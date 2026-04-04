@@ -3,55 +3,66 @@
 ## Présentation du projet
 **Cre8Connect** est une plateforme web de collaboration entre **marques** et **créateurs de contenu**.
 
-L’objectif du projet est de faciliter la mise en relation entre les marques et les créateurs autour de campagnes de promotion digitale, tout en proposant une interface d’administration pour la supervision de la plateforme.
+L’objectif du projet est de faciliter la mise en relation entre ces deux acteurs à travers des **offres**, des **candidatures**, des **campagnes**, des **contrats**, ainsi que des espaces d’échange et d’interaction sur la plateforme.
 
 Le projet s’inscrit dans la thématique : **Économie digitale, entrepreneuriat et futur du travail**.
 
 ---
 
 ## Objectifs
-- Permettre aux **créateurs** de gérer leur profil et leurs publications.
-- Permettre aux **marques** de gérer leur profil, consulter les candidatures et sélectionner des créateurs.
-- Permettre la gestion des **campagnes** et des **contrats**.
-- Présenter les **produits promus** sur la plateforme.
-- Permettre aux **marques** de laisser des **avis sur les créateurs** après une collaboration.
-- Fournir un espace **administratif** pour consulter les signalements et prendre des décisions.
+- Permettre aux **utilisateurs** de s’authentifier et d’accéder à la plateforme selon leur rôle (**créateur**, **marque**, **admin**).
+- Permettre aux **créateurs** de publier du contenu, interagir avec la communauté et postuler à des offres.
+- Permettre aux **marques** de publier des offres, consulter les candidatures et sélectionner des créateurs.
+- Gérer les **campagnes**, les **contrats** et les **produits** promus.
+- Offrir un espace d’**événements** et de **forum** pour encourager l’échange, la formation et la collaboration.
+- Fournir un espace **administratif** pour superviser la plateforme, traiter les réclamations et assurer la sécurité.
 - Intégrer des aspects liés à **l’intelligence artificielle**, à la **sécurité** et au **développement durable**.
 
 ---
 
 ## Modules du projet
 
-### 1. Administration / Signalement
-- Consulter les signalements
-- Analyser les signalements
-- Prendre des décisions administratives
+### 1. Utilisateur / Réclamation
+- Gérer les comptes utilisateurs
+- Authentification (login)
+- Gestion des rôles : **créateur / marque / admin**
+- Gérer les réclamations (CRUD + traitement)
+- Assurer la sécurité (blocage + vérification)
+- Superviser la plateforme (statistiques + suivi)
 
-### 2. Créateur / Publications
-- Gérer le profil créateur
-- Publier, modifier et supprimer des publications
-- Consulter les campagnes
-- Postuler à une campagne
+### 2. Post / Commentaire / Réaction
+- Gérer les publications (CRUD)
+- Réagir à un post
+- Commenter un post
+- Réagir à un commentaire
+- Répondre à un commentaire
 
-### 3. Campagne / Contrat
-- Créer, modifier et supprimer une campagne
-- Définir le budget, les objectifs, les délais et le type de contenu
-- Associer des créateurs sélectionnés à une campagne
-- Générer et consulter les contrats
+### 3. Campagne / Contrat / Produit
+- Gérer les campagnes
+- Sélectionner un créateur
+- Générer un contrat
+- Signer un contrat
+- Assurer le suivi de la collaboration
+- Ajouter et gérer les produits
+- Décrire les caractéristiques des produits
+- Associer les produits aux campagnes
 
-### 4. Produit / Avis
-- Gérer les produits promus
-- Associer un produit à une campagne
-- Consulter les informations produit
-- Permettre aux marques de laisser des avis sur les créateurs
-- Consulter les avis reçus par les créateurs
+### 4. Événement / Forum
+- Créer et gérer des événements
+- Ajouter des contenus (vidéos, documents, ressources…)
+- Associer un forum à chaque événement ou formation
+- Permettre aux créateurs de participer aux événements
+- Poser des questions, échanger et partager des expériences
+- Permettre aux marques de promouvoir leurs produits
+- Gérer les partenaires et renforcer la collaboration entre marques et créateurs
 
-### 5. Marque / Candidature
-- Gérer le profil marque
-- Consulter les candidatures d’une campagne
-- Analyser une candidature
-- Consulter le profil et les publications d’un créateur
-- Accepter ou refuser une ou plusieurs candidatures
+### 5. Offre / Candidature
+- Créer et gérer des offres
+- Consulter les offres disponibles
+- Soumettre une candidature à une offre
+- Consulter les candidatures reçues
+- Étudier les profils des créateurs
+- Accepter ou refuser une candidature
 
 ---
 
@@ -69,24 +80,25 @@ Le projet s’inscrit dans la thématique : **Économie digitale, entrepreneuria
 
 ---
 
-## Développement durable et IA
+## Intelligence artificielle, sécurité et développement durable
 Le projet prend en compte :
 - l’**intelligence artificielle** pour améliorer l’analyse, la recommandation et l’expérience utilisateur ;
-- le **développement durable** à travers une conception numérique responsable, une interface claire et une réflexion sur des usages digitaux utiles et modernes.
+- la **sécurité** pour protéger les comptes, les accès et les données ;
+- le **développement durable** à travers une conception numérique responsable, une interface claire et des usages digitaux utiles et modernes.
 
 ### ODD visés
 - **ODD 8** : Travail décent et croissance économique
+- **ODD 9** : Industrie, innovation et infrastructure
 - **ODD 12** : Consommation et production responsables
-- **ODD 13** : Mesures relatives à la lutte contre les changements climatiques
 
 ---
 
 ## Membres du groupe
-- **Mhamdi Neila** : Module Administration / Signalement
-- **Mansouri Amal** : Module Créateur / Publications
-- **Ghadhab Nour** : Module Campagne / Contrat
-- **Mouaddeb Rabeb** : Module Produit / Avis
-- **Felhi Mohamed** : Module Marque / Candidature
+- **Mhamdi Neila** : Module Utilisateur / Réclamation
+- **Mansouri Amal** : Module Post / Commentaire / Réaction
+- **Ghadhab Nour** : Module Campagne / Contrat / Produit
+- **Mouaddeb Rabeb** : Module Événement / Forum
+- **Felhi Mohamed** : Module Offre / Candidature
 
 ---
 
