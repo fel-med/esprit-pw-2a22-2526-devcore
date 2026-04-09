@@ -1,0 +1,190 @@
+Project prompt for AI tools:
+
+This project is called **Cre8Connect**.
+
+Cre8Connect is a web platform that connects **brands** and **content creators**.
+Its goal is to support collaboration between them through offers, candidatures, campaigns, contracts, promoted products, events, forum interaction, posts, comments, reactions, user management, and complaints.
+
+You must understand this project context before generating code.
+
+1. General project identity
+Cre8Connect is a **multi-module collaboration platform**.
+
+It is not:
+- a simple portfolio website
+- a freelancer marketplace only
+- an e-commerce shop only
+- a blog only
+- a social network only
+
+It is a hybrid platform that combines:
+- platform user management
+- collaboration workflows
+- community/content interaction
+- event/forum interaction
+- admin supervision and moderation
+
+So when generating code, always think in terms of a real platform ecosystem with multiple modules and multiple user roles.
+
+2. Main user roles
+The platform has 3 main roles:
+
+- `createur`
+  - publishes content
+  - interacts with the community
+  - browses offers
+  - submits candidatures
+  - participates in events/forum spaces
+
+- `marque`
+  - publishes offers
+  - reviews candidatures
+  - launches campaigns
+  - manages products
+  - collaborates with creators through the platform
+
+- `admin`
+  - supervises the platform
+  - manages users
+  - handles reclamations
+  - moderates activity
+  - ensures control and follow-up
+
+Always respect role boundaries when generating code.
+Do not assign random responsibilities to the wrong role.
+
+3. Main project modules
+The project is organized around 5 main modules:
+
+- `utilisateur / reclamation`
+- `offre / candidature`
+- `evenement / forum`
+- `campagne / contrat / produit`
+- `post / comment / react`
+
+These modules are connected, but each one has its own purpose.
+
+4. Module meanings
+
+A. `utilisateur / reclamation`
+This module manages:
+- user accounts
+- authentication-related context
+- roles
+- account status
+- complaints/reclamations
+
+Main logic:
+- a user exists with a role and account state
+- a user can submit a reclamation
+- admins supervise and manage reclamations
+
+This module is the base layer of the platform because all other modules depend on users.
+
+B. `offre / candidature`
+This module manages:
+- offers
+- candidatures
+
+Main logic:
+- a marque creates an offre
+- a createur views offers
+- a createur submits a candidature
+- a marque reviews candidatures
+- a candidature can be accepted or refused
+
+This module represents the matching/selection phase of collaboration.
+
+C. `evenement / forum`
+This module manages:
+- events/formations
+- forum/discussion spaces linked to events
+
+Main logic:
+- events are displayed on the platform
+- forum/discussion activity can happen around events
+- this module supports exchange, participation, and community interaction
+
+This module gives the platform a community/training dimension.
+
+D. `campagne / contrat / produit`
+This module manages:
+- campaigns
+- contracts
+- products
+
+Main logic:
+- collaboration may continue into campaigns after the offer/candidature stage
+- campaigns organize the active collaboration
+- contracts formalize it
+- products are managed and promoted in campaigns and related contexts
+
+This module represents the execution phase of collaboration.
+
+E. `post / comment / react`
+This module manages:
+- posts/publications
+- comments
+- reactions
+
+Main logic:
+- creators publish content
+- users interact through comments and reactions
+- this module supports the social/content layer of the platform
+
+5. Main entities already known in the project
+Important entities include:
+- utilisateur
+- reclamation
+- offre
+- candidature
+- evenement
+- forum
+- campagne
+- contrat
+- produit
+- post
+- comment
+- react
+
+Do not invent unrelated business entities unless explicitly requested.
+
+6. Core business logic to preserve
+When generating code, always respect these business relationships:
+
+- a `marque` creates offers
+- a `createur` submits candidatures
+- an accepted candidature can lead to collaboration logic such as a campaign
+- campaigns are related to products and contracts
+- creators publish posts
+- users interact with posts through comments and reactions
+- users can submit reclamations
+- admins supervise the platform
+
+7. How to think about the project
+Before generating code, always ask:
+
+- Which module does this belong to?
+- Which role uses this feature?
+- Is this a public/front-office page or an admin/back-office page?
+- How does this feature fit inside Cre8Connect as a collaboration platform?
+
+Always generate code that fits the logic of a structured multi-role platform.
+
+8. Behavior rules for AI tools
+Do not:
+- treat the project like a portfolio site
+- treat the project like a simple online shop
+- treat the project like a basic school CRUD app only
+- mix module responsibilities randomly
+- assign actions to the wrong role
+- generate unrelated business logic
+
+Do:
+- respect the project modules
+- respect role boundaries
+- respect the collaboration flow
+- keep generated code coherent with the platform identity of Cre8Connect
+
+9. Output purpose
+All generated code and suggestions must stay consistent with Cre8Connect as a real collaboration platform between brands and creators, supervised by admin users, with both operational modules and community features.

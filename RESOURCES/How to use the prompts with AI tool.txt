@@ -1,0 +1,52 @@
+How to use the prompts with AI tools
+
+Before asking ChatGPT, Claude, or any other AI tool to generate code for your module, always give it the project context first.
+
+Use the prompts in this order:
+
+1. Template prompt
+- This tells the AI how the Front Office and Back Office must look.
+- It prevents the AI from inventing another style.
+
+2. Project prompt
+- This tells the AI what Cre8Connect is.
+- It helps the AI understand the modules, roles, and business logic.
+
+3. Architecture prompt
+- This tells the AI how the codebase is organized.
+- It helps the AI continue from the existing MVC structure instead of rebuilding the project.
+
+4. Your specific request
+- After the 3 prompts, ask for your exact task.
+- Example:
+  - generate the code for the offer listing page
+  - add the candidature form in my module
+  - create the admin page for complaints
+  - update the campaign controller and matching views
+
+Important rules for everyone:
+- Do not ask the AI to rebuild the project from zero.
+- Do not let the AI invent another architecture.
+- Do not let the AI ignore the chosen templates.
+- Always mention your module clearly.
+- Always mention whether the requested page is Front Office or Back Office.
+- Always ask the AI to modify only the files related to your module unless a shared file is really needed.
+
+Recommended way to ask:
+- first paste the template prompt
+- then paste the project prompt
+- then paste the architecture prompt
+- then write your task
+
+Example of final request:
+“My module is offre / candidature.
+I want you to generate the Front Office code for the offers page and the Back Office code for the admin offers management page.
+Respect the existing MVC structure and the chosen templates.
+Modify only the files related to my module.”
+
+Goal:
+All teammates should generate code that:
+- matches the same Front Office template
+- matches the same Back Office template
+- respects the same architecture
+- stays compatible with merging back into the main branch

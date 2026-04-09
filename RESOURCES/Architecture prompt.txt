@@ -1,0 +1,165 @@
+Architecture prompt for AI tools:
+
+This project uses a simple MVC architecture in plain PHP without any framework. The current files and folders in the repository are the source of truth and must be followed exactly. Do not rebuild the project from scratch and do not invent another architecture.
+
+1. Architectural style
+The project follows a simple MVC structure:
+
+- `Modele/` contains model/entity classes
+- `Controleur/` contains controller classes
+- `Vue/` contains presentation files
+
+Keep responsibilities separated correctly:
+- models define entity structure
+- controllers handle coordination between model, database connection, and views
+- views handle presentation only
+
+2. Current structure to respect
+The shared project already has an existing base structure. Follow it exactly.
+
+Main structure:
+- `config.php`
+- `Modele/`
+- `Controleur/`
+- `Vue/`
+
+Expected model files:
+- `Modele/utilisateur.php`
+- `Modele/offre.php`
+- `Modele/evenement.php`
+- `Modele/campagne.php`
+- `Modele/post.php`
+
+Expected controller files:
+- `Controleur/utilisateurC.php`
+- `Controleur/offreC.php`
+- `Controleur/evenementC.php`
+- `Controleur/campagneC.php`
+- `Controleur/postC.php`
+
+Views are separated into:
+- `Vue/FrontOffice/`
+- `Vue/BackOffice/`
+
+Shared public resources are under:
+- `Vue/public/`
+
+Do not add or rename top-level folders unless explicitly required by the existing project.
+
+3. Model rules
+Model files represent the main project entities.
+Keep models clean and aligned with the current architecture.
+
+Models should remain focused on:
+- private attributes
+- constructor
+- getters
+- setters
+
+Do not overload models with unrelated presentation code.
+Do not place full HTML in models.
+Keep entity structure clear and reusable.
+
+4. Controller rules
+Controllers connect the models, the configuration, and the views.
+
+Controllers must:
+- stay lightweight
+- remain compatible with the current project structure
+- only add the methods necessary for the requested feature
+- avoid unnecessary complexity
+- use `config.php` for database connection when needed
+
+Do not turn controllers into a second model layer.
+Do not place large HTML page structures inside controllers.
+
+5. View rules
+Views belong inside `Vue/FrontOffice/` or `Vue/BackOffice/` depending on the page type.
+
+Views must:
+- stay presentation-oriented
+- remain compatible with the selected office template
+- respect the existing layout organization
+- avoid direct SQL logic
+- avoid mixing heavy business logic into the view
+
+Front-office pages go into `Vue/FrontOffice/...`
+Back-office pages go into `Vue/BackOffice/...`
+
+6. Configuration rule
+`config.php` is the shared database configuration file.
+It holds the PDO connection and must be reused instead of creating random new connection systems.
+
+Do not replace `config.php` with another architecture.
+Do not invent another database access style if the project already uses this shared config file.
+
+7. Team workflow rules
+The base architecture already exists in the `main` branch.
+
+Development workflow:
+- each teammate works in their own branch
+- each teammate starts from the existing architecture
+- no one should rebuild the project from scratch
+- later all branches will be merged back into `main`
+
+So generated code must be merge-friendly and architecture-compatible.
+
+8. Module boundary rules
+Each teammate works mainly inside their assigned module.
+
+Examples:
+- `utilisateur` module
+- `offre` module
+- `evenement` module
+- `campagne` module
+- `post` module
+
+Work only in the files and folders relevant to the requested module, unless a shared file must be updated.
+If a shared file is touched, keep the modification minimal and compatible with the rest of the project.
+
+9. Naming and consistency rules
+Respect the current naming conventions already used in the project.
+
+Examples:
+- models in `Modele/`
+- controllers in `Controleur/`
+- front-office pages in `Vue/FrontOffice/`
+- back-office pages in `Vue/BackOffice/`
+
+Do not create random duplicate files with inconsistent names.
+Do not invent parallel architectures.
+
+10. Template integration rules
+The project already has:
+- a Front Office template
+- a Back Office template
+
+Architecture and generated code must integrate into the existing office separation.
+
+That means:
+- front-office code must fit inside `Vue/FrontOffice/`
+- back-office code must fit inside `Vue/BackOffice/`
+- keep template consistency
+- do not break the existing office separation
+
+11. What AI tools must not do
+Do not:
+- rebuild the entire project
+- invent another MVC structure
+- switch to another framework
+- rename folders randomly
+- move code into the wrong layer
+- duplicate existing architecture unnecessarily
+- ignore the existing repository structure
+
+12. What AI tools should do
+Do:
+- continue from the current project state
+- extend the existing structure
+- keep code compatible with shared architecture
+- respect MVC roles
+- respect office separation
+- keep code clean enough for teamwork and branch merging
+
+13. Output purpose
+All generated code or suggestions must be compatible with the current architecture, suitable for collaborative branch-based development, and easy to merge back into `main`.

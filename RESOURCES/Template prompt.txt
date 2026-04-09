@@ -1,0 +1,103 @@
+Template prompt for AI tools:
+
+This project already has two chosen visual template directions: one for the Front Office and one for the Back Office. These template identities must be preserved. Do not redesign the website, do not invent a new visual system, and do not replace the chosen templates.
+
+The goal is to generate pages and components that visually belong to the same project.
+
+1. Front Office template identity
+The Front Office must keep a light, modern, elegant, and user-facing design style.
+
+Its visual spirit is:
+- clean and polished
+- white or very light background
+- spacious layout
+- modern startup/platform feeling
+- smooth and friendly visual presentation
+- attractive but not overloaded
+- visually premium and welcoming
+
+Front Office design rules:
+- Use a light page atmosphere, not a dark dashboard look.
+- Keep the navigation clean, horizontal, and public-facing.
+- Use spacious sections with clear visual breathing room.
+- Preserve polished cards, rounded blocks, and smooth content grouping.
+- Use elegant visual hierarchy with strong headings, softer secondary text, and clear calls to action.
+- Preserve a modern and refined visual rhythm.
+- Use visually attractive user-facing forms and clean public-facing content blocks.
+- Listings should feel like platform/showcase content, not heavy admin management tables by default.
+- The Front Office must feel suitable for creators, brands, offers, campaigns, events, products, posts, and public interaction pages.
+
+Front Office must not look like:
+- an admin dashboard
+- a monitoring panel
+- a data-heavy technical interface
+- a dark sidebar-based management system
+
+2. Back Office template identity
+The Back Office must keep a dark, structured, dashboard-oriented admin design style.
+
+Its visual spirit is:
+- dark admin interface
+- management-oriented
+- operational and technical
+- dense but organized
+- built for supervision, moderation, CRUD, tables, stats, and internal control
+
+Back Office design rules:
+- Preserve the dashboard layout logic.
+- Use a dark or admin-oriented environment, not a public landing-page style.
+- Keep the top admin navbar and left sidebar logic when generating admin pages.
+- Use structured cards, widgets, KPI blocks, forms, tables, and status elements.
+- Management pages should look practical, structured, and easy to scan.
+- Preserve admin-oriented page density and hierarchy.
+- Use admin-style forms, admin-style tables, status badges, and dashboard blocks.
+- The Back Office must feel suitable for user management, complaints, moderation, offers/candidatures management, campaigns/products/contracts management, events/forum supervision, and post moderation.
+
+Back Office must not look like:
+- a startup landing page
+- a public marketing page
+- a creator-facing page
+- a public card showcase without admin structure
+
+3. Office separation rules
+The two template identities must remain clearly separated.
+
+- Front Office = light, polished, public-facing
+- Back Office = dark, dashboard, admin-facing
+
+Before generating a page or component, always determine whether it belongs to:
+- Front Office
+or
+- Back Office
+
+Then generate it only in the matching template style.
+
+Do not mix the two identities badly.
+Do not style a public page like an admin dashboard.
+Do not style an admin page like a public landing page.
+
+4. Visual consistency rules
+Generated code must preserve the visual language of the chosen side:
+- spacing
+- page rhythm
+- card structure
+- form style
+- content presentation
+- navigation logic
+- general mood
+- density level
+
+Do not flatten everything into plain raw HTML with no template identity.
+Do not generate a third unrelated design style.
+Do not replace the existing look with your own favorite style.
+
+5. Practical generation rules
+When generating a page, section, component, or CRUD screen:
+- first identify whether it is Front Office or Back Office
+- then follow only the corresponding template language
+- preserve the existing visual identity of that side
+- keep the result compatible with the already chosen project templates
+- prioritize template consistency over creativity
+
+6. Output purpose
+All generated UI code must feel like it belongs to the same project and the same shared template system.

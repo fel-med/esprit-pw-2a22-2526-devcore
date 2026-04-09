@@ -1,0 +1,101 @@
+# =========================================
+# GUIDE GIT SIMPLE - PROJET CRE8CONNECT
+# =========================================
+
+# 1) PREMIERE FOIS : cloner le projet et creer sa branche
+
+git clone https://github.com/Fel-med/Esprit-PW-2A22-2526-Devcore.git
+cd Esprit-PW-2A22-2526-Devcore
+git checkout main
+git pull origin main
+git checkout -b YOUR_MODULE_NAME
+git push -u origin YOUR_MODULE_NAME
+
+
+# Exemple :
+# git checkout -b offre
+# git push -u origin offre
+
+
+# =========================================
+# 2) REGLES IMPORTANTES
+# =========================================
+
+# - Ne jamais travailler directement sur main
+# - Chacun travaille sur sa propre branche
+# - Chacun modifie surtout les fichiers de son module
+# - Ne pas renommer les dossiers/fichiers du projet sans accord
+# - Ne pas modifier les fichiers partages sans raison
+# - Faire des commits clairs
+# - Pousser souvent
+# - Ne pas faire git push --force
+
+# =========================================
+### NOMS DE BRANCHES CONSEILLES
+# =========================================
+
+# utilisateur
+# offre
+# evenement
+# campagne
+# post
+
+
+# =========================================
+# 3) QUAND TU COMMENCES UNE NOUVELLE SEANCE
+# =========================================
+
+git checkout main
+git pull origin main
+git checkout YOUR_MODULE_NAME
+git merge main
+
+
+# =========================================
+# 4) QUAND TU VEUX ENREGISTRER ET PUSH TON TRAVAIL
+# =========================================
+
+git add .
+git commit -m "Describe clearly what you added"
+git push origin YOUR_MODULE_NAME
+
+
+# Exemple :
+# git add .
+# git commit -m "Add campagne module pages"
+# git push origin campagne
+
+
+# =========================================
+# 5) SI TU AS DEJA LA BRANCHE ET TU VEUX JUSTE CONTINUER
+# =========================================
+
+git checkout YOUR_MODULE_NAME
+git pull origin YOUR_MODULE_NAME
+
+
+# =========================================
+# 6) SI IL Y A UN CONFLIT APRES git merge main
+# =========================================
+
+# Ouvre les fichiers en conflit
+# Corrige manuellement
+# Puis fais :
+
+git add .
+git commit -m "Resolve merge conflict"
+git push origin YOUR_MODULE_NAME
+
+
+# =========================================
+# 7) AVANT LE MERGE FINAL VERS main
+# =========================================
+
+git checkout main
+git pull origin main
+git checkout YOUR_MODULE_NAME
+git merge main
+git add .
+git commit -m "Update branch with latest main"
+git push origin YOUR_MODULE_NAME
+
