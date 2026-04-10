@@ -56,5 +56,20 @@ class Offre {
 
     public function getStatutOffre() { return $this->statutOffre; }
     public function setStatutOffre($statutOffre) { $this->statutOffre = $statutOffre; }
+
+    public static function fromArray(array $data) {
+        return new self(
+            $data['idOffre'] ?? null,
+            $data['idMarque'] ?? null,
+            $data['titre'] ?? null,
+            $data['description'] ?? null,
+            $data['objectif'] ?? null,
+            $data['budgetMin'] ?? null,
+            $data['budgetMax'] ?? null,
+            $data['datePublication'] ?? null,
+            $data['dateLimite'] ?? null,
+            $data['statutOffre'] ?? null
+        );
+    }
 }
 ?>

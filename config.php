@@ -20,7 +20,7 @@ class config
 
         self::$pdo = new PDO(
 
-          'mysql:host=localhost;dbname=',
+          'mysql:host=localhost;dbname=cre8connect',
 
           'root',
 

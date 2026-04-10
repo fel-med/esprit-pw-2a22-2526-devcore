@@ -2,27 +2,140 @@
 // Controller class for Offre
 // Handles offer-related operations and connects to the Offre model
 
-require_once '../Modele/offre.php';
-require_once '../config.php';
+require_once __DIR__ . '/../Modele/offre.php';
+require_once __DIR__ . '/../config.php';
 
 class OffreC {
-    private $offreModel;
+    private $pdo;
 
     public function __construct() {
-        // Instantiate the model
-        $this->offreModel = new Offre();
+        $this->pdo = config::getConnexion();
     }
 
-    public function afficherPage() {
-        // Method to display the offer page
-        // This is a starter method - full logic will be added later
+    private function rowToOffre(array $row) {
+        return new Offre(
+            $row['idOffre'] ?? null,
+            $row['idMarque'] ?? null,
+            $row['titre'] ?? null,
+            $row['description'] ?? null,
+            $row['objectif'] ?? null,
+            $row['budgetMin'] ?? null,
+            $row['budgetMax'] ?? null,
+            $row['datePublication'] ?? null,
+            $row['dateLimite'] ?? null,
+            $row['statutOffre'] ?? null
+        );
     }
 
-    public function creerObjetExemple() {
-        // Example method to create a sample offer object
-        // This demonstrates the connection between controller and model
-        $offre = new Offre(1, 1, 'Sample Offer', 'Description', 'Objective', 1000, 5000, '2023-01-01', '2023-12-31', 'active');
-        return $offre;
+    public function getOffresByMarque($idMarque) {
+        $sql = 'SELECT * FROM offre WHERE idMarque = :idMarque ORDER BY datePublication DESC';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['idMarque' => $idMarque]);
+        $rows = $stmt->fetchAll();
+
+        $offres = [];
+        foreach ($rows as $row) {
+            $offres[] = $this->rowToOffre($row);
+        }
+        return $offres;
+    }
+
+    public function getOffreById($idOffre, $idMarque) {
+        $sql = 'SELECT * FROM offre WHERE idOffre = :idOffre AND idMarque = :idMarque';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['idOffre' => $idOffre, 'idMarque' => $idMarque]);
+        $row = $stmt->fetch();
+
+        return $row ? $this->rowToOffre($row) : null;
+    }
+
+    public function createOffre(Offre $offre) {
+        $sql = 'INSERT INTO offre (idMarque, titre, description, objectif, budgetMin, budgetMax, datePublication, dateLimite, statutOffre) VALUES (:idMarque, :titre, :description, :objectif, :budgetMin, :budgetMax, :datePublication, :dateLimite, :statutOffre)';
+        $stmt = $this->pdo->prepare($sql);
+
+        return $stmt->execute([
+            'idMarque' => $offre->getIdMarque(),
+            'titre' => $offre->getTitre(),
+            'description' => $offre->getDescription(),
+            'objectif' => $offre->getObjectif(),
+            'budgetMin' => $offre->getBudgetMin(),
+            'budgetMax' => $offre->getBudgetMax(),
+            'datePublication' => $offre->getDatePublication(),
+            'dateLimite' => $offre->getDateLimite(),
+            'statutOffre' => $offre->getStatutOffre() ?? 'active'
+        ]);
+    }
+
+    public function updateOffre(Offre $offre) {
+        $sql = 'UPDATE offre SET titre = :titre, description = :description, objectif = :objectif, budgetMin = :budgetMin, budgetMax = :budgetMax, datePublication = :datePublication, dateLimite = :dateLimite, statutOffre = :statutOffre WHERE idOffre = :idOffre AND idMarque = :idMarque';
+        $stmt = $this->pdo->prepare($sql);
+
+        return $stmt->execute([
+            'titre' => $offre->getTitre(),
+            'description' => $offre->getDescription(),
+            'objectif' => $offre->getObjectif(),
+            'budgetMin' => $offre->getBudgetMin(),
+            'budgetMax' => $offre->getBudgetMax(),
+            'datePublication' => $offre->getDatePublication(),
+            'dateLimite' => $offre->getDateLimite(),
+            'statutOffre' => $offre->getStatutOffre() ?? 'active',
+            'idOffre' => $offre->getIdOffre(),
+            'idMarque' => $offre->getIdMarque()
+        ]);
+    }
+
+    public function deleteOffre($idOffre, $idMarque) {
+        $sql = 'DELETE FROM offre WHERE idOffre = :idOffre AND idMarque = :idMarque';
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute(['idOffre' => $idOffre, 'idMarque' => $idMarque]);
+    }
+
+    public function validateOffreData(array $data) {
+        $errors = [];
+
+        $titre = trim($data['titre'] ?? '');
+        $description = trim($data['description'] ?? '');
+        $objectif = trim($data['objectif'] ?? '');
+        $budgetMin = trim($data['budgetMin'] ?? '');
+        $budgetMax = trim($data['budgetMax'] ?? '');
+        $datePublication = trim($data['datePublication'] ?? '');
+        $dateLimite = trim($data['dateLimite'] ?? '');
+
+        if ($titre === '') {
+            $errors[] = 'Le titre est requis.';
+        }
+        if ($description === '') {
+            $errors[] = 'La description est requise.';
+        }
+        if ($objectif === '') {
+            $errors[] = 'L\'objectif est requis.';
+        }
+
+        if ($budgetMin === '' || !is_numeric($budgetMin)) {
+            $errors[] = 'Le budget minimum doit être un montant numérique valide.';
+        }
+        if ($budgetMax === '' || !is_numeric($budgetMax)) {
+            $errors[] = 'Le budget maximum doit être un montant numérique valide.';
+        }
+        if (is_numeric($budgetMin) && is_numeric($budgetMax) && floatval($budgetMin) > floatval($budgetMax)) {
+            $errors[] = 'Le budget minimum doit être inférieur ou égal au budget maximum.';
+        }
+
+        $publicationDate = DateTime::createFromFormat('Y-m-d', $datePublication);
+        if (!$publicationDate || $publicationDate->format('Y-m-d') !== $datePublication) {
+            $errors[] = 'La date de publication doit être au format AAAA-MM-JJ.';
+        }
+
+        $limiteDate = DateTime::createFromFormat('Y-m-d', $dateLimite);
+        if (!$limiteDate || $limiteDate->format('Y-m-d') !== $dateLimite) {
+            $errors[] = 'La date limite doit être au format AAAA-MM-JJ.';
+        }
+
+        if ($publicationDate && $limiteDate && $publicationDate > $limiteDate) {
+            $errors[] = 'La date de publication doit être antérieure ou égale à la date limite.';
+        }
+
+        return $errors;
     }
 }
 ?>

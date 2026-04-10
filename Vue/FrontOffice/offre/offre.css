@@ -1,0 +1,10 @@
+/* Cre8Connect - Offre Module Styles */
+
+/* Gradient Title - Blue to Pink */
+.gradient-title {
+  background: linear-gradient(135deg, #1e30f3 0%, #e21e80 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+}
