@@ -50,6 +50,44 @@ class OffreC {
         return $row ? $this->rowToOffre($row) : null;
     }
 
+    public function getAllOffres() {
+        $sql = 'SELECT * FROM offre ORDER BY datePublication DESC';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        $rows = $stmt->fetchAll();
+
+        $offres = [];
+        foreach ($rows as $row) {
+            $offres[] = $this->rowToOffre($row);
+        }
+        return $offres;
+    }
+
+    public function getOffreByIdAdmin($idOffre) {
+        $sql = 'SELECT * FROM offre WHERE idOffre = :idOffre';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['idOffre' => $idOffre]);
+        $row = $stmt->fetch();
+
+        return $row ? $this->rowToOffre($row) : null;
+    }
+
+    public function getCandidatureCountByOffre($idOffre) {
+        $sql = 'SELECT COUNT(*) AS total FROM candidature WHERE origineCandidature = :origine AND idSource = :idSource';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['origine' => 'par_offre', 'idSource' => $idOffre]);
+        $row = $stmt->fetch();
+
+        return $row ? intval($row['total']) : 0;
+    }
+
+    public function getCandidaturesByOffre($idOffre) {
+        $sql = 'SELECT c.*, u.nom AS createurNom, u.email AS createurEmail FROM candidature c LEFT JOIN utilisateur u ON u.id = c.idCreateur WHERE c.origineCandidature = :origine AND c.idSource = :idSource ORDER BY c.dateCandidature DESC';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['origine' => 'par_offre', 'idSource' => $idOffre]);
+        return $stmt->fetchAll();
+    }
+
     // New method for creator: Get all offers targeted to a specific creator
     public function getOffresByCreateurCible($idCreateurCible) {
         $sql = 'SELECT * FROM offre WHERE idCreateurCible = :idCreateurCible AND statutOffre = :statut ORDER BY datePublication DESC';
@@ -72,6 +110,52 @@ class OffreC {
         if ($keyword) {
             $sql .= ' AND (titre LIKE :keyword OR objectif LIKE :keyword OR description LIKE :keyword)';
             $params['keyword'] = '%' . $keyword . '%';
+        }
+        if ($budgetMin !== null && is_numeric($budgetMin)) {
+            $sql .= ' AND budgetMax >= :budgetMin';
+            $params['budgetMin'] = $budgetMin;
+        }
+        if ($budgetMax !== null && is_numeric($budgetMax)) {
+            $sql .= ' AND budgetMin <= :budgetMax';
+            $params['budgetMax'] = $budgetMax;
+        }
+        if ($dateLimite) {
+            $sql .= ' AND dateLimite >= :dateLimite';
+            $params['dateLimite'] = $dateLimite;
+        }
+
+        $sql .= ' ORDER BY datePublication DESC';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll();
+
+        $offres = [];
+        foreach ($rows as $row) {
+            $offres[] = $this->rowToOffre($row);
+        }
+        return $offres;
+    }
+
+    // Admin search/filter for offers
+    public function searchOffresAdmin($keyword = null, $statut = null, $idMarque = null, $idCreateurCible = null, $budgetMin = null, $budgetMax = null, $dateLimite = null) {
+        $sql = 'SELECT * FROM offre WHERE 1=1';
+        $params = [];
+
+        if ($keyword) {
+            $sql .= ' AND (titre LIKE :keyword OR objectif LIKE :keyword OR description LIKE :keyword)';
+            $params['keyword'] = '%' . $keyword . '%';
+        }
+        if ($statut) {
+            $sql .= ' AND statutOffre = :statut';
+            $params['statut'] = $statut;
+        }
+        if ($idMarque !== null && is_numeric($idMarque)) {
+            $sql .= ' AND idMarque = :idMarque';
+            $params['idMarque'] = $idMarque;
+        }
+        if ($idCreateurCible !== null && is_numeric($idCreateurCible)) {
+            $sql .= ' AND idCreateurCible = :idCreateurCible';
+            $params['idCreateurCible'] = $idCreateurCible;
         }
         if ($budgetMin !== null && is_numeric($budgetMin)) {
             $sql .= ' AND budgetMax >= :budgetMin';
