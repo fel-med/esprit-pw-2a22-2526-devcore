@@ -1,22 +1,32 @@
-﻿<?php
+<?php
 session_start();
-// Simulate logged-in user (remove this when login system is ready)
+// Simulate logged-in creator (remove this when login system is ready)
 if (!isset($_SESSION['utilisateur'])) {
-    $_SESSION['utilisateur']['id'] = 1;  // Test with marque ID 1
+    $_SESSION['utilisateur']['id'] = 2;  // Test with creator ID 2
+    $_SESSION['utilisateur']['role'] = 'createur';
 }
 
 require_once __DIR__ . '/../../../Controleur/offreC.php';
 
 $controller = new OffreC();
-$brandId = $_SESSION['utilisateur']['id'];
 $idOffre = isset($_GET['idOffre']) && is_numeric($_GET['idOffre']) ? intval($_GET['idOffre']) : null;
+$idCreateur = isset($_GET['idCreateur']) && is_numeric($_GET['idCreateur']) ? intval($_GET['idCreateur']) : null;
 $offre = null;
 $error = null;
+$success = null;
 
-if ($idOffre !== null) {
-    $offre = $controller->getOffreById($idOffre, $brandId);
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['candidater'])) {
+    if ($controller->createCandidature($idCreateur, 'par_offre', $idOffre)) {
+        $success = 'Votre candidature a été soumise avec succès.';
+    } else {
+        $error = 'Erreur lors de la soumission de la candidature.';
+    }
+}
+
+if ($idOffre !== null && $idCreateur !== null) {
+    $offre = $controller->getPublishedOffreById($idOffre, $idCreateur);
     if (!$offre) {
-        $error = 'Offre introuvable ou accès refusé.';
+        $error = 'Offre introuvable ou non disponible pour vous.';
     }
 } else {
     $error = 'Paramètres invalides pour afficher l\'offre.';
@@ -39,7 +49,7 @@ if ($idOffre !== null) {
                     <div class="bg-danger-subtle rounded-3 p-5 text-center">
                         <h2 class="text-danger">Erreur</h2>
                         <p class="text-muted mb-4"><?php echo htmlspecialchars($error); ?></p>
-                        <a class="btn btn-primary" href="index.php">Retour à mes offres</a>
+                        <a class="btn btn-primary" href="creator_list.php">Retour aux offres</a>
                     </div>
                 </div>
             </div>
@@ -49,10 +59,17 @@ if ($idOffre !== null) {
                     <h1 class="display-5 fw-bold mb-2 gradient-title"><?php echo htmlspecialchars($offre->getTitre()); ?></h1>
                     <div class="d-flex gap-3 flex-wrap">
                         <span class="badge bg-info text-white fs-6"><?php echo htmlspecialchars($offre->getStatutOffre()); ?></span>
-                        <span class="text-muted">Créée le <?php echo htmlspecialchars($offre->getDatePublication()); ?></span>
+                        <span class="text-muted">Publiée le <?php echo htmlspecialchars($offre->getDatePublication()); ?></span>
                     </div>
                 </div>
             </div>
+
+            <?php if ($success): ?>
+                <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                    <?php echo htmlspecialchars($success); ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
 
             <div class="row g-5">
                 <div class="col-lg-8">
@@ -124,12 +141,12 @@ if ($idOffre !== null) {
                     <div class="bg-white rounded-3 p-4 shadow-sm sticky-top" style="top: 20px;">
                         <h5 class="fw-semibold mb-4">Actions</h5>
                         <div class="d-grid gap-2">
-                            <a class="btn btn-primary" href="edit.php?idOffre=<?php echo $offre->getIdOffre(); ?>">✏️ Modifier</a>
-                            <form method="post" action="delete.php" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette offre ?');">
+                            <form method="post" action="">
                                 <input type="hidden" name="idOffre" value="<?php echo $offre->getIdOffre(); ?>">
-                                <button type="submit" class="btn btn-outline-danger w-100">🗑️ Supprimer</button>
+                                <input type="hidden" name="idCreateur" value="<?php echo $idCreateur; ?>">
+                                <button type="submit" name="candidater" class="btn btn-success w-100">Postuler à cette offre</button>
                             </form>
-                            <a class="btn btn-outline-secondary" href="index.php">← Retour</a>
+                            <a class="btn btn-outline-secondary w-100" href="creator_list.php">← Retour aux offres</a>
                         </div>
                     </div>
                 </div>

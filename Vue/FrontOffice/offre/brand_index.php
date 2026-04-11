@@ -6,11 +6,24 @@ if (!isset($_SESSION['utilisateur'])) {
 }
 
 require_once __DIR__ . '/../../../Controleur/offreC.php';
+require_once __DIR__ . '/../../../Controleur/utilisateurC.php';
 
 $brandId = $_SESSION['utilisateur']['id'];
 $controller = new OffreC();
+$userController = new UtilisateurC();
 $offres = [];
 $error = null;
+
+function renderCreatorLabel($userController, $creatorId) {
+    if (!$creatorId) {
+        return 'Non défini';
+    }
+    $creator = $userController->getUserByIdAndRole($creatorId, 'createur');
+    if ($creator) {
+        return htmlspecialchars($creator->getNom() . ' (#' . $creator->getId() . ')');
+    }
+    return 'ID ' . htmlspecialchars($creatorId);
+}
 
 if ($brandId !== null) {
     $offres = $controller->getOffresByMarque($brandId);
@@ -37,7 +50,7 @@ $message = isset($_GET['message']) ? htmlspecialchars($_GET['message']) : null;
                 <p class="lead text-muted">Gérez vos offres de collaboration en tant que marque.</p>
             </div>
             <div class="col-lg-4 d-flex align-items-center justify-content-end">
-                <a class="btn btn-primary btn-lg" href="create.php">+ Créer une offre</a>
+                <a class="btn btn-primary btn-lg" href="brand_create.php">+ Créer une offre</a>
             </div>
         </div>
 
@@ -61,6 +74,7 @@ $message = isset($_GET['message']) ? htmlspecialchars($_GET['message']) : null;
                     <thead class="table-light">
                         <tr>
                             <th class="fs-6 fw-semibold">Titre</th>
+                            <th class="fs-6 fw-semibold">Créateur ciblé</th>
                             <th class="fs-6 fw-semibold">Objectif</th>
                             <th class="fs-6 fw-semibold text-center">Budget</th>
                             <th class="fs-6 fw-semibold text-center" style="width: 90px;">Publication</th>
@@ -75,15 +89,16 @@ $message = isset($_GET['message']) ? htmlspecialchars($_GET['message']) : null;
                             <td>
                                 <div class="fw-semibold"><?php echo htmlspecialchars($offre->getTitre()); ?></div>
                             </td>
+                            <td><?php echo renderCreatorLabel($userController, $offre->getIdCreateurCible()); ?></td>
                             <td><?php echo htmlspecialchars(substr($offre->getObjectif(), 0, 50)); ?></td>
                             <td class="text-center"><span class="badge bg-light text-dark"><?php echo htmlspecialchars($offre->getBudgetMin()); ?> - <?php echo htmlspecialchars($offre->getBudgetMax()); ?></span></td>
                             <td class="text-center text-muted small"><?php echo htmlspecialchars($offre->getDatePublication()); ?></td>
                             <td class="text-center text-muted small"><?php echo htmlspecialchars($offre->getDateLimite()); ?></td>
                             <td class="text-center"><span class="badge bg-info text-white"><?php echo htmlspecialchars($offre->getStatutOffre()); ?></span></td>
                             <td class="text-center" style="white-space: nowrap;">
-                                <a class="btn btn-sm btn-outline-primary" href="details.php?idOffre=<?php echo $offre->getIdOffre(); ?>">Détails</a>
-                                <a class="btn btn-sm btn-outline-secondary" href="edit.php?idOffre=<?php echo $offre->getIdOffre(); ?>">Modifier</a>
-                                <form class="d-inline-block" method="post" action="delete.php" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette offre ?');">
+                                <a class="btn btn-sm btn-outline-primary" href="brand_details.php?idOffre=<?php echo $offre->getIdOffre(); ?>">Détails</a>
+                                <a class="btn btn-sm btn-outline-secondary" href="brand_edit.php?idOffre=<?php echo $offre->getIdOffre(); ?>">Modifier</a>
+                                <form class="d-inline-block" method="post" action="brand_delete.php" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette offre ?');">
                                     <input type="hidden" name="idOffre" value="<?php echo $offre->getIdOffre(); ?>">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">Supprimer</button>
                                 </form>
@@ -100,9 +115,10 @@ $message = isset($_GET['message']) ? htmlspecialchars($_GET['message']) : null;
                 </svg>
                 <h3 class="mb-2">Aucune offre créée</h3>
                 <p class="text-muted mb-4">Commencez par créer votre première offre pour vos collaborateurs.</p>
-                <a class="btn btn-primary" href="create.php">Créer une offre</a>
+                <a class="btn btn-primary" href="brand_create.php">Créer une offre</a>
             </div>
         <?php endif; ?>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
 </body>
 </html>

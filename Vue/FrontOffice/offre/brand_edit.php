@@ -6,17 +6,28 @@ if (!isset($_SESSION['utilisateur'])) {
 }
 
 require_once __DIR__ . '/../../../Controleur/offreC.php';
+require_once __DIR__ . '/../../../Controleur/utilisateurC.php';
 
 $controller = new OffreC();
+$userController = new UtilisateurC();
 $errors = [];
 $form = [];
 $brandId = $_SESSION['utilisateur']['id'];
 $offer = null;
 
+if (isset($_GET['validateCreatorId']) && isset($_GET['id'])) {
+    header('Content-Type: application/json');
+    $creatorId = intval($_GET['id']);
+    $creator = $userController->getUserByIdAndRole($creatorId, 'createur');
+    echo json_encode(['valid' => (bool)$creator, 'message' => $creator ? 'Créateur trouvé.' : 'ID invalide ou rôle non créateur.']);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $idOffre = isset($_POST['idOffre']) && is_numeric($_POST['idOffre']) ? intval($_POST['idOffre']) : null;
 
     $form = [
+        'idCreateurCible' => $_POST['idCreateurCible'] ?? '',
         'titre' => $_POST['titre'] ?? '',
         'description' => $_POST['description'] ?? '',
         'objectif' => $_POST['objectif'] ?? '',
@@ -27,6 +38,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ];
 
     $errors = $controller->validateOffreData($form);
+    $creatorId = intval($form['idCreateurCible']);
+    $creator = $userController->getUserByIdAndRole($creatorId, 'createur');
+    if (!$creator) {
+        $errors[] = 'Le créateur ciblé doit exister et avoir le rôle créateur.';
+    }
 
     if ($idOffre === null) {
         $errors[] = 'Paramètres invalides pour la modification.';
@@ -36,6 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $offre = new Offre(
             $idOffre,
             $brandId,
+            intval($form['idCreateurCible']),
             trim($form['titre']),
             trim($form['description']),
             trim($form['objectif']),
@@ -47,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
 
         if ($controller->updateOffre($offre)) {
-            header('Location: index.php?message=' . urlencode('Offre mise à jour avec succès.'));
+            header('Location: brand_index.php?message=' . urlencode('Offre mise à jour avec succès.'));
             exit;
         }
         $errors[] = 'Impossible de mettre à jour l\'offre.';
@@ -59,6 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $offer = $controller->getOffreById($idOffre, $brandId);
         if ($offer) {
             $form = [
+                'idCreateurCible' => $offer->getIdCreateurCible(),
                 'titre' => $offer->getTitre(),
                 'description' => $offer->getDescription(),
                 'objectif' => $offer->getObjectif(),
@@ -107,16 +125,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="bg-danger-subtle rounded-3 p-5 text-center">
                         <h3 class="text-danger">Offre introuvable</h3>
                         <p class="text-muted mb-4">L'offre que vous cherchez n'existe pas ou vous n'avez pas accès à sa modification.</p>
-                        <a class="btn btn-primary" href="index.php">Retour à mes offres</a>
+                        <a class="btn btn-primary" href="brand_index.php">Retour à mes offres</a>
                     </div>
                 <?php else: ?>
-                    <form method="post" action="edit.php" class="needs-validation">
+                    <form method="post" action="brand_edit.php" class="needs-validation">
                         <input type="hidden" name="idMarque" value="<?php echo htmlspecialchars($brandId); ?>">
                         <input type="hidden" name="idOffre" value="<?php echo htmlspecialchars($idOffre ?? $offer->getIdOffre()); ?>">
 
                         <div class="mb-4">
                             <label for="titre" class="form-label fw-semibold">Titre de l'offre</label>
                             <input type="text" class="form-control form-control-lg" id="titre" name="titre" value="<?php echo htmlspecialchars($form['titre']); ?>" required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="idCreateurCible" class="form-label fw-semibold">Créateur ciblé (ID)</label>
+                            <input type="number" class="form-control" id="idCreateurCible" name="idCreateurCible" value="<?php echo htmlspecialchars($form['idCreateurCible'] ?? ''); ?>" placeholder="ID du créateur ciblé" required>
+                            <div id="creatorIdFeedback" class="invalid-feedback"></div>
                         </div>
 
                         <div class="mb-4">
@@ -161,12 +185,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary btn-lg">Enregistrer les modifications</button>
-                            <a class="btn btn-outline-secondary btn-lg" href="index.php">Annuler</a>
+                            <a class="btn btn-outline-secondary btn-lg" href="brand_index.php">Annuler</a>
                         </div>
                     </form>
                 <?php endif; ?>
             </div>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const creatorInput = document.getElementById('idCreateurCible');
+            const feedback = document.getElementById('creatorIdFeedback');
+            const submitButton = document.querySelector('button[type="submit"]');
+            let creatorValid = false;
+
+            function updateValidation(valid, message) {
+                if (valid) {
+                    creatorInput.classList.remove('is-invalid');
+                    creatorInput.classList.add('is-valid');
+                    feedback.textContent = '';
+                    submitButton.disabled = false;
+                } else {
+                    creatorInput.classList.add('is-invalid');
+                    creatorInput.classList.remove('is-valid');
+                    feedback.textContent = message;
+                    submitButton.disabled = true;
+                }
+                creatorValid = valid;
+            }
+
+            function validateCreator() {
+                const value = creatorInput.value.trim();
+                if (!value || !/^[1-9]\d*$/.test(value)) {
+                    updateValidation(false, 'Entrez un ID de créateur valide.');
+                    return;
+                }
+
+                const url = new URL(window.location.href);
+                url.search = '';
+                url.searchParams.set('validateCreatorId', '1');
+                url.searchParams.set('id', value);
+
+                fetch(url.toString(), { cache: 'no-store' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.valid) {
+                            updateValidation(true, '');
+                        } else {
+                            updateValidation(false, data.message || 'Créateur introuvable.');
+                        }
+                    })
+                    .catch(() => {
+                        updateValidation(false, 'Impossible de vérifier cet ID actuellement.');
+                    });
+            }
+
+            creatorInput.addEventListener('blur', validateCreator);
+            creatorInput.addEventListener('input', function() {
+                creatorInput.classList.remove('is-valid', 'is-invalid');
+                feedback.textContent = '';
+                submitButton.disabled = false;
+                creatorValid = false;
+            });
+
+            const form = creatorInput.closest('form');
+            if (form) {
+                form.addEventListener('submit', function(event) {
+                    if (!creatorValid) {
+                        event.preventDefault();
+                        updateValidation(false, 'Veuillez saisir un ID de créateur valide avant d’envoyer.');
+                        creatorInput.focus();
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>

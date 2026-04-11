@@ -8,7 +8,7 @@ if (!isset($_SESSION['utilisateur'])) {
 require_once __DIR__ . '/../../../Controleur/offreC.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: index.php');
+    header('Location: brand_index.php');
     exit;
 }
 
@@ -17,10 +17,10 @@ $brandId = $_SESSION['utilisateur']['id'];
 $idOffre = isset($_POST['idOffre']) && is_numeric($_POST['idOffre']) ? intval($_POST['idOffre']) : null;
 
 if ($idOffre !== null && $controller->deleteOffre($idOffre, $brandId)) {
-    header('Location: index.php?message=' . urlencode('Offre supprimée avec succès.'));
+    header('Location: brand_index.php?message=' . urlencode('Offre supprimée avec succès.'));
     exit;
 }
 
-$redirect = 'index.php';
+$redirect = 'brand_index.php';
 header('Location: ' . $redirect . '&message=' . urlencode('Impossible de supprimer cette offre.'));
 exit;

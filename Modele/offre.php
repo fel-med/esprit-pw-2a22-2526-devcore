@@ -5,6 +5,7 @@
 class Offre {
     private $idOffre;
     private $idMarque;
+    private $idCreateurCible;
     private $titre;
     private $description;
     private $objectif;
@@ -14,9 +15,10 @@ class Offre {
     private $dateLimite;
     private $statutOffre;
 
-    public function __construct($idOffre = null, $idMarque = null, $titre = null, $description = null, $objectif = null, $budgetMin = null, $budgetMax = null, $datePublication = null, $dateLimite = null, $statutOffre = null) {
+    public function __construct($idOffre = null, $idMarque = null, $idCreateurCible = null, $titre = null, $description = null, $objectif = null, $budgetMin = null, $budgetMax = null, $datePublication = null, $dateLimite = null, $statutOffre = null) {
         $this->idOffre = $idOffre;
         $this->idMarque = $idMarque;
+        $this->idCreateurCible = $idCreateurCible;
         $this->titre = $titre;
         $this->description = $description;
         $this->objectif = $objectif;
@@ -32,6 +34,9 @@ class Offre {
 
     public function getIdMarque() { return $this->idMarque; }
     public function setIdMarque($idMarque) { $this->idMarque = $idMarque; }
+
+    public function getIdCreateurCible() { return $this->idCreateurCible; }
+    public function setIdCreateurCible($idCreateurCible) { $this->idCreateurCible = $idCreateurCible; }
 
     public function getTitre() { return $this->titre; }
     public function setTitre($titre) { $this->titre = $titre; }
@@ -61,6 +66,7 @@ class Offre {
         return new self(
             $data['idOffre'] ?? null,
             $data['idMarque'] ?? null,
+            $data['idCreateurCible'] ?? null,
             $data['titre'] ?? null,
             $data['description'] ?? null,
             $data['objectif'] ?? null,

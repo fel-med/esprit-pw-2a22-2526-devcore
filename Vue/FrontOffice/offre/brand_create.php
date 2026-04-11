@@ -6,11 +6,14 @@ if (!isset($_SESSION['utilisateur'])) {
 }
 
 require_once __DIR__ . '/../../../Controleur/offreC.php';
+require_once __DIR__ . '/../../../Controleur/utilisateurC.php';
 
 $controller = new OffreC();
+$userController = new UtilisateurC();
 $brandId = $_SESSION['utilisateur']['id'];
 $errors = [];
 $form = [
+    'idCreateurCible' => '',
     'titre' => '',
     'description' => '',
     'objectif' => '',
@@ -20,8 +23,17 @@ $form = [
     'dateLimite' => ''
 ];
 
+if (isset($_GET['validateCreatorId']) && isset($_GET['id'])) {
+    header('Content-Type: application/json');
+    $creatorId = intval($_GET['id']);
+    $creator = $userController->getUserByIdAndRole($creatorId, 'createur');
+    echo json_encode(['valid' => (bool)$creator, 'message' => $creator ? 'Créateur trouvé.' : 'ID invalide ou rôle non créateur.']);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $form = [
+        'idCreateurCible' => $_POST['idCreateurCible'] ?? '',
         'titre' => $_POST['titre'] ?? '',
         'description' => $_POST['description'] ?? '',
         'objectif' => $_POST['objectif'] ?? '',
@@ -32,11 +44,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ];
 
     $errors = $controller->validateOffreData($form);
+    $creatorId = intval($form['idCreateurCible']);
+    $creator = $userController->getUserByIdAndRole($creatorId, 'createur');
+    if (!$creator) {
+        $errors[] = 'Le créateur ciblé doit exister et avoir le rôle créateur.';
+    }
 
     if (empty($errors)) {
         $offre = new Offre(
             null,
             $brandId,
+            intval($form['idCreateurCible']),
             trim($form['titre']),
             trim($form['description']),
             trim($form['objectif']),
@@ -44,11 +62,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             floatval($form['budgetMax']),
             trim($form['datePublication']),
             trim($form['dateLimite']),
-            'active'
+            'publiee'
         );
 
         if ($controller->createOffre($offre)) {
-            header('Location: index.php?message=' . urlencode('Offre créée avec succès.'));
+            header('Location: brand_index.php?message=' . urlencode('Offre créée avec succès.'));
             exit;
         }
         $errors[] = 'Impossible de créer l\'offre. Réessayez plus tard.';
@@ -87,12 +105,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 <?php endif; ?>
 
-                <form method="post" action="create.php" class="needs-validation">
+                <form method="post" action="brand_create.php" class="needs-validation">
                     <input type="hidden" name="idMarque" value="<?php echo htmlspecialchars($brandId); ?>">
 
                     <div class="mb-4">
                         <label for="titre" class="form-label fw-semibold">Titre de l'offre</label>
                         <input type="text" class="form-control form-control-lg" id="titre" name="titre" value="<?php echo htmlspecialchars($form['titre']); ?>" placeholder="Ex: Créateur de contenu pour TikTok" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="idCreateurCible" class="form-label fw-semibold">Créateur ciblé (ID)</label>
+                        <input type="number" class="form-control" id="idCreateurCible" name="idCreateurCible" value="<?php echo htmlspecialchars($form['idCreateurCible']); ?>" placeholder="ID du créateur ciblé" required>
+                        <div id="creatorIdFeedback" class="invalid-feedback"></div>
                     </div>
 
                     <div class="mb-4">
@@ -137,7 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary btn-lg">Créer l'offre</button>
-                        <a class="btn btn-outline-secondary btn-lg" href="index.php">Annuler</a>
+                        <a class="btn btn-outline-secondary btn-lg" href="brand_index.php">Annuler</a>
                     </div>
                 </form>
             </div>
@@ -155,5 +179,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const creatorInput = document.getElementById('idCreateurCible');
+            const feedback = document.getElementById('creatorIdFeedback');
+            const submitButton = document.querySelector('button[type="submit"]');
+            let creatorValid = false;
+
+            function updateValidation(valid, message) {
+                if (valid) {
+                    creatorInput.classList.remove('is-invalid');
+                    creatorInput.classList.add('is-valid');
+                    feedback.textContent = '';
+                    submitButton.disabled = false;
+                } else {
+                    creatorInput.classList.add('is-invalid');
+                    creatorInput.classList.remove('is-valid');
+                    feedback.textContent = message;
+                    submitButton.disabled = true;
+                }
+                creatorValid = valid;
+            }
+
+            function validateCreator() {
+                const value = creatorInput.value.trim();
+                if (!value || !/^[1-9]\d*$/.test(value)) {
+                    updateValidation(false, 'Entrez un ID de créateur valide.');
+                    return;
+                }
+
+                const url = new URL(window.location.href);
+                url.search = '';
+                url.searchParams.set('validateCreatorId', '1');
+                url.searchParams.set('id', value);
+
+                fetch(url.toString(), { cache: 'no-store' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.valid) {
+                            updateValidation(true, '');
+                        } else {
+                            updateValidation(false, data.message || 'Créateur introuvable.');
+                        }
+                    })
+                    .catch(() => {
+                        updateValidation(false, 'Impossible de vérifier cet ID actuellement.');
+                    });
+            }
+
+            creatorInput.addEventListener('blur', validateCreator);
+            creatorInput.addEventListener('input', function() {
+                creatorInput.classList.remove('is-valid', 'is-invalid');
+                feedback.textContent = '';
+                submitButton.disabled = false;
+                creatorValid = false;
+            });
+
+            const form = creatorInput.closest('form');
+            if (form) {
+                form.addEventListener('submit', function(event) {
+                    if (!creatorValid) {
+                        event.preventDefault();
+                        updateValidation(false, 'Veuillez saisir un ID de créateur valide avant d’envoyer.');
+                        creatorInput.focus();
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>
