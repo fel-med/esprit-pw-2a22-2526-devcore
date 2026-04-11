@@ -515,52 +515,56 @@ body.light-mode {
                       <table class="table">
                         <thead>
                           <tr>
-                            <th>
-                              <div class="form-check form-check-muted m-0">
-                                <label class="form-check-label">
-                                  <input type="checkbox" class="form-check-input">
-                                <i class="input-helper"></i></label>
-                              </div>
-                            </th>
+            
                              <th>ID</th><th>Nom</th><th>Email</th><th>Role</th><th>Action</th>
                           </tr>
                         </thead>
                         <tbody>
 
+<?php foreach ($users as $u) : ?>
+<tr>
+    <form method="POST" action="update.php">
+        
+        <td><?= $u['id'] ?></td>
 
-<?php if (isset($users) && !empty($users)) : ?>
-    <?php foreach ($users as $u) : ?>
-        <tr>
-            <td>
-                <div class="form-check form-check-muted m-0">
-                    <label class="form-check-label">
-                        <input type="checkbox" class="form-check-input">
-                        <i class="input-helper"></i>
-                    </label>
-                </div>
-            </td>
-            <td><?= htmlspecialchars($u['id'] ?? '') ?></td>
-            <td><?= htmlspecialchars($u['nom'] ?? '') ?></td>
-            <td><?= htmlspecialchars($u['email'] ?? '') ?></td>
-            <td><?= htmlspecialchars($u['role'] ?? '') ?></td>
-            <td>
-                
-                <button 
-    onclick="if(confirm('Supprimer cet utilisateur ?')) window.location.href='delete.php?id=<?= $u['id'] ?>';"
-    class="btn btn-danger btn-sm">
-    
-    <i class="bi bi-trash"></i> Delete
-</button>
-            </td>
-        </tr>
-    <?php endforeach; ?>
-<?php else : ?>
-    <tr>
-        <td colspan="6" class="text-center text-muted">
-            Aucun utilisateur trouvé
+        <td>
+            <input type="text" name="nom" 
+                value="<?= htmlspecialchars($u['nom']) ?>" 
+                class="form-control form-control-sm">
         </td>
-    </tr>
-<?php endif; ?>
+
+        <td>
+            <input type="email" name="email" 
+                value="<?= htmlspecialchars($u['email']) ?>" 
+                class="form-control form-control-sm">
+        </td>
+
+        <td>
+            <select name="role" class="form-control form-control-sm">
+                <option value="admin" <?= $u['role']=='admin'?'selected':'' ?>>Admin</option>
+                <option value="createur" <?= $u['role']=='createur'?'selected':'' ?>>Créateur</option>
+                <option value="marque" <?= $u['role']=='marque'?'selected':'' ?>>Marque</option>
+            </select>
+        </td>
+
+        <td>
+            <input type="hidden" name="id" value="<?= $u['id'] ?>">
+
+            <button type="submit" class="btn btn-success btn-sm me-1">
+                update
+            </button>
+
+            <button type="button"
+                onclick="if(confirm('Supprimer ?')) window.location.href='delete.php?id=<?= $u['id'] ?>';"
+                class="btn btn-danger btn-sm">
+                Delete
+            </button>
+        </td>
+
+    </form>
+</tr>
+<?php endforeach; ?>
+
     
                             
                       </table>

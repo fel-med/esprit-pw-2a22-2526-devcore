@@ -26,7 +26,17 @@ class UtilisateurC {
 
         return "success";
     }
-
+public function updateUser($id, $nom, $email, $role) {
+    $db = config::getConnexion();
+    $sql = "UPDATE utilisateur SET nom = :nom, email = :email, role = :role WHERE id = :id";
+    $req = $db->prepare($sql);
+    $req->execute([
+        'id' => $id,
+        'nom' => $nom,
+        'email' => $email,
+        'role' => $role
+    ]);
+}
     public function afficherUsers() {
     $db = config::getConnexion();
     $sql = "SELECT * FROM utilisateur";
