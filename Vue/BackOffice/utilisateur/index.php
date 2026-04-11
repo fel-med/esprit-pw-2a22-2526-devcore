@@ -28,7 +28,26 @@ $users = $userC->afficherUsers();
     <!-- End layout styles -->
     <link rel="shortcut icon" href="assets/images/favicon.png">
   <style type="text/css">/* Chart.js */
-@keyframes chartjs-render-animation{from{opacity:.99}to{opacity:1}}.chartjs-render-monitor{animation:chartjs-render-animation 1ms}.chartjs-size-monitor,.chartjs-size-monitor-expand,.chartjs-size-monitor-shrink{position:absolute;direction:ltr;left:0;top:0;right:0;bottom:0;overflow:hidden;pointer-events:none;visibility:hidden;z-index:-1}.chartjs-size-monitor-expand>div{position:absolute;width:1000000px;height:1000000px;left:0;top:0}.chartjs-size-monitor-shrink>div{position:absolute;width:200%;height:200%;left:0;top:0}</style></head>
+@keyframes chartjs-render-animation{from{opacity:.99}to{opacity:1}}.chartjs-render-monitor{animation:chartjs-render-animation 1ms}.chartjs-size-monitor,.chartjs-size-monitor-expand,.chartjs-size-monitor-shrink{position:absolute;direction:ltr;left:0;top:0;right:0;bottom:0;overflow:hidden;pointer-events:none;visibility:hidden;z-index:-1}.chartjs-size-monitor-expand>div{position:absolute;width:1000000px;height:1000000px;left:0;top:0}.chartjs-size-monitor-shrink>div{position:absolute;width:200%;height:200%;left:0;top:0}</style><style>
+body.light-mode {
+    background-color: #ffffff !important;
+    color: #000 !important;
+}
+
+.light-mode .card {
+    background-color: #f8f9fa !important;
+    color: black !important;
+}
+
+.light-mode .navbar,
+.light-mode .sidebar {
+    background-color: #ffffff !important;
+}
+
+.light-mode .table {
+    color: black !important;
+}
+</style></head>
   <body>
     <div class="container-scroller">
       <!-- partial:partials/_sidebar.html -->
@@ -52,6 +71,7 @@ $users = $userC->afficherUsers();
                   <span>Admin</span>
                 </div>
               </div>
+              
               <a href="#" id="profile-dropdown" data-toggle="dropdown"><i class="mdi mdi-dots-vertical"></i></a>
               <div class="dropdown-menu dropdown-menu-right sidebar-dropdown preview-list" aria-labelledby="profile-dropdown">
                 <a href="#" class="dropdown-item preview-item">
@@ -92,6 +112,14 @@ $users = $userC->afficherUsers();
           <li class="nav-item nav-category">
             <span class="nav-link">Navigation</span>
           </li>
+          <li class="nav-item menu-items">
+  <a class="nav-link" href="#" onclick="toggleDarkMode()">
+    <span class="menu-icon">
+      <i id="themeIcon" class="mdi mdi-weather-night"></i>
+    </span>
+    <span class="menu-title">Mode jour / nuit</span>
+  </a>
+</li>
           <li class="nav-item menu-items active">
             <a class="nav-link" href="index.html">
               <span class="menu-icon">
@@ -516,10 +544,13 @@ $users = $userC->afficherUsers();
             <td><?= htmlspecialchars($u['email'] ?? '') ?></td>
             <td><?= htmlspecialchars($u['role'] ?? '') ?></td>
             <td>
-                <a href="delete.php?id=<?= $u['id'] ?>"
-                   onclick="return confirm('Supprimer cet utilisateur ?')">
-                   Delete
-                </a>
+                
+                <button 
+    onclick="if(confirm('Supprimer cet utilisateur ?')) window.location.href='delete.php?id=<?= $u['id'] ?>';"
+    class="btn btn-danger btn-sm">
+    
+    <i class="bi bi-trash"></i> Delete
+</button>
             </td>
         </tr>
     <?php endforeach; ?>
@@ -582,4 +613,45 @@ $users = $userC->afficherUsers();
     <script src="assets/js/dashboard.js"></script>
     <!-- End custom js for this page -->
   
-<div class="jvectormap-tip" style="display: none; left: 605.948px; top: 2089px;">United States</div></body></html>
+<div class="jvectormap-tip" style="display: none; left: 605.948px; top: 2089px;">United States</div>
+<script>
+function toggleDarkMode() {
+    document.body.classList.toggle("light-mode");
+
+    if (document.body.classList.contains("light-mode")) {
+        localStorage.setItem("theme", "light");
+    } else {
+        localStorage.setItem("theme", "dark");
+    }
+}
+
+window.onload = function() {
+    if (localStorage.getItem("theme") === "light") {
+        document.body.classList.add("light-mode");
+    }
+}
+</script>
+<script>
+function toggleDarkMode() {
+    document.body.classList.toggle("light-mode");
+
+    let icon = document.getElementById("themeIcon");
+
+    if (document.body.classList.contains("light-mode")) {
+        localStorage.setItem("theme", "light");
+        if(icon) icon.className = "mdi mdi-white-balance-sunny";
+    } else {
+        localStorage.setItem("theme", "dark");
+        if(icon) icon.className = "mdi mdi-weather-night";
+    }
+}
+
+window.onload = function() {
+    let icon = document.getElementById("themeIcon");
+
+    if (localStorage.getItem("theme") === "light") {
+        document.body.classList.add("light-mode");
+        if(icon) icon.className = "mdi mdi-white-balance-sunny";
+    }
+}
+</script></body></html>

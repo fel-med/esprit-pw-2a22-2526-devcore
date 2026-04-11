@@ -12513,7 +12513,26 @@ a.close.disabled {
       content: "";
       border-color: transparent;
       border-style: solid; }
+<style>
+body.dark-mode {
+    background-color: #121212;
+    color: white;
+}
 
+.dark-mode .card {
+    background-color: #1e1e1e;
+    color: white;
+}
+
+.dark-mode .navbar,
+.dark-mode .sidebar {
+    background-color: #1a1a1a !important;
+}
+
+.dark-mode table {
+    color: white;
+}
+</style>
 .bs-popover-top, .bs-popover-auto[x-placement^="top"] {
   margin-bottom: 0.5rem; }
   .bs-popover-top > .arrow, .bs-popover-auto[x-placement^="top"] > .arrow {
