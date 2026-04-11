@@ -1,0 +1,63 @@
+post-hero {
+  background: linear-gradient(135deg, #f8f9fa, #ffffff);
+}
+
+.post-card {
+  border: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,.08);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.post-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 34px rgba(0,0,0,.12);
+}
+
+.post-media {
+  width: 100%;
+  max-height: 420px;
+  object-fit: cover;
+}
+
+.post-meta {
+  font-size: .9rem;
+  color: #6c757d;
+}
+
+.post-actions .btn {
+  margin-right: .5rem;
+  margin-bottom: .5rem;
+}
+
+.search-toolbar {
+  border-radius: 18px;
+}
+
+.feed-empty {
+  padding: 60px 20px;
+  text-align: center;
+  border-radius: 18px;
+  background: #f8f9fa;
+}
+
+.stat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: .45rem .8rem;
+  background: #f3f4f6;
+  font-size: .9rem;
+  font-weight: 600;
+}
+
+.post-video {
+  width: 100%;
+  border-radius: 12px;
+}
+
+.post-content {
+  white-space: pre-line;
+}
