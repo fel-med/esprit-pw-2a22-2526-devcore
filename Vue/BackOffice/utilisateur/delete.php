@@ -6,5 +6,5 @@ if (isset($_GET['id'])) {
     $userC->supprimerUser($_GET['id']);
 }
 
-header("Location: list.php");
+header("Location: index.php");
 ?>

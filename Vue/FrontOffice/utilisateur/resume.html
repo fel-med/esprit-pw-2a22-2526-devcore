@@ -1,3 +1,25 @@
+<?php
+require_once '../../../../Controleur/utilisateurC.php';
+
+$message = "";
+
+if (isset($_POST['submit'])) {
+
+    if (!empty($_POST['nom']) &&
+        filter_var($_POST['email'], FILTER_VALIDATE_EMAIL) &&
+        strlen($_POST['password']) >= 6) {
+
+        $user = new Utilisateur(null,$_POST['nom'],$_POST['email'],$_POST['password'],$_POST['role']);
+        $userC = new UtilisateurC();
+        $message = $userC->ajouterUser($user);
+
+    } else {
+        $message = "Erreur de validation";
+    }
+}
+?>
+
+
 <!DOCTYPE html>
 <html lang="en">
     <head>

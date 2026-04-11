@@ -28,8 +28,10 @@ class UtilisateurC {
     }
 
     public function afficherUsers() {
-        return config::getConnexion()->query("SELECT * FROM utilisateur");
-    }
+    $db = config::getConnexion();
+    $sql = "SELECT * FROM utilisateur";
+    return $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+}
 
     public function supprimerUser($id) {
         $db = config::getConnexion();
@@ -54,7 +56,7 @@ class UtilisateurC {
         $_SESSION['role'] = $user['role'];
 
         if ($user['role'] == 'admin')
-            header("Location: ../BackOffice/dashboard.php");
+            header("Location:http://127.0.0.1/crea8connect/Esprit-PW-2A22-2526-Devcore/Vue/BackOffice/utilisateur/index.php");
         else
             header("Location: ../FrontOffice/home.php");
 
