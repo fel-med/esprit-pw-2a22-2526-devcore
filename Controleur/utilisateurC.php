@@ -67,9 +67,10 @@ public function updateUser($id, $nom, $email, $role) {
 
         if ($user['role'] == 'admin')
             header("Location:http://127.0.0.1/crea8connect/Esprit-PW-2A22-2526-Devcore/Vue/BackOffice/utilisateur/index.php");
-        else
-            header("Location: ../FrontOffice/home.php");
-
+        else if ($user['role'] == 'createur')
+            header("Location: ../utilisateur/creator.html");
+        else 
+ header("Location: ../utilisateur/brand.html");
         exit;
     }
 }
