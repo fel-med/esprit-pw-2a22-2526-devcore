@@ -1,12 +1,12 @@
 <?php
 require_once '../../../Controleur/postC.php';
 
-$pageTitle = 'My Posts Dashboard';
 $postC = new PostC();
-$creatorId = 1;
+$pageTitle = 'All Posts';
+$currentPage = 'posts';
 
-$posts = $postC->listPostsByCreator($creatorId);
-$stats = $postC->getCreatorStats($creatorId);
+$posts = $postC->listPosts();
+$stats = $postC->getAdminStats();
 
 require_once '../partials/header.php';
 ?>
@@ -16,11 +16,11 @@ require_once '../partials/header.php';
         <div class="card">
             <div class="card-body d-flex justify-content-between align-items-center flex-wrap">
                 <div>
-                    <h3 class="mb-1">My Posts</h3>
-                    <p class="text-muted mb-0">Manage all posts created by creator #1</p>
+                    <h3 class="mb-1">All Posts Dashboard</h3>
+                    <p class="text-muted mb-0">View all creators' posts, inspect details, and remove inappropriate content.</p>
                 </div>
-                <a href="./create.php" class="btn btn-success">
-                    <i class="mdi mdi-plus-circle-outline"></i> Create New Post
+                <a href="../../FrontOffice/post/index.php" class="btn btn-success">
+                    <i class="mdi mdi-open-in-new"></i> Open Actuality
                 </a>
             </div>
         </div>
@@ -29,7 +29,7 @@ require_once '../partials/header.php';
 
 <div class="row">
     <div class="col-md-3 grid-margin stretch-card">
-        <div class="card stats-card">
+        <div class="card admin-stats-card">
             <div class="card-body">
                 <h6 class="text-muted font-weight-normal">Total Posts</h6>
                 <h3 class="mb-0"><?= (int)$stats['totalPosts'] ?></h3>
@@ -38,7 +38,7 @@ require_once '../partials/header.php';
     </div>
 
     <div class="col-md-3 grid-margin stretch-card">
-        <div class="card stats-card">
+        <div class="card admin-stats-card">
             <div class="card-body">
                 <h6 class="text-muted font-weight-normal">Total Views</h6>
                 <h3 class="mb-0"><?= (int)$stats['totalViews'] ?></h3>
@@ -46,43 +46,28 @@ require_once '../partials/header.php';
         </div>
     </div>
 
-    <div class="col-md-3 grid-margin stretch-card">
-        <div class="card stats-card">
-            <div class="card-body">
-                <h6 class="text-muted font-weight-normal">Total Likes</h6>
-                <h3 class="mb-0"><?= (int)$stats['totalLikes'] ?></h3>
-            </div>
-        </div>
-    </div>
+   
 
-    <div class="col-md-3 grid-margin stretch-card">
-        <div class="card stats-card">
-            <div class="card-body">
-                <h6 class="text-muted font-weight-normal">Total Dislikes</h6>
-                <h3 class="mb-0"><?= (int)$stats['totalDislikes'] ?></h3>
-            </div>
-        </div>
-    </div>
 </div>
 
 <div class="row">
     <div class="col-12 grid-margin stretch-card">
         <div class="card">
             <div class="card-body">
-                <h4 class="card-title">Posts List</h4>
+                <h4 class="card-title">Posts moderation list</h4>
 
                 <?php if (empty($posts)) : ?>
-                    <div class="empty-state">
-                        <h5>No posts yet</h5>
-                        <p class="text-muted">Create your first post to start filling the dashboard.</p>
-                        <a href="./create.php" class="btn btn-primary">Create First Post</a>
+                    <div class="empty-state-admin">
+                        <h5>No posts available</h5>
+                        <p class="text-muted mb-0">No creator has published a post yet.</p>
                     </div>
                 <?php else : ?>
                     <div class="table-responsive">
-                        <table class="table table-dark">
+                        <table class="table table-dark admin-table">
                             <thead>
                                 <tr>
                                     <th>Media</th>
+                                    <th>Creator</th>
                                     <th>Subject</th>
                                     <th>Content</th>
                                     <th>Date</th>
@@ -97,12 +82,25 @@ require_once '../partials/header.php';
                                 <tr>
                                     <td>
                                         <?php if (!empty($post['imageContent'])) : ?>
-                                            <img src="../../public/<?= htmlspecialchars($post['imageContent']) ?>" alt="post image" class="post-thumb">
+                                            <img
+                                                src="../../public/<?= htmlspecialchars($post['imageContent']) ?>"
+                                                alt="Post image"
+                                                class="admin-media-thumb"
+                                            >
                                         <?php elseif (!empty($post['VideoContent'])) : ?>
-                                            <span class="badge badge-info">Video</span>
+                                            <video class="admin-video-thumb" muted>
+                                                <source src="../../public/<?= htmlspecialchars($post['VideoContent']) ?>">
+                                            </video>
                                         <?php else : ?>
                                             <span class="badge badge-secondary">No media</span>
                                         <?php endif; ?>
+                                    </td>
+
+                                    <td>
+                                        <div class="post-creator-badge">
+                                            <i class="mdi mdi-account-circle"></i>
+                                            <?= htmlspecialchars($post['creatorName'] ?? ('Creator #' . $post['idCreateur'])) ?>
+                                        </div>
                                     </td>
 
                                     <td><?= htmlspecialchars($post['subject']) ?></td>
@@ -118,14 +116,14 @@ require_once '../partials/header.php';
                                     <td><?= (int)$post['numberOfLike'] ?></td>
                                     <td><?= (int)$post['numberOfDislike'] ?></td>
 
-                                    <td class="action-buttons">
-                                        <a href="./edit.php?id=<?= urlencode($post['id']) ?>" class="btn btn-warning btn-sm">
-                                            <i class="mdi mdi-border-color"></i> Edit
+                                    <td>
+                                        <a href="./details.php?id=<?= urlencode($post['id']) ?>" class="admin-action-btn admin-view-btn">
+                                            <i class="mdi mdi-eye-outline"></i> View
                                         </a>
+
                                         <a href="./delete.php?id=<?= urlencode($post['id']) ?>"
-                                           class="btn btn-danger btn-sm"
-                                           onclick="return confirm('Are you sure you want to delete this post?');">
-                                            <i class="mdi mdi-delete"></i> Delete
+                                           class="admin-action-btn admin-delete-btn js-admin-delete">
+                                            <i class="mdi mdi-delete-outline"></i> Delete
                                         </a>
                                     </td>
                                 </tr>

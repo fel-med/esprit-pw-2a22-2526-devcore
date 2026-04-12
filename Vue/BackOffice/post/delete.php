@@ -2,18 +2,18 @@
 require_once '../../../Controleur/postC.php';
 
 $postC = new PostC();
-$creatorId = 1;
 
 if (!isset($_GET['id']) || empty($_GET['id'])) {
     die('Post ID is missing.');
 }
 
-$postId = $_GET['id'];
+$post = $postC->showPost($_GET['id']);
 
-if (!$postC->creatorOwnsPost($postId, $creatorId)) {
-    die('Access denied.');
+if (!$post) {
+    die('Post not found.');
 }
 
-$postC->deletePost($postId, $creatorId);
+$postC->deletePostAdmin($_GET['id']);
+
 header('Location: ./index.php');
 exit();

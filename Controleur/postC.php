@@ -26,7 +26,10 @@ class PostC
 
     public function showPost(string $id)
     {
-        $sql = "SELECT * FROM post WHERE id = :id";
+        $sql = "SELECT p.*, u.nom AS creatorName
+                FROM post p
+                INNER JOIN utilisateur u ON u.id = p.idCreateur
+                WHERE p.id = :id";
         $query = $this->db->prepare($sql);
         $query->execute(['id' => $id]);
         return $query->fetch();
@@ -34,13 +37,20 @@ class PostC
 
     public function listPosts()
     {
-        $sql = "SELECT * FROM post ORDER BY creationDate DESC";
+        $sql = "SELECT p.*, u.nom AS creatorName
+                FROM post p
+                INNER JOIN utilisateur u ON u.id = p.idCreateur
+                ORDER BY p.creationDate DESC";
         return $this->db->query($sql)->fetchAll();
     }
 
     public function listPostsByCreator(int $idCreateur)
     {
-        $sql = "SELECT * FROM post WHERE idCreateur = :idCreateur ORDER BY creationDate DESC";
+        $sql = "SELECT p.*, u.nom AS creatorName
+                FROM post p
+                INNER JOIN utilisateur u ON u.id = p.idCreateur
+                WHERE p.idCreateur = :idCreateur
+                ORDER BY p.creationDate DESC";
         $query = $this->db->prepare($sql);
         $query->execute(['idCreateur' => $idCreateur]);
         return $query->fetchAll();
@@ -48,10 +58,12 @@ class PostC
 
     public function searchPosts(string $keyword)
     {
-        $sql = "SELECT * FROM post
-                WHERE CAST(idCreateur AS CHAR) LIKE :keyword
-                   OR subject LIKE :keyword
-                ORDER BY creationDate DESC";
+        $sql = "SELECT p.*, u.nom AS creatorName
+                FROM post p
+                INNER JOIN utilisateur u ON u.id = p.idCreateur
+                WHERE u.nom LIKE :keyword
+                   OR p.subject LIKE :keyword
+                ORDER BY p.creationDate DESC";
         $query = $this->db->prepare($sql);
         $query->execute([
             'keyword' => '%' . $keyword . '%'
@@ -61,7 +73,10 @@ class PostC
 
     public function listTrendingPosts()
     {
-        $sql = "SELECT * FROM post ORDER BY numberOfView DESC, creationDate DESC";
+        $sql = "SELECT p.*, u.nom AS creatorName
+                FROM post p
+                INNER JOIN utilisateur u ON u.id = p.idCreateur
+                ORDER BY p.numberOfView DESC, p.creationDate DESC";
         return $this->db->query($sql)->fetchAll();
     }
 
@@ -149,7 +164,9 @@ class PostC
 
     public function creatorOwnsPost(string $id, int $idCreateur): bool
     {
-        $sql = "SELECT COUNT(*) as total FROM post WHERE id = :id AND idCreateur = :idCreateur";
+        $sql = "SELECT COUNT(*) AS total
+                FROM post
+                WHERE id = :id AND idCreateur = :idCreateur";
         $query = $this->db->prepare($sql);
         $query->execute([
             'id' => $id,
@@ -161,15 +178,50 @@ class PostC
 
     public function getCreatorStats(int $idCreateur)
     {
-        $sql = "SELECT 
-                    COUNT(*) as totalPosts,
-                    COALESCE(SUM(numberOfView), 0) as totalViews,
-                    COALESCE(SUM(numberOfLike), 0) as totalLikes,
-                    COALESCE(SUM(numberOfDislike), 0) as totalDislikes
+        $sql = "SELECT
+                    COUNT(*) AS totalPosts,
+                    COALESCE(SUM(numberOfView), 0) AS totalViews,
+                    COALESCE(SUM(numberOfLike), 0) AS totalLikes,
+                    COALESCE(SUM(numberOfDislike), 0) AS totalDislikes
                 FROM post
                 WHERE idCreateur = :idCreateur";
         $query = $this->db->prepare($sql);
         $query->execute(['idCreateur' => $idCreateur]);
         return $query->fetch();
     }
+    public function getLikeCount(string $id): int
+{
+    $sql = "SELECT numberOfLike FROM post WHERE id = :id";
+    $query = $this->db->prepare($sql);
+    $query->execute(['id' => $id]);
+    $result = $query->fetch();
+    return (int)($result['numberOfLike'] ?? 0);
+}
+
+public function getDislikeCount(string $id): int
+{
+    $sql = "SELECT numberOfDislike FROM post WHERE id = :id";
+    $query = $this->db->prepare($sql);
+    $query->execute(['id' => $id]);
+    $result = $query->fetch();
+    return (int)($result['numberOfDislike'] ?? 0);
+}
+public function deletePostAdmin(string $id): bool
+{
+    $sql = "DELETE FROM post WHERE id = :id";
+    $query = $this->db->prepare($sql);
+    return $query->execute(['id' => $id]);
+}
+
+public function getAdminStats()
+{
+    $sql = "SELECT
+                COUNT(*) AS totalPosts,
+                COALESCE(SUM(numberOfView), 0) AS totalViews,
+                COALESCE(SUM(numberOfLike), 0) AS totalLikes,
+                COALESCE(SUM(numberOfDislike), 0) AS totalDislikes
+            FROM post";
+    $query = $this->db->query($sql);
+    return $query->fetch();
+}
 }
