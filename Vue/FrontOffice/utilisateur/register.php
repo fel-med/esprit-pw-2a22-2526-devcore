@@ -56,30 +56,36 @@ if (isset($_POST['submit'])) {
 
                         <h2 class="fw-bolder mb-4 text-gradient">Create Account</h2>
 
-                        <form method="POST">
+                        <form id="registerForm" method="POST">
 
-                            <div class="mb-3">
-                                <input type="text" name="nom" class="form-control" placeholder="Nom">
-                            </div>
+    <div class="mb-3">
+        <input type="text" id="nom" name="nom" class="form-control" placeholder="Nom">
+        <small id="nomError" class="text-danger"></small>
+    </div>
 
-                            <div class="mb-3">
-                                <input type="text" name="email" class="form-control" placeholder="Email">
-                            </div>
+    <div class="mb-3">
+        <input type="text" id="email" name="email" class="form-control" placeholder="Email">
+        <small id="emailError" class="text-danger"></small>
+    </div>
 
-                            <div class="mb-3">
-                                <input type="password" name="password" class="form-control" placeholder="Password">
-                            </div>
+    <div class="mb-3">
+        <input type="password" id="password" name="password" class="form-control" placeholder="Password">
+        <small id="passwordError" class="text-danger"></small>
+    </div>
 
-                            <div class="mb-3">
-                                <select name="role" class="form-control">
-                                    <option value="createur">Créateur</option>
-                                    <option value="marque">Marque</option>
-                                    <option value="admin">admin</option>
-                                </select>
-                            </div>
+    <div class="mb-3">
+        <select id="role" name="role" class="form-control">
+            <option value="">Choisir un rôle</option>
+            <option value="createur">Créateur</option>
+            <option value="marque">Marque</option>
+            <option value="admin">Admin</option>
+        </select>
+        <small id="roleError" class="text-danger"></small>
+    </div>
 
-                            <button name="submit" class="btn btn-primary w-100 py-2">Register</button>
-                        </form>
+    <button type="submit" class="btn btn-primary w-100">Register</button>
+
+</form>
 
                         <p class="mt-3 text-muted">
                             Already have an account?
@@ -123,6 +129,109 @@ if (isset($_POST['submit'])) {
         <!-- Bootstrap core JS-->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
         <!-- Core theme JS-->
-        <script src="js/scripts.js"></script>
+        <script src="js/scripts.js">
+            
+        </script>
+        <script>
+
+// récupération des champs
+let nom = document.getElementById("nom");
+let email = document.getElementById("email");
+let password = document.getElementById("password");
+let role = document.getElementById("role");
+
+// ===== NOM =====
+nom.addEventListener("input", function () {
+    let error = document.getElementById("nomError");
+
+    if (nom.value.trim() === "") {
+        error.textContent = "Le nom est requis";
+        nom.classList.add("is-invalid");
+    } 
+    else if (nom.value.length < 3) {
+        error.textContent = "Le nom doit contenir au moins 3 caractères";
+        nom.classList.add("is-invalid");
+    }
+    else if (!/^[a-zA-Z\s]+$/.test(nom.value)) {
+        error.textContent = "Le nom ne doit contenir que des lettres";
+        nom.classList.add("is-invalid");
+    }
+    else {
+        error.textContent = "";
+        nom.classList.remove("is-invalid");
+        nom.classList.add("is-valid");
+    }
+});
+
+// ===== EMAIL =====
+email.addEventListener("input", function () {
+    let error = document.getElementById("emailError");
+    let regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (email.value.trim() === "") {
+        error.textContent = "L'email est requis";
+        email.classList.add("is-invalid");
+    }
+    else if (!regex.test(email.value)) {
+        error.textContent = "Veuillez entrer une adresse email valide";
+        email.classList.add("is-invalid");
+    }
+    else {
+        error.textContent = "";
+        email.classList.remove("is-invalid");
+        email.classList.add("is-valid");
+    }
+});
+
+// ===== PASSWORD =====
+password.addEventListener("input", function () {
+    let error = document.getElementById("passwordError");
+
+    if (password.value.trim() === "") {
+        error.textContent = "Le mot de passe est requis";
+        password.classList.add("is-invalid");
+    }
+    else if (password.value.length < 6) {
+        error.textContent = "Minimum 6 caractères";
+        password.classList.add("is-invalid");
+    }
+    else {
+        error.textContent = "";
+        password.classList.remove("is-invalid");
+        password.classList.add("is-valid");
+    }
+});
+
+// ===== ROLE =====
+role.addEventListener("change", function () {
+    let error = document.getElementById("roleError");
+
+    if (role.value === "") {
+        error.textContent = "Veuillez sélectionner un rôle";
+        role.classList.add("is-invalid");
+    } else {
+        error.textContent = "";
+        role.classList.remove("is-invalid");
+        role.classList.add("is-valid");
+    }
+});
+
+// ===== SUBMIT =====
+document.getElementById("registerForm").addEventListener("submit", function (e) {
+
+    if (
+        nom.value.trim().length < 3 ||
+        !/^[a-zA-Z\s]+$/.test(nom.value) ||
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value) ||
+        password.value.length < 6 ||
+        role.value === ""
+    ) {
+        e.preventDefault();
+        alert("Veuillez corriger les erreurs avant de continuer !");
+    }
+
+});
+
+</script>
     </body>
 </html>
