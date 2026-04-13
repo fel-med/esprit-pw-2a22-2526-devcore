@@ -214,9 +214,14 @@ $publishedCount = 0;
 $responseCount = 0;
 $averageBudget = 0;
 $closestDeadline = null;
+$declinedOfferCount = count(array_filter($offerCards, static fn($card) => $card['isDeclined']));
+$averageBudgetCards = array_values(array_filter($offerCards, static fn($card) => !$card['isDeclined']));
+
+if (!empty($averageBudgetCards)) {
+    $averageBudget = array_sum(array_map(static fn($card) => (float) $card['offre']->getBudgetPropose(), $averageBudgetCards)) / count($averageBudgetCards);
+}
 
 if (!empty($offerCards)) {
-    $averageBudget = array_sum(array_map(static fn($card) => (float) $card['offre']->getBudgetPropose(), $offerCards)) / count($offerCards);
 
     foreach ($offerCards as $card) {
         $offre = $card['offre'];
@@ -324,7 +329,15 @@ if (!empty($offerCards)) {
                 <article class="stat-card">
                     <span class="stat-label">Average budget</span>
                     <span class="stat-value"><?php echo count($offerCards) ? htmlspecialchars(formatMoney($averageBudget)) : 'EUR 0.00'; ?></span>
-                    <span class="stat-note"><?php echo $closestDeadline ? 'Closest deadline: ' . htmlspecialchars($closestDeadline) : 'No deadlines scheduled yet'; ?></span>
+                    <span class="stat-note">
+                        <?php
+                        $budgetNote = $closestDeadline ? 'Closest deadline: ' . htmlspecialchars($closestDeadline) : 'No deadlines scheduled yet';
+                        if ($declinedOfferCount > 0) {
+                            $budgetNote .= ' | Declined offers excluded';
+                        }
+                        echo $budgetNote;
+                        ?>
+                    </span>
                 </article>
             </section>
 

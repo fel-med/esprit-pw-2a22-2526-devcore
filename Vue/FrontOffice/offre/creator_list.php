@@ -111,6 +111,32 @@ function getCreatorOfferSortRank($response)
     return 2;
 }
 
+function sortCreatorOffersForDisplay(array $offres, array $responseGroups, $creatorId)
+{
+    usort($offres, static function ($left, $right) use ($responseGroups, $creatorId) {
+        $leftResponse = getCreatorResponseForOffer($responseGroups[$left->getIdOffre()] ?? [], $creatorId);
+        $rightResponse = getCreatorResponseForOffer($responseGroups[$right->getIdOffre()] ?? [], $creatorId);
+        $rankComparison = getCreatorOfferSortRank($leftResponse) <=> getCreatorOfferSortRank($rightResponse);
+        if ($rankComparison !== 0) {
+            return $rankComparison;
+        }
+
+        $budgetComparison = (float) $right->getBudgetPropose() <=> (float) $left->getBudgetPropose();
+        if ($budgetComparison !== 0) {
+            return $budgetComparison;
+        }
+
+        $publicationComparison = strcmp((string) $right->getDatePublication(), (string) $left->getDatePublication());
+        if ($publicationComparison !== 0) {
+            return $publicationComparison;
+        }
+
+        return (int) $right->getIdOffre() <=> (int) $left->getIdOffre();
+    });
+
+    return $offres;
+}
+
 function excerptText($text, $length = 155)
 {
     $text = trim((string) $text);
@@ -155,27 +181,7 @@ try {
 
     $offerIds = array_map(static fn($offre) => $offre->getIdOffre(), $offres);
     $responseGroups = $controller->getCandidaturesGroupedByOfferIds($offerIds);
-
-    usort($offres, static function ($left, $right) use ($responseGroups, $creatorId) {
-        $leftResponse = getCreatorResponseForOffer($responseGroups[$left->getIdOffre()] ?? [], $creatorId);
-        $rightResponse = getCreatorResponseForOffer($responseGroups[$right->getIdOffre()] ?? [], $creatorId);
-        $rankComparison = getCreatorOfferSortRank($leftResponse) <=> getCreatorOfferSortRank($rightResponse);
-        if ($rankComparison !== 0) {
-            return $rankComparison;
-        }
-
-        $budgetComparison = (float) $right->getBudgetPropose() <=> (float) $left->getBudgetPropose();
-        if ($budgetComparison !== 0) {
-            return $budgetComparison;
-        }
-
-        $publicationComparison = strcmp((string) $right->getDatePublication(), (string) $left->getDatePublication());
-        if ($publicationComparison !== 0) {
-            return $publicationComparison;
-        }
-
-        return (int) $right->getIdOffre() <=> (int) $left->getIdOffre();
-    });
+    $offres = sortCreatorOffersForDisplay($offres, $responseGroups, $creatorId);
 } catch (Exception $exception) {
     $error = 'An error occurred while loading your invitations.';
 }
@@ -185,6 +191,19 @@ $brandIds = array_map(static fn($offre) => $offre->getIdMarque(), $offres);
 $brandMap = $controller->getUsersByIds($brandIds, 'marque');
 $responseGroups = $controller->getCandidaturesGroupedByOfferIds($offerIds);
 $savedOffers = $_SESSION['saved_offer_ids'] ?? [];
+$savedOfferList = [];
+$savedBrandMap = [];
+$savedResponseGroups = [];
+
+if (!empty($savedOffers)) {
+    $allCreatorOffers = $controller->getOffresByCreateurCible($creatorId);
+    $savedOfferList = array_values(array_filter($allCreatorOffers, static fn($offre) => in_array($offre->getIdOffre(), $savedOffers, true)));
+    $savedOfferIds = array_map(static fn($offre) => $offre->getIdOffre(), $savedOfferList);
+    $savedBrandIds = array_map(static fn($offre) => $offre->getIdMarque(), $savedOfferList);
+    $savedBrandMap = $controller->getUsersByIds($savedBrandIds, 'marque');
+    $savedResponseGroups = $controller->getCandidaturesGroupedByOfferIds($savedOfferIds);
+    $savedOfferList = sortCreatorOffersForDisplay($savedOfferList, $savedResponseGroups, $creatorId);
+}
 
 $closingSoon = 0;
 $respondedOffers = 0;
@@ -262,6 +281,67 @@ if (!empty($offres)) {
                         <?php endif; ?>
                     </span>
                 </article>
+            </section>
+
+            <section class="section-card saved-offer-section">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                    <div>
+                        <h2 class="section-title">Saved for later</h2>
+                        <p class="section-subtitle">Keep a quick view of bookmarked invitations without leaving this page.</p>
+                    </div>
+                    <span class="offer-chip"><?php echo count($savedOfferList); ?> saved</span>
+                </div>
+
+                <?php if (!empty($savedOfferList)): ?>
+                    <div class="saved-offer-grid mt-4">
+                        <?php foreach ($savedOfferList as $offre): ?>
+                            <?php
+                            $brand = $savedBrandMap[$offre->getIdMarque()] ?? null;
+                            $creatorResponse = getCreatorResponseForOffer($savedResponseGroups[$offre->getIdOffre()] ?? [], $creatorId);
+                            $isAccepted = $creatorResponse && isAcceptedResponseStatus($creatorResponse['statutCandidature'] ?? '');
+                            $isDeclined = $creatorResponse && isDeclinedResponseStatus($creatorResponse['statutCandidature'] ?? '');
+                            ?>
+                            <article class="saved-offer-card<?php echo $isAccepted ? ' is-accepted' : ($isDeclined ? ' is-declined' : ''); ?>">
+                                <div class="saved-offer-head">
+                                    <div>
+                                        <div class="offer-flag-row mb-2">
+                                            <?php if ($isAccepted): ?>
+                                                <span class="priority-badge priority-badge-success">Accepted</span>
+                                            <?php elseif ($isDeclined): ?>
+                                                <span class="priority-badge priority-badge-danger">Declined</span>
+                                            <?php else: ?>
+                                                <span class="saved-badge">Saved</span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <h3><?php echo htmlspecialchars($offre->getTitre()); ?></h3>
+                                        <p><?php echo htmlspecialchars(excerptText($offre->getDescription(), 110)); ?></p>
+                                    </div>
+                                </div>
+
+                                <div class="saved-offer-meta">
+                                    <span class="offer-chip"><?php echo htmlspecialchars(formatMoney($offre->getBudgetPropose())); ?></span>
+                                    <span class="offer-chip">Deadline: <?php echo htmlspecialchars($offre->getDateLimite()); ?></span>
+                                    <?php if ($brand): ?>
+                                        <span class="offer-chip">Brand: <?php echo htmlspecialchars($brand['nom']); ?></span>
+                                    <?php endif; ?>
+                                </div>
+
+                                <div class="saved-offer-actions">
+                                    <a class="btn btn-primary" href="creator_details.php?idOffre=<?php echo (int) $offre->getIdOffre(); ?>&idCreateur=<?php echo (int) $creatorId; ?>">Open invitation</a>
+                                    <form method="post" action="creator_list.php<?php echo !empty($_SERVER['QUERY_STRING']) ? '?' . htmlspecialchars($_SERVER['QUERY_STRING']) : ''; ?>">
+                                        <input type="hidden" name="idOffre" value="<?php echo (int) $offre->getIdOffre(); ?>">
+                                        <button type="submit" name="toggleSaved" class="btn btn-outline-secondary">Remove</button>
+                                    </form>
+                                </div>
+                            </article>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="note-block mt-4">
+                        <strong>No saved offers yet</strong>
+                        <p>Use the “Save for later” button on any invitation and it will appear here for quick access.</p>
+                    </div>
+                <?php endif; ?>
             </section>
 
             <section class="filter-card">
