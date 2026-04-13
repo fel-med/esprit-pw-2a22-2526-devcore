@@ -15,29 +15,40 @@ $offre = null;
 $error = null;
 $success = null;
 
+function translateOfferStatus($status) {
+    $normalized = strtolower((string)$status);
+
+    return match ($normalized) {
+        'publiee' => 'Published',
+        'active' => 'Active',
+        'fermee', 'closed' => 'Closed',
+        default => ucwords(str_replace(['_', '-'], ' ', (string)$status)),
+    };
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['candidater'])) {
     if ($controller->createCandidature($idCreateur, 'par_offre', $idOffre)) {
-        $success = 'Votre candidature a été soumise avec succès.';
+        $success = 'Your application was submitted successfully.';
     } else {
-        $error = 'Erreur lors de la soumission de la candidature.';
+        $error = 'An error occurred while submitting your application.';
     }
 }
 
 if ($idOffre !== null && $idCreateur !== null) {
     $offre = $controller->getPublishedOffreById($idOffre, $idCreateur);
     if (!$offre) {
-        $error = 'Offre introuvable ou non disponible pour vous.';
+        $error = 'Offer not found or not available to you.';
     }
 } else {
-    $error = 'Paramètres invalides pour afficher l\'offre.';
+    $error = 'Invalid parameters for displaying the offer.';
 }
 ?>
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Détails de l'offre - Cre8Connect</title>
+    <title>Offer Details - Cre8Connect</title>
     <link rel="stylesheet" href="../css/frontoffice.css">
     <link rel="stylesheet" href="offre.css">
 </head>
@@ -47,9 +58,9 @@ if ($idOffre !== null && $idCreateur !== null) {
             <div class="row mb-5">
                 <div class="col-lg-8 mx-auto">
                     <div class="bg-danger-subtle rounded-3 p-5 text-center">
-                        <h2 class="text-danger">Erreur</h2>
+                        <h2 class="text-danger">Error</h2>
                         <p class="text-muted mb-4"><?php echo htmlspecialchars($error); ?></p>
-                        <a class="btn btn-primary" href="creator_list.php">Retour aux offres</a>
+                        <a class="btn btn-primary" href="creator_list.php">Back to offers</a>
                     </div>
                 </div>
             </div>
@@ -58,8 +69,8 @@ if ($idOffre !== null && $idCreateur !== null) {
                 <div class="col-lg-8">
                     <h1 class="display-5 fw-bold mb-2 gradient-title"><?php echo htmlspecialchars($offre->getTitre()); ?></h1>
                     <div class="d-flex gap-3 flex-wrap">
-                        <span class="badge bg-info text-white fs-6"><?php echo htmlspecialchars($offre->getStatutOffre()); ?></span>
-                        <span class="text-muted">Publiée le <?php echo htmlspecialchars($offre->getDatePublication()); ?></span>
+                        <span class="badge bg-info text-white fs-6"><?php echo htmlspecialchars(translateOfferStatus($offre->getStatutOffre())); ?></span>
+                        <span class="text-muted">Published on <?php echo htmlspecialchars($offre->getDatePublication()); ?></span>
                     </div>
                 </div>
             </div>
@@ -79,17 +90,17 @@ if ($idOffre !== null && $idCreateur !== null) {
                     </div>
 
                     <div class="bg-white rounded-3 p-5 shadow-sm">
-                        <h3 class="fw-semibold mb-4">Détails de l'offre</h3>
+                        <h3 class="fw-semibold mb-4">Offer details</h3>
                         <div class="row g-4">
                             <div class="col-md-6">
                                 <div class="d-flex align-items-start">
                                     <div class="flex-shrink-0">
                                         <div class="flex-shrink-0 bg-light rounded-circle p-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                                            🎯
+                                            &#127919;
                                         </div>
                                     </div>
                                     <div class="flex-grow-1 ms-3">
-                                        <h6 class="fw-semibold mb-1">Objectif</h6>
+                                        <h6 class="fw-semibold mb-1">Objective</h6>
                                         <p class="text-muted mb-0"><?php echo htmlspecialchars($offre->getObjectif()); ?></p>
                                     </div>
                                 </div>
@@ -98,12 +109,12 @@ if ($idOffre !== null && $idCreateur !== null) {
                                 <div class="d-flex align-items-start">
                                     <div class="flex-shrink-0">
                                         <div class="flex-shrink-0 bg-light rounded-circle p-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                                            💰
+                                            &#128176;
                                         </div>
                                     </div>
                                     <div class="flex-grow-1 ms-3">
                                         <h6 class="fw-semibold mb-1">Budget</h6>
-                                        <p class="text-muted mb-0">€<?php echo htmlspecialchars($offre->getBudgetMin()); ?> - €<?php echo htmlspecialchars($offre->getBudgetMax()); ?></p>
+                                        <p class="text-muted mb-0">&euro;<?php echo htmlspecialchars($offre->getBudgetMin()); ?> - &euro;<?php echo htmlspecialchars($offre->getBudgetMax()); ?></p>
                                     </div>
                                 </div>
                             </div>
@@ -111,11 +122,11 @@ if ($idOffre !== null && $idCreateur !== null) {
                                 <div class="d-flex align-items-start">
                                     <div class="flex-shrink-0">
                                         <div class="flex-shrink-0 bg-light rounded-circle p-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                                            📅
+                                            &#128197;
                                         </div>
                                     </div>
                                     <div class="flex-grow-1 ms-3">
-                                        <h6 class="fw-semibold mb-1">Publiée</h6>
+                                        <h6 class="fw-semibold mb-1">Published</h6>
                                         <p class="text-muted mb-0"><?php echo htmlspecialchars($offre->getDatePublication()); ?></p>
                                     </div>
                                 </div>
@@ -124,11 +135,11 @@ if ($idOffre !== null && $idCreateur !== null) {
                                 <div class="d-flex align-items-start">
                                     <div class="flex-shrink-0">
                                         <div class="flex-shrink-0 bg-light rounded-circle p-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                                            ⏰
+                                            &#9200;
                                         </div>
                                     </div>
                                     <div class="flex-grow-1 ms-3">
-                                        <h6 class="fw-semibold mb-1">Limite</h6>
+                                        <h6 class="fw-semibold mb-1">Deadline</h6>
                                         <p class="text-muted mb-0"><?php echo htmlspecialchars($offre->getDateLimite()); ?></p>
                                     </div>
                                 </div>
@@ -144,9 +155,9 @@ if ($idOffre !== null && $idCreateur !== null) {
                             <form method="post" action="">
                                 <input type="hidden" name="idOffre" value="<?php echo $offre->getIdOffre(); ?>">
                                 <input type="hidden" name="idCreateur" value="<?php echo $idCreateur; ?>">
-                                <button type="submit" name="candidater" class="btn btn-success w-100">Postuler à cette offre</button>
+                                <button type="submit" name="candidater" class="btn btn-success w-100">Apply to this offer</button>
                             </form>
-                            <a class="btn btn-outline-secondary w-100" href="creator_list.php">← Retour aux offres</a>
+                            <a class="btn btn-outline-secondary w-100" href="creator_list.php">&#8592; Back to offers</a>
                         </div>
                     </div>
                 </div>

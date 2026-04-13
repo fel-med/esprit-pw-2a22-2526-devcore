@@ -11,13 +11,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $role = $_POST['role'] ?? '';
 
     if ($id === '') {
-        $errors[] = 'L\'ID est requis.';
+        $errors[] = 'ID is required.';
     } elseif (!ctype_digit($id)) {
-        $errors[] = 'L\'ID doit être un nombre entier.';
+        $errors[] = 'ID must be a whole number.';
     }
 
     if (!in_array($role, ['marque', 'createur'], true)) {
-        $errors[] = 'Veuillez sélectionner un rôle valide.';
+        $errors[] = 'Please select a valid role.';
     }
 
     if (empty($errors)) {
@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'id' => $user->getId(),
                 'role' => $user->getRole()
             ];
-            $message = 'Connexion réussie. Redirection...';
+            $message = 'Login successful. Redirecting...';
             if ($role === 'marque') {
                 header('Location: brand_index.php');
             } else {
@@ -37,16 +37,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             exit;
         }
-        $errors[] = 'Aucun utilisateur actif trouvé avec cet ID et ce rôle.';
+        $errors[] = 'No active user was found with this ID and role.';
     }
 }
 ?>
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connexion - Cre8Connect</title>
+    <title>Login - Cre8Connect</title>
     <link rel="stylesheet" href="../css/frontoffice.css">
     <style>
         .form-card {
@@ -70,8 +70,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <main class="container py-5">
         <div class="form-card">
-            <h1>Connexion</h1>
-            <p class="text-muted">Entrez vos identifiants pour vous connecter.</p>
+            <h1>Login</h1>
+            <p class="text-muted">Enter your credentials to sign in.</p>
 
             <?php if (!empty($message)): ?>
                 <div class="alert alert-success" role="alert">
@@ -91,21 +91,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <form method="post" action="login.php" class="row g-3 needs-validation" novalidate>
                 <div class="col-12">
-                    <label for="id" class="form-label">Identifiant</label>
-                    <input type="text" class="form-control" id="id" name="id" value="<?php echo htmlspecialchars($id); ?>" placeholder="Entrez votre ID" required>
+                    <label for="id" class="form-label">ID</label>
+                    <input type="text" class="form-control" id="id" name="id" value="<?php echo htmlspecialchars($id); ?>" placeholder="Enter your ID" required>
                 </div>
 
                 <div class="col-12">
-                    <label for="role" class="form-label">Rôle</label>
+                    <label for="role" class="form-label">Role</label>
                     <select class="form-select" id="role" name="role" required>
-                        <option value=""<?php echo $role === '' ? ' selected' : ''; ?>>Sélectionnez votre rôle</option>
-                        <option value="marque"<?php echo $role === 'marque' ? ' selected' : ''; ?>>Marque</option>
-                        <option value="createur"<?php echo $role === 'createur' ? ' selected' : ''; ?>>Créateur</option>
+                        <option value=""<?php echo $role === '' ? ' selected' : ''; ?>>Select your role</option>
+                        <option value="marque"<?php echo $role === 'marque' ? ' selected' : ''; ?>>Brand</option>
+                        <option value="createur"<?php echo $role === 'createur' ? ' selected' : ''; ?>>Creator</option>
                     </select>
                 </div>
 
                 <div class="col-12">
-                    <button type="submit" class="btn btn-primary btn-lg">Se connecter</button>
+                    <button type="submit" class="btn btn-primary btn-lg">Sign in</button>
                 </div>
             </form>
         </div>

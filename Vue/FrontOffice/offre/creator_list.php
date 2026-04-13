@@ -13,6 +13,17 @@ $creatorId = $_SESSION['utilisateur']['id'];
 $offres = [];
 $error = null;
 
+function translateOfferStatus($status) {
+    $normalized = strtolower((string)$status);
+
+    return match ($normalized) {
+        'publiee' => 'Published',
+        'active' => 'Active',
+        'fermee', 'closed' => 'Closed',
+        default => ucwords(str_replace(['_', '-'], ' ', (string)$status)),
+    };
+}
+
 // Handle search/filter
 $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : null;
 $budgetMin = isset($_GET['budgetMin']) && is_numeric($_GET['budgetMin']) ? floatval($_GET['budgetMin']) : null;
@@ -22,15 +33,15 @@ $dateLimite = isset($_GET['dateLimite']) && !empty($_GET['dateLimite']) ? $_GET[
 try {
     $offres = $controller->searchOffers($creatorId, $keyword, $budgetMin, $budgetMax, $dateLimite);
 } catch (Exception $e) {
-    $error = 'Erreur lors de la recherche des offres.';
+    $error = 'An error occurred while searching offers.';
 }
 ?>
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Offres disponibles - Cre8Connect</title>
+    <title>Available Offers - Cre8Connect</title>
     <link rel="stylesheet" href="../css/frontoffice.css">
     <link rel="stylesheet" href="offre.css">
 </head>
@@ -38,33 +49,32 @@ try {
     <div class="container py-5">
         <div class="row mb-5">
             <div class="col-lg-8">
-                <h1 class="display-5 fw-bold mb-2 gradient-title">Offres disponibles</h1>
-                <p class="lead text-muted">Découvrez les offres de collaboration publiées par les marques.</p>
+                <h1 class="display-5 fw-bold mb-2 gradient-title">Available offers</h1>
+                <p class="lead text-muted">Discover collaboration offers published by brands.</p>
             </div>
         </div>
 
-        <!-- Search/Filter Form -->
         <div class="bg-white rounded-3 p-4 shadow-sm mb-5">
-            <h3 class="fw-semibold mb-4">Rechercher et filtrer</h3>
+            <h3 class="fw-semibold mb-4">Search and filter</h3>
             <form method="get" action="creator_list.php" class="row g-3">
                 <div class="col-md-4">
-                    <label for="keyword" class="form-label">Mot-clé (titre, objectif, description)</label>
-                    <input type="text" class="form-control" id="keyword" name="keyword" value="<?php echo htmlspecialchars($keyword ?? ''); ?>" placeholder="Ex: vidéo, photo...">
+                    <label for="keyword" class="form-label">Keyword (title, objective, description)</label>
+                    <input type="text" class="form-control" id="keyword" name="keyword" value="<?php echo htmlspecialchars($keyword ?? ''); ?>" placeholder="e.g., video, photo...">
                 </div>
                 <div class="col-md-2">
-                    <label for="budgetMin" class="form-label">Budget min (€)</label>
+                    <label for="budgetMin" class="form-label">Min budget (&euro;)</label>
                     <input type="number" class="form-control" id="budgetMin" name="budgetMin" value="<?php echo htmlspecialchars($budgetMin ?? ''); ?>" min="0">
                 </div>
                 <div class="col-md-2">
-                    <label for="budgetMax" class="form-label">Budget max (€)</label>
+                    <label for="budgetMax" class="form-label">Max budget (&euro;)</label>
                     <input type="number" class="form-control" id="budgetMax" name="budgetMax" value="<?php echo htmlspecialchars($budgetMax ?? ''); ?>" min="0">
                 </div>
                 <div class="col-md-2">
-                    <label for="dateLimite" class="form-label">Date limite (min)</label>
+                    <label for="dateLimite" class="form-label">Deadline (from)</label>
                     <input type="date" class="form-control" id="dateLimite" name="dateLimite" value="<?php echo htmlspecialchars($dateLimite ?? ''); ?>">
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">Rechercher</button>
+                    <button type="submit" class="btn btn-primary w-100">Search</button>
                 </div>
             </form>
         </div>
@@ -84,12 +94,12 @@ try {
                             <h5 class="fw-semibold mb-2"><?php echo htmlspecialchars($offre->getTitre()); ?></h5>
                             <p class="text-muted mb-3"><?php echo htmlspecialchars(substr($offre->getObjectif(), 0, 100)); ?>...</p>
                             <div class="mb-3">
-                                <span class="badge bg-light text-dark me-2">€<?php echo htmlspecialchars($offre->getBudgetMin()); ?> - €<?php echo htmlspecialchars($offre->getBudgetMax()); ?></span>
-                                <span class="badge bg-info text-white"><?php echo htmlspecialchars($offre->getStatutOffre()); ?></span>
+                                <span class="badge bg-light text-dark me-2">&euro;<?php echo htmlspecialchars($offre->getBudgetMin()); ?> - &euro;<?php echo htmlspecialchars($offre->getBudgetMax()); ?></span>
+                                <span class="badge bg-info text-white"><?php echo htmlspecialchars(translateOfferStatus($offre->getStatutOffre())); ?></span>
                             </div>
-                            <p class="text-muted small mb-3">Limite: <?php echo htmlspecialchars($offre->getDateLimite()); ?></p>
+                            <p class="text-muted small mb-3">Deadline: <?php echo htmlspecialchars($offre->getDateLimite()); ?></p>
                             <div class="mt-auto">
-                                <a class="btn btn-primary w-100" href="creator_details.php?idOffre=<?php echo $offre->getIdOffre(); ?>&idCreateur=<?php echo $creatorId; ?>">Voir les détails</a>
+                                <a class="btn btn-primary w-100" href="creator_details.php?idOffre=<?php echo $offre->getIdOffre(); ?>&idCreateur=<?php echo $creatorId; ?>">View details</a>
                             </div>
                         </div>
                     </div>
@@ -100,8 +110,8 @@ try {
                 <svg class="mb-4" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-muted">
                     <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                 </svg>
-                <h3 class="mb-2">Aucune offre trouvée</h3>
-                <p class="text-muted mb-4">Ajustez vos critères de recherche pour voir plus d'offres.</p>
+                <h3 class="mb-2">No offers found</h3>
+                <p class="text-muted mb-4">Adjust your search criteria to see more offers.</p>
             </div>
         <?php endif; ?>
     </div>

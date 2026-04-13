@@ -16,7 +16,7 @@ $error = null;
 
 function renderCreatorLabel($userController, $creatorId) {
     if (!$creatorId) {
-        return 'Non défini';
+        return 'Not set';
     }
     $creator = $userController->getUserByIdAndRole($creatorId, 'createur');
     if ($creator) {
@@ -25,20 +25,45 @@ function renderCreatorLabel($userController, $creatorId) {
     return 'ID ' . htmlspecialchars($creatorId);
 }
 
+function translateOfferStatus($status) {
+    $normalized = strtolower((string)$status);
+
+    return match ($normalized) {
+        'publiee' => 'Published',
+        'active' => 'Active',
+        'fermee', 'closed' => 'Closed',
+        default => ucwords(str_replace(['_', '-'], ' ', (string)$status)),
+    };
+}
+
+function translateOfferFlashMessage($message) {
+    $translations = [
+        'Offre creee avec succes.' => 'Offer created successfully.',
+        'Offre créée avec succès.' => 'Offer created successfully.',
+        'Offre mise a jour avec succes.' => 'Offer updated successfully.',
+        'Offre mise à jour avec succès.' => 'Offer updated successfully.',
+        'Offre supprimee avec succes.' => 'Offer deleted successfully.',
+        'Offre supprimée avec succès.' => 'Offer deleted successfully.',
+        'Impossible de supprimer cette offre.' => 'Unable to delete this offer.',
+    ];
+
+    return $translations[$message] ?? $message;
+}
+
 if ($brandId !== null) {
     $offres = $controller->getOffresByMarque($brandId);
 } else {
-    $error = 'Identifiant de marque manquant.';
+    $error = 'Brand ID is missing.';
 }
 
-$message = isset($_GET['message']) ? htmlspecialchars($_GET['message']) : null;
+$message = isset($_GET['message']) ? translateOfferFlashMessage($_GET['message']) : null;
 ?>
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mes offres - Cre8Connect</title>
+    <title>My Offers - Cre8Connect</title>
     <link rel="stylesheet" href="../css/frontoffice.css">
     <link rel="stylesheet" href="offre.css">
 </head>
@@ -46,17 +71,17 @@ $message = isset($_GET['message']) ? htmlspecialchars($_GET['message']) : null;
     <div class="container py-5">
         <div class="row mb-5">
             <div class="col-lg-8">
-                <h1 class="display-5 fw-bold mb-2 gradient-title">Mes offres</h1>
-                <p class="lead text-muted">Gérez vos offres de collaboration en tant que marque.</p>
+                <h1 class="display-5 fw-bold mb-2 gradient-title">My offers</h1>
+                <p class="lead text-muted">Manage your collaboration offers as a brand.</p>
             </div>
             <div class="col-lg-4 d-flex align-items-center justify-content-end">
-                <a class="btn btn-primary btn-lg" href="brand_create.php">+ Créer une offre</a>
+                <a class="btn btn-primary btn-lg" href="brand_create.php">+ Create an offer</a>
             </div>
         </div>
 
         <?php if ($message): ?>
             <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
-                <?php echo $message; ?>
+                <?php echo htmlspecialchars($message); ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         <?php endif; ?>
@@ -73,13 +98,13 @@ $message = isset($_GET['message']) ? htmlspecialchars($_GET['message']) : null;
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th class="fs-6 fw-semibold">Titre</th>
-                            <th class="fs-6 fw-semibold">Créateur ciblé</th>
-                            <th class="fs-6 fw-semibold">Objectif</th>
+                            <th class="fs-6 fw-semibold">Title</th>
+                            <th class="fs-6 fw-semibold">Target creator</th>
+                            <th class="fs-6 fw-semibold">Objective</th>
                             <th class="fs-6 fw-semibold text-center">Budget</th>
-                            <th class="fs-6 fw-semibold text-center" style="width: 90px;">Publication</th>
-                            <th class="fs-6 fw-semibold text-center" style="width: 90px;">Limite</th>
-                            <th class="fs-6 fw-semibold text-center">Statut</th>
+                            <th class="fs-6 fw-semibold text-center" style="width: 90px;">Published</th>
+                            <th class="fs-6 fw-semibold text-center" style="width: 90px;">Deadline</th>
+                            <th class="fs-6 fw-semibold text-center">Status</th>
                             <th class="fs-6 fw-semibold text-center" style="width: 200px;">Actions</th>
                         </tr>
                     </thead>
@@ -94,13 +119,13 @@ $message = isset($_GET['message']) ? htmlspecialchars($_GET['message']) : null;
                             <td class="text-center"><span class="badge bg-light text-dark"><?php echo htmlspecialchars($offre->getBudgetMin()); ?> - <?php echo htmlspecialchars($offre->getBudgetMax()); ?></span></td>
                             <td class="text-center text-muted small"><?php echo htmlspecialchars($offre->getDatePublication()); ?></td>
                             <td class="text-center text-muted small"><?php echo htmlspecialchars($offre->getDateLimite()); ?></td>
-                            <td class="text-center"><span class="badge bg-info text-white"><?php echo htmlspecialchars($offre->getStatutOffre()); ?></span></td>
+                            <td class="text-center"><span class="badge bg-info text-white"><?php echo htmlspecialchars(translateOfferStatus($offre->getStatutOffre())); ?></span></td>
                             <td class="text-center" style="white-space: nowrap;">
-                                <a class="btn btn-sm btn-outline-primary" href="brand_details.php?idOffre=<?php echo $offre->getIdOffre(); ?>">Détails</a>
-                                <a class="btn btn-sm btn-outline-secondary" href="brand_edit.php?idOffre=<?php echo $offre->getIdOffre(); ?>">Modifier</a>
-                                <form class="d-inline-block" method="post" action="brand_delete.php" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette offre ?');">
+                                <a class="btn btn-sm btn-outline-primary" href="brand_details.php?idOffre=<?php echo $offre->getIdOffre(); ?>">Details</a>
+                                <a class="btn btn-sm btn-outline-secondary" href="brand_edit.php?idOffre=<?php echo $offre->getIdOffre(); ?>">Edit</a>
+                                <form class="d-inline-block" method="post" action="brand_delete.php" onsubmit="return confirm('Are you sure you want to delete this offer?');">
                                     <input type="hidden" name="idOffre" value="<?php echo $offre->getIdOffre(); ?>">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">Supprimer</button>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                 </form>
                             </td>
                         </tr>
@@ -113,9 +138,9 @@ $message = isset($_GET['message']) ? htmlspecialchars($_GET['message']) : null;
                 <svg class="mb-4" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-muted">
                     <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9a1 1 0 11-2 0 1 1 0 012 0z"/>
                 </svg>
-                <h3 class="mb-2">Aucune offre créée</h3>
-                <p class="text-muted mb-4">Commencez par créer votre première offre pour vos collaborateurs.</p>
-                <a class="btn btn-primary" href="brand_create.php">Créer une offre</a>
+                <h3 class="mb-2">No offers created</h3>
+                <p class="text-muted mb-4">Start by creating your first offer for your collaborators.</p>
+                <a class="btn btn-primary" href="brand_create.php">Create an offer</a>
             </div>
         <?php endif; ?>
     </div>

@@ -15,11 +15,33 @@ $form = [];
 $brandId = $_SESSION['utilisateur']['id'];
 $offer = null;
 
+function translateOfferValidationMessage($message) {
+    $translations = [
+        'Le titre est requis.' => 'Title is required.',
+        'La description est requise.' => 'Description is required.',
+        "L'objectif est requis." => 'Objective is required.',
+        'Le budget minimum doit être un montant numérique valide.' => 'Minimum budget must be a valid numeric amount.',
+        'Le budget minimum doit Ãªtre un montant numÃ©rique valide.' => 'Minimum budget must be a valid numeric amount.',
+        'Le budget maximum doit être un montant numérique valide.' => 'Maximum budget must be a valid numeric amount.',
+        'Le budget maximum doit Ãªtre un montant numÃ©rique valide.' => 'Maximum budget must be a valid numeric amount.',
+        'Le budget minimum doit être inférieur ou égal au budget maximum.' => 'Minimum budget must be less than or equal to the maximum budget.',
+        'Le budget minimum doit Ãªtre infÃ©rieur ou Ã©gal au budget maximum.' => 'Minimum budget must be less than or equal to the maximum budget.',
+        'La date de publication doit être au format AAAA-MM-JJ.' => 'Publication date must use the YYYY-MM-DD format.',
+        'La date de publication doit Ãªtre au format AAAA-MM-JJ.' => 'Publication date must use the YYYY-MM-DD format.',
+        'La date limite doit être au format AAAA-MM-JJ.' => 'Deadline must use the YYYY-MM-DD format.',
+        'La date limite doit Ãªtre au format AAAA-MM-JJ.' => 'Deadline must use the YYYY-MM-DD format.',
+        'La date de publication doit être antérieure ou égale à la date limite.' => 'Publication date must be earlier than or equal to the deadline.',
+        'La date de publication doit Ãªtre antÃ©rieure ou Ã©gale Ã  la date limite.' => 'Publication date must be earlier than or equal to the deadline.',
+    ];
+
+    return $translations[$message] ?? $message;
+}
+
 if (isset($_GET['validateCreatorId']) && isset($_GET['id'])) {
     header('Content-Type: application/json');
     $creatorId = intval($_GET['id']);
     $creator = $userController->getUserByIdAndRole($creatorId, 'createur');
-    echo json_encode(['valid' => (bool)$creator, 'message' => $creator ? 'Créateur trouvé.' : 'ID invalide ou rôle non créateur.']);
+    echo json_encode(['valid' => (bool)$creator, 'message' => $creator ? 'Creator found.' : 'Invalid ID or non-creator role.']);
     exit;
 }
 
@@ -37,15 +59,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'dateLimite' => $_POST['dateLimite'] ?? ''
     ];
 
-    $errors = $controller->validateOffreData($form);
+    $errors = array_map('translateOfferValidationMessage', $controller->validateOffreData($form));
     $creatorId = intval($form['idCreateurCible']);
     $creator = $userController->getUserByIdAndRole($creatorId, 'createur');
     if (!$creator) {
-        $errors[] = 'Le créateur ciblé doit exister et avoir le rôle créateur.';
+        $errors[] = 'The target creator must exist and have the creator role.';
     }
 
     if ($idOffre === null) {
-        $errors[] = 'Paramètres invalides pour la modification.';
+        $errors[] = 'Invalid parameters for editing.';
     }
 
     if (empty($errors)) {
@@ -64,10 +86,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
 
         if ($controller->updateOffre($offre)) {
-            header('Location: brand_index.php?message=' . urlencode('Offre mise à jour avec succès.'));
+            header('Location: brand_index.php?message=' . urlencode('Offer updated successfully.'));
             exit;
         }
-        $errors[] = 'Impossible de mettre à jour l\'offre.';
+        $errors[] = 'Unable to update the offer.';
     }
 } else {
     $idOffre = isset($_GET['idOffre']) && is_numeric($_GET['idOffre']) ? intval($_GET['idOffre']) : null;
@@ -90,11 +112,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modifier une offre - Cre8Connect</title>
+    <title>Edit an Offer - Cre8Connect</title>
     <link rel="stylesheet" href="../css/frontoffice.css">
     <link rel="stylesheet" href="offre.css">
 </head>
@@ -102,8 +124,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container py-5">
         <div class="row mb-5">
             <div class="col-lg-8">
-                <h1 class="display-5 fw-bold mb-2 gradient-title">Modifier l'offre</h1>
-                <p class="lead text-muted">Mettez à jour les informations de votre offre.</p>
+                <h1 class="display-5 fw-bold mb-2 gradient-title">Edit the offer</h1>
+                <p class="lead text-muted">Update your offer information.</p>
             </div>
         </div>
 
@@ -111,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="col-lg-8">
                 <?php if (!empty($errors)): ?>
                     <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
-                        <h5 class="alert-heading">Erreurs à corriger</h5>
+                        <h5 class="alert-heading">Errors to fix</h5>
                         <ul class="mb-0">
                             <?php foreach ($errors as $error): ?>
                                 <li><?php echo htmlspecialchars($error); ?></li>
@@ -123,9 +145,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <?php if ($brandId === null || (empty($offer) && $_SERVER['REQUEST_METHOD'] !== 'POST')): ?>
                     <div class="bg-danger-subtle rounded-3 p-5 text-center">
-                        <h3 class="text-danger">Offre introuvable</h3>
-                        <p class="text-muted mb-4">L'offre que vous cherchez n'existe pas ou vous n'avez pas accès à sa modification.</p>
-                        <a class="btn btn-primary" href="brand_index.php">Retour à mes offres</a>
+                        <h3 class="text-danger">Offer not found</h3>
+                        <p class="text-muted mb-4">The offer you are looking for does not exist or you do not have access to edit it.</p>
+                        <a class="btn btn-primary" href="brand_index.php">Back to my offers</a>
                     </div>
                 <?php else: ?>
                     <form method="post" action="brand_edit.php" class="needs-validation">
@@ -133,30 +155,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="hidden" name="idOffre" value="<?php echo htmlspecialchars($idOffre ?? $offer->getIdOffre()); ?>">
 
                         <div class="mb-4">
-                            <label for="titre" class="form-label fw-semibold">Titre de l'offre</label>
+                            <label for="titre" class="form-label fw-semibold">Offer title</label>
                             <input type="text" class="form-control form-control-lg" id="titre" name="titre" value="<?php echo htmlspecialchars($form['titre']); ?>" required>
                         </div>
 
                         <div class="mb-4">
-                            <label for="idCreateurCible" class="form-label fw-semibold">Créateur ciblé (ID)</label>
-                            <input type="number" class="form-control" id="idCreateurCible" name="idCreateurCible" value="<?php echo htmlspecialchars($form['idCreateurCible'] ?? ''); ?>" placeholder="ID du créateur ciblé" required>
+                            <label for="idCreateurCible" class="form-label fw-semibold">Target creator (ID)</label>
+                            <input type="number" class="form-control" id="idCreateurCible" name="idCreateurCible" value="<?php echo htmlspecialchars($form['idCreateurCible'] ?? ''); ?>" placeholder="Target creator ID" required>
                             <div id="creatorIdFeedback" class="invalid-feedback"></div>
                         </div>
 
                         <div class="mb-4">
-                            <label for="description" class="form-label fw-semibold">Description détaillée</label>
+                            <label for="description" class="form-label fw-semibold">Detailed description</label>
                             <textarea class="form-control" id="description" name="description" rows="5" required><?php echo htmlspecialchars($form['description']); ?></textarea>
                         </div>
 
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
-                                <label for="objectif" class="form-label fw-semibold">Objectif</label>
+                                <label for="objectif" class="form-label fw-semibold">Objective</label>
                                 <input type="text" class="form-control" id="objectif" name="objectif" value="<?php echo htmlspecialchars($form['objectif']); ?>" required>
                             </div>
                             <div class="col-md-6">
-                                <label for="budgetMin" class="form-label fw-semibold">Budget minimum</label>
+                                <label for="budgetMin" class="form-label fw-semibold">Minimum budget</label>
                                 <div class="input-group">
-                                    <span class="input-group-text">€</span>
+                                    <span class="input-group-text">&euro;</span>
                                     <input type="number" step="0.01" class="form-control" id="budgetMin" name="budgetMin" value="<?php echo htmlspecialchars($form['budgetMin']); ?>" required>
                                 </div>
                             </div>
@@ -164,9 +186,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
-                                <label for="budgetMax" class="form-label fw-semibold">Budget maximum</label>
+                                <label for="budgetMax" class="form-label fw-semibold">Maximum budget</label>
                                 <div class="input-group">
-                                    <span class="input-group-text">€</span>
+                                    <span class="input-group-text">&euro;</span>
                                     <input type="number" step="0.01" class="form-control" id="budgetMax" name="budgetMax" value="<?php echo htmlspecialchars($form['budgetMax']); ?>" required>
                                 </div>
                             </div>
@@ -174,18 +196,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         <div class="row g-3 mb-5">
                             <div class="col-md-6">
-                                <label for="datePublication" class="form-label fw-semibold">Date de publication</label>
+                                <label for="datePublication" class="form-label fw-semibold">Publication date</label>
                                 <input type="date" class="form-control" id="datePublication" name="datePublication" value="<?php echo htmlspecialchars($form['datePublication']); ?>" required>
                             </div>
                             <div class="col-md-6">
-                                <label for="dateLimite" class="form-label fw-semibold">Date limite</label>
+                                <label for="dateLimite" class="form-label fw-semibold">Deadline</label>
                                 <input type="date" class="form-control" id="dateLimite" name="dateLimite" value="<?php echo htmlspecialchars($form['dateLimite']); ?>" required>
                             </div>
                         </div>
 
                         <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg">Enregistrer les modifications</button>
-                            <a class="btn btn-outline-secondary btn-lg" href="brand_index.php">Annuler</a>
+                            <button type="submit" class="btn btn-primary btn-lg">Save changes</button>
+                            <a class="btn btn-outline-secondary btn-lg" href="brand_index.php">Cancel</a>
                         </div>
                     </form>
                 <?php endif; ?>
@@ -218,7 +240,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             function validateCreator() {
                 const value = creatorInput.value.trim();
                 if (!value || !/^[1-9]\d*$/.test(value)) {
-                    updateValidation(false, 'Entrez un ID de créateur valide.');
+                    updateValidation(false, 'Enter a valid creator ID.');
                     return;
                 }
 
@@ -233,11 +255,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         if (data.valid) {
                             updateValidation(true, '');
                         } else {
-                            updateValidation(false, data.message || 'Créateur introuvable.');
+                            updateValidation(false, data.message || 'Creator not found.');
                         }
                     })
                     .catch(() => {
-                        updateValidation(false, 'Impossible de vérifier cet ID actuellement.');
+                        updateValidation(false, 'Unable to verify this ID right now.');
                     });
             }
 
@@ -254,7 +276,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 form.addEventListener('submit', function(event) {
                     if (!creatorValid) {
                         event.preventDefault();
-                        updateValidation(false, 'Veuillez saisir un ID de créateur valide avant d’envoyer.');
+                        updateValidation(false, 'Please enter a valid creator ID before submitting.');
                         creatorInput.focus();
                     }
                 });

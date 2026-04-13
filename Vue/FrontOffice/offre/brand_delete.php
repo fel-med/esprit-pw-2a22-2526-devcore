@@ -17,10 +17,10 @@ $brandId = $_SESSION['utilisateur']['id'];
 $idOffre = isset($_POST['idOffre']) && is_numeric($_POST['idOffre']) ? intval($_POST['idOffre']) : null;
 
 if ($idOffre !== null && $controller->deleteOffre($idOffre, $brandId)) {
-    header('Location: brand_index.php?message=' . urlencode('Offre supprimée avec succès.'));
+    header('Location: brand_index.php?message=' . urlencode('Offer deleted successfully.'));
     exit;
 }
 
 $redirect = 'brand_index.php';
-header('Location: ' . $redirect . '&message=' . urlencode('Impossible de supprimer cette offre.'));
+header('Location: ' . $redirect . '&message=' . urlencode('Unable to delete this offer.'));
 exit;
