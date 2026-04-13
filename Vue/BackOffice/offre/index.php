@@ -1,32 +1,190 @@
 <?php
 require_once __DIR__ . '/../../../Controleur/offreC.php';
-require_once __DIR__ . '/../../../Controleur/utilisateurC.php';
 
 $offreController = new OffreC();
-$userController = new UtilisateurC();
 
 $message = '';
 $searchKeyword = trim($_GET['keyword'] ?? '');
 $searchStatut = trim($_GET['statut'] ?? '');
 $searchMarque = trim($_GET['marque'] ?? '');
 $searchCreateur = trim($_GET['createur'] ?? '');
-$searchBudgetMin = trim($_GET['budgetMin'] ?? '');
-$searchBudgetMax = trim($_GET['budgetMax'] ?? '');
+$searchBudgetFrom = trim($_GET['budgetFrom'] ?? '');
+$searchBudgetTo = trim($_GET['budgetTo'] ?? '');
 $searchDateLimite = trim($_GET['dateLimite'] ?? '');
+
 $filterValues = [
     $searchKeyword,
     $searchStatut,
     $searchMarque,
     $searchCreateur,
-    $searchBudgetMin,
-    $searchBudgetMax,
-    $searchDateLimite
+    $searchBudgetFrom,
+    $searchBudgetTo,
+    $searchDateLimite,
 ];
 $activeFilterCount = count(array_filter($filterValues, static fn($value) => $value !== '' && $value !== null));
 $hasActiveFilters = $activeFilterCount > 0;
 
+function translateOfferStatus($status)
+{
+    return match ($status) {
+        'brouillon' => 'Draft',
+        'publiee' => 'Published',
+        'cloturee' => 'Closed',
+        'expiree' => 'Expired',
+        'archivee' => 'Archived',
+        'active' => 'Active',
+        'fermee', 'closed' => 'Closed',
+        default => ucwords(str_replace('_', ' ', (string) $status)),
+    };
+}
+
+function responseStatusLabel($status)
+{
+    return match ($status) {
+        'en_attente' => 'Accepted',
+        'en_etude' => 'Negotiating',
+        'acceptee' => 'Approved',
+        'refusee' => 'Declined by brand',
+        'retiree' => 'Declined by creator',
+        default => ucwords(str_replace('_', ' ', (string) $status)),
+    };
+}
+
+function formatMoney($value)
+{
+    return 'EUR ' . number_format((float) $value, 2, '.', ',');
+}
+
+function excerptText($text, $length = 80)
+{
+    $text = trim((string) $text);
+    if (strlen($text) <= $length) {
+        return $text;
+    }
+
+    return rtrim(substr($text, 0, max(0, $length - 3))) . '...';
+}
+
+function buildInspectUrl($offerId, array $filters)
+{
+    $query = $filters;
+    $query['idOffre'] = (int) $offerId;
+
+    return 'index.php?' . http_build_query($query);
+}
+
+function renderOfferInsightsHtml($selectedOffer, $selectedBrand, $selectedCreator, array $selectedResponses, array $selectedBreakdown, $selectedOfferOutsideFilters)
+{
+    ob_start();
+    ?>
+    <?php if ($selectedOffer): ?>
+        <?php if ($selectedOfferOutsideFilters): ?>
+            <div class="admin-inline-note">
+                The selected offer is open in the insights panel, but it is outside the current filter view.
+            </div>
+        <?php endif; ?>
+        <div class="quick-overview-card">
+            <div class="quick-overview-top">
+                <span class="quick-overview-tag">Selected offer</span>
+                <span class="badge-status <?php echo htmlspecialchars($selectedOffer->getStatutOffre()); ?>"><?php echo htmlspecialchars(translateOfferStatus($selectedOffer->getStatutOffre())); ?></span>
+            </div>
+            <h3><?php echo htmlspecialchars($selectedOffer->getTitre()); ?></h3>
+            <p class="quick-overview-description"><?php echo htmlspecialchars(excerptText($selectedOffer->getDescription(), 150)); ?></p>
+            <div class="quick-overview-meta">
+                <span><?php echo htmlspecialchars(formatMoney($selectedOffer->getBudgetPropose())); ?></span>
+                <span>Published: <?php echo htmlspecialchars($selectedOffer->getDatePublication()); ?></span>
+                <span>Deadline: <?php echo htmlspecialchars($selectedOffer->getDateLimite()); ?></span>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <div class="quick-stat-list">
+                <div class="quick-stat-item">
+                    <span class="quick-stat-label">Brand</span>
+                    <span class="quick-stat-value"><?php echo htmlspecialchars($selectedBrand['nom'] ?? 'Unknown brand'); ?></span>
+                </div>
+                <div class="quick-stat-item">
+                    <span class="quick-stat-label">Target creator</span>
+                    <span class="quick-stat-value"><?php echo htmlspecialchars($selectedCreator['nom'] ?? 'Unknown creator'); ?></span>
+                </div>
+                <div class="quick-stat-item">
+                    <span class="quick-stat-label">Response volume</span>
+                    <span class="quick-stat-value"><?php echo count($selectedResponses); ?> total responses</span>
+                </div>
+                <div class="quick-stat-item">
+                    <span class="quick-stat-label">Breakdown</span>
+                    <span class="quick-stat-value">
+                        Accepted <?php echo $selectedBreakdown['en_attente']; ?>,
+                        Negotiating <?php echo $selectedBreakdown['en_etude']; ?>,
+                        Approved <?php echo $selectedBreakdown['acceptee']; ?>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <div class="detail-grid">
+                <div class="detail-block">
+                    <h4>Why this creator</h4>
+                    <p><?php echo htmlspecialchars($selectedOffer->getRaisonChoix() !== '' ? excerptText($selectedOffer->getRaisonChoix(), 120) : 'No specific rationale was attached to this offer.'); ?></p>
+                </div>
+                <div class="detail-block">
+                    <h4>Expected fit</h4>
+                    <p><?php echo htmlspecialchars($selectedOffer->getAttenteCollaboration() !== '' ? excerptText($selectedOffer->getAttenteCollaboration(), 120) : 'No collaboration expectations were added.'); ?></p>
+                </div>
+                <div class="detail-block">
+                    <h4>Personal note</h4>
+                    <p><?php echo htmlspecialchars($selectedOffer->getMessagePersonnalise() !== '' ? excerptText($selectedOffer->getMessagePersonnalise(), 120) : 'No personal note was added.'); ?></p>
+                </div>
+                <div class="detail-block">
+                    <h4>Objective</h4>
+                    <p><?php echo htmlspecialchars(excerptText($selectedOffer->getObjectif(), 120)); ?></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <h4 class="quick-stat-label">Recent creator responses</h4>
+            <?php if (!empty($selectedResponses)): ?>
+                <div class="quick-candidate-list">
+                    <?php foreach ($selectedResponses as $response): ?>
+                        <div class="quick-candidate-item">
+                            <div>
+                                <strong><?php echo htmlspecialchars($response['createurNom'] ?: ('Creator #' . $response['idCreateur'])); ?></strong>
+                                <span><?php echo htmlspecialchars($response['createurEmail'] ?? ''); ?></span>
+                                <span><?php echo htmlspecialchars(excerptText((string) ($response['messageMotivation'] ?? ''), 72)); ?></span>
+                            </div>
+                            <div>
+                                <span class="status-pill"><?php echo htmlspecialchars(responseStatusLabel($response['statutCandidature'])); ?></span>
+                                <span class="status-pill"><?php echo htmlspecialchars(formatMoney($response['budgetPropose'])); ?></span>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <div class="detail-empty-state">
+                    <span class="detail-empty-icon">i</span>
+                    <h4>No creator response yet</h4>
+                    <p>This targeted offer has not received any acceptance, decline, or negotiation signal yet.</p>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <p class="admin-note">Tip: use the filters above to isolate closing offers, high budgets, or creator-specific invitation flows without leaving this module.</p>
+    <?php else: ?>
+        <div class="detail-empty-state">
+            <span class="detail-empty-icon">i</span>
+            <h4>No offer selected</h4>
+            <p>Choose an offer from the list to inspect its target creator, collaboration brief, and response activity.</p>
+        </div>
+    <?php endif; ?>
+    <?php
+
+    return trim((string) ob_get_clean());
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['deleteOffre'], $_POST['idOffreToDelete']) && is_numeric($_POST['idOffreToDelete'])) {
-    $deleteId = intval($_POST['idOffreToDelete']);
+    $deleteId = (int) $_POST['idOffreToDelete'];
     $offerToDelete = $offreController->getOffreByIdAdmin($deleteId);
     if ($offerToDelete) {
         $offreController->deleteOffre($deleteId, $offerToDelete->getIdMarque());
@@ -36,86 +194,118 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['deleteOffre'], $_POST
         header('Location: index.php?' . http_build_query($query));
         exit;
     }
+
     $message = 'Offer not found or impossible to delete.';
-}
-
-$allOffres = $offreController->getAllOffres();
-
-$marqueOptions = [];
-$createurOptions = [];
-foreach ($allOffres as $offreOption) {
-    if ($offreOption->getIdMarque()) {
-        $marqueOptions[$offreOption->getIdMarque()] = userLabelText($userController, $offreOption->getIdMarque(), 'marque');
-    }
-    if ($offreOption->getIdCreateurCible()) {
-        $createurOptions[$offreOption->getIdCreateurCible()] = userLabelText($userController, $offreOption->getIdCreateurCible(), 'createur');
-    }
 }
 
 $offres = $offreController->searchOffresAdmin(
     $searchKeyword ?: null,
     $searchStatut ?: null,
-    is_numeric($searchMarque) ? intval($searchMarque) : null,
-    is_numeric($searchCreateur) ? intval($searchCreateur) : null,
-    $searchBudgetMin !== '' ? $searchBudgetMin : null,
-    $searchBudgetMax !== '' ? $searchBudgetMax : null,
+    is_numeric($searchMarque) ? (int) $searchMarque : null,
+    is_numeric($searchCreateur) ? (int) $searchCreateur : null,
+    $searchBudgetFrom !== '' ? $searchBudgetFrom : null,
+    $searchBudgetTo !== '' ? $searchBudgetTo : null,
     $searchDateLimite ?: null
 );
 
+$persistedFilters = [
+    'keyword' => $searchKeyword,
+    'statut' => $searchStatut,
+    'marque' => $searchMarque,
+    'createur' => $searchCreateur,
+    'budgetFrom' => $searchBudgetFrom,
+    'budgetTo' => $searchBudgetTo,
+    'dateLimite' => $searchDateLimite,
+];
+
+$offerIds = array_map(static fn($offre) => $offre->getIdOffre(), $offres);
+$brandIds = array_map(static fn($offre) => $offre->getIdMarque(), $offres);
+$creatorIds = array_map(static fn($offre) => $offre->getIdCreateurCible(), $offres);
+$brandMap = $offreController->getUsersByIds($brandIds, 'marque');
+$creatorMap = $offreController->getUsersByIds($creatorIds, 'createur');
+$responseGroups = $offreController->getCandidaturesGroupedByOfferIds($offerIds);
+
+$allOffres = $offreController->getAllOffres();
+$allBrandIds = array_map(static fn($offre) => $offre->getIdMarque(), $allOffres);
+$allCreatorIds = array_map(static fn($offre) => $offre->getIdCreateurCible(), $allOffres);
+$allBrandMap = $offreController->getUsersByIds($allBrandIds, 'marque');
+$allCreatorMap = $offreController->getUsersByIds($allCreatorIds, 'createur');
+
 $selectedOffer = null;
-$candidatures = [];
+$selectedOfferInList = false;
+$selectedId = isset($_GET['idOffre']) && is_numeric($_GET['idOffre']) ? (int) $_GET['idOffre'] : null;
 
-if (isset($_GET['idOffre']) && is_numeric($_GET['idOffre'])) {
-    $offerId = intval($_GET['idOffre']);
-    $selectedOffer = $offreController->getOffreByIdAdmin($offerId);
-    if ($selectedOffer) {
-        $candidatures = $offreController->getCandidaturesByOffre($offerId);
+if ($selectedId !== null) {
+    $selectedOffer = $offreController->getOffreByIdAdmin($selectedId);
+    foreach ($offres as $offre) {
+        if ((int) $offre->getIdOffre() === $selectedId) {
+            $selectedOfferInList = true;
+            break;
+        }
     }
 }
 
-function translateOfferStatus($status) {
-    $normalized = strtolower((string)$status);
-
-    return match ($normalized) {
-        'publiee' => 'Published',
-        'active' => 'Active',
-        'fermee', 'closed' => 'Closed',
-        default => ucwords(str_replace(['_', '-'], ' ', (string)$status)),
-    };
+if (!$selectedOffer && !empty($offres)) {
+    $selectedOffer = $offres[0];
+    $selectedOfferInList = true;
 }
 
-function userLabel($controller, $id, $role) {
-    if (empty($id)) {
-        return '<span class="status-pill">Not set</span>';
+$selectedResponses = $selectedOffer
+    ? ($responseGroups[$selectedOffer->getIdOffre()] ?? $offreController->getCandidaturesByOffre($selectedOffer->getIdOffre()))
+    : [];
+$selectedBreakdown = $selectedOffer ? $offreController->getOfferResponseBreakdown($selectedOffer->getIdOffre()) : [
+    'en_attente' => 0,
+    'en_etude' => 0,
+    'acceptee' => 0,
+    'refusee' => 0,
+    'retiree' => 0,
+    'total' => 0,
+];
+$selectedOfferOutsideFilters = $selectedOffer && !$selectedOfferInList;
+$selectedBrand = $selectedOffer ? ($brandMap[$selectedOffer->getIdMarque()] ?? $allBrandMap[$selectedOffer->getIdMarque()] ?? null) : null;
+$selectedCreator = $selectedOffer ? ($creatorMap[$selectedOffer->getIdCreateurCible()] ?? $allCreatorMap[$selectedOffer->getIdCreateurCible()] ?? null) : null;
+
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'insights') {
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        'selectedId' => $selectedOffer ? (int) $selectedOffer->getIdOffre() : null,
+        'html' => renderOfferInsightsHtml(
+            $selectedOffer,
+            $selectedBrand,
+            $selectedCreator,
+            $selectedResponses,
+            $selectedBreakdown,
+            $selectedOfferOutsideFilters
+        ),
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+$publishedCount = 0;
+$offersWithResponses = 0;
+$averageBudget = 0;
+$closingSoon = 0;
+
+if (!empty($offres)) {
+    $averageBudget = array_sum(array_map(static fn($offre) => (float) $offre->getBudgetPropose(), $offres)) / count($offres);
+    $today = new DateTime('today');
+
+    foreach ($offres as $offre) {
+        if ($offre->getStatutOffre() === 'publiee') {
+            $publishedCount++;
+        }
+        if (!empty($responseGroups[$offre->getIdOffre()] ?? [])) {
+            $offersWithResponses++;
+        }
+
+        $deadline = DateTime::createFromFormat('Y-m-d', (string) $offre->getDateLimite());
+        if ($deadline) {
+            $days = (int) $today->diff($deadline)->format('%r%a');
+            if ($days >= 0 && $days <= 7) {
+                $closingSoon++;
+            }
+        }
     }
-    $user = $controller->getUserByIdAndRole($id, $role);
-    if ($user) {
-        return htmlspecialchars($user->getNom() . ' (#' . $user->getId() . ')');
-    }
-    return 'ID #' . intval($id);
-}
-
-function userLabelText($controller, $id, $role) {
-    if (empty($id)) {
-        return 'Not set';
-    }
-    $user = $controller->getUserByIdAndRole($id, $role);
-    if ($user) {
-        return $user->getNom() . ' (#' . $user->getId() . ')';
-    }
-    return 'ID #' . intval($id);
-}
-
-function statutBadge($statut) {
-    return '<span class="badge-status ' . htmlspecialchars((string)$statut) . '">' . htmlspecialchars(translateOfferStatus($statut)) . '</span>';
-}
-
-function formatPrice($value) {
-    return number_format((float)$value, 2, ',', ' ') . ' &euro;';
-}
-
-function formatDate($date) {
-    return $date ? htmlspecialchars($date) : '-';
 }
 ?>
 <!DOCTYPE html>
@@ -130,8 +320,8 @@ function formatDate($date) {
 <body>
     <div class="admin-shell">
         <header class="admin-header">
-            <h1>Offer Administration</h1>
-            <p>Manage targeted offers, brands, creators, and applications.</p>
+            <h1>Offer administration</h1>
+            <p>Track targeted offers, understand creator response behavior, and keep the collaboration pipeline visible for admins.</p>
         </header>
 
         <?php if (!empty($message)): ?>
@@ -143,9 +333,9 @@ function formatDate($date) {
         <details class="search-panel" <?php echo $hasActiveFilters ? 'open' : ''; ?>>
             <summary class="search-panel-summary">
                 <span class="search-panel-heading">
-                    <span class="search-panel-title">Search filters</span>
+                    <span class="search-panel-title">Admin filters</span>
                     <span class="search-panel-subtitle">
-                        <?php echo $hasActiveFilters ? $activeFilterCount . ' filter' . ($activeFilterCount > 1 ? 's' : '') . ' applied to the current list.' : 'Refine the list by status, brand, creator, budget, or deadline.'; ?>
+                        <?php echo $hasActiveFilters ? $activeFilterCount . ' filter' . ($activeFilterCount > 1 ? 's' : '') . ' applied to the current dashboard.' : 'Refine the list by status, brand, creator, budget, or deadline.'; ?>
                     </span>
                 </span>
                 <span class="search-panel-status">
@@ -159,74 +349,92 @@ function formatDate($date) {
                     </span>
                 </span>
             </summary>
-            <form method="get" class="search-form">
+
+            <form method="get" class="search-form" data-module-validation="admin-filters" novalidate>
                 <div class="search-grid">
                     <div class="search-group">
                         <label for="keyword">Search</label>
-                        <input id="keyword" name="keyword" type="search" value="<?php echo htmlspecialchars($searchKeyword); ?>" placeholder="Title, description, objectives...">
+                        <input id="keyword" name="keyword" type="search" value="<?php echo htmlspecialchars($searchKeyword); ?>" placeholder="Title, objective, description...">
                     </div>
+
                     <div class="search-group">
                         <label for="statut">Status</label>
                         <select id="statut" name="statut">
                             <option value="">All</option>
-                            <option value="publiee" <?php echo $searchStatut === 'publiee' ? 'selected' : ''; ?>>Published</option>
-                            <option value="active" <?php echo $searchStatut === 'active' ? 'selected' : ''; ?>>Active</option>
-                            <option value="fermee" <?php echo $searchStatut === 'fermee' ? 'selected' : ''; ?>>Closed</option>
-                            <option value="closed" <?php echo $searchStatut === 'closed' ? 'selected' : ''; ?>>Closed</option>
+                            <option value="brouillon"<?php echo $searchStatut === 'brouillon' ? ' selected' : ''; ?>>Draft</option>
+                            <option value="publiee"<?php echo $searchStatut === 'publiee' ? ' selected' : ''; ?>>Published</option>
+                            <option value="cloturee"<?php echo $searchStatut === 'cloturee' ? ' selected' : ''; ?>>Closed</option>
+                            <option value="expiree"<?php echo $searchStatut === 'expiree' ? ' selected' : ''; ?>>Expired</option>
+                            <option value="archivee"<?php echo $searchStatut === 'archivee' ? ' selected' : ''; ?>>Archived</option>
                         </select>
                     </div>
+
                     <div class="search-group">
                         <label for="marque">Brand</label>
                         <select id="marque" name="marque">
                             <option value="">All</option>
-                            <?php foreach ($marqueOptions as $marqueId => $marqueLabel): ?>
-                                <option value="<?php echo intval($marqueId); ?>" <?php echo $searchMarque === (string)$marqueId ? 'selected' : ''; ?>><?php echo htmlspecialchars($marqueLabel); ?></option>
+                            <?php foreach ($allBrandMap as $brand): ?>
+                                <option value="<?php echo (int) $brand['id']; ?>"<?php echo $searchMarque === (string) $brand['id'] ? ' selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($brand['nom'] . ' (#' . $brand['id'] . ')'); ?>
+                                </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
+
                     <div class="search-group">
                         <label for="createur">Target creator</label>
                         <select id="createur" name="createur">
                             <option value="">All</option>
-                            <?php foreach ($createurOptions as $createurId => $createurLabel): ?>
-                                <option value="<?php echo intval($createurId); ?>" <?php echo $searchCreateur === (string)$createurId ? 'selected' : ''; ?>><?php echo htmlspecialchars($createurLabel); ?></option>
+                            <?php foreach ($allCreatorMap as $creator): ?>
+                                <option value="<?php echo (int) $creator['id']; ?>"<?php echo $searchCreateur === (string) $creator['id'] ? ' selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($creator['nom'] . ' (#' . $creator['id'] . ')'); ?>
+                                </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
+
                     <div class="search-group">
-                        <label for="budgetMin">Min budget</label>
-                        <input id="budgetMin" name="budgetMin" type="number" min="0" step="0.01" value="<?php echo htmlspecialchars($searchBudgetMin); ?>" placeholder="0">
+                        <label for="budgetFrom">Budget from</label>
+                        <input id="budgetFrom" name="budgetFrom" type="number" step="0.01" value="<?php echo htmlspecialchars($searchBudgetFrom); ?>" placeholder="0">
                     </div>
+
                     <div class="search-group">
-                        <label for="budgetMax">Max budget</label>
-                        <input id="budgetMax" name="budgetMax" type="number" min="0" step="0.01" value="<?php echo htmlspecialchars($searchBudgetMax); ?>" placeholder="0">
+                        <label for="budgetTo">Budget to</label>
+                        <input id="budgetTo" name="budgetTo" type="number" step="0.01" value="<?php echo htmlspecialchars($searchBudgetTo); ?>" placeholder="0">
                     </div>
+
                     <div class="search-group">
-                        <label for="dateLimite">Deadline</label>
+                        <label for="dateLimite">Deadline from</label>
                         <input id="dateLimite" name="dateLimite" type="date" value="<?php echo htmlspecialchars($searchDateLimite); ?>">
                     </div>
                 </div>
+
                 <div class="search-actions">
-                    <button type="submit">Apply</button>
+                    <button type="submit">Apply filters</button>
                     <a class="clear-link" href="index.php">Reset</a>
                 </div>
             </form>
         </details>
 
-        <div class="admin-summary">
-            <div class="admin-card">
-                <h3>Displayed offers</h3>
+        <section class="admin-summary">
+            <article class="admin-card">
+                <h3>Offers in view</h3>
                 <p><?php echo count($offres); ?></p>
-            </div>
-            <div class="admin-card">
-                <h3>Targeted offers</h3>
-                <p><?php echo count(array_filter($offres, fn($offre) => $offre->getIdCreateurCible())); ?></p>
-            </div>
-            <div class="admin-card">
-                <h3>Selected applications</h3>
-                <p><?php echo $selectedOffer ? count($candidatures) : '-'; ?></p>
-            </div>
-        </div>
+            </article>
+            <article class="admin-card">
+                <h3>Published</h3>
+                <p><?php echo $publishedCount; ?></p>
+            </article>
+            <article class="admin-card">
+                <h3>With creator responses</h3>
+                <p><?php echo $offersWithResponses; ?></p>
+            </article>
+            <article class="admin-card">
+                <h3>Average budget</h3>
+                <p><?php echo count($offres) ? htmlspecialchars(formatMoney($averageBudget)) : 'EUR 0.00'; ?></p>
+                <small><?php echo $closingSoon; ?> closing soon</small>
+            </article>
+        </section>
 
         <div class="admin-layout">
             <section class="admin-panel admin-table-panel">
@@ -242,35 +450,51 @@ function formatDate($date) {
                                     <th>Brand</th>
                                     <th>Target creator</th>
                                     <th>Budget</th>
-                                    <th>Published</th>
+                                    <th>Deadline</th>
                                     <th>Status</th>
-                                    <th>Applications</th>
+                                    <th>Responses</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php if (count($offres) === 0): ?>
+                                <?php if (empty($offres)): ?>
                                     <tr>
-                                        <td colspan="8" style="padding: 1.5rem; text-align: center; color: #94a3b8;">No offers available.</td>
+                                        <td colspan="8" style="padding: 1.5rem; text-align: center; color: #94a3b8;">No offers match the current filters.</td>
                                     </tr>
                                 <?php endif; ?>
+
                                 <?php foreach ($offres as $offre): ?>
-                                    <tr<?php echo $selectedOffer && $selectedOffer->getIdOffre() === $offre->getIdOffre() ? ' class="is-selected"' : ''; ?>>
-                                        <td>
-                                            <strong><?php echo htmlspecialchars($offre->getTitre()); ?></strong>
-                                            <span class="row-label"><?php echo htmlspecialchars(substr($offre->getDescription(), 0, 70)); ?>...</span>
+                                    <?php
+                                    $isSelected = $selectedOffer && (int) $selectedOffer->getIdOffre() === (int) $offre->getIdOffre();
+                                    $responses = $responseGroups[$offre->getIdOffre()] ?? [];
+                                    $brand = $brandMap[$offre->getIdMarque()] ?? null;
+                                    $creator = $creatorMap[$offre->getIdCreateurCible()] ?? null;
+                                    $inspectUrl = buildInspectUrl($offre->getIdOffre(), $persistedFilters);
+                                    $offerTitle = (string) $offre->getTitre();
+                                    $offerObjective = 'ID #' . (int) $offre->getIdOffre() . ' - ' . (string) $offre->getObjectif();
+                                    $brandName = (string) ($brand['nom'] ?? ('ID #' . $offre->getIdMarque()));
+                                    $creatorName = (string) ($creator['nom'] ?? ('ID #' . $offre->getIdCreateurCible()));
+                                    ?>
+                                    <tr<?php echo $isSelected ? ' class="is-selected"' : ''; ?> data-offer-id="<?php echo (int) $offre->getIdOffre(); ?>" data-inspect-url="<?php echo htmlspecialchars($inspectUrl); ?>" tabindex="0">
+                                        <td class="offer-cell">
+                                            <strong class="offer-row-title table-hover-text" title="<?php echo htmlspecialchars($offerTitle, ENT_QUOTES); ?>"><?php echo htmlspecialchars(excerptText($offerTitle, 44)); ?></strong>
+                                            <span class="row-label table-hover-text" title="<?php echo htmlspecialchars($offerObjective, ENT_QUOTES); ?>">ID #<?php echo (int) $offre->getIdOffre(); ?> - <?php echo htmlspecialchars(excerptText($offre->getObjectif(), 42)); ?></span>
                                         </td>
-                                        <td><?php echo userLabel($userController, $offre->getIdMarque(), 'marque'); ?></td>
-                                        <td><?php echo userLabel($userController, $offre->getIdCreateurCible(), 'createur'); ?></td>
-                                        <td><?php echo formatPrice($offre->getBudgetMin()); ?> - <?php echo formatPrice($offre->getBudgetMax()); ?></td>
-                                        <td><?php echo formatDate($offre->getDatePublication()); ?></td>
-                                        <td><?php echo statutBadge($offre->getStatutOffre()); ?></td>
-                                        <td><?php echo $offreController->getCandidatureCountByOffre($offre->getIdOffre()); ?></td>
+                                        <td class="entity-cell">
+                                            <strong class="entity-primary table-hover-text" title="<?php echo htmlspecialchars($brandName, ENT_QUOTES); ?>"><?php echo htmlspecialchars($brandName); ?></strong>
+                                        </td>
+                                        <td class="entity-cell">
+                                            <strong class="entity-primary table-hover-text" title="<?php echo htmlspecialchars($creatorName, ENT_QUOTES); ?>"><?php echo htmlspecialchars($creatorName); ?></strong>
+                                        </td>
+                                        <td><?php echo htmlspecialchars(formatMoney($offre->getBudgetPropose())); ?></td>
+                                        <td><?php echo htmlspecialchars($offre->getDateLimite()); ?></td>
+                                        <td><span class="badge-status <?php echo htmlspecialchars($offre->getStatutOffre()); ?>"><?php echo htmlspecialchars(translateOfferStatus($offre->getStatutOffre())); ?></span></td>
+                                        <td><?php echo count($responses); ?></td>
                                         <td class="admin-actions">
                                             <div class="admin-actions-stack">
-                                                <a href="index.php?idOffre=<?php echo intval($offre->getIdOffre()); ?>&<?php echo http_build_query(['keyword' => $searchKeyword, 'statut' => $searchStatut, 'marque' => $searchMarque, 'createur' => $searchCreateur, 'budgetMin' => $searchBudgetMin, 'budgetMax' => $searchBudgetMax, 'dateLimite' => $searchDateLimite]); ?>">Select</a>
+                                                <a class="inspect-link" href="<?php echo htmlspecialchars($inspectUrl); ?>">Inspect</a>
                                                 <form method="post" class="inline-delete-form" onsubmit="return confirm('Confirm deletion of this offer?');">
-                                                    <input type="hidden" name="idOffreToDelete" value="<?php echo intval($offre->getIdOffre()); ?>">
+                                                    <input type="hidden" name="idOffreToDelete" value="<?php echo (int) $offre->getIdOffre(); ?>">
                                                     <button type="submit" name="deleteOffre" class="delete-btn">Delete</button>
                                                 </form>
                                             </div>
@@ -283,7 +507,103 @@ function formatDate($date) {
                 </div>
             </section>
 
+            <aside class="admin-panel admin-details-panel">
+                <div class="admin-panel-header">
+                    <h2>Offer insights</h2>
+                </div>
+                <div class="admin-panel-body admin-insights-body" id="offerInsightsBody">
+                    <?php echo renderOfferInsightsHtml(
+                        $selectedOffer,
+                        $selectedBrand,
+                        $selectedCreator,
+                        $selectedResponses,
+                        $selectedBreakdown,
+                        $selectedOfferOutsideFilters
+                    ); ?>
+                </div>
+            </aside>
         </div>
     </div>
+    <script src="offre-admin-validation.js"></script>
+    <script>
+        (() => {
+            const rows = document.querySelectorAll('.admin-table tbody tr[data-inspect-url]');
+            const insightsBody = document.getElementById('offerInsightsBody');
+
+            function setSelectedRow(selectedId) {
+                rows.forEach((row) => {
+                    row.classList.toggle('is-selected', String(row.dataset.offerId) === String(selectedId));
+                });
+            }
+
+            async function loadInsights(url, row) {
+                if (!insightsBody || !window.fetch) {
+                    window.location.href = url;
+                    return;
+                }
+
+                const ajaxUrl = new URL(url, window.location.href);
+                ajaxUrl.searchParams.set('ajax', 'insights');
+                insightsBody.classList.add('is-loading');
+
+                try {
+                    const response = await fetch(ajaxUrl.toString(), {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Unable to load offer insights.');
+                    }
+
+                    const payload = await response.json();
+                    insightsBody.innerHTML = payload.html || '';
+                    if (payload.selectedId !== null && payload.selectedId !== undefined) {
+                        setSelectedRow(payload.selectedId);
+                    } else if (row) {
+                        setSelectedRow(row.dataset.offerId);
+                    }
+                    window.history.replaceState({}, '', url);
+                } catch (error) {
+                    window.location.href = url;
+                } finally {
+                    insightsBody.classList.remove('is-loading');
+                }
+            }
+
+            rows.forEach((row) => {
+                const url = row.dataset.inspectUrl;
+                if (!url) {
+                    return;
+                }
+
+                const inspectLink = row.querySelector('.inspect-link');
+                if (inspectLink) {
+                    inspectLink.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        loadInsights(url, row);
+                    });
+                }
+
+                row.addEventListener('click', (event) => {
+                    if (event.target.closest('button, form, .delete-btn')) {
+                        return;
+                    }
+                    if (event.target.closest('a')) {
+                        return;
+                    }
+                    loadInsights(url, row);
+                });
+
+                row.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        loadInsights(url, row);
+                    }
+                });
+            });
+        })();
+    </script>
 </body>
 </html>

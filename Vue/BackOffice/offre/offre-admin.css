@@ -1,13 +1,16 @@
 body {
+    margin: 0;
     background: #0b1220;
     color: #e2e8f0;
     font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .admin-shell {
-    max-width: 1280px;
+    width: min(1520px, calc(100vw - 5rem));
+    max-width: none;
     margin: 0 auto;
-    padding: 2rem 1.5rem;
+    padding: 1.5rem 0.75rem;
+    box-sizing: border-box;
 }
 
 .admin-header {
@@ -27,7 +30,7 @@ body {
 
 .admin-summary {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 1rem;
     margin-bottom: 1.75rem;
 }
@@ -54,10 +57,17 @@ body {
     color: #fff;
 }
 
+.admin-card small {
+    display: block;
+    margin-top: 0.55rem;
+    color: #94a3b8;
+    font-size: 0.84rem;
+}
+
 .admin-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0;
+    grid-template-columns: minmax(0, 2.18fr) minmax(280px, 0.72fr);
+    gap: 1rem;
     align-items: start;
 }
 
@@ -254,6 +264,39 @@ body {
     color: #cbd5e1;
 }
 
+.search-form .validation-summary {
+    margin-bottom: 1rem;
+    padding: 0.95rem 1rem;
+    border-radius: 0.95rem;
+    border: 1px solid rgba(248, 113, 113, 0.22);
+    background: rgba(127, 29, 29, 0.28);
+    color: #fecaca;
+}
+
+.search-form .validation-summary strong {
+    display: block;
+    margin-bottom: 0.45rem;
+}
+
+.search-form .validation-summary ul {
+    margin: 0;
+    padding-left: 1.2rem;
+}
+
+.search-form .validation-feedback {
+    display: block;
+    margin-top: 0.45rem;
+    color: #fca5a5;
+    font-size: 0.82rem;
+    line-height: 1.4;
+}
+
+.search-group input.is-invalid,
+.search-group select.is-invalid {
+    border-color: rgba(248, 113, 113, 0.5);
+    box-shadow: 0 0 0 0.18rem rgba(248, 113, 113, 0.12);
+}
+
 .delete-btn {
     background: #b91c1c;
     color: #fff;
@@ -291,12 +334,13 @@ body {
 .admin-table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 860px;
+    min-width: 920px;
+    table-layout: auto;
 }
 
 .admin-table th,
 .admin-table td {
-    padding: 0.95rem 1rem;
+    padding: 0.85rem 0.8rem;
     border-bottom: 1px solid #1f2937;
     text-align: left;
     vertical-align: middle;
@@ -314,14 +358,65 @@ body {
     background: rgba(255, 255, 255, 0.03);
 }
 
+.admin-table tr[data-inspect-url] {
+    cursor: pointer;
+}
+
+.admin-table tr[data-inspect-url]:focus-visible {
+    outline: 2px solid rgba(96, 165, 250, 0.8);
+    outline-offset: -2px;
+}
+
 .admin-table tr.is-selected {
-    background: rgba(37, 99, 235, 0.08);
+    background: rgba(37, 99, 235, 0.12);
+    box-shadow: inset 3px 0 0 #60a5fa;
+}
+
+.admin-table tr.is-selected td strong {
+    color: #f8fafc;
 }
 
 .admin-table td .row-label {
     display: block;
     color: #94a3b8;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+    margin-top: 0.32rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.offer-cell {
+    min-width: 0;
+    width: 29%;
+}
+
+.offer-row-title {
+    display: block;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.45;
+}
+
+.entity-cell {
+    min-width: 0;
+    width: 13%;
+}
+
+.entity-primary {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #e2e8f0;
+}
+
+.table-hover-text {
+    position: relative;
+    cursor: help;
 }
 
 .badge-status {
@@ -340,9 +435,29 @@ body {
     color: #a7f3d0;
 }
 
+.badge-status.brouillon {
+    background: rgba(148, 163, 184, 0.14);
+    color: #cbd5e1;
+}
+
 .badge-status.publiee {
     background: #164e63;
     color: #a5f3fc;
+}
+
+.badge-status.cloturee {
+    background: rgba(234, 179, 8, 0.18);
+    color: #fde68a;
+}
+
+.badge-status.expiree {
+    background: rgba(220, 38, 38, 0.18);
+    color: #fecaca;
+}
+
+.badge-status.archivee {
+    background: rgba(79, 70, 229, 0.16);
+    color: #c7d2fe;
 }
 
 .badge-status.closed,
@@ -355,12 +470,13 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.65rem 0.95rem;
+    padding: 0.48rem 0.72rem;
     background: #2563eb;
-    border-radius: 0.75rem;
+    border-radius: 0.65rem;
     color: #fff;
     text-decoration: none;
     font-weight: 600;
+    font-size: 0.9rem;
     transition: transform 0.18s ease, background 0.18s ease;
 }
 
@@ -381,7 +497,7 @@ body {
 }
 
 .admin-actions-stack {
-    min-width: 138px;
+    min-width: 96px;
 }
 
 .admin-actions .inline-delete-form {
@@ -391,9 +507,15 @@ body {
 .admin-actions a,
 .admin-actions .delete-btn {
     width: 100%;
-    min-height: 42px;
+    min-height: 34px;
     box-sizing: border-box;
     text-align: center;
+}
+
+.delete-btn {
+    padding: 0.48rem 0.72rem;
+    border-radius: 0.65rem;
+    font-size: 0.9rem;
 }
 
 .status-pill {
@@ -463,6 +585,17 @@ body {
     font-size: 0.95rem;
 }
 
+.admin-inline-note {
+    margin-bottom: 0.95rem;
+    padding: 0.85rem 0.95rem;
+    border-radius: 0.95rem;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(96, 165, 250, 0.2);
+    color: #bfdbfe;
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
 .admin-table-panel,
 .admin-details-panel {
     min-width: 0;
@@ -483,6 +616,15 @@ body {
 
 .admin-details-panel .admin-panel-body {
     padding: 0.95rem 1.05rem 1.05rem;
+}
+
+.admin-insights-body {
+    transition: opacity 0.18s ease;
+}
+
+.admin-insights-body.is-loading {
+    opacity: 0.52;
+    pointer-events: none;
 }
 
 .admin-details-panel .detail-section {
@@ -537,7 +679,7 @@ body {
     font-size: 0.9rem;
     line-height: 1.6;
     display: -webkit-box;
-    -webkit-line-clamp: 5;
+    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -606,6 +748,10 @@ body {
     font-size: 0.9rem;
     line-height: 1.55;
     word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .quick-candidate-list {
@@ -641,6 +787,13 @@ body {
     margin-top: 0.2rem;
     color: #94a3b8;
     font-size: 0.8rem;
+}
+
+.quick-candidate-item > div span:last-child {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .detail-empty-state {
@@ -700,6 +853,10 @@ body {
 
     .admin-details-panel {
         position: static;
+    }
+
+    .admin-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 

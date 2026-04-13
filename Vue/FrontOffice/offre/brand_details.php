@@ -1,41 +1,82 @@
 <?php
 session_start();
-// Simulate logged-in user (remove this when login system is ready)
+
 if (!isset($_SESSION['utilisateur'])) {
-    $_SESSION['utilisateur']['id'] = 1;  // Test with marque ID 1
+    $_SESSION['utilisateur']['id'] = 1;
 }
 
 require_once __DIR__ . '/../../../Controleur/offreC.php';
-require_once __DIR__ . '/../../../Controleur/utilisateurC.php';
 
 $controller = new OffreC();
-$userController = new UtilisateurC();
 $brandId = $_SESSION['utilisateur']['id'];
-$idOffre = isset($_GET['idOffre']) && is_numeric($_GET['idOffre']) ? intval($_GET['idOffre']) : null;
+$idOffre = isset($_GET['idOffre']) && is_numeric($_GET['idOffre']) ? (int) $_GET['idOffre'] : null;
 $offre = null;
 $error = null;
-$creatorLabel = 'Not set';
+$creator = null;
+$response = null;
 
-function translateOfferStatus($status) {
-    $normalized = strtolower((string)$status);
-
-    return match ($normalized) {
+function translateOfferStatus($status)
+{
+    return match ($status) {
+        'brouillon' => 'Draft',
         'publiee' => 'Published',
+        'cloturee' => 'Closed',
+        'expiree' => 'Expired',
+        'archivee' => 'Archived',
         'active' => 'Active',
         'fermee', 'closed' => 'Closed',
-        default => ucwords(str_replace(['_', '-'], ' ', (string)$status)),
+        default => ucwords(str_replace('_', ' ', (string) $status)),
     };
+}
+
+function offerStatusClass($status)
+{
+    return match ($status) {
+        'brouillon' => 'status-draft',
+        'publiee', 'active' => 'status-published',
+        'cloturee', 'fermee', 'closed' => 'status-closed',
+        'expiree' => 'status-expired',
+        'archivee' => 'status-archived',
+        default => 'status-draft',
+    };
+}
+
+function responseStatusLabel($status)
+{
+    return match ($status) {
+        'en_attente' => 'Creator accepted',
+        'en_etude' => 'Negotiation requested',
+        'acceptee' => 'Approved',
+        'refusee' => 'Declined by brand',
+        'retiree' => 'Declined by creator',
+        default => ucwords(str_replace('_', ' ', (string) $status)),
+    };
+}
+
+function responseStatusClass($status)
+{
+    return match ($status) {
+        'en_attente' => 'pending',
+        'en_etude' => 'review',
+        'acceptee' => 'accepted',
+        'refusee', 'retiree' => 'declined',
+        default => 'pending',
+    };
+}
+
+function formatMoney($value)
+{
+    return 'EUR ' . number_format((float) $value, 2, '.', ',');
 }
 
 if ($idOffre !== null) {
     $offre = $controller->getOffreById($idOffre, $brandId);
     if ($offre) {
-        $creatorId = $offre->getIdCreateurCible();
-        if ($creatorId) {
-            $creator = $userController->getUserByIdAndRole($creatorId, 'createur');
-            $creatorLabel = $creator ? htmlspecialchars($creator->getNom() . ' (#' . $creator->getId() . ')') : 'ID ' . htmlspecialchars($creatorId);
-        }
+        $users = $controller->getUsersByIds([$offre->getIdCreateurCible()], 'createur');
+        $creator = $users[$offre->getIdCreateurCible()] ?? null;
+        $response = $controller->getOfferResponseByCreator($offre->getIdCreateurCible(), $offre->getIdOffre());
     }
+
     if (!$offre) {
         $error = 'Offer not found or access denied.';
     }
@@ -53,122 +94,131 @@ if ($idOffre !== null) {
     <link rel="stylesheet" href="offre.css">
 </head>
 <body>
-    <div class="container py-5">
-        <?php if ($error): ?>
-            <div class="row mb-5">
-                <div class="col-lg-8 mx-auto">
-                    <div class="bg-danger-subtle rounded-3 p-5 text-center">
-                        <h2 class="text-danger">Error</h2>
-                        <p class="text-muted mb-4"><?php echo htmlspecialchars($error); ?></p>
+    <main class="container py-5">
+        <div class="offre-page-shell">
+            <?php if ($error): ?>
+                <section class="empty-state-card">
+                    <div class="empty-state-icon">!</div>
+                    <h2 class="section-title">Offer not available</h2>
+                    <p class="section-subtitle"><?php echo htmlspecialchars($error); ?></p>
+                    <div class="compact-actions justify-content-center mt-4">
                         <a class="btn btn-primary" href="brand_index.php">Back to my offers</a>
                     </div>
-                </div>
-            </div>
-        <?php else: ?>
-            <div class="row mb-5 align-items-center">
-                <div class="col-lg-8">
-                    <h1 class="display-5 fw-bold mb-2 gradient-title"><?php echo htmlspecialchars($offre->getTitre()); ?></h1>
-                    <div class="d-flex gap-3 flex-wrap">
-                        <span class="badge bg-info text-white fs-6"><?php echo htmlspecialchars(translateOfferStatus($offre->getStatutOffre())); ?></span>
-                        <span class="text-muted">Created on <?php echo htmlspecialchars($offre->getDatePublication()); ?></span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row g-5">
-                <div class="col-lg-8">
-                    <div class="bg-white rounded-3 p-5 shadow-sm mb-5">
-                        <h3 class="fw-semibold mb-3">Description</h3>
-                        <p class="lead text-muted"><?php echo nl2br(htmlspecialchars($offre->getDescription())); ?></p>
-                    </div>
-
-                    <div class="bg-white rounded-3 p-5 shadow-sm">
-                        <h3 class="fw-semibold mb-4">Offer details</h3>
-                        <div class="row g-4">
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-start">
-                                    <div class="flex-shrink-0">
-                                        <div class="flex-shrink-0 bg-light rounded-circle p-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                                            &#127919;
-                                        </div>
-                                    </div>
-                                    <div class="flex-grow-1 ms-3">
-                                        <h6 class="fw-semibold mb-1">Objective</h6>
-                                        <p class="text-muted mb-0"><?php echo htmlspecialchars($offre->getObjectif()); ?></p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-start">
-                                    <div class="flex-shrink-0">
-                                        <div class="flex-shrink-0 bg-light rounded-circle p-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                                            &#128176;
-                                        </div>
-                                    </div>
-                                    <div class="flex-grow-1 ms-3">
-                                        <h6 class="fw-semibold mb-1">Budget</h6>
-                                        <p class="text-muted mb-0">&euro;<?php echo htmlspecialchars($offre->getBudgetMin()); ?> - &euro;<?php echo htmlspecialchars($offre->getBudgetMax()); ?></p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-start">
-                                    <div class="flex-shrink-0">
-                                        <div class="flex-shrink-0 bg-light rounded-circle p-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                                            &#128197;
-                                        </div>
-                                    </div>
-                                    <div class="flex-grow-1 ms-3">
-                                        <h6 class="fw-semibold mb-1">Published</h6>
-                                        <p class="text-muted mb-0"><?php echo htmlspecialchars($offre->getDatePublication()); ?></p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-start">
-                                    <div class="flex-shrink-0">
-                                        <div class="flex-shrink-0 bg-light rounded-circle p-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                                            &#9200;
-                                        </div>
-                                    </div>
-                                    <div class="flex-grow-1 ms-3">
-                                        <h6 class="fw-semibold mb-1">Deadline</h6>
-                                        <p class="text-muted mb-0"><?php echo htmlspecialchars($offre->getDateLimite()); ?></p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-start">
-                                    <div class="flex-shrink-0">
-                                        <div class="flex-shrink-0 bg-light rounded-circle p-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                                            &#128100;
-                                        </div>
-                                    </div>
-                                    <div class="flex-grow-1 ms-3">
-                                        <h6 class="fw-semibold mb-1">Target creator</h6>
-                                        <p class="text-muted mb-0"><?php echo $creatorLabel; ?></p>
-                                    </div>
-                                </div>
-                            </div>
+                </section>
+            <?php else: ?>
+                <section class="module-hero">
+                    <div class="d-flex flex-wrap justify-content-between gap-3 align-items-start">
+                        <div>
+                            <span class="module-eyebrow">Targeted collaboration brief</span>
+                            <h1 class="display-5 fw-bold mt-3 mb-2 gradient-title"><?php echo htmlspecialchars($offre->getTitre()); ?></h1>
+                            <p class="lead text-muted mb-0"><?php echo htmlspecialchars($offre->getDescription()); ?></p>
+                        </div>
+                        <div class="offer-meta">
+                            <span class="offer-status <?php echo htmlspecialchars(offerStatusClass($offre->getStatutOffre())); ?>"><?php echo htmlspecialchars(translateOfferStatus($offre->getStatutOffre())); ?></span>
+                            <span class="offer-chip"><?php echo htmlspecialchars(formatMoney($offre->getBudgetPropose())); ?></span>
+                            <span class="offer-chip">Published: <?php echo htmlspecialchars($offre->getDatePublication()); ?></span>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <div class="col-lg-4">
-                    <div class="bg-white rounded-3 p-4 shadow-sm sticky-top" style="top: 20px;">
-                        <h5 class="fw-semibold mb-4">Actions</h5>
-                        <div class="d-grid gap-2">
-                            <a class="btn btn-primary" href="brand_edit.php?idOffre=<?php echo $offre->getIdOffre(); ?>">&#9998;&#65039; Edit</a>
-                            <form method="post" action="brand_delete.php" onsubmit="return confirm('Are you sure you want to delete this offer?');">
-                                <input type="hidden" name="idOffre" value="<?php echo $offre->getIdOffre(); ?>">
-                                <button type="submit" class="btn btn-outline-danger w-100">&#128465;&#65039; Delete</button>
-                            </form>
-                            <a class="btn btn-outline-secondary" href="brand_index.php">&#8592; Back</a>
+                <div class="invitation-grid">
+                    <div class="response-grid">
+                        <section class="section-card">
+                            <h2 class="section-title">Offer snapshot</h2>
+                            <p class="section-subtitle">A clean view of the invitation this creator receives.</p>
+                            <div class="offer-detail-list mt-4">
+                                <div class="offer-detail-item">
+                                    <strong>Target creator</strong>
+                                    <span><?php echo htmlspecialchars($creator['nom'] ?? 'Unknown creator'); ?></span>
+                                    <p><?php echo htmlspecialchars($creator['email'] ?? ''); ?></p>
+                                </div>
+                                <div class="offer-detail-item">
+                                    <strong>Objective</strong>
+                                    <span><?php echo htmlspecialchars($offre->getObjectif()); ?></span>
+                                </div>
+                                <div class="offer-detail-item">
+                                    <strong>Deadline</strong>
+                                    <span><?php echo htmlspecialchars($offre->getDateLimite()); ?></span>
+                                </div>
+                                <div class="offer-detail-item">
+                                    <strong>Budget</strong>
+                                    <span><?php echo htmlspecialchars(formatMoney($offre->getBudgetPropose())); ?></span>
+                                </div>
+                            </div>
+                        </section>
+
+                        <div class="detail-columns">
+                            <section class="info-card">
+                                <h2 class="section-title">Why this creator</h2>
+                                <div class="note-block mt-3">
+                                    <strong>Selection rationale</strong>
+                                    <p><?php echo htmlspecialchars($offre->getRaisonChoix() !== '' ? $offre->getRaisonChoix() : 'No specific rationale was added for this offer yet.'); ?></p>
+                                </div>
+                            </section>
+
+                            <section class="info-card">
+                                <h2 class="section-title">Expected collaboration fit</h2>
+                                <div class="note-block mt-3">
+                                    <strong>How this should work</strong>
+                                    <p><?php echo htmlspecialchars($offre->getAttenteCollaboration() !== '' ? $offre->getAttenteCollaboration() : 'No collaboration expectations were written yet.'); ?></p>
+                                </div>
+                            </section>
                         </div>
+
+                        <section class="section-card">
+                            <h2 class="section-title">Personal note to the creator</h2>
+                            <div class="note-block mt-3">
+                                <strong>Message</strong>
+                                <p><?php echo htmlspecialchars($offre->getMessagePersonnalise() !== '' ? $offre->getMessagePersonnalise() : 'No personal note has been added to this invitation.'); ?></p>
+                            </div>
+                        </section>
                     </div>
+
+                    <aside class="response-grid">
+                        <section class="info-card">
+                            <h2 class="section-title">Creator response</h2>
+                            <?php if ($response): ?>
+                                <div class="review-list mt-4">
+                                    <div class="review-item">
+                                        <strong>Status</strong>
+                                        <span class="response-status <?php echo htmlspecialchars(responseStatusClass($response['statutCandidature'])); ?>"><?php echo htmlspecialchars(responseStatusLabel($response['statutCandidature'])); ?></span>
+                                    </div>
+                                    <div class="review-item">
+                                        <strong>Budget reply</strong>
+                                        <span>EUR <?php echo htmlspecialchars($response['budgetPropose']); ?></span>
+                                    </div>
+                                    <div class="review-item">
+                                        <strong>Timeline reply</strong>
+                                        <span><?php echo htmlspecialchars($response['delaiPropose']); ?> days</span>
+                                    </div>
+                                    <div class="review-item">
+                                        <strong>Creator message</strong>
+                                        <span><?php echo htmlspecialchars($response['messageMotivation']); ?></span>
+                                    </div>
+                                </div>
+                            <?php else: ?>
+                                <div class="response-callout mt-4">
+                                    <strong>No response yet</strong>
+                                    <div class="mt-2 text-muted small">The targeted creator has not answered this invitation yet.</div>
+                                </div>
+                            <?php endif; ?>
+                        </section>
+
+                        <section class="info-card">
+                            <h2 class="section-title">Actions</h2>
+                            <div class="compact-actions mt-4">
+                                <a class="btn btn-primary" href="brand_edit.php?idOffre=<?php echo (int) $offre->getIdOffre(); ?>">Edit offer</a>
+                                <form method="post" action="brand_delete.php" onsubmit="return confirm('Are you sure you want to delete this offer?');">
+                                    <input type="hidden" name="idOffre" value="<?php echo (int) $offre->getIdOffre(); ?>">
+                                    <button type="submit" class="btn btn-outline-danger">Delete</button>
+                                </form>
+                                <a class="btn btn-outline-secondary" href="brand_index.php">Back to offers</a>
+                            </div>
+                        </section>
+                    </aside>
                 </div>
-            </div>
-        <?php endif; ?>
-    </div>
+            <?php endif; ?>
+        </div>
+    </main>
 </body>
 </html>
