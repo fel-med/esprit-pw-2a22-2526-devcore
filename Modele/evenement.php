@@ -10,14 +10,16 @@ class Evenement {
     private int    $id;
     private string $titre;
     private string $description;
-    private string $type;          // formation | webinaire | meetup | atelier | evenement
-    private string $statut;        // brouillon | en_attente | actif | cloture | annule
-    private string $lieu;          // City name or "En ligne"
+    private string $type;
+    private string $statut;
+    private string $lieu;
     private string $date_evenement;
     private int    $capacite;
     private int    $nb_inscrits;
-    private int    $id_organisateur; // FK → utilisateur.id
+    private int    $duree;
+    private int    $id_organisateur;
     private string $created_at;
+    private ?string $image;
 
     public function __construct(
         int    $id            = 0,
@@ -29,8 +31,9 @@ class Evenement {
         string $date_evenement = '',
         int    $capacite      = 0,
         int    $nb_inscrits   = 0,
-        int    $id_organisateur = 0,
-        string $created_at    = ''
+        int    $duree         = 0,
+        string $created_at    = '',
+        ?string $image        = null
     ) {
         $this->id               = $id;
         $this->titre            = $titre;
@@ -41,8 +44,10 @@ class Evenement {
         $this->date_evenement   = $date_evenement;
         $this->capacite         = $capacite;
         $this->nb_inscrits      = $nb_inscrits;
-        $this->id_organisateur  = $id_organisateur;
+        $this->duree            = $duree;
+        $this->id_organisateur  = 0;
         $this->created_at       = $created_at;
+        $this->image            = $image;
     }
 
     // ── Getters ──────────────────────────────────────────────
@@ -55,8 +60,10 @@ class Evenement {
     public function getDateEvenement(): string { return $this->date_evenement; }
     public function getCapacite(): int         { return $this->capacite; }
     public function getNbInscrits(): int       { return $this->nb_inscrits; }
+    public function getDuree(): int            { return $this->duree; }  // ← AJOUTE CETTE LIGNE
     public function getIdOrganisateur(): int   { return $this->id_organisateur; }
     public function getCreatedAt(): string     { return $this->created_at; }
+    public function getImage(): ?string        { return $this->image; }
 
     // ── Setters ──────────────────────────────────────────────
     public function setId(int $id): void                        { $this->id = $id; }
@@ -68,7 +75,9 @@ class Evenement {
     public function setDateEvenement(string $date): void        { $this->date_evenement = $date; }
     public function setCapacite(int $capacite): void            { $this->capacite = $capacite; }
     public function setNbInscrits(int $nb): void                { $this->nb_inscrits = $nb; }
+    public function setDuree(int $duree): void                  { $this->duree = $duree; }
     public function setIdOrganisateur(int $id): void            { $this->id_organisateur = $id; }
+    public function setImage(?string $image): void              { $this->image = $image; }
 
     // ── Helper ───────────────────────────────────────────────
     public function getPlacesRestantes(): int {
@@ -79,3 +88,4 @@ class Evenement {
         return $this->nb_inscrits >= $this->capacite;
     }
 }
+?>
