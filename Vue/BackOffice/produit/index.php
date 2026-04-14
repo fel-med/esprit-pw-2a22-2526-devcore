@@ -745,8 +745,10 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
                     </div>
                     <div class="form-group">
                         <label class="form-label">Price (<?= DEVISE ?>) *</label>
-                        <input type="text" name="prix" class="form-control"
-                               value="<?= htmlspecialchars($produitUpdate['prix'] ?? '') ?>">
+                        <input type="text" name="prix" id="inputPrix" class="form-control"
+                               value="<?= htmlspecialchars($produitUpdate['prix'] ?? '') ?>"
+                               placeholder="0.00" autocomplete="off">
+                        <span class="field-error" id="errPrix" style="display:none;color:var(--danger);font-size:11px;margin-top:4px;"></span>
                     </div>
 
                     <!-- Row 2: Category + Availability Date -->
@@ -767,8 +769,9 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
                     </div>
                     <div class="form-group">
                         <label class="form-label">Availability date <span style="font-size:10px;color:var(--text-dim);font-weight:400;">(optional)</span></label>
-                        <input type="text" name="dateDisponibilite" class="form-control"
+                        <input type="date" name="dateDisponibilite" id="inputDate" class="form-control"
                                value="<?= htmlspecialchars($produitUpdate['dateDisponibilite'] ?? '') ?>">
+                        <span class="field-error" id="errDate" style="display:none;color:var(--danger);font-size:11px;margin-top:4px;"></span>
                         <div class="dispo-preview nodate" id="dispoPreviewBO" style="margin-top:6px;">📅 Available now</div>
                     </div>
 
@@ -1209,11 +1212,117 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
 </div>
 
 <script>
+/* ══════════════════════════════════════════════════════════════════
+   VALIDATION JS — PRIX decimal(10,2)  &  DATE (type DATE SQL)
+   ══════════════════════════════════════════════════════════════════ */
+
+/**
+ * Valide un champ prix conforme à decimal(10,2) :
+ *   - Obligatoirement numérique
+ *   - >= 0
+ *   - Partie entière ≤ 8 chiffres (total 10 - 2 décimales)
+ *   - Au plus 2 décimales
+ * Retourne { valid: bool, msg: string }
+ */
+function validatePrixValue(value) {
+    const v = value.trim();
+    if (v === '') return { valid: false, msg: 'Le prix est obligatoire.' };
+
+    // Autoriser uniquement chiffres, point ou virgule décimale
+    if (!/^\d+([.,]\d{0,2})?$/.test(v)) {
+        return { valid: false, msg: 'Format invalide. Exemple : 19.99 (max 2 décimales).' };
+    }
+
+    const num = parseFloat(v.replace(',', '.'));
+    if (isNaN(num)) return { valid: false, msg: 'Le prix doit être un nombre valide.' };
+    if (num < 0)    return { valid: false, msg: 'Le prix doit être supérieur ou égal à 0.' };
+
+    // decimal(10,2) → partie entière max 8 chiffres
+    const parts = v.replace(',', '.').split('.');
+    if (parts[0].length > 8) {
+        return { valid: false, msg: 'Le prix est trop élevé (max 99999999.99).' };
+    }
+    if (parts[1] && parts[1].length > 2) {
+        return { valid: false, msg: 'Le prix ne peut pas avoir plus de 2 décimales.' };
+    }
+
+    return { valid: true, msg: '' };
+}
+
+/**
+ * Valide un champ date au format YYYY-MM-DD (type DATE SQL).
+ *   - Si vide → valide (champ optionnel)
+ *   - Sinon : doit correspondre à YYYY-MM-DD et être une vraie date calendrier
+ * Retourne { valid: bool, msg: string }
+ */
+function validateDateValue(value) {
+    const v = value.trim();
+    if (v === '') return { valid: true, msg: '' };  // champ optionnel
+
+    // Format ISO attendu par input[type=date] : YYYY-MM-DD
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+        return { valid: false, msg: 'Format de date invalide. Attendu : AAAA-MM-JJ.' };
+    }
+
+    const [year, month, day] = v.split('-').map(Number);
+    const d = new Date(year, month - 1, day);
+
+    // Vérifier que la date est réelle (pas 31 février, etc.)
+    if (d.getFullYear() !== year || d.getMonth() + 1 !== month || d.getDate() !== day) {
+        return { valid: false, msg: 'La date saisie n\'existe pas dans le calendrier.' };
+    }
+
+    // Année cohérente (entre 2000 et 2100)
+    if (year < 2000 || year > 2100) {
+        return { valid: false, msg: 'L\'année doit être comprise entre 2000 et 2100.' };
+    }
+
+    return { valid: true, msg: '' };
+}
+
+/**
+ * Affiche ou masque le message d'erreur sous un champ.
+ */
+function showFieldError(errId, msg) {
+    const el = document.getElementById(errId);
+    if (!el) return;
+    if (msg) {
+        el.textContent = msg;
+        el.style.display = 'block';
+    } else {
+        el.textContent = '';
+        el.style.display = 'none';
+    }
+}
+
+/**
+ * Validation en temps réel du champ prix (feedback instantané).
+ * Normalise la virgule en point à la soumission.
+ */
+function onPrixInput(el, errId) {
+    const res = validatePrixValue(el.value);
+    showFieldError(errId || 'errPrix', res.valid ? '' : res.msg);
+    // Feedback visuel sur le champ
+    el.style.borderColor = res.valid || el.value.trim() === ''
+        ? '' : 'var(--danger)';
+}
+
+/**
+ * Validation en temps réel du champ date.
+ */
+function onDateInput(el, errId) {
+    const res = validateDateValue(el.value);
+    showFieldError(errId || 'errDate', res.valid ? '' : res.msg);
+    el.style.borderColor = res.valid ? '' : 'var(--danger)';
+}
+
+/**
+ * Ancienne fonction conservée pour les filtres de prix (min/max du tableau).
+ * Pour les filtres du tableau on accepte les valeurs positives seulement.
+ */
 function validatePriceInput(el) {
     let v = parseFloat(el.value);
-    if (!isNaN(v) && v < 0) {
-        el.value = '0';
-    }
+    if (!isNaN(v) && v < 0) el.value = '0';
 }
 
 // ── DYNAMIC FORM INITIALIZATION ──────────────────────────────────
@@ -1223,7 +1332,6 @@ document.addEventListener('DOMContentLoaded', () => {
         'searchInput': 'Search a product…',
         'nom': 'e.g. Leather handbag',
         'prix': '0.00',
-        'dateDisponibilite': 'YYYY-MM-DD (optional)',
         'description': 'Detailed product description…',
         'caracteristiques': 'Bio, Vegan, Premium, Made in France…',
         'noteInterne': 'Briefing notes, moderation remarks, follow-up actions…',
@@ -1296,6 +1404,71 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[id^="prixInput-"]').forEach(input => {
         input.addEventListener('input', function() {
             validatePriceInput(this);
+        });
+        // Validation stricte au blur sur les inputs inline du tableau
+        input.addEventListener('blur', function() {
+            const res = validatePrixValue(this.value);
+            if (!res.valid) {
+                this.style.borderColor = 'var(--danger)';
+                this.title = res.msg;
+            } else {
+                this.style.borderColor = '';
+                this.title = '';
+                // Normaliser la valeur
+                this.value = parseFloat(this.value.replace(',','.')).toFixed(2);
+            }
+        });
+    });
+
+    // Validation temps-réel du champ prix du formulaire principal
+    const inputPrix = document.getElementById('inputPrix');
+    if (inputPrix) {
+        inputPrix.addEventListener('input', function() { onPrixInput(this, 'errPrix'); });
+        inputPrix.addEventListener('blur',  function() {
+            // Normaliser la virgule en point
+            this.value = this.value.trim().replace(',', '.');
+            onPrixInput(this, 'errPrix');
+            // Formater en 2 décimales si valide
+            const res = validatePrixValue(this.value);
+            if (res.valid && this.value !== '') {
+                this.value = parseFloat(this.value).toFixed(2);
+                showFieldError('errPrix', '');
+                this.style.borderColor = '';
+            }
+        });
+    }
+
+    // Validation temps-réel du champ date du formulaire principal
+    const inputDate = document.getElementById('inputDate');
+    if (inputDate) {
+        inputDate.addEventListener('input', function() {
+            onDateInput(this, 'errDate');
+            updateDispoPreviewBO(this);
+        });
+        inputDate.addEventListener('change', function() {
+            onDateInput(this, 'errDate');
+            updateDispoPreviewBO(this);
+        });
+    }
+
+    // Validation des formulaires inline prix du tableau à la soumission
+    document.querySelectorAll('.prix-inline-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const input = this.querySelector('input[name="prix"]');
+            if (!input) return;
+            input.value = input.value.trim().replace(',', '.');
+            const res = validatePrixValue(input.value);
+            if (!res.valid) {
+                e.preventDefault();
+                input.style.borderColor = 'var(--danger)';
+                input.title = res.msg;
+                alert('Prix invalide : ' + res.msg);
+                input.focus();
+            } else {
+                input.value = parseFloat(input.value).toFixed(2);
+                input.style.borderColor = '';
+                input.title = '';
+            }
         });
     });
 
@@ -1435,8 +1608,8 @@ function updateDispoPreviewBO(input) {
 }
 // init on load if editing
 document.addEventListener('DOMContentLoaded', () => {
-    const dispoInput = document.querySelector('input[name="dateDisponibilite"]');
-    if (dispoInput && dispoInput.value) updateDispoPreviewBO(dispoInput);
+    const inputDate = document.getElementById('inputDate');
+    if (inputDate && inputDate.value) updateDispoPreviewBO(inputDate);
     renderPage(1);
 });
 
@@ -1743,20 +1916,45 @@ function openPreview(id) {
 function closePreview() { document.getElementById('previewModal').classList.remove('open'); }
 function closePreviewOutside(e) { if (e.target.id === 'previewModal') closePreview(); }
 
-// ── MISC ──────────────────────────────────────────────────────────
+// ── VALIDATION FORMULAIRE PRINCIPAL ──────────────────────────────
 function validateForm() {
-    const nom = document.querySelector('input[name="nom"]').value.trim();
-    const prix = parseFloat(document.querySelector('input[name="prix"]').value);
-    let valid = true;
-    if (!nom) {
-        alert('Product name is required.');
-        valid = false;
+    let isValid = true;
+
+    // --- Nom ---
+    const nomEl = document.querySelector('input[name="nom"]');
+    if (nomEl && nomEl.value.trim() === '') {
+        alert('Le nom du produit est obligatoire.');
+        nomEl.focus();
+        isValid = false;
     }
-    if (isNaN(prix) || prix < 0) {
-        alert('Price must be a valid number >= 0.');
-        valid = false;
+
+    // --- Prix ---
+    const prixEl = document.getElementById('inputPrix');
+    if (prixEl) {
+        // Normaliser la virgule en point avant validation
+        prixEl.value = prixEl.value.trim().replace(',', '.');
+        const resPrix = validatePrixValue(prixEl.value);
+        showFieldError('errPrix', resPrix.valid ? '' : resPrix.msg);
+        prixEl.style.borderColor = resPrix.valid ? '' : 'var(--danger)';
+        if (!resPrix.valid) {
+            if (isValid) prixEl.focus(); // focus sur le premier champ invalide
+            isValid = false;
+        }
     }
-    return valid;
+
+    // --- Date ---
+    const dateEl = document.getElementById('inputDate');
+    if (dateEl) {
+        const resDate = validateDateValue(dateEl.value);
+        showFieldError('errDate', resDate.valid ? '' : resDate.msg);
+        dateEl.style.borderColor = resDate.valid ? '' : 'var(--danger)';
+        if (!resDate.valid) {
+            if (isValid) dateEl.focus();
+            isValid = false;
+        }
+    }
+
+    return isValid;
 }
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') { closeDeleteModal(); closePreview(); }

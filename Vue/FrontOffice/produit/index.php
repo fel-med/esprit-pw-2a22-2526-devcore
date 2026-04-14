@@ -36,57 +36,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
 // ── ADD ───────────────────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'ajouter') {
-    if (empty(trim($_POST['nom'])) || !is_numeric($_POST['prix']) || floatval($_POST['prix']) < 0) {
-        $message = "Invalid input: name required, price must be >=0";
-        $messageType = "error";
-    } else {
-        $nomImage = $controller->gererUploadImage($_FILES['image'] ?? null);
-        $produit = new Produit(
-            null,
-            htmlspecialchars($_POST['nom']),
-            htmlspecialchars($_POST['description']),
-            htmlspecialchars($_POST['caracteristiques']),
-            floatval($_POST['prix']),
-            $id_marque,
-            $nomImage,
-            htmlspecialchars($_POST['categorie'] ?? ''),
-            0, 0, 0,
-            !empty($_POST['dateDisponibilite']) ? $_POST['dateDisponibilite'] : null,
-            htmlspecialchars($_POST['noteInterne'] ?? '')
-        );
-        $controller->ajouterProduit($produit);
-        $message = "Product added successfully!";
-        $messageType = "success";
-    }
+    $nomImage = $controller->gererUploadImage($_FILES['image'] ?? null);
+    $produit = new Produit(
+        null,
+        htmlspecialchars($_POST['nom']),
+        htmlspecialchars($_POST['description']),
+        htmlspecialchars($_POST['caracteristiques']),
+        floatval(str_replace(',', '.', $_POST['prix'])),
+        $id_marque,
+        $nomImage,
+        htmlspecialchars($_POST['categorie'] ?? ''),
+        0, 0, 0,
+        !empty($_POST['dateDisponibilite']) ? $_POST['dateDisponibilite'] : null,
+        htmlspecialchars($_POST['noteInterne'] ?? '')
+    );
+    $controller->ajouterProduit($produit);
+    $message = "Product added successfully!";
+    $messageType = "success";
 }
 
 // ── UPDATE ────────────────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'modifier') {
-    if (empty(trim($_POST['nom'])) || !is_numeric($_POST['prix']) || floatval($_POST['prix']) < 0) {
-        $message = "Invalid input: name required, price must be >=0";
-        $messageType = "error";
-    } else {
-        $ancienProduit = $controller->recupererProduit(intval($_POST['id']));
-        $nomImage = $controller->gererUploadImage($_FILES['image'] ?? null, $ancienProduit['image'] ?? null);
-        $produit = new Produit(
-            null,
-            htmlspecialchars($_POST['nom']),
-            htmlspecialchars($_POST['description']),
-            htmlspecialchars($_POST['caracteristiques']),
-            floatval($_POST['prix']),
-            $id_marque,
-            $nomImage,
-            htmlspecialchars($_POST['categorie'] ?? ''),
-            intval($_POST['estArchive'] ?? 0),
-            intval($_POST['estEpingle'] ?? 0),
-            0,
-            !empty($_POST['dateDisponibilite']) ? $_POST['dateDisponibilite'] : null,
-            htmlspecialchars($_POST['noteInterne'] ?? '')
-        );
-        $controller->modifierProduit($produit, intval($_POST['id']));
-        $message = "Product updated successfully!";
-        $messageType = "success";
-    }
+    $ancienProduit = $controller->recupererProduit(intval($_POST['id']));
+    $nomImage = $controller->gererUploadImage($_FILES['image'] ?? null, $ancienProduit['image'] ?? null);
+    $produit = new Produit(
+        null,
+        htmlspecialchars($_POST['nom']),
+        htmlspecialchars($_POST['description']),
+        htmlspecialchars($_POST['caracteristiques']),
+        floatval(str_replace(',', '.', $_POST['prix'])),
+        $id_marque,
+        $nomImage,
+        htmlspecialchars($_POST['categorie'] ?? ''),
+        intval($_POST['estArchive'] ?? 0),
+        intval($_POST['estEpingle'] ?? 0),
+        0,
+        !empty($_POST['dateDisponibilite']) ? $_POST['dateDisponibilite'] : null,
+        htmlspecialchars($_POST['noteInterne'] ?? '')
+    );
+    $controller->modifierProduit($produit, intval($_POST['id']));
+    $message = "Product updated successfully!";
+    $messageType = "success";
 }
 
 // ── DELETE ─────────────────────────────────────────────────────────────────────
@@ -145,7 +135,6 @@ $rappels = array_slice($rappels, 0, 3);
 
 $tagsDisponibles = ['Bio','Vegan','Gluten-free','Made in France','Premium','Natural','Certified','Recycled','Artisan','Sustainable','Paraben-free','Cruelty-free','Luxury','Sport','Tech'];
 
-// Categories list — shared with admin and creator pages for consistency
 $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadgets','Food & Nutrition','Sport & Fitness','Home & Decor','Travel','Wellness','Gaming','Kids'];
 ?>
 <!DOCTYPE html>
@@ -361,8 +350,31 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
         .form-input.error { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(244,63,94,0.1); }
         textarea.form-input { resize: vertical; min-height: 100px; }
         select.form-input { cursor: pointer; }
-        .error-msg { font-size: 11.5px; color: var(--danger); font-weight: 600; margin-top: 4px; display: none; }
-        .error-msg.visible { display: block; }
+
+        /* ── ERROR MESSAGES ── */
+        .error-msg {
+            font-size: 11.5px;
+            color: var(--danger);
+            font-weight: 600;
+            margin-top: 5px;
+            display: none;
+            align-items: center;
+            gap: 5px;
+            animation: slideDown .2s ease;
+        }
+        .error-msg.visible { display: flex; }
+        .error-msg::before { content: '⚠'; font-size: 11px; }
+
+        /* ── HINT MESSAGE (prix) ── */
+        .field-hint {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
         .input-with-prefix { position: relative; }
         .input-with-prefix .prefix { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 700; color: var(--text-sub); pointer-events: none; }
         .input-with-prefix .form-input { padding-left: 30px; }
@@ -398,6 +410,7 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
         /* ── TAGS ── */
         .tags-container { border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 12px; background: #fafafa; transition: border-color .2s, box-shadow .2s; }
         .tags-container:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); background: var(--white); }
+        .tags-container.error { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(244,63,94,0.1); }
         .tags-selected { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; min-height: 28px; }
         .tags-selected:empty { display: none; }
         .tag-chip { display: inline-flex; align-items: center; gap: 5px; background: var(--primary-light); color: var(--primary); border-radius: 20px; padding: 4px 10px; font-size: 12px; font-weight: 700; }
@@ -417,6 +430,7 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
         /* ── UPLOAD ── */
         .upload-zone { border: 2px dashed var(--border); border-radius: var(--radius-sm); padding: 22px 16px; text-align: center; background: #fafafa; cursor: pointer; transition: all .2s; position: relative; overflow: hidden; }
         .upload-zone:hover, .upload-zone.dragging { border-color: var(--primary); background: var(--primary-light); }
+        .upload-zone.error { border-color: var(--danger); }
         .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
         .upload-icon-wrap { width: 44px; height: 44px; border-radius: 12px; background: var(--primary-light); display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; }
         .upload-icon-wrap svg { width: 22px; height: 22px; color: var(--primary); }
@@ -524,7 +538,6 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
         .pcard-body { padding: 18px; display: flex; flex-direction: column; flex: 1; }
         .view-list .pcard-body { padding: 18px 22px; }
 
-        /* Category badge on card — consistent with admin & creator */
         .pcard-cat { font-size: 11px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
         .pcard-cat .cat-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); opacity: 0.5; }
 
@@ -818,14 +831,14 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
                     <label for="nom">Product name * <span class="char-counter" id="nomCounter">0 / 80</span></label>
                     <input type="text" id="nom" name="nom" class="form-input" maxlength="80"
                            value="<?= $editProduit ? htmlspecialchars($editProduit['nomProduit']) : '' ?>">
-                    <div class="error-msg" id="nomError">Product name is required.</div>
+                    <div class="error-msg" id="nomError">Product name is required (min. 2 characters).</div>
                 </div>
 
                 <!-- Description -->
                 <div class="form-group">
-                    <label for="description">Description <span class="char-counter" id="descCounter">0 / 400</span></label>
+                    <label for="description">Description * <span class="char-counter" id="descCounter">0 / 400</span></label>
                     <textarea id="description" name="description" class="form-input" maxlength="400"><?= $editProduit ? htmlspecialchars($editProduit['description']) : '' ?></textarea>
-                    <div class="error-msg" id="descError">A description is required.</div>
+                    <div class="error-msg" id="descError">A description is required (min. 10 characters).</div>
                 </div>
 
                 <!-- Category + Price -->
@@ -850,9 +863,12 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
                         <div class="input-with-prefix">
                             <span class="prefix">€</span>
                             <input type="text" name="prix" id="prix" class="form-input"
+                                   autocomplete="off"
                                    value="<?= $editProduit ? htmlspecialchars($editProduit['prix']) : '' ?>">
                         </div>
-                        <div class="error-msg" id="prixError">A valid price is required.</div>
+                        <!-- Message d'erreur dynamique — modifié par JS selon le cas -->
+                        <div class="error-msg" id="prixError">Le prix est obligatoire (nombre ≥ 0, max 2 décimales).</div>
+                        <div class="field-hint">ℹ️ Utilisez un point ou une virgule comme séparateur décimal. Ex : 12.99 ou 12,99</div>
                     </div>
                 </div>
 
@@ -863,13 +879,16 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
                         <span style="font-size:11px;color:var(--text-dim);font-weight:400;">Optional — leave empty = available now</span>
                     </label>
                     <input type="text" id="dateDisponibilite" name="dateDisponibilite" class="form-input"
+                           autocomplete="off"
                            value="<?= $editProduit ? htmlspecialchars($editProduit['dateDisponibilite'] ?? '') : '' ?>">
+                    <!-- Message d'erreur dynamique — modifié par JS selon le cas -->
+                    <div class="error-msg" id="dateError">Format invalide. Utilisez AAAA-MM-JJ (ex : 2025-12-31).</div>
                     <div id="dispoPreview" class="dispo-badge nodate" style="margin-top:6px;">📅 Available now</div>
                 </div>
 
                 <!-- Tags / Characteristics -->
                 <div class="form-group">
-                    <label>Tags <span style="font-size:11px;color:var(--text-dim);font-weight:500;">Characteristics</span></label>
+                    <label>Tags * <span style="font-size:11px;color:var(--text-dim);font-weight:500;">Characteristics</span></label>
                     <div class="tags-container" id="tagsContainer">
                         <div class="tags-selected" id="tagsSelected"></div>
                         <div class="tags-grid" id="tagsGrid">
@@ -939,7 +958,7 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
                         </div>
                     <?php endif; ?>
                     <div class="upload-zone" id="uploadZone">
-                        <input type="file" name="image" id="fileInput">
+                        <input type="file" name="image" id="fileInput" accept="image/jpeg,image/png,image/webp">
                         <div class="upload-icon-wrap">
                             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -948,6 +967,7 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
                         <p><strong>Click to upload</strong> or drag an image here</p>
                         <span class="upload-hint">JPG, PNG, WEBP — 2 MB max</span>
                     </div>
+                    <div class="error-msg" id="imageError">File too large (max 2 MB) or invalid format (JPG, PNG, WEBP only).</div>
                     <div class="img-preview-realtime" id="imgPreviewWrap">
                         <img id="imgPreview" src="" alt="Preview">
                     </div>
@@ -1069,7 +1089,6 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
     <!-- TAB: ACTIVE -->
     <div class="tab-content active" id="content-actifs">
 
-        <!-- Category filter — aligned with admin BO and creator FO -->
         <?php if (!empty($categories)): ?>
         <div class="cat-filter-bar" id="catFilterBar">
             <span class="cat-filter-label">Category:</span>
@@ -1302,77 +1321,388 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
 </div>
 
 <script>
+const BASE_URL = '<?= $baseUrl ?>';
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILITAIRE : afficher / masquer un message d'erreur sur un champ
+   ═══════════════════════════════════════════════════════════════════════════ */
+/**
+ * Bascule l'état de validité d'un champ.
+ * @param {string}  fieldId  — id du champ input/select/textarea
+ * @param {string}  errorId  — id du div .error-msg
+ * @param {boolean} isValid  — true = pas d'erreur, false = erreur
+ */
+function setFieldValidity(fieldId, errorId, isValid) {
+    const field = document.getElementById(fieldId);
+    const err   = document.getElementById(errorId);
+    if (!field || !err) return;
+    if (isValid) {
+        field.classList.remove('error');
+        err.classList.remove('visible');
+    } else {
+        field.classList.add('error');
+        err.classList.add('visible');
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VALIDATION PRIX  — type SQL : DECIMAL(10,2)
+   Règles :
+     • Obligatoire
+     • Chiffres uniquement, point OU virgule comme séparateur décimal
+     • Valeur >= 0
+     • Partie entière : max 8 chiffres  (10 total − 2 décimales)
+     • Partie décimale : max 2 chiffres
+   ═══════════════════════════════════════════════════════════════════════════ */
+function validatePrix() {
+    const rawOriginal = document.getElementById('prix').value.trim();
+    const raw         = rawOriginal.replace(',', '.');   // normalisation virgule → point
+    const errEl       = document.getElementById('prixError');
+
+    /* 1. Champ vide → obligatoire */
+    if (rawOriginal === '') {
+        errEl.textContent = 'Le prix est obligatoire.';
+        setFieldValidity('prix', 'prixError', false);
+        return false;
+    }
+
+    /* 2. Caractères interdits : seuls chiffres, un seul séparateur décimal */
+    if (!/^\d+([.,]\d*)?$/.test(rawOriginal)) {
+        errEl.textContent = 'Seuls les chiffres sont autorisés. Séparateur décimal : point ou virgule.';
+        setFieldValidity('prix', 'prixError', false);
+        return false;
+    }
+
+    const num = parseFloat(raw);
+
+    /* 3. Valeur négative */
+    if (num < 0) {
+        errEl.textContent = 'Le prix ne peut pas être négatif.';
+        setFieldValidity('prix', 'prixError', false);
+        return false;
+    }
+
+    /* 4. Décomposition partie entière / décimale */
+    const parts   = raw.split('.');
+    const intPart = parts[0];          // jamais de signe car déjà filtré
+    const decPart = parts[1] || '';
+
+    /* 5. Partie entière : max 8 chiffres  (DECIMAL(10,2) → 10 − 2 = 8) */
+    if (intPart.length > 8) {
+        errEl.textContent = 'La partie entière ne peut pas dépasser 8 chiffres.';
+        setFieldValidity('prix', 'prixError', false);
+        return false;
+    }
+
+    /* 6. Partie décimale : max 2 chiffres */
+    if (decPart.length > 2) {
+        errEl.textContent = 'Maximum 2 décimales autorisées (ex : 12.99 ou 12,99).';
+        setFieldValidity('prix', 'prixError', false);
+        return false;
+    }
+
+    /* OK */
+    setFieldValidity('prix', 'prixError', true);
+    return true;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BLOCAGE CLAVIER  — champ prix
+   Autorisés  : chiffres 0-9, un seul point, une seule virgule,
+                touches de navigation / édition.
+   Refusés    : tout le reste.
+   ═══════════════════════════════════════════════════════════════════════════ */
+function onPrixKeydown(e) {
+    /* Touches systèmes toujours autorisées */
+    const systemKeys = [
+        'Backspace','Delete','Tab','Escape','Enter',
+        'ArrowLeft','ArrowRight','ArrowUp','ArrowDown',
+        'Home','End'
+    ];
+    if (systemKeys.includes(e.key)) return;
+
+    /* Copier / Coller / Couper / Sélectionner tout */
+    if (e.ctrlKey || e.metaKey) return;
+
+    /* Séparateur décimal : point ou virgule, un seul */
+    if (e.key === '.' || e.key === ',') {
+        const current = document.getElementById('prix').value;
+        /* Interdit si un séparateur est déjà présent */
+        if (current.includes('.') || current.includes(',')) {
+            e.preventDefault();
+        }
+        return;
+    }
+
+    /* Chiffres uniquement */
+    if (!/^\d$/.test(e.key)) {
+        e.preventDefault();
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VALIDATION DATE  — type SQL : DATE  (stocké en YYYY-MM-DD)
+   Règles :
+     • Optionnel — champ vide = valide (disponible immédiatement)
+     • Format strict  YYYY-MM-DD
+     • Année comprise entre 1000 et 9999 (plage SQL DATE)
+     • Date calendaire réelle  (ex : 2024-02-30 refusé)
+     • La date ne peut pas être dans le passé (règle métier)
+   ═══════════════════════════════════════════════════════════════════════════ */
+function validateDate() {
+    const val   = document.getElementById('dateDisponibilite').value.trim();
+    const errEl = document.getElementById('dateError');
+
+    /* 1. Champ optionnel — vide = valide */
+    if (val === '') {
+        setFieldValidity('dateDisponibilite', 'dateError', true);
+        return true;
+    }
+
+    /* 2. Format strict YYYY-MM-DD */
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+        errEl.textContent = 'Format invalide. Utilisez AAAA-MM-JJ (ex : 2025-12-31).';
+        setFieldValidity('dateDisponibilite', 'dateError', false);
+        return false;
+    }
+
+    const [year, month, day] = val.split('-').map(Number);
+
+    /* 3. Plage d'année acceptée par SQL DATE */
+    if (year < 1000 || year > 9999) {
+        errEl.textContent = "L'année doit être comprise entre 1000 et 9999.";
+        setFieldValidity('dateDisponibilite', 'dateError', false);
+        return false;
+    }
+
+    /* 4. Date calendaire réelle
+          new Date() corrige silencieusement les dates invalides (ex : 31 fév → 2 mars).
+          On compare donc les composantes avec celles fournies. */
+    const dateObj = new Date(year, month - 1, day);
+    const isRealDate = (
+        dateObj.getFullYear() === year  &&
+        dateObj.getMonth()    === month - 1 &&
+        dateObj.getDate()     === day
+    );
+
+    if (!isRealDate) {
+        errEl.textContent = "Cette date n'existe pas dans le calendrier (ex : le 31 février est refusé).";
+        setFieldValidity('dateDisponibilite', 'dateError', false);
+        return false;
+    }
+
+    /* 5. Pas dans le passé (règle métier : date de disponibilité future ou aujourd'hui) */
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);   // minuit du jour courant pour comparaison juste
+
+    if (dateObj < today) {
+        errEl.textContent = 'La date de disponibilité ne peut pas être dans le passé.';
+        setFieldValidity('dateDisponibilite', 'dateError', false);
+        return false;
+    }
+
+    /* OK */
+    setFieldValidity('dateDisponibilite', 'dateError', true);
+    return true;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BLOCAGE CLAVIER  — champ date
+   Autorisés : chiffres 0-9, tiret, touches navigation / édition.
+   ═══════════════════════════════════════════════════════════════════════════ */
+function onDateKeydown(e) {
+    const systemKeys = [
+        'Backspace','Delete','Tab','Escape','Enter',
+        'ArrowLeft','ArrowRight','ArrowUp','ArrowDown',
+        'Home','End'
+    ];
+    if (systemKeys.includes(e.key)) return;
+    if (e.ctrlKey || e.metaKey) return;
+
+    /* Tiret autorisé (séparateur YYYY-MM-DD) */
+    if (e.key === '-') return;
+
+    /* Chiffres uniquement */
+    if (!/^\d$/.test(e.key)) {
+        e.preventDefault();
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FORMATAGE AUTOMATIQUE DATE  — insère les tirets à la frappe
+   YYYY → YYYY- → YYYY-MM → YYYY-MM- → YYYY-MM-DD
+   ═══════════════════════════════════════════════════════════════════════════ */
+function onDateInput(e) {
+    let val = e.target.value.replace(/[^\d]/g, '');   // garde uniquement les chiffres
+    if (val.length > 4)  val = val.slice(0,4) + '-' + val.slice(4);
+    if (val.length > 7)  val = val.slice(0,7) + '-' + val.slice(7);
+    if (val.length > 10) val = val.slice(0,10);        // max 10 caractères YYYY-MM-DD
+    e.target.value = val;
+    updateDispoPreview();
+    updateCompletion();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VALIDATION PRIX CATALOGUE  — filtres min/max
+   Empêche les valeurs négatives dans les champs de filtre.
+   ═══════════════════════════════════════════════════════════════════════════ */
 function validatePriceInput(el) {
-    let v = parseFloat(el.value);
+    const raw = el.value.replace(',', '.');
+    const v   = parseFloat(raw);
     if (!isNaN(v) && v < 0) {
         el.value = '0';
     }
 }
-const BASE_URL = '<?= $baseUrl ?>';
 
-// Add event listeners for input controls
-document.getElementById('searchInput').addEventListener('input', filterProducts);
-document.getElementById('priceMin').addEventListener('input', function() {
-    validatePriceInput(this);
-    filterProducts();
-});
-document.getElementById('priceMax').addEventListener('input', function() {
-    validatePriceInput(this);
-    filterProducts();
-});
-document.getElementById('nom').addEventListener('input', function() {
-    updateCounter('nom','nomCounter');
-    updateLivePreview();
-    updateCompletion();
-});
-document.getElementById('prix').addEventListener('input', function() {
-    validatePriceInput(this);
+/* ═══════════════════════════════════════════════════════════════════════════
+   AUTRES FONCTIONS DE VALIDATION  (inchangées)
+   ═══════════════════════════════════════════════════════════════════════════ */
+function validateNom() {
+    const val = document.getElementById('nom').value.trim();
+    const ok  = val.length >= 2;
+    setFieldValidity('nom', 'nomError', ok);
+    return ok;
+}
+
+function validateDescription() {
+    const val = document.getElementById('description').value.trim();
+    const ok  = val.length >= 10;
+    setFieldValidity('description', 'descError', ok);
+    return ok;
+}
+
+function validateTags() {
+    const ok        = selectedTags.length > 0;
+    const err       = document.getElementById('caracError');
+    const container = document.getElementById('tagsContainer');
+    if (ok) {
+        if (err)       err.classList.remove('visible');
+        if (container) container.classList.remove('error');
+    } else {
+        if (err)       err.classList.add('visible');
+        if (container) container.classList.add('error');
+    }
+    return ok;
+}
+
+function validateImage() {
+    const input = document.getElementById('fileInput');
+    const err   = document.getElementById('imageError');
+    const zone  = document.getElementById('uploadZone');
+    if (!input || !input.files || input.files.length === 0) {
+        if (err)  err.classList.remove('visible');
+        if (zone) zone.classList.remove('error');
+        return true;
+    }
+    const file         = input.files[0];
+    const maxSize      = 2 * 1024 * 1024;
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const ok           = file.size <= maxSize && allowedTypes.includes(file.type);
+    if (ok) {
+        if (err)  err.classList.remove('visible');
+        if (zone) zone.classList.remove('error');
+    } else {
+        if (err)  err.classList.add('visible');
+        if (zone) zone.classList.add('error');
+    }
+    return ok;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LISTENERS  PRIX
+   ═══════════════════════════════════════════════════════════════════════════ */
+document.getElementById('prix').addEventListener('keydown', onPrixKeydown);
+
+document.getElementById('prix').addEventListener('input', function () {
     updateLivePreview();
     updateCompletion();
 });
 
-// Add listeners for other elements
-document.getElementById('sortSelect').addEventListener('change', sortProducts);
-document.getElementById('vbtn-grid').addEventListener('click', () => setView('grid'));
-document.getElementById('vbtn-list').addEventListener('click', () => setView('list'));
-document.getElementById('tab-actifs').addEventListener('click', () => switchTab('actifs'));
-document.getElementById('tab-archives').addEventListener('click', () => switchTab('archives'));
-const kpiLink = document.querySelector('.kpi-link');
-if (kpiLink) kpiLink.addEventListener('click', () => switchTab('archives'));
-const btnExport = document.getElementById('btnExport');
-if (btnExport) btnExport.addEventListener('click', exportCSV);
-const btnSaveOrder = document.getElementById('btnSaveOrder');
-if (btnSaveOrder) btnSaveOrder.addEventListener('click', saveDragOrder);
-const resetButton = document.querySelector('button[type="reset"]');
-if (resetButton) resetButton.addEventListener('click', resetForm);
-document.getElementById('description').addEventListener('input', function() {
-    updateCounter('description','descCounter');
-    updateLivePreview();
-    updateCompletion();
-});
-document.getElementById('categorie').addEventListener('change', function() {
-    updateLivePreview();
-    updateCompletion();
-});
-document.getElementById('dateDisponibilite').addEventListener('change', function() {
+document.getElementById('prix').addEventListener('blur', validatePrix);
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LISTENERS  DATE
+   ═══════════════════════════════════════════════════════════════════════════ */
+document.getElementById('dateDisponibilite').addEventListener('keydown', onDateKeydown);
+
+document.getElementById('dateDisponibilite').addEventListener('input', onDateInput);
+
+document.getElementById('dateDisponibilite').addEventListener('blur', function () {
+    validateDate();
     updateDispoPreview();
     updateCompletion();
 });
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AUTRES LISTENERS  (inchangés)
+   ═══════════════════════════════════════════════════════════════════════════ */
+document.getElementById('nom').addEventListener('input', function () {
+    updateCounter('nom', 'nomCounter');
+    updateLivePreview();
+    updateCompletion();
+    validateNom();
+});
+document.getElementById('nom').addEventListener('blur', validateNom);
+
+document.getElementById('description').addEventListener('input', function () {
+    updateCounter('description', 'descCounter');
+    updateLivePreview();
+    updateCompletion();
+});
+document.getElementById('description').addEventListener('blur', validateDescription);
+
+document.getElementById('searchInput').addEventListener('input', filterProducts);
+
+document.getElementById('priceMin').addEventListener('input', function () {
+    validatePriceInput(this);
+    filterProducts();
+});
+document.getElementById('priceMax').addEventListener('input', function () {
+    validatePriceInput(this);
+    filterProducts();
+});
+
+document.getElementById('categorie').addEventListener('change', function () {
+    updateLivePreview();
+    updateCompletion();
+});
+
 document.getElementById('noteInterne').addEventListener('input', updateCompletion);
+
+document.getElementById('sortSelect').addEventListener('change', sortProducts);
+document.getElementById('vbtn-grid').addEventListener('click', () => setView('grid'));
+document.getElementById('vbtn-list').addEventListener('click', () => setView('list'));
+document.getElementById('tab-actifs').addEventListener('click',   () => switchTab('actifs'));
+document.getElementById('tab-archives').addEventListener('click', () => switchTab('archives'));
+
+const kpiLink = document.querySelector('.kpi-link');
+if (kpiLink) kpiLink.addEventListener('click', () => switchTab('archives'));
+
+const btnExport = document.getElementById('btnExport');
+if (btnExport) btnExport.addEventListener('click', exportCSV);
+
+const btnSaveOrder = document.getElementById('btnSaveOrder');
+if (btnSaveOrder) btnSaveOrder.addEventListener('click', saveDragOrder);
+
+const resetButton = document.querySelector('button[type="reset"]');
+if (resetButton) resetButton.addEventListener('click', resetForm);
+
 const toggleEpingleEl = document.getElementById('toggleEpingle');
 if (toggleEpingleEl) {
-    toggleEpingleEl.addEventListener('change', function() {
+    toggleEpingleEl.addEventListener('change', function () {
         document.getElementById('epingleHidden').value = this.checked ? 1 : 0;
     });
 }
 const toggleArchiveEl = document.getElementById('toggleArchive');
 if (toggleArchiveEl) {
-    toggleArchiveEl.addEventListener('change', function() {
+    toggleArchiveEl.addEventListener('change', function () {
         document.getElementById('archiveHidden').value = this.checked ? 1 : 0;
     });
 }
 
-/* ─── TAGS ─────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   TAGS
+   ═══════════════════════════════════════════════════════════════════════════ */
 let selectedTags = [];
 
 (function initTags() {
@@ -1393,20 +1723,28 @@ let selectedTags = [];
 function toggleTag(name, btn) {
     const idx = selectedTags.indexOf(name);
     if (idx === -1) { selectedTags.push(name); btn.classList.add('selected'); }
-    else { selectedTags.splice(idx, 1); btn.classList.remove('selected'); }
-    renderSelectedTags(); updateHiddenCarac(); updateLivePreview(); updateCompletion();
+    else            { selectedTags.splice(idx, 1); btn.classList.remove('selected'); }
+    renderSelectedTags();
+    updateHiddenCarac();
+    updateLivePreview();
+    updateCompletion();
+    validateTags();
 }
 
 function addCustomTag() {
     const input = document.getElementById('tagCustomInput');
-    const val = input.value.trim();
+    const val   = input.value.trim();
     if (!val || selectedTags.includes(val)) { input.value = ''; return; }
     selectedTags.push(val);
-    renderSelectedTags(); updateHiddenCarac(); updateLivePreview(); updateCompletion();
+    renderSelectedTags();
+    updateHiddenCarac();
+    updateLivePreview();
+    updateCompletion();
+    validateTags();
     input.value = '';
 }
 
-document.getElementById('tagCustomInput').addEventListener('keydown', function(e) {
+document.getElementById('tagCustomInput').addEventListener('keydown', function (e) {
     if (e.key === 'Enter') { e.preventDefault(); addCustomTag(); }
 });
 
@@ -1415,7 +1753,11 @@ function removeTag(name) {
     document.querySelectorAll('.tag-btn').forEach(btn => {
         if (btn.textContent.trim() === name) btn.classList.remove('selected');
     });
-    renderSelectedTags(); updateHiddenCarac(); updateLivePreview(); updateCompletion();
+    renderSelectedTags();
+    updateHiddenCarac();
+    updateLivePreview();
+    updateCompletion();
+    validateTags();
 }
 
 function renderSelectedTags() {
@@ -1434,23 +1776,25 @@ function updateHiddenCarac() {
     document.getElementById('caracHidden').value = selectedTags.join(', ');
 }
 
-/* ─── COMPLETION BAR ────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   COMPLETION BAR
+   ═══════════════════════════════════════════════════════════════════════════ */
 function updateCompletion() {
-    const nom   = document.getElementById('nom').value.trim();
-    const desc  = document.getElementById('description').value.trim();
-    const prix  = document.getElementById('prix').value;
-    const cat   = document.getElementById('categorie').value;
-    const dispo = document.getElementById('dateDisponibilite').value;
-    const note  = document.getElementById('noteInterne') ? document.getElementById('noteInterne').value.trim() : '';
+    const nom      = document.getElementById('nom').value.trim();
+    const desc     = document.getElementById('description').value.trim();
+    const prix     = document.getElementById('prix').value;
+    const cat      = document.getElementById('categorie').value;
+    const dispo    = document.getElementById('dateDisponibilite').value;
+    const note     = document.getElementById('noteInterne') ? document.getElementById('noteInterne').value.trim() : '';
     const hasImage = document.getElementById('imgPreviewWrap').classList.contains('visible')
-        || document.querySelector('.current-img-block') !== null;
+                     || document.querySelector('.current-img-block') !== null;
 
     const checks = [!!nom, !!desc, !!prix, hasImage, selectedTags.length > 0, !!cat, !!dispo, !!note];
-    const filled = checks.filter(Boolean).length;
-    const pct = Math.round((filled / checks.length) * 100);
+    const filled  = checks.filter(Boolean).length;
+    const pct     = Math.round((filled / checks.length) * 100);
 
-    document.getElementById('completionFill').style.width = pct + '%';
-    document.getElementById('completionPct').textContent = pct + '%';
+    document.getElementById('completionFill').style.width  = pct + '%';
+    document.getElementById('completionPct').textContent   = pct + '%';
 
     const hints = {
         0:   'Start by entering the product name.',
@@ -1459,49 +1803,69 @@ function updateCompletion() {
         75:  'Add an image, availability date and internal note.',
         100: '✅ Listing complete — your product is ready to publish!'
     };
-    const key = [0,25,50,75,100].reverse().find(k => pct >= k);
+    const key = [0, 25, 50, 75, 100].reverse().find(k => pct >= k);
     document.getElementById('completionHint').textContent = hints[key];
 }
 
-/* ─── AVAILABILITY DATE ─────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   APERÇU DATE DE DISPONIBILITÉ
+   ═══════════════════════════════════════════════════════════════════════════ */
 function updateDispoPreview() {
     const val = document.getElementById('dateDisponibilite').value;
     const el  = document.getElementById('dispoPreview');
-    if (!val) {
+    if (!val || val.length < 10) {
         el.textContent = '📅 Available now';
-        el.className = 'dispo-badge nodate';
+        el.className   = 'dispo-badge nodate';
+        return;
+    }
+    const [year, month, day] = val.split('-').map(Number);
+    const d   = new Date(year, month - 1, day);
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const isRealDate = (
+        d.getFullYear() === year &&
+        d.getMonth()    === month - 1 &&
+        d.getDate()     === day
+    );
+    if (!isRealDate) {
+        el.textContent = '📅 Available now';
+        el.className   = 'dispo-badge nodate';
+        return;
+    }
+    const formatted = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    if (d > now) {
+        el.textContent = '⏳ Available from ' + formatted;
+        el.className   = 'dispo-badge future';
     } else {
-        const d = new Date(val);
-        const now = new Date();
-        const formatted = d.toLocaleDateString('en-GB', {day:'2-digit', month:'2-digit', year:'numeric'});
-        if (d > now) {
-            el.textContent = '⏳ Available from ' + formatted;
-            el.className = 'dispo-badge future';
-        } else {
-            el.textContent = '✅ Available since ' + formatted;
-            el.className = 'dispo-badge available';
-        }
+        el.textContent = '✅ Available since ' + formatted;
+        el.className   = 'dispo-badge available';
     }
 }
 
-/* ─── CHAR COUNTERS ─────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   COMPTEURS DE CARACTÈRES
+   ═══════════════════════════════════════════════════════════════════════════ */
 function updateCounter(fieldId, counterId) {
-    const field = document.getElementById(fieldId);
+    const field   = document.getElementById(fieldId);
     const counter = document.getElementById(counterId);
     if (!field || !counter) return;
     counter.textContent = field.value.length + ' / ' + (field.maxLength || '');
 }
 
-/* ─── LIVE PREVIEW ──────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   APERÇU EN DIRECT
+   ═══════════════════════════════════════════════════════════════════════════ */
 function updateLivePreview() {
-    const nom  = document.getElementById('nom').value.trim() || 'Product name';
-    const desc = document.getElementById('description').value.trim() || 'Description will appear here…';
-    const prix = parseFloat(document.getElementById('prix').value) || 0;
+    const nom  = document.getElementById('nom').value.trim()              || 'Product name';
+    const desc = document.getElementById('description').value.trim()      || 'Description will appear here…';
+    const raw  = document.getElementById('prix').value.replace(',', '.');
+    const prix = parseFloat(raw) || 0;
     const cat  = document.getElementById('categorie').value;
 
-    document.getElementById('lpName').textContent = nom;
-    document.getElementById('lpDesc').textContent = desc;
+    document.getElementById('lpName').textContent  = nom;
+    document.getElementById('lpDesc').textContent  = desc;
     document.getElementById('lpPrice').textContent = prix.toFixed(2) + ' €';
+
     const lpCat = document.getElementById('lpCat');
     if (lpCat) lpCat.textContent = cat || '';
 
@@ -1509,35 +1873,49 @@ function updateLivePreview() {
     tagsEl.innerHTML = '';
     selectedTags.slice(0, 3).forEach(tag => {
         const t = document.createElement('span');
-        t.className = 'lp-tag';
+        t.className   = 'lp-tag';
         t.textContent = '🏷️ ' + tag;
         tagsEl.appendChild(t);
     });
 }
 
-/* ─── IMAGE UPLOAD ──────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   UPLOAD IMAGE
+   ═══════════════════════════════════════════════════════════════════════════ */
 document.getElementById('fileInput').addEventListener('change', function () {
     const wrap    = document.getElementById('imgPreviewWrap');
     const preview = document.getElementById('imgPreview');
     const lpImg   = document.getElementById('lpImgEl');
+
     if (this.files && this.files[0]) {
+        const isImageValid = validateImage();
+        if (!isImageValid) {
+            this.value = '';
+            wrap.classList.remove('visible');
+            lpImg.style.display = 'none';
+            updateCompletion();
+            return;
+        }
         const reader = new FileReader();
         reader.onload = e => {
-            preview.src = e.target.result;
+            preview.src         = e.target.result;
             wrap.classList.add('visible');
-            lpImg.src = e.target.result;
+            lpImg.src           = e.target.result;
             lpImg.style.display = 'block';
         };
         reader.readAsDataURL(this.files[0]);
         updateCompletion();
     }
 });
-const uploadZone = document.getElementById('uploadZone');
-uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragging'); });
-uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragging'));
-uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.classList.remove('dragging'); });
 
-/* ─── FORM INIT ─────────────────────────────────────────────── */
+const uploadZone = document.getElementById('uploadZone');
+uploadZone.addEventListener('dragover',  e => { e.preventDefault(); uploadZone.classList.add('dragging'); });
+uploadZone.addEventListener('dragleave', ()  => uploadZone.classList.remove('dragging'));
+uploadZone.addEventListener('drop',      e  => { e.preventDefault(); uploadZone.classList.remove('dragging'); });
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INITIALISATION DOMContentLoaded
+   ═══════════════════════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
     updateCounter('nom', 'nomCounter');
     updateCounter('description', 'descCounter');
@@ -1545,51 +1923,139 @@ document.addEventListener('DOMContentLoaded', () => {
     updateLivePreview();
     updateDispoPreview();
     initDragAndDrop();
-});
 
-/* ─── FORM VALIDATION ───────────────────────────────────────── */
-document.getElementById('produitForm').addEventListener('submit', function(e) {
-    let valid = true;
-    [['nom','nomError'],['description','descError'],['prix','prixError']].forEach(([id, errId]) => {
-        const el  = document.getElementById(id);
-        const err = document.getElementById(errId);
-        if (!el || !err) return;
-        if (!el.value.trim() || (id === 'prix' && parseFloat(el.value) < 0)) {
-            el.classList.add('error'); err.classList.add('visible'); valid = false;
-        } else { el.classList.remove('error'); err.classList.remove('visible'); }
+    /* Placeholders */
+    document.getElementById('nom').placeholder               = 'e.g. Premium Hydrating Cream';
+    document.getElementById('description').placeholder       = 'Describe your product, its benefits, target audience…';
+    document.getElementById('prix').placeholder              = '0.00';
+    document.getElementById('dateDisponibilite').placeholder = 'AAAA-MM-JJ (optionnel)';
+    document.getElementById('tagCustomInput').placeholder    = 'Add a custom tag…';
+    document.getElementById('noteInterne').placeholder       = 'Briefing notes, creator instructions, follow-up remarks…';
+    document.getElementById('searchInput').placeholder       = 'Search…';
+    document.getElementById('priceMin').placeholder          = 'Min';
+    document.getElementById('priceMax').placeholder          = 'Max';
+
+    /* Chips de catégorie */
+    document.querySelectorAll('.cat-chip').forEach((chip, index) => {
+        const cat = index === 0 ? '' : chip.textContent.trim().toLowerCase();
+        chip.addEventListener('click', () => filterByCategory(cat, chip));
     });
-    if (selectedTags.length === 0) {
-        document.getElementById('caracError').classList.add('visible');
-        document.getElementById('tagsContainer').style.borderColor = 'var(--danger)';
-        valid = false;
-    } else {
-        document.getElementById('caracError').classList.remove('visible');
-        document.getElementById('tagsContainer').style.borderColor = '';
-    }
-    if (!valid) e.preventDefault();
+
+    /* Boutons de tags */
+    document.querySelectorAll('.tag-btn').forEach(btn => {
+        const tag = btn.textContent.trim();
+        btn.addEventListener('click', () => toggleTag(tag, btn));
+    });
+
+    /* Bouton ajout tag personnalisé */
+    document.querySelector('.tags-custom-btn').addEventListener('click', addCustomTag);
+
+    /* Boutons Unpin */
+    document.querySelectorAll('.btn-unpin').forEach(btn => {
+        const id = btn.closest('.pinned-card').dataset.id;
+        btn.addEventListener('click', () => toggleEpingle(id, btn));
+    });
+
+    /* Boutons des cartes produit */
+    document.querySelectorAll('.btn-quickview').forEach(btn => {
+        const card = btn.closest('.product-card');
+        const id   = card.dataset.id;
+        btn.addEventListener('click', e => openQuickView(e, id));
+    });
+    document.querySelectorAll('.btn-pin-card').forEach(btn => {
+        const card = btn.closest('.product-card');
+        const id   = card.dataset.id;
+        btn.addEventListener('click', () => toggleEpingle(id, btn));
+    });
+    document.querySelectorAll('.btn-archive-card').forEach(btn => {
+        const card = btn.closest('.product-card');
+        const id   = card.dataset.id;
+        btn.addEventListener('click', () => toggleArchive(id, btn));
+    });
+    document.querySelectorAll('.btn-delete-card').forEach(btn => {
+        const card = btn.closest('.product-card');
+        const id   = card.dataset.id;
+        const name = card.dataset.name;
+        btn.addEventListener('click', () => openDeleteModal(id, name));
+    });
+
+    /* Boutons onglet Archives */
+    document.querySelectorAll('.btn-restore').forEach(btn => {
+        const card = btn.closest('.archived-card');
+        const id   = card.dataset.id;
+        btn.addEventListener('click', () => restoreArchive(id, btn));
+    });
+    document.querySelectorAll('.btn-delete-arch').forEach(btn => {
+        const card = btn.closest('.archived-card');
+        const id   = card.dataset.id;
+        const name = card.dataset.name;
+        btn.addEventListener('click', () => openDeleteModal(id, name));
+    });
+
+    /* Modals */
+    document.getElementById('qvModal').addEventListener('click', closeQVOutside);
+    document.querySelector('.qv-close').addEventListener('click', closeQV);
+    document.getElementById('deleteModal').addEventListener('click', closeModalOutside);
+    document.querySelector('.btn-cancel').addEventListener('click', closeDeleteModal);
 });
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   SOUMISSION DU FORMULAIRE  — validation globale
+   ═══════════════════════════════════════════════════════════════════════════ */
+document.getElementById('produitForm').addEventListener('submit', function (e) {
+    const nomOk   = validateNom();
+    const descOk  = validateDescription();
+    const prixOk  = validatePrix();
+    const dateOk  = validateDate();
+    const tagsOk  = validateTags();
+    const imageOk = validateImage();
+
+    if (!nomOk || !descOk || !prixOk || !dateOk || !tagsOk || !imageOk) {
+        e.preventDefault();
+        const firstError = document.querySelector('.form-input.error, .tags-container.error');
+        if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESET FORMULAIRE
+   ═══════════════════════════════════════════════════════════════════════════ */
 function resetForm() {
     selectedTags = [];
     renderSelectedTags();
     updateHiddenCarac();
     document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('selected'));
     document.getElementById('imgPreviewWrap').classList.remove('visible');
+
+    document.querySelectorAll('.form-input').forEach(el => el.classList.remove('error'));
+    document.querySelectorAll('.error-msg').forEach(el => el.classList.remove('visible'));
+    document.getElementById('tagsContainer').classList.remove('error');
+    document.getElementById('uploadZone').classList.remove('error');
+
     updateCounter('nom', 'nomCounter');
     updateCounter('description', 'descCounter');
-    updateCompletion(); updateLivePreview(); updateDispoPreview();
+    updateCompletion();
+    updateLivePreview();
+    updateDispoPreview();
 }
 
-/* ─── TABS ──────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   ONGLETS
+   ═══════════════════════════════════════════════════════════════════════════ */
 function switchTab(tab) {
-    ['actifs','archives'].forEach(t => {
+    ['actifs', 'archives'].forEach(t => {
         document.getElementById('tab-' + t).classList.toggle('active', t === tab);
         document.getElementById('content-' + t).classList.toggle('active', t === tab);
     });
 }
 
-/* ─── FILTER BY CATEGORY ────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   FILTRE PAR CATÉGORIE
+   ═══════════════════════════════════════════════════════════════════════════ */
 let activeCategory = '';
+
 function filterByCategory(cat, btn) {
     activeCategory = cat.toLowerCase();
     document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
@@ -1597,18 +2063,21 @@ function filterByCategory(cat, btn) {
     filterProducts();
 }
 
-/* ─── FILTER + SORT ─────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   FILTRE + TRI CATALOGUE
+   ═══════════════════════════════════════════════════════════════════════════ */
 function filterProducts() {
     const q    = document.getElementById('searchInput').value.toLowerCase().trim();
-    const minP = parseFloat(document.getElementById('priceMin').value) || 0;
-    const maxP = parseFloat(document.getElementById('priceMax').value) || Infinity;
+    const minP = parseFloat(document.getElementById('priceMin').value.replace(',', '.')) || 0;
+    const maxP = parseFloat(document.getElementById('priceMax').value.replace(',', '.')) || Infinity;
     const cards = document.querySelectorAll('#productsGrid .product-card');
     let visible = 0;
+
     cards.forEach(card => {
         const name = card.dataset.name || '';
         const desc = card.dataset.desc || '';
         const prix = parseFloat(card.dataset.prix) || 0;
-        const cat  = card.dataset.cat || '';
+        const cat  = card.dataset.cat  || '';
         const matchText  = name.includes(q) || desc.includes(q);
         const matchPrice = prix >= minP && prix <= maxP;
         const matchCat   = !activeCategory || cat === activeCategory;
@@ -1616,6 +2085,7 @@ function filterProducts() {
         card.style.display = show ? '' : 'none';
         if (show) visible++;
     });
+
     const noRes = document.getElementById('noResults');
     if (noRes) noRes.style.display = visible === 0 ? '' : 'none';
 }
@@ -1629,7 +2099,7 @@ function sortProducts() {
         if (mode === 'nom')       return (a.dataset.name || '').localeCompare(b.dataset.name || '');
         if (mode === 'prix_asc')  return parseFloat(a.dataset.prix) - parseFloat(b.dataset.prix);
         if (mode === 'prix_desc') return parseFloat(b.dataset.prix) - parseFloat(a.dataset.prix);
-        if (mode === 'epingle')   return parseInt(b.dataset.epingle||0) - parseInt(a.dataset.epingle||0);
+        if (mode === 'epingle')   return parseInt(b.dataset.epingle || 0) - parseInt(a.dataset.epingle || 0);
         return 0;
     });
     cards.forEach(c => grid.appendChild(c));
@@ -1643,12 +2113,15 @@ function setView(mode) {
     document.getElementById('vbtn-list').classList.toggle('active', mode === 'list');
 }
 
-/* ─── DRAG AND DROP ─────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   DRAG AND DROP
+   ═══════════════════════════════════════════════════════════════════════════ */
 let dragSrc = null;
 
 function initDragAndDrop() {
     const grid = document.getElementById('productsGrid');
     if (!grid) return;
+
     grid.addEventListener('dragstart', e => {
         dragSrc = e.target.closest('.product-card');
         if (dragSrc) { dragSrc.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
@@ -1668,7 +2141,7 @@ function initDragAndDrop() {
         e.preventDefault();
         const target = e.target.closest('.product-card');
         if (target && dragSrc && target !== dragSrc) {
-            const cards = Array.from(grid.querySelectorAll('.product-card'));
+            const cards  = Array.from(grid.querySelectorAll('.product-card'));
             const srcIdx = cards.indexOf(dragSrc);
             const tgtIdx = cards.indexOf(target);
             grid.insertBefore(dragSrc, srcIdx < tgtIdx ? target.nextSibling : target);
@@ -1680,8 +2153,8 @@ function initDragAndDrop() {
 }
 
 function saveDragOrder() {
-    const cards = Array.from(document.querySelectorAll('#productsGrid .product-card'));
-    const ordre = cards.map(c => c.dataset.id);
+    const cards    = Array.from(document.querySelectorAll('#productsGrid .product-card'));
+    const ordre    = cards.map(c => c.dataset.id);
     const formData = new FormData();
     formData.append('action', 'reordonner');
     formData.append('ordre', JSON.stringify(ordre));
@@ -1690,22 +2163,26 @@ function saveDragOrder() {
         .then(data => {
             if (data.ok) {
                 const btn = document.getElementById('btnSaveOrder');
-                if (btn) { btn.textContent = '✅ Order saved'; setTimeout(() => { btn.textContent = '💾 Save order'; btn.style.display = 'none'; }, 2000); }
+                if (btn) {
+                    btn.textContent = '✅ Order saved';
+                    setTimeout(() => { btn.textContent = '💾 Save order'; btn.style.display = 'none'; }, 2000);
+                }
             }
         });
 }
 
-/* ─── AJAX TOGGLE PIN ───────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   AJAX : toggle épingle / archive
+   ═══════════════════════════════════════════════════════════════════════════ */
 function toggleEpingle(id) {
     const formData = new FormData();
     formData.append('action', 'epingle');
     formData.append('id', id);
     fetch('index.php', { method: 'POST', body: formData })
         .then(r => r.json())
-        .then(() => { location.reload(); });
+        .then(() => location.reload());
 }
 
-/* ─── AJAX TOGGLE ARCHIVE ───────────────────────────────────── */
 function toggleArchive(id) {
     if (!confirm('Archive this product? It will be hidden from the active catalog.')) return;
     const formData = new FormData();
@@ -1713,7 +2190,7 @@ function toggleArchive(id) {
     formData.append('id', id);
     fetch('index.php', { method: 'POST', body: formData })
         .then(r => r.json())
-        .then(() => { location.reload(); });
+        .then(() => location.reload());
 }
 
 function restoreArchive(id) {
@@ -1722,48 +2199,57 @@ function restoreArchive(id) {
     formData.append('id', id);
     fetch('index.php', { method: 'POST', body: formData })
         .then(r => r.json())
-        .then(() => { location.reload(); });
+        .then(() => location.reload());
 }
 
-/* ─── QUICK VIEW ────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   QUICK VIEW MODAL
+   ═══════════════════════════════════════════════════════════════════════════ */
 function openQuickView(e, id) {
     e.stopPropagation();
     const card = document.querySelector(`.product-card[data-id="${id}"]`);
     if (!card) return;
-    const name = card.querySelector('.pcard-name').textContent;
-    const desc = card.querySelector('.pcard-desc').textContent;
-    const prix = card.dataset.prix;
-    const img  = card.dataset.img;
-    const cat  = card.dataset.cat || '';
-    const tags = (card.dataset.tags || '').split(',').filter(Boolean);
-    const note = card.dataset.note || '';
+
+    const name  = card.querySelector('.pcard-name').textContent;
+    const desc  = card.querySelector('.pcard-desc').textContent;
+    const prix  = card.dataset.prix;
+    const img   = card.dataset.img;
+    const cat   = card.dataset.cat  || '';
+    const tags  = (card.dataset.tags || '').split(',').filter(Boolean);
+    const note  = card.dataset.note || '';
     const dispo = card.dataset.dispo || '';
 
-    document.getElementById('qvName').textContent = name;
+    document.getElementById('qvName').textContent  = name;
     document.getElementById('qvPrice').textContent = parseFloat(prix).toFixed(2) + ' €';
-    document.getElementById('qvDesc').textContent = desc;
+    document.getElementById('qvDesc').textContent  = desc;
+
     const qvCat = document.getElementById('qvCat');
     if (qvCat) qvCat.textContent = cat ? '📂 ' + cat.charAt(0).toUpperCase() + cat.slice(1) : '';
 
     const qvDispo = document.getElementById('qvDispo');
     if (dispo) {
-        const d = new Date(dispo);
-        const formatted = d.toLocaleDateString('en-GB', {day:'2-digit', month:'long', year:'numeric'});
-        const isFuture = d > new Date();
+        const [y, m, d] = dispo.split('-').map(Number);
+        const dateObj   = new Date(y, m - 1, d);
+        const formatted = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+        const isFuture  = dateObj > new Date();
         qvDispo.textContent = isFuture ? '⏳ Available from ' + formatted : '✅ Available since ' + formatted;
-        qvDispo.className = 'qv-dispo ' + (isFuture ? 'future' : 'avail');
-    } else { qvDispo.textContent = ''; }
+        qvDispo.className   = 'qv-dispo ' + (isFuture ? 'future' : 'avail');
+    } else {
+        qvDispo.textContent = '';
+    }
 
     const noteWrap = document.getElementById('qvNoteWrap');
     const noteEl   = document.getElementById('qvNote');
     if (note && noteWrap && noteEl) {
-        noteEl.textContent = note;
+        noteEl.textContent     = note;
         noteWrap.style.display = 'block';
-    } else if (noteWrap) { noteWrap.style.display = 'none'; }
+    } else if (noteWrap) {
+        noteWrap.style.display = 'none';
+    }
 
     const qvImg = document.getElementById('qvImg');
     if (img) { qvImg.innerHTML = `<img src="${img}" alt="${name}" style="width:100%;height:100%;object-fit:cover;">`; }
-    else { qvImg.innerHTML = '📦'; }
+    else      { qvImg.innerHTML = '📦'; }
 
     const qvTags = document.getElementById('qvTags');
     qvTags.innerHTML = tags.map(t => `<span class="qv-tag">🏷️ ${t}</span>`).join('');
@@ -1776,7 +2262,9 @@ function openQuickView(e, id) {
 function closeQV() { document.getElementById('qvModal').classList.remove('open'); document.body.style.overflow = ''; }
 function closeQVOutside(e) { if (e.target === document.getElementById('qvModal')) closeQV(); }
 
-/* ─── DELETE MODAL ──────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   DELETE MODAL
+   ═══════════════════════════════════════════════════════════════════════════ */
 function openDeleteModal(id, name) {
     document.getElementById('deleteModalText').textContent = 'Are you sure you want to delete "' + name + '"? This action is permanent.';
     document.getElementById('deleteConfirmBtn').href = 'index.php?supprimer=' + id;
@@ -1785,37 +2273,54 @@ function openDeleteModal(id, name) {
 }
 function closeDeleteModal() { document.getElementById('deleteModal').classList.remove('open'); document.body.style.overflow = ''; }
 function closeModalOutside(e) { if (e.target === document.getElementById('deleteModal')) closeDeleteModal(); }
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeDeleteModal(); closeQV(); } });
 
-/* ─── CSV EXPORT ────────────────────────────────────────────── */
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeDeleteModal(); closeQV(); }
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EXPORT CSV
+   ═══════════════════════════════════════════════════════════════════════════ */
 function exportCSV() {
     const cards = document.querySelectorAll('#productsGrid .product-card');
     if (!cards.length) { alert('No products to export.'); return; }
+
     const rows = [['Name', 'Description', 'Category', 'Price (€)', 'Tags', 'Availability', 'Internal note']];
     cards.forEach(card => {
-        const nom  = card.querySelector('.pcard-name')?.textContent.trim() || '';
-        const desc = card.querySelector('.pcard-desc')?.textContent.trim() || '';
-        const prix = parseFloat(card.dataset.prix || 0).toFixed(2);
-        const cat  = card.dataset.cat || '';
-        const tags = (card.dataset.tags || '').replace(/"/g, '""');
+        const nom   = card.querySelector('.pcard-name')?.textContent.trim() || '';
+        const desc  = card.querySelector('.pcard-desc')?.textContent.trim() || '';
+        const prix  = parseFloat(card.dataset.prix || 0).toFixed(2);
+        const cat   = card.dataset.cat  || '';
+        const tags  = (card.dataset.tags || '').replace(/"/g, '""');
         const dispo = card.dataset.dispo || '';
-        const note = (card.dataset.note || '').replace(/"/g, '""');
-        rows.push([`"${nom.replace(/"/g,'""')}"`, `"${desc.replace(/"/g,'""')}"`, `"${cat}"`, prix, `"${tags}"`, dispo, `"${note}"`]);
+        const note  = (card.dataset.note || '').replace(/"/g, '""');
+        rows.push([
+            `"${nom.replace(/"/g, '""')}"`,
+            `"${desc.replace(/"/g, '""')}"`,
+            `"${cat}"`,
+            prix,
+            `"${tags}"`,
+            dispo,
+            `"${note}"`
+        ]);
     });
-    const csv = rows.map(r => r.join(';')).join('\n');
+
+    const csv  = rows.map(r => r.join(';')).join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
     a.href = url; a.download = 'my_products_cre8connect.csv'; a.click();
     URL.revokeObjectURL(url);
 }
 
-/* ─── FLASH AUTO-DISMISS ────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   FLASH AUTO-DISMISS
+   ═══════════════════════════════════════════════════════════════════════════ */
 const flash = document.getElementById('flashMsg');
 if (flash) {
     setTimeout(() => {
         flash.style.transition = 'opacity .4s';
-        flash.style.opacity = '0';
+        flash.style.opacity    = '0';
         setTimeout(() => flash.remove(), 400);
     }, 4000);
 }
@@ -1823,82 +2328,6 @@ if (flash) {
 <?php if ($editProduit): ?>
 document.getElementById('formAnchor').scrollIntoView({ behavior: 'smooth', block: 'start' });
 <?php endif; ?>
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Set placeholders
-    document.getElementById('nom').placeholder = 'e.g. Premium Hydrating Cream';
-    document.getElementById('description').placeholder = 'Describe your product, its benefits, target audience…';
-    document.getElementById('prix').placeholder = '0.00';
-    document.getElementById('dateDisponibilite').placeholder = 'YYYY-MM-DD (optional)';
-    document.getElementById('tagCustomInput').placeholder = 'Add a custom tag…';
-    document.getElementById('noteInterne').placeholder = 'Briefing notes, creator instructions, follow-up remarks…';
-    document.getElementById('searchInput').placeholder = 'Search…';
-    document.getElementById('priceMin').placeholder = 'Min';
-    document.getElementById('priceMax').placeholder = 'Max';
-
-    // Category chips
-    document.querySelectorAll('.cat-chip').forEach((chip, index) => {
-        const cat = index === 0 ? '' : chip.textContent.trim().toLowerCase();
-        chip.addEventListener('click', () => filterByCategory(cat, chip));
-    });
-
-    // Tag buttons
-    document.querySelectorAll('.tag-btn').forEach(btn => {
-        const tag = btn.textContent.trim();
-        btn.addEventListener('click', () => toggleTag(tag, btn));
-    });
-
-    // Add custom tag button
-    document.querySelector('.tags-custom-btn').addEventListener('click', addCustomTag);
-
-    // Unpin buttons
-    document.querySelectorAll('.btn-unpin').forEach(btn => {
-        const id = btn.closest('.pinned-card').dataset.id;
-        btn.addEventListener('click', () => toggleEpingle(id, btn));
-    });
-
-    // Product card buttons
-    document.querySelectorAll('.btn-quickview').forEach(btn => {
-        const card = btn.closest('.product-card');
-        const id = card.dataset.id;
-        btn.addEventListener('click', (e) => openQuickView(e, id));
-    });
-    document.querySelectorAll('.btn-pin-card').forEach(btn => {
-        const card = btn.closest('.product-card');
-        const id = card.dataset.id;
-        btn.addEventListener('click', () => toggleEpingle(id, btn));
-    });
-    document.querySelectorAll('.btn-archive-card').forEach(btn => {
-        const card = btn.closest('.product-card');
-        const id = card.dataset.id;
-        btn.addEventListener('click', () => toggleArchive(id, btn));
-    });
-    document.querySelectorAll('.btn-delete-card').forEach(btn => {
-        const card = btn.closest('.product-card');
-        const id = card.dataset.id;
-        const name = card.dataset.name;
-        btn.addEventListener('click', () => openDeleteModal(id, name));
-    });
-
-    // Archive buttons
-    document.querySelectorAll('.btn-restore').forEach(btn => {
-        const card = btn.closest('.archived-card');
-        const id = card.dataset.id;
-        btn.addEventListener('click', () => restoreArchive(id, btn));
-    });
-    document.querySelectorAll('.btn-delete-arch').forEach(btn => {
-        const card = btn.closest('.archived-card');
-        const id = card.dataset.id;
-        const name = card.dataset.name;
-        btn.addEventListener('click', () => openDeleteModal(id, name));
-    });
-
-    // Modals
-    document.getElementById('qvModal').addEventListener('click', closeQVOutside);
-    document.querySelector('.qv-close').addEventListener('click', closeQV);
-    document.getElementById('deleteModal').addEventListener('click', closeModalOutside);
-    document.querySelector('.btn-cancel').addEventListener('click', closeDeleteModal);
-});
 </script>
 </body>
 </html>
