@@ -1,28 +1,152 @@
 <?php
-// Controller class for Campagne
-// Handles campaign-related operations and connects to the Campagne model
-
-require_once '../Modele/campagne.php';
-require_once '../config.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../Modele/campagne.php';
 
 class CampagneC {
-    private $campagneModel;
 
-    public function __construct() {
-        // Instantiate the model
-        $this->campagneModel = new Campagne();
+    // ─── AJOUTER ───────────────────────────────────────────────────────────────
+    public function ajouterCampagne($campagne) {
+        if (empty(trim($campagne->getTitre())) || $campagne->getBudget() < 0) {
+            throw new Exception("Invalid campaign: title required, budget must be >= 0");
+        }
+        $sql = "INSERT INTO campagne
+                    (titreCampagne, description, dateDebut, dateFin, budget, statut, idMarque, objectif, estArchive)
+                VALUES
+                    (:titre, :description, :dateDebut, :dateFin, :budget, :statut, :idMarque, :objectif, :estArchive)";
+        $db = config::getConnexion();
+        $query = $db->prepare($sql);
+        $query->execute([
+            'titre'       => $campagne->getTitre(),
+            'description' => $campagne->getDescription(),
+            'dateDebut'   => $campagne->getDateDebut(),
+            'dateFin'     => $campagne->getDateFin(),
+            'budget'      => $campagne->getBudget(),
+            'statut'      => $campagne->getStatut(),
+            'idMarque'    => $campagne->getIdMarque(),
+            'objectif'    => $campagne->getObjectif(),
+            'estArchive'  => $campagne->getEstArchive() ? 1 : 0,
+        ]);
     }
 
-    public function afficherPage() {
-        // Method to display the campaign page
-        // This is a starter method - full logic will be added later
+    // ─── MODIFIER ──────────────────────────────────────────────────────────────
+    public function modifierCampagne($campagne, $id) {
+        if (empty(trim($campagne->getTitre())) || $campagne->getBudget() < 0) {
+            throw new Exception("Invalid campaign: title required, budget must be >= 0");
+        }
+        $sql = "UPDATE campagne SET
+                    titreCampagne = :titre,
+                    description   = :description,
+                    dateDebut     = :dateDebut,
+                    dateFin       = :dateFin,
+                    budget        = :budget,
+                    statut        = :statut,
+                    objectif      = :objectif,
+                    estArchive    = :estArchive
+                WHERE idCampagne = :id";
+        $db = config::getConnexion();
+        $query = $db->prepare($sql);
+        $query->execute([
+            'titre'       => $campagne->getTitre(),
+            'description' => $campagne->getDescription(),
+            'dateDebut'   => $campagne->getDateDebut(),
+            'dateFin'     => $campagne->getDateFin(),
+            'budget'      => $campagne->getBudget(),
+            'statut'      => $campagne->getStatut(),
+            'objectif'    => $campagne->getObjectif(),
+            'estArchive'  => $campagne->getEstArchive() ? 1 : 0,
+            'id'          => $id,
+        ]);
     }
 
-    public function creerObjetExemple() {
-        // Example method to create a sample campaign object
-        // This demonstrates the connection between controller and model
-        $campagne = new Campagne(1, 1, 1, 'Sample Campaign', 'Description', '2023-01-01', '2023-12-31', 'active');
-        return $campagne;
+    // ─── AFFICHER (actives, non archivées) ─────────────────────────────────────
+    public function afficherCampagnes($idMarque = null) {
+        $where = $idMarque
+            ? "WHERE estArchive = 0 AND idMarque = :idMarque"
+            : "WHERE estArchive = 0";
+        $sql = "SELECT c.*, u.nom AS nomMarque
+                FROM campagne c
+                LEFT JOIN utilisateur u ON u.id = c.idMarque
+                $where
+                ORDER BY c.dateDebut DESC";
+        $db = config::getConnexion();
+        if ($idMarque) {
+            $q = $db->prepare($sql);
+            $q->execute(['idMarque' => $idMarque]);
+            return $q->fetchAll();
+        }
+        return $db->query($sql)->fetchAll();
+    }
+
+    // ─── AFFICHER ARCHIVÉES ────────────────────────────────────────────────────
+    public function afficherCampagnesArchives($idMarque = null) {
+        $where = $idMarque
+            ? "WHERE estArchive = 1 AND idMarque = :idMarque"
+            : "WHERE estArchive = 1";
+        $sql = "SELECT c.*, u.nom AS nomMarque
+                FROM campagne c
+                LEFT JOIN utilisateur u ON u.id = c.idMarque
+                $where
+                ORDER BY c.idCampagne DESC";
+        $db = config::getConnexion();
+        if ($idMarque) {
+            $q = $db->prepare($sql);
+            $q->execute(['idMarque' => $idMarque]);
+            return $q->fetchAll();
+        }
+        return $db->query($sql)->fetchAll();
+    }
+
+    // ─── RÉCUPÉRER UNE CAMPAGNE ────────────────────────────────────────────────
+    public function recupererCampagne($id) {
+        $sql = "SELECT c.*, u.nom AS nomMarque
+                FROM campagne c
+                LEFT JOIN utilisateur u ON u.id = c.idMarque
+                WHERE c.idCampagne = :id";
+        $db = config::getConnexion();
+        $query = $db->prepare($sql);
+        $query->execute(['id' => $id]);
+        return $query->fetch();
+    }
+
+    // ─── SUPPRIMER ─────────────────────────────────────────────────────────────
+    public function supprimerCampagne($id) {
+        $sql = "DELETE FROM campagne WHERE idCampagne = :id";
+        $db = config::getConnexion();
+        $req = $db->prepare($sql);
+        $req->execute(['id' => $id]);
+    }
+
+    // ─── ARCHIVER / DÉSARCHIVER ────────────────────────────────────────────────
+    public function toggleArchive($id) {
+        $sql = "UPDATE campagne SET estArchive = NOT estArchive WHERE idCampagne = :id";
+        $db = config::getConnexion();
+        $q = $db->prepare($sql);
+        $q->execute(['id' => $id]);
+    }
+
+    // ─── CHANGER STATUT ────────────────────────────────────────────────────────
+    public function changerStatut($id, $statut) {
+        $statutsValides = ['brouillon', 'active', 'terminee', 'annulee'];
+        if (!in_array($statut, $statutsValides)) return;
+        $sql = "UPDATE campagne SET statut = :statut WHERE idCampagne = :id";
+        $db = config::getConnexion();
+        $q = $db->prepare($sql);
+        $q->execute(['statut' => $statut, 'id' => $id]);
+    }
+
+    // ─── STATUTS DISTINCTS ─────────────────────────────────────────────────────
+    public function getStatuts() {
+        return ['brouillon', 'active', 'terminee', 'annulee'];
+    }
+
+    // ─── TOUTES CAMPAGNES (admin, toutes confondues) ───────────────────────────
+    public function afficherToutesCampagnes() {
+        $sql = "SELECT c.*, u.nom AS nomMarque
+                FROM campagne c
+                LEFT JOIN utilisateur u ON u.id = c.idMarque
+                ORDER BY c.idCampagne DESC";
+        $db = config::getConnexion();
+        return $db->query($sql)->fetchAll();
     }
 }
 ?>
