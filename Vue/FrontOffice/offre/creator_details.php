@@ -144,7 +144,7 @@ $isSaved = $idOffre !== null ? in_array($idOffre, $_SESSION['saved_offer_ids'] ?
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invitation Details - Cre8Connect</title>
     <link rel="stylesheet" href="../css/frontoffice.css">
-    <link rel="stylesheet" href="offre.css">
+    <link rel="stylesheet" href="offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre.css')); ?>">
 </head>
 <body>
     <main class="container py-5">

@@ -19,6 +19,7 @@ function translateOfferStatus($status)
 {
     return match ($status) {
         'brouillon' => 'Draft',
+        'pending' => 'Pending launch',
         'publiee' => 'Published',
         'cloturee' => 'Closed',
         'expiree' => 'Expired',
@@ -33,6 +34,7 @@ function offerStatusClass($status)
 {
     return match ($status) {
         'brouillon' => 'status-draft',
+        'pending' => 'status-pending',
         'publiee', 'active' => 'status-published',
         'cloturee', 'fermee', 'closed' => 'status-closed',
         'expiree' => 'status-expired',
@@ -72,9 +74,11 @@ function formatMoney($value)
 if ($idOffre !== null) {
     $offre = $controller->getOffreById($idOffre, $brandId);
     if ($offre) {
-        $users = $controller->getUsersByIds([$offre->getIdCreateurCible()], 'createur');
-        $creator = $users[$offre->getIdCreateurCible()] ?? null;
-        $response = $controller->getOfferResponseByCreator($offre->getIdCreateurCible(), $offre->getIdOffre());
+        if (!$offre->isDraftSansCreateur() && $offre->getIdCreateurCible()) {
+            $users = $controller->getUsersByIds([$offre->getIdCreateurCible()], 'createur');
+            $creator = $users[$offre->getIdCreateurCible()] ?? null;
+            $response = $controller->getOfferResponseByCreator($offre->getIdCreateurCible(), $offre->getIdOffre());
+        }
     }
 
     if (!$offre) {
@@ -83,6 +87,9 @@ if ($idOffre !== null) {
 } else {
     $error = 'Invalid parameters for displaying the offer.';
 }
+
+$displayStatus = $offre ? $offre->getDisplayStatusKey() : 'brouillon';
+$publicationLabel = $offre && $offre->isPendingPublication() ? 'Goes live' : 'Published';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -91,7 +98,7 @@ if ($idOffre !== null) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Offer Details - Cre8Connect</title>
     <link rel="stylesheet" href="../css/frontoffice.css">
-    <link rel="stylesheet" href="offre.css">
+    <link rel="stylesheet" href="offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre.css')); ?>">
 </head>
 <body>
     <main class="container py-5">
@@ -114,9 +121,9 @@ if ($idOffre !== null) {
                             <p class="lead text-muted mb-0"><?php echo htmlspecialchars($offre->getDescription()); ?></p>
                         </div>
                         <div class="offer-meta">
-                            <span class="offer-status <?php echo htmlspecialchars(offerStatusClass($offre->getStatutOffre())); ?>"><?php echo htmlspecialchars(translateOfferStatus($offre->getStatutOffre())); ?></span>
+                            <span class="offer-status <?php echo htmlspecialchars(offerStatusClass($displayStatus)); ?>"><?php echo htmlspecialchars(translateOfferStatus($displayStatus)); ?></span>
                             <span class="offer-chip"><?php echo htmlspecialchars(formatMoney($offre->getBudgetPropose())); ?></span>
-                            <span class="offer-chip">Published: <?php echo htmlspecialchars($offre->getDatePublication()); ?></span>
+                            <span class="offer-chip"><?php echo htmlspecialchars($publicationLabel); ?>: <?php echo htmlspecialchars($offre->getDatePublication()); ?></span>
                         </div>
                     </div>
                 </section>
@@ -129,7 +136,7 @@ if ($idOffre !== null) {
                             <div class="offer-detail-list mt-4">
                                 <div class="offer-detail-item">
                                     <strong>Target creator</strong>
-                                    <span><?php echo htmlspecialchars($creator['nom'] ?? 'Unknown creator'); ?></span>
+                                    <span><?php echo htmlspecialchars($creator['nom'] ?? 'No creator selected yet'); ?></span>
                                     <p><?php echo htmlspecialchars($creator['email'] ?? ''); ?></p>
                                 </div>
                                 <div class="offer-detail-item">
@@ -208,7 +215,13 @@ if ($idOffre !== null) {
                             <h2 class="section-title">Actions</h2>
                             <div class="compact-actions mt-4">
                                 <a class="btn btn-primary" href="brand_edit.php?idOffre=<?php echo (int) $offre->getIdOffre(); ?>">Edit offer</a>
-                                <form method="post" action="brand_delete.php" onsubmit="return confirm('Are you sure you want to delete this offer?');">
+                                <form
+                                    method="post"
+                                    action="brand_delete.php"
+                                    data-delete-confirm
+                                    data-delete-title="<?php echo htmlspecialchars($offre->getTitre(), ENT_QUOTES); ?>"
+                                    data-delete-creator="<?php echo htmlspecialchars($creator['nom'] ?? 'No creator selected yet', ENT_QUOTES); ?>"
+                                >
                                     <input type="hidden" name="idOffre" value="<?php echo (int) $offre->getIdOffre(); ?>">
                                     <button type="submit" class="btn btn-outline-danger">Delete</button>
                                 </form>
@@ -220,5 +233,6 @@ if ($idOffre !== null) {
             <?php endif; ?>
         </div>
     </main>
+    <script src="offre-delete-confirm.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre-delete-confirm.js')); ?>"></script>
 </body>
 </html>

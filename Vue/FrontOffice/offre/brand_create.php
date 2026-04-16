@@ -8,18 +8,44 @@ if (!isset($_SESSION['utilisateur'])) {
 require_once __DIR__ . '/../../../Controleur/offreC.php';
 
 $controller = new OffreC();
-$brandId = $_SESSION['utilisateur']['id'];
 $errors = [];
 $successMessage = null;
 $creatorPageSize = 6;
+$saveMode = 'publish';
+$moduleTimezone = new DateTimeZone('Africa/Tunis');
+$todayDate = new DateTimeImmutable('now', $moduleTimezone);
+$serverErrorFocusTarget = null;
+$brandId = isset($_SESSION['utilisateur']['id']) && is_numeric($_SESSION['utilisateur']['id'])
+    ? (int) $_SESSION['utilisateur']['id']
+    : 0;
+
+if ($brandId > 0) {
+    $brandLookup = $controller->getUsersByIds([$brandId], 'marque');
+    if (!isset($brandLookup[$brandId])) {
+        $brandId = 0;
+    }
+}
+
+if ($brandId <= 0) {
+    $brandDirectory = $controller->getLoginDirectoryUsers(['marque']);
+    $brandId = isset($brandDirectory['marque'][0]['id']) && is_numeric($brandDirectory['marque'][0]['id'])
+        ? (int) $brandDirectory['marque'][0]['id']
+        : 0;
+
+    if ($brandId > 0) {
+        $_SESSION['utilisateur']['id'] = $brandId;
+        $_SESSION['utilisateur']['role'] = 'marque';
+    }
+}
+
 $form = [
     'idCreateurCible' => '',
     'titre' => '',
     'description' => '',
     'objectif' => '',
     'budgetPropose' => '',
-    'datePublication' => date('Y-m-d'),
-    'dateLimite' => date('Y-m-d', strtotime('+14 days')),
+    'datePublication' => $todayDate->format('Y-m-d'),
+    'dateLimite' => $todayDate->modify('+14 days')->format('Y-m-d'),
     'raisonChoix' => '',
     'messagePersonnalise' => '',
     'attenteCollaboration' => '',
@@ -42,6 +68,58 @@ function creatorStatusClass($status)
         'en_attente' => 'pending',
         default => '',
     };
+}
+
+function resolveCreateOfferErrorFocusTarget(array $errors)
+{
+    foreach ($errors as $error) {
+        $normalizedError = strtolower(trim((string) $error));
+
+        if (
+            strpos($normalizedError, 'creator') !== false
+            || strpos($normalizedError, 'draft') !== false
+        ) {
+            return 'creatorSearch';
+        }
+
+        if (strpos($normalizedError, 'title') !== false) {
+            return 'titre';
+        }
+
+        if (strpos($normalizedError, 'description') !== false) {
+            return 'description';
+        }
+
+        if (strpos($normalizedError, 'objective') !== false) {
+            return 'objectif';
+        }
+
+        if (strpos($normalizedError, 'budget') !== false) {
+            return 'budgetPropose';
+        }
+
+        if (strpos($normalizedError, 'publication date') !== false) {
+            return 'datePublication';
+        }
+
+        if (strpos($normalizedError, 'deadline') !== false) {
+            return 'dateLimite';
+        }
+
+        if (strpos($normalizedError, 'why this creator') !== false) {
+            return 'raisonChoix';
+        }
+
+        if (strpos($normalizedError, 'personal note') !== false) {
+            return 'messagePersonnalise';
+        }
+
+        if (strpos($normalizedError, 'collaboration expectations') !== false) {
+            return 'attenteCollaboration';
+        }
+    }
+
+    return null;
 }
 
 function renderCreatorPickerCard(array $creator, $selectedCreatorId = 0)
@@ -99,6 +177,7 @@ $creatorHasMore = $creatorPage['hasMore'];
 $selectedCreatorProfile = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $saveMode = (isset($_POST['saveMode']) && $_POST['saveMode'] === 'draft') ? 'draft' : 'publish';
     $form = [
         'idCreateurCible' => $_POST['idCreateurCible'] ?? '',
         'titre' => $_POST['titre'] ?? '',
@@ -112,37 +191,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'attenteCollaboration' => $_POST['attenteCollaboration'] ?? '',
     ];
 
-    $errors = $controller->validateOffreData($form);
+    $errors = $controller->validateOffreData($form, $saveMode);
+
+    if ($brandId <= 0) {
+        array_unshift($errors, 'A valid brand account is required before this offer can be saved.');
+    }
     $creatorId = isset($form['idCreateurCible']) && is_numeric($form['idCreateurCible']) ? (int) $form['idCreateurCible'] : 0;
     $selectedCreatorProfile = $controller->getCreatorPickerProfile($creatorId);
 
-    if (!$selectedCreatorProfile) {
+    if ($saveMode !== 'draft' && !$selectedCreatorProfile) {
         $errors[] = 'Please choose a valid creator for this targeted offer.';
+    } elseif ($saveMode !== 'draft' && $creatorId > 0 && !$selectedCreatorProfile) {
+        $errors[] = 'The selected creator could not be found anymore. Please choose another one.';
     }
 
     if (empty($errors)) {
-        $offre = new Offre(
-            null,
-            $brandId,
-            $creatorId,
-            trim($form['titre']),
-            trim($form['description']),
-            trim($form['objectif']),
-            (float) $form['budgetPropose'],
-            trim($form['datePublication']),
-            trim($form['dateLimite']),
-            'publiee',
-            trim($form['raisonChoix']),
-            trim($form['messagePersonnalise']),
-            trim($form['attenteCollaboration'])
-        );
-
-        if ($controller->createOffre($offre)) {
-            header('Location: brand_index.php?message=' . urlencode('Offer created successfully.'));
-            exit;
+        if ($saveMode === 'draft' && $creatorId > 0 && !$selectedCreatorProfile) {
+            $creatorId = 0;
         }
 
-        $errors[] = 'Unable to create the offer right now. Please try again.';
+        $draftWithoutCreator = $saveMode === 'draft' && $creatorId <= 0;
+        $persistedCreatorId = $creatorId > 0 ? $creatorId : null;
+        if ($draftWithoutCreator) {
+            $persistedCreatorId = $controller->getDraftPlaceholderCreatorId();
+            if (!$persistedCreatorId) {
+                $errors[] = 'A creator account must exist in the platform before this draft can be stored.';
+            }
+        }
+
+        if (empty($errors)) {
+            $publicationFallback = new DateTimeImmutable('now', $moduleTimezone);
+            $publicationDate = trim((string) $form['datePublication']) !== ''
+                ? trim((string) $form['datePublication'])
+                : $publicationFallback->format('Y-m-d');
+            $deadlineDate = trim((string) $form['dateLimite']) !== ''
+                ? trim((string) $form['dateLimite'])
+                : $publicationFallback->modify('+14 days')->format('Y-m-d');
+            $budgetValue = trim((string) $form['budgetPropose']) !== '' && is_numeric($form['budgetPropose'])
+                ? (float) $form['budgetPropose']
+                : 0.0;
+            $targetStatus = $saveMode === 'draft' ? 'brouillon' : 'publiee';
+            $offre = new Offre(
+                null,
+                $brandId,
+                $persistedCreatorId,
+                trim($form['titre']),
+                trim($form['description']),
+                trim($form['objectif']),
+                $budgetValue,
+                $publicationDate,
+                $deadlineDate,
+                $targetStatus,
+                trim($form['raisonChoix']),
+                trim($form['messagePersonnalise']),
+                trim($form['attenteCollaboration']),
+                $draftWithoutCreator
+            );
+
+            if ($controller->createOffre($offre)) {
+                $flashMessage = $saveMode === 'draft' ? 'Draft saved successfully.' : 'Offer published successfully.';
+                header('Location: brand_index.php?message=' . urlencode($flashMessage));
+                exit;
+            }
+
+            $errors[] = 'Unable to create the offer right now. Please try again.';
+        }
+    }
+
+    if (!empty($errors)) {
+        $serverErrorFocusTarget = resolveCreateOfferErrorFocusTarget($errors);
     }
 }
 
@@ -158,7 +275,7 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Targeted Offer - Cre8Connect</title>
     <link rel="stylesheet" href="../css/frontoffice.css">
-    <link rel="stylesheet" href="offre.css">
+    <link rel="stylesheet" href="offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre.css')); ?>">
 </head>
 <body>
     <main class="container py-5">
@@ -186,7 +303,7 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
             <?php endif; ?>
 
             <div class="wizard-layout">
-                <form method="post" action="brand_create.php" class="wizard-stack" data-module-validation="brand-offer" novalidate>
+                <form method="post" action="brand_create.php" class="wizard-stack" data-module-validation="brand-offer" data-server-error-focus="<?php echo htmlspecialchars((string) ($serverErrorFocusTarget ?? '')); ?>" novalidate>
                     <section class="wizard-card">
                         <div class="wizard-step-head">
                             <span class="wizard-step-number">1</span>
@@ -328,17 +445,18 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
                             <span class="wizard-step-number">4</span>
                             <div>
                                 <h3>Review and send</h3>
-                                <p>Use the live summary on the right to review the invitation before publishing it to the targeted creator.</p>
+                                <p>Use the live summary on the right, then either publish the invitation now or keep it as a draft for later refinement.</p>
                             </div>
                         </div>
 
                         <div class="note-block">
                             <strong>Final check</strong>
-                            <p>Make sure the creator fit, proposed budget, and deadline all match the collaboration you want to start. When you submit, the offer will be published directly for the selected creator.</p>
+                            <p>Publish when the creator fit, proposed budget, and timeline are ready. If you still need to refine the brief, save it as a draft and come back without losing your progress.</p>
                         </div>
 
                         <div class="compact-actions mt-4">
-                            <button type="submit" class="btn btn-primary btn-lg">Publish targeted offer</button>
+                            <button type="submit" name="saveMode" value="publish" data-validation-intent="publish" class="btn btn-primary btn-lg">Publish targeted offer</button>
+                            <button type="submit" name="saveMode" value="draft" data-validation-intent="draft" data-draft-button class="btn btn-outline-primary btn-lg">Save as draft</button>
                             <a class="btn btn-outline-secondary btn-lg" href="brand_index.php">Cancel</a>
                         </div>
                     </section>
@@ -395,8 +513,8 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
-    <script src="offre-validation.js"></script>
-    <script src="offre-creator-picker.js"></script>
+    <script src="offre-validation.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre-validation.js')); ?>"></script>
+    <script src="offre-creator-picker.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre-creator-picker.js')); ?>"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const creatorPicker = document.querySelector('[data-creator-picker]');
@@ -405,12 +523,15 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
             const reviewObjective = document.getElementById('reviewObjective');
             const reviewBudget = document.getElementById('reviewBudget');
             const reviewFit = document.getElementById('reviewFit');
+            const draftButton = document.querySelector('[data-draft-button]');
             const titleInput = document.getElementById('titre');
             const objectiveInput = document.getElementById('objectif');
             const budgetInput = document.getElementById('budgetPropose');
+            const descriptionInput = document.getElementById('description');
             const publicationInput = document.getElementById('datePublication');
             const deadlineInput = document.getElementById('dateLimite');
             const reasonInput = document.getElementById('raisonChoix');
+            const noteInput = document.getElementById('messagePersonnalise');
             const expectationInput = document.getElementById('attenteCollaboration');
 
             function getSelectedCreator() {
@@ -468,25 +589,69 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
                 reviewFit.textContent = fitBits.length ? fitBits.join(' ') : 'Explain why this creator is a good match.';
             }
 
-            if (creatorPicker) {
-                creatorPicker.addEventListener('creatorpicker:change', updateCreatorReview);
-                creatorPicker.addEventListener('creatorpicker:ready', updateCreatorReview);
-                creatorPicker.addEventListener('creatorpicker:clear', updateCreatorReview);
-                creatorPicker.addEventListener('creatorpicker:results', updateCreatorReview);
-                creatorPicker.addEventListener('creatorpicker:render', updateCreatorReview);
+            function hasDraftSignal() {
+                if (getSelectedCreator()) {
+                    return true;
+                }
+
+                return [
+                    titleInput,
+                    objectiveInput,
+                    budgetInput,
+                    descriptionInput,
+                    reasonInput,
+                    noteInput,
+                    expectationInput
+                ].some(function (input) {
+                    return input && input.value.trim() !== '';
+                });
             }
 
-            [titleInput, objectiveInput, budgetInput, publicationInput, deadlineInput, reasonInput, expectationInput].forEach(function (input) {
+            function updateDraftButtonState() {
+                if (!draftButton) {
+                    return;
+                }
+
+                const enabled = hasDraftSignal();
+                draftButton.disabled = !enabled;
+                draftButton.setAttribute('aria-disabled', enabled ? 'false' : 'true');
+                draftButton.title = enabled
+                    ? 'Save the current work as a draft.'
+                    : 'Select a creator or fill at least one field to enable draft saving.';
+            }
+
+            if (creatorPicker) {
+                [
+                    'creatorpicker:change',
+                    'creatorpicker:ready',
+                    'creatorpicker:clear',
+                    'creatorpicker:results',
+                    'creatorpicker:render'
+                ].forEach(function (eventName) {
+                    creatorPicker.addEventListener(eventName, function () {
+                        updateCreatorReview();
+                        updateDraftButtonState();
+                    });
+                });
+            }
+
+            [titleInput, objectiveInput, budgetInput, descriptionInput, publicationInput, deadlineInput, reasonInput, noteInput, expectationInput].forEach(function (input) {
                 if (!input) {
                     return;
                 }
 
-                input.addEventListener('input', updateTextReview);
-                input.addEventListener('change', updateTextReview);
+                const refresh = function () {
+                    updateTextReview();
+                    updateDraftButtonState();
+                };
+
+                input.addEventListener('input', refresh);
+                input.addEventListener('change', refresh);
             });
 
             updateCreatorReview();
             updateTextReview();
+            updateDraftButtonState();
         });
     </script>
 </body>

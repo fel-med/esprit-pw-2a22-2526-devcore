@@ -17,6 +17,7 @@ class Offre
     private $raisonChoix;
     private $messagePersonnalise;
     private $attenteCollaboration;
+    private $draftSansCreateur;
 
     public function __construct(
         $idOffre = null,
@@ -31,7 +32,8 @@ class Offre
         $statutOffre = null,
         $raisonChoix = null,
         $messagePersonnalise = null,
-        $attenteCollaboration = null
+        $attenteCollaboration = null,
+        $draftSansCreateur = null
     ) {
         $this->idOffre = $idOffre;
         $this->idMarque = $idMarque;
@@ -45,6 +47,7 @@ class Offre
         $this->raisonChoix = '';
         $this->messagePersonnalise = '';
         $this->attenteCollaboration = '';
+        $this->draftSansCreateur = false;
 
         $this->setDescription($description);
 
@@ -56,6 +59,9 @@ class Offre
         }
         if ($attenteCollaboration !== null) {
             $this->setAttenteCollaboration($attenteCollaboration);
+        }
+        if ($draftSansCreateur !== null) {
+            $this->setDraftSansCreateur($draftSansCreateur);
         }
     }
 
@@ -111,6 +117,7 @@ class Offre
         $this->raisonChoix = $parts['raisonChoix'];
         $this->messagePersonnalise = $parts['messagePersonnalise'];
         $this->attenteCollaboration = $parts['attenteCollaboration'];
+        $this->draftSansCreateur = $parts['draftSansCreateur'];
     }
 
     public function getDescriptionForStorage()
@@ -120,7 +127,8 @@ class Offre
             'raisonChoix' => trim((string) $this->raisonChoix),
             'messagePersonnalise' => trim((string) $this->messagePersonnalise),
             'attenteCollaboration' => trim((string) $this->attenteCollaboration),
-        ], static fn($value) => $value !== '');
+            'draftSansCreateur' => $this->draftSansCreateur ? 1 : null,
+        ], static fn($value) => $value !== '' && $value !== null);
 
         if (empty($meta)) {
             return $description;
@@ -201,6 +209,32 @@ class Offre
         $this->statutOffre = $statutOffre;
     }
 
+    public function isPendingPublication($referenceDate = 'today')
+    {
+        if ((string) $this->statutOffre !== 'publiee') {
+            return false;
+        }
+
+        $publicationDate = $this->normalizeComparableDate($this->datePublication);
+        $comparisonDate = $this->normalizeComparableDate($referenceDate);
+
+        if ($publicationDate === null || $comparisonDate === null) {
+            return false;
+        }
+
+        return $publicationDate > $comparisonDate;
+    }
+
+    public function isLivePublication($referenceDate = 'today')
+    {
+        return (string) $this->statutOffre === 'publiee' && !$this->isPendingPublication($referenceDate);
+    }
+
+    public function getDisplayStatusKey($referenceDate = 'today')
+    {
+        return $this->isPendingPublication($referenceDate) ? 'pending' : (string) $this->statutOffre;
+    }
+
     public function getRaisonChoix()
     {
         return $this->raisonChoix;
@@ -236,6 +270,16 @@ class Offre
         return $this->raisonChoix !== '' || $this->messagePersonnalise !== '' || $this->attenteCollaboration !== '';
     }
 
+    public function isDraftSansCreateur()
+    {
+        return $this->draftSansCreateur;
+    }
+
+    public function setDraftSansCreateur($draftSansCreateur)
+    {
+        $this->draftSansCreateur = (bool) $draftSansCreateur;
+    }
+
     private function splitDescriptionPayload($value)
     {
         $description = trim((string) $value);
@@ -243,6 +287,7 @@ class Offre
             'raisonChoix' => '',
             'messagePersonnalise' => '',
             'attenteCollaboration' => '',
+            'draftSansCreateur' => false,
         ];
 
         if ($description !== '' && preg_match(self::META_PATTERN, $description, $matches)) {
@@ -251,6 +296,7 @@ class Offre
                 $meta['raisonChoix'] = trim((string) ($decoded['raisonChoix'] ?? ''));
                 $meta['messagePersonnalise'] = trim((string) ($decoded['messagePersonnalise'] ?? ''));
                 $meta['attenteCollaboration'] = trim((string) ($decoded['attenteCollaboration'] ?? ''));
+                $meta['draftSansCreateur'] = !empty($decoded['draftSansCreateur']);
                 $description = trim((string) preg_replace(self::META_PATTERN, '', $description));
             }
         }
@@ -260,7 +306,27 @@ class Offre
             'raisonChoix' => $meta['raisonChoix'],
             'messagePersonnalise' => $meta['messagePersonnalise'],
             'attenteCollaboration' => $meta['attenteCollaboration'],
+            'draftSansCreateur' => $meta['draftSansCreateur'],
         ];
+    }
+
+    private function normalizeComparableDate($value)
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        $strictDate = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+        if ($strictDate && $strictDate->format('Y-m-d') === $value) {
+            return $strictDate->format('Y-m-d');
+        }
+
+        try {
+            return (new DateTimeImmutable($value))->format('Y-m-d');
+        } catch (Exception $exception) {
+            return null;
+        }
     }
 
     public static function fromArray(array $data)
@@ -278,7 +344,8 @@ class Offre
             $data['statutOffre'] ?? null,
             $data['raisonChoix'] ?? null,
             $data['messagePersonnalise'] ?? null,
-            $data['attenteCollaboration'] ?? null
+            $data['attenteCollaboration'] ?? null,
+            $data['draftSansCreateur'] ?? null
         );
     }
 }

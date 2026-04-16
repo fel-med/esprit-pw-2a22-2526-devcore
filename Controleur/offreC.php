@@ -6,10 +6,16 @@ require_once __DIR__ . '/../config.php';
 class OffreC
 {
     private $pdo;
+    private const MODULE_TIMEZONE = 'Africa/Tunis';
 
     public function __construct()
     {
         $this->pdo = config::getConnexion();
+    }
+
+    private function getModuleTimezone()
+    {
+        return new DateTimeZone(self::MODULE_TIMEZONE);
     }
 
     private function rowToOffre(array $row)
@@ -175,7 +181,7 @@ class OffreC
                 u.email,
                 u.statut,
                 COUNT(o.idOffre) AS targetedOffers,
-                SUM(CASE WHEN o.statutOffre = 'publiee' THEN 1 ELSE 0 END) AS liveOffers
+                SUM(CASE WHEN o.statutOffre = 'publiee' AND o.datePublication <= CURDATE() THEN 1 ELSE 0 END) AS liveOffers
             FROM utilisateur u
             LEFT JOIN offre o ON o.idCreateurCible = u.id
             WHERE u.role = :role AND u.statut != :blocked
@@ -246,7 +252,7 @@ class OffreC
                 u.email,
                 u.statut,
                 COUNT(o.idOffre) AS targetedOffers,
-                SUM(CASE WHEN o.statutOffre = 'publiee' THEN 1 ELSE 0 END) AS liveOffers
+                SUM(CASE WHEN o.statutOffre = 'publiee' AND o.datePublication <= CURDATE() THEN 1 ELSE 0 END) AS liveOffers
             FROM utilisateur u
             LEFT JOIN offre o ON o.idCreateurCible = u.id
             WHERE u.role = :role AND u.statut != :blocked AND u.id = :creatorId
@@ -264,6 +270,26 @@ class OffreC
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         return $row ? $this->normalizeCreatorPickerRow($row) : null;
+    }
+
+    public function getDraftPlaceholderCreatorId()
+    {
+        $stmt = $this->pdo->query("
+            SELECT id
+            FROM utilisateur
+            WHERE role = 'createur' AND statut != 'bloque'
+            ORDER BY
+                CASE statut
+                    WHEN 'actif' THEN 0
+                    WHEN 'en_attente' THEN 1
+                    ELSE 2
+                END,
+                id ASC
+            LIMIT 1
+        ");
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row ? (int) $row['id'] : null;
     }
 
     public function getCandidatureCountByOffre($idOffre)
@@ -392,7 +418,7 @@ class OffreC
 
     public function getOffresByCreateurCible($idCreateurCible)
     {
-        $sql = 'SELECT * FROM offre WHERE idCreateurCible = :idCreateurCible AND statutOffre = :statut ORDER BY datePublication DESC, idOffre DESC';
+        $sql = 'SELECT * FROM offre WHERE idCreateurCible = :idCreateurCible AND statutOffre = :statut AND datePublication <= CURDATE() ORDER BY datePublication DESC, idOffre DESC';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'idCreateurCible' => $idCreateurCible,
@@ -404,7 +430,7 @@ class OffreC
 
     public function searchOffers($idCreateurCible, $keyword = null, $budgetMin = null, $budgetMax = null, $dateLimite = null)
     {
-        $sql = 'SELECT * FROM offre WHERE idCreateurCible = :idCreateurCible AND statutOffre = :statut';
+        $sql = 'SELECT * FROM offre WHERE idCreateurCible = :idCreateurCible AND statutOffre = :statut AND datePublication <= CURDATE()';
         $params = [
             'idCreateurCible' => $idCreateurCible,
             'statut' => 'publiee',
@@ -486,7 +512,7 @@ class OffreC
 
     public function getPublishedOffreById($idOffre, $idCreateurCible)
     {
-        $sql = 'SELECT * FROM offre WHERE idOffre = :idOffre AND idCreateurCible = :idCreateurCible AND statutOffre = :statut';
+        $sql = 'SELECT * FROM offre WHERE idOffre = :idOffre AND idCreateurCible = :idCreateurCible AND statutOffre = :statut AND datePublication <= CURDATE()';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'idOffre' => $idOffre,
@@ -768,10 +794,14 @@ class OffreC
         return min(45, $diff);
     }
 
-    public function validateOffreData(array $data)
+    public function validateOffreData(array $data, $mode = 'publish')
     {
         $errors = [];
+        $isDraft = $mode === 'draft';
+        $timezone = $this->getModuleTimezone();
+        $today = new DateTime('today', $timezone);
 
+        $idCreateurCible = trim((string) ($data['idCreateurCible'] ?? ''));
         $titre = trim((string) ($data['titre'] ?? ''));
         $description = trim((string) ($data['description'] ?? ''));
         $objectif = trim((string) ($data['objectif'] ?? ''));
@@ -781,6 +811,23 @@ class OffreC
         $raisonChoix = trim((string) ($data['raisonChoix'] ?? ''));
         $messagePersonnalise = trim((string) ($data['messagePersonnalise'] ?? ''));
         $attenteCollaboration = trim((string) ($data['attenteCollaboration'] ?? ''));
+        $hasCreator = $idCreateurCible !== '' && is_numeric($idCreateurCible) && (int) $idCreateurCible > 0;
+
+        if ($isDraft) {
+            $hasDraftSignal = $hasCreator
+                || $titre !== ''
+                || $description !== ''
+                || $objectif !== ''
+                || $budgetPropose !== ''
+                || $raisonChoix !== ''
+                || $messagePersonnalise !== ''
+                || $attenteCollaboration !== '';
+
+            if (!$hasDraftSignal) {
+                $errors[] = 'Start the draft by selecting a creator or filling at least one offer field.';
+            }
+            return $errors;
+        }
 
         if ($titre === '') {
             $errors[] = 'Title is required.';
@@ -802,18 +849,32 @@ class OffreC
             $errors[] = 'Proposed budget must be greater than zero.';
         }
 
-        $publicationDate = DateTime::createFromFormat('Y-m-d', $datePublication);
-        if (!$publicationDate || $publicationDate->format('Y-m-d') !== $datePublication) {
+        $publicationDate = null;
+        if ($datePublication !== '') {
+            $publicationDate = DateTime::createFromFormat('!Y-m-d', $datePublication, $timezone);
+            if (!$publicationDate || $publicationDate->format('Y-m-d') !== $datePublication) {
+                $errors[] = 'Publication date must use the YYYY-MM-DD format.';
+            } elseif ($publicationDate < $today) {
+                $errors[] = 'Publication date cannot be in the past.';
+            }
+        } else {
             $errors[] = 'Publication date must use the YYYY-MM-DD format.';
         }
 
-        $limiteDate = DateTime::createFromFormat('Y-m-d', $dateLimite);
-        if (!$limiteDate || $limiteDate->format('Y-m-d') !== $dateLimite) {
+        $limiteDate = null;
+        if ($dateLimite !== '') {
+            $limiteDate = DateTime::createFromFormat('!Y-m-d', $dateLimite, $timezone);
+            if (!$limiteDate || $limiteDate->format('Y-m-d') !== $dateLimite) {
+                $errors[] = 'Deadline must use the YYYY-MM-DD format.';
+            } elseif ($limiteDate < $today) {
+                $errors[] = 'Deadline cannot be in the past.';
+            }
+        } else {
             $errors[] = 'Deadline must use the YYYY-MM-DD format.';
         }
 
-        if ($publicationDate && $limiteDate && $publicationDate > $limiteDate) {
-            $errors[] = 'Publication date must be earlier than or equal to the deadline.';
+        if ($publicationDate && $limiteDate && $publicationDate >= $limiteDate) {
+            $errors[] = 'Deadline must be later than the publication date.';
         }
 
         if (strlen($raisonChoix) > 600) {

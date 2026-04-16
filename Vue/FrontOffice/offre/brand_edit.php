@@ -13,6 +13,7 @@ $creatorPageSize = 6;
 $errors = [];
 $offer = null;
 $currentResponse = null;
+$saveMode = 'publish';
 $idOffre = isset($_GET['idOffre']) && is_numeric($_GET['idOffre']) ? (int) $_GET['idOffre'] : null;
 $form = [
     'idCreateurCible' => '',
@@ -124,9 +125,10 @@ $creatorHasMore = $creatorPage['hasMore'];
 $selectedCreatorProfile = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $saveMode = (isset($_POST['saveMode']) && $_POST['saveMode'] === 'draft') ? 'draft' : 'publish';
     $idOffre = isset($_POST['idOffre']) && is_numeric($_POST['idOffre']) ? (int) $_POST['idOffre'] : null;
     $offer = $idOffre ? $controller->getOffreById($idOffre, $brandId) : null;
-    $currentStatus = $offer ? $offer->getStatutOffre() : 'publiee';
+    $targetStatus = $saveMode === 'draft' ? 'brouillon' : 'publiee';
 
     $form = [
         'idCreateurCible' => $_POST['idCreateurCible'] ?? '',
@@ -145,44 +147,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'The offer you are trying to edit could not be found.';
     }
 
-    $errors = array_merge($errors, $controller->validateOffreData($form));
+    $errors = array_merge($errors, $controller->validateOffreData($form, $saveMode));
 
     $creatorId = isset($form['idCreateurCible']) && is_numeric($form['idCreateurCible']) ? (int) $form['idCreateurCible'] : 0;
     $selectedCreatorProfile = $controller->getCreatorPickerProfile($creatorId);
 
-    if (!$selectedCreatorProfile) {
+    if ($saveMode !== 'draft' && !$selectedCreatorProfile) {
         $errors[] = 'Please choose a valid creator for this targeted offer.';
+    } elseif ($creatorId > 0 && !$selectedCreatorProfile) {
+        $errors[] = 'The selected creator could not be found anymore. Please choose another one.';
     }
 
     if (empty($errors)) {
+        $draftWithoutCreator = $saveMode === 'draft' && $creatorId <= 0;
+        $persistedCreatorId = $creatorId > 0 ? $creatorId : null;
+        if ($draftWithoutCreator) {
+            $persistedCreatorId = $controller->getDraftPlaceholderCreatorId();
+            if (!$persistedCreatorId) {
+                $errors[] = 'A creator account must exist in the platform before this draft can be stored.';
+            }
+        }
+
+        if (empty($errors)) {
+        $publicationDate = trim((string) $form['datePublication']) !== '' ? trim((string) $form['datePublication']) : date('Y-m-d');
+        $deadlineDate = trim((string) $form['dateLimite']) !== ''
+            ? trim((string) $form['dateLimite'])
+            : date('Y-m-d', strtotime($publicationDate . ' +14 days'));
+        $budgetValue = trim((string) $form['budgetPropose']) !== '' && is_numeric($form['budgetPropose'])
+            ? (float) $form['budgetPropose']
+            : 0.0;
         $updatedOffer = new Offre(
             $idOffre,
             $brandId,
-            $creatorId,
+            $persistedCreatorId,
             trim($form['titre']),
             trim($form['description']),
             trim($form['objectif']),
-            (float) $form['budgetPropose'],
-            trim($form['datePublication']),
-            trim($form['dateLimite']),
-            $currentStatus ?: 'publiee',
+            $budgetValue,
+            $publicationDate,
+            $deadlineDate,
+            $targetStatus,
             trim($form['raisonChoix']),
             trim($form['messagePersonnalise']),
-            trim($form['attenteCollaboration'])
+            trim($form['attenteCollaboration']),
+            $draftWithoutCreator
         );
 
         if ($controller->updateOffre($updatedOffer)) {
-            header('Location: brand_index.php?message=' . urlencode('Offer updated successfully.'));
+            $flashMessage = $saveMode === 'draft' ? 'Draft saved successfully.' : 'Offer published successfully.';
+            header('Location: brand_index.php?message=' . urlencode($flashMessage));
             exit;
         }
 
         $errors[] = 'Unable to update the offer right now.';
+        }
     }
 } elseif ($idOffre) {
     $offer = $controller->getOffreById($idOffre, $brandId);
     if ($offer) {
         $form = [
-            'idCreateurCible' => $offer->getIdCreateurCible(),
+            'idCreateurCible' => $offer->isDraftSansCreateur() ? '' : $offer->getIdCreateurCible(),
             'titre' => $offer->getTitre(),
             'description' => $offer->getDescription(),
             'objectif' => $offer->getObjectif(),
@@ -193,7 +217,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'messagePersonnalise' => $offer->getMessagePersonnalise(),
             'attenteCollaboration' => $offer->getAttenteCollaboration(),
         ];
-        $currentResponse = $controller->getOfferResponseByCreator($offer->getIdCreateurCible(), $offer->getIdOffre());
+        $currentResponse = !$offer->isDraftSansCreateur() && $offer->getIdCreateurCible()
+            ? $controller->getOfferResponseByCreator($offer->getIdCreateurCible(), $offer->getIdOffre())
+            : null;
     }
 }
 
@@ -201,6 +227,10 @@ $selectedCreatorId = isset($form['idCreateurCible']) && is_numeric($form['idCrea
 if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
     $selectedCreatorProfile = $controller->getCreatorPickerProfile($selectedCreatorId);
 }
+
+$isDraftOffer = $offer && $offer->getStatutOffre() === 'brouillon';
+$publishButtonLabel = $isDraftOffer ? 'Publish offer' : 'Publish updates';
+$draftButtonLabel = $isDraftOffer ? 'Keep as draft' : 'Save as draft';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -209,7 +239,7 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Targeted Offer - Cre8Connect</title>
     <link rel="stylesheet" href="../css/frontoffice.css">
-    <link rel="stylesheet" href="offre.css">
+    <link rel="stylesheet" href="offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre.css')); ?>">
 </head>
 <body>
     <main class="container py-5">
@@ -387,12 +417,13 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
                                 <span class="wizard-step-number">4</span>
                                 <div>
                                     <h3>Save the improved offer</h3>
-                                    <p>The live summary updates instantly, so you can review the final invitation before saving.</p>
+                                    <p>The live summary updates instantly, so you can either publish the current version or keep refining it as a draft.</p>
                                 </div>
                             </div>
 
                             <div class="compact-actions">
-                                <button type="submit" class="btn btn-primary btn-lg">Save offer changes</button>
+                                <button type="submit" name="saveMode" value="publish" class="btn btn-primary btn-lg"><?php echo htmlspecialchars($publishButtonLabel); ?></button>
+                                <button type="submit" name="saveMode" value="draft" class="btn btn-outline-primary btn-lg"><?php echo htmlspecialchars($draftButtonLabel); ?></button>
                                 <a class="btn btn-outline-secondary btn-lg" href="brand_details.php?idOffre=<?php echo (int) $idOffre; ?>">Cancel</a>
                             </div>
                         </section>

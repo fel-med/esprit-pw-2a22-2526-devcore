@@ -16,6 +16,7 @@ function translateOfferStatus($status)
 {
     return match ($status) {
         'brouillon' => 'Draft',
+        'pending' => 'Pending launch',
         'publiee' => 'Published',
         'cloturee' => 'Closed',
         'expiree' => 'Expired',
@@ -30,6 +31,7 @@ function offerStatusClass($status)
 {
     return match ($status) {
         'brouillon' => 'status-draft',
+        'pending' => 'status-pending',
         'publiee', 'active' => 'status-published',
         'cloturee', 'fermee', 'closed' => 'status-closed',
         'expiree' => 'status-expired',
@@ -129,17 +131,20 @@ function buildBrandOfferCards(array $offres, array $creatorMap, array $responseG
     foreach ($offres as $offre) {
         $responses = $responseGroups[$offre->getIdOffre()] ?? [];
         $targetedResponse = null;
+        $hasRealTargetCreator = !$offre->isDraftSansCreateur() && $offre->getIdCreateurCible();
 
-        foreach ($responses as $response) {
-            if ((int) $response['idCreateur'] === (int) $offre->getIdCreateurCible()) {
-                $targetedResponse = $response;
-                break;
+        if ($hasRealTargetCreator) {
+            foreach ($responses as $response) {
+                if ((int) $response['idCreateur'] === (int) $offre->getIdCreateurCible()) {
+                    $targetedResponse = $response;
+                    break;
+                }
             }
         }
 
         $cards[] = [
             'offre' => $offre,
-            'creator' => $creatorMap[$offre->getIdCreateurCible()] ?? null,
+            'creator' => $hasRealTargetCreator ? ($creatorMap[$offre->getIdCreateurCible()] ?? null) : null,
             'responses' => $responses,
             'targetedResponse' => $targetedResponse,
             'isAccepted' => $targetedResponse && isAcceptedTargetResponseStatus($targetedResponse['statutCandidature'] ?? ''),
@@ -210,32 +215,39 @@ if (isset($_GET['notificationPing']) && $_GET['notificationPing'] === '1') {
 $acceptedCount = count($acceptedOfferCards);
 $acceptedOfferIds = array_map(static fn($card) => (int) $card['offre']->getIdOffre(), $acceptedOfferCards);
 
-$publishedCount = 0;
+$liveCount = 0;
+$pendingCount = 0;
 $responseCount = 0;
 $averageBudget = 0;
 $closestDeadline = null;
 $declinedOfferCount = count(array_filter($offerCards, static fn($card) => $card['isDeclined']));
-$averageBudgetCards = array_values(array_filter($offerCards, static fn($card) => !$card['isDeclined']));
-
-if (!empty($averageBudgetCards)) {
-    $averageBudget = array_sum(array_map(static fn($card) => (float) $card['offre']->getBudgetPropose(), $averageBudgetCards)) / count($averageBudgetCards);
-}
+$averageBudgetCards = [];
 
 if (!empty($offerCards)) {
 
     foreach ($offerCards as $card) {
         $offre = $card['offre'];
-        if ($offre->getStatutOffre() === 'publiee') {
-            $publishedCount++;
+        if ($offre->isPendingPublication()) {
+            $pendingCount++;
+        } elseif ($offre->isLivePublication()) {
+            $liveCount++;
+
+            if (!$card['isDeclined']) {
+                $averageBudgetCards[] = $card;
+            }
         }
 
         $responseCount += count($card['responses']);
 
         $deadline = $offre->getDateLimite();
-        if ($deadline && ($closestDeadline === null || $deadline < $closestDeadline)) {
+        if ($offre->isLivePublication() && $deadline && ($closestDeadline === null || $deadline < $closestDeadline)) {
             $closestDeadline = $deadline;
         }
     }
+}
+
+if (!empty($averageBudgetCards)) {
+    $averageBudget = array_sum(array_map(static fn($card) => (float) $card['offre']->getBudgetPropose(), $averageBudgetCards)) / count($averageBudgetCards);
 }
 ?>
 <!DOCTYPE html>
@@ -245,7 +257,7 @@ if (!empty($offerCards)) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Targeted Offers - Cre8Connect</title>
     <link rel="stylesheet" href="../css/frontoffice.css">
-    <link rel="stylesheet" href="offre.css">
+    <link rel="stylesheet" href="offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre.css')); ?>">
 </head>
 <body>
     <main class="container py-5">
@@ -302,7 +314,7 @@ if (!empty($offerCards)) {
                 <div class="notification-banner-list" id="acceptedBannerList">
                     <?php foreach (array_slice($acceptedOfferCards, 0, 3) as $card): ?>
                         <span class="notification-chip">
-                            <?php echo htmlspecialchars($card['offre']->getTitre()); ?> - <?php echo htmlspecialchars($card['creator']['nom'] ?? 'Target creator'); ?>
+                            <?php echo htmlspecialchars($card['offre']->getTitre()); ?> - <?php echo htmlspecialchars($card['creator']['nom'] ?? 'No creator selected yet'); ?>
                         </span>
                     <?php endforeach; ?>
                 </div>
@@ -310,7 +322,7 @@ if (!empty($offerCards)) {
 
             <div id="liveNotificationStack" class="live-notification-stack" aria-live="polite"></div>
 
-            <section class="stats-grid">
+            <section class="stats-grid brand-stats-grid">
                 <article class="stat-card">
                     <span class="stat-label">Total offers</span>
                     <span class="stat-value"><?php echo count($offerCards); ?></span>
@@ -318,8 +330,13 @@ if (!empty($offerCards)) {
                 </article>
                 <article class="stat-card">
                     <span class="stat-label">Live invitations</span>
-                    <span class="stat-value"><?php echo $publishedCount; ?></span>
+                    <span class="stat-value"><?php echo $liveCount; ?></span>
                     <span class="stat-note">Currently published to creators</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Pending launch</span>
+                    <span class="stat-value"><?php echo $pendingCount; ?></span>
+                    <span class="stat-note">Scheduled but not visible yet</span>
                 </article>
                 <article class="stat-card">
                     <span class="stat-label">Creator accepted</span>
@@ -328,12 +345,20 @@ if (!empty($offerCards)) {
                 </article>
                 <article class="stat-card">
                     <span class="stat-label">Average budget</span>
-                    <span class="stat-value"><?php echo count($offerCards) ? htmlspecialchars(formatMoney($averageBudget)) : 'EUR 0.00'; ?></span>
+                    <span class="stat-value"><?php echo count($averageBudgetCards) ? htmlspecialchars(formatMoney($averageBudget)) : 'EUR 0.00'; ?></span>
                     <span class="stat-note">
                         <?php
-                        $budgetNote = $closestDeadline ? 'Closest deadline: ' . htmlspecialchars($closestDeadline) : 'No deadlines scheduled yet';
+                        $budgetNote = $liveCount > 0
+                            ? 'Based on live invitations'
+                            : 'No live invitations yet';
+                        if ($closestDeadline) {
+                            $budgetNote .= '<br />Closest deadline: ' . htmlspecialchars($closestDeadline);
+                        }
                         if ($declinedOfferCount > 0) {
                             $budgetNote .= ' | Declined offers excluded';
+                        }
+                        if ($pendingCount > 0) {
+                            $budgetNote .= ' | Pending launches excluded';
                         }
                         echo $budgetNote;
                         ?>
@@ -351,18 +376,20 @@ if (!empty($offerCards)) {
                         $targetedResponse = $card['targetedResponse'];
                         $isAccepted = $card['isAccepted'];
                         $isDeclined = $card['isDeclined'];
+                        $displayStatus = $offre->getDisplayStatusKey();
+                        $publicationLabel = $offre->isPendingPublication() ? 'Goes live' : 'Published';
                         ?>
                         <article
                             class="offer-card<?php echo $isAccepted ? ' is-accepted' : ($isDeclined ? ' is-declined' : ''); ?>"
                             data-offer-id="<?php echo (int) $offre->getIdOffre(); ?>"
                             data-offer-title="<?php echo htmlspecialchars($offre->getTitre(), ENT_QUOTES); ?>"
-                            data-creator-name="<?php echo htmlspecialchars($creator['nom'] ?? 'Target creator', ENT_QUOTES); ?>"
+                            data-creator-name="<?php echo htmlspecialchars($creator['nom'] ?? 'No creator selected yet', ENT_QUOTES); ?>"
                         >
                             <div class="offer-card-head">
                                 <div>
                                     <div class="offer-flag-row">
-                                        <span class="offer-status <?php echo htmlspecialchars(offerStatusClass($offre->getStatutOffre())); ?>">
-                                            <?php echo htmlspecialchars(translateOfferStatus($offre->getStatutOffre())); ?>
+                                        <span class="offer-status <?php echo htmlspecialchars(offerStatusClass($displayStatus)); ?>">
+                                            <?php echo htmlspecialchars(translateOfferStatus($displayStatus)); ?>
                                         </span>
                                         <?php if ($isAccepted): ?>
                                             <span class="priority-badge priority-badge-success js-accepted-flag">Accepted by creator</span>
@@ -377,7 +404,7 @@ if (!empty($offerCards)) {
 
                             <div class="offer-meta">
                                 <span class="offer-chip"><?php echo htmlspecialchars(formatMoney($offre->getBudgetPropose())); ?></span>
-                                <span class="offer-chip">Published: <?php echo htmlspecialchars($offre->getDatePublication()); ?></span>
+                                <span class="offer-chip"><?php echo htmlspecialchars($publicationLabel); ?>: <?php echo htmlspecialchars($offre->getDatePublication()); ?></span>
                                 <span class="offer-chip">Deadline: <?php echo htmlspecialchars($offre->getDateLimite()); ?></span>
                                 <span class="offer-chip"><?php echo count($responses); ?> response<?php echo count($responses) === 1 ? '' : 's'; ?></span>
                             </div>
@@ -385,7 +412,7 @@ if (!empty($offerCards)) {
                             <div class="offer-detail-list">
                                 <div class="offer-detail-item">
                                     <strong>Target creator</strong>
-                                    <span><?php echo htmlspecialchars($creator['nom'] ?? 'Unknown creator'); ?></span>
+                                    <span><?php echo htmlspecialchars($creator['nom'] ?? 'No creator selected yet'); ?></span>
                                     <p><?php echo htmlspecialchars($creator['email'] ?? ''); ?></p>
                                 </div>
                                 <div class="offer-detail-item">
@@ -410,6 +437,11 @@ if (!empty($offerCards)) {
                                         </span>
                                     </div>
                                 </div>
+                            <?php elseif ($offre->isPendingPublication()): ?>
+                                <div class="response-callout">
+                                    <strong>Scheduled launch</strong>
+                                    <div class="mt-2 text-muted small">This offer will become visible to the creator on <?php echo htmlspecialchars($offre->getDatePublication()); ?>.</div>
+                                </div>
                             <?php else: ?>
                                 <div class="response-callout">
                                     <strong>Waiting for creator feedback</strong>
@@ -420,7 +452,13 @@ if (!empty($offerCards)) {
                             <div class="compact-actions">
                                 <a class="btn btn-primary" href="brand_details.php?idOffre=<?php echo (int) $offre->getIdOffre(); ?>">Open details</a>
                                 <a class="btn btn-outline-secondary" href="brand_edit.php?idOffre=<?php echo (int) $offre->getIdOffre(); ?>">Edit offer</a>
-                                <form method="post" action="brand_delete.php" onsubmit="return confirm('Are you sure you want to delete this offer?');">
+                                <form
+                                    method="post"
+                                    action="brand_delete.php"
+                                    data-delete-confirm
+                                    data-delete-title="<?php echo htmlspecialchars($offre->getTitre(), ENT_QUOTES); ?>"
+                                    data-delete-creator="<?php echo htmlspecialchars($creator['nom'] ?? 'No creator selected yet', ENT_QUOTES); ?>"
+                                >
                                     <input type="hidden" name="idOffre" value="<?php echo (int) $offre->getIdOffre(); ?>">
                                     <button type="submit" class="btn btn-outline-danger">Delete</button>
                                 </form>
@@ -442,6 +480,7 @@ if (!empty($offerCards)) {
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+    <script src="offre-delete-confirm.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre-delete-confirm.js')); ?>"></script>
     <script>
         (() => {
             const grid = document.getElementById('brandOfferGrid');
