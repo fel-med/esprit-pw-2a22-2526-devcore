@@ -8,8 +8,11 @@ $pageTitle = 'Edit Post';
 $currentPage = 'portfolio';
 
 function handleUploadedPostFile(string $inputName, array $allowedExtensions, int $maxBytes, string $prefix): ?string
-{
-    if (empty($_FILES[$inputName]['name']) || $_FILES[$inputName]['error'] !== 0) {
+{    if (empty($_FILES[$inputName]['name'])) {
+        return null;
+    }
+    if ($_FILES[$inputName]['error'] !== 0) {
+        error_log("Erreur upload '$inputName': code " . $_FILES[$inputName]['error']);
         return null;
     }
 
@@ -56,6 +59,7 @@ if (!$post) {
 $errorMessage = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    
     $subject = trim($_POST['subject'] ?? '');
     $textContent = trim($_POST['textContent'] ?? '');
 
@@ -67,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $imageContent = $newImage;
     }
 
-    $newVideo = handleUploadedPostFile('video', ['mp4', 'webm', 'ogg'], 30 * 1024 * 1024, 'vid');
+    $newVideo = handleUploadedPostFile('video', ['mp4', 'webm', 'ogg'], 100 * 1024 * 1024, 'vid');
     if ($newVideo !== null) {
         $videoContent = $newVideo;
     }

@@ -1,6 +1,7 @@
 <?php
 require_once '../../../Controleur/postC.php';
 require_once '../../../Modele/post.php';
+date_default_timezone_set('Africa/Tunis');
 
 $postC = new PostC();
 $creatorId = 1;

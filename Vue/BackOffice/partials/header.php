@@ -2,15 +2,15 @@
 if (!isset($pageTitle)) {
     $pageTitle = 'Admin Posts Dashboard';
 }
-
 if (!isset($currentPage)) {
     $currentPage = 'posts';
 }
-
 function isActivePage($page, $currentPage)
 {
     return $page === $currentPage ? 'active' : '';
 }
+$isCommentSection = strpos($_SERVER['PHP_SELF'] ?? '', '/Vue/BackOffice/comment/') !== false;
+$postsIndexUrl = $isCommentSection ? '../post/index.php' : './index.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -22,15 +22,15 @@ function isActivePage($page, $currentPage)
     <link rel="stylesheet" href="../assets/vendors/mdi/css/materialdesignicons.min.css">
     <link rel="stylesheet" href="../assets/vendors/css/vendor.bundle.base.css">
     <link rel="stylesheet" href="../assets/css/style.css">
-    <link rel="stylesheet" href="../assets/post-admin.css?v=1">
+    <link rel="stylesheet" href="../assets/post-admin.css?v=2">
 </head>
 <body>
 <div class="container-scroller">
 
     <nav class="sidebar sidebar-offcanvas" id="sidebar">
         <div class="sidebar-brand-wrapper d-none d-lg-flex align-items-center justify-content-center fixed-top">
-            <a class="sidebar-brand brand-logo text-white text-decoration-none" href="./index.php">Admin Panel</a>
-            <a class="sidebar-brand brand-logo-mini text-white text-decoration-none" href="./index.php">AP</a>
+            <a class="sidebar-brand brand-logo text-white text-decoration-none" href="<?= htmlspecialchars($postsIndexUrl) ?>">Admin Panel</a>
+            <a class="sidebar-brand brand-logo-mini text-white text-decoration-none" href="<?= htmlspecialchars($postsIndexUrl) ?>">AP</a>
         </div>
 
         <ul class="nav">
@@ -49,14 +49,19 @@ function isActivePage($page, $currentPage)
                 </div>
             </li>
 
-            <li class="nav-item nav-category">
-                <span class="nav-link">Navigation</span>
-            </li>
+            <li class="nav-item nav-category"><span class="nav-link">Navigation</span></li>
 
             <li class="nav-item menu-items <?= isActivePage('posts', $currentPage); ?>">
-                <a class="nav-link" href="./index.php">
+                <a class="nav-link" href="<?= htmlspecialchars($postsIndexUrl) ?>">
                     <span class="menu-icon"><i class="mdi mdi-post-outline"></i></span>
                     <span class="menu-title">All Posts</span>
+                </a>
+            </li>
+
+            <li class="nav-item menu-items <?= isActivePage('comments', $currentPage); ?>">
+                <a class="nav-link" href="<?= $isCommentSection ? './index.php' : '../comment/index.php' ?>">
+                    <span class="menu-icon"><i class="mdi mdi-comment-multiple-outline"></i></span>
+                    <span class="menu-title">Manage Comments</span>
                 </a>
             </li>
 
@@ -79,29 +84,22 @@ function isActivePage($page, $currentPage)
     <div class="container-fluid page-body-wrapper">
         <nav class="navbar p-0 fixed-top d-flex flex-row">
             <div class="navbar-brand-wrapper d-flex d-lg-none align-items-center justify-content-center">
-                <a class="navbar-brand brand-logo-mini" href="./index.php">AP</a>
+                <a class="navbar-brand brand-logo-mini" href="<?= htmlspecialchars($postsIndexUrl) ?>">AP</a>
             </div>
-
             <div class="navbar-menu-wrapper flex-grow d-flex align-items-stretch">
                 <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-toggle="minimize">
                     <span class="mdi mdi-menu"></span>
                 </button>
-
                 <ul class="navbar-nav w-100">
                     <li class="nav-item w-100">
                         <div class="nav-link mt-2 mt-md-0 d-none d-lg-flex search">
-                            <input type="text" class="form-control" placeholder="Admin posts dashboard" disabled>
+                            <input type="text" class="form-control" placeholder="Admin dashboard" disabled>
                         </div>
                     </li>
                 </ul>
-
                 <ul class="navbar-nav navbar-nav-right">
-                    <li class="nav-item d-none d-lg-block">
-                        <span class="nav-link text-muted">Manage all creators' posts</span>
-                    </li>
+                    <li class="nav-item d-none d-lg-block"><span class="nav-link text-muted">Manage creators, posts, and comments</span></li>
                 </ul>
             </div>
         </nav>
-
-        <div class="main-panel">
-            <div class="content-wrapper">
+        <div class="main-panel"><div class="content-wrapper">

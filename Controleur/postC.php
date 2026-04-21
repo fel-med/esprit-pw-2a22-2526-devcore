@@ -2,14 +2,17 @@
 
 require_once __DIR__ . '/../Modele/post.php';
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/commentC.php';
 
 class PostC
 {
     private PDO $db;
+    private CommentC $commentC;
 
     public function __construct()
     {
         $this->db = config::getConnexion();
+        $this->commentC = new CommentC();
     }
 
     private function generateUuid()
@@ -131,14 +134,58 @@ class PostC
         ]);
     }
 
+    
+    private function deleteCommentsByPostRecursive(string $postId): void
+    {
+        $topLevelComments = $this->commentC->listCommentsByPost($postId);
+
+        foreach ($topLevelComments as $comment) {
+            if (!empty($comment['id'])) {
+                $this->commentC->deleteCommentAdmin((string)$comment['id']);
+            }
+        }
+    }
+
     public function deletePost(string $id, int $idCreateur)
     {
-        $sql = "DELETE FROM post WHERE id = :id AND idCreateur = :idCreateur";
-        $query = $this->db->prepare($sql);
-        return $query->execute([
-            'id' => $id,
-            'idCreateur' => $idCreateur
-        ]);
+        try {
+            $this->db->beginTransaction();
+
+            $sqlCheck = "SELECT id FROM post WHERE id = :id AND idCreateur = :idCreateur";
+            $queryCheck = $this->db->prepare($sqlCheck);
+            $queryCheck->execute([
+                'id' => $id,
+                'idCreateur' => $idCreateur
+            ]);
+
+            $post = $queryCheck->fetch(PDO::FETCH_ASSOC);
+            if (!$post) {
+                $this->db->rollBack();
+                return false;
+            }
+
+            $this->deleteCommentsByPostRecursive($id);
+
+            $sqlDelete = "DELETE FROM post WHERE id = :id AND idCreateur = :idCreateur";
+            $queryDelete = $this->db->prepare($sqlDelete);
+            $success = $queryDelete->execute([
+                'id' => $id,
+                'idCreateur' => $idCreateur
+            ]);
+
+            if (!$success) {
+                $this->db->rollBack();
+                return false;
+            }
+
+            $this->db->commit();
+            return true;
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            return false;
+        }
     }
 
     public function incrementViews(string $id)
@@ -189,39 +236,70 @@ class PostC
         $query->execute(['idCreateur' => $idCreateur]);
         return $query->fetch();
     }
+
     public function getLikeCount(string $id): int
-{
-    $sql = "SELECT numberOfLike FROM post WHERE id = :id";
-    $query = $this->db->prepare($sql);
-    $query->execute(['id' => $id]);
-    $result = $query->fetch();
-    return (int)($result['numberOfLike'] ?? 0);
-}
+    {
+        $sql = "SELECT numberOfLike FROM post WHERE id = :id";
+        $query = $this->db->prepare($sql);
+        $query->execute(['id' => $id]);
+        $result = $query->fetch();
+        return (int)($result['numberOfLike'] ?? 0);
+    }
 
-public function getDislikeCount(string $id): int
-{
-    $sql = "SELECT numberOfDislike FROM post WHERE id = :id";
-    $query = $this->db->prepare($sql);
-    $query->execute(['id' => $id]);
-    $result = $query->fetch();
-    return (int)($result['numberOfDislike'] ?? 0);
-}
-public function deletePostAdmin(string $id): bool
-{
-    $sql = "DELETE FROM post WHERE id = :id";
-    $query = $this->db->prepare($sql);
-    return $query->execute(['id' => $id]);
-}
+    public function getDislikeCount(string $id): int
+    {
+        $sql = "SELECT numberOfDislike FROM post WHERE id = :id";
+        $query = $this->db->prepare($sql);
+        $query->execute(['id' => $id]);
+        $result = $query->fetch();
+        return (int)($result['numberOfDislike'] ?? 0);
+    }
 
-public function getAdminStats()
-{
-    $sql = "SELECT
-                COUNT(*) AS totalPosts,
-                COALESCE(SUM(numberOfView), 0) AS totalViews,
-                COALESCE(SUM(numberOfLike), 0) AS totalLikes,
-                COALESCE(SUM(numberOfDislike), 0) AS totalDislikes
-            FROM post";
-    $query = $this->db->query($sql);
-    return $query->fetch();
-}
+    public function deletePostAdmin(string $id): bool
+    {
+        try {
+            $this->db->beginTransaction();
+
+            $sqlCheck = "SELECT id FROM post WHERE id = :id";
+            $queryCheck = $this->db->prepare($sqlCheck);
+            $queryCheck->execute(['id' => $id]);
+
+            $post = $queryCheck->fetch(PDO::FETCH_ASSOC);
+            if (!$post) {
+                $this->db->rollBack();
+                return false;
+            }
+
+            $this->deleteCommentsByPostRecursive($id);
+
+            $sqlDelete = "DELETE FROM post WHERE id = :id";
+            $queryDelete = $this->db->prepare($sqlDelete);
+            $success = $queryDelete->execute(['id' => $id]);
+
+            if (!$success) {
+                $this->db->rollBack();
+                return false;
+            }
+
+            $this->db->commit();
+            return true;
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            return false;
+        }
+    }
+
+    public function getAdminStats()
+    {
+        $sql = "SELECT
+                    COUNT(*) AS totalPosts,
+                    COALESCE(SUM(numberOfView), 0) AS totalViews,
+                    COALESCE(SUM(numberOfLike), 0) AS totalLikes,
+                    COALESCE(SUM(numberOfDislike), 0) AS totalDislikes
+                FROM post";
+        $query = $this->db->query($sql);
+        return $query->fetch();
+    }
 }
