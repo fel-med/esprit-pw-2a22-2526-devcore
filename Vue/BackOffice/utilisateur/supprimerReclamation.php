@@ -4,20 +4,21 @@ require_once __DIR__ . '/../../../Controleur/reclamationC.php';
 
 session_start();
 
+// 🔐 vérifier login
 if (!isset($_SESSION['id'])) {
     die("Utilisateur non connecté");
+}
+
+// 🔐 vérifier rôle admin
+if ($_SESSION['role'] != 'admin') {
+    die("Accès refusé");
 }
 
 if (isset($_POST['id'])) {
 
     $reclamationC = new ReclamationC();
-    $rec = $reclamationC->recupererReclamation($_POST['id']);
+    $reclamationC->supprimerReclamation($_POST['id']);
 
-    // 🔐 sécurité : vérifier que c'est son propre ticket
-    if ($rec && $rec['idUtilisateur'] == $_SESSION['id']) {
-        $reclamationC->supprimerReclamation($_POST['id']);
-    }
-
-    header("Location: reclamation.php");
+    header("Location: reclamations.php");
     exit();
 }

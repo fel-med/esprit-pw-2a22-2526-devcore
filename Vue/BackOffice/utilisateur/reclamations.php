@@ -130,7 +130,7 @@ body.light-mode {
             </a>
           </li>
           <li class="nav-item menu-items">
-            <a class="nav-link" href="pages/forms/basic_elements.html">
+            <a class="nav-link" href="reclamations.php">
               <span class="menu-icon">
                 <i class="mdi mdi-playlist-play"></i>
               </span>

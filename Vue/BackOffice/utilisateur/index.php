@@ -129,7 +129,7 @@ body.light-mode {
             </a>
           </li>
           <li class="nav-item menu-items">
-            <a class="nav-link" href="reclamation.php">
+            <a class="nav-link" href="reclamations.php">
               <span class="menu-icon">
                 <i class="mdi mdi-playlist-play"></i>
               </span>
@@ -338,16 +338,16 @@ body.light-mode {
                     </div>
                   </a>
                   <div class="dropdown-divider"></div>
-                  <a class="dropdown-item preview-item">
-                    <div class="preview-thumbnail">
-                      <div class="preview-icon bg-dark rounded-circle">
-                        <i class="mdi mdi-logout text-danger"></i>
-                      </div>
-                    </div>
-                    <div class="preview-item-content">
-                      <p class="preview-subject mb-1">Log out</p>
-                    </div>
-                  </a>
+                  <a href="../utilisateur/logout.php" class="dropdown-item preview-item">
+  <div class="preview-thumbnail">
+    <div class="preview-icon bg-dark rounded-circle">
+      <i class="mdi mdi-logout text-danger"></i>
+    </div>
+  </div>
+  <div class="preview-item-content">
+    <p class="preview-subject mb-1">Log out</p>
+  </div>
+</a>
                   <div class="dropdown-divider"></div>
                   <p class="p-3 mb-0 text-center">Advanced settings</p>
                 </div>
