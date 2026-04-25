@@ -43,6 +43,20 @@ public function afficherReclamationsAvecReponsesUser($idUtilisateur) {
 
     return $req->fetchAll();
 }
+public function modifierReclamation($id, $description, $priorite) {
+    $sql = "UPDATE reclamation 
+            SET description = :description, priorite = :priorite
+            WHERE id = :id";
+
+    $db = config::getConnexion();
+    $req = $db->prepare($sql);
+
+    $req->execute([
+        'id' => $id,
+        'description' => $description,
+        'priorite' => $priorite
+    ]);
+}
 public function statistiques() {
     $sql = "SELECT 
                 COUNT(*) AS total,

@@ -147,19 +147,31 @@ $liste = $reclamationC->afficherReclamationsAvecReponsesUser($_SESSION['id']);
                                 <?php endif; ?>
 
                                 <!-- 🔴 BOUTON SUPPRIMER -->
-                                <div class="text-end mt-3">
-                                    <form method="POST" action="supprimerReclamation.php"
-                                          onsubmit="return confirm('Voulez-vous vraiment supprimer cette réclamation ?');">
+                                <div class="text-end mt-3 d-flex justify-content-end gap-2">
 
-                                        <input type="hidden" name="id" value="<?php echo $rec['id']; ?>">
+    <!-- Modifier -->
+    <button class="btn btn-sm d-flex align-items-center justify-content-center"
+            style="background-color:#AEEA94; width:40px; height:40px; border:none;"
+            data-bs-toggle="modal"
+            data-bs-target="#modalEdit<?php echo $rec['id']; ?>">
+        <i class="bi bi-pencil"></i>
+    </button>
 
-                                        <button type="submit" class="btn btn-danger btn-sm">
-                                            <i class="bi bi-trash"></i> Supprimer
-                                        </button>
+    <!-- Supprimer -->
+    <form method="POST" action="supprimerReclamation.php"
+          onsubmit="return confirm('Voulez-vous vraiment supprimer cette réclamation ?');">
 
-                                    </form>
-                                </div>
+        <input type="hidden" name="id" value="<?php echo $rec['id']; ?>">
 
+        <button type="submit"
+                class="btn btn-sm d-flex align-items-center justify-content-center"
+                style="background-color:#FF8383; width:40px; height:40px; border:none;">
+            <i class="bi bi-trash"></i>
+        </button>
+
+    </form>
+
+</div>
                             </div>
                         </div>
                     </div>
@@ -171,6 +183,52 @@ $liste = $reclamationC->afficherReclamationsAvecReponsesUser($_SESSION['id']);
 
     </div>
 </section>
+<?php foreach ($liste as $rec): ?>
+
+<div class="modal fade" id="modalEdit<?php echo $rec['id']; ?>" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <form method="POST" action="modifierReclamation.php">
+
+        <div class="modal-header">
+          <h5 class="modal-title">Modifier Réclamation</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+
+          <input type="hidden" name="id" value="<?php echo $rec['id']; ?>">
+
+          <!-- Description -->
+          <div class="mb-3">
+            <label>Description</label>
+            <textarea name="description" class="form-control" required><?php echo $rec['description']; ?></textarea>
+          </div>
+
+          <!-- Priorité -->
+          <div class="mb-3">
+            <label>Priorité</label>
+            <select name="priorite" class="form-select">
+              <option value="faible" <?php if($rec['priorite']=='faible') echo 'selected'; ?>>Faible</option>
+              <option value="normale" <?php if($rec['priorite']=='normale') echo 'selected'; ?>>Normale</option>
+              <option value="haute" <?php if($rec['priorite']=='haute') echo 'selected'; ?>>Haute</option>
+            </select>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Enregistrer</button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<?php endforeach; ?>
             <!-- Call to action section-->
             <section class="py-5 bg-gradient-primary-to-secondary text-white">
                 <div class="container px-5 my-5">
