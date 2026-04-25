@@ -1,6 +1,7 @@
 <?php
-error_reporting(E_ALL);
 ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../Modele/evenement.php';
 
@@ -36,7 +37,20 @@ class EvenementControleur {
 
     public function creer(array $data, array $files = []): void {
         $date = $data['date_evenement'];
-        if (strpos($date, 'T') !== false) $date = explode('T', $date)[0];
+        $today = date('Y-m-d');
+        if ($date < $today) {
+        // Redirige avec un message d'erreur dans l'URL
+        header('Location: /ProjetWeb/Esprit-PW-2A22-2526-Devcore/Controleur/evenementC.php?action=admin&error=date');
+        exit;
+    }
+    // ===== FIN VALIDATION =====
+
+    // Formatage de la date (si format datetime-local)
+    if (strpos($date, 'T') !== false) {
+        $date = explode('T', $date)[0];
+    }
+        
+        
         
         $stmt = $this->pdo->prepare(
             "INSERT INTO evenement 
@@ -58,7 +72,11 @@ class EvenementControleur {
         ]);
         
         $eventId = $this->pdo->lastInsertId();
-        
+        if ($date < $today) {
+        // Redirige avec un message d'erreur dans l'URL
+        header('Location: /ProjetWeb/Esprit-PW-2A22-2526-Devcore/Controleur/evenementC.php?action=admin&error=date');
+        exit;
+        }
         if (isset($files['image']) && $files['image']['error'] === UPLOAD_ERR_OK) {
             $path = $this->uploadImage($files['image'], $eventId);
             if ($path) {
@@ -170,13 +188,20 @@ class EvenementControleur {
     }
 
 public function inscrireEvenement(int $idEvenement): void {
-    header('Content-Type: application/json');
+    file_put_contents(__DIR__ . '/debug.txt', "Méthode appelée ID: " . $idEvenement . "\n", FILE_APPEND);
+    ini_set('display_errors', 0);
+    ob_start();
+    header('Content-Type: application/json; charset=utf-8');
     
     $nom = $_POST['nom'] ?? '';
     $email = $_POST['email'] ?? '';
     
+    $response = ['success' => false, 'message' => 'Une erreur est survenue'];
+    
     if (empty($nom) || empty($email)) {
-        echo json_encode(['success' => false, 'message' => 'Nom et email requis']);
+        $response['message'] = 'Nom et email requis';
+        ob_end_clean();
+        echo json_encode($response, JSON_UNESCAPED_UNICODE);
         exit;
     }
     
@@ -188,14 +213,18 @@ public function inscrireEvenement(int $idEvenement): void {
         $check->execute([$idEvenement, $userId]);
         
         if ($check->fetch()) {
-            echo json_encode(['success' => false, 'message' => 'Vous êtes déjà inscrit']);
+            $response['message'] = 'Vous êtes déjà inscrit';
+            ob_end_clean();
+            echo json_encode($response, JSON_UNESCAPED_UNICODE);
             exit;
         }
         
         // Vérifier les places
         $event = $this->getEventById($idEvenement);
         if ($event && $event->getNbInscrits() >= $event->getCapacite()) {
-            echo json_encode(['success' => false, 'message' => 'Événement complet']);
+            $response['message'] = 'Événement complet';
+            ob_end_clean();
+            echo json_encode($response, JSON_UNESCAPED_UNICODE);
             exit;
         }
         
@@ -206,11 +235,20 @@ public function inscrireEvenement(int $idEvenement): void {
         // Mettre à jour le compteur
         $this->pdo->prepare("UPDATE evenement SET nb_inscrits = nb_inscrits + 1 WHERE idFormation = ?")->execute([$idEvenement]);
         
-        echo json_encode(['success' => true, 'message' => 'Inscription confirmée !']);
-        
+        $response = ['success' => true, 'message' => 'Inscription confirmée !'];
     } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => 'Erreur: ' . $e->getMessage()]);
+        $response['message'] = 'Erreur: ' . $e->getMessage();
     }
+    ob_end_clean();
+    $json = json_encode($response, JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR);
+    if ($json === false) {
+        $json = json_encode([
+            'success' => false,
+            'message' => 'Erreur JSON: ' . json_last_error_msg()
+        ], JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR);
+    }
+    file_put_contents(__DIR__ . '/debug.txt', "JSON sortie: $json\n", FILE_APPEND);
+    echo $json;
     exit;
 }
 
@@ -238,6 +276,19 @@ public function inscrireEvenement(int $idEvenement): void {
         header('Location: /ProjetWeb/Esprit-PW-2A22-2526-Devcore/Controleur/evenementC.php?action=inscriptions');
         exit;
     }
+    public function afficherDetailEvenement(int $id): void {
+    $stmt = $this->pdo->prepare("SELECT * FROM evenement WHERE idFormation = :id");
+    $stmt->execute([':id' => $id]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$row) {
+        header('Location: /ProjetWeb/Esprit-PW-2A22-2526-Devcore/Controleur/evenementC.php');
+        exit;
+    }
+    
+    $evenement = $this->hydrate($row);
+    require_once __DIR__ . '/../Vue/FrontOffice/evenement/detail.php';
+}
 }
 
 // ROUTER
@@ -259,28 +310,27 @@ switch ($action) {
         if ($id > 0) $ctrl->supprimer($id); 
         break;
     case 'get':
-        if ($id > 0) {
-            $event = $ctrl->getEventById($id);
-            if ($event) {
-                header('Content-Type: application/json');
-                echo json_encode([
-                    'id' => $event->getId(),
-                    'titre' => $event->getTitre(),
-                    'description' => $event->getDescription(),
-                    'duree' => $event->getDuree(),
-                    'date_evenement' => $event->getDateEvenement(),
-                    'type' => $event->getType(),
-                    'statut' => $event->getStatut(),
-                    'lieu' => $event->getLieu(),
-                    'capacite' => $event->getCapacite(),
-                    'image' => $event->getImage()
-                ]);
-            } else {
-                echo json_encode(['error' => 'Event not found']);
-            }
-            exit;
+    if ($id > 0) {
+        $event = $ctrl->getEventById($id);
+        if ($event) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'id' => $event->getId(),
+                'titre' => $event->getTitre(),
+                'description' => $event->getDescription(),
+                'duree' => $event->getDuree(),
+                'date_evenement' => $event->getDateEvenement(),
+                'type' => $event->getType(),
+                'statut' => $event->getStatut(),
+                'lieu' => $event->getLieu(),
+                'capacite' => $event->getCapacite(),
+                'nb_inscrits' => $event->getNbInscrits(),  // ← Cette ligne doit exister
+                'image' => $event->getImage()
+            ]);
         }
-        break;
+        exit;
+    }
+    break;
     case 'inscrire':
         if ($id > 0) {
             $ctrl->inscrireEvenement($id);
@@ -297,5 +347,10 @@ switch ($action) {
     default:
         $ctrl->listerEvenementsPublics();
         break;
+    case 'detail':
+    if ($id > 0) {
+        $ctrl->afficherDetailEvenement($id);
+    }
+    break;
 }
 ?>

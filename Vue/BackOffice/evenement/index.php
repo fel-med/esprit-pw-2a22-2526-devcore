@@ -341,12 +341,14 @@ $activeEvents = count(array_filter($evenements, function($e) { return $e->getSta
       border-radius: var(--radius-lg);
       width: 560px;
       max-width: 95vw;
-      max-height: 90vh;
+      max-height: 80vh;
       overflow-y: auto;
+      display: flex;
+      flex-direction: column;
     }
     .modal-header {
       padding: 20px 24px; border-bottom: 1px solid var(--border);
-      display: flex; justify-content: space-between;
+      display: flex; justify-content: space-between;  flex-shrink: 0;
     }
     .modal-close {
       background: var(--bg-elevated); border: 1px solid var(--border);
@@ -356,6 +358,7 @@ $activeEvents = count(array_filter($evenements, function($e) { return $e->getSta
     .modal-body {
       padding: 24px;
       max-height: calc(90vh - 120px);
+      
     }
     .form-group { margin-bottom: 16px; }
     .form-label { font-size: .78rem; font-weight: 600; color: var(--text-soft); margin-bottom: 6px; display: block; }
@@ -447,6 +450,11 @@ $activeEvents = count(array_filter($evenements, function($e) { return $e->getSta
 
   <div class="content">
     <div class="page-header">
+      <?php if (isset($_GET['error']) && $_GET['error'] === 'date'): ?>
+    <div class="alert-banner" style="background: var(--danger-dim); color: var(--danger); margin-bottom: 20px;">
+        ❌ La date de l'événement ne peut pas être dans le passé
+    </div>
+<?php endif; ?>
       <div class="page-title-wrap">
         <h1>Gestion des Événements</h1>
         <p>Supervision, modération et administration de tous les événements</p>
@@ -696,6 +704,8 @@ $activeEvents = count(array_filter($evenements, function($e) { return $e->getSta
       window.location.href = '/ProjetWeb/Esprit-PW-2A22-2526-Devcore/Controleur/evenementC.php?action=delete&id=' + id;
     }
   }
+
+  
   
   function filterTable() {
     const input = document.getElementById('searchInput');
@@ -704,7 +714,7 @@ $activeEvents = count(array_filter($evenements, function($e) { return $e->getSta
     rows.forEach(row => {
       const titleCell = row.cells[2];
       if (titleCell) {
-        row.style.display = titleCell.textContent.toLowerCase().includes(filter) ? '' : 'none';
+        row.style.display = titleCell.textContent.toLowerCase().includes(filter) ?  '' : 'none';
       }
     });
   }

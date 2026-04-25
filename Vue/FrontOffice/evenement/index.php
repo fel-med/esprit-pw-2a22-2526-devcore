@@ -305,7 +305,6 @@ if (!isset($evenements)) {
             overflow: hidden;
             border: 1px solid #e2e8f0;
             transition: transform 0.2s, box-shadow 0.2s;
-            cursor: pointer;
         }
 
         .event-card:hover {
@@ -403,7 +402,26 @@ if (!isset($evenements)) {
             color: white;
         }
 
-        /* Modal */
+        .btn-detail {
+            width: 100%;
+            padding: 10px;
+            background: transparent;
+            color: #4f46e5;
+            border: 1px solid #4f46e5;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+
+        .btn-detail:hover {
+            background: #4f46e5;
+            color: white;
+        }
+
+        /* Modal d'inscription stylé */
         .inscription-modal {
             display: none;
             position: fixed;
@@ -411,51 +429,277 @@ if (!isset($evenements)) {
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
             z-index: 1000;
             align-items: center;
             justify-content: center;
         }
-        .inscription-modal.show { display: flex; }
+
+        .inscription-modal.show {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
         .inscription-card {
             background: white;
-            border-radius: 20px;
-            width: 400px;
+            border-radius: 24px;
+            width: 480px;
             max-width: 90%;
-            padding: 30px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: slideUp 0.3s ease;
         }
-        .inscription-card h3 { font-size: 1.3rem; margin-bottom: 10px; }
-        .inscription-card p { color: #6b7280; font-size: 0.85rem; margin-bottom: 20px; }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .inscription-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 28px 0 28px;
+        }
+
+        .inscription-header h3 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0;
+        }
+
+        .inscription-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #94a3b8;
+            transition: color 0.2s;
+        }
+
+        .inscription-close:hover {
+            color: #ef4444;
+        }
+
+        .inscription-subtitle {
+            padding: 8px 28px 0 28px;
+            color: #64748b;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+        }
+
+        .inscription-form-group {
+            padding: 0 28px;
+            margin-bottom: 20px;
+        }
+
+        .inscription-label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 6px;
+        }
+
+        .inscription-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            font-size: 1rem;
+            color: #94a3b8;
+        }
+
         .inscription-input {
             width: 100%;
-            padding: 12px 15px;
-            margin-bottom: 15px;
-            border: 1.5px solid #e5e7eb;
-            border-radius: 12px;
+            padding: 12px 16px 12px 42px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
             font-size: 0.9rem;
+            font-family: inherit;
+            transition: all 0.2s;
+            background: #f8fafc;
         }
-        .inscription-input:focus { outline: none; border-color: #4f46e5; }
-        .inscription-buttons { display: flex; gap: 12px; }
+
+        .inscription-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .inscription-buttons {
+            display: flex;
+            gap: 12px;
+            padding: 8px 28px 28px 28px;
+        }
+
         .btn-inscrire-modal {
             flex: 1;
-            padding: 12px;
-            background: #4f46e5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
             color: white;
             border: none;
-            border-radius: 12px;
+            border-radius: 14px;
             font-weight: 600;
+            font-size: 0.9rem;
             cursor: pointer;
+            transition: all 0.2s;
         }
+
+        .btn-inscrire-modal:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.4);
+        }
+
         .btn-annuler-modal {
             flex: 1;
-            padding: 12px;
-            background: #f3f4f6;
-            color: #374151;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: #f1f5f9;
+            color: #475569;
             border: none;
-            border-radius: 12px;
+            border-radius: 14px;
             font-weight: 600;
+            font-size: 0.9rem;
             cursor: pointer;
+            transition: all 0.2s;
         }
+
+        .btn-annuler-modal:hover {
+            background: #e2e8f0;
+        }
+
+        /* Modal Détail Événement */
+        .detail-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1001;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .detail-modal.show {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .detail-modal-content {
+            background: white;
+            border-radius: 28px;
+            width: 900px;
+            max-width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
+            animation: slideUp 0.3s ease;
+        }
+
+        .detail-modal-close {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            background: white;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #64748b;
+            z-index: 10;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .detail-modal-close:hover {
+            background: #f1f5f9;
+            color: #ef4444;
+        }
+
+        .detail-modal-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+        }
+
+        .detail-image {
+            height: 100%;
+            min-height: 400px;
+            background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 28px 0 0 28px;
+            overflow: hidden;
+        }
+
+        .detail-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .detail-info {
+            padding: 32px;
+        }
+
+        .detail-info h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin: 12px 0;
+            color: #0f172a;
+        }
+
+        .detail-info p {
+            color: #475569;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .detail-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 20px 0;
+            border-top: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 24px;
+        }
+
+        .detail-meta span {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: #475569;
+        }
+
         .toast {
             position: fixed;
             bottom: 20px;
@@ -465,11 +709,10 @@ if (!isset($evenements)) {
             padding: 12px 24px;
             border-radius: 50px;
             display: none;
-            z-index: 1000;
+            z-index: 1002;
         }
         .toast.error { background: #ef4444; }
 
-        /* Responsive */
         @media (max-width: 1024px) {
             .main-container {
                 flex-direction: column;
@@ -502,6 +745,13 @@ if (!isset($evenements)) {
                 flex-direction: column;
                 gap: 16px;
             }
+            .detail-modal-body {
+                grid-template-columns: 1fr;
+            }
+            .detail-image {
+                min-height: 200px;
+                border-radius: 28px 28px 0 0;
+            }
         }
     </style>
 </head>
@@ -514,7 +764,6 @@ if (!isset($evenements)) {
         <span>Cre8Connect</span>
     </a>
     <nav class="nav-links">
-        <a href="#">Accueil</a>
         <a href="#" class="active">Événements</a>
         <a href="#">Produits</a>
         <a href="#">Offres</a>
@@ -604,7 +853,7 @@ if (!isset($evenements)) {
         <div class="events-grid" id="eventsGrid">
             <?php foreach ($evenements as $event): 
                 $spotsLeft = $event->getCapacite() - $event->getNbInscrits();
-                $isFull = $spotsLeft <= 0;
+                $isFull = ($spotsLeft <= 0);
                 $isOnline = strpos(strtolower($event->getLieu()), 'en ligne') !== false || empty($event->getLieu());
             ?>
             <div class="event-card" 
@@ -627,10 +876,17 @@ if (!isset($evenements)) {
                         <span>📍 <?= htmlspecialchars($event->getLieu() ?: 'En ligne') ?></span>
                     </div>
                     <div class="event-spots <?= $isFull ? 'full' : '' ?>">
-                        <?= $isFull ? 'Complet' : ($spotsLeft . ' places restantes') ?>
+                        <?php if ($isFull): ?>
+                            ❌ Complet
+                        <?php else: ?>
+                                 <?= $spotsLeft ?> places restantes
+                        <?php endif; ?>
                     </div>
                     <button onclick="ouvrirModalInscription(<?= $event->getId() ?>)" class="btn-event <?= $isFull ? 'outline' : '' ?>">
                         <?= $isFull ? '📋 Liste d\'attente' : '✨ S\'inscrire' ?>
+                    </button>
+                    <button onclick="voirDetail(<?= $event->getId() ?>)" class="btn-detail">
+                        👁 Voir les détails
                     </button>
                 </div>
             </div>
@@ -642,13 +898,52 @@ if (!isset($evenements)) {
 <!-- Modal Inscription -->
 <div id="inscriptionModal" class="inscription-modal">
     <div class="inscription-card">
-        <h3>📝 Inscription à l'événement</h3>
-        <p>Renseignez vos informations pour vous inscrire</p>
-        <input type="text" id="inscrireNom" class="inscription-input" placeholder="Votre nom complet">
-        <input type="email" id="inscrireEmail" class="inscription-input" placeholder="Votre email">
+        <div class="inscription-header">
+            <h3>✨ Inscription à l'événement</h3>
+            <button class="inscription-close" onclick="fermerModalInscription()">&times;</button>
+        </div>
+        <p class="inscription-subtitle">Rejoignez cet événement et connectez-vous avec la communauté</p>
+        
+        <div class="inscription-form-group">
+            <label class="inscription-label">Nom complet</label>
+            <div class="inscription-input-wrapper">
+                <span class="input-icon">👤</span>
+                <input type="text" id="inscrireNom" class="inscription-input" placeholder="Votre nom et prénom" autocomplete="off">
+            </div>
+        </div>
+        
+        <div class="inscription-form-group">
+            <label class="inscription-label">Adresse email</label>
+            <div class="inscription-input-wrapper">
+                <span class="input-icon">📧</span>
+                <input type="email" id="inscrireEmail" class="inscription-input" placeholder="votre@email.com" autocomplete="off">
+            </div>
+        </div>
+        
         <div class="inscription-buttons">
             <button class="btn-annuler-modal" onclick="fermerModalInscription()">Annuler</button>
             <button class="btn-inscrire-modal" onclick="confirmerInscription()">S'inscrire</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Détail Événement -->
+<div id="detailModal" class="detail-modal">
+    <div class="detail-modal-content">
+        <button class="detail-modal-close" onclick="fermerDetailModal()">&times;</button>
+        <div class="detail-modal-body">
+            <div class="detail-image" id="detailImage"></div>
+            <div class="detail-info">
+                <span class="event-type" id="detailType"></span>
+                <h2 id="detailTitre"></h2>
+                <p id="detailDescription"></p>
+                <div class="detail-meta">
+                    <span id="detailDate"></span>
+                    <span id="detailLieu"></span>
+                    <span id="detailPlaces"></span>
+                </div>
+                <button id="detailInscrireBtn" class="btn-event">✨ S'inscrire maintenant</button>
+            </div>
         </div>
     </div>
 </div>
@@ -708,6 +1003,57 @@ if (!isset($evenements)) {
             if (data.success) setTimeout(() => location.reload(), 2000);
         })
         .catch(() => showToast('Erreur de connexion', true));
+    }
+
+    function voirDetail(eventId) {
+        fetch('/ProjetWeb/Esprit-PW-2A22-2526-Devcore/Controleur/evenementC.php?action=get&id=' + eventId)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showToast('Erreur lors du chargement', true);
+                    return;
+                }
+                
+                document.getElementById('detailTitre').innerHTML = data.titre;
+                document.getElementById('detailType').innerHTML = data.type;
+                document.getElementById('detailType').className = 'event-type type-' + data.type;
+                document.getElementById('detailDescription').innerHTML = data.description;
+                document.getElementById('detailDate').innerHTML = '📅 ' + new Date(data.date_evenement).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'});
+                document.getElementById('detailLieu').innerHTML = '📍 ' + (data.lieu || 'En ligne');
+                
+                const placesRestantes = data.capacite - data.nb_inscrits;
+                if (placesRestantes > 0) {
+                    document.getElementById('detailPlaces').innerHTML =  placesRestantes + ' places restantes';
+                } else {
+                    document.getElementById('detailPlaces').innerHTML = '❌ Complet';
+                }
+                
+                if (data.image) {
+                    document.getElementById('detailImage').innerHTML = '<img src="/ProjetWeb/Esprit-PW-2A22-2526-Devcore/' + data.image + '" alt="' + data.titre + '">';
+                } else {
+                    document.getElementById('detailImage').innerHTML = '<span style="font-size: 3rem;">🎯</span>';
+                }
+                
+                const inscrireBtn = document.getElementById('detailInscrireBtn');
+                inscrireBtn.setAttribute('onclick', 'ouvrirModalInscription(' + data.id + ')');
+                if (placesRestantes <= 0) {
+                    inscrireBtn.innerHTML = '📋 Liste d\'attente';
+                    inscrireBtn.classList.add('outline');
+                } else {
+                    inscrireBtn.innerHTML = '✨ S\'inscrire maintenant';
+                    inscrireBtn.classList.remove('outline');
+                }
+                
+                document.getElementById('detailModal').classList.add('show');
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                showToast('Erreur de chargement', true);
+            });
+    }
+
+    function fermerDetailModal() {
+        document.getElementById('detailModal').classList.remove('show');
     }
 
     function filterEvents() {
@@ -770,7 +1116,11 @@ if (!isset($evenements)) {
     document.getElementById('inscriptionModal').addEventListener('click', function(e) {
         if (e.target === this) fermerModalInscription();
     });
+    
+    document.getElementById('detailModal').addEventListener('click', function(e) {
+        if (e.target === this) fermerDetailModal();
+    });
 </script>
 
 </body>
-</html> 
+</html>
