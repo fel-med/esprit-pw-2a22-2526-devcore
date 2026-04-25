@@ -37,11 +37,59 @@ public function updateUser($id, $nom, $email, $role) {
         'role' => $role
     ]);
 }
-    public function afficherUsers() {
+    public function afficherUsers($search = '', $role = '') {
     $db = config::getConnexion();
-    $sql = "SELECT * FROM utilisateur";
-    return $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    $sql = "SELECT * FROM utilisateur WHERE 1=1";
+    
+    if (!empty($search)) {
+        $sql .= " AND (nom LIKE :search OR email LIKE :search)";
+    }
+    
+    if (!empty($role)) {
+        $sql .= " AND role = :role";
+    }
+    
+    $sql .= " ORDER BY id DESC";
+    
+    $stmt = $db->prepare($sql);
+    
+    if (!empty($search)) {
+        $searchTerm = "%$search%";
+        $stmt->bindParam(':search', $searchTerm);
+    }
+    
+    if (!empty($role)) {
+        $stmt->bindParam(':role', $role);
+    }
+    
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
+    public function getStatistiquesUtilisateurs() {
+        $db = config::getConnexion();
+        
+        // Total utilisateurs
+        $total = $db->query("SELECT COUNT(*) as total FROM utilisateur")->fetch()['total'];
+        
+        // Par rôle
+        $admin = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE role='admin'")->fetch()['count'];
+        $createur = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE role='createur'")->fetch()['count'];
+        $marque = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE role='marque'")->fetch()['count'];
+        
+        // Par statut
+        $actif = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE statut='actif'")->fetch()['count'];
+        $inactif = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE statut='inactif'")->fetch()['count'];
+        
+        return [
+            'total' => $total,
+            'admin' => $admin,
+            'createur' => $createur,
+            'marque' => $marque,
+            'actif' => $actif,
+            'inactif' => $inactif
+        ];
+    }
 
     public function supprimerUser($id) {
         $db = config::getConnexion();
@@ -72,7 +120,7 @@ public function updateUser($id, $nom, $email, $role) {
     else if ($user['role'] == 'createur')
         header("Location: ../utilisateur/creator.php");
     else 
-        header("Location: ../utilisateur/brand.html");
+        header("Location: ../utilisateur/brand.php");
 
     exit;
 }

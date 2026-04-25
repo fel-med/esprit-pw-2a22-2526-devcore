@@ -181,7 +181,7 @@ $stats = $reclamationC->statistiques();
           </a>
         </li>
         <li class="nav-item menu-items active">
-          <a class="nav-link" href="index.html">
+          <a class="nav-link" href="index.php">
             <span class="menu-icon">
               <i class="mdi mdi-speedometer"></i>
             </span>
@@ -227,7 +227,7 @@ $stats = $reclamationC->statistiques();
       <!-- partial:partials/_navbar.html -->
       <nav class="navbar p-0 fixed-top d-flex flex-row">
         <div class="navbar-brand-wrapper d-flex d-lg-none align-items-center justify-content-center">
-          <a class="navbar-brand brand-logo-mini" href="index.html"><img src="assets/images/logo-mini.svg"
+          <a class="navbar-brand brand-logo-mini" href="index.php"><img src="assets/images/logo-mini.svg"
               alt="logo"></a>
         </div>
         <div class="navbar-menu-wrapper flex-grow d-flex align-items-stretch">
@@ -405,16 +405,16 @@ $stats = $reclamationC->statistiques();
                   </div>
                 </a>
                 <div class="dropdown-divider"></div>
-                <a class="dropdown-item preview-item">
-                  <div class="preview-thumbnail">
-                    <div class="preview-icon bg-dark rounded-circle">
-                      <i class="mdi mdi-logout text-danger"></i>
-                    </div>
-                  </div>
-                  <div class="preview-item-content">
-                    <p class="preview-subject mb-1">Log out</p>
-                  </div>
-                </a>
+                  <a href="../utilisateur/logout.php" class="dropdown-item preview-item">
+  <div class="preview-thumbnail">
+    <div class="preview-icon bg-dark rounded-circle">
+      <i class="mdi mdi-logout text-danger"></i>
+    </div>
+  </div>
+  <div class="preview-item-content">
+    <p class="preview-subject mb-1">Log out</p>
+  </div>
+</a>
                 <div class="dropdown-divider"></div>
                 <p class="p-3 mb-0 text-center">Advanced settings</p>
               </div>
