@@ -22,6 +22,7 @@ if ($search !== '') {
 
 require_once '../partials/header.php';
 ?>
+<link rel="stylesheet" href="../assets/post-front.css">
 <link rel="stylesheet" href="../assets/comment-front.css">
 
 <header class="feed-hero">
@@ -33,26 +34,43 @@ require_once '../partials/header.php';
             </p>
 
             <div class="toolbar-card mt-4">
-                <form method="GET" action="./index.php" class="row g-3 align-items-center">
-                    <div class="col-lg-8">
+                <form method="GET" action="./index.php">
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
                         <input
                             type="text"
-                            id="searchInput"
                             name="search"
-                            class="form-control toolbar-input"
+                            class="toolbar-input flex-grow-1"
                             placeholder="Search by creator name or subject..."
                             value="<?= htmlspecialchars($search) ?>"
+                            style="min-width:200px;"
                         >
-                    </div>
 
-                    <div class="col-lg-4 d-flex flex-wrap gap-2">
-                        <button type="submit" class="btn btn-primary toolbar-btn flex-grow-1">
-                            <i class="bi bi-search"></i> Search
+                        <!-- Search — primary violet, filled -->
+                        <button type="submit" class="btn-search-action">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+                                <path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            Search
                         </button>
-                        <a href="./index.php?sort=trending" class="btn btn-dark toolbar-btn">
-                            <i class="bi bi-fire"></i> Trending
+
+                        <!-- Trending — warm orange -->
+                        <a href="./index.php?sort=trending" class="btn-trending-action">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <polyline points="16 7 22 7 22 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Trending
                         </a>
-                        <a href="./index.php" class="btn btn-outline-secondary toolbar-btn">
+
+                        <!-- Reset — neutral -->
+                        <a href="./index.php" class="btn-reset-action">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M3 12C3 7.03 7.03 3 12 3C15.3 3 18.17 4.77 19.77 7.42" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                <path d="M21 12C21 16.97 16.97 21 12 21C8.7 21 5.83 19.23 4.23 16.58" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                <polyline points="20 3 20 8 15 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <polyline points="4 21 4 16 9 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
                             Reset
                         </a>
                     </div>
@@ -62,7 +80,7 @@ require_once '../partials/header.php';
     </div>
 </header>
 
-<section class="pb-5">
+<section class="pb-5 pt-4">
     <div class="container px-4 px-lg-5">
         <?php if (empty($posts)) : ?>
             <div class="empty-state-box">
@@ -73,13 +91,18 @@ require_once '../partials/header.php';
             <div class="social-grid">
                 <?php foreach ($posts as $post) : ?>
                     <?php
-                    $commentCount = $commentC->countCommentsByPost($post['id']);
+                    $commentCount    = $commentC->countCommentsByPost($post['id']);
                     $previewComments = $commentC->listLatestCommentsByPost($post['id'], 2);
                     $allCommentsTree = $commentC->getCommentsTreeByPost($post['id']);
                     $modalId = 'commentsModal-' . preg_replace('/[^a-zA-Z0-9_-]/', '', $post['id']);
                     ?>
-                    <div class="social-col js-post-comments-scope js-post-view-track" data-post-id="<?= htmlspecialchars($post['id']) ?>" data-context="index">
+                    <div class="social-col js-post-comments-scope js-post-view-track"
+                         data-post-id="<?= htmlspecialchars($post['id']) ?>"
+                         data-context="index">
+
                         <article class="social-post-card">
+
+                            <!-- Header -->
                             <div class="social-post-header">
                                 <div class="social-post-avatar">
                                     <?= htmlspecialchars(substr($post['creatorName'] ?? 'C', 0, 1)) ?>
@@ -90,22 +113,19 @@ require_once '../partials/header.php';
                                 </div>
                             </div>
 
+                            <!-- Body -->
                             <div class="social-post-body">
                                 <h2 class="social-post-title"><?= htmlspecialchars($post['subject']) ?></h2>
                                 <p class="social-post-text"><?= htmlspecialchars(mb_strimwidth($post['textContent'], 0, 260, '...')) ?></p>
                             </div>
 
+                            <!-- Media -->
                             <?php if (!empty($post['imageContent']) || !empty($post['VideoContent'])) : ?>
                                 <div class="social-post-media-wrap">
                                     <?php if (!empty($post['imageContent'])) : ?>
-                                        <img
-                                            src="../../public/<?= htmlspecialchars($post['imageContent']) ?>"
-                                            alt="Post image"
-                                            class="social-post-image"
-                                            loading="lazy"
-                                        >
+                                        <img src="../../public/<?= htmlspecialchars($post['imageContent']) ?>"
+                                             alt="Post image" class="social-post-image" loading="lazy">
                                     <?php endif; ?>
-
                                     <?php if (!empty($post['VideoContent'])) : ?>
                                         <video class="social-post-video" controls preload="metadata" playsinline>
                                             <source src="../../public/<?= htmlspecialchars($post['VideoContent']) ?>">
@@ -114,90 +134,151 @@ require_once '../partials/header.php';
                                 </div>
                             <?php endif; ?>
 
+                            <!-- Actions -->
                             <div class="social-post-actions">
+
+                                <!-- Top row: like · dislike · comment  |  Read More -->
                                 <div class="social-action-top">
                                     <div class="social-action-left">
-                                        <button
-                                            type="button"
-                                            class="icon-action-btn reaction-btn js-reaction-btn"
-                                            data-post-id="<?= htmlspecialchars($post['id']) ?>"
-                                            data-action="like"
-                                            aria-label="Like post"
-                                        >
-                                            <i class="bi bi-heart"></i>
+
+                                        <!-- Like — heart SVG, red -->
+                                        <button type="button"
+                                                class="reaction-btn js-reaction-btn"
+                                                data-post-id="<?= htmlspecialchars($post['id']) ?>"
+                                                data-action="like"
+                                                aria-label="Like post">
+                                            <svg viewBox="0 0 24 24" fill="none">
+                                                <path d="M12 21C12 21 3 14.5 3 8.5C3 5.42 5.42 3 8.5 3C10.24 3 11.81 3.85 12 5C12.19 3.85 13.76 3 15.5 3C18.58 3 21 5.42 21 8.5C21 14.5 12 21 12 21Z"
+                                                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                      fill="currentColor" fill-opacity="0.12"/>
+                                            </svg>
                                         </button>
 
-                                        <button
-                                            type="button"
-                                            class="icon-action-btn reaction-btn js-reaction-btn"
-                                            data-post-id="<?= htmlspecialchars($post['id']) ?>"
-                                            data-action="dislike"
-                                            aria-label="Dislike post"
-                                        >
-                                            <i class="bi bi-hand-thumbs-down"></i>
+                                        <!-- Dislike — thumbs-down SVG, violet -->
+                                        <button type="button"
+                                                class="btn-dislike-post js-reaction-btn"
+                                                data-post-id="<?= htmlspecialchars($post['id']) ?>"
+                                                data-action="dislike"
+                                                aria-label="Dislike post">
+                                            <svg viewBox="0 0 24 24" fill="none">
+                                                <path d="M17 2H7L3 10v2c0 1.1.9 2 2 2h6l-1 5.5c-.1.6.3 1.1.9 1.4l.6.1c.5 0 1-.3 1.2-.8L15 14h4a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"
+                                                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
                                         </button>
 
-                                        <button
-                                            type="button"
-                                            class="icon-action-btn btn-comment-toggle js-open-comments-modal"
-                                            data-bs-target="#<?= $modalId ?>"
-                                            aria-label="Open comments"
-                                        >
-                                            <i class="bi bi-chat-dots"></i>
+                                        <!-- Comment bubble -->
+                                        <button type="button"
+                                                class="action-btn btn-comment-post js-open-comments-modal"
+                                                data-bs-target="#<?= $modalId ?>"
+                                                aria-label="Open comments">
+                                            <svg viewBox="0 0 24 24" fill="none">
+                                                <path d="M21 15C21 15.53 20.79 16.04 20.41 16.41C20.04 16.79 19.53 17 19 17H7L3 21V5C3 4.47 3.21 3.96 3.59 3.59C3.96 3.21 4.47 3 5 3H19C19.53 3 20.04 3.21 20.41 3.59C20.79 3.96 21 4.47 21 5V15Z"
+                                                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                      fill="currentColor" fill-opacity="0.1"/>
+                                                <line x1="8" y1="9" x2="16" y2="9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                                <line x1="8" y1="13" x2="13" y2="13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                            </svg>
                                         </button>
                                     </div>
 
+                                    <!-- Read More — same row, right side, vertically centered -->
                                     <div class="social-action-right">
                                         <a href="./details.php?id=<?= urlencode($post['id']) ?>" class="action-btn readmore-btn">
-                                            <i class="bi bi-arrow-right-circle"></i> Read More
+                                            <svg viewBox="0 0 24 24" fill="none" style="width:14px;height:14px;">
+                                                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+                                                <path d="M9 12h6M13 10l2 2-2 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                            Read More
                                         </a>
                                     </div>
                                 </div>
 
+                                <!-- Summary row -->
                                 <div class="reaction-summary">
-                                    <span><i class="bi bi-heart-fill"></i> <span class="js-like-count"><?= (int)$post['numberOfLike'] ?></span></span>
-                                    <span><i class="bi bi-hand-thumbs-down-fill"></i> <span class="js-dislike-count"><?= (int)$post['numberOfDislike'] ?></span></span>
-                                    <span class="view-meta"><i class="bi bi-eye"></i> <span class="js-view-count"><?= (int)$post['numberOfView'] ?></span> views</span>
-                                    <span><i class="bi bi-chat-left-text"></i> <span class="js-comment-count"><?= $commentCount ?></span></span>
+                                    <span>
+                                        <svg viewBox="0 0 24 24" fill="currentColor" style="width:12px;height:12px;color:#be123c;">
+                                            <path d="M12 21C12 21 3 14.5 3 8.5C3 5.42 5.42 3 8.5 3C10.24 3 11.81 3.85 12 5C12.19 3.85 13.76 3 15.5 3C18.58 3 21 5.42 21 8.5C21 14.5 12 21 12 21Z"/>
+                                        </svg>
+                                        <span class="js-like-count"><?= (int)$post['numberOfLike'] ?></span>
+                                    </span>
+                                    <span>
+                                        <svg viewBox="0 0 24 24" fill="currentColor" style="width:12px;height:12px;color:#5b4fff;">
+                                            <path d="M17 2H7L3 10v2c0 1.1.9 2 2 2h6l-1 5.5c-.1.6.3 1.1.9 1.4l.6.1c.5 0 1-.3 1.2-.8L15 14h4a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/>
+                                        </svg>
+                                        <span class="js-dislike-count"><?= (int)$post['numberOfDislike'] ?></span>
+                                    </span>
+                                    <span class="view-meta">
+                                        <svg viewBox="0 0 24 24" fill="none" style="width:12px;height:12px;">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/>
+                                            <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                                        </svg>
+                                        <span class="js-view-count"><?= (int)$post['numberOfView'] ?></span> views
+                                    </span>
+                                    <span>
+                                        <svg viewBox="0 0 24 24" fill="none" style="width:12px;height:12px;color:#0369a1;">
+                                            <path d="M21 15C21 15.53 20.79 16.04 20.41 16.41C20.04 16.79 19.53 17 19 17H7L3 21V5C3 4.47 3.21 3.96 3.59 3.59C3.96 3.21 4.47 3 5 3H19C19.53 3 20.04 3.21 20.41 3.59C20.79 3.96 21 4.47 21 5V15Z"
+                                                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <span class="js-comment-count"><?= $commentCount ?></span>
+                                    </span>
                                 </div>
                             </div>
 
-                            <div class="comments-preview mt-3 js-comments-preview">
+                            <!-- Preview comments -->
+                            <div class="comments-preview px-3 pb-1 js-comments-preview">
                                 <?php render_preview_comments($previewComments); ?>
                             </div>
 
                             <?php if ($commentCount > 0) : ?>
-                                <div class="comment-create-inline">
+                                <div class="comment-create-inline px-3 pb-3">
                                     <button type="button" class="comment-see-all-btn js-open-comments-modal" data-bs-target="#<?= $modalId ?>">
-                                        <i class="bi bi-chat-dots-fill"></i> See all comments
+                                        <svg viewBox="0 0 24 24" fill="none" style="width:14px;height:14px;">
+                                            <path d="M21 15C21 15.53 20.79 16.04 20.41 16.41C20.04 16.79 19.53 17 19 17H7L3 21V5C3 4.47 3.21 3.96 3.59 3.59C3.96 3.21 4.47 3 5 3H19C19.53 3 20.04 3.21 20.41 3.59C20.79 3.96 21 4.47 21 5V15Z"
+                                                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                  fill="currentColor" fill-opacity="0.1"/>
+                                        </svg>
+                                        See all comments
                                     </button>
                                 </div>
                             <?php endif; ?>
                         </article>
                     </div>
 
+                    <!-- Comments Modal -->
                     <div class="modal fade" id="<?= $modalId ?>" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-scrollable modal-lg">
                             <div class="modal-content" style="background:#fff;border-radius:20px;">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">
-                                        Comments — <?= htmlspecialchars($post['subject']) ?>
+                                <div class="modal-header border-0 pb-0">
+                                    <h5 class="modal-title" style="font-family:'Fraunces',serif;font-weight:800;font-size:1rem;display:flex;align-items:center;gap:.5rem;">
+                                        <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:#f0f9ff;color:#0369a1;flex-shrink:0;">
+                                            <svg viewBox="0 0 24 24" fill="none" style="width:14px;height:14px;">
+                                                <path d="M21 15C21 15.53 20.79 16.04 20.41 16.41C20.04 16.79 19.53 17 19 17H7L3 21V5C3 4.47 3.21 3.96 3.59 3.59C3.96 3.21 4.47 3 5 3H19C19.53 3 20.04 3.21 20.41 3.59C20.79 3.96 21 4.47 21 5V15Z"
+                                                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                <line x1="8" y1="9" x2="16" y2="9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                                <line x1="8" y1="13" x2="13" y2="13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                            </svg>
+                                        </span>
+                                        Comments
                                         <span class="comment-count-badge js-comment-count"><?= $commentCount ?></span>
                                     </h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
-                                <div class="modal-body js-post-comments-scope" data-post-id="<?= htmlspecialchars($post['id']) ?>" data-context="index">
+                                <div class="modal-body js-post-comments-scope"
+                                     data-post-id="<?= htmlspecialchars($post['id']) ?>"
+                                     data-context="index">
                                     <div class="comment-form-wrap mb-4">
                                         <div class="comment-avatar-sm">U</div>
                                         <div class="comment-input-area">
                                             <?php render_comment_form($post['id'], $post['id'], 'post', 'index', 'Add a comment...', 'Post'); ?>
                                         </div>
                                     </div>
-
                                     <div class="comments-list js-comments-list">
                                         <?php if (empty($allCommentsTree)) : ?>
                                             <div class="no-comments-msg">
-                                                <i class="bi bi-chat-square" style="font-size:2rem;opacity:.4;"></i>
+                                                <svg viewBox="0 0 24 24" fill="none" style="width:2rem;height:2rem;opacity:.3;display:block;margin:0 auto .5rem;">
+                                                    <path d="M21 15C21 15.53 20.79 16.04 20.41 16.41C20.04 16.79 19.53 17 19 17H7L3 21V5C3 4.47 3.21 3.96 3.59 3.59C3.96 3.21 4.47 3 5 3H19C19.53 3 20.04 3.21 20.41 3.59C20.79 3.96 21 4.47 21 5V15Z"
+                                                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </svg>
                                                 <p class="mt-2 mb-0">No comments yet. Be the first to comment!</p>
                                             </div>
                                         <?php else : ?>
