@@ -1,9 +1,10 @@
-<?php session_start(); ?>
 <?php
-require_once '../../../Controleur/utilisateurC.php';
+session_start();
+require_once '../../../Controleur/reclamationC.php';
 
-$userC = new UtilisateurC();
-$users = $userC->afficherUsers();
+$reclamationC = new ReclamationC();
+$liste = $reclamationC->afficherReclamationsAdmin();
+$stats = $reclamationC->statistiques();
 ?>
 
 <html lang="en"><head>
@@ -129,7 +130,7 @@ body.light-mode {
             </a>
           </li>
           <li class="nav-item menu-items">
-            <a class="nav-link" href="reclamation.php">
+            <a class="nav-link" href="pages/forms/basic_elements.html">
               <span class="menu-icon">
                 <i class="mdi mdi-playlist-play"></i>
               </span>
@@ -358,229 +359,151 @@ body.light-mode {
             </button>
           </div>
         </nav>
-        <!-- partial -->
         <div class="main-panel">
           <div class="content-wrapper">
             <div class="row">
               
             </div>
-            <div class="row">
-              <div class="col-xl-3 col-sm-6 grid-margin stretch-card">
-                <div class="card">
-                  <div class="card-body">
-                    <div class="row">
-                      <div class="col-9">
-                        <div class="d-flex align-items-center align-self-start">
-                          <h3 class="mb-0">$12.34</h3>
-                          <p class="text-success ml-2 mb-0 font-weight-medium">+3.5%</p>
-                        </div>
-                      </div>
-                      <div class="col-3">
-                        <div class="icon icon-box-success ">
-                          <span class="mdi mdi-arrow-top-right icon-item"></span>
-                        </div>
-                      </div>
-                    </div>
-                    <h6 class="text-muted font-weight-normal">Potential growth</h6>
-                  </div>
-                </div>
-              </div>
-              <div class="col-xl-3 col-sm-6 grid-margin stretch-card">
-                <div class="card">
-                  <div class="card-body">
-                    <div class="row">
-                      <div class="col-9">
-                        <div class="d-flex align-items-center align-self-start">
-                          <h3 class="mb-0">$17.34</h3>
-                          <p class="text-success ml-2 mb-0 font-weight-medium">+11%</p>
-                        </div>
-                      </div>
-                      <div class="col-3">
-                        <div class="icon icon-box-success">
-                          <span class="mdi mdi-arrow-top-right icon-item"></span>
-                        </div>
-                      </div>
-                    </div>
-                    <h6 class="text-muted font-weight-normal">Revenue current</h6>
-                  </div>
-                </div>
-              </div>
-              <div class="col-xl-3 col-sm-6 grid-margin stretch-card">
-                <div class="card">
-                  <div class="card-body">
-                    <div class="row">
-                      <div class="col-9">
-                        <div class="d-flex align-items-center align-self-start">
-                          <h3 class="mb-0">$12.34</h3>
-                          <p class="text-danger ml-2 mb-0 font-weight-medium">-2.4%</p>
-                        </div>
-                      </div>
-                      <div class="col-3">
-                        <div class="icon icon-box-danger">
-                          <span class="mdi mdi-arrow-bottom-left icon-item"></span>
-                        </div>
-                      </div>
-                    </div>
-                    <h6 class="text-muted font-weight-normal">Daily Income</h6>
-                  </div>
-                </div>
-              </div>
-              <div class="col-xl-3 col-sm-6 grid-margin stretch-card">
-                <div class="card">
-                  <div class="card-body">
-                    <div class="row">
-                      <div class="col-9">
-                        <div class="d-flex align-items-center align-self-start">
-                          <h3 class="mb-0">$31.53</h3>
-                          <p class="text-success ml-2 mb-0 font-weight-medium">+3.5%</p>
-                        </div>
-                      </div>
-                      <div class="col-3">
-                        <div class="icon icon-box-success ">
-                          <span class="mdi mdi-arrow-top-right icon-item"></span>
-                        </div>
-                      </div>
-                    </div>
-                    <h6 class="text-muted font-weight-normal">Expense current</h6>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="row">
-              <div class="col-sm-4 grid-margin">
-                <div class="card">
-                  <div class="card-body">
-                    <h5>Revenue</h5>
-                    <div class="row">
-                      <div class="col-8 col-sm-12 col-xl-8 my-auto">
-                        <div class="d-flex d-sm-block d-md-flex align-items-center">
-                          <h2 class="mb-0">$32123</h2>
-                          <p class="text-success ml-2 mb-0 font-weight-medium">+3.5%</p>
-                        </div>
-                        <h6 class="text-muted font-weight-normal">11.38% Since last month</h6>
-                      </div>
-                      <div class="col-4 col-sm-12 col-xl-4 text-center text-xl-right">
-                        <i class="icon-lg mdi mdi-codepen text-primary ml-auto"></i>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-sm-4 grid-margin">
-                <div class="card">
-                  <div class="card-body">
-                    <h5>Sales</h5>
-                    <div class="row">
-                      <div class="col-8 col-sm-12 col-xl-8 my-auto">
-                        <div class="d-flex d-sm-block d-md-flex align-items-center">
-                          <h2 class="mb-0">$45850</h2>
-                          <p class="text-success ml-2 mb-0 font-weight-medium">+8.3%</p>
-                        </div>
-                        <h6 class="text-muted font-weight-normal"> 9.61% Since last month</h6>
-                      </div>
-                      <div class="col-4 col-sm-12 col-xl-4 text-center text-xl-right">
-                        <i class="icon-lg mdi mdi-wallet-travel text-danger ml-auto"></i>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-sm-4 grid-margin">
-                <div class="card">
-                  <div class="card-body">
-                    <h5>Purchase</h5>
-                    <div class="row">
-                      <div class="col-8 col-sm-12 col-xl-8 my-auto">
-                        <div class="d-flex d-sm-block d-md-flex align-items-center">
-                          <h2 class="mb-0">$2039</h2>
-                          <p class="text-danger ml-2 mb-0 font-weight-medium">-2.1% </p>
-                        </div>
-                        <h6 class="text-muted font-weight-normal">2.27% Since last month</h6>
-                      </div>
-                      <div class="col-4 col-sm-12 col-xl-4 text-center text-xl-right">
-                        <i class="icon-lg mdi mdi-monitor text-success ml-auto"></i>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="row ">
-              <div class="col-12 grid-margin">
-                <div class="card">
-                  <div class="card-body">
-                    <h4 class="card-title">Order Status</h4>
-                    <div class="table-responsive">
-                      <table class="table">
-                        <thead>
-                          <tr>
-            
-                             <th>ID</th><th>Nom</th><th>Email</th><th>Role</th><th>Action</th>
-                          </tr>
-                        </thead>
-                        <tbody>
+<div class="row mb-4">
 
-<?php foreach ($users as $u) : ?>
-<tr>
-    <form method="POST" action="update.php">
-        
-        <td><?= $u['id'] ?></td>
+  <!-- Total -->
+  <div class="col-md-3">
+    <div class="card shadow-sm text-center p-3">
+      <h6 class="text-muted">Total</h6>
+      <h3><?php echo $stats['total']; ?></h3>
+    </div>
+  </div>
 
-        <td>
-            <input type="text" name="nom" 
-                value="<?= htmlspecialchars($u['nom']) ?>" 
-                class="form-control form-control-sm">
-        </td>
+  <!-- En attente -->
+  <div class="col-md-3">
+    <div class="card shadow-sm text-center p-3 bg-warning">
+      <h6>En attente</h6>
+      <h3><?php echo $stats['en_attente']; ?></h3>
+    </div>
+  </div>
 
-        <td>
-            <input type="email" name="email" 
-                value="<?= htmlspecialchars($u['email']) ?>" 
-                class="form-control form-control-sm">
-        </td>
+  <!-- Traitées -->
+   
+  <div class="col-md-3">
+    <div class="card shadow-sm text-center p-3 bg-success text-white">
+      <h6>Traitées</h6>
+      <h3><?php echo $stats['traitee']; ?></h3>
+    </div>
+  </div>
 
-        <td>
-            <select name="role" class="form-control form-control-sm">
-                <option value="admin" <?= $u['role']=='admin'?'selected':'' ?>>Admin</option>
-                <option value="createur" <?= $u['role']=='createur'?'selected':'' ?>>Créateur</option>
-                <option value="marque" <?= $u['role']=='marque'?'selected':'' ?>>Marque</option>
-            </select>
-        </td>
+  <!-- Chart -->
+  <div class="col-md-3">
+    <div class="card shadow-sm p-2 text-center">
+      <h6>Statistiques</h6>
+      <div style="height:90px;">
+        <canvas id="chartReclamation"></canvas>
+      </div>
+    </div>
+  </div>
 
-        <td>
-            <input type="hidden" name="id" value="<?= $u['id'] ?>">
+</div>
 
-            <button type="submit" class="btn btn-success btn-sm me-1">
-                update
-            </button>
+<!-- ===================== TABLEAU ===================== -->
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-body">
 
-            <button type="button"
-                onclick="if(confirm('Supprimer ?')) window.location.href='delete.php?id=<?= $u['id'] ?>';"
-                class="btn btn-danger btn-sm">
-                Delete
-            </button>
-        </td>
+        <h5 class="mb-3">Gestion des réclamations</h5>
 
-    </form>
-</tr>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-dark">
+              <tr>
+                <th>ID</th>
+                <th>Utilisateur</th>
+                <th>Description</th>
+                <th>Date</th>
+                <th>Priorité</th>
+                <th>Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <?php foreach ($liste as $rec): ?>
+              <tr>
+                <td><?php echo $rec['id']; ?></td>
+                <td><?php echo $rec['nom']; ?></td>
+                <td><?php echo $rec['description']; ?></td>
+                <td><?php echo $rec['date_creation']; ?></td>
+                <td><?php echo $rec['priorite']; ?></td>
+
+                <td>
+                  <span class="badge bg-<?php echo ($rec['statut']=='traitee')?'success':'warning'; ?>">
+                    <?php echo $rec['statut']; ?>
+                  </span>
+                </td>
+
+                <td class="d-flex gap-1">
+
+                  <!-- Répondre -->
+                  <button class="btn btn-primary btn-sm"
+                          data-bs-toggle="modal"
+                          data-bs-target="#modal<?php echo $rec['id']; ?>">
+                    Répondre
+                  </button>
+
+                  <!-- Supprimer -->
+                  <form method="POST" action="supprimerReclamation.php">
+                    <input type="hidden" name="id" value="<?php echo $rec['id']; ?>">
+                    <button class="btn btn-danger btn-sm">🗑</button>
+                  </form>
+
+                  <!-- Modifier -->
+                  <form method="POST" action="modifierStatut.php">
+                    <input type="hidden" name="id" value="<?php echo $rec['id']; ?>">
+                    <select name="statut" onchange="this.form.submit()" class="form-select form-select-sm">
+                      <option value="en_attente" <?php if($rec['statut']=='en_attente') echo 'selected'; ?>>En attente</option>
+                      <option value="traitee" <?php if($rec['statut']=='traitee') echo 'selected'; ?>>Traitée</option>
+                    </select>
+                  </form>
+
+                </td>
+              </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODALS ===================== -->
+<?php foreach ($liste as $rec): ?>
+<div class="modal fade" id="modal<?php echo $rec['id']; ?>" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <form method="POST" action="ajouterReponse.php">
+
+        <div class="modal-header">
+          <h5 class="modal-title">Répondre</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <input type="hidden" name="idReclamation" value="<?php echo $rec['id']; ?>">
+          <textarea name="contenu" class="form-control" placeholder="Votre réponse..." required></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-success">Envoyer</button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
 <?php endforeach; ?>
-
-    
-                            
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-
-            <div class="row">
-              <div class="col-12">
-                
-              </div>
-            </div>
-          </div>
           <!-- content-wrapper ends -->
           <!-- partial:partials/_footer.html -->
           <footer class="footer">
@@ -612,9 +535,36 @@ body.light-mode {
     <script src="assets/js/misc.js"></script>
     <script src="assets/js/settings.js"></script>
     <script src="assets/js/todolist.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- endinject -->
     <!-- Custom js for this page -->
     <script src="assets/js/dashboard.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const ctx = document.getElementById('chartReclamation');
+
+new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: ['En attente', 'Traitées'],
+        datasets: [{
+            data: [
+                <?php echo $stats['en_attente']; ?>,
+                <?php echo $stats['traitee']; ?>
+            ],
+            backgroundColor: ['#B771E5', '#AEEA94']
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false }
+        }
+    }
+});
+</script>
     <!-- End custom js for this page -->
   
 <div class="jvectormap-tip" style="display: none; left: 605.948px; top: 2089px;">United States</div>

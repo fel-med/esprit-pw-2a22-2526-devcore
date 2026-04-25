@@ -34,9 +34,16 @@ $idUtilisateur = $_SESSION['id'];
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
                     <div class="collapse navbar-collapse" id="navbarSupportedContent">
                         <ul class="navbar-nav ms-auto mb-2 mb-lg-0 small fw-bolder">
-                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-                            <li class="nav-item"><a class="nav-link" href="reclamation.html">Reclamation</a></li>
-                           
+                            <?php if (isset($_SESSION['nom'])): ?>
+    <span class="nav-link">👤 <?php echo $_SESSION['nom']; ?></span>
+<?php endif; ?>
+                            <li class="nav-item"><a class="nav-link" href="creator.php">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="reclamation.php">Reclamation</a></li>
+                           <li class="nav-item">
+    <a class="nav-link text-danger" href="logout.php">
+        <i class="bi bi-box-arrow-right"></i> Logout
+    </a>
+</li>
                         </ul>
                     </div>
                 </div>
@@ -45,10 +52,10 @@ $idUtilisateur = $_SESSION['id'];
             <section class="py-5">
                 <div class="container px-5 mb-5">
                     <div class="text-center mb-5">
-                        <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">creator</span></h1>]
+                        <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">creator</span></h1>
                         <div class="text-center mt-3">
     <p class="text-muted">
-        Connecté en tant que : <strong><?php echo $_SESSION['nom'] ?? 'Utilisateur'; ?></strong>
+        hello  : <strong><?php echo $_SESSION['nom'] ?? 'Utilisateur'; ?></strong>
     </p>
 </div>
                     </div>

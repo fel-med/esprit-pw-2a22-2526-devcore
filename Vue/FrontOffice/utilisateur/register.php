@@ -3,7 +3,7 @@ require_once '../../../Controleur/utilisateurC.php';
 
 $message = "";
 
-if (isset($_POST['submit'])) {
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if (!empty($_POST['nom']) &&
         filter_var($_POST['email'], FILTER_VALIDATE_EMAIL) &&

@@ -49,29 +49,32 @@ public function updateUser($id, $nom, $email, $role) {
     }
 
     public function login($email, $password) {
-        $db = config::getConnexion();
+    $db = config::getConnexion();
 
-        $query = $db->prepare("SELECT * FROM utilisateur WHERE email=?");
-        $query->execute([$email]);
-        $user = $query->fetch();
+    $query = $db->prepare("SELECT * FROM utilisateur WHERE email=?");
+    $query->execute([$email]);
+    $user = $query->fetch();
 
-        if (!$user) return "Utilisateur introuvable";
+    if (!$user) return "Utilisateur introuvable";
 
-        if (!password_verify($password, $user['mot_de_passe'])) return "Mot de passe incorrect";
+    if (!password_verify($password, $user['mot_de_passe'])) return "Mot de passe incorrect";
 
-        if ($user['statut'] != 'actif') return "Compte non actif";
+    if ($user['statut'] != 'actif') return "Compte non actif";
 
-        session_start();
-        $_SESSION['user'] = $user;
-        $_SESSION['role'] = $user['role'];
+    session_start();
 
-        if ($user['role'] == 'admin')
-            header("Location:http://127.0.0.1/crea8connect/Esprit-PW-2A22-2526-Devcore/Vue/BackOffice/utilisateur/index.php");
-        else if ($user['role'] == 'createur')
-            header("Location: ../utilisateur/creator.html");
-        else 
- header("Location: ../utilisateur/brand.html");
-        exit;
-    }
+    $_SESSION['user'] = $user;
+    $_SESSION['role'] = $user['role'];
+    $_SESSION['id'] = $user['id']; // 🔥 AJOUT IMPORTANT
+
+    if ($user['role'] == 'admin')
+        header("Location:http://127.0.0.1/crea8connect/Esprit-PW-2A22-2526-Devcore/Vue/BackOffice/utilisateur/index.php");
+    else if ($user['role'] == 'createur')
+        header("Location: ../utilisateur/creator.php");
+    else 
+        header("Location: ../utilisateur/brand.html");
+
+    exit;
+}
 }
 ?>

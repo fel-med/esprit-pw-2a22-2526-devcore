@@ -2,11 +2,13 @@
 session_start();
 
 if (!isset($_SESSION['id'])) {
-    echo "Utilisateur non connecté";
-    exit();
+    die("Utilisateur non connecté");
 }
 
-$idUtilisateur = $_SESSION['id'];
+require_once '../../../Controleur/reclamationC.php';
+
+$reclamationC = new ReclamationC();
+$liste = $reclamationC->afficherReclamationsAvecReponsesUser($_SESSION['id']);
 ?>
 <html lang="en"><head>
         <meta charset="utf-8">
@@ -35,26 +37,66 @@ $idUtilisateur = $_SESSION['id'];
                     <div class="collapse navbar-collapse" id="navbarSupportedContent">
                         <ul class="navbar-nav ms-auto mb-2 mb-lg-0 small fw-bolder">
                             <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-                            <li class="nav-item"><a class="nav-link" href="reclamation.html">Reclamation</a></li>
+                            <li class="nav-item"><a class="nav-link" href="resume.html">Reclamation</a></li>
                            
                         </ul>
                     </div>
                 </div>
             </nav>
             <!-- Projects Section-->
-            <section class="py-5">
-                <div class="container px-5 mb-5">
-                    <div class="text-center mb-5">
-                        <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">creator</span></h1>]
-                        <div class="text-center mt-3">
-    <p class="text-muted">
-        Connecté en tant que : <strong><?php echo $_SESSION['nom'] ?? 'Utilisateur'; ?></strong>
-    </p>
-</div>
+           <section class="py-5">
+    <div class="container px-5 mb-5">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bolder mb-0">
+                <span class="text-gradient d-inline">Envoyer une réclamation</span>
+            </h1>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+
+                <div class="card shadow rounded-4 border-0">
+                    <div class="card-body p-5">
+
+                        <form method="POST" action="traiterReclamation.php">
+
+                            <!-- Description -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Description</label>
+                                <textarea 
+                                    name="description" 
+                                    class="form-control" 
+                                    rows="4" 
+                                    placeholder="Décrivez votre problème..." 
+                                    required></textarea>
+                            </div>
+
+                            <!-- Priorité -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Priorité</label>
+                                <select name="priorite" class="form-select">
+                                    <option value="faible">Faible</option>
+                                    <option value="normale" selected>Normale</option>
+                                    <option value="haute">Haute</option>
+                                </select>
+                            </div>
+
+                            <!-- Bouton -->
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    Envoyer la réclamation
+                                </button>
+                            </div>
+
+                        </form>
+
                     </div>
-                    
                 </div>
-            </section>
+
+            </div>
+        </div>
+    </div>
+</section>
             <!-- Call to action section-->
             <section class="py-5 bg-gradient-primary-to-secondary text-white">
                 <div class="container px-5 my-5">

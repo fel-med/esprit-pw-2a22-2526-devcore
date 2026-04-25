@@ -12840,7 +12840,7 @@ button.bg-secondary:focus {
   background-color: #c6d3d7 !important; }
 
 .bg-success, .swal2-modal .swal2-buttonswrapper .swal2-styled.swal2-confirm {
-  background-color: #00d25b !important; }
+  background-color: #AEEA94 !important; }
 
 a.bg-success:hover, .swal2-modal .swal2-buttonswrapper a.swal2-styled.swal2-confirm:hover, a.bg-success:focus, .swal2-modal .swal2-buttonswrapper a.swal2-styled.swal2-confirm:focus,
 button.bg-success:hover,
@@ -12858,7 +12858,7 @@ button.bg-info:focus {
   background-color: #7032e2 !important; }
 
 .bg-warning {
-  background-color: #ffab00 !important; }
+  background-color: #B771E5 !important; }
 
 a.bg-warning:hover, a.bg-warning:focus,
 button.bg-warning:hover,

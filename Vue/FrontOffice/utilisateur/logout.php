@@ -1,7 +1,12 @@
 <?php
 session_start();
+
+// vider toutes les variables de session
+$_SESSION = [];
+
+// détruire la session
 session_destroy();
 
-header("Location: auth/login.php");
-exit;
-?>
+// redirection vers login
+header("Location: login.php");
+exit();
