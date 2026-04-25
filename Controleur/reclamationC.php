@@ -68,20 +68,45 @@ public function statistiques() {
     $db = config::getConnexion();
     return $db->query($sql)->fetch();
 }
-public function afficherReclamationsAdmin() {
+public function afficherReclamationsAdmin($search = '', $priorite = '') {
     $sql = "SELECT 
                 r.id,
                 u.nom,
                 r.description,
                 r.date_creation,
                 r.statut,
-                r.priorite
+                r.priorite,
+                rep.contenu AS reponse,
+                rep.date_reponse
             FROM reclamation r
             JOIN utilisateur u ON r.idUtilisateur = u.id
-            ORDER BY r.date_creation DESC";
+            LEFT JOIN reponse rep ON r.id = rep.idReclamation
+            WHERE 1=1";
+
+    if (!empty($search)) {
+        $sql .= " AND (u.nom LIKE :search OR r.description LIKE :search)";
+    }
+
+    if (!empty($priorite)) {
+        $sql .= " AND r.priorite = :priorite";
+    }
+
+    $sql .= " ORDER BY r.date_creation DESC";
 
     $db = config::getConnexion();
-    return $db->query($sql);
+    $stmt = $db->prepare($sql);
+
+    if (!empty($search)) {
+        $searchTerm = "%$search%";
+        $stmt->bindParam(':search', $searchTerm);
+    }
+
+    if (!empty($priorite)) {
+        $stmt->bindParam(':priorite', $priorite);
+    }
+
+    $stmt->execute();
+    return $stmt;
 }
     // ✔️ Afficher toutes les réclamations avec jointure
     public function afficherReclamations() {

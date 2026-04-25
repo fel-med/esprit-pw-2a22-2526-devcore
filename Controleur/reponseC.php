@@ -1,5 +1,7 @@
 <?php
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../Modele/reclamation.php';
+require_once __DIR__ . '/../Modele/reponse.php';
 
 class ReponseC {
 
@@ -50,5 +52,30 @@ class ReponseC {
         $db = config::getConnexion();
         $req = $db->prepare($sql);
         $req->execute(['id' => $id]);
+    }
+
+    // ✔️ Modifier réponse
+    public function modifierReponse($id, $contenu) {
+        $sql = "UPDATE reponse SET contenu = :contenu WHERE id = :id";
+        $db = config::getConnexion();
+        try {
+            $req = $db->prepare($sql);
+            $req->execute([
+                'id' => $id,
+                'contenu' => $contenu
+            ]);
+        } catch (Exception $e) {
+            die('Erreur modification réponse: ' . $e->getMessage());
+        }
+    }
+
+    // ✔️ Récupérer une réponse par ID réclamation
+    public function getReponseByReclamation($idReclamation) {
+        $sql = "SELECT id FROM reponse WHERE idReclamation = :idReclamation LIMIT 1";
+        $db = config::getConnexion();
+        $req = $db->prepare($sql);
+        $req->execute(['idReclamation' => $idReclamation]);
+        $result = $req->fetch();
+        return $result ? $result['id'] : null;
     }
 }
