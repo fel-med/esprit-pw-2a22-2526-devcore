@@ -102,6 +102,46 @@ $stats = $reclamationC->statistiques();
     .light-mode .table {
       color: black !important;
     }
+
+    .light-mode .table-dark {
+      background-color: #e9ecef !important;
+      color: black !important;
+    }
+
+    .light-mode input.form-control,
+    .light-mode select.form-select,
+    .light-mode textarea.form-control {
+      background-color: #ffffff !important;
+      color: black !important;
+      border-color: #dee2e6 !important;
+    }
+
+    .light-mode .modal-content {
+      background-color: #f8f9fa !important;
+      color: black !important;
+    }
+
+    .light-mode .modal-header {
+      background-color: #e9ecef !important;
+      border-color: #dee2e6 !important;
+    }
+
+    body {
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .light-mode * {
+      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .nav-link i#themeIcon {
+      transition: all 0.3s ease;
+      font-size: 1.2rem;
+    }
+
+    .nav-link:hover i#themeIcon {
+      transform: rotate(20deg);
+    }
   </style>
 </head>
 
@@ -173,7 +213,7 @@ $stats = $reclamationC->statistiques();
           <span class="nav-link">Navigation</span>
         </li>
         <li class="nav-item menu-items">
-          <a class="nav-link" href="#" onclick="toggleDarkMode()">
+          <a class="nav-link" href="#" onclick="toggleDarkMode(); return false;">
             <span class="menu-icon">
               <i id="themeIcon" class="mdi mdi-weather-night"></i>
             </span>
@@ -571,7 +611,7 @@ $stats = $reclamationC->statistiques();
               <div class="modal-dialog">
                 <div class="modal-content">
 
-                  <form method="POST" action="ajouterReponse.php">
+                  <form method="POST" action="ajouterReponse.php" id="formReply<?php echo $rec['id']; ?>" onsubmit="return validateReply(this)">
 
                     <div class="modal-header">
                       <h5 class="modal-title">Répondre</h5>
@@ -581,8 +621,9 @@ $stats = $reclamationC->statistiques();
                     <div class="modal-body">
                       <input type="hidden" name="idReclamation" value="<?php echo $rec['id']; ?>">
 
-                      <textarea name="contenu" class="form-control"
-                                placeholder="Votre réponse..." required></textarea>
+                      <textarea name="contenu" class="form-control" id="replyContent<?php echo $rec['id']; ?>"
+                                placeholder="Votre réponse..."></textarea>
+                      <small class="text-danger d-none" id="replyError<?php echo $rec['id']; ?>">Veuillez entrer une réponse.</small>
                     </div>
 
                     <div class="modal-footer d-flex justify-content-between">
@@ -640,7 +681,7 @@ $stats = $reclamationC->statistiques();
               <div class="modal-dialog">
                 <div class="modal-content">
 
-                  <form method="POST" action="modifierReponse.php">
+                  <form method="POST" action="modifierReponse.php" id="formEditReply<?php echo $rec['id']; ?>" onsubmit="return validateEditReply(this)">
 
                     <div class="modal-header">
                       <h5 class="modal-title">Modifier la réponse</h5>
@@ -649,7 +690,8 @@ $stats = $reclamationC->statistiques();
 
                     <div class="modal-body">
                       <input type="hidden" name="idReclamation" value="<?php echo $rec['id']; ?>">
-                      <textarea name="contenu" class="form-control" placeholder="Modifier la réponse..." required><?php echo htmlspecialchars($rec['reponse'] ?? ''); ?></textarea>
+                      <textarea name="contenu" class="form-control" id="editReplyContent<?php echo $rec['id']; ?>" placeholder="Modifier la réponse..."><?php echo htmlspecialchars($rec['reponse'] ?? ''); ?></textarea>
+                      <small class="text-danger d-none" id="editReplyError<?php echo $rec['id']; ?>">Veuillez entrer une réponse valide.</small>
                     </div>
 
                     <div class="modal-footer d-flex justify-content-between">
@@ -796,6 +838,111 @@ $stats = $reclamationC->statistiques();
           form.submit();
         }
       }
+
+      // ===== VALIDATION JAVASCRIPT =====
+      
+      // Validation pour ajouter une réponse
+      function validateReply(form) {
+        const idReclamation = form.querySelector('input[name="idReclamation"]').value;
+        const textarea = form.querySelector('textarea[name="contenu"]');
+        const errorEl = document.getElementById('replyError' + idReclamation);
+        
+        const content = textarea.value.trim();
+        
+        // Vérification du contenu
+        if (content === '') {
+          errorEl.classList.remove('d-none');
+          textarea.classList.add('border-danger');
+          return false;
+        }
+        
+        // Vérification de la longueur minimale (5 caractères)
+        if (content.length < 5) {
+          errorEl.textContent = 'La réponse doit contenir au moins 5 caractères.';
+          errorEl.classList.remove('d-none');
+          textarea.classList.add('border-danger');
+          return false;
+        }
+        
+        // Vérification de la longueur maximale (1000 caractères)
+        if (content.length > 1000) {
+          errorEl.textContent = 'La réponse ne doit pas dépasser 1000 caractères.';
+          errorEl.classList.remove('d-none');
+          textarea.classList.add('border-danger');
+          return false;
+        }
+        
+        // Vérification que ce n'est pas que des espaces
+        if (!/\S/.test(content)) {
+          errorEl.textContent = 'La réponse ne peut pas contenir uniquement des espaces.';
+          errorEl.classList.remove('d-none');
+          textarea.classList.add('border-danger');
+          return false;
+        }
+        
+        // Succès
+        errorEl.classList.add('d-none');
+        textarea.classList.remove('border-danger');
+        return true;
+      }
+      
+      // Validation pour modifier une réponse
+      function validateEditReply(form) {
+        const idReclamation = form.querySelector('input[name="idReclamation"]').value;
+        const textarea = form.querySelector('textarea[name="contenu"]');
+        const errorEl = document.getElementById('editReplyError' + idReclamation);
+        
+        const content = textarea.value.trim();
+        
+        // Vérification du contenu
+        if (content === '') {
+          errorEl.classList.remove('d-none');
+          textarea.classList.add('border-danger');
+          return false;
+        }
+        
+        // Vérification de la longueur minimale (5 caractères)
+        if (content.length < 5) {
+          errorEl.textContent = 'La réponse doit contenir au moins 5 caractères.';
+          errorEl.classList.remove('d-none');
+          textarea.classList.add('border-danger');
+          return false;
+        }
+        
+        // Vérification de la longueur maximale (1000 caractères)
+        if (content.length > 1000) {
+          errorEl.textContent = 'La réponse ne doit pas dépasser 1000 caractères.';
+          errorEl.classList.remove('d-none');
+          textarea.classList.add('border-danger');
+          return false;
+        }
+        
+        // Vérification que ce n'est pas que des espaces
+        if (!/\S/.test(content)) {
+          errorEl.textContent = 'La réponse ne peut pas contenir uniquement des espaces.';
+          errorEl.classList.remove('d-none');
+          textarea.classList.add('border-danger');
+          return false;
+        }
+        
+        // Succès
+        errorEl.classList.add('d-none');
+        textarea.classList.remove('border-danger');
+        return true;
+      }
+      
+      // Enlever les messages d'erreur au focus
+      document.addEventListener('focusin', function(e) {
+        if (e.target.tagName === 'TEXTAREA' && e.target.name === 'contenu') {
+          e.target.classList.remove('border-danger');
+          const errorEls = document.querySelectorAll('small.text-danger');
+          errorEls.forEach(el => {
+            if (!el.classList.contains('d-none')) {
+              el.classList.add('d-none');
+            }
+          });
+        }
+      });
     </script>
     <div class="jvectormap-tip" style="display: none; left: 605.948px; top: 2089px;">United States</div>
     <script>
