@@ -31,6 +31,7 @@ if ($commentId === '' || $postId === '') {
 }
 
 $commentC = new CommentC();
+
 if (!$commentC->userOwnsComment($commentId, $idUser)) {
     comment_json_response(['success' => false, 'message' => 'You cannot edit this comment.']);
 }
@@ -61,9 +62,9 @@ if ($text === '' && $sticker === null && $finalImage === null) {
 
 $comment = new Comment();
 $comment->setId($commentId);
-$comment->setIdCommentedElement((string)($current['idCommentedElement'] ?? ''));
-$comment->setIdUser($idUser);
-$comment->setCommentedItem((string)($current['commentedItem'] ?? 'post'));
+$comment->setIdPost($current['idPost'] ?? null);
+$comment->setIdComment($current['idComment'] ?? null);
+$comment->setIdUser((string)$idUser);
 $comment->setText($text);
 $comment->setSticker($sticker);
 $comment->setImage($finalImage);
@@ -71,4 +72,9 @@ $comment->setNumberOfLike((int)($current['numberOfLike'] ?? 0));
 $comment->setNumberOfDislike((int)($current['numberOfDislike'] ?? 0));
 
 $success = $commentC->updateComment($comment);
-comment_json_response(['success' => $success, 'postId' => $postId, 'message' => $success ? 'Comment updated.' : 'Unable to update comment.']);
+
+comment_json_response([
+    'success' => $success,
+    'postId' => $postId,
+    'message' => $success ? 'Comment updated.' : 'Unable to update comment.'
+]);

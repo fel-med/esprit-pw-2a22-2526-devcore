@@ -147,46 +147,23 @@ class PostC
     }
 
     public function deletePost(string $id, int $idCreateur)
-    {
-        try {
-            $this->db->beginTransaction();
+{
+    $sql = "DELETE FROM post WHERE id = :id AND idCreateur = :idCreateur";
+    $query = $this->db->prepare($sql);
 
-            $sqlCheck = "SELECT id FROM post WHERE id = :id AND idCreateur = :idCreateur";
-            $queryCheck = $this->db->prepare($sqlCheck);
-            $queryCheck->execute([
-                'id' => $id,
-                'idCreateur' => $idCreateur
-            ]);
+    return $query->execute([
+        'id' => $id,
+        'idCreateur' => $idCreateur
+    ]);
+}
 
-            $post = $queryCheck->fetch(PDO::FETCH_ASSOC);
-            if (!$post) {
-                $this->db->rollBack();
-                return false;
-            }
+public function deletePostAdmin(string $id): bool
+{
+    $sql = "DELETE FROM post WHERE id = :id";
+    $query = $this->db->prepare($sql);
 
-            $this->deleteCommentsByPostRecursive($id);
-
-            $sqlDelete = "DELETE FROM post WHERE id = :id AND idCreateur = :idCreateur";
-            $queryDelete = $this->db->prepare($sqlDelete);
-            $success = $queryDelete->execute([
-                'id' => $id,
-                'idCreateur' => $idCreateur
-            ]);
-
-            if (!$success) {
-                $this->db->rollBack();
-                return false;
-            }
-
-            $this->db->commit();
-            return true;
-        } catch (Throwable $e) {
-            if ($this->db->inTransaction()) {
-                $this->db->rollBack();
-            }
-            return false;
-        }
-    }
+    return $query->execute(['id' => $id]);
+}
 
     public function incrementViews(string $id)
     {
@@ -255,41 +232,7 @@ class PostC
         return (int)($result['numberOfDislike'] ?? 0);
     }
 
-    public function deletePostAdmin(string $id): bool
-    {
-        try {
-            $this->db->beginTransaction();
-
-            $sqlCheck = "SELECT id FROM post WHERE id = :id";
-            $queryCheck = $this->db->prepare($sqlCheck);
-            $queryCheck->execute(['id' => $id]);
-
-            $post = $queryCheck->fetch(PDO::FETCH_ASSOC);
-            if (!$post) {
-                $this->db->rollBack();
-                return false;
-            }
-
-            $this->deleteCommentsByPostRecursive($id);
-
-            $sqlDelete = "DELETE FROM post WHERE id = :id";
-            $queryDelete = $this->db->prepare($sqlDelete);
-            $success = $queryDelete->execute(['id' => $id]);
-
-            if (!$success) {
-                $this->db->rollBack();
-                return false;
-            }
-
-            $this->db->commit();
-            return true;
-        } catch (Throwable $e) {
-            if ($this->db->inTransaction()) {
-                $this->db->rollBack();
-            }
-            return false;
-        }
-    }
+    
 
     public function getAdminStats()
     {

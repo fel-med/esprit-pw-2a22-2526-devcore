@@ -18,8 +18,12 @@ function comment_json_response(array $payload): void
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     if (is_ajax_request()) {
-        comment_json_response(['success' => false, 'message' => 'Invalid request method']);
+        comment_json_response([
+            'success' => false,
+            'message' => 'Invalid request method'
+        ]);
     }
+
     header('Location: ../post/index.php');
     exit;
 }
@@ -33,8 +37,12 @@ $from = trim($_POST['from'] ?? 'index');
 
 if ($postId === '' || $targetId === '') {
     if (is_ajax_request()) {
-        comment_json_response(['success' => false, 'message' => 'Missing target post.']);
+        comment_json_response([
+            'success' => false,
+            'message' => 'Missing target post.'
+        ]);
     }
+
     header('Location: ../post/index.php');
     exit;
 }
@@ -44,17 +52,44 @@ $image = $commentC->handleCommentImage('image');
 
 if ($text === '' && $sticker === null && $image === null) {
     if (is_ajax_request()) {
-        comment_json_response(['success' => false, 'message' => 'Write something, choose a sticker, or add an image.']);
+        comment_json_response([
+            'success' => false,
+            'message' => 'Write something, choose a sticker, or add an image.'
+        ]);
     }
-    $redirect = $from === 'details' ? '../post/details.php?id=' . urlencode($postId) . '#comments' : '../post/index.php';
+
+    $redirect = $from === 'details'
+        ? '../post/details.php?id=' . urlencode($postId) . '#comments'
+        : ($from === 'portfolio' ? '../post/portfolio.php' : '../post/index.php');
+
     header('Location: ' . $redirect);
     exit;
 }
 
+/*
+|--------------------------------------------------------------------------
+| NEW FK-BASED STRUCTURE
+|--------------------------------------------------------------------------
+| If targetType = post    => idPost = targetId,    idComment = null
+| If targetType = comment => idPost = null,        idComment = targetId
+|
+| We still accept the same front-office payload, so the views/JS do not
+| need to change.
+|--------------------------------------------------------------------------
+*/
+$idPostRef = null;
+$idCommentRef = null;
+
+if ($targetType === 'comment') {
+    $idCommentRef = $targetId;
+} else {
+    $idPostRef = $targetId;
+}
+
 $comment = new Comment();
-$comment->setIdCommentedElement($targetId);
-$comment->setIdUser($idUser);
-$comment->setCommentedItem($targetType === 'comment' ? 'comment' : 'post');
+$comment->setIdPost($idPostRef);
+$comment->setIdComment($idCommentRef);
+$comment->setIdUser((string)$idUser);
 $comment->setText($text);
 $comment->setSticker($sticker);
 $comment->setImage($image);
@@ -72,6 +107,9 @@ if (is_ajax_request()) {
     ]);
 }
 
-$redirect = $from === 'details' ? '../post/details.php?id=' . urlencode($postId) . '#comments' : ($from === 'portfolio' ? '../post/portfolio.php' : '../post/index.php');
+$redirect = $from === 'details'
+    ? '../post/details.php?id=' . urlencode($postId) . '#comments'
+    : ($from === 'portfolio' ? '../post/portfolio.php' : '../post/index.php');
+
 header('Location: ' . $redirect);
 exit;

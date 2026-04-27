@@ -24,10 +24,39 @@ class CommentC
         );
     }
 
-    private function normalizeElementType(string $type): string
+    public function buildLinkFromLegacyInput(?string $commentedItem, ?string $idCommentedElement): array
     {
-        $type = strtolower(trim($type));
-        return $type === SocialElementType::COMMENT ? SocialElementType::COMMENT : SocialElementType::POST;
+        $commentedItem = strtolower(trim((string)$commentedItem));
+        $idCommentedElement = trim((string)$idCommentedElement);
+
+        if ($commentedItem === 'comment') {
+            return [
+                'idPost' => null,
+                'idComment' => $idCommentedElement !== '' ? $idCommentedElement : null
+            ];
+        }
+
+        return [
+            'idPost' => $idCommentedElement !== '' ? $idCommentedElement : null,
+            'idComment' => null
+        ];
+    }
+
+    private function getLegacyTypeFromRow(array $row): string
+    {
+        return !empty($row['idComment']) ? 'comment' : 'post';
+    }
+
+    private function getLegacyElementIdFromRow(array $row): ?string
+    {
+        return !empty($row['idComment']) ? $row['idComment'] : ($row['idPost'] ?? null);
+    }
+
+    private function hydrateLegacyShape(array $row): array
+    {
+        $row['commentedItem'] = $this->getLegacyTypeFromRow($row);
+        $row['idCommentedElement'] = $this->getLegacyElementIdFromRow($row);
+        return $row;
     }
 
     public function handleCommentImage(string $fieldName = 'image'): ?string
@@ -99,9 +128,9 @@ class CommentC
 
         $sql = "INSERT INTO `comment` (
                     id,
-                    idCommentedElement,
+                    idPost,
+                    idComment,
                     idUser,
-                    commentedItem,
                     `text`,
                     Sticker,
                     image,
@@ -109,9 +138,9 @@ class CommentC
                     numberOfDislike
                 ) VALUES (
                     :id,
-                    :idCommentedElement,
+                    :idPost,
+                    :idComment,
                     :idUser,
-                    :commentedItem,
                     :text,
                     :sticker,
                     :image,
@@ -121,15 +150,15 @@ class CommentC
 
         $query = $this->db->prepare($sql);
         return $query->execute([
-            'id'                 => $comment->getId(),
-            'idCommentedElement' => $comment->getIdCommentedElement(),
-            'idUser'             => $comment->getIdUser(),
-            'commentedItem'      => $this->normalizeElementType($comment->getCommentedItem()),
-            'text'               => $comment->getText(),
-            'sticker'            => $comment->getSticker(),
-            'image'              => $comment->getImage(),
-            'numberOfLike'       => $comment->getNumberOfLike(),
-            'numberOfDislike'    => $comment->getNumberOfDislike(),
+            'id' => $comment->getId(),
+            'idPost' => $comment->getIdPost(),
+            'idComment' => $comment->getIdComment(),
+            'idUser' => $comment->getIdUser(),
+            'text' => $comment->getText(),
+            'sticker' => $comment->getSticker(),
+            'image' => $comment->getImage(),
+            'numberOfLike' => $comment->getNumberOfLike(),
+            'numberOfDislike' => $comment->getNumberOfDislike(),
         ]);
     }
 
@@ -143,11 +172,11 @@ class CommentC
 
         $query = $this->db->prepare($sql);
         return $query->execute([
-            'id'      => $comment->getId(),
-            'idUser'  => $comment->getIdUser(),
-            'text'    => $comment->getText(),
+            'id' => $comment->getId(),
+            'idUser' => $comment->getIdUser(),
+            'text' => $comment->getText(),
             'sticker' => $comment->getSticker(),
-            'image'   => $comment->getImage(),
+            'image' => $comment->getImage(),
         ]);
     }
 
@@ -160,35 +189,43 @@ class CommentC
 
         $query = $this->db->prepare($sql);
         $query->execute(['id' => $id]);
-        return $query->fetch(PDO::FETCH_ASSOC);
-    }
 
-    public function listCommentsByElement(string $type, string $elementId): array
-    {
-        $sql = "SELECT c.*, u.nom AS userName
-                FROM `comment` c
-                LEFT JOIN utilisateur u ON u.id = c.idUser
-                WHERE c.commentedItem = :commentedItem
-                  AND c.idCommentedElement = :idCommentedElement
-                ORDER BY c.id ASC";
+        $row = $query->fetch(PDO::FETCH_ASSOC);
+        if (!$row) {
+            return false;
+        }
 
-        $query = $this->db->prepare($sql);
-        $query->execute([
-            'commentedItem'      => $this->normalizeElementType($type),
-            'idCommentedElement' => $elementId,
-        ]);
-
-        return $query->fetchAll(PDO::FETCH_ASSOC);
+        return $this->hydrateLegacyShape($row);
     }
 
     public function listCommentsByPost(string $postId): array
     {
-        return $this->listCommentsByElement(SocialElementType::POST, $postId);
+        $sql = "SELECT c.*, u.nom AS userName
+                FROM `comment` c
+                LEFT JOIN utilisateur u ON u.id = c.idUser
+                WHERE c.idPost = :postId
+                ORDER BY c.id ASC";
+
+        $query = $this->db->prepare($sql);
+        $query->execute(['postId' => $postId]);
+
+        $rows = $query->fetchAll(PDO::FETCH_ASSOC);
+        return array_map([$this, 'hydrateLegacyShape'], $rows);
     }
 
     public function listRepliesByComment(string $commentId): array
     {
-        return $this->listCommentsByElement(SocialElementType::COMMENT, $commentId);
+        $sql = "SELECT c.*, u.nom AS userName
+                FROM `comment` c
+                LEFT JOIN utilisateur u ON u.id = c.idUser
+                WHERE c.idComment = :commentId
+                ORDER BY c.id ASC";
+
+        $query = $this->db->prepare($sql);
+        $query->execute(['commentId' => $commentId]);
+
+        $rows = $query->fetchAll(PDO::FETCH_ASSOC);
+        return array_map([$this, 'hydrateLegacyShape'], $rows);
     }
 
     private function buildTree(array $comments): array
@@ -359,10 +396,11 @@ class CommentC
         $sql = "SELECT c.*, u.nom AS userName, p.subject AS postSubject
                 FROM `comment` c
                 LEFT JOIN utilisateur u ON u.id = c.idUser
-                LEFT JOIN post p ON c.commentedItem = 'post' AND p.id = c.idCommentedElement
+                LEFT JOIN post p ON p.id = c.idPost
                 ORDER BY c.id DESC";
 
-        return $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        return array_map([$this, 'hydrateLegacyShape'], $rows);
     }
 
     public function searchCommentsAdmin(string $searchType, string $keyword): array
@@ -376,10 +414,7 @@ class CommentC
 
         switch ($searchType) {
             case 'postId':
-                $tree = $this->getCommentsTreeByPost($keyword);
-                $flat = [];
-                $this->flattenTree($tree, $flat);
-                return $flat;
+                return $this->getCommentsTreeByPost($keyword);
 
             case 'commentId':
                 return $this->buildTree($this->listRepliesByComment($keyword));
@@ -388,12 +423,13 @@ class CommentC
                 $sql = "SELECT c.*, u.nom AS userName, p.subject AS postSubject
                         FROM `comment` c
                         LEFT JOIN utilisateur u ON u.id = c.idUser
-                        LEFT JOIN post p ON c.commentedItem = 'post' AND p.id = c.idCommentedElement
+                        LEFT JOIN post p ON p.id = c.idPost
                         WHERE u.nom LIKE :keyword OR CAST(c.idUser AS CHAR) LIKE :keyword
                         ORDER BY c.id DESC";
                 $query = $this->db->prepare($sql);
                 $query->execute(['keyword' => '%' . $keyword . '%']);
-                return $query->fetchAll(PDO::FETCH_ASSOC);
+                $rows = $query->fetchAll(PDO::FETCH_ASSOC);
+                return array_map([$this, 'hydrateLegacyShape'], $rows);
 
             default:
                 return $this->listAllCommentsAdmin();
