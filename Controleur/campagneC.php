@@ -139,7 +139,7 @@ class CampagneC {
         return ['brouillon', 'active', 'terminee', 'annulee'];
     }
 
-    // ─── TOUTES CAMPAGNES (admin, toutes confondues) ───────────────────────────
+    // ─── TOUTES CAMPAGNES (admin) ──────────────────────────────────────────────
     public function afficherToutesCampagnes() {
         $sql = "SELECT c.*, u.nom AS nomMarque
                 FROM campagne c
@@ -147,6 +147,75 @@ class CampagneC {
                 ORDER BY c.idCampagne DESC";
         $db = config::getConnexion();
         return $db->query($sql)->fetchAll();
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // ─── JOINTURE CAMPAGNE ↔ PRODUIT ────────────────────────────────
+    // ════════════════════════════════════════════════════════════════
+
+    /**
+     * Lie un produit à une campagne.
+     * Ignore silencieusement si le lien existe déjà (INSERT IGNORE).
+     *
+     * @param int $idCampagne
+     * @param int $idProduit
+     */
+    public function ajouterProduitCampagne(int $idCampagne, int $idProduit): void {
+        $sql = "INSERT IGNORE INTO campagne_produit (idCampagne, idProduit) VALUES (:idCampagne, :idProduit)";
+        $db  = config::getConnexion();
+        $q   = $db->prepare($sql);
+        $q->execute(['idCampagne' => $idCampagne, 'idProduit' => $idProduit]);
+    }
+
+    /**
+     * Supprime le lien entre un produit et une campagne.
+     *
+     * @param int $idCampagne
+     * @param int $idProduit
+     */
+    public function retirerProduitCampagne(int $idCampagne, int $idProduit): void {
+        $sql = "DELETE FROM campagne_produit WHERE idCampagne = :idCampagne AND idProduit = :idProduit";
+        $db  = config::getConnexion();
+        $q   = $db->prepare($sql);
+        $q->execute(['idCampagne' => $idCampagne, 'idProduit' => $idProduit]);
+    }
+
+    /**
+     * Retourne les campagnes actives auxquelles un produit est lié.
+     * Utile pour la vue détail produit côté créateur.
+     *
+     * @param int $idProduit
+     * @return array
+     */
+    public function getCampagnesByProduit(int $idProduit): array {
+        $sql = "SELECT c.*, u.nom AS nomMarque
+                FROM campagne c
+                INNER JOIN campagne_produit cp ON cp.idCampagne = c.idCampagne
+                LEFT JOIN utilisateur u ON u.id = c.idMarque
+                WHERE cp.idProduit = :idProduit
+                  AND c.estArchive  = 0
+                ORDER BY c.dateDebut DESC";
+        $db = config::getConnexion();
+        $q  = $db->prepare($sql);
+        $q->execute(['idProduit' => $idProduit]);
+        return $q->fetchAll();
+    }
+
+    /**
+     * Compte le nombre de produits liés à une campagne.
+     * Utile pour les KPIs et badges.
+     *
+     * @param int $idCampagne
+     * @return int
+     */
+    public function compterProduitsCampagne(int $idCampagne): int {
+        $sql = "SELECT COUNT(*) FROM campagne_produit cp
+                INNER JOIN produit p ON p.idProduit = cp.idProduit
+                WHERE cp.idCampagne = :idCampagne AND p.estArchive = 0";
+        $db = config::getConnexion();
+        $q  = $db->prepare($sql);
+        $q->execute(['idCampagne' => $idCampagne]);
+        return (int) $q->fetchColumn();
     }
 }
 ?>

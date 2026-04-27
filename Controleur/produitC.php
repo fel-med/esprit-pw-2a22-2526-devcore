@@ -27,7 +27,6 @@ class ProduitC {
     }
 
     // ─── SQL MIGRATION HELPER (run once) ───────────────────────────────────────
-    // Call this once to add new columns if they don't exist yet.
     public function migrerColonnes() {
         $db = config::getConnexion();
         $alterations = [
@@ -48,10 +47,10 @@ class ProduitC {
         if (empty(trim($produit->getNom())) || $produit->getPrix() < 0) {
             throw new Exception("Invalid product: name required, price must be >=0");
         }
-        $sql = "INSERT INTO produit 
+        $sql = "INSERT INTO produit
                     (nomProduit, description, caracteristiques, prix, idMarque, image,
                      categorie, estArchive, estEpingle, sortOrder, dateDisponibilite, noteInterne)
-                VALUES 
+                VALUES
                     (:nom, :description, :caracteristiques, :prix, :idMarque, :image,
                      :categorie, :estArchive, :estEpingle, :sortOrder, :dateDisponibilite, :noteInterne)";
         $db = config::getConnexion();
@@ -171,7 +170,6 @@ class ProduitC {
     }
 
     // ─── RÉORDONNER (drag & drop) ──────────────────────────────────────────────
-    // $ordre = tableau ordonné d'idProduit
     public function reordonnerProduits(array $ordre) {
         $db = config::getConnexion();
         $sql = "UPDATE produit SET sortOrder = :ordre WHERE idProduit = :id";
@@ -195,8 +193,7 @@ class ProduitC {
         return $db->query($sql)->fetchAll(\PDO::FETCH_COLUMN);
     }
 
-    // ─── TOP PRODUITS (les plus demandés via offres) ───────────────────────────
-    // Nécessite la table offre avec une colonne produit_id (à adapter selon votre schéma)
+    // ─── TOP PRODUITS ──────────────────────────────────────────────────────────
     public function getTopProduits($limit = 5) {
         $sql = "SELECT p.*, COUNT(o.idOffre) as nbOffres
                 FROM produit p
@@ -209,6 +206,57 @@ class ProduitC {
         $q = $db->prepare($sql);
         $q->bindValue(':limit', (int)$limit, \PDO::PARAM_INT);
         $q->execute();
+        return $q->fetchAll();
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // ─── JOINTURE CAMPAGNE ↔ PRODUIT ────────────────────────────────
+    // ════════════════════════════════════════════════════════════════
+
+    /**
+     * Retourne tous les produits actifs liés à une campagne donnée.
+     *
+     * @param int $idCampagne
+     * @return array
+     */
+    public function getProduitsByCampagne(int $idCampagne): array {
+        $sql = "SELECT p.*
+                FROM produit p
+                INNER JOIN campagne_produit cp ON cp.idProduit = p.idProduit
+                WHERE cp.idCampagne = :idCampagne
+                  AND p.estArchive  = 0
+                ORDER BY p.estEpingle DESC, p.sortOrder ASC, p.idProduit DESC";
+        $db = config::getConnexion();
+        $q  = $db->prepare($sql);
+        $q->execute(['idCampagne' => $idCampagne]);
+        return $q->fetchAll();
+    }
+
+    /**
+     * Retourne tous les produits actifs NON encore liés à une campagne.
+     * Utile pour alimenter le sélecteur d'ajout.
+     *
+     * @param int      $idCampagne
+     * @param int|null $idMarque   Filtrer sur la marque propriétaire (optionnel)
+     * @return array
+     */
+    public function getProduitsDisponiblesPourCampagne(int $idCampagne, int $idMarque = null): array {
+        $whereMarque = $idMarque ? "AND p.idMarque = :idMarque" : "";
+        $sql = "SELECT p.*
+                FROM produit p
+                WHERE p.estArchive = 0
+                  $whereMarque
+                  AND p.idProduit NOT IN (
+                      SELECT cp.idProduit
+                      FROM campagne_produit cp
+                      WHERE cp.idCampagne = :idCampagne
+                  )
+                ORDER BY p.estEpingle DESC, p.nomProduit ASC";
+        $db = config::getConnexion();
+        $q  = $db->prepare($sql);
+        $params = ['idCampagne' => $idCampagne];
+        if ($idMarque) $params['idMarque'] = $idMarque;
+        $q->execute($params);
         return $q->fetchAll();
     }
 }

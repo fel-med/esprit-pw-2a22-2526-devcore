@@ -1,26 +1,39 @@
 <?php
 require_once __DIR__ . '/../../../Controleur/campagneC.php';
+require_once __DIR__ . '/../../../Controleur/produitC.php';
 
 session_start();
+
 $campagneC = new CampagneC();
+$produitC  = new ProduitC();
 $baseUrl   = '/projet/Esprit-PW-2A22-2526-Devcore';
 
-// ── DATA ──────────────────────────────────────────────────────────────────────
-$campagnes = $campagneC->afficherCampagnes();
-$statuts   = $campagneC->getStatuts();
-
-// ── DETAIL MODAL ──────────────────────────────────────────────────────────────
-$campagneDetail = null;
-if (isset($_GET['voir'])) {
-    $campagneDetail = $campagneC->recupererCampagne(intval($_GET['voir']));
+// ════════════════════════════════════════════════════════════
+// AJAX : produits d'une campagne (lecture seule — créateur)
+// Doit être AVANT tout echo / HTML
+// ════════════════════════════════════════════════════════════
+if (isset($_GET['ajax_produits_creator'])) {
+    $idC      = intval($_GET['ajax_produits_creator']);
+    $produits = $produitC->getProduitsByCampagne($idC);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($produits, JSON_UNESCAPED_UNICODE);
+    exit;
 }
 
-// ── KPIs ──────────────────────────────────────────────────────────────────────
+// ── DATA ──────────────────────────────────────────────────────────────────────
+$campagnes      = $campagneC->afficherCampagnes();
 $totalCampagnes = count($campagnes);
 $nbActives      = count(array_filter($campagnes, fn($c) => $c['statut'] === 'active'));
 $budgets        = array_column($campagnes, 'budget');
 $budgetTotal    = array_sum($budgets);
 
+// Ouvrir directement le modal si ?voir=ID
+$campagneDetail = null;
+if (isset($_GET['voir'])) {
+    $campagneDetail = $campagneC->recupererCampagne(intval($_GET['voir']));
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
 function statutLabel($s) {
     return match($s) {
         'active'   => '✅ Active',
@@ -56,36 +69,37 @@ function statutBg($s) {
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,wght@0,700;0,800;1,700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary:       #5b4fff;
-            --primary-hover: #4a3ee8;
-            --primary-light: #eeecff;
-            --primary-glow:  rgba(91,79,255,0.18);
-            --primary-border:rgba(91,79,255,0.2);
-            --text-main:     #0f0e1a;
-            --text-sub:      #6b6f80;
-            --text-dim:      #a0a4b2;
-            --border:        #ebebf2;
-            --bg:            #f6f6fc;
-            --white:         #ffffff;
-            --success:       #0ea370;
-            --success-light: #edfaf5;
-            --warning:       #f59e0b;
-            --warning-light: #fffbeb;
-            --info:          #3b82f6;
-            --info-light:    #eff6ff;
-            --danger:        #f43f5e;
-            --danger-light:  #fff1f3;
-            --card-shadow:   0 1px 3px rgba(15,14,26,0.06), 0 4px 16px rgba(91,79,255,0.06);
+            --primary:        #5b4fff;
+            --primary-hover:  #4a3ee8;
+            --primary-light:  #eeecff;
+            --primary-glow:   rgba(91,79,255,0.18);
+            --primary-border: rgba(91,79,255,0.2);
+            --text-main:      #0f0e1a;
+            --text-sub:       #6b6f80;
+            --text-dim:       #a0a4b2;
+            --border:         #ebebf2;
+            --bg:             #f6f6fc;
+            --white:          #ffffff;
+            --danger:         #f43f5e;
+            --danger-light:   #fff1f3;
+            --success:        #0ea370;
+            --success-light:  #edfaf5;
+            --success-border: rgba(14,163,112,0.2);
+            --warning:        #f59e0b;
+            --warning-light:  #fffbeb;
+            --info:           #3b82f6;
+            --info-light:     #eff6ff;
+            --card-shadow:    0 1px 3px rgba(15,14,26,0.06), 0 4px 16px rgba(91,79,255,0.06);
             --card-shadow-hover: 0 8px 32px rgba(91,79,255,0.14);
-            --radius:        14px;
-            --radius-sm:     8px;
-            --nav-h:         66px;
+            --radius:         14px;
+            --radius-sm:      8px;
+            --nav-h:          66px;
         }
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text-main); min-height: 100vh; }
 
-        /* NAV */
-        nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 48px; height: var(--nav-h); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 200; box-shadow: 0 1px 0 var(--border), 0 2px 12px rgba(15,14,26,0.04); }
+        /* ── NAV ── */
+        nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 48px; height: var(--nav-h); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 200; box-shadow: 0 2px 12px rgba(15,14,26,0.04); }
         .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
         .nav-logo img { width: 36px; height: 36px; object-fit: contain; border-radius: 9px; }
         .nav-logo-text { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
@@ -96,7 +110,7 @@ function statutBg($s) {
         .nav-badge { background: var(--primary); color: #fff; border-radius: 20px; padding: 5px 14px; font-size: 12px; font-weight: 700; }
         .nav-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; cursor: pointer; border: 2px solid var(--primary-border); }
 
-        /* HERO */
+        /* ── HERO ── */
         .hero { background: linear-gradient(135deg, #0f0e1a 0%, #1a1632 60%, #2b1f60 100%); padding: 60px 48px; text-align: center; color: #fff; position: relative; overflow: hidden; }
         .hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(91,79,255,.35), transparent); }
         .hero-content { position: relative; max-width: 640px; margin: 0 auto; }
@@ -107,40 +121,34 @@ function statutBg($s) {
         .hero-stat-val { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 800; }
         .hero-stat-label { font-size: 12px; color: rgba(255,255,255,.55); margin-top: 2px; }
 
-        /* PAGE */
+        /* ── PAGE ── */
         .page-wrapper { max-width: 1160px; margin: 0 auto; padding: 40px 24px 80px; }
 
-        /* FILTER BAR */
+        /* ── FILTER BAR ── */
         .filter-bar { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 22px; margin-bottom: 28px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; box-shadow: var(--card-shadow); }
         .search-wrap { position: relative; flex: 1; min-width: 200px; }
         .search-wrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-dim); pointer-events: none; width: 15px; height: 15px; }
         .search-input { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 9px 12px 9px 34px; font-size: 13.5px; font-family: 'DM Sans', sans-serif; color: var(--text-main); outline: none; transition: border-color .2s, box-shadow .2s; }
         .search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
         .filter-select { background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 9px 12px; font-size: 13px; font-family: 'DM Sans', sans-serif; outline: none; cursor: pointer; color: var(--text-main); }
-        .filter-select:focus { border-color: var(--primary); }
-        .pf-reset { background: transparent; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 9px 14px; font-size: 12.5px; font-family: 'DM Sans', sans-serif; color: var(--text-sub); cursor: pointer; transition: border-color .2s, color .2s; }
-        .pf-reset:hover { border-color: var(--danger); color: var(--danger); }
         .result-count { font-size: 12.5px; color: var(--text-sub); font-weight: 600; white-space: nowrap; }
 
-        /* STATUS CHIPS */
+        /* ── STATUS CHIPS ── */
         .status-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; }
         .s-chip { display: inline-flex; align-items: center; gap: 5px; background: var(--white); border: 1.5px solid var(--border); border-radius: 20px; padding: 6px 14px; font-size: 12.5px; font-weight: 700; cursor: pointer; transition: all .18s; color: var(--text-sub); }
         .s-chip:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
         .s-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
         .s-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; opacity: .5; }
 
-        /* CAMPAIGN GRID */
+        /* ── CAMPAIGN GRID ── */
         .camp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 20px; }
-        .camp-card { background: var(--white); border-radius: var(--radius); overflow: hidden; box-shadow: var(--card-shadow); border: 1px solid var(--border); display: flex; flex-direction: column; transition: transform .22s, box-shadow .22s, border-color .22s; cursor: pointer; }
+        .camp-card { background: var(--white); border-radius: var(--radius); overflow: hidden; box-shadow: var(--card-shadow); border: 1px solid var(--border); display: flex; flex-direction: column; transition: transform .22s, box-shadow .22s, border-color .22s; }
         .camp-card:hover { transform: translateY(-4px); box-shadow: var(--card-shadow-hover); border-color: var(--primary-border); }
-
-        /* Card top accent */
-        .camp-card-accent { height: 4px; }
-        .accent-active   { background: linear-gradient(90deg, #0ea370, #34d399); }
-        .accent-brouillon{ background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-        .accent-terminee { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
-        .accent-annulee  { background: linear-gradient(90deg, #f43f5e, #fb7185); }
-
+        .camp-accent { height: 4px; }
+        .accent-active    { background: linear-gradient(90deg, #0ea370, #34d399); }
+        .accent-brouillon { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .accent-terminee  { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+        .accent-annulee   { background: linear-gradient(90deg, #f43f5e, #fb7185); }
         .camp-card-header { padding: 18px 18px 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
         .camp-card-title { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 800; color: var(--text-main); line-height: 1.25; flex: 1; }
         .camp-badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; flex-shrink: 0; }
@@ -148,43 +156,79 @@ function statutBg($s) {
         .camp-desc { font-size: 13px; color: var(--text-sub); line-height: 1.65; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
         .camp-obj { font-size: 12px; background: var(--primary-light); color: var(--primary); border-radius: 7px; padding: 7px 11px; font-weight: 600; }
         .camp-meta { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-sub); }
-        .camp-meta-row { display: flex; align-items: center; gap: 6px; }
         .camp-budget { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 800; color: var(--primary); margin-top: 4px; }
-        .camp-brand { display: inline-flex; align-items: center; gap: 5px; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 700; color: var(--text-sub); }
-        .camp-card-footer { padding: 13px 18px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
-        .btn-see-detail { flex: 1; padding: 9px; background: var(--primary-light); color: var(--primary); border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 700; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background .18s; display: flex; align-items: center; justify-content: center; gap: 6px; }
-        .btn-see-detail:hover { background: #ddddf8; }
-        .btn-interested { flex: 0 0 auto; padding: 9px 14px; background: var(--success-light); color: var(--success); border: 1px solid rgba(14,163,112,.2); border-radius: var(--radius-sm); font-size: 12px; font-weight: 700; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background .18s; }
-        .btn-interested:hover { background: #d1fae5; }
 
-        /* EMPTY STATE */
+        /* ── PRODUITS PILL (jointure) ── */
+        .camp-products-pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 700; }
+        .camp-products-pill.has-products { background: var(--success-light); color: var(--success); border: 1px solid var(--success-border); }
+        .camp-products-pill.no-products  { background: var(--bg); color: var(--text-dim); border: 1px solid var(--border); }
+
+        .camp-card-footer { padding: 13px 18px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+        .btn-see-detail { flex: 1; padding: 9px; background: var(--primary); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 700; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background .18s, transform .15s; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 2px 8px var(--primary-glow); }
+        .btn-see-detail:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        .btn-apply { flex: 0 0 auto; padding: 9px 14px; background: var(--success-light); color: var(--success); border: 1px solid var(--success-border); border-radius: var(--radius-sm); font-size: 12px; font-weight: 700; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background .18s; }
+        .btn-apply:hover { background: #d1fae5; }
+
+        /* ── EMPTY STATE ── */
         .empty-state { text-align: center; padding: 70px 20px; background: var(--white); border: 1.5px dashed var(--border); border-radius: var(--radius); }
         .empty-icon { font-size: 52px; margin-bottom: 16px; }
         .empty-state h3 { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 800; margin-bottom: 8px; }
         .empty-state p { font-size: 14px; color: var(--text-sub); }
 
-        /* DETAIL MODAL */
-        .detail-modal { position: fixed; inset: 0; background: rgba(15,14,26,.6); z-index: 300; display: none; align-items: center; justify-content: center; padding: 20px; }
+        /* ════════════════════════════════════════════════════
+           DETAIL MODAL avec produits liés (Jointure Creator)
+        ════════════════════════════════════════════════════ */
+        .detail-modal { position: fixed; inset: 0; background: rgba(15,14,26,.6); z-index: 300; display: none; align-items: flex-start; justify-content: center; padding: 24px 20px; overflow-y: auto; }
         .detail-modal.open { display: flex; }
-        .detail-box { background: var(--white); border-radius: var(--radius); width: 700px; max-width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 80px rgba(15,14,26,.22); animation: popIn .22s ease; display: flex; flex-direction: column; }
+        .detail-box { background: var(--white); border-radius: var(--radius); width: 760px; max-width: 100%; box-shadow: 0 24px 80px rgba(15,14,26,.22); animation: popIn .22s ease; display: flex; flex-direction: column; margin: auto; }
         @keyframes popIn { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: scale(1); } }
         .detail-header { padding: 24px 28px 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
         .detail-title { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 800; line-height: 1.2; }
-        .detail-close { background: var(--bg); border: 1.5px solid var(--border); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; color: var(--text-sub); flex-shrink: 0; transition: background .18s; }
+        .detail-close { background: var(--bg); border: 1.5px solid var(--border); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; color: var(--text-sub); flex-shrink: 0; transition: all .2s; }
         .detail-close:hover { background: var(--danger-light); color: var(--danger); }
-        .detail-body { padding: 18px 28px 24px; flex: 1; display: flex; flex-direction: column; gap: 16px; }
-        .detail-section-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text-dim); margin-bottom: 4px; }
+        .detail-body { padding: 18px 28px 24px; display: flex; flex-direction: column; gap: 16px; }
+        .detail-section-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text-dim); margin-bottom: 6px; }
         .detail-text { font-size: 14px; color: var(--text-sub); line-height: 1.7; }
         .detail-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
         .detail-meta-card { background: var(--bg); border-radius: var(--radius-sm); padding: 14px 16px; border: 1px solid var(--border); }
         .detail-meta-val { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 800; color: var(--text-main); margin-bottom: 3px; }
         .detail-meta-label { font-size: 11px; color: var(--text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+
+        /* ── Section produits dans le modal (jointure) ── */
+        .detail-products-section { border-top: 1px solid var(--border); padding-top: 18px; }
+        .detail-products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-top: 12px; }
+        .detail-prod-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; transition: border-color .2s, box-shadow .2s; }
+        .detail-prod-card:hover { border-color: var(--primary-border); box-shadow: var(--card-shadow-hover); }
+        .detail-prod-img { height: 110px; background: linear-gradient(135deg, #f0effb, var(--bg)); display: flex; align-items: center; justify-content: center; font-size: 32px; overflow: hidden; }
+        .detail-prod-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .detail-prod-body { padding: 10px 12px; }
+        .detail-prod-name { font-size: 12.5px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .detail-prod-price { font-family: 'Fraunces', serif; font-size: 14px; font-weight: 800; color: var(--primary); }
+        .detail-prod-cat { font-size: 10.5px; color: var(--text-sub); margin-top: 2px; }
+        .detail-prod-dispo { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; border-radius: 20px; padding: 2px 8px; margin-top: 5px; }
+        .detail-prod-dispo.available { background: var(--success-light); color: var(--success); }
+        .detail-prod-dispo.future    { background: var(--warning-light); color: #92400e; }
+
+        /* Loader & empty dans la grille produits */
+        .prod-loader { text-align: center; padding: 28px; color: var(--text-dim); font-size: 13px; grid-column: 1 / -1; }
+        .prod-empty  { text-align: center; padding: 28px; color: var(--text-dim); font-size: 13px; grid-column: 1 / -1; }
+
         .detail-footer { padding: 16px 28px 22px; border-top: 1px solid var(--border); display: flex; gap: 10px; }
-        .btn-interested-big { flex: 1; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 700; font-family: 'DM Sans', sans-serif; cursor: pointer; box-shadow: 0 3px 10px var(--primary-glow); transition: background .2s; }
-        .btn-interested-big:hover { background: var(--primary-hover); }
+        .btn-apply-big { flex: 1; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 700; font-family: 'DM Sans', sans-serif; cursor: pointer; box-shadow: 0 3px 10px var(--primary-glow); transition: background .2s; }
+        .btn-apply-big:hover { background: var(--primary-hover); }
         .btn-close-detail { padding: 12px 20px; background: var(--bg); color: var(--text-sub); border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
 
-        @media (max-width: 700px) { nav { padding: 0 16px; } .hero { padding: 40px 20px; } .hero h1 { font-size: 28px; } .page-wrapper { padding: 24px 14px 60px; } .filter-bar { flex-direction: column; align-items: stretch; } .hero-stats { gap: 20px; } }
+        @media (max-width: 700px) {
+            nav { padding: 0 16px; }
+            .nav-links { display: none; }
+            .hero { padding: 40px 20px; }
+            .hero h1 { font-size: 28px; }
+            .page-wrapper { padding: 24px 14px 60px; }
+            .filter-bar { flex-direction: column; align-items: stretch; }
+            .hero-stats { gap: 20px; }
+            .detail-meta-grid { grid-template-columns: 1fr; }
+            .detail-products-grid { grid-template-columns: 1fr 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -212,7 +256,7 @@ function statutBg($s) {
     <div class="hero-content">
         <div class="hero-tag">⚡ Active Campaigns</div>
         <h1>Discover Brand Campaigns</h1>
-        <p>Browse active campaigns from top brands and apply to collaborate on exciting projects.</p>
+        <p>Browse active campaigns from top brands, explore their linked products, and apply to collaborate.</p>
         <div class="hero-stats">
             <div>
                 <div class="hero-stat-val"><?= $totalCampagnes ?></div>
@@ -234,10 +278,10 @@ function statutBg($s) {
 
     <!-- STATUS CHIPS -->
     <div class="status-chips">
-        <div class="s-chip active" data-val="" onclick="filterChip('', this)"><span class="dot"></span> All</div>
-        <div class="s-chip" data-val="active" onclick="filterChip('active', this)"><span class="dot" style="background:#0ea370"></span> Active</div>
-        <div class="s-chip" data-val="brouillon" onclick="filterChip('brouillon', this)"><span class="dot" style="background:#f59e0b"></span> Draft</div>
-        <div class="s-chip" data-val="terminee" onclick="filterChip('terminee', this)"><span class="dot" style="background:#3b82f6"></span> Ended</div>
+        <div class="s-chip active" onclick="filterChip('', this)"><span class="dot"></span> All</div>
+        <div class="s-chip" onclick="filterChip('active', this)"><span class="dot" style="background:#0ea370"></span> Active</div>
+        <div class="s-chip" onclick="filterChip('brouillon', this)"><span class="dot" style="background:#f59e0b"></span> Draft</div>
+        <div class="s-chip" onclick="filterChip('terminee', this)"><span class="dot" style="background:#3b82f6"></span> Ended</div>
     </div>
 
     <!-- FILTER BAR -->
@@ -253,7 +297,6 @@ function statutBg($s) {
             <option value="budget_asc">Budget ↑</option>
             <option value="date">Start date</option>
         </select>
-        <button class="pf-reset" onclick="resetFilters()">✕ Reset</button>
         <span class="result-count"><span id="visibleCount"><?= $totalCampagnes ?></span> campaign(s)</span>
     </div>
 
@@ -266,20 +309,22 @@ function statutBg($s) {
     </div>
     <?php else: ?>
     <div class="camp-grid" id="campGrid">
-        <?php foreach ($campagnes as $c): ?>
-        <?php $accentClass = 'accent-' . $c['statut']; ?>
+        <?php foreach ($campagnes as $c):
+            $nbProd = $campagneC->compterProduitsCampagne($c['idCampagne']);
+        ?>
         <div class="camp-card"
+             data-id="<?= $c['idCampagne'] ?>"
              data-titre="<?= strtolower(htmlspecialchars($c['titreCampagne'])) ?>"
              data-statut="<?= htmlspecialchars($c['statut']) ?>"
              data-budget="<?= (float)$c['budget'] ?>"
              data-date="<?= $c['dateDebut'] ?? '' ?>"
-             data-brand="<?= strtolower(htmlspecialchars($c['nomMarque'] ?? '')) ?>"
-             data-obj="<?= strtolower(htmlspecialchars($c['objectif'] ?? '')) ?>"
-             onclick="openDetail(<?= $c['idCampagne'] ?>)">
-            <div class="camp-card-accent <?= $accentClass ?>"></div>
+             data-brand="<?= strtolower(htmlspecialchars($c['nomMarque'] ?? '')) ?>">
+            <div class="camp-accent accent-<?= $c['statut'] ?>"></div>
             <div class="camp-card-header">
                 <div class="camp-card-title"><?= htmlspecialchars($c['titreCampagne']) ?></div>
-                <span class="camp-badge" style="background:<?= statutBg($c['statut']) ?>;color:<?= statutColor($c['statut']) ?>"><?= statutLabel($c['statut']) ?></span>
+                <span class="camp-badge" style="background:<?= statutBg($c['statut']) ?>;color:<?= statutColor($c['statut']) ?>">
+                    <?= statutLabel($c['statut']) ?>
+                </span>
             </div>
             <div class="camp-card-body">
                 <div class="camp-desc"><?= htmlspecialchars($c['description']) ?></div>
@@ -287,56 +332,64 @@ function statutBg($s) {
                 <div class="camp-obj">🎯 <?= htmlspecialchars($c['objectif']) ?></div>
                 <?php endif; ?>
                 <div class="camp-meta">
-                    <div class="camp-meta-row">📅 <span><?= $c['dateDebut'] ?? '—' ?></span> → 🏁 <span><?= $c['dateFin'] ?? '—' ?></span></div>
+                    <div>📅 <?= $c['dateDebut'] ?? '—' ?> → 🏁 <?= $c['dateFin'] ?? '—' ?></div>
                     <?php if (!empty($c['nomMarque'])): ?>
-                    <div class="camp-meta-row">🏢 <span><?= htmlspecialchars($c['nomMarque']) ?></span></div>
+                    <div>🏢 <?= htmlspecialchars($c['nomMarque']) ?></div>
                     <?php endif; ?>
                 </div>
                 <div class="camp-budget"><?= number_format((float)$c['budget'], 2, ',', ' ') ?> €</div>
+
+                <!-- ── JOINTURE : badge produits liés ── -->
+                <div>
+                    <span class="camp-products-pill <?= $nbProd > 0 ? 'has-products' : 'no-products' ?>">
+                        📦 <?= $nbProd ?> product<?= $nbProd !== 1 ? 's' : '' ?> linked
+                    </span>
+                </div>
             </div>
-            <div class="camp-card-footer" onclick="event.stopPropagation()">
+            <div class="camp-card-footer">
                 <button class="btn-see-detail" onclick="openDetail(<?= $c['idCampagne'] ?>)">
                     <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                     View Details
                 </button>
                 <?php if ($c['statut'] === 'active'): ?>
-                <button class="btn-interested">🙋 Apply</button>
+                <button class="btn-apply">🙋 Apply</button>
                 <?php endif; ?>
             </div>
         </div>
         <?php endforeach; ?>
     </div>
-    <div id="noResults" style="display:none;text-align:center;padding:48px;color:var(--text-dim);font-size:14px">
+    <div id="noResults" style="display:none;text-align:center;padding:48px;color:var(--text-dim);font-size:14px;">
         No campaigns match your search.
     </div>
     <?php endif; ?>
 
 </div><!-- /page-wrapper -->
 
-<!-- DETAIL MODAL -->
-<div class="detail-modal" id="detailModal" onclick="closeDetailOutside(event)">
+<!-- ════════════════════════════════════════════════════════════
+     DETAIL MODAL avec produits liés (Jointure Creator)
+════════════════════════════════════════════════════════════ -->
+<div class="detail-modal" id="detailModal">
     <div class="detail-box">
         <div class="detail-header">
             <div>
                 <div id="detailBadge" class="camp-badge" style="margin-bottom:8px;font-size:12px"></div>
                 <div class="detail-title" id="detailTitle"></div>
-                <?php if ($campagneDetail && !empty($campagneDetail['nomMarque'])): ?>
-                <div style="margin-top:6px">
-                    <span class="camp-brand">🏢 <?= htmlspecialchars($campagneDetail['nomMarque']) ?></span>
-                </div>
-                <?php endif; ?>
+                <div id="detailBrandBadge" style="margin-top:8px"></div>
             </div>
             <button class="detail-close" onclick="closeDetail()">✕</button>
         </div>
         <div class="detail-body">
+            <!-- Description -->
             <div>
                 <div class="detail-section-label">Description</div>
                 <div class="detail-text" id="detailDesc"></div>
             </div>
+            <!-- Objectif -->
             <div id="detailObjWrap">
                 <div class="detail-section-label">Objective</div>
                 <div class="camp-obj" id="detailObj"></div>
             </div>
+            <!-- Budget + Dates -->
             <div class="detail-meta-grid">
                 <div class="detail-meta-card">
                     <div class="detail-meta-val" id="detailBudget"></div>
@@ -346,52 +399,45 @@ function statutBg($s) {
                     <div class="detail-meta-val" id="detailDates" style="font-size:14px"></div>
                     <div class="detail-meta-label">Campaign Period</div>
                 </div>
-                <div class="detail-meta-card">
-                    <div class="detail-meta-val" id="detailBrand"></div>
-                    <div class="detail-meta-label">Brand</div>
-                </div>
-                <div class="detail-meta-card">
-                    <div class="detail-meta-val" id="detailStatut"></div>
-                    <div class="detail-meta-label">Status</div>
+            </div>
+
+            <!-- ── JOINTURE : produits liés à la campagne ── -->
+            <div class="detail-products-section">
+                <div class="detail-section-label">Products included in this campaign</div>
+                <div class="detail-products-grid" id="detailProductsGrid">
+                    <div class="prod-loader">⏳ Loading products…</div>
                 </div>
             </div>
         </div>
         <div class="detail-footer">
-            <button class="btn-interested-big" id="detailApplyBtn">🙋 Apply to this campaign</button>
+            <button class="btn-apply-big" id="detailApplyBtn">🙋 Apply to this campaign</button>
             <button class="btn-close-detail" onclick="closeDetail()">Close</button>
         </div>
     </div>
 </div>
 
 <script>
-// ── CAMPAIGN DATA MAP ──────────────────────────────────────────────────────────
+const BASE_URL = '<?= $baseUrl ?>';
+
+// ── Campaign data map (pré-chargé depuis PHP) ──────────────────────────────────
 const campagnesMap = {};
 <?php foreach ($campagnes as $c): ?>
 campagnesMap[<?= $c['idCampagne'] ?>] = {
-    id:      <?= $c['idCampagne'] ?>,
-    titre:   <?= json_encode($c['titreCampagne']) ?>,
-    desc:    <?= json_encode($c['description'] ?? '') ?>,
-    obj:     <?= json_encode($c['objectif'] ?? '') ?>,
-    budget:  <?= (float)$c['budget'] ?>,
-    debut:   <?= json_encode($c['dateDebut'] ?? '') ?>,
-    fin:     <?= json_encode($c['dateFin'] ?? '') ?>,
-    statut:  <?= json_encode($c['statut']) ?>,
-    marque:  <?= json_encode($c['nomMarque'] ?? '') ?>,
+    id:     <?= $c['idCampagne'] ?>,
+    titre:  <?= json_encode($c['titreCampagne']) ?>,
+    desc:   <?= json_encode($c['description'] ?? '') ?>,
+    obj:    <?= json_encode($c['objectif'] ?? '') ?>,
+    budget: <?= (float)$c['budget'] ?>,
+    debut:  <?= json_encode($c['dateDebut'] ?? '') ?>,
+    fin:    <?= json_encode($c['dateFin'] ?? '') ?>,
+    statut: <?= json_encode($c['statut']) ?>,
+    marque: <?= json_encode($c['nomMarque'] ?? '') ?>,
 };
 <?php endforeach; ?>
 
-const statutLabels = {
-    active:    '✅ Active',
-    brouillon: '📝 Draft',
-    terminee:  '🏁 Ended',
-    annulee:   '❌ Cancelled',
-};
-const statutColors = {
-    active: '#0ea370', brouillon: '#f59e0b', terminee: '#3b82f6', annulee: '#f43f5e'
-};
-const statutBgs = {
-    active: '#edfaf5', brouillon: '#fffbeb', terminee: '#eff6ff', annulee: '#fff1f3'
-};
+const sLabels = { active:'✅ Active', brouillon:'📝 Draft', terminee:'🏁 Ended', annulee:'❌ Cancelled' };
+const sColors = { active:'#0ea370', brouillon:'#f59e0b', terminee:'#3b82f6', annulee:'#f43f5e' };
+const sBgs    = { active:'#edfaf5', brouillon:'#fffbeb', terminee:'#eff6ff', annulee:'#fff1f3' };
 
 // ── CHIP FILTER ────────────────────────────────────────────────────────────────
 let activeChip = '';
@@ -402,32 +448,22 @@ function filterChip(val, btn) {
     filterCampagnes();
 }
 
-// ── SEARCH + FILTER ────────────────────────────────────────────────────────────
 document.getElementById('searchInput').addEventListener('input', filterCampagnes);
 
 function filterCampagnes() {
     const q = document.getElementById('searchInput').value.toLowerCase();
     const cards = document.querySelectorAll('#campGrid .camp-card');
-    let visible = 0;
+    let v = 0;
     cards.forEach(card => {
-        const matchQ = !q || (card.dataset.titre||'').includes(q) || (card.dataset.brand||'').includes(q) || (card.dataset.obj||'').includes(q);
+        const matchQ = !q || (card.dataset.titre||'').includes(q) || (card.dataset.brand||'').includes(q);
         const matchS = !activeChip || card.dataset.statut === activeChip;
-        const show = matchQ && matchS;
-        card.style.display = show ? '' : 'none';
-        if (show) visible++;
+        card.style.display = matchQ && matchS ? '' : 'none';
+        if (matchQ && matchS) v++;
     });
-    const countEl = document.getElementById('visibleCount');
-    if (countEl) countEl.textContent = visible;
+    const el = document.getElementById('visibleCount');
+    if (el) el.textContent = v;
     const noRes = document.getElementById('noResults');
-    if (noRes) noRes.style.display = visible === 0 ? '' : 'none';
-}
-
-function resetFilters() {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('sortSelect').value = '';
-    activeChip = '';
-    document.querySelectorAll('.s-chip').forEach((c,i) => c.classList.toggle('active', i === 0));
-    filterCampagnes();
+    if (noRes) noRes.style.display = v === 0 ? '' : 'none';
 }
 
 function sortCampagnes() {
@@ -445,48 +481,137 @@ function sortCampagnes() {
     cards.forEach(c => grid.appendChild(c));
 }
 
-// ── DETAIL MODAL ───────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
+// DETAIL MODAL — ouvrir + charger les produits via AJAX
+// ════════════════════════════════════════════════════════════
 function openDetail(id) {
     const c = campagnesMap[id];
     if (!c) return;
 
+    // Badge statut
     const badge = document.getElementById('detailBadge');
-    badge.textContent = statutLabels[c.statut] || c.statut;
-    badge.style.background = statutBgs[c.statut] || '#f0f0f0';
-    badge.style.color       = statutColors[c.statut] || '#555';
+    badge.textContent      = sLabels[c.statut] || c.statut;
+    badge.style.background = sBgs[c.statut]    || '#f0f0f0';
+    badge.style.color      = sColors[c.statut] || '#555';
 
-    document.getElementById('detailTitle').textContent  = c.titre;
-    document.getElementById('detailDesc').textContent   = c.desc || 'No description available.';
-    document.getElementById('detailBudget').textContent = new Intl.NumberFormat('fr-FR').format(c.budget) + ' €';
-    document.getElementById('detailDates').innerHTML    = (c.debut || '—') + ' → ' + (c.fin || '—');
-    document.getElementById('detailBrand').textContent  = c.marque || '—';
-    document.getElementById('detailStatut').textContent = statutLabels[c.statut] || c.statut;
+    // Titre + marque
+    document.getElementById('detailTitle').textContent = c.titre;
+    const brandBadge = document.getElementById('detailBrandBadge');
+    brandBadge.innerHTML = c.marque
+        ? `<span style="display:inline-flex;align-items:center;gap:5px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600;color:var(--text-sub);">🏢 ${escHtml(c.marque)}</span>`
+        : '';
 
+    // Description
+    document.getElementById('detailDesc').textContent = c.desc || 'No description available.';
+
+    // Objectif
     const objWrap = document.getElementById('detailObjWrap');
     const objEl   = document.getElementById('detailObj');
     if (c.obj) { objEl.textContent = c.obj; objWrap.style.display = ''; }
     else { objWrap.style.display = 'none'; }
 
-    const applyBtn = document.getElementById('detailApplyBtn');
-    applyBtn.style.display = c.statut === 'active' ? '' : 'none';
+    // Budget + dates
+    document.getElementById('detailBudget').textContent = new Intl.NumberFormat('fr-FR').format(c.budget) + ' €';
+    document.getElementById('detailDates').innerHTML    = (c.debut || '—') + ' → ' + (c.fin || '—');
 
+    // Bouton Apply
+    document.getElementById('detailApplyBtn').style.display = c.statut === 'active' ? '' : 'none';
+
+    // Réinitialise la grille produits avec un loader
+    document.getElementById('detailProductsGrid').innerHTML =
+        '<div class="prod-loader">⏳ Loading products…</div>';
+
+    // Affiche le modal
     document.getElementById('detailModal').classList.add('open');
     document.body.style.overflow = 'hidden';
+
+    // ── APPEL AJAX pour charger les produits ──
+    fetch('indexC.php?ajax_produits_creator=' + id)
+        .then(function(response) {
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            return response.json();
+        })
+        .then(function(produits) {
+            renderProduits(produits);
+        })
+        .catch(function(err) {
+            document.getElementById('detailProductsGrid').innerHTML =
+                '<div class="prod-empty">⚠️ Unable to load products. (' + err.message + ')</div>';
+        });
 }
 
+// ── Afficher les produits dans la grille du modal ──────────────────────────────
+function renderProduits(produits) {
+    const grid = document.getElementById('detailProductsGrid');
+
+    if (!produits || produits.length === 0) {
+        grid.innerHTML = '<div class="prod-empty">No products linked to this campaign yet.</div>';
+        return;
+    }
+
+    let html = '';
+    produits.forEach(function(p) {
+        const dispo       = p.dateDisponibilite || '';
+        const dispoFuture = dispo && (new Date(dispo) > new Date());
+
+        const imgHtml = p.image
+            ? '<img src="' + BASE_URL + '/Vue/public/produits/' + escHtml(p.image) + '" alt="' + escHtml(p.nomProduit) + '">'
+            : '📦';
+
+        const dispoHtml = dispo
+            ? '<div class="detail-prod-dispo ' + (dispoFuture ? 'future' : 'available') + '">'
+              + (dispoFuture ? '⏳ From ' : '✅ ')
+              + new Date(dispo).toLocaleDateString('en-GB')
+              + '</div>'
+            : '';
+
+        const catHtml = p.categorie
+            ? '<div class="detail-prod-cat">📂 ' + escHtml(p.categorie) + '</div>'
+            : '';
+
+        html += '<div class="detail-prod-card">'
+            + '<div class="detail-prod-img">' + imgHtml + '</div>'
+            + '<div class="detail-prod-body">'
+            + '<div class="detail-prod-name" title="' + escHtml(p.nomProduit) + '">' + escHtml(p.nomProduit) + '</div>'
+            + '<div class="detail-prod-price">' + parseFloat(p.prix).toFixed(2) + ' €</div>'
+            + catHtml
+            + dispoHtml
+            + '</div>'
+            + '</div>';
+    });
+
+    grid.innerHTML = html;
+}
+
+// ── Fermer le modal ────────────────────────────────────────────────────────────
 function closeDetail() {
     document.getElementById('detailModal').classList.remove('open');
     document.body.style.overflow = '';
 }
-function closeDetailOutside(e) {
+
+// Clic sur le fond du modal
+document.getElementById('detailModal').addEventListener('click', function(e) {
     if (e.target === document.getElementById('detailModal')) closeDetail();
+});
+
+// Touche Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeDetail();
+});
+
+// ── Utilitaire : échapper le HTML ──────────────────────────────────────────────
+function escHtml(str) {
+    var d = document.createElement('div');
+    d.textContent = str || '';
+    return d.innerHTML;
 }
 
+// ── Ouvrir directement si ?voir=ID ────────────────────────────────────────────
 <?php if ($campagneDetail): ?>
-document.addEventListener('DOMContentLoaded', () => openDetail(<?= $campagneDetail['idCampagne'] ?>));
+document.addEventListener('DOMContentLoaded', function() {
+    openDetail(<?= $campagneDetail['idCampagne'] ?>);
+});
 <?php endif; ?>
-
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
 </script>
 </body>
 </html>
