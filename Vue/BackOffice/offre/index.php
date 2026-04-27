@@ -6,8 +6,6 @@ $offreController = new OffreC();
 $message = '';
 $searchKeyword = trim($_GET['keyword'] ?? '');
 $searchStatut = trim($_GET['statut'] ?? '');
-$searchMarque = trim($_GET['marque'] ?? '');
-$searchCreateur = trim($_GET['createur'] ?? '');
 $searchBudgetFrom = trim($_GET['budgetFrom'] ?? '');
 $searchBudgetTo = trim($_GET['budgetTo'] ?? '');
 $searchDateLimite = trim($_GET['dateLimite'] ?? '');
@@ -15,8 +13,6 @@ $searchDateLimite = trim($_GET['dateLimite'] ?? '');
 $filterValues = [
     $searchKeyword,
     $searchStatut,
-    $searchMarque,
-    $searchCreateur,
     $searchBudgetFrom,
     $searchBudgetTo,
     $searchDateLimite,
@@ -29,7 +25,7 @@ function translateOfferStatus($status)
     return match ($status) {
         'brouillon' => 'Draft',
         'pending' => 'Pending launch',
-        'publiee' => 'Published',
+        'publiee' => 'Live now',
         'cloturee' => 'Closed',
         'expiree' => 'Expired',
         'archivee' => 'Archived',
@@ -39,16 +35,9 @@ function translateOfferStatus($status)
     };
 }
 
-function responseStatusLabel($status)
+function responseStatusLabel(array $response)
 {
-    return match ($status) {
-        'en_attente' => 'Accepted',
-        'en_etude' => 'Negotiating',
-        'acceptee' => 'Approved',
-        'refusee' => 'Declined by brand',
-        'retiree' => 'Declined by creator',
-        default => ucwords(str_replace('_', ' ', (string) $status)),
-    };
+    return (string) ($response['displayStatusLabel'] ?? ucwords(str_replace('_', ' ', (string) ($response['statutCandidature'] ?? ''))));
 }
 
 function formatMoney($value)
@@ -117,9 +106,10 @@ function renderOfferInsightsHtml($selectedOffer, $selectedBrand, $selectedCreato
                 <div class="quick-stat-item">
                     <span class="quick-stat-label">Breakdown</span>
                     <span class="quick-stat-value">
-                        Accepted <?php echo $selectedBreakdown['en_attente']; ?>,
-                        Negotiating <?php echo $selectedBreakdown['en_etude']; ?>,
-                        Approved <?php echo $selectedBreakdown['acceptee']; ?>
+                        Drafts <?php echo $selectedBreakdown['brouillon'] ?? 0; ?>,
+                        Accepted <?php echo $selectedBreakdown['envoyee']; ?>,
+                        Negotiating <?php echo $selectedBreakdown['negociation'] + $selectedBreakdown['en_etude']; ?>,
+                        Declined <?php echo ($selectedBreakdown['retiree'] ?? 0) + ($selectedBreakdown['refusee'] ?? 0); ?>
                     </span>
                 </div>
             </div>
@@ -158,7 +148,7 @@ function renderOfferInsightsHtml($selectedOffer, $selectedBrand, $selectedCreato
                                 <span><?php echo htmlspecialchars(excerptText((string) ($response['messageMotivation'] ?? ''), 72)); ?></span>
                             </div>
                             <div>
-                                <span class="status-pill"><?php echo htmlspecialchars(responseStatusLabel($response['statutCandidature'])); ?></span>
+                                <span class="status-pill"><?php echo htmlspecialchars(responseStatusLabel($response)); ?></span>
                                 <span class="status-pill"><?php echo htmlspecialchars(formatMoney($response['budgetPropose'])); ?></span>
                             </div>
                         </div>
@@ -242,7 +232,7 @@ function renderOfferInspectCardHtml($selectedOffer, $selectedBrand, $selectedCre
                 <h4>Latest creator signal</h4>
                 <?php if ($latestResponse): ?>
                     <div class="inspect-card-response-top">
-                        <span class="status-pill"><?php echo htmlspecialchars(responseStatusLabel($latestResponse['statutCandidature'])); ?></span>
+                        <span class="status-pill"><?php echo htmlspecialchars(responseStatusLabel($latestResponse)); ?></span>
                         <span class="status-pill"><?php echo htmlspecialchars(formatMoney($latestResponse['budgetPropose'])); ?></span>
                     </div>
                     <p><?php echo htmlspecialchars((string) ($latestResponse['messageMotivation'] ?? 'No response message was provided.')); ?></p>
@@ -281,8 +271,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['deleteOffre'], $_POST
 $offres = $offreController->searchOffresAdmin(
     $searchKeyword ?: null,
     $searchStatut ?: null,
-    is_numeric($searchMarque) ? (int) $searchMarque : null,
-    is_numeric($searchCreateur) ? (int) $searchCreateur : null,
+    null,
+    null,
     $searchBudgetFrom !== '' ? $searchBudgetFrom : null,
     $searchBudgetTo !== '' ? $searchBudgetTo : null,
     $searchDateLimite ?: null
@@ -291,8 +281,6 @@ $offres = $offreController->searchOffresAdmin(
 $persistedFilters = [
     'keyword' => $searchKeyword,
     'statut' => $searchStatut,
-    'marque' => $searchMarque,
-    'createur' => $searchCreateur,
     'budgetFrom' => $searchBudgetFrom,
     'budgetTo' => $searchBudgetTo,
     'dateLimite' => $searchDateLimite,
@@ -334,7 +322,8 @@ $selectedResponses = $selectedOffer
     ? ($responseGroups[$selectedOffer->getIdOffre()] ?? $offreController->getCandidaturesByOffre($selectedOffer->getIdOffre()))
     : [];
 $selectedBreakdown = $selectedOffer ? $offreController->getOfferResponseBreakdown($selectedOffer->getIdOffre()) : [
-    'en_attente' => 0,
+    'envoyee' => 0,
+    'negociation' => 0,
     'en_etude' => 0,
     'acceptee' => 0,
     'refusee' => 0,
@@ -417,6 +406,7 @@ if (!empty($liveBudgetOffers)) {
     <link rel="stylesheet" href="offre-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre-admin.css')); ?>">
 </head>
 <body>
+    <?php require_once dirname(__DIR__) . '/header.php'; ?>
     <div class="admin-shell">
         <header class="admin-header">
             <h1>Offer administration</h1>
@@ -429,31 +419,24 @@ if (!empty($liveBudgetOffers)) {
             <div class="admin-flash success">Offer deleted successfully.</div>
         <?php endif; ?>
 
-        <details class="search-panel" <?php echo $hasActiveFilters ? 'open' : ''; ?>>
-            <summary class="search-panel-summary">
-                <span class="search-panel-heading">
-                    <span class="search-panel-title">Admin filters</span>
+        <section class="search-panel search-panel-simple">
+            <div class="search-panel-head">
+                <div class="search-panel-copy">
+                    <span class="search-panel-title">Filter the offer list</span>
                     <span class="search-panel-subtitle">
-                        <?php echo $hasActiveFilters ? $activeFilterCount . ' filter' . ($activeFilterCount > 1 ? 's' : '') . ' applied to the current dashboard.' : 'Refine the list by status, brand, creator, budget, or deadline.'; ?>
+                        Search by offer, brand, creator, budget, or deadline without opening extra controls.
                     </span>
-                </span>
-                <span class="search-panel-status">
-                    <?php if ($hasActiveFilters): ?>
-                        <span class="search-panel-badge"><?php echo $activeFilterCount; ?> active</span>
-                    <?php endif; ?>
-                    <span class="search-panel-toggle">
-                        <span class="search-panel-toggle-label search-panel-toggle-label-closed">Open filters</span>
-                        <span class="search-panel-toggle-label search-panel-toggle-label-open">Close filters</span>
-                        <span class="search-panel-toggle-icon" aria-hidden="true"></span>
-                    </span>
-                </span>
-            </summary>
+                </div>
+                <?php if ($hasActiveFilters): ?>
+                    <span class="search-panel-badge"><?php echo $activeFilterCount; ?> active</span>
+                <?php endif; ?>
+            </div>
 
             <form method="get" class="search-form" data-module-validation="admin-filters" novalidate>
                 <div class="search-grid">
                     <div class="search-group">
-                        <label for="keyword">Search</label>
-                        <input id="keyword" name="keyword" type="search" value="<?php echo htmlspecialchars($searchKeyword); ?>" placeholder="Title, objective, description...">
+                        <label for="keyword">Keyword</label>
+                        <input id="keyword" name="keyword" type="search" value="<?php echo htmlspecialchars($searchKeyword); ?>" placeholder="Offer, brand, creator, or ID...">
                     </div>
 
                     <div class="search-group">
@@ -461,34 +444,11 @@ if (!empty($liveBudgetOffers)) {
                         <select id="statut" name="statut">
                             <option value="">All</option>
                             <option value="brouillon"<?php echo $searchStatut === 'brouillon' ? ' selected' : ''; ?>>Draft</option>
-                            <option value="publiee"<?php echo $searchStatut === 'publiee' ? ' selected' : ''; ?>>Published</option>
+                            <option value="publiee"<?php echo $searchStatut === 'publiee' ? ' selected' : ''; ?>>Live now</option>
+                            <option value="pending"<?php echo $searchStatut === 'pending' ? ' selected' : ''; ?>>Pending launch</option>
                             <option value="cloturee"<?php echo $searchStatut === 'cloturee' ? ' selected' : ''; ?>>Closed</option>
                             <option value="expiree"<?php echo $searchStatut === 'expiree' ? ' selected' : ''; ?>>Expired</option>
                             <option value="archivee"<?php echo $searchStatut === 'archivee' ? ' selected' : ''; ?>>Archived</option>
-                        </select>
-                    </div>
-
-                    <div class="search-group">
-                        <label for="marque">Brand</label>
-                        <select id="marque" name="marque">
-                            <option value="">All</option>
-                            <?php foreach ($allBrandMap as $brand): ?>
-                                <option value="<?php echo (int) $brand['id']; ?>"<?php echo $searchMarque === (string) $brand['id'] ? ' selected' : ''; ?>>
-                                    <?php echo htmlspecialchars($brand['nom'] . ' (#' . $brand['id'] . ')'); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-
-                    <div class="search-group">
-                        <label for="createur">Target creator</label>
-                        <select id="createur" name="createur">
-                            <option value="">All</option>
-                            <?php foreach ($allCreatorMap as $creator): ?>
-                                <option value="<?php echo (int) $creator['id']; ?>"<?php echo $searchCreateur === (string) $creator['id'] ? ' selected' : ''; ?>>
-                                    <?php echo htmlspecialchars($creator['nom'] . ' (#' . $creator['id'] . ')'); ?>
-                                </option>
-                            <?php endforeach; ?>
                         </select>
                     </div>
 
@@ -513,7 +473,7 @@ if (!empty($liveBudgetOffers)) {
                     <a class="clear-link" href="index.php">Reset</a>
                 </div>
             </form>
-        </details>
+        </section>
 
         <section class="admin-summary">
             <article class="admin-card">
@@ -692,6 +652,10 @@ if (!empty($liveBudgetOffers)) {
             const insightsBody = document.getElementById('offerInsightsBody');
             const inspectDialog = document.getElementById('offerInspectDialog');
             const inspectDialogBody = document.getElementById('offerInspectDialogBody');
+            const tablePanel = document.querySelector('.admin-table-panel');
+            const tablePanelBody = tablePanel ? tablePanel.querySelector('.admin-panel-body') : null;
+            const tableWrapper = tablePanel ? tablePanel.querySelector('.admin-table-wrapper') : null;
+            const detailsPanel = document.querySelector('.admin-details-panel');
             const loadingCardHtml = `
                 <div class="detail-empty-state">
                     <span class="detail-empty-icon">…</span>
@@ -699,6 +663,45 @@ if (!empty($liveBudgetOffers)) {
                     <p>The detailed inspection card is being prepared for this offer.</p>
                 </div>
             `;
+
+            function resetDashboardPanelHeight() {
+                if (tablePanel) {
+                    tablePanel.style.height = '';
+                }
+
+                if (tableWrapper) {
+                    tableWrapper.style.height = '';
+                    tableWrapper.style.maxHeight = '';
+                }
+            }
+
+            function syncDashboardPanelHeight() {
+                if (!tablePanel || !tablePanelBody || !tableWrapper || !detailsPanel) {
+                    return;
+                }
+
+                if (window.innerWidth <= 1180) {
+                    resetDashboardPanelHeight();
+                    return;
+                }
+
+                const detailsHeight = Math.round(detailsPanel.getBoundingClientRect().height);
+                if (!detailsHeight) {
+                    return;
+                }
+
+                const tableHeader = tablePanel.querySelector('.admin-panel-header');
+                const tableHeaderHeight = tableHeader ? tableHeader.offsetHeight : 0;
+                const bodyStyles = window.getComputedStyle(tablePanelBody);
+                const bodyPadding =
+                    parseFloat(bodyStyles.paddingTop || '0') +
+                    parseFloat(bodyStyles.paddingBottom || '0');
+                const availableTableHeight = Math.max(260, Math.floor(detailsHeight - tableHeaderHeight - bodyPadding));
+
+                tablePanel.style.height = `${detailsHeight}px`;
+                tableWrapper.style.height = `${availableTableHeight}px`;
+                tableWrapper.style.maxHeight = `${availableTableHeight}px`;
+            }
 
             function openInspectDialog(html) {
                 if (!inspectDialog || !inspectDialogBody) {
@@ -774,6 +777,7 @@ if (!empty($liveBudgetOffers)) {
                     }
 
                     window.history.replaceState({}, '', url);
+                    syncDashboardPanelHeight();
                 } catch (error) {
                     if (options.openModal) {
                         openInspectDialog(`
@@ -836,6 +840,16 @@ if (!empty($liveBudgetOffers)) {
                 inspectDialog.addEventListener('cancel', () => {
                     closeInspectDialog();
                 });
+            }
+
+            syncDashboardPanelHeight();
+            window.addEventListener('resize', syncDashboardPanelHeight);
+
+            if (window.ResizeObserver && detailsPanel) {
+                const dashboardObserver = new ResizeObserver(() => {
+                    syncDashboardPanelHeight();
+                });
+                dashboardObserver.observe(detailsPanel);
             }
         })();
     </script>

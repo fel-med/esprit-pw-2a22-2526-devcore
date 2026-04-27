@@ -7,8 +7,10 @@ if (!isset($_SESSION['utilisateur'])) {
 }
 
 require_once __DIR__ . '/../../../Controleur/offreC.php';
+require_once __DIR__ . '/../../../Controleur/condidatureC.php';
 
-$controller = new OffreC();
+$offreController = new OffreC();
+$candidatureController = new CondidatureC();
 $idOffre = isset($_GET['idOffre']) && is_numeric($_GET['idOffre']) ? (int) $_GET['idOffre'] : null;
 $sessionUser = $_SESSION['utilisateur'] ?? [];
 $idCreateur = isset($sessionUser['id'], $sessionUser['role']) && $sessionUser['role'] === 'createur'
@@ -18,7 +20,7 @@ $offre = null;
 $brand = null;
 $error = null;
 $response = null;
-$savedOffers = $_SESSION['saved_offer_ids'] ?? [];
+$responseContext = null;
 $notice = isset($_GET['notice']) ? trim($_GET['notice']) : null;
 $noticeType = isset($_GET['noticeType']) ? trim($_GET['noticeType']) : 'success';
 
@@ -47,23 +49,17 @@ function offerStatusClass($status)
     };
 }
 
-function responseStatusLabel($status)
+function responseStatusLabel($response)
 {
-    return match ($status) {
-        'en_attente' => 'Accepted and waiting',
-        'en_etude' => 'Negotiation in progress',
-        'acceptee' => 'Approved',
-        'refusee' => 'Declined by brand',
-        'retiree' => 'Declined by creator',
-        default => ucwords(str_replace('_', ' ', (string) $status)),
-    };
+    return $response ? $response->getDisplayStatusLabel() : 'No response started';
 }
 
 function responseStatusClass($status)
 {
     return match ($status) {
-        'en_attente' => 'pending',
-        'en_etude' => 'review',
+        'brouillon' => 'draft',
+        'envoyee', 'en_attente' => 'pending',
+        'negociation', 'en_etude' => 'review',
         'acceptee' => 'accepted',
         'refusee', 'retiree' => 'declined',
         default => 'pending',
@@ -73,6 +69,20 @@ function responseStatusClass($status)
 function formatMoney($value)
 {
     return 'EUR ' . number_format((float) $value, 2, '.', ',');
+}
+
+function buildResponseWorkspaceUrl($idOffre, $mode = null)
+{
+    $query = [
+        'origin' => 'par_offre',
+        'idSource' => (int) $idOffre,
+    ];
+
+    if ($mode !== null && $mode !== '') {
+        $query['mode'] = $mode;
+    }
+
+    return '../condidature/details.php?' . http_build_query($query);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggleSaved'], $_POST['idOffre']) && is_numeric($_POST['idOffre'])) {
@@ -93,41 +103,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggleSaved'], $_POST
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['responseType'])) {
-    $responseType = trim((string) ($_POST['responseType'] ?? ''));
-    $messageMotivation = trim((string) ($_POST['messageMotivation'] ?? ''));
-    $budgetPropose = $_POST['budgetPropose'] ?? null;
-    $delaiPropose = $_POST['delaiPropose'] ?? null;
-
-    $ok = $controller->submitOfferResponse($idCreateur, $idOffre, $responseType, $messageMotivation, $budgetPropose, $delaiPropose);
-
-    if ($ok) {
-        $feedback = match ($responseType) {
-            'accept' => 'You accepted the invitation.',
-            'decline' => 'You declined the invitation.',
-            'negotiate' => 'Your negotiation response was sent.',
-            default => 'Your response was sent.',
-        };
-        if (in_array($responseType, ['accept', 'decline'], true)) {
-            $noticeType = $responseType === 'decline' ? 'danger' : 'success';
-            header('Location: creator_list.php?notice=' . urlencode($feedback) . '&noticeType=' . urlencode($noticeType));
-            exit;
-        }
-
-        header('Location: creator_details.php?idOffre=' . $idOffre . '&idCreateur=' . $idCreateur . '&notice=' . urlencode($feedback) . '&noticeType=success');
-        exit;
-    }
-
-    header('Location: creator_details.php?idOffre=' . $idOffre . '&idCreateur=' . $idCreateur . '&notice=' . urlencode('Unable to save your response right now.') . '&noticeType=danger');
-    exit;
-}
-
 if ($idOffre !== null && $idCreateur !== null) {
-    $offre = $controller->getPublishedOffreById($idOffre, $idCreateur);
+    $offre = $offreController->getPublishedOffreById($idOffre, $idCreateur);
     if ($offre) {
-        $brandMap = $controller->getUsersByIds([$offre->getIdMarque()], 'marque');
+        $brandMap = $offreController->getUsersByIds([$offre->getIdMarque()], 'marque');
         $brand = $brandMap[$offre->getIdMarque()] ?? null;
-        $response = $controller->getOfferResponseByCreator($idCreateur, $idOffre);
+        $responseContext = $candidatureController->getCreatorCandidatureBySource($idCreateur, 'par_offre', $idOffre);
+        $response = $responseContext['condidature'] ?? null;
     } else {
         $error = 'Offer not found or not available to you.';
     }
@@ -136,6 +118,13 @@ if ($idOffre !== null && $idCreateur !== null) {
 }
 
 $isSaved = $idOffre !== null ? in_array($idOffre, $_SESSION['saved_offer_ids'] ?? [], true) : false;
+$currentResponseMode = $response ? $response->getResponseMode() : 'accept';
+$isNegotiationOnly = $response && $response->canCreatorEditNegotiationOnly();
+$isResponseLocked = $response && $response->isCreatorLocked();
+$responseWorkspaceUrl = $idOffre !== null ? buildResponseWorkspaceUrl($idOffre, $currentResponseMode) : '#';
+$acceptWorkspaceUrl = $idOffre !== null ? buildResponseWorkspaceUrl($idOffre, 'accept') : '#';
+$negotiateWorkspaceUrl = $idOffre !== null ? buildResponseWorkspaceUrl($idOffre, 'negotiate') : '#';
+$declineWorkspaceUrl = $idOffre !== null ? buildResponseWorkspaceUrl($idOffre, 'decline') : '#';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -147,6 +136,7 @@ $isSaved = $idOffre !== null ? in_array($idOffre, $_SESSION['saved_offer_ids'] ?
     <link rel="stylesheet" href="offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre.css')); ?>">
 </head>
 <body>
+    <?php require_once dirname(__DIR__) . '/header.php'; ?>
     <main class="container py-5">
         <div class="offre-page-shell">
             <?php if ($error): ?>
@@ -247,64 +237,76 @@ $isSaved = $idOffre !== null ? in_array($idOffre, $_SESSION['saved_offer_ids'] ?
                                 <div class="review-list mt-4">
                                     <div class="review-item">
                                         <strong>Current status</strong>
-                                        <span class="response-status <?php echo htmlspecialchars(responseStatusClass($response['statutCandidature'])); ?>"><?php echo htmlspecialchars(responseStatusLabel($response['statutCandidature'])); ?></span>
+                                        <span class="response-status <?php echo htmlspecialchars(responseStatusClass($response->getStatutCandidature())); ?>"><?php echo htmlspecialchars(responseStatusLabel($response)); ?></span>
+                                    </div>
+                                    <div class="review-item">
+                                        <strong>Response path</strong>
+                                        <span><?php echo htmlspecialchars($response->getResponseTypeLabel()); ?></span>
                                     </div>
                                     <div class="review-item">
                                         <strong>Your budget reply</strong>
-                                        <span>EUR <?php echo htmlspecialchars($response['budgetPropose']); ?></span>
+                                        <span><?php echo htmlspecialchars(formatMoney($response->getBudgetPropose())); ?></span>
                                     </div>
                                     <div class="review-item">
                                         <strong>Your proposed timeline</strong>
-                                        <span><?php echo htmlspecialchars($response['delaiPropose']); ?> days</span>
+                                        <span><?php echo htmlspecialchars((string) $response->getDelaiPropose()); ?> days</span>
                                     </div>
                                     <div class="review-item">
                                         <strong>Your message</strong>
-                                        <span><?php echo htmlspecialchars($response['messageMotivation']); ?></span>
+                                        <span><?php echo htmlspecialchars(trim((string) $response->getMessageMotivation()) !== '' ? $response->getMessageMotivation() : 'No response message has been added yet.'); ?></span>
                                     </div>
                                 </div>
                             <?php else: ?>
                                 <div class="response-callout mt-4">
-                                    <strong>No response sent yet</strong>
-                                    <div class="mt-2 text-muted small">Accept if you are ready, decline if it is not a fit, or negotiate if you want to adjust the brief.</div>
+                                    <strong>No response started yet</strong>
+                                    <div class="mt-2 text-muted small">Open the response workflow to accept, decline, request negotiation, or save a draft for later.</div>
                                 </div>
                             <?php endif; ?>
                         </section>
 
                         <section class="response-card">
-                            <h2 class="section-title">Quick actions</h2>
-                            <div class="response-actions mt-4">
-                                <form method="post" action="creator_details.php?idOffre=<?php echo (int) $idOffre; ?>&idCreateur=<?php echo (int) $idCreateur; ?>">
-                                    <input type="hidden" name="responseType" value="accept">
-                                    <button type="submit" class="btn btn-success w-100">Accept invitation</button>
-                                </form>
-                                <form method="post" action="creator_details.php?idOffre=<?php echo (int) $idOffre; ?>&idCreateur=<?php echo (int) $idCreateur; ?>">
-                                    <input type="hidden" name="responseType" value="decline">
-                                    <button type="submit" class="btn btn-outline-danger w-100">Decline invitation</button>
-                                </form>
-                            </div>
-                        </section>
+                            <h2 class="section-title">Response workflow</h2>
+                            <p class="section-subtitle">
+                                Start from this offer, then finish the structured response in the candidature workspace.
+                            </p>
 
-                        <section class="response-card">
-                            <h2 class="section-title">Negotiate or respond with context</h2>
-                            <form method="post" action="creator_details.php?idOffre=<?php echo (int) $idOffre; ?>&idCreateur=<?php echo (int) $idCreateur; ?>" class="response-grid mt-4" data-module-validation="creator-response" novalidate>
-                                <input type="hidden" name="responseType" value="negotiate">
-                                <div>
-                                    <label for="messageMotivation" class="form-label fw-semibold">Message</label>
-                                    <textarea class="form-control" id="messageMotivation" name="messageMotivation" rows="4" placeholder="Explain what you would like to adjust or clarify."><?php echo htmlspecialchars($response['messageMotivation'] ?? ''); ?></textarea>
-                                </div>
-                                <div>
-                                    <label for="budgetPropose" class="form-label fw-semibold">Your proposed budget</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">EUR</span>
-                                        <input type="number" class="form-control" id="budgetPropose" name="budgetPropose" step="0.01" value="<?php echo htmlspecialchars($response['budgetPropose'] ?? $offre->getBudgetPropose()); ?>">
+                            <?php if ($isResponseLocked): ?>
+                                <div class="response-callout response-callout-accepted mt-4">
+                                    <strong>Response locked</strong>
+                                    <div class="mt-2 text-muted small">
+                                        This invitation already moved into a locked stage. You can still open the response workspace and review the final response details.
                                     </div>
                                 </div>
-                                <div>
-                                    <label for="delaiPropose" class="form-label fw-semibold">Your timeline in days</label>
-                                    <input type="number" class="form-control" id="delaiPropose" name="delaiPropose" step="1" value="<?php echo htmlspecialchars($response['delaiPropose'] ?? '7'); ?>">
+                                <div class="compact-actions mt-4">
+                                    <a class="btn btn-primary w-100" href="<?php echo htmlspecialchars($responseWorkspaceUrl); ?>">Open response workspace</a>
                                 </div>
-                                <button type="submit" class="btn btn-primary">Send negotiation response</button>
-                            </form>
+                            <?php elseif ($isNegotiationOnly): ?>
+                                <div class="response-action-grid mt-4">
+                                    <a class="response-action-card response-action-card-accent" href="<?php echo htmlspecialchars($negotiateWorkspaceUrl); ?>">
+                                        <strong>Continue negotiation</strong>
+                                        <span>Update only the message, budget, and delivery timeline for this ongoing negotiation.</span>
+                                    </a>
+                                    <a class="response-action-card" href="<?php echo htmlspecialchars($responseWorkspaceUrl); ?>">
+                                        <strong>Open full response workspace</strong>
+                                        <span>Review the source context and continue the negotiation without losing your previous values.</span>
+                                    </a>
+                                </div>
+                            <?php else: ?>
+                                <div class="response-action-grid mt-4">
+                                    <a class="response-action-card response-action-card-accept" href="<?php echo htmlspecialchars($acceptWorkspaceUrl); ?>">
+                                        <strong>Accept</strong>
+                                        <span>Send a standard acceptance response and move the invitation into review.</span>
+                                    </a>
+                                    <a class="response-action-card response-action-card-negotiate" href="<?php echo htmlspecialchars($negotiateWorkspaceUrl); ?>">
+                                        <strong>Negotiate</strong>
+                                        <span>Adjust budget, timing, or context before you confirm the collaboration.</span>
+                                    </a>
+                                    <a class="response-action-card response-action-card-decline response-action-card-center" href="<?php echo htmlspecialchars($declineWorkspaceUrl); ?>">
+                                        <strong>Decline</strong>
+                                        <span>Keep the offer visible in your history while clearly declining the invitation.</span>
+                                    </a>
+                                </div>
+                            <?php endif; ?>
                         </section>
 
                         <div class="compact-actions">
@@ -317,6 +319,5 @@ $isSaved = $idOffre !== null ? in_array($idOffre, $_SESSION['saved_offer_ids'] ?
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
-    <script src="offre-validation.js"></script>
 </body>
 </html>

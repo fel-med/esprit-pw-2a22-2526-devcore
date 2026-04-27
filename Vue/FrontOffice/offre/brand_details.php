@@ -43,23 +43,17 @@ function offerStatusClass($status)
     };
 }
 
-function responseStatusLabel($status)
+function responseStatusLabel(array $response)
 {
-    return match ($status) {
-        'en_attente' => 'Creator accepted',
-        'en_etude' => 'Negotiation requested',
-        'acceptee' => 'Approved',
-        'refusee' => 'Declined by brand',
-        'retiree' => 'Declined by creator',
-        default => ucwords(str_replace('_', ' ', (string) $status)),
-    };
+    return (string) ($response['displayStatusLabel'] ?? ucwords(str_replace('_', ' ', (string) ($response['statutCandidature'] ?? ''))));
 }
 
 function responseStatusClass($status)
 {
     return match ($status) {
-        'en_attente' => 'pending',
-        'en_etude' => 'review',
+        'brouillon' => 'draft',
+        'envoyee', 'en_attente' => 'pending',
+        'negociation', 'en_etude' => 'review',
         'acceptee' => 'accepted',
         'refusee', 'retiree' => 'declined',
         default => 'pending',
@@ -69,6 +63,11 @@ function responseStatusClass($status)
 function formatMoney($value)
 {
     return 'EUR ' . number_format((float) $value, 2, '.', ',');
+}
+
+function isAcceptedResponseLockStatus($status)
+{
+    return in_array((string) $status, ['envoyee', 'en_attente', 'acceptee'], true);
 }
 
 if ($idOffre !== null) {
@@ -90,6 +89,7 @@ if ($idOffre !== null) {
 
 $displayStatus = $offre ? $offre->getDisplayStatusKey() : 'brouillon';
 $publicationLabel = $offre && $offre->isPendingPublication() ? 'Goes live' : 'Published';
+$isEditLocked = $response && isAcceptedResponseLockStatus($response['statutCandidature'] ?? '');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -101,6 +101,7 @@ $publicationLabel = $offre && $offre->isPendingPublication() ? 'Goes live' : 'Pu
     <link rel="stylesheet" href="offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre.css')); ?>">
 </head>
 <body>
+    <?php require_once dirname(__DIR__) . '/header.php'; ?>
     <main class="container py-5">
         <div class="offre-page-shell">
             <?php if ($error): ?>
@@ -188,7 +189,11 @@ $publicationLabel = $offre && $offre->isPendingPublication() ? 'Goes live' : 'Pu
                                 <div class="review-list mt-4">
                                     <div class="review-item">
                                         <strong>Status</strong>
-                                        <span class="response-status <?php echo htmlspecialchars(responseStatusClass($response['statutCandidature'])); ?>"><?php echo htmlspecialchars(responseStatusLabel($response['statutCandidature'])); ?></span>
+                                        <span class="response-status <?php echo htmlspecialchars(responseStatusClass($response['statutCandidature'])); ?>"><?php echo htmlspecialchars(responseStatusLabel($response)); ?></span>
+                                    </div>
+                                    <div class="review-item">
+                                        <strong>Creator action</strong>
+                                        <span><?php echo htmlspecialchars($response['responseTypeLabel'] ?? 'Offer response'); ?></span>
                                     </div>
                                     <div class="review-item">
                                         <strong>Budget reply</strong>
@@ -203,6 +208,13 @@ $publicationLabel = $offre && $offre->isPendingPublication() ? 'Goes live' : 'Pu
                                         <span><?php echo htmlspecialchars($response['messageMotivation']); ?></span>
                                     </div>
                                 </div>
+                                <div class="note-block mt-4">
+                                    <strong>Response workspace</strong>
+                                    <p>Open the candidature workspace to review the full response thread and continue negotiation if this collaboration still needs adjustments.</p>
+                                    <div class="compact-actions mt-3">
+                                        <a class="btn btn-outline-secondary" href="../condidature/brand_details.php?idCandidature=<?php echo (int) $response['idCandidature']; ?>">Open candidature details</a>
+                                    </div>
+                                </div>
                             <?php else: ?>
                                 <div class="response-callout mt-4">
                                     <strong>No response yet</strong>
@@ -213,8 +225,21 @@ $publicationLabel = $offre && $offre->isPendingPublication() ? 'Goes live' : 'Pu
 
                         <section class="info-card">
                             <h2 class="section-title">Actions</h2>
+                            <?php if ($isEditLocked): ?>
+                                <div class="response-callout response-callout-accepted mt-4">
+                                    <strong>Editing locked</strong>
+                                    <div class="mt-2 text-muted small">The targeted creator already accepted this offer, so the brief can no longer be modified by the brand.</div>
+                                </div>
+                            <?php endif; ?>
                             <div class="compact-actions mt-4">
-                                <a class="btn btn-primary" href="brand_edit.php?idOffre=<?php echo (int) $offre->getIdOffre(); ?>">Edit offer</a>
+                                <?php if ($isEditLocked): ?>
+                                    <span class="btn btn-outline-secondary disabled" aria-disabled="true">Editing locked</span>
+                                <?php else: ?>
+                                    <a class="btn btn-primary" href="brand_edit.php?idOffre=<?php echo (int) $offre->getIdOffre(); ?>">Edit offer</a>
+                                <?php endif; ?>
+                                <?php if ($response): ?>
+                                    <a class="btn btn-outline-secondary" href="../condidature/brand_details.php?idCandidature=<?php echo (int) $response['idCandidature']; ?>">Open response</a>
+                                <?php endif; ?>
                                 <form
                                     method="post"
                                     action="brand_delete.php"

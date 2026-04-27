@@ -14,6 +14,14 @@ function initCreatorPicker(picker) {
     const emptyCopy = picker.querySelector('[data-creator-empty-copy]');
     const footer = picker.querySelector('[data-creator-footer]');
     const loadMoreButton = picker.querySelector('[data-creator-load-more]');
+    const openModalButton = picker.querySelector('[data-open-creator-modal]');
+    const modal = picker.querySelector('[data-creator-modal]');
+    const modalGrid = picker.querySelector('[data-creator-modal-grid]');
+    const modalEmpty = picker.querySelector('[data-creator-modal-empty]');
+    const modalLoadMoreButton = picker.querySelector('[data-creator-modal-load-more]');
+    const modalResultsNote = picker.querySelector('[data-creator-modal-results]');
+    const modalEndNote = picker.querySelector('[data-creator-modal-end]');
+    const modalCloseButtons = picker.querySelectorAll('[data-close-creator-modal]');
     const statusNote = picker.querySelector('[data-creator-status]');
     const resultsNote = picker.querySelector('[data-creator-results]');
     const hiddenInput = picker.querySelector('input[name="idCreateurCible"]');
@@ -108,6 +116,13 @@ function initCreatorPicker(picker) {
             const isSelected = !!selectedCreator && selectedCreator.id && card.dataset.creatorId === selectedCreator.id;
             card.classList.toggle('is-selected', isSelected);
         });
+
+        if (modalGrid) {
+            modalGrid.querySelectorAll('.creator-option').forEach(function (card) {
+                const isSelected = !!selectedCreator && selectedCreator.id && card.dataset.creatorId === selectedCreator.id;
+                card.classList.toggle('is-selected', isSelected);
+            });
+        }
     }
 
     function applySelection(creator) {
@@ -137,6 +152,11 @@ function initCreatorPicker(picker) {
             loadMoreButton.disabled = isLoading;
             loadMoreButton.textContent = isLoading ? 'Loading creators...' : 'Load more creators';
         }
+
+        if (modalLoadMoreButton) {
+            modalLoadMoreButton.disabled = isLoading;
+            modalLoadMoreButton.textContent = isLoading ? 'Loading creators...' : 'Load more';
+        }
     }
 
     function updateNotes() {
@@ -154,10 +174,28 @@ function initCreatorPicker(picker) {
                     ? 'No creators match this search yet.'
                     : 'No creators are available right now.';
             } else if (currentKeyword) {
-                resultsNote.textContent = 'Showing ' + loadedCount + ' matching creators' + (hasMore ? '. Load more to expand the search results.' : '.');
+                resultsNote.textContent = 'Showing ' + loadedCount + ' matching creators' + (hasMore ? '. Open the browser to view more.' : '.');
             } else {
-                resultsNote.textContent = 'Showing ' + loadedCount + ' creators from the current shortlist' + (hasMore ? '. Load more if you want a wider pool.' : '.');
+                resultsNote.textContent = 'Showing ' + loadedCount + ' creators from the current shortlist' + (hasMore ? '. Open the browser to view more.' : '.');
             }
+        }
+
+        if (modalResultsNote) {
+            const label = currentKeyword ? 'matching creators' : 'creators';
+            modalResultsNote.textContent = loadedCount === 0
+                ? 'No creators are currently loaded.'
+                : 'Showing ' + loadedCount + ' ' + label + '.';
+        }
+
+        if (modalLoadMoreButton) {
+            modalLoadMoreButton.hidden = !hasMore || loadedCount === 0;
+        }
+
+        if (modalEndNote) {
+            modalEndNote.hidden = hasMore || loadedCount === 0;
+            modalEndNote.textContent = currentKeyword
+                ? 'There are no more matching creators to load.'
+                : 'There are no more creators to load.';
         }
 
         if (emptyTitle) {
@@ -201,9 +239,71 @@ function initCreatorPicker(picker) {
             loadMoreButton.hidden = !hasMore || !hasItems;
         }
 
+        if (openModalButton) {
+            openModalButton.hidden = !hasItems;
+        }
+
         refreshSelectionStyling();
+        renderModalFromInlineGrid();
         updateNotes();
         dispatchPickerEvent('creatorpicker:render');
+    }
+
+    function readCreatorFromCard(card) {
+        return normalizeCreator({
+            id: card.dataset.creatorId,
+            nom: card.dataset.name,
+            email: card.dataset.email,
+            statusLabel: card.dataset.statusLabel,
+            statusClass: card.dataset.statusClass,
+            targetedOffers: card.dataset.targeted,
+            liveOffers: card.dataset.live
+        });
+    }
+
+    function renderModalFromInlineGrid() {
+        if (!modalGrid || !grid) {
+            return;
+        }
+
+        modalGrid.innerHTML = '';
+        grid.querySelectorAll('.creator-option').forEach(function (card) {
+            modalGrid.appendChild(buildCreatorCard(readCreatorFromCard(card)));
+        });
+
+        const hasItems = modalGrid.children.length > 0;
+        if (modalEmpty) {
+            modalEmpty.classList.toggle('is-hidden', hasItems);
+        }
+
+        refreshSelectionStyling();
+    }
+
+    function setModalOpen(isOpen) {
+        if (!modal) {
+            return;
+        }
+
+        if (isOpen) {
+            renderModalFromInlineGrid();
+            modal.hidden = false;
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('creator-modal-open');
+            const firstCard = modalGrid ? modalGrid.querySelector('.creator-option') : null;
+            const focusTarget = firstCard || modalLoadMoreButton || modal.querySelector('[data-close-creator-modal]');
+            if (focusTarget) {
+                window.setTimeout(function () {
+                    focusTarget.focus();
+                }, 20);
+            }
+        } else {
+            modal.hidden = true;
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('creator-modal-open');
+            if (openModalButton) {
+                openModalButton.focus();
+            }
+        }
     }
 
     function fetchCreators(options) {
@@ -308,6 +408,50 @@ function initCreatorPicker(picker) {
             fetchCreators({ keyword: currentKeyword, reset: false });
         });
     }
+
+    if (openModalButton) {
+        openModalButton.addEventListener('click', function () {
+            setModalOpen(true);
+        });
+    }
+
+    if (modalLoadMoreButton) {
+        modalLoadMoreButton.addEventListener('click', function () {
+            fetchCreators({ keyword: currentKeyword, reset: false });
+        });
+    }
+
+    if (modalGrid) {
+        modalGrid.addEventListener('click', function (event) {
+            const card = event.target.closest('.creator-option');
+            if (!card || !modalGrid.contains(card)) {
+                return;
+            }
+
+            applySelection(readCreatorFromCard(card));
+            setModalOpen(false);
+        });
+    }
+
+    modalCloseButtons.forEach(function (button) {
+        button.addEventListener('click', function () {
+            setModalOpen(false);
+        });
+    });
+
+    if (modal) {
+        modal.addEventListener('click', function (event) {
+            if (event.target === modal) {
+                setModalOpen(false);
+            }
+        });
+    }
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && modal && !modal.hidden) {
+            setModalOpen(false);
+        }
+    });
 
     if (clearSelectionButton) {
         clearSelectionButton.addEventListener('click', clearSelection);

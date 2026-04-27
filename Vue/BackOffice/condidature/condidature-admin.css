@@ -1,0 +1,342 @@
+.badge-status.brouillon {
+  background: rgba(148, 163, 184, 0.14);
+  color: #cbd5e1;
+}
+
+.badge-status.envoyee {
+  background: rgba(37, 99, 235, 0.18);
+  color: #bfdbfe;
+}
+
+.badge-status.en_etude {
+  background: rgba(180, 83, 9, 0.22);
+  color: #fcd34d;
+}
+
+.badge-status.negociation {
+  background: rgba(190, 24, 93, 0.2);
+  color: #f9a8d4;
+}
+
+.badge-status.acceptee {
+  background: rgba(20, 128, 74, 0.2);
+  color: #bbf7d0;
+}
+
+.badge-status.refusee,
+.badge-status.retiree {
+  background: rgba(220, 38, 38, 0.18);
+  color: #fecaca;
+}
+
+.candidature-origin-pill,
+.candidature-detail-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 0.78rem;
+  border-radius: 999px;
+  border: 1px solid rgba(59, 130, 246, 0.16);
+  background: rgba(15, 23, 42, 0.72);
+  color: #cbd5e1;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.candidature-admin-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.9fr);
+  gap: 1.35rem;
+}
+
+.candidature-review-grid,
+.candidature-decision-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.candidature-review-card,
+.candidature-message-card,
+.candidature-status-card {
+  padding: 1rem 1.05rem;
+  border-radius: 1.05rem;
+  border: 1px solid #1f2937;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.74));
+  box-shadow: inset 0 1px 0 rgba(148, 163, 184, 0.04);
+}
+
+.candidature-review-card h3,
+.candidature-message-card h3,
+.candidature-status-card h3 {
+  margin: 0 0 0.58rem;
+  color: #93c5fd;
+  font-size: 0.77rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.candidature-review-card p,
+.candidature-message-card p,
+.candidature-status-card p {
+  margin: 0;
+  color: #e5eef9;
+  line-height: 1.7;
+}
+
+.candidature-review-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.candidature-review-form textarea,
+.candidature-review-form select {
+  width: 100%;
+}
+
+.candidature-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.admin-negotiation-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.admin-negotiation-subtitle {
+  margin: 0.45rem 0 0;
+  color: #94a3b8;
+  line-height: 1.65;
+}
+
+.admin-negotiation-thread {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+
+.admin-negotiation-entry {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid #1f2937;
+  background: linear-gradient(180deg, rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.8));
+}
+
+.admin-negotiation-entry-createur {
+  border-color: rgba(59, 130, 246, 0.22);
+}
+
+.admin-negotiation-entry-marque {
+  border-color: rgba(20, 128, 74, 0.24);
+}
+
+.admin-negotiation-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.admin-negotiation-author {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.admin-negotiation-author strong {
+  color: #f8fafc;
+}
+
+.admin-negotiation-author span {
+  color: #94a3b8;
+  font-size: 0.88rem;
+}
+
+.admin-negotiation-role {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  justify-content: center;
+  padding: 0.34rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.admin-negotiation-role-createur {
+  background: rgba(59, 130, 246, 0.18);
+  color: #bfdbfe;
+}
+
+.admin-negotiation-role-marque {
+  background: rgba(20, 128, 74, 0.18);
+  color: #bbf7d0;
+}
+
+.admin-negotiation-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.candidature-table-source {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.candidature-table-response {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.candidature-table-response small {
+  color: #94a3b8;
+  font-size: 0.82rem;
+}
+
+.admin-inline-link {
+  color: #93c5fd;
+  word-break: break-word;
+  text-decoration: none;
+}
+
+.admin-inline-link:hover {
+  color: #bfdbfe;
+  text-decoration: underline;
+}
+
+.detail-empty-inline {
+  margin-top: 1rem;
+}
+
+.candidature-table-source strong,
+.candidature-table-person strong {
+  color: #f8fafc;
+}
+
+.candidature-table-source span,
+.candidature-table-person span {
+  color: #94a3b8;
+  font-size: 0.88rem;
+}
+
+@media (max-width: 1180px) {
+  .candidature-admin-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .candidature-review-grid,
+  .candidature-decision-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .candidature-review-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-negotiation-top,
+  .admin-negotiation-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Candidature admin refinements, visually aligned with the offer admin dashboard. */
+.candidature-admin-grid {
+  align-items: start;
+}
+
+.candidature-review-card,
+.candidature-message-card,
+.candidature-status-card,
+.admin-negotiation-entry {
+  border-radius: 0.85rem;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.candidature-review-card:hover,
+.candidature-message-card:hover,
+.candidature-status-card:hover,
+.admin-negotiation-entry:hover {
+  transform: translateY(-1px);
+  border-color: rgba(96, 165, 250, 0.22);
+  box-shadow: 0 16px 34px rgba(2, 6, 23, 0.22);
+}
+
+.candidature-review-card h3,
+.candidature-message-card h3,
+.candidature-status-card h3 {
+  color: #bfdbfe;
+}
+
+.candidature-origin-pill,
+.candidature-detail-pill {
+  min-height: 1.7rem;
+  padding: 0.3rem 0.68rem;
+  font-size: 0.72rem;
+}
+
+.admin-negotiation-thread {
+  max-height: min(56vh, 620px);
+  overflow: auto;
+  padding-right: 0.25rem;
+  scrollbar-width: thin;
+  scrollbar-color: #475569 #0f172a;
+}
+
+.admin-negotiation-thread::-webkit-scrollbar {
+  width: 10px;
+}
+
+.admin-negotiation-thread::-webkit-scrollbar-track {
+  background: #0f172a;
+  border-radius: 999px;
+}
+
+.admin-negotiation-thread::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #475569, #334155);
+  border: 2px solid #0f172a;
+  border-radius: 999px;
+}
+
+.admin-negotiation-entry-createur {
+  background:
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.1), transparent 38%),
+    linear-gradient(180deg, rgba(17, 24, 39, 0.94), rgba(17, 24, 39, 0.82));
+}
+
+.admin-negotiation-entry-marque {
+  background:
+    radial-gradient(circle at top right, rgba(20, 128, 74, 0.1), transparent 38%),
+    linear-gradient(180deg, rgba(17, 24, 39, 0.94), rgba(17, 24, 39, 0.82));
+}
+
+.candidature-table-source,
+.candidature-table-response,
+.candidature-table-person {
+  min-width: 0;
+}
+
+.candidature-table-source span,
+.candidature-table-person span,
+.candidature-table-response small {
+  line-height: 1.45;
+}
+
+.candidature-review-actions .delete-btn,
+.candidature-review-actions .admin-inline-link,
+.candidature-review-actions button {
+  border-radius: 0.55rem;
+}

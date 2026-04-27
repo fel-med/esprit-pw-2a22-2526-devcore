@@ -1,8 +1,13 @@
-document.addEventListener('DOMContentLoaded', initializeModuleValidation);
+document.addEventListener('DOMContentLoaded', function () {
+    initializeModuleValidation(document);
+});
+
+window.initializeModuleValidation = initializeModuleValidation;
 
 const MODULE_VALIDATORS = {
     'brand-offer': {
         trackedSelectors: [
+            '#creatorSearch',
             'input[name="idCreateurCible"]',
             '#titre',
             '#objectif',
@@ -34,8 +39,14 @@ const MODULE_VALIDATORS = {
 // 1. Validation bootstrap
 // ---------------------------------------------------------------------------
 
-function initializeModuleValidation() {
-    document.querySelectorAll('form[data-module-validation]').forEach(function (form) {
+function initializeModuleValidation(root) {
+    const validationRoot = root || document;
+
+    validationRoot.querySelectorAll('form[data-module-validation]').forEach(function (form) {
+        if (form.dataset.validationBound === '1') {
+            return;
+        }
+
         const validationType = form.dataset.moduleValidation;
         const config = MODULE_VALIDATORS[validationType];
 
@@ -43,6 +54,7 @@ function initializeModuleValidation() {
             return;
         }
 
+        form.dataset.validationBound = '1';
         form.setAttribute('novalidate', 'novalidate');
         attachLiveValidation(form, config);
         attachSubmitIntentTracking(form);
@@ -70,17 +82,38 @@ function attachSubmitIntentTracking(form) {
 }
 
 function attachLiveValidation(form, config) {
-    config.trackedSelectors.forEach(function (selector) {
-        form.querySelectorAll(selector).forEach(function (field) {
-            const refresh = function () {
-                if (form.dataset.validationSubmitted === '1') {
-                    runValidation(form, config.validate, false, getCurrentValidationContext(form));
-                }
-            };
+    getTrackedValidationFields(form, config).forEach(function (field) {
+        const refreshTouchedField = function () {
+            const effectiveField = getEffectiveValidationField(form, field);
 
-            field.addEventListener('input', refresh);
-            field.addEventListener('change', refresh);
-        });
+            if (form.dataset.validationSubmitted === '1') {
+                runValidation(form, config.validate, false, getCurrentValidationContext(form));
+                return;
+            }
+
+            if (isValidationFieldTouched(effectiveField)) {
+                runProgressiveValidation(form, config.validate, getCurrentValidationContext(form));
+            }
+        };
+
+        const markTouchedOnBlur = function () {
+            const effectiveField = getEffectiveValidationField(form, field);
+
+            if (form.dataset.validationSubmitted !== '1' && isSubmitOnlyValidationField(effectiveField)) {
+                return;
+            }
+
+            markValidationFieldTouched(effectiveField);
+            runProgressiveValidation(form, config.validate, getCurrentValidationContext(form));
+        };
+
+        field.addEventListener('input', refreshTouchedField);
+        field.addEventListener('change', refreshTouchedField);
+        field.addEventListener('blur', markTouchedOnBlur);
+
+        if (field.type === 'date' || field.type === 'hidden') {
+            field.addEventListener('change', markTouchedOnBlur);
+        }
     });
 }
 
@@ -128,6 +161,19 @@ function runValidation(form, validateCallback, focusFirstField, context) {
     }
 
     return false;
+}
+
+function runProgressiveValidation(form, validateCallback, context) {
+    clearValidationState(form);
+    form.dataset.serverErrorFocus = '';
+
+    const errors = validateCallback(form, context || getCurrentValidationContext(form));
+    const touchedFields = getTouchedValidationFields(form);
+    const touchedErrors = errors.filter(function (error) {
+        return isErrorLinkedToTouchedFields(error, touchedFields);
+    });
+
+    renderFieldErrors(touchedErrors);
 }
 
 // ---------------------------------------------------------------------------
@@ -233,7 +279,9 @@ function validateBrandOfferDateRules(fields, errors, validationIntent) {
 
     validateDateField(fields.publicationInput, 'Publication date', errors);
     validateDateField(fields.deadlineInput, 'Deadline', errors);
-    validateDateNotPast(fields.publicationInput, 'Publication date', errors);
+    if (!isPastPublicationDateAllowed(fields.publicationInput)) {
+        validateDateNotPast(fields.publicationInput, 'Publication date', errors);
+    }
     validateDateNotPast(fields.deadlineInput, 'Deadline', errors);
 
     // Current JS behavior:
@@ -509,6 +557,10 @@ function validateDateNotPast(field, label, errors) {
     }
 }
 
+function isPastPublicationDateAllowed(field) {
+    return Boolean(field && field.dataset && field.dataset.allowPastPublication === '1');
+}
+
 // ---------------------------------------------------------------------------
 // 4. Error object creation and UI feedback
 // ---------------------------------------------------------------------------
@@ -539,6 +591,58 @@ function clearValidationState(form) {
 
     form.querySelectorAll('.validation-group-invalid').forEach(function (field) {
         field.classList.remove('validation-group-invalid');
+    });
+}
+
+function getTrackedValidationFields(form, config) {
+    return config.trackedSelectors.flatMap(function (selector) {
+        return Array.from(form.querySelectorAll(selector));
+    });
+}
+
+function getEffectiveValidationField(form, field) {
+    if (!field) {
+        return field;
+    }
+
+    if (field.type === 'hidden' && field.name === 'idCreateurCible') {
+        return form.querySelector('#creatorSearch') || field;
+    }
+
+    return field;
+}
+
+function isSubmitOnlyValidationField(field) {
+    if (!field) {
+        return false;
+    }
+
+    return field.id === 'creatorSearch' || field.name === 'idCreateurCible';
+}
+
+function markValidationFieldTouched(field) {
+    if (!field) {
+        return;
+    }
+
+    field.dataset.validationTouched = '1';
+}
+
+function isValidationFieldTouched(field) {
+    return !!(field && field.dataset.validationTouched === '1');
+}
+
+function getTouchedValidationFields(form) {
+    return Array.from(form.querySelectorAll('[data-validation-touched="1"]'));
+}
+
+function isErrorLinkedToTouchedFields(error, touchedFields) {
+    if (!touchedFields.length || !error) {
+        return false;
+    }
+
+    return touchedFields.some(function (field) {
+        return error.focusElement === field || error.anchor === field;
     });
 }
 

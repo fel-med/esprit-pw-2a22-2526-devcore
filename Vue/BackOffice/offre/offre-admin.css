@@ -80,6 +80,8 @@ body.inspect-modal-open {
     border: 1px solid #1f2937;
     border-radius: 1rem;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .admin-panel-header {
@@ -96,14 +98,34 @@ body.inspect-modal-open {
 
 .admin-panel-body {
     padding: 1.5rem;
+    flex: 1;
+    min-height: 0;
 }
 
 .search-panel {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.15rem;
     background: #111827;
     border: 1px solid #1f2937;
     border-radius: 1rem;
     overflow: hidden;
+}
+
+.search-panel-simple {
+    padding: 0.95rem 1.05rem 1.05rem;
+}
+
+.search-panel-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.85rem;
+}
+
+.search-panel-copy {
+    display: grid;
+    gap: 0.22rem;
+    min-width: 0;
 }
 
 .search-panel-summary {
@@ -129,15 +151,16 @@ body.inspect-modal-open {
 }
 
 .search-panel-title {
-    font-size: 1rem;
+    font-size: 0.96rem;
     font-weight: 700;
     color: #f8fafc;
 }
 
 .search-panel-subtitle {
     color: #94a3b8;
-    font-size: 0.85rem;
-    line-height: 1.4;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    max-width: 48rem;
 }
 
 .search-panel-status {
@@ -152,11 +175,11 @@ body.inspect-modal-open {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.35rem 0.7rem;
+    padding: 0.28rem 0.62rem;
     border-radius: 999px;
     background: rgba(37, 99, 235, 0.18);
     color: #bfdbfe;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 700;
 }
 
@@ -211,24 +234,24 @@ body.inspect-modal-open {
 
 .search-form {
     margin: 0;
-    padding: 1.25rem 1.5rem;
 }
 
 .search-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 1rem;
-    margin-bottom: 1rem;
+    grid-template-columns: minmax(240px, 2.25fr) minmax(130px, 0.95fr) repeat(3, minmax(118px, 0.95fr));
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
 }
 
 .search-group {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.38rem;
 }
 
 .search-group label {
-    font-size: 0.85rem;
+    font-size: 0.76rem;
+    font-weight: 600;
     color: #94a3b8;
 }
 
@@ -236,36 +259,70 @@ body.inspect-modal-open {
 .search-group select {
     background: #0f172a;
     border: 1px solid #1f2937;
-    border-radius: 0.75rem;
-    padding: 0.85rem 1rem;
+    border-radius: 0.68rem;
+    min-height: 42px;
+    padding: 0.72rem 0.88rem;
     color: #e2e8f0;
-    font-size: 0.95rem;
+    font-size: 0.88rem;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.search-group input::placeholder {
+    color: #64748b;
+}
+
+.search-group input:focus,
+.search-group select:focus {
+    outline: none;
+    border-color: rgba(96, 165, 250, 0.42);
+    box-shadow: 0 0 0 0.18rem rgba(37, 99, 235, 0.12);
+    background: #101a2f;
 }
 
 .search-actions {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.8rem;
+    flex-wrap: wrap;
 }
 
 .search-actions button,
 .search-actions .clear-link {
-    border: none;
-    border-radius: 0.85rem;
-    padding: 0.85rem 1.2rem;
-    font-weight: 600;
+    border-radius: 0.74rem;
+    padding: 0.68rem 0.96rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    line-height: 1;
     cursor: pointer;
     text-decoration: none;
+    transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .search-actions button {
     background: #2563eb;
     color: #fff;
+    border: 1px solid #2563eb;
 }
 
 .search-actions .clear-link {
-    background: #1f2937;
+    background: transparent;
+    border: 1px solid rgba(96, 165, 250, 0.22);
     color: #cbd5e1;
+}
+
+.search-actions .clear-link:hover,
+.search-actions button:hover {
+    transform: translateY(-1px);
+}
+
+.search-actions button:hover {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+}
+
+.search-actions .clear-link:hover {
+    background: rgba(37, 99, 235, 0.1);
+    border-color: rgba(96, 165, 250, 0.38);
 }
 
 .search-form .validation-summary {
@@ -332,7 +389,37 @@ body.inspect-modal-open {
 }
 
 .admin-table-wrapper {
-    overflow-x: auto;
+    max-height: min(68vh, 860px);
+    overflow: auto;
+    padding-right: 0.15rem;
+    scrollbar-width: thin;
+    scrollbar-color: #334155 #0f172a;
+    flex: 1;
+    min-height: 0;
+}
+
+.admin-table-wrapper::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.admin-table-wrapper::-webkit-scrollbar-track {
+    background: #0f172a;
+    border-radius: 999px;
+}
+
+.admin-table-wrapper::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #334155, #1e293b);
+    border: 2px solid #0f172a;
+    border-radius: 999px;
+}
+
+.admin-table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #475569, #334155);
+}
+
+.admin-table-wrapper::-webkit-scrollbar-corner {
+    background: #0f172a;
 }
 
 .admin-table {
@@ -356,6 +443,11 @@ body.inspect-modal-open {
     letter-spacing: 0.02em;
     text-transform: uppercase;
     color: #94a3b8;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #111827;
+    box-shadow: 0 1px 0 #1f2937;
 }
 
 .admin-table tr:hover {
@@ -1309,6 +1401,10 @@ dialog.delete-dialog[open] {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .admin-table-wrapper {
+        max-height: none;
+    }
+
     .search-actions {
         flex-direction: column;
         align-items: stretch;
@@ -1316,6 +1412,7 @@ dialog.delete-dialog[open] {
 }
 
 @media (max-width: 720px) {
+    .search-panel-head,
     .search-panel-summary {
         flex-direction: column;
         align-items: flex-start;
@@ -1366,5 +1463,207 @@ dialog.delete-dialog[open] {
 
     .inspect-card-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+/* Reference-style admin polish for offer/candidature dashboards. */
+body {
+    background:
+        radial-gradient(circle at 12% 0%, rgba(124, 111, 255, 0.12), transparent 28rem),
+        radial-gradient(circle at 88% 4%, rgba(59, 130, 246, 0.1), transparent 24rem),
+        #0b1220;
+}
+
+.admin-shell {
+    padding-top: 1.85rem;
+}
+
+.admin-header h1 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+}
+
+.admin-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.85rem;
+    background:
+        radial-gradient(circle at top right, rgba(96, 165, 250, 0.08), transparent 36%),
+        #111827;
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.admin-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 3px;
+    background: linear-gradient(90deg, #7c6fff, #60a5fa);
+}
+
+.admin-summary .admin-card:nth-child(2)::before {
+    background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.admin-summary .admin-card:nth-child(3)::before {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.admin-summary .admin-card:nth-child(4)::before {
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+}
+
+.admin-summary .admin-card:nth-child(5)::before {
+    background: linear-gradient(90deg, #64748b, #94a3b8);
+}
+
+.admin-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(96, 165, 250, 0.28);
+    box-shadow: 0 24px 52px rgba(2, 6, 23, 0.34);
+}
+
+.admin-panel,
+.search-panel {
+    border-radius: 0.85rem;
+    box-shadow: 0 22px 54px rgba(2, 6, 23, 0.22);
+}
+
+.search-panel-simple {
+    padding: 1rem;
+}
+
+.search-grid {
+    align-items: end;
+    gap: 0.7rem;
+}
+
+.search-group label {
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+}
+
+.search-group input,
+.search-group select {
+    min-height: 2.65rem;
+    border-radius: 0.55rem;
+}
+
+.search-actions button,
+.search-actions .clear-link,
+.admin-actions a,
+.admin-actions .delete-btn {
+    border-radius: 0.55rem;
+}
+
+.admin-table-wrapper {
+    border-radius: 0.75rem;
+}
+
+.admin-table {
+    min-width: 820px;
+}
+
+.admin-table th {
+    padding: 0.72rem 0.72rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.055em;
+}
+
+.admin-table td {
+    padding: 0.78rem 0.72rem;
+    font-size: 0.88rem;
+}
+
+.admin-table tbody tr {
+    transition: background 0.16s ease, box-shadow 0.16s ease;
+}
+
+.admin-table tr:hover td {
+    background: rgba(96, 165, 250, 0.045);
+}
+
+.admin-table tr.is-selected {
+    background: rgba(37, 99, 235, 0.13);
+    box-shadow: inset 3px 0 0 #60a5fa;
+}
+
+.badge-status {
+    min-height: 1.65rem;
+    padding: 0.28rem 0.62rem;
+    font-size: 0.7rem;
+    font-weight: 800;
+}
+
+.admin-actions-stack {
+    min-width: 82px;
+    gap: 0.45rem;
+}
+
+.admin-actions a,
+.admin-actions .delete-btn {
+    min-height: 30px;
+    padding: 0.4rem 0.62rem;
+    font-size: 0.78rem;
+}
+
+.quick-overview-card,
+.quick-stat-item,
+.quick-candidate-item,
+.detail-block,
+.inspect-card-block {
+    border-radius: 0.85rem;
+}
+
+.quick-overview-card {
+    box-shadow: inset 0 1px 0 rgba(148, 163, 184, 0.05);
+}
+
+.quick-overview-card h3,
+.inspect-dialog-header h2 {
+    letter-spacing: -0.02em;
+}
+
+.inspect-dialog-body,
+.admin-table-wrapper {
+    scrollbar-width: thin;
+    scrollbar-color: #475569 #0f172a;
+}
+
+.inspect-dialog-body::-webkit-scrollbar {
+    width: 10px;
+}
+
+.inspect-dialog-body::-webkit-scrollbar-track {
+    background: #0f172a;
+    border-radius: 999px;
+}
+
+.inspect-dialog-body::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #475569, #334155);
+    border: 2px solid #0f172a;
+    border-radius: 999px;
+}
+
+dialog.inspect-dialog,
+dialog.delete-dialog {
+    animation: adminDialogIn 0.2s ease both;
+}
+
+@keyframes adminDialogIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, calc(-50% + 10px)) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@media (max-width: 980px) {
+    .admin-table {
+        min-width: 760px;
     }
 }

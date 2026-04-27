@@ -51,13 +51,13 @@ class Offre
 
         $this->setDescription($description);
 
-        if ($raisonChoix !== null) {
+        if ($raisonChoix !== null && trim((string) $raisonChoix) !== '') {
             $this->setRaisonChoix($raisonChoix);
         }
-        if ($messagePersonnalise !== null) {
+        if ($messagePersonnalise !== null && trim((string) $messagePersonnalise) !== '') {
             $this->setMessagePersonnalise($messagePersonnalise);
         }
-        if ($attenteCollaboration !== null) {
+        if ($attenteCollaboration !== null && trim((string) $attenteCollaboration) !== '') {
             $this->setAttenteCollaboration($attenteCollaboration);
         }
         if ($draftSansCreateur !== null) {
@@ -122,21 +122,7 @@ class Offre
 
     public function getDescriptionForStorage()
     {
-        $description = trim((string) $this->description);
-        $meta = array_filter([
-            'raisonChoix' => trim((string) $this->raisonChoix),
-            'messagePersonnalise' => trim((string) $this->messagePersonnalise),
-            'attenteCollaboration' => trim((string) $this->attenteCollaboration),
-            'draftSansCreateur' => $this->draftSansCreateur ? 1 : null,
-        ], static fn($value) => $value !== '' && $value !== null);
-
-        if (empty($meta)) {
-            return $description;
-        }
-
-        $payload = base64_encode(json_encode($meta, JSON_UNESCAPED_UNICODE));
-
-        return $description . "\n\n<!--cre8connect-offre-meta:" . $payload . "-->";
+        return trim((string) $this->description);
     }
 
     public function getObjectif()

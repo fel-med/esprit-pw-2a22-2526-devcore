@@ -15,6 +15,8 @@ $offres = [];
 $error = null;
 $notice = isset($_GET['notice']) ? trim((string) $_GET['notice']) : null;
 $noticeType = isset($_GET['noticeType']) ? trim((string) $_GET['noticeType']) : 'success';
+$isAjaxRequest = (isset($_REQUEST['ajax']) && (string) $_REQUEST['ajax'] === '1')
+    || strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
 
 function translateOfferStatus($status)
 {
@@ -41,23 +43,17 @@ function offerStatusClass($status)
     };
 }
 
-function responseStatusLabel($status)
+function responseStatusLabel(array $response)
 {
-    return match ($status) {
-        'en_attente' => 'Accepted',
-        'en_etude' => 'Negotiating',
-        'acceptee' => 'Approved',
-        'refusee' => 'Declined by brand',
-        'retiree' => 'Declined',
-        default => ucwords(str_replace('_', ' ', (string) $status)),
-    };
+    return (string) ($response['displayStatusLabel'] ?? ucwords(str_replace('_', ' ', (string) ($response['statutCandidature'] ?? ''))));
 }
 
 function responseStatusClass($status)
 {
     return match ($status) {
-        'en_attente', 'acceptee' => 'accepted',
-        'en_etude' => 'review',
+        'brouillon' => 'draft',
+        'envoyee', 'en_attente', 'acceptee' => 'accepted',
+        'negociation', 'en_etude' => 'review',
         'refusee', 'retiree' => 'declined',
         default => 'pending',
     };
@@ -70,12 +66,22 @@ function formatMoney($value)
 
 function isAcceptedResponseStatus($status)
 {
-    return in_array((string) $status, ['en_attente', 'acceptee'], true);
+    return in_array((string) $status, ['envoyee', 'en_attente', 'acceptee'], true);
 }
 
 function isDeclinedResponseStatus($status)
 {
     return in_array((string) $status, ['retiree', 'refusee'], true);
+}
+
+function isOfferOutdated($offre)
+{
+    $deadline = DateTime::createFromFormat('Y-m-d', (string) $offre->getDateLimite());
+    if (!$deadline) {
+        return false;
+    }
+
+    return $deadline < new DateTime('today');
 }
 
 function getCreatorResponseForOffer(array $responses, $creatorId)
@@ -100,7 +106,7 @@ function getCreatorOfferSortRank($response)
         return 0;
     }
 
-    if ($status === 'en_etude') {
+    if (in_array($status, ['negociation', 'en_etude'], true)) {
         return 1;
     }
 
@@ -109,6 +115,120 @@ function getCreatorOfferSortRank($response)
     }
 
     return 2;
+}
+
+function getCreatorOfferSectionKey($response, $offre)
+{
+    $status = (string) ($response['statutCandidature'] ?? '');
+
+    if (isAcceptedResponseStatus($status)) {
+        return 'accepted';
+    }
+
+    if (isDeclinedResponseStatus($status)) {
+        return 'declined';
+    }
+
+    if (isOfferOutdated($offre)) {
+        return 'outdated';
+    }
+
+    return 'waiting';
+}
+
+function getCreatorOfferStageLabel($response, $offre = null)
+{
+    if (!$response) {
+        return $offre && isOfferOutdated($offre) ? 'Outdated' : 'Waiting invitation';
+    }
+
+    $status = (string) ($response['statutCandidature'] ?? '');
+
+    return match ($status) {
+        'brouillon' => 'Draft response',
+        default => responseStatusLabel($response),
+    };
+}
+
+function getCreatorOfferStageClass($response, $offre = null)
+{
+    if (!$response) {
+        return $offre && isOfferOutdated($offre) ? 'status-outdated' : 'status-waiting';
+    }
+
+    $status = (string) ($response['statutCandidature'] ?? '');
+
+    return match ($status) {
+        'brouillon' => 'status-draft',
+        'negociation', 'en_etude' => 'status-review',
+        'envoyee', 'en_attente', 'acceptee' => 'status-accepted',
+        'retiree', 'refusee' => 'status-declined',
+        default => 'status-waiting',
+    };
+}
+
+function buildCreatorOfferSections(array $offres, array $responseGroups, array $savedOfferList, $creatorId)
+{
+    $sections = [
+        'waiting' => [
+            'key' => 'waiting',
+            'themeClass' => 'section-waiting',
+            'title' => 'Waiting invitations',
+            'subtitle' => 'Invitations you can still review, open, or continue discussing with the brand.',
+            'empty' => 'No waiting invitations right now.',
+            'cards' => [],
+        ],
+        'accepted' => [
+            'key' => 'accepted',
+            'themeClass' => 'section-accepted',
+            'title' => 'Accepted invitations',
+            'subtitle' => 'Offers you already accepted and kept active in your collaboration pipeline.',
+            'empty' => 'You have not accepted any invitation yet.',
+            'cards' => [],
+        ],
+        'declined' => [
+            'key' => 'declined',
+            'themeClass' => 'section-declined',
+            'title' => 'Declined invitations',
+            'subtitle' => 'Offers you decided not to continue, kept visible as pipeline history.',
+            'empty' => 'No declined invitations in your history.',
+            'cards' => [],
+        ],
+        'outdated' => [
+            'key' => 'outdated',
+            'themeClass' => 'section-outdated',
+            'title' => 'Outdated invitations',
+            'subtitle' => 'Invitations whose deadline has already passed without a final answer.',
+            'empty' => 'No outdated invitations right now.',
+            'cards' => [],
+        ],
+        'saved' => [
+            'key' => 'saved',
+            'themeClass' => 'section-waiting',
+            'title' => 'Saved invitations',
+            'subtitle' => 'Offers you bookmarked so you can come back to them later.',
+            'empty' => 'No saved invitations yet.',
+            'cards' => $savedOfferList,
+        ],
+    ];
+
+    foreach ($offres as $offre) {
+        $response = getCreatorResponseForOffer($responseGroups[$offre->getIdOffre()] ?? [], $creatorId);
+        $sections[getCreatorOfferSectionKey($response, $offre)]['cards'][] = $offre;
+    }
+
+    return array_values($sections);
+}
+
+function getDefaultCreatorSectionKey(array $sections)
+{
+    foreach ($sections as $section) {
+        if (!empty($section['cards'])) {
+            return $section['key'];
+        }
+    }
+
+    return 'waiting';
 }
 
 function sortCreatorOffersForDisplay(array $offres, array $responseGroups, $creatorId)
@@ -159,26 +279,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggleSaved'], $_POST
     }
 
     $_SESSION['saved_offer_ids'] = $savedOffers;
-    $redirect = 'creator_list.php';
-    if (!empty($_SERVER['QUERY_STRING'])) {
-        $redirect .= '?' . $_SERVER['QUERY_STRING'];
+    if (!$isAjaxRequest) {
+        $redirect = 'creator_list.php';
+        if (!empty($_SERVER['QUERY_STRING'])) {
+            $redirect .= '?' . $_SERVER['QUERY_STRING'];
+        }
+        header('Location: ' . $redirect);
+        exit;
     }
-    header('Location: ' . $redirect);
-    exit;
 }
 
 $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : null;
 $budgetFrom = isset($_GET['budgetFrom']) && is_numeric($_GET['budgetFrom']) ? (float) $_GET['budgetFrom'] : null;
 $budgetTo = isset($_GET['budgetTo']) && is_numeric($_GET['budgetTo']) ? (float) $_GET['budgetTo'] : null;
 $dateLimite = isset($_GET['dateLimite']) && $_GET['dateLimite'] !== '' ? $_GET['dateLimite'] : null;
-$savedOnly = isset($_GET['savedOnly']) && $_GET['savedOnly'] === '1';
 
 try {
     $offres = $controller->searchOffers($creatorId, $keyword, $budgetFrom, $budgetTo, $dateLimite);
-    if ($savedOnly) {
-        $offres = array_values(array_filter($offres, static fn($offre) => in_array($offre->getIdOffre(), $_SESSION['saved_offer_ids'] ?? [], true)));
-    }
-
     $offerIds = array_map(static fn($offre) => $offre->getIdOffre(), $offres);
     $responseGroups = $controller->getCandidaturesGroupedByOfferIds($offerIds);
     $offres = sortCreatorOffersForDisplay($offres, $responseGroups, $creatorId);
@@ -198,12 +315,17 @@ $savedResponseGroups = [];
 if (!empty($savedOffers)) {
     $allCreatorOffers = $controller->getOffresByCreateurCible($creatorId);
     $savedOfferList = array_values(array_filter($allCreatorOffers, static fn($offre) => in_array($offre->getIdOffre(), $savedOffers, true)));
+    $savedOffers = array_values(array_map(static fn($offre) => (int) $offre->getIdOffre(), $savedOfferList));
+    $_SESSION['saved_offer_ids'] = $savedOffers;
     $savedOfferIds = array_map(static fn($offre) => $offre->getIdOffre(), $savedOfferList);
     $savedBrandIds = array_map(static fn($offre) => $offre->getIdMarque(), $savedOfferList);
     $savedBrandMap = $controller->getUsersByIds($savedBrandIds, 'marque');
     $savedResponseGroups = $controller->getCandidaturesGroupedByOfferIds($savedOfferIds);
     $savedOfferList = sortCreatorOffersForDisplay($savedOfferList, $savedResponseGroups, $creatorId);
 }
+
+$creatorSections = buildCreatorOfferSections($offres, $responseGroups, $savedOfferList, $creatorId);
+$creatorDefaultSectionKey = getDefaultCreatorSectionKey($creatorSections);
 
 $closingSoon = 0;
 $respondedOffers = 0;
@@ -212,7 +334,10 @@ $topBudget = null;
 $topBudgetOffer = null;
 
 if (!empty($offres)) {
-    $averageBudget = array_sum(array_map(static fn($offre) => (float) $offre->getBudgetPropose(), $offres)) / count($offres);
+    $averageBudgetOffers = array_values(array_filter($offres, static fn($offre) => !isOfferOutdated($offre)));
+    if (!empty($averageBudgetOffers)) {
+        $averageBudget = array_sum(array_map(static fn($offre) => (float) $offre->getBudgetPropose(), $averageBudgetOffers)) / count($averageBudgetOffers);
+    }
     $today = new DateTime('today');
 
     foreach ($offres as $offre) {
@@ -229,7 +354,7 @@ if (!empty($offres)) {
             $respondedOffers++;
         }
 
-        if (!$creatorResponse && ($topBudget === null || (float) $offre->getBudgetPropose() > $topBudget)) {
+        if (!isOfferOutdated($offre) && !$creatorResponse && ($topBudget === null || (float) $offre->getBudgetPropose() > $topBudget)) {
             $topBudget = (float) $offre->getBudgetPropose();
             $topBudgetOffer = $offre;
         }
@@ -246,6 +371,7 @@ if (!empty($offres)) {
     <link rel="stylesheet" href="offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre.css')); ?>">
 </head>
 <body>
+    <?php require_once dirname(__DIR__) . '/header.php'; ?>
     <main class="container py-5">
         <div class="offre-page-shell">
             <section class="module-hero">
@@ -254,7 +380,8 @@ if (!empty($offres)) {
                 <p class="lead text-muted">Browse targeted invitations from brands, save the ones you want to revisit, and respond when the collaboration feels right.</p>
             </section>
 
-            <section class="stats-grid">
+            <div class="creator-live-region" data-creator-live-region>
+                <section class="stats-grid">
                 <article class="stat-card">
                     <span class="stat-label">Visible invitations</span>
                     <span class="stat-value"><?php echo count($offres); ?></span>
@@ -262,7 +389,7 @@ if (!empty($offres)) {
                 </article>
                 <article class="stat-card">
                     <span class="stat-label">Saved for later</span>
-                    <span class="stat-value"><?php echo count($savedOffers); ?></span>
+                    <span class="stat-value"><?php echo count($savedOfferList); ?></span>
                     <span class="stat-note">Session-based shortlist</span>
                 </article>
                 <article class="stat-card">
@@ -283,11 +410,11 @@ if (!empty($offres)) {
                 </article>
             </section>
 
-            <section class="section-card saved-offer-section">
+            <section class="section-card saved-offer-section" hidden>
                 <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
                     <div>
                         <h2 class="section-title">Saved for later</h2>
-                        <p class="section-subtitle">Keep a quick view of bookmarked invitations without leaving this page.</p>
+                        <p class="section-subtitle">Saved offers stay here so you can come back to them later.</p>
                     </div>
                     <span class="offer-chip"><?php echo count($savedOfferList); ?> saved</span>
                 </div>
@@ -301,7 +428,10 @@ if (!empty($offres)) {
                             $isAccepted = $creatorResponse && isAcceptedResponseStatus($creatorResponse['statutCandidature'] ?? '');
                             $isDeclined = $creatorResponse && isDeclinedResponseStatus($creatorResponse['statutCandidature'] ?? '');
                             ?>
-                            <article class="saved-offer-card<?php echo $isAccepted ? ' is-accepted' : ($isDeclined ? ' is-declined' : ''); ?>">
+                            <article
+                                class="saved-offer-card<?php echo $isAccepted ? ' is-accepted' : ($isDeclined ? ' is-declined' : (isOfferOutdated($offre) ? ' is-outdated' : '')); ?>"
+                                data-card-href="creator_details.php?idOffre=<?php echo (int) $offre->getIdOffre(); ?>&idCreateur=<?php echo (int) $creatorId; ?>"
+                            >
                                 <div class="saved-offer-head">
                                     <div>
                                         <div class="offer-flag-row mb-2">
@@ -327,8 +457,7 @@ if (!empty($offres)) {
                                 </div>
 
                                 <div class="saved-offer-actions">
-                                    <a class="btn btn-primary" href="creator_details.php?idOffre=<?php echo (int) $offre->getIdOffre(); ?>&idCreateur=<?php echo (int) $creatorId; ?>">Open invitation</a>
-                                    <form method="post" action="creator_list.php<?php echo !empty($_SERVER['QUERY_STRING']) ? '?' . htmlspecialchars($_SERVER['QUERY_STRING']) : ''; ?>">
+                                    <form method="post" action="creator_list.php<?php echo !empty($_SERVER['QUERY_STRING']) ? '?' . htmlspecialchars($_SERVER['QUERY_STRING']) : ''; ?>" data-save-toggle-form>
                                         <input type="hidden" name="idOffre" value="<?php echo (int) $offre->getIdOffre(); ?>">
                                         <button type="submit" name="toggleSaved" class="btn btn-outline-secondary">Remove</button>
                                     </form>
@@ -346,8 +475,8 @@ if (!empty($offres)) {
 
             <section class="filter-card">
                 <h2 class="section-title">Filter your invitation inbox</h2>
-                <p class="section-subtitle">Narrow the list by topic, budget, deadline, or your saved shortlist.</p>
-                <form method="get" action="creator_list.php" class="filter-stack mt-4" data-module-validation="creator-filters" novalidate>
+                <p class="section-subtitle">Narrow the list by topic, budget, or deadline.</p>
+                <form method="get" action="creator_list.php" class="filter-stack mt-4" data-module-validation="creator-filters" data-creator-filter-form novalidate>
                     <div class="filter-grid">
                         <div>
                             <label for="keyword" class="form-label fw-semibold">Keyword</label>
@@ -365,17 +494,10 @@ if (!empty($offres)) {
                             <label for="dateLimite" class="form-label fw-semibold">Deadline from</label>
                             <input type="date" class="form-control" id="dateLimite" name="dateLimite" value="<?php echo htmlspecialchars($dateLimite ?? ''); ?>">
                         </div>
-                        <div>
-                            <label for="savedOnly" class="form-label fw-semibold">Saved only</label>
-                            <select class="form-select" id="savedOnly" name="savedOnly">
-                                <option value="0"<?php echo !$savedOnly ? ' selected' : ''; ?>>Show all</option>
-                                <option value="1"<?php echo $savedOnly ? ' selected' : ''; ?>>Saved first</option>
-                            </select>
-                        </div>
                     </div>
                     <div class="filter-actions">
                         <button type="submit" class="btn btn-primary">Apply filters</button>
-                        <a class="btn btn-outline-secondary" href="creator_list.php">Reset</a>
+                        <a class="btn btn-outline-secondary" href="creator_list.php" data-creator-reset-link>Reset</a>
                     </div>
                 </form>
             </section>
@@ -394,109 +516,221 @@ if (!empty($offres)) {
                 </div>
             <?php endif; ?>
 
-            <?php if (!empty($offres)): ?>
-                <section class="offer-grid">
-                    <?php foreach ($offres as $offre): ?>
-                        <?php
-                        $brand = $brandMap[$offre->getIdMarque()] ?? null;
-                        $saved = in_array($offre->getIdOffre(), $savedOffers, true);
-                        $creatorResponse = getCreatorResponseForOffer($responseGroups[$offre->getIdOffre()] ?? [], $creatorId);
-                        $isAccepted = $creatorResponse && isAcceptedResponseStatus($creatorResponse['statutCandidature'] ?? '');
-                        $isDeclined = $creatorResponse && isDeclinedResponseStatus($creatorResponse['statutCandidature'] ?? '');
-                        $isTopBudget = !$creatorResponse && $topBudget !== null && (float) $offre->getBudgetPropose() === (float) $topBudget;
-                        ?>
-                        <article class="offer-card<?php echo $isAccepted ? ' is-accepted' : ($isDeclined ? ' is-declined' : ($isTopBudget ? ' is-top-budget' : '')); ?>">
-                            <div class="offer-card-head">
-                                <div>
-                                    <div class="offer-flag-row mb-2">
-                                        <span class="offer-status <?php echo htmlspecialchars(offerStatusClass($offre->getStatutOffre())); ?>"><?php echo htmlspecialchars(translateOfferStatus($offre->getStatutOffre())); ?></span>
-                                        <?php if ($isAccepted): ?>
-                                            <span class="priority-badge priority-badge-success">Accepted</span>
-                                        <?php elseif ($isDeclined): ?>
-                                            <span class="priority-badge priority-badge-danger">Declined</span>
-                                        <?php elseif ($isTopBudget): ?>
-                                            <span class="priority-badge priority-badge-gold">Top budget match</span>
-                                        <?php endif; ?>
-                                        <?php if ($saved): ?>
-                                            <span class="saved-badge">Saved</span>
-                                        <?php endif; ?>
-                                    </div>
-                                    <h2 class="offer-card-title"><?php echo htmlspecialchars($offre->getTitre()); ?></h2>
-                                    <p class="offer-summary mt-2"><?php echo htmlspecialchars(excerptText($offre->getDescription(), 155)); ?></p>
-                                </div>
-                                <form method="post" action="creator_list.php<?php echo !empty($_SERVER['QUERY_STRING']) ? '?' . htmlspecialchars($_SERVER['QUERY_STRING']) : ''; ?>">
-                                    <input type="hidden" name="idOffre" value="<?php echo (int) $offre->getIdOffre(); ?>">
-                                    <button type="submit" name="toggleSaved" class="saved-toggle <?php echo $saved ? 'saved' : ''; ?>">
-                                        <?php echo $saved ? 'Saved' : 'Save for later'; ?>
-                                    </button>
-                                </form>
-                            </div>
+            <?php if (!empty($offres) || !empty($savedOfferList)): ?>
+                <section class="offer-tab-shell" data-offer-tab-shell data-default-tab="<?php echo htmlspecialchars($creatorDefaultSectionKey); ?>">
+                    <div class="offer-tab-list" role="tablist" aria-label="Creator invitation tabs">
+                        <?php foreach ($creatorSections as $section): ?>
+                            <?php $isActiveTab = $section['key'] === $creatorDefaultSectionKey; ?>
+                            <button
+                                type="button"
+                                class="offer-tab-button<?php echo $isActiveTab ? ' is-active' : ''; ?>"
+                                id="creator-tab-<?php echo htmlspecialchars($section['key']); ?>"
+                                role="tab"
+                                aria-selected="<?php echo $isActiveTab ? 'true' : 'false'; ?>"
+                                aria-controls="creator-panel-<?php echo htmlspecialchars($section['key']); ?>"
+                                data-offer-tab="<?php echo htmlspecialchars($section['key']); ?>"
+                            >
+                                <span class="offer-tab-label"><?php echo htmlspecialchars($section['title']); ?></span>
+                                <span class="offer-tab-badge"><?php echo count($section['cards']); ?></span>
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
 
-                            <div class="offer-meta">
-                                <span class="offer-chip"><?php echo htmlspecialchars(formatMoney($offre->getBudgetPropose())); ?></span>
-                                <span class="offer-chip">Deadline: <?php echo htmlspecialchars($offre->getDateLimite()); ?></span>
-                                <?php if ($brand): ?>
-                                    <span class="offer-chip">Brand: <?php echo htmlspecialchars($brand['nom']); ?></span>
+                    <div class="offer-tab-panels">
+                        <?php foreach ($creatorSections as $section): ?>
+                            <?php $isActivePanel = $section['key'] === $creatorDefaultSectionKey; ?>
+                            <section
+                                class="section-card offer-section-card <?php echo htmlspecialchars($section['themeClass']); ?> offer-tab-panel"
+                                id="creator-panel-<?php echo htmlspecialchars($section['key']); ?>"
+                                role="tabpanel"
+                                aria-labelledby="creator-tab-<?php echo htmlspecialchars($section['key']); ?>"
+                                data-offer-tab-panel="<?php echo htmlspecialchars($section['key']); ?>"
+                                <?php echo $isActivePanel ? '' : 'hidden'; ?>
+                            >
+                                <div class="offer-section-header">
+                                    <div class="offer-section-copy">
+                                        <h2 class="section-title"><?php echo htmlspecialchars($section['title']); ?></h2>
+                                        <p class="section-subtitle"><?php echo htmlspecialchars($section['subtitle']); ?></p>
+                                    </div>
+                                    <span class="offer-section-count">
+                                        <?php echo count($section['cards']); ?> offer<?php echo count($section['cards']) === 1 ? '' : 's'; ?>
+                                    </span>
+                                </div>
+
+                                <?php if (!empty($section['cards'])): ?>
+                                    <?php if ($section['key'] === 'saved'): ?>
+                                        <div class="saved-offer-grid">
+                                            <?php foreach ($section['cards'] as $offre): ?>
+                                                <?php
+                                                $brand = $savedBrandMap[$offre->getIdMarque()] ?? ($brandMap[$offre->getIdMarque()] ?? null);
+                                                $creatorResponse = getCreatorResponseForOffer($savedResponseGroups[$offre->getIdOffre()] ?? [], $creatorId);
+                                                $isAccepted = $creatorResponse && isAcceptedResponseStatus($creatorResponse['statutCandidature'] ?? '');
+                                                $isDeclined = $creatorResponse && isDeclinedResponseStatus($creatorResponse['statutCandidature'] ?? '');
+                                                ?>
+                                                <article
+                                                    class="saved-offer-card<?php echo $isAccepted ? ' is-accepted' : ($isDeclined ? ' is-declined' : (isOfferOutdated($offre) ? ' is-outdated' : '')); ?>"
+                                                    data-card-href="creator_details.php?idOffre=<?php echo (int) $offre->getIdOffre(); ?>&idCreateur=<?php echo (int) $creatorId; ?>"
+                                                >
+                                                    <div class="saved-offer-head">
+                                                        <div>
+                                                            <div class="offer-flag-row mb-2">
+                                                                <?php if ($isAccepted): ?>
+                                                                    <span class="priority-badge priority-badge-success">Accepted</span>
+                                                                <?php elseif ($isDeclined): ?>
+                                                                    <span class="priority-badge priority-badge-danger">Declined</span>
+                                                                <?php else: ?>
+                                                                    <span class="saved-badge">Saved</span>
+                                                                <?php endif; ?>
+                                                            </div>
+                                                            <h3><?php echo htmlspecialchars($offre->getTitre()); ?></h3>
+                                                            <p><?php echo htmlspecialchars(excerptText($offre->getDescription(), 110)); ?></p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="saved-offer-meta">
+                                                        <span class="offer-chip"><?php echo htmlspecialchars(formatMoney($offre->getBudgetPropose())); ?></span>
+                                                        <span class="offer-chip">Deadline: <?php echo htmlspecialchars($offre->getDateLimite()); ?></span>
+                                                        <?php if ($brand): ?>
+                                                            <span class="offer-chip">Brand: <?php echo htmlspecialchars($brand['nom']); ?></span>
+                                                        <?php endif; ?>
+                                                    </div>
+
+                                                    <div class="saved-offer-actions">
+                                                        <form method="post" action="creator_list.php<?php echo !empty($_SERVER['QUERY_STRING']) ? '?' . htmlspecialchars($_SERVER['QUERY_STRING']) : ''; ?>" data-save-toggle-form>
+                                                            <input type="hidden" name="idOffre" value="<?php echo (int) $offre->getIdOffre(); ?>">
+                                                            <button type="submit" name="toggleSaved" class="btn btn-outline-secondary">Remove</button>
+                                                        </form>
+                                                    </div>
+                                                </article>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="offer-grid">
+                                            <?php foreach ($section['cards'] as $offre): ?>
+                                                <?php
+                                                $brand = $brandMap[$offre->getIdMarque()] ?? null;
+                                                $saved = in_array($offre->getIdOffre(), $savedOffers, true);
+                                                $creatorResponse = getCreatorResponseForOffer($responseGroups[$offre->getIdOffre()] ?? [], $creatorId);
+                                                $isAccepted = $creatorResponse && isAcceptedResponseStatus($creatorResponse['statutCandidature'] ?? '');
+                                                $isDeclined = $creatorResponse && isDeclinedResponseStatus($creatorResponse['statutCandidature'] ?? '');
+                                                $isTopBudget = !$creatorResponse && $topBudget !== null && (float) $offre->getBudgetPropose() === (float) $topBudget;
+                                                ?>
+                                                <?php $isOutdated = isOfferOutdated($offre); ?>
+                                                <article
+                                                    class="offer-card<?php echo $isAccepted ? ' is-accepted' : ($isDeclined ? ' is-declined' : ($isOutdated ? ' is-outdated' : ($isTopBudget ? ' is-top-budget' : ''))); ?>"
+                                                    data-card-href="creator_details.php?idOffre=<?php echo (int) $offre->getIdOffre(); ?>&idCreateur=<?php echo (int) $creatorId; ?>"
+                                                >
+                                                    <div class="offer-card-head">
+                                                        <div>
+                                                            <div class="offer-flag-row mb-2">
+                                                                <span class="offer-status <?php echo htmlspecialchars(getCreatorOfferStageClass($creatorResponse, $offre)); ?>">
+                                                                    <?php echo htmlspecialchars(getCreatorOfferStageLabel($creatorResponse, $offre)); ?>
+                                                                </span>
+                                                                <?php if ($isTopBudget): ?>
+                                                                    <span class="priority-badge priority-badge-gold">Top budget match</span>
+                                                                <?php endif; ?>
+                                                                <?php if ($saved): ?>
+                                                                    <span class="saved-badge">Saved</span>
+                                                                <?php endif; ?>
+                                                            </div>
+                                                            <h2 class="offer-card-title"><?php echo htmlspecialchars($offre->getTitre()); ?></h2>
+                                                            <p class="offer-summary mt-2"><?php echo htmlspecialchars(excerptText($offre->getDescription(), 155)); ?></p>
+                                                        </div>
+                                                        <form method="post" action="creator_list.php<?php echo !empty($_SERVER['QUERY_STRING']) ? '?' . htmlspecialchars($_SERVER['QUERY_STRING']) : ''; ?>" data-save-toggle-form>
+                                                            <input type="hidden" name="idOffre" value="<?php echo (int) $offre->getIdOffre(); ?>">
+                                                            <button type="submit" name="toggleSaved" class="saved-toggle <?php echo $saved ? 'saved' : ''; ?>">
+                                                                <?php echo $saved ? 'Saved' : 'Save for later'; ?>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+
+                                                    <div class="offer-meta">
+                                                        <span class="offer-chip"><?php echo htmlspecialchars(formatMoney($offre->getBudgetPropose())); ?></span>
+                                                        <span class="offer-chip">Deadline: <?php echo htmlspecialchars($offre->getDateLimite()); ?></span>
+                                                        <?php if ($brand): ?>
+                                                            <span class="offer-chip">Brand: <?php echo htmlspecialchars($brand['nom']); ?></span>
+                                                        <?php endif; ?>
+                                                    </div>
+
+                                                    <div class="offer-detail-list">
+                                                        <div class="offer-detail-item">
+                                                            <strong>Brand</strong>
+                                                            <span><?php echo htmlspecialchars($brand['nom'] ?? 'Unknown brand'); ?></span>
+                                                            <p><?php echo htmlspecialchars($brand['email'] ?? ''); ?></p>
+                                                        </div>
+                                                        <div class="offer-detail-item">
+                                                            <strong>Objective</strong>
+                                                            <span><?php echo htmlspecialchars($offre->getObjectif()); ?></span>
+                                                        </div>
+                                                    </div>
+
+                                                    <?php if ($offre->getRaisonChoix() !== ''): ?>
+                                                        <div class="note-block">
+                                                            <strong>Why you were picked</strong>
+                                                            <p><?php echo htmlspecialchars(excerptText($offre->getRaisonChoix(), 170)); ?></p>
+                                                        </div>
+                                                    <?php endif; ?>
+
+                                                    <?php if ($creatorResponse): ?>
+                                                        <div class="response-callout<?php echo $isAccepted ? ' response-callout-accepted' : ($isDeclined ? ' response-callout-declined' : ''); ?>">
+                                                            <strong>Your current response</strong>
+                                                            <div class="mt-2 d-flex flex-wrap gap-2 align-items-center">
+                                                                <span class="response-status <?php echo htmlspecialchars(responseStatusClass($creatorResponse['statutCandidature'])); ?>">
+                                                                    <?php echo htmlspecialchars(responseStatusLabel($creatorResponse)); ?>
+                                                                </span>
+                                                                <span class="text-muted small">
+                                                                    <?php if ($isDeclined): ?>
+                                                                        This invitation stays in your pipeline history.
+                                                                    <?php elseif (($creatorResponse['statutCandidature'] ?? '') === 'brouillon'): ?>
+                                                                        Draft response saved. Open the invitation to finish it when you are ready.
+                                                                    <?php else: ?>
+                                                                        Budget reply: EUR <?php echo htmlspecialchars($creatorResponse['budgetPropose']); ?>
+                                                                    <?php endif; ?>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    <?php elseif ($isOutdated): ?>
+                                                        <div class="response-callout">
+                                                            <strong>Deadline passed</strong>
+                                                            <div class="mt-2 text-muted small">This invitation is kept for history, but the response window has ended.</div>
+                                                        </div>
+                                                    <?php elseif ($section['key'] === 'waiting'): ?>
+                                                        <div class="response-callout">
+                                                            <strong>Waiting for your response</strong>
+                                                            <div class="mt-2 text-muted small">This invitation is still open and ready for your decision.</div>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </article>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    <div class="note-block offer-section-empty">
+                                        <strong><?php echo htmlspecialchars($section['title']); ?></strong>
+                                        <p><?php echo htmlspecialchars($section['empty']); ?></p>
+                                    </div>
                                 <?php endif; ?>
-                            </div>
-
-                            <div class="offer-detail-list">
-                                <div class="offer-detail-item">
-                                    <strong>Brand</strong>
-                                    <span><?php echo htmlspecialchars($brand['nom'] ?? 'Unknown brand'); ?></span>
-                                    <p><?php echo htmlspecialchars($brand['email'] ?? ''); ?></p>
-                                </div>
-                                <div class="offer-detail-item">
-                                    <strong>Objective</strong>
-                                    <span><?php echo htmlspecialchars($offre->getObjectif()); ?></span>
-                                </div>
-                            </div>
-
-                            <?php if ($offre->getRaisonChoix() !== ''): ?>
-                                <div class="note-block">
-                                    <strong>Why you were picked</strong>
-                                    <p><?php echo htmlspecialchars(excerptText($offre->getRaisonChoix(), 170)); ?></p>
-                                </div>
-                            <?php endif; ?>
-
-                            <?php if ($creatorResponse): ?>
-                                <div class="response-callout<?php echo $isAccepted ? ' response-callout-accepted' : ($isDeclined ? ' response-callout-declined' : ''); ?>">
-                                    <strong>Your current response</strong>
-                                    <div class="mt-2 d-flex flex-wrap gap-2 align-items-center">
-                                        <span class="response-status <?php echo htmlspecialchars(responseStatusClass($creatorResponse['statutCandidature'])); ?>">
-                                            <?php echo htmlspecialchars(responseStatusLabel($creatorResponse['statutCandidature'])); ?>
-                                        </span>
-                                        <span class="text-muted small">
-                                            <?php if ($isDeclined): ?>
-                                                This invitation stays in your pipeline history.
-                                            <?php else: ?>
-                                                Budget reply: EUR <?php echo htmlspecialchars($creatorResponse['budgetPropose']); ?>
-                                            <?php endif; ?>
-                                        </span>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
-
-                            <div class="compact-actions">
-                                <a class="btn btn-primary" href="creator_details.php?idOffre=<?php echo (int) $offre->getIdOffre(); ?>&idCreateur=<?php echo (int) $creatorId; ?>">Open invitation</a>
-                            </div>
-                        </article>
-                    <?php endforeach; ?>
+                            </section>
+                        <?php endforeach; ?>
+                    </div>
                 </section>
             <?php else: ?>
                 <section class="empty-state-card">
-                    <div class="empty-state-icon"><?php echo $savedOnly ? '*' : '!'; ?></div>
-                    <h2 class="section-title"><?php echo $savedOnly ? 'No saved invitations match this view' : 'No targeted offers found'; ?></h2>
-                    <p class="section-subtitle"><?php echo $savedOnly ? 'Try removing the saved-only filter or save more offers for later.' : 'Adjust the filters and check back soon for new brand invitations.'; ?></p>
+                    <div class="empty-state-icon">!</div>
+                    <h2 class="section-title">No targeted offers found</h2>
+                    <p class="section-subtitle">Adjust the filters and check back soon for new brand invitations.</p>
                     <div class="compact-actions justify-content-center mt-4">
-                        <a class="btn btn-outline-secondary" href="creator_list.php">Reset filters</a>
+                        <a class="btn btn-outline-secondary" href="creator_list.php" data-creator-reset-link>Reset filters</a>
                     </div>
                 </section>
             <?php endif; ?>
+            </div>
         </div>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+    <script src="offre-tabs.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre-tabs.js')); ?>"></script>
     <script src="offre-validation.js"></script>
+    <script src="creator-list-live.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/creator-list-live.js')); ?>"></script>
 </body>
 </html>

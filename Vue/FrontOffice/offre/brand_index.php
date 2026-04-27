@@ -40,23 +40,17 @@ function offerStatusClass($status)
     };
 }
 
-function responseStatusLabel($status)
+function responseStatusLabel(array $response)
 {
-    return match ($status) {
-        'en_attente' => 'Creator accepted',
-        'en_etude' => 'Negotiation requested',
-        'acceptee' => 'Approved',
-        'refusee' => 'Declined by brand',
-        'retiree' => 'Declined by creator',
-        default => ucwords(str_replace('_', ' ', (string) $status)),
-    };
+    return (string) ($response['displayStatusLabel'] ?? ucwords(str_replace('_', ' ', (string) ($response['statutCandidature'] ?? ''))));
 }
 
 function responseStatusClass($status)
 {
     return match ($status) {
-        'en_attente', 'acceptee' => 'accepted',
-        'en_etude' => 'review',
+        'brouillon' => 'draft',
+        'envoyee', 'en_attente', 'acceptee' => 'accepted',
+        'negociation', 'en_etude' => 'review',
         'refusee', 'retiree' => 'declined',
         default => 'pending',
     };
@@ -94,12 +88,22 @@ function excerptText($text, $length = 165)
 
 function isAcceptedTargetResponseStatus($status)
 {
-    return in_array((string) $status, ['en_attente', 'acceptee'], true);
+    return in_array((string) $status, ['envoyee', 'en_attente', 'acceptee'], true);
 }
 
 function isDeclinedTargetResponseStatus($status)
 {
     return in_array((string) $status, ['retiree', 'refusee'], true);
+}
+
+function isOfferOutdated($offre)
+{
+    $deadline = DateTime::createFromFormat('Y-m-d', (string) $offre->getDateLimite());
+    if (!$deadline) {
+        return false;
+    }
+
+    return $deadline < new DateTime('today');
 }
 
 function getTargetResponseSortRank($response)
@@ -113,7 +117,7 @@ function getTargetResponseSortRank($response)
         return 0;
     }
 
-    if ($status === 'en_etude') {
+    if (in_array($status, ['negociation', 'en_etude'], true)) {
         return 1;
     }
 
@@ -149,6 +153,7 @@ function buildBrandOfferCards(array $offres, array $creatorMap, array $responseG
             'targetedResponse' => $targetedResponse,
             'isAccepted' => $targetedResponse && isAcceptedTargetResponseStatus($targetedResponse['statutCandidature'] ?? ''),
             'isDeclined' => $targetedResponse && isDeclinedTargetResponseStatus($targetedResponse['statutCandidature'] ?? ''),
+            'isOutdated' => isOfferOutdated($offre),
             'acceptedAt' => $targetedResponse['dateCandidature'] ?? null,
         ];
     }
@@ -182,6 +187,102 @@ function buildBrandOfferCards(array $offres, array $creatorMap, array $responseG
     return $cards;
 }
 
+function getBrandOfferSectionKey(array $card)
+{
+    $offre = $card['offre'];
+    $displayStatus = $offre->getDisplayStatusKey();
+
+    if ($card['isAccepted']) {
+        return 'accepted';
+    }
+
+    if ($card['isDeclined']) {
+        return 'declined';
+    }
+
+    if ($card['isOutdated']) {
+        return 'outdated';
+    }
+
+    if (
+        in_array($displayStatus, ['brouillon', 'pending'], true)
+        || $offre->isPendingPublication()
+        || $offre->isDraftSansCreateur()
+    ) {
+        return 'draft-pending';
+    }
+
+    return 'published';
+}
+
+function buildBrandOfferSections(array $offerCards)
+{
+    $sections = [
+        'published' => [
+            'key' => 'published',
+            'domId' => 'brandPublishedGrid',
+            'themeClass' => 'section-published',
+            'title' => 'Published offers',
+            'subtitle' => 'Offers that are already visible to creators.',
+            'empty' => 'No live published offers right now.',
+            'cards' => [],
+        ],
+        'accepted' => [
+            'key' => 'accepted',
+            'domId' => 'brandAcceptedGrid',
+            'themeClass' => 'section-accepted',
+            'title' => 'Accepted offers',
+            'subtitle' => 'Offers already accepted by the targeted creator.',
+            'empty' => 'No creator has accepted an offer yet.',
+            'cards' => [],
+        ],
+        'draft-pending' => [
+            'key' => 'draft-pending',
+            'domId' => 'brandDraftPendingGrid',
+            'themeClass' => 'section-draft-pending',
+            'title' => 'Draft / pending offers',
+            'subtitle' => 'Offers still in draft or waiting for their publication date.',
+            'empty' => 'No draft or scheduled offers at the moment.',
+            'cards' => [],
+        ],
+        'declined' => [
+            'key' => 'declined',
+            'domId' => 'brandDeclinedGrid',
+            'themeClass' => 'section-declined',
+            'title' => 'Declined offers',
+            'subtitle' => 'Offers kept in the history after the creator declined them.',
+            'empty' => 'No declined offers in your pipeline.',
+            'cards' => [],
+        ],
+        'outdated' => [
+            'key' => 'outdated',
+            'domId' => 'brandOutdatedGrid',
+            'themeClass' => 'section-outdated',
+            'title' => 'Outdated offers',
+            'subtitle' => 'Offers whose deadline has already passed without a final creator acceptance or decline.',
+            'empty' => 'No outdated offers in your pipeline.',
+            'cards' => [],
+        ],
+    ];
+
+    foreach ($offerCards as $card) {
+        $sections[getBrandOfferSectionKey($card)]['cards'][] = $card;
+    }
+
+    return array_values($sections);
+}
+
+function getDefaultBrandSectionKey(array $sections)
+{
+    foreach ($sections as $section) {
+        if (!empty($section['cards'])) {
+            return $section['key'];
+        }
+    }
+
+    return 'published';
+}
+
 if ($brandId !== null) {
     $offres = $controller->getOffresByMarque($brandId);
 } else {
@@ -195,6 +296,8 @@ $creatorMap = $controller->getUsersByIds($creatorIds, 'createur');
 $responseGroups = $controller->getCandidaturesGroupedByOfferIds($offerIds);
 $offerCards = buildBrandOfferCards($offres, $creatorMap, $responseGroups);
 $acceptedOfferCards = array_values(array_filter($offerCards, static fn($card) => $card['isAccepted']));
+$brandSections = buildBrandOfferSections($offerCards);
+$brandDefaultSectionKey = getDefaultBrandSectionKey($brandSections);
 
 if (isset($_GET['notificationPing']) && $_GET['notificationPing'] === '1') {
     header('Content-Type: application/json; charset=utf-8');
@@ -229,7 +332,7 @@ if (!empty($offerCards)) {
         $offre = $card['offre'];
         if ($offre->isPendingPublication()) {
             $pendingCount++;
-        } elseif ($offre->isLivePublication()) {
+        } elseif ($offre->isLivePublication() && !$card['isOutdated']) {
             $liveCount++;
 
             if (!$card['isDeclined']) {
@@ -260,6 +363,7 @@ if (!empty($averageBudgetCards)) {
     <link rel="stylesheet" href="offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre.css')); ?>">
 </head>
 <body>
+    <?php require_once dirname(__DIR__) . '/header.php'; ?>
     <main class="container py-5">
         <div class="offre-page-shell">
             <section class="module-hero">
@@ -271,6 +375,7 @@ if (!empty($averageBudgetCards)) {
                     </div>
                     <div class="compact-actions">
                         <a class="btn btn-primary btn-lg" href="brand_create.php">Create a new offer</a>
+                        <a class="btn btn-outline-secondary btn-lg" href="../condidature/brand_index.php">Open response workspace</a>
                     </div>
                 </div>
             </section>
@@ -295,19 +400,19 @@ if (!empty($averageBudgetCards)) {
                 data-accepted-ids="<?php echo htmlspecialchars(implode(',', $acceptedOfferIds)); ?>"
             >
                 <div>
-                    <span class="notification-pill">Acceptance monitor</span>
+                    <span class="notification-pill">Accepted offers</span>
                     <h2 id="acceptedBannerTitle">
                         <?php if ($acceptedCount > 0): ?>
                             <?php echo $acceptedCount; ?> offer<?php echo $acceptedCount === 1 ? '' : 's'; ?> accepted by creators
                         <?php else: ?>
-                            No creator acceptance yet
+                            No accepted offers yet
                         <?php endif; ?>
                     </h2>
                     <p id="acceptedBannerText">
                         <?php if ($acceptedCount > 0): ?>
-                            Accepted invitations are pinned to the top so your team can react quickly.
+                            Review accepted offers in the dedicated Accepted tab.
                         <?php else: ?>
-                            When a creator accepts one of your targeted offers, it will appear here and move to the top of the list.
+                            This area updates automatically when a creator accepts one of your offers.
                         <?php endif; ?>
                     </p>
                 </div>
@@ -367,104 +472,175 @@ if (!empty($averageBudgetCards)) {
             </section>
 
             <?php if (!empty($offerCards)): ?>
-                <section class="offer-grid" id="brandOfferGrid">
-                    <?php foreach ($offerCards as $card): ?>
-                        <?php
-                        $offre = $card['offre'];
-                        $creator = $card['creator'];
-                        $responses = $card['responses'];
-                        $targetedResponse = $card['targetedResponse'];
-                        $isAccepted = $card['isAccepted'];
-                        $isDeclined = $card['isDeclined'];
-                        $displayStatus = $offre->getDisplayStatusKey();
-                        $publicationLabel = $offre->isPendingPublication() ? 'Goes live' : 'Published';
-                        ?>
-                        <article
-                            class="offer-card<?php echo $isAccepted ? ' is-accepted' : ($isDeclined ? ' is-declined' : ''); ?>"
-                            data-offer-id="<?php echo (int) $offre->getIdOffre(); ?>"
-                            data-offer-title="<?php echo htmlspecialchars($offre->getTitre(), ENT_QUOTES); ?>"
-                            data-creator-name="<?php echo htmlspecialchars($creator['nom'] ?? 'No creator selected yet', ENT_QUOTES); ?>"
-                        >
-                            <div class="offer-card-head">
-                                <div>
-                                    <div class="offer-flag-row">
-                                        <span class="offer-status <?php echo htmlspecialchars(offerStatusClass($displayStatus)); ?>">
-                                            <?php echo htmlspecialchars(translateOfferStatus($displayStatus)); ?>
-                                        </span>
-                                        <?php if ($isAccepted): ?>
-                                            <span class="priority-badge priority-badge-success js-accepted-flag">Accepted by creator</span>
-                                        <?php elseif ($isDeclined): ?>
-                                            <span class="priority-badge priority-badge-danger">Declined by creator</span>
-                                        <?php endif; ?>
+                <section class="offer-tab-shell" data-offer-tab-shell data-default-tab="<?php echo htmlspecialchars($brandDefaultSectionKey); ?>">
+                    <div class="offer-tab-list" role="tablist" aria-label="Brand offer pipeline tabs">
+                        <?php foreach ($brandSections as $section): ?>
+                            <?php $isActiveTab = $section['key'] === $brandDefaultSectionKey; ?>
+                            <button
+                                type="button"
+                                class="offer-tab-button<?php echo $isActiveTab ? ' is-active' : ''; ?>"
+                                id="brand-tab-<?php echo htmlspecialchars($section['key']); ?>"
+                                role="tab"
+                                aria-selected="<?php echo $isActiveTab ? 'true' : 'false'; ?>"
+                                aria-controls="brand-panel-<?php echo htmlspecialchars($section['key']); ?>"
+                                data-offer-tab="<?php echo htmlspecialchars($section['key']); ?>"
+                            >
+                                <span class="offer-tab-label"><?php echo htmlspecialchars($section['title']); ?></span>
+                                <span class="offer-tab-badge" data-brand-tab-count="<?php echo htmlspecialchars($section['key']); ?>"><?php echo count($section['cards']); ?></span>
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <div class="offer-tab-panels">
+                        <?php foreach ($brandSections as $section): ?>
+                            <?php $isActivePanel = $section['key'] === $brandDefaultSectionKey; ?>
+                            <section
+                                class="section-card offer-section-card <?php echo htmlspecialchars($section['themeClass']); ?> offer-tab-panel"
+                                id="brand-panel-<?php echo htmlspecialchars($section['key']); ?>"
+                                role="tabpanel"
+                                aria-labelledby="brand-tab-<?php echo htmlspecialchars($section['key']); ?>"
+                                data-offer-tab-panel="<?php echo htmlspecialchars($section['key']); ?>"
+                                data-brand-section-panel="<?php echo htmlspecialchars($section['key']); ?>"
+                                data-empty-title="<?php echo htmlspecialchars($section['title'], ENT_QUOTES); ?>"
+                                data-empty-message="<?php echo htmlspecialchars($section['empty'], ENT_QUOTES); ?>"
+                                <?php echo $isActivePanel ? '' : 'hidden'; ?>
+                            >
+                                <div class="offer-section-header">
+                                    <div class="offer-section-copy">
+                                        <h2 class="section-title"><?php echo htmlspecialchars($section['title']); ?></h2>
+                                        <p class="section-subtitle"><?php echo htmlspecialchars($section['subtitle']); ?></p>
                                     </div>
-                                    <h2 class="offer-card-title"><?php echo htmlspecialchars($offre->getTitre()); ?></h2>
-                                    <p class="offer-summary mt-2"><?php echo htmlspecialchars(excerptText($offre->getDescription(), 165)); ?></p>
+                                    <span class="offer-section-count" data-brand-section-count="<?php echo htmlspecialchars($section['key']); ?>">
+                                        <?php echo count($section['cards']); ?> offer<?php echo count($section['cards']) === 1 ? '' : 's'; ?>
+                                    </span>
                                 </div>
-                            </div>
 
-                            <div class="offer-meta">
-                                <span class="offer-chip"><?php echo htmlspecialchars(formatMoney($offre->getBudgetPropose())); ?></span>
-                                <span class="offer-chip"><?php echo htmlspecialchars($publicationLabel); ?>: <?php echo htmlspecialchars($offre->getDatePublication()); ?></span>
-                                <span class="offer-chip">Deadline: <?php echo htmlspecialchars($offre->getDateLimite()); ?></span>
-                                <span class="offer-chip"><?php echo count($responses); ?> response<?php echo count($responses) === 1 ? '' : 's'; ?></span>
-                            </div>
-
-                            <div class="offer-detail-list">
-                                <div class="offer-detail-item">
-                                    <strong>Target creator</strong>
-                                    <span><?php echo htmlspecialchars($creator['nom'] ?? 'No creator selected yet'); ?></span>
-                                    <p><?php echo htmlspecialchars($creator['email'] ?? ''); ?></p>
-                                </div>
-                                <div class="offer-detail-item">
-                                    <strong>Objective</strong>
-                                    <span><?php echo htmlspecialchars($offre->getObjectif()); ?></span>
-                                </div>
-                            </div>
-
-                            <?php if ($targetedResponse): ?>
-                                <div class="response-callout<?php echo $isAccepted ? ' response-callout-accepted' : ($isDeclined ? ' response-callout-declined' : ''); ?>">
-                                    <strong>Latest creator signal</strong>
-                                    <div class="mt-2 d-flex flex-wrap gap-2 align-items-center">
-                                        <span class="response-status <?php echo htmlspecialchars(responseStatusClass($targetedResponse['statutCandidature'])); ?>">
-                                            <?php echo htmlspecialchars(responseStatusLabel($targetedResponse['statutCandidature'])); ?>
-                                        </span>
-                                        <span class="text-muted small">
-                                            <?php if ($isDeclined): ?>
-                                                This offer stays in the pipeline, but moves to the bottom.
-                                            <?php else: ?>
-                                                Budget reply: EUR <?php echo htmlspecialchars($targetedResponse['budgetPropose']); ?>
-                                            <?php endif; ?>
-                                        </span>
-                                    </div>
-                                </div>
-                            <?php elseif ($offre->isPendingPublication()): ?>
-                                <div class="response-callout">
-                                    <strong>Scheduled launch</strong>
-                                    <div class="mt-2 text-muted small">This offer will become visible to the creator on <?php echo htmlspecialchars($offre->getDatePublication()); ?>.</div>
-                                </div>
-                            <?php else: ?>
-                                <div class="response-callout">
-                                    <strong>Waiting for creator feedback</strong>
-                                    <div class="mt-2 text-muted small">No response yet from the targeted creator.</div>
-                                </div>
-                            <?php endif; ?>
-
-                            <div class="compact-actions">
-                                <a class="btn btn-primary" href="brand_details.php?idOffre=<?php echo (int) $offre->getIdOffre(); ?>">Open details</a>
-                                <a class="btn btn-outline-secondary" href="brand_edit.php?idOffre=<?php echo (int) $offre->getIdOffre(); ?>">Edit offer</a>
-                                <form
-                                    method="post"
-                                    action="brand_delete.php"
-                                    data-delete-confirm
-                                    data-delete-title="<?php echo htmlspecialchars($offre->getTitre(), ENT_QUOTES); ?>"
-                                    data-delete-creator="<?php echo htmlspecialchars($creator['nom'] ?? 'No creator selected yet', ENT_QUOTES); ?>"
+                                <div
+                                    class="offer-grid"
+                                    id="<?php echo htmlspecialchars($section['domId']); ?>"
+                                    data-brand-section="<?php echo htmlspecialchars($section['key']); ?>"
                                 >
-                                    <input type="hidden" name="idOffre" value="<?php echo (int) $offre->getIdOffre(); ?>">
-                                    <button type="submit" class="btn btn-outline-danger">Delete</button>
-                                </form>
-                            </div>
-                        </article>
-                    <?php endforeach; ?>
+                                    <?php foreach ($section['cards'] as $card): ?>
+                                        <?php
+                                        $offre = $card['offre'];
+                                        $creator = $card['creator'];
+                                        $responses = $card['responses'];
+                                        $targetedResponse = $card['targetedResponse'];
+                                        $isAccepted = $card['isAccepted'];
+                                        $isDeclined = $card['isDeclined'];
+                                        $isOutdated = $card['isOutdated'];
+                                        $displayStatus = $offre->getDisplayStatusKey();
+                                        $publicationLabel = $offre->isPendingPublication() ? 'Goes live' : 'Published';
+                                        ?>
+                                        <article
+                                            class="offer-card<?php echo $isAccepted ? ' is-accepted' : ($isDeclined ? ' is-declined' : ($isOutdated ? ' is-outdated' : '')); ?>"
+                                            data-offer-id="<?php echo (int) $offre->getIdOffre(); ?>"
+                                            data-offer-title="<?php echo htmlspecialchars($offre->getTitre(), ENT_QUOTES); ?>"
+                                            data-creator-name="<?php echo htmlspecialchars($creator['nom'] ?? 'No creator selected yet', ENT_QUOTES); ?>"
+                                            data-brand-section-key="<?php echo htmlspecialchars($section['key']); ?>"
+                                            data-card-href="brand_details.php?idOffre=<?php echo (int) $offre->getIdOffre(); ?>"
+                                        >
+                                            <div class="offer-card-head">
+                                                <div>
+                                                    <div class="offer-flag-row">
+                                                        <span class="offer-status <?php echo htmlspecialchars($isOutdated ? 'status-outdated' : offerStatusClass($displayStatus)); ?>">
+                                                            <?php echo htmlspecialchars($isOutdated ? 'Outdated' : translateOfferStatus($displayStatus)); ?>
+                                                        </span>
+                                                        <?php if ($isAccepted): ?>
+                                                            <span class="priority-badge priority-badge-success js-accepted-flag">Accepted by creator</span>
+                                                        <?php elseif ($isDeclined): ?>
+                                                            <span class="priority-badge priority-badge-danger">Declined by creator</span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                    <h2 class="offer-card-title"><?php echo htmlspecialchars($offre->getTitre()); ?></h2>
+                                                    <p class="offer-summary mt-2"><?php echo htmlspecialchars(excerptText($offre->getDescription(), 165)); ?></p>
+                                                </div>
+                                            </div>
+
+                                            <div class="offer-meta">
+                                                <span class="offer-chip"><?php echo htmlspecialchars(formatMoney($offre->getBudgetPropose())); ?></span>
+                                                <span class="offer-chip"><?php echo htmlspecialchars($publicationLabel); ?>: <?php echo htmlspecialchars($offre->getDatePublication()); ?></span>
+                                                <span class="offer-chip">Deadline: <?php echo htmlspecialchars($offre->getDateLimite()); ?></span>
+                                                <span class="offer-chip"><?php echo count($responses); ?> response<?php echo count($responses) === 1 ? '' : 's'; ?></span>
+                                            </div>
+
+                                            <div class="offer-detail-list">
+                                                <div class="offer-detail-item">
+                                                    <strong>Target creator</strong>
+                                                    <span><?php echo htmlspecialchars($creator['nom'] ?? 'No creator selected yet'); ?></span>
+                                                    <p><?php echo htmlspecialchars($creator['email'] ?? ''); ?></p>
+                                                </div>
+                                                <div class="offer-detail-item">
+                                                    <strong>Objective</strong>
+                                                    <span><?php echo htmlspecialchars($offre->getObjectif()); ?></span>
+                                                </div>
+                                            </div>
+
+                                            <?php if ($targetedResponse): ?>
+                                                <div class="response-callout<?php echo $isAccepted ? ' response-callout-accepted' : ($isDeclined ? ' response-callout-declined' : ''); ?>">
+                                                    <strong>Latest creator signal</strong>
+                                                    <div class="mt-2 d-flex flex-wrap gap-2 align-items-center">
+                                                        <span class="response-status <?php echo htmlspecialchars(responseStatusClass($targetedResponse['statutCandidature'])); ?>">
+                                                            <?php echo htmlspecialchars(responseStatusLabel($targetedResponse)); ?>
+                                                        </span>
+                                                        <span class="text-muted small">
+                                                            <?php if ($isDeclined): ?>
+                                                                This offer stays in the pipeline, but moves to the bottom.
+                                                            <?php elseif (($targetedResponse['statutCandidature'] ?? '') === 'brouillon'): ?>
+                                                                The creator saved a draft response but has not submitted it yet.
+                                                            <?php else: ?>
+                                                                Budget reply: EUR <?php echo htmlspecialchars($targetedResponse['budgetPropose']); ?>
+                                                            <?php endif; ?>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            <?php elseif ($offre->isPendingPublication()): ?>
+                                                <div class="response-callout">
+                                                    <strong>Scheduled launch</strong>
+                                                    <div class="mt-2 text-muted small">This offer will appear to the creator on <?php echo htmlspecialchars($offre->getDatePublication()); ?>.</div>
+                                                </div>
+                                            <?php elseif ($isOutdated): ?>
+                                                <div class="response-callout">
+                                                    <strong>Deadline passed</strong>
+                                                    <div class="mt-2 text-muted small">This offer stays available for history, but the response window has ended.</div>
+                                                </div>
+                                            <?php else: ?>
+                                                <div class="response-callout">
+                                                    <strong>Waiting for creator reply</strong>
+                                                    <div class="mt-2 text-muted small">No reply from the creator yet.</div>
+                                                </div>
+                                            <?php endif; ?>
+
+                                        <div class="compact-actions">
+                                            <?php if ($isAccepted): ?>
+                                                <span class="btn btn-outline-secondary disabled" aria-disabled="true">Editing locked</span>
+                                            <?php else: ?>
+                                                <a class="btn btn-outline-secondary" href="brand_edit.php?idOffre=<?php echo (int) $offre->getIdOffre(); ?>">Edit offer</a>
+                                            <?php endif; ?>
+                                            <form
+                                                method="post"
+                                                action="brand_delete.php"
+                                                    data-delete-confirm
+                                                    data-delete-title="<?php echo htmlspecialchars($offre->getTitre(), ENT_QUOTES); ?>"
+                                                    data-delete-creator="<?php echo htmlspecialchars($creator['nom'] ?? 'No creator selected yet', ENT_QUOTES); ?>"
+                                                >
+                                                    <input type="hidden" name="idOffre" value="<?php echo (int) $offre->getIdOffre(); ?>">
+                                                    <button type="submit" class="btn btn-outline-danger">Delete</button>
+                                                </form>
+                                            </div>
+                                        </article>
+                                    <?php endforeach; ?>
+                                </div>
+
+                                <?php if (empty($section['cards'])): ?>
+                                    <div class="note-block offer-section-empty" data-brand-section-empty="<?php echo htmlspecialchars($section['key']); ?>">
+                                        <strong><?php echo htmlspecialchars($section['title']); ?></strong>
+                                        <p><?php echo htmlspecialchars($section['empty']); ?></p>
+                                    </div>
+                                <?php endif; ?>
+                            </section>
+                        <?php endforeach; ?>
+                    </div>
                 </section>
             <?php else: ?>
                 <section class="empty-state-card">
@@ -481,14 +657,15 @@ if (!empty($averageBudgetCards)) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
     <script src="offre-delete-confirm.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre-delete-confirm.js')); ?>"></script>
+    <script src="offre-tabs.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre-tabs.js')); ?>"></script>
     <script>
         (() => {
-            const grid = document.getElementById('brandOfferGrid');
             const banner = document.getElementById('acceptedOfferBanner');
             const title = document.getElementById('acceptedBannerTitle');
             const text = document.getElementById('acceptedBannerText');
             const list = document.getElementById('acceptedBannerList');
             const stack = document.getElementById('liveNotificationStack');
+            const acceptedGrid = document.getElementById('brandAcceptedGrid');
 
             if (!banner || !stack || !window.fetch) {
                 return;
@@ -517,23 +694,69 @@ if (!empty($averageBudgetCards)) {
 
                 banner.classList.remove('is-hidden');
                 title.textContent = `${offers.length} offer${offers.length === 1 ? '' : 's'} accepted by creators`;
-                text.textContent = 'Accepted invitations are pinned to the top so your team can react quickly.';
+                text.textContent = 'Review accepted offers in the dedicated Accepted tab.';
                 list.innerHTML = offers.slice(0, 3).map((offer) => (
                     `<span class="notification-chip">${escapeHtml(offer.titre)} - ${escapeHtml(offer.creatorName)}</span>`
                 )).join('');
             }
 
-            function elevateAcceptedCard(offer) {
-                if (!grid) {
+            function syncSectionEmptyState(key) {
+                const panel = document.querySelector(`[data-brand-section-panel="${key}"]`);
+                const grid = document.querySelector(`[data-brand-section="${key}"]`);
+
+                if (!panel || !grid) {
                     return;
                 }
 
-                const card = grid.querySelector(`[data-offer-id="${offer.idOffre}"]`);
+                const total = grid.querySelectorAll('.offer-card').length;
+                let emptyState = panel.querySelector(`[data-brand-section-empty="${key}"]`);
+
+                if (total === 0) {
+                    if (!emptyState) {
+                        emptyState = document.createElement('div');
+                        emptyState.className = 'note-block offer-section-empty';
+                        emptyState.dataset.brandSectionEmpty = key;
+                        emptyState.innerHTML = `
+                            <strong>${escapeHtml(panel.dataset.emptyTitle || '')}</strong>
+                            <p>${escapeHtml(panel.dataset.emptyMessage || '')}</p>
+                        `;
+                        panel.appendChild(emptyState);
+                    }
+                } else if (emptyState) {
+                    emptyState.remove();
+                }
+            }
+
+            function updateSectionCounts() {
+                document.querySelectorAll('[data-brand-section-count]').forEach((node) => {
+                    const key = node.getAttribute('data-brand-section-count');
+                    const grid = document.querySelector(`[data-brand-section="${key}"]`);
+                    const total = grid ? grid.querySelectorAll('.offer-card').length : 0;
+                    node.textContent = `${total} offer${total === 1 ? '' : 's'}`;
+                });
+
+                document.querySelectorAll('[data-brand-tab-count]').forEach((node) => {
+                    const key = node.getAttribute('data-brand-tab-count');
+                    const grid = document.querySelector(`[data-brand-section="${key}"]`);
+                    const total = grid ? grid.querySelectorAll('.offer-card').length : 0;
+                    node.textContent = String(total);
+                    syncSectionEmptyState(key);
+                });
+            }
+
+            function elevateAcceptedCard(offer) {
+                if (!acceptedGrid) {
+                    return;
+                }
+
+                const card = document.querySelector(`[data-offer-id="${offer.idOffre}"]`);
                 if (!card) {
                     return;
                 }
 
                 card.classList.add('is-accepted');
+                card.classList.remove('is-declined');
+                card.dataset.brandSectionKey = 'accepted';
 
                 let flag = card.querySelector('.js-accepted-flag');
                 if (!flag) {
@@ -558,7 +781,13 @@ if (!empty($averageBudgetCards)) {
                     `;
                 }
 
-                grid.prepend(card);
+                const emptyNote = document.querySelector('[data-brand-section-empty="accepted"]');
+                if (emptyNote) {
+                    emptyNote.remove();
+                }
+
+                acceptedGrid.prepend(card);
+                updateSectionCounts();
             }
 
             function showLiveToast(newOffers) {
@@ -569,7 +798,7 @@ if (!empty($averageBudgetCards)) {
                 const toast = document.createElement('div');
                 toast.className = 'live-toast live-toast-success';
                 toast.innerHTML = `
-                    <strong>${newOffers.length} creator acceptance${newOffers.length === 1 ? '' : 's'} received</strong>
+                    <strong>${newOffers.length} new accepted offer${newOffers.length === 1 ? '' : 's'}</strong>
                     <span>${escapeHtml(newOffers.map((offer) => offer.titre).join(', '))}</span>
                 `;
                 stack.prepend(toast);
@@ -610,6 +839,7 @@ if (!empty($averageBudgetCards)) {
                 }
             }
 
+            updateSectionCounts();
             window.setInterval(pollAcceptedOffers, 20000);
         })();
     </script>

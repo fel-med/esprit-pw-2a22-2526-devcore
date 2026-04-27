@@ -23,9 +23,8 @@
         <div>
           <span class="delete-confirm-kicker">Delete offer</span>
           <h2 id="deleteConfirmTitle">Delete this offer?</h2>
-          <p class="delete-confirm-subtitle">Remove it from your collaboration pipeline without leaving this page.</p>
+          <p class="delete-confirm-subtitle">Remove this offer from your pipeline.</p>
         </div>
-        <button type="button" class="delete-confirm-close" data-delete-cancel aria-label="Close delete confirmation">Close</button>
       </div>
       <div class="delete-confirm-body">
         <p class="delete-confirm-copy">This will permanently remove the offer from your pipeline and you will not be able to restore it later.</p>
@@ -73,7 +72,7 @@
     const creator = (form.dataset.deleteCreator || "").trim();
 
     offerNode.textContent = title || "This targeted offer";
-    creatorNode.textContent = creator ? `Target creator: ${creator}` : "The selected creator will be removed from this offer pipeline.";
+    creatorNode.textContent = creator ? `Target creator: ${creator}` : "No target creator is linked to this offer.";
 
     overlay.removeAttribute("hidden");
     overlay.classList.add("is-open");

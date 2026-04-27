@@ -249,7 +249,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
 
             if ($controller->createOffre($offre)) {
-                $flashMessage = $saveMode === 'draft' ? 'Draft saved successfully.' : 'Offer published successfully.';
+                $flashMessage = $saveMode === 'draft' ? 'Draft saved.' : 'Offer published.';
                 header('Location: brand_index.php?message=' . urlencode($flashMessage));
                 exit;
             }
@@ -278,6 +278,7 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
     <link rel="stylesheet" href="offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre.css')); ?>">
 </head>
 <body>
+    <?php require_once dirname(__DIR__) . '/header.php'; ?>
     <main class="container py-5">
         <div class="offre-page-shell">
             <section class="module-hero">
@@ -309,7 +310,7 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
                             <span class="wizard-step-number">1</span>
                             <div>
                                 <h3>Choose the creator</h3>
-                                <p>Select the person this invitation is meant for. The list is searchable and keeps the current targeted workflow.</p>
+                                <p>Pick the creator who should receive this offer.</p>
                             </div>
                         </div>
 
@@ -330,13 +331,13 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
                         >
                             <input type="hidden" name="idCreateurCible" id="idCreateurCible" value="<?php echo $selectedCreatorId > 0 ? $selectedCreatorId : ''; ?>">
 
-                            <div class="creator-search">
-                                <div class="creator-search-head">
-                                    <label for="creatorSearch" class="form-label fw-semibold">Search creators</label>
-                                    <span class="creator-search-status" data-creator-status>Start with a focused shortlist. Search by name, email, or ID when you need someone specific.</span>
+                                <div class="creator-search">
+                                    <div class="creator-search-head">
+                                        <label for="creatorSearch" class="form-label fw-semibold">Search creators</label>
+                                        <span class="creator-search-status" data-creator-status>Browse the available creators or search by name, email, or ID.</span>
+                                    </div>
+                                    <input type="search" id="creatorSearch" class="form-control" data-creator-search placeholder="Search by name, email, or ID" autocomplete="off">
                                 </div>
-                                <input type="search" id="creatorSearch" class="form-control" data-creator-search placeholder="Search by name, email, or ID" autocomplete="off">
-                            </div>
 
                             <div class="creator-selection-summary<?php echo $selectedCreatorProfile ? '' : ' is-hidden'; ?>" data-selected-summary>
                                 <div class="creator-selection-copy">
@@ -363,14 +364,40 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
                             <div class="empty-state-card<?php echo count($availableCreators) > 0 ? ' is-hidden' : ''; ?>" data-creator-empty>
                                 <div class="empty-state-icon">!</div>
                                 <h3 class="section-title" data-creator-empty-title>No creators available</h3>
-                                <p class="section-subtitle" data-creator-empty-copy>You can create the offer as soon as creator accounts are available in the platform.</p>
+                                <p class="section-subtitle" data-creator-empty-copy>Creator accounts are not available yet.</p>
                             </div>
 
                             <div class="creator-browser-footer<?php echo count($availableCreators) > 0 ? '' : ' is-hidden'; ?>" data-creator-footer>
-                                <button type="button" class="btn btn-outline-secondary" data-creator-load-more<?php echo $creatorHasMore ? '' : ' hidden'; ?>>Load more creators</button>
+                                <button type="button" class="btn btn-outline-secondary" data-open-creator-modal<?php echo count($availableCreators) > 0 ? '' : ' hidden'; ?>>Browse more creators</button>
                                 <span class="creator-search-status" data-creator-results>
-                                    Showing <?php echo count($availableCreators); ?> creators. Search to narrow the list before loading more.
+                                    Showing <?php echo count($availableCreators); ?> creators in the current list.
                                 </span>
+                            </div>
+
+                            <div class="creator-modal-overlay" data-creator-modal hidden aria-hidden="true">
+                                <div class="creator-modal-card" role="dialog" aria-modal="true" aria-labelledby="creatorModalTitle">
+                                    <div class="creator-modal-head">
+                                        <div>
+                                            <span class="module-eyebrow">Creator browser</span>
+                                            <h3 id="creatorModalTitle">Browse creators</h3>
+                                            <p>Scroll through the creator stack, select one profile, or load the next group when you reach the bottom.</p>
+                                        </div>
+                                        <button type="button" class="creator-modal-close" data-close-creator-modal aria-label="Close creator browser">Close</button>
+                                    </div>
+                                    <div class="creator-modal-body">
+                                        <div class="creator-modal-stack" data-creator-modal-grid></div>
+                                        <div class="empty-state-card is-hidden" data-creator-modal-empty>
+                                            <div class="empty-state-icon">!</div>
+                                            <h3 class="section-title">No creators to show</h3>
+                                            <p class="section-subtitle">Try changing the search field, then open the browser again.</p>
+                                        </div>
+                                    </div>
+                                    <div class="creator-modal-footer">
+                                        <button type="button" class="btn btn-primary" data-creator-modal-load-more<?php echo $creatorHasMore ? '' : ' hidden'; ?>>Load more</button>
+                                        <span class="creator-search-status" data-creator-modal-results>Showing <?php echo count($availableCreators); ?> creators.</span>
+                                        <span class="creator-search-status creator-modal-end" data-creator-modal-end<?php echo $creatorHasMore ? ' hidden' : ''; ?>>There are no more creators to load.</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </section>
@@ -378,31 +405,6 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
                     <section class="wizard-card">
                         <div class="wizard-step-head">
                             <span class="wizard-step-number">2</span>
-                            <div>
-                                <h3>Why this creator?</h3>
-                                <p>Give your team and the creator more context about the collaboration fit. These fields are optional but make the invitation feel intentional.</p>
-                            </div>
-                        </div>
-
-                        <div class="row g-3">
-                            <div class="col-12">
-                                <label for="raisonChoix" class="form-label fw-semibold">Why was this creator selected?</label>
-                                <textarea class="form-control" id="raisonChoix" name="raisonChoix" rows="3" placeholder="Audience fit, previous work, tone, niche expertise..."><?php echo htmlspecialchars($form['raisonChoix']); ?></textarea>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="attenteCollaboration" class="form-label fw-semibold">Expected collaboration fit</label>
-                                <textarea class="form-control" id="attenteCollaboration" name="attenteCollaboration" rows="4" placeholder="What kind of partnership, energy, deliverables, or rhythm do you expect?"><?php echo htmlspecialchars($form['attenteCollaboration']); ?></textarea>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="messagePersonnalise" class="form-label fw-semibold">Personal note</label>
-                                <textarea class="form-control" id="messagePersonnalise" name="messagePersonnalise" rows="4" placeholder="Optional warm introduction or context for this creator."><?php echo htmlspecialchars($form['messagePersonnalise']); ?></textarea>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section class="wizard-card">
-                        <div class="wizard-step-head">
-                            <span class="wizard-step-number">3</span>
                             <div>
                                 <h3>Offer details</h3>
                                 <p>Define the actual collaboration brief: the goal, the value, and the timeline.</p>
@@ -442,6 +444,32 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
 
                     <section class="wizard-card">
                         <div class="wizard-step-head">
+                            <span class="wizard-step-number">3</span>
+                            <div>
+                                <h3>Why this creator?</h3>
+                                <p>This whole section is optional. Use it when you want to explain the creator fit more clearly and make the invitation feel more personal.</p>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label for="raisonChoix" class="form-label fw-semibold">Why was this creator selected? <span class="optional-field-mark">Optional</span></label>
+                                <textarea class="form-control" id="raisonChoix" name="raisonChoix" rows="3" placeholder="Audience fit, previous work, tone, niche expertise..."><?php echo htmlspecialchars($form['raisonChoix']); ?></textarea>
+                                <p class="field-helper-text">Use this only if you want to explain the audience match, tone, or previous work that made this creator a good fit.</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="attenteCollaboration" class="form-label fw-semibold">Expected collaboration fit <span class="optional-field-mark">Optional</span></label>
+                                <textarea class="form-control" id="attenteCollaboration" name="attenteCollaboration" rows="4" placeholder="What kind of partnership, energy, deliverables, or rhythm do you expect?"><?php echo htmlspecialchars($form['attenteCollaboration']); ?></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="messagePersonnalise" class="form-label fw-semibold">Personal note <span class="optional-field-mark">Optional</span></label>
+                                <textarea class="form-control" id="messagePersonnalise" name="messagePersonnalise" rows="4" placeholder="Optional warm introduction or context for this creator."><?php echo htmlspecialchars($form['messagePersonnalise']); ?></textarea>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="wizard-card">
+                        <div class="wizard-step-head">
                             <span class="wizard-step-number">4</span>
                             <div>
                                 <h3>Review and send</h3>
@@ -463,47 +491,41 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
                 </form>
 
                 <aside class="wizard-sidebar">
-                    <section class="info-card">
+                    <section class="info-card live-review-card" data-live-review-card>
                         <h2 class="section-title">Live review</h2>
-                        <p class="section-subtitle">A final summary of what the creator will receive.</p>
+                        <p class="section-subtitle">A final summary of the creator, core offer details, and optional collaboration context.</p>
                         <div class="review-list mt-4">
-                            <div class="review-item">
+                            <div class="review-item" data-review-item="creator">
                                 <strong>Selected creator</strong>
                                 <span id="reviewCreator">Choose a creator from step 1.</span>
                             </div>
-                            <div class="review-item">
-                                <strong>Offer title</strong>
-                                <span id="reviewTitle"><?php echo $form['titre'] !== '' ? htmlspecialchars($form['titre']) : 'Your title will appear here.'; ?></span>
+                            <div class="review-item" data-review-item="details">
+                                <strong>Offer details</strong>
+                                <span class="review-detail-line" id="reviewTitle">Title: Your title will appear here.</span>
+                                <span class="review-detail-line" id="reviewObjective">Objective: Define the collaboration goal.</span>
+                                <span class="review-detail-line" id="reviewBudget">Budget and timing: Add a proposed budget and schedule.</span>
                             </div>
-                            <div class="review-item">
-                                <strong>Objective</strong>
-                                <span id="reviewObjective"><?php echo $form['objectif'] !== '' ? htmlspecialchars($form['objectif']) : 'Define the collaboration goal.'; ?></span>
-                            </div>
-                            <div class="review-item">
-                                <strong>Budget and timing</strong>
-                                <span id="reviewBudget">Add a proposed budget and schedule.</span>
-                            </div>
-                            <div class="review-item">
+                            <div class="review-item" data-review-item="fit">
                                 <strong>Collaboration fit</strong>
-                                <span id="reviewFit">Explain why this creator is a good match.</span>
+                                <span id="reviewFit">Optional collaboration notes will appear here.</span>
                             </div>
                         </div>
                     </section>
 
                     <section class="info-card">
-                        <h2 class="section-title">Helpful framing</h2>
+                        <h2 class="section-title">Quick tips</h2>
                         <div class="mini-note-list">
                             <div>
-                                <strong>Target the right creator</strong>
-                                <span>Use the creator card to anchor the invitation in a real person, not a raw identifier.</span>
+                                <strong>Choose a clear match</strong>
+                                <span>Pick a creator whose audience and style fit the offer.</span>
                             </div>
                             <div>
-                                <strong>Keep the ask concrete</strong>
-                                <span>Specific objectives and clear budgets make it easier for creators to reply quickly.</span>
+                                <strong>Keep the brief specific</strong>
+                                <span>Clear goals, budget, and dates make it easier for creators to answer.</span>
                             </div>
                             <div>
-                                <strong>Use the personal note well</strong>
-                                <span>A short, thoughtful note can increase the sense of a genuine collaboration invitation.</span>
+                                <strong>Add context only when useful</strong>
+                                <span>A short personal note can help, but it does not need to be long.</span>
                             </div>
                         </div>
                     </section>
@@ -523,6 +545,7 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
             const reviewObjective = document.getElementById('reviewObjective');
             const reviewBudget = document.getElementById('reviewBudget');
             const reviewFit = document.getElementById('reviewFit');
+            const liveReviewCard = document.querySelector('[data-live-review-card]');
             const draftButton = document.querySelector('[data-draft-button]');
             const titleInput = document.getElementById('titre');
             const objectiveInput = document.getElementById('objectif');
@@ -533,6 +556,11 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
             const reasonInput = document.getElementById('raisonChoix');
             const noteInput = document.getElementById('messagePersonnalise');
             const expectationInput = document.getElementById('attenteCollaboration');
+            const reviewItems = {
+                creator: document.querySelector('[data-review-item="creator"]'),
+                fit: document.querySelector('[data-review-item="fit"]'),
+                details: document.querySelector('[data-review-item="details"]')
+            };
 
             function getSelectedCreator() {
                 if (!creatorPicker || !creatorPicker.dataset.selectedId || creatorPicker.dataset.selectedId === '0') {
@@ -565,8 +593,8 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
             }
 
             function updateTextReview() {
-                reviewTitle.textContent = titleInput.value.trim() || 'Your title will appear here.';
-                reviewObjective.textContent = objectiveInput.value.trim() || 'Define the collaboration goal.';
+                reviewTitle.textContent = 'Title: ' + (titleInput.value.trim() || 'Your title will appear here.');
+                reviewObjective.textContent = 'Objective: ' + (objectiveInput.value.trim() || 'Define the collaboration goal.');
 
                 const budget = budgetInput.value.trim();
                 const publication = publicationInput.value.trim();
@@ -583,10 +611,76 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
                     parts.push('Deadline: ' + deadline);
                 }
 
-                reviewBudget.textContent = parts.length ? parts.join(' | ') : 'Add a proposed budget and schedule.';
+                reviewBudget.textContent = 'Budget and timing: ' + (parts.length ? parts.join(' | ') : 'Add a proposed budget and schedule.');
 
-                const fitBits = [reasonInput.value.trim(), expectationInput.value.trim()].filter(Boolean);
-                reviewFit.textContent = fitBits.length ? fitBits.join(' ') : 'Explain why this creator is a good match.';
+                const fitBits = [
+                    reasonInput.value.trim(),
+                    expectationInput.value.trim(),
+                    noteInput.value.trim()
+                ].filter(Boolean);
+                reviewFit.textContent = fitBits.length ? fitBits.join(' | ') : 'Optional collaboration notes will appear here.';
+            }
+
+            function parseDateInput(value) {
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+                    return null;
+                }
+
+                const date = new Date(value + 'T00:00:00');
+                return Number.isNaN(date.getTime()) ? null : date;
+            }
+
+            function isBudgetAndTimingComplete() {
+                const budgetValue = Number(String(budgetInput.value || '').replace(',', '.'));
+                const publicationDate = parseDateInput(publicationInput.value.trim());
+                const deadlineDate = parseDateInput(deadlineInput.value.trim());
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                if (!Number.isFinite(budgetValue) || budgetValue <= 0 || !publicationDate || !deadlineDate) {
+                    return false;
+                }
+
+                return publicationDate >= today && deadlineDate >= today && deadlineDate > publicationDate;
+            }
+
+            function setReviewCompletionState(key, isComplete) {
+                const node = reviewItems[key];
+                if (!node) {
+                    return;
+                }
+
+                node.classList.toggle('is-complete', Boolean(isComplete));
+            }
+
+            function updateReviewCompletion() {
+                const creatorComplete = !!getSelectedCreator();
+                const titleComplete = titleInput.value.trim().length >= 3;
+                const objectiveComplete = objectiveInput.value.trim().length >= 3;
+                const fitComplete = [reasonInput, noteInput, expectationInput].some(function (input) {
+                    return input && input.value.trim() !== '';
+                });
+                const budgetComplete = isBudgetAndTimingComplete();
+                const detailsComplete = titleComplete && objectiveComplete && budgetComplete;
+                const hasAnyProgress = creatorComplete
+                    || titleInput.value.trim() !== ''
+                    || objectiveInput.value.trim() !== ''
+                    || budgetInput.value.trim() !== ''
+                    || descriptionInput.value.trim() !== ''
+                    || publicationInput.value.trim() !== ''
+                    || deadlineInput.value.trim() !== ''
+                    || fitComplete;
+
+                setReviewCompletionState('creator', creatorComplete);
+                setReviewCompletionState('fit', fitComplete);
+                setReviewCompletionState('details', detailsComplete);
+
+                if (!liveReviewCard) {
+                    return;
+                }
+
+                liveReviewCard.classList.toggle('review-card-active', hasAnyProgress);
+                liveReviewCard.classList.toggle('review-card-complete', creatorComplete && detailsComplete);
             }
 
             function hasDraftSignal() {
@@ -630,6 +724,7 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
                 ].forEach(function (eventName) {
                     creatorPicker.addEventListener(eventName, function () {
                         updateCreatorReview();
+                        updateReviewCompletion();
                         updateDraftButtonState();
                     });
                 });
@@ -642,6 +737,7 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
 
                 const refresh = function () {
                     updateTextReview();
+                    updateReviewCompletion();
                     updateDraftButtonState();
                 };
 
@@ -651,6 +747,7 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
 
             updateCreatorReview();
             updateTextReview();
+            updateReviewCompletion();
             updateDraftButtonState();
         });
     </script>

@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../Modele/offre.php';
+require_once __DIR__ . '/../Modele/condidature.php';
 require_once __DIR__ . '/../config.php';
 
 class OffreC
@@ -30,7 +31,11 @@ class OffreC
             $row['budgetPropose'] ?? ($row['budgetMin'] ?? $row['budgetMax'] ?? null),
             $row['datePublication'] ?? null,
             $row['dateLimite'] ?? null,
-            $row['statutOffre'] ?? null
+            $row['statutOffre'] ?? null,
+            $row['raisonChoix'] ?? null,
+            $row['messagePersonnalise'] ?? null,
+            $row['attenteCollaboration'] ?? null,
+            $row['draftSansCreateur'] ?? null
         );
     }
 
@@ -42,6 +47,41 @@ class OffreC
         }
 
         return $offres;
+    }
+
+    private function normalizeCandidatureStatus($status)
+    {
+        $status = trim((string) $status);
+
+        return match ($status) {
+            '', 'en_attente' => 'envoyee',
+            default => $status,
+        };
+    }
+
+    private function normalizeCandidatureRow(array $row)
+    {
+        if (array_key_exists('statutCandidature', $row)) {
+            $row['statutCandidature'] = $this->normalizeCandidatureStatus($row['statutCandidature']);
+        }
+
+        $condidature = Condidature::fromArray($row);
+        $row['noteDecision'] = $condidature->getNoteDecision();
+        $row['responseMode'] = $condidature->getResponseMode();
+        $row['typeReponse'] = $condidature->getTypeReponse();
+        $row['displayStatusLabel'] = $condidature->getDisplayStatusLabel();
+        $row['responseTypeLabel'] = $condidature->getResponseTypeLabel();
+
+        return $row;
+    }
+
+    private function isAcceptedCreatorResponseStatus($status)
+    {
+        return in_array(
+            $this->normalizeCandidatureStatus($status),
+            ['envoyee', 'en_attente', 'acceptee'],
+            true
+        );
     }
 
     public function getOffresByMarque($idMarque)
@@ -348,7 +388,7 @@ class OffreC
             'idSource' => $idOffre,
         ]);
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return array_map([$this, 'normalizeCandidatureRow'], $stmt->fetchAll(PDO::FETCH_ASSOC));
     }
 
     public function getCandidaturesGroupedByOfferIds(array $offerIds)
@@ -375,7 +415,7 @@ class OffreC
 
         $grouped = [];
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-            $grouped[(int) $row['idSource']][] = $row;
+            $grouped[(int) $row['idSource']][] = $this->normalizeCandidatureRow($row);
         }
 
         return $grouped;
@@ -395,7 +435,9 @@ class OffreC
         ]);
 
         $breakdown = [
-            'en_attente' => 0,
+            'brouillon' => 0,
+            'envoyee' => 0,
+            'negociation' => 0,
             'en_etude' => 0,
             'acceptee' => 0,
             'refusee' => 0,
@@ -404,7 +446,7 @@ class OffreC
         ];
 
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-            $status = $row['statutCandidature'];
+            $status = $this->normalizeCandidatureStatus($row['statutCandidature'] ?? '');
             $count = (int) $row['total'];
             if (!array_key_exists($status, $breakdown)) {
                 $breakdown[$status] = 0;
@@ -437,7 +479,7 @@ class OffreC
         ];
 
         if ($keyword !== null && trim((string) $keyword) !== '') {
-            $sql .= ' AND (titre LIKE :keyword OR objectif LIKE :keyword OR description LIKE :keyword)';
+            $sql .= ' AND (titre LIKE :keyword OR objectif LIKE :keyword OR description LIKE :keyword OR raisonChoix LIKE :keyword OR attenteCollaboration LIKE :keyword OR messagePersonnalise LIKE :keyword)';
             $params['keyword'] = '%' . trim((string) $keyword) . '%';
         }
 
@@ -465,45 +507,73 @@ class OffreC
 
     public function searchOffresAdmin($keyword = null, $statut = null, $idMarque = null, $idCreateurCible = null, $budgetMin = null, $budgetMax = null, $dateLimite = null)
     {
-        $sql = 'SELECT * FROM offre WHERE 1 = 1';
+        $sql = "
+            SELECT o.*
+            FROM offre o
+            LEFT JOIN utilisateur marque ON marque.id = o.idMarque
+            LEFT JOIN utilisateur createur ON createur.id = o.idCreateurCible
+            WHERE 1 = 1
+        ";
         $params = [];
 
         if ($keyword !== null && trim((string) $keyword) !== '') {
-            $sql .= ' AND (titre LIKE :keyword OR objectif LIKE :keyword OR description LIKE :keyword)';
+            $sql .= '
+                AND (
+                    o.titre LIKE :keyword
+                    OR o.objectif LIKE :keyword
+                    OR o.description LIKE :keyword
+                    OR o.raisonChoix LIKE :keyword
+                    OR o.attenteCollaboration LIKE :keyword
+                    OR o.messagePersonnalise LIKE :keyword
+                    OR CAST(o.idOffre AS CHAR) LIKE :keyword
+                    OR marque.nom LIKE :keyword
+                    OR marque.email LIKE :keyword
+                    OR createur.nom LIKE :keyword
+                    OR createur.email LIKE :keyword
+                )
+            ';
             $params['keyword'] = '%' . trim((string) $keyword) . '%';
         }
 
         if ($statut) {
-            $sql .= ' AND statutOffre = :statut';
-            $params['statut'] = $statut;
+            if ($statut === 'pending') {
+                $sql .= ' AND o.statutOffre = :pendingStatus AND o.datePublication > CURDATE()';
+                $params['pendingStatus'] = 'publiee';
+            } elseif ($statut === 'publiee') {
+                $sql .= ' AND o.statutOffre = :statut AND o.datePublication <= CURDATE()';
+                $params['statut'] = $statut;
+            } else {
+                $sql .= ' AND o.statutOffre = :statut';
+                $params['statut'] = $statut;
+            }
         }
 
         if ($idMarque !== null && is_numeric($idMarque)) {
-            $sql .= ' AND idMarque = :idMarque';
+            $sql .= ' AND o.idMarque = :idMarque';
             $params['idMarque'] = $idMarque;
         }
 
         if ($idCreateurCible !== null && is_numeric($idCreateurCible)) {
-            $sql .= ' AND idCreateurCible = :idCreateurCible';
+            $sql .= ' AND o.idCreateurCible = :idCreateurCible';
             $params['idCreateurCible'] = $idCreateurCible;
         }
 
         if ($budgetMin !== null && is_numeric($budgetMin)) {
-            $sql .= ' AND budgetPropose >= :budgetMin';
+            $sql .= ' AND o.budgetPropose >= :budgetMin';
             $params['budgetMin'] = $budgetMin;
         }
 
         if ($budgetMax !== null && is_numeric($budgetMax)) {
-            $sql .= ' AND budgetPropose <= :budgetMax';
+            $sql .= ' AND o.budgetPropose <= :budgetMax';
             $params['budgetMax'] = $budgetMax;
         }
 
         if ($dateLimite) {
-            $sql .= ' AND dateLimite >= :dateLimite';
+            $sql .= ' AND o.dateLimite >= :dateLimite';
             $params['dateLimite'] = $dateLimite;
         }
 
-        $sql .= ' ORDER BY datePublication DESC, idOffre DESC';
+        $sql .= ' ORDER BY o.datePublication DESC, o.idOffre DESC';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
 
@@ -536,7 +606,10 @@ class OffreC
                 budgetPropose,
                 datePublication,
                 dateLimite,
-                statutOffre
+                statutOffre,
+                raisonChoix,
+                attenteCollaboration,
+                messagePersonnalise
             ) VALUES (
                 :idMarque,
                 :idCreateurCible,
@@ -546,7 +619,10 @@ class OffreC
                 :budgetPropose,
                 :datePublication,
                 :dateLimite,
-                :statutOffre
+                :statutOffre,
+                :raisonChoix,
+                :attenteCollaboration,
+                :messagePersonnalise
             )
         ';
         $stmt = $this->pdo->prepare($sql);
@@ -561,11 +637,31 @@ class OffreC
             'datePublication' => $offre->getDatePublication(),
             'dateLimite' => $offre->getDateLimite(),
             'statutOffre' => $offre->getStatutOffre() ?: 'publiee',
+            'raisonChoix' => $offre->getRaisonChoix(),
+            'attenteCollaboration' => $offre->getAttenteCollaboration(),
+            'messagePersonnalise' => $offre->getMessagePersonnalise(),
         ]);
     }
 
     public function updateOffre(Offre $offre)
     {
+        $existingOffer = $this->getOffreById($offre->getIdOffre(), $offre->getIdMarque());
+        if (!$existingOffer) {
+            return false;
+        }
+
+        if (!$existingOffer->isDraftSansCreateur() && $existingOffer->getIdCreateurCible()) {
+            $targetedResponse = $this->getOfferResponseByCreator($existingOffer->getIdCreateurCible(), $existingOffer->getIdOffre());
+            if ($targetedResponse && $this->isAcceptedCreatorResponseStatus($targetedResponse['statutCandidature'] ?? '')) {
+                return false;
+            }
+        }
+
+        $targetCreatorId = $offre->getIdCreateurCible();
+        if (!$existingOffer->isDraftSansCreateur() && $existingOffer->getIdCreateurCible()) {
+            $targetCreatorId = $existingOffer->getIdCreateurCible();
+        }
+
         $sql = '
             UPDATE offre
             SET
@@ -576,13 +672,16 @@ class OffreC
                 budgetPropose = :budgetPropose,
                 datePublication = :datePublication,
                 dateLimite = :dateLimite,
-                statutOffre = :statutOffre
+                statutOffre = :statutOffre,
+                raisonChoix = :raisonChoix,
+                attenteCollaboration = :attenteCollaboration,
+                messagePersonnalise = :messagePersonnalise
             WHERE idOffre = :idOffre AND idMarque = :idMarque
         ';
         $stmt = $this->pdo->prepare($sql);
 
         return $stmt->execute([
-            'idCreateurCible' => $offre->getIdCreateurCible(),
+            'idCreateurCible' => $targetCreatorId,
             'titre' => $offre->getTitre(),
             'description' => $offre->getDescriptionForStorage(),
             'objectif' => $offre->getObjectif(),
@@ -590,6 +689,9 @@ class OffreC
             'datePublication' => $offre->getDatePublication(),
             'dateLimite' => $offre->getDateLimite(),
             'statutOffre' => $offre->getStatutOffre() ?: 'publiee',
+            'raisonChoix' => $offre->getRaisonChoix(),
+            'attenteCollaboration' => $offre->getAttenteCollaboration(),
+            'messagePersonnalise' => $offre->getMessagePersonnalise(),
             'idOffre' => $offre->getIdOffre(),
             'idMarque' => $offre->getIdMarque(),
         ]);
@@ -623,7 +725,9 @@ class OffreC
             'idSource' => $idSource,
         ]);
 
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row ? $this->normalizeCandidatureRow($row) : null;
     }
 
     public function submitOfferResponse($idCreateur, $idOffre, $responseType, $messageMotivation = '', $budgetPropose = null, $delaiPropose = null)
@@ -635,9 +739,9 @@ class OffreC
 
         $responseType = strtolower(trim((string) $responseType));
         $statusMap = [
-            'accept' => 'en_attente',
+            'accept' => 'envoyee',
             'decline' => 'retiree',
-            'negotiate' => 'en_etude',
+            'negotiate' => 'negociation',
         ];
 
         if (!isset($statusMap[$responseType])) {
@@ -663,8 +767,18 @@ class OffreC
             ? max(1, (int) $delaiPropose)
             : $this->buildDefaultResponseDelay($offer->getDateLimite());
 
-        $noteDecision = ucfirst($responseType) . ' response submitted from the offer invitation module.';
         $existing = $this->getOfferResponseByCreator($idCreateur, $idOffre);
+        $record = $existing ? Condidature::fromArray($existing) : new Condidature();
+        $record->setIdCreateur($idCreateur);
+        $record->setOrigineCandidature('par_offre');
+        $record->setIdSource($idOffre);
+        $record->setStatutCandidature($statusMap[$responseType]);
+        $record->setMessageMotivation($finalMessage);
+        $record->setBudgetPropose($finalBudget);
+        $record->setDelaiPropose($finalDelay);
+        $record->setResponseMode($responseType);
+        $record->setNoteDecision('');
+        $storedNoteDecision = $record->getNoteDecisionForStorage();
 
         if ($existing) {
             $sql = '
@@ -685,7 +799,7 @@ class OffreC
                 'messageMotivation' => $finalMessage,
                 'budgetPropose' => $finalBudget,
                 'delaiPropose' => $finalDelay,
-                'noteDecision' => $noteDecision,
+                'noteDecision' => $storedNoteDecision,
                 'idCandidature' => $existing['idCandidature'],
             ]);
         }
@@ -723,11 +837,11 @@ class OffreC
             'messageMotivation' => $finalMessage,
             'budgetPropose' => $finalBudget,
             'delaiPropose' => $finalDelay,
-            'noteDecision' => $noteDecision,
+            'noteDecision' => $storedNoteDecision,
         ]);
     }
 
-    public function createCandidature($idCreateur, $origineCandidature, $idSource, $messageMotivation = '', $budgetPropose = null, $delaiPropose = null, $statutCandidature = 'en_attente')
+    public function createCandidature($idCreateur, $origineCandidature, $idSource, $messageMotivation = '', $budgetPropose = null, $delaiPropose = null, $statutCandidature = 'envoyee')
     {
         if ($origineCandidature === 'par_offre') {
             return $this->submitOfferResponse($idCreateur, $idSource, 'accept', $messageMotivation, $budgetPropose, $delaiPropose);
@@ -794,10 +908,11 @@ class OffreC
         return min(45, $diff);
     }
 
-    public function validateOffreData(array $data, $mode = 'publish')
+    public function validateOffreData(array $data, $mode = 'publish', array $options = [])
     {
         $errors = [];
         $isDraft = $mode === 'draft';
+        $allowPastPublicationDate = !empty($options['allowPastPublicationDate']);
         $timezone = $this->getModuleTimezone();
         $today = new DateTime('today', $timezone);
 
@@ -854,7 +969,7 @@ class OffreC
             $publicationDate = DateTime::createFromFormat('!Y-m-d', $datePublication, $timezone);
             if (!$publicationDate || $publicationDate->format('Y-m-d') !== $datePublication) {
                 $errors[] = 'Publication date must use the YYYY-MM-DD format.';
-            } elseif ($publicationDate < $today) {
+            } elseif (!$allowPastPublicationDate && $publicationDate < $today) {
                 $errors[] = 'Publication date cannot be in the past.';
             }
         } else {
