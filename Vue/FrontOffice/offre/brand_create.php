@@ -142,6 +142,7 @@ function renderCreatorPickerCard(array $creator, $selectedCreatorId = 0)
         data-live="<?php echo $liveOffers; ?>"
     >
         <span class="creator-option-body">
+            <span class="creator-selected-badge" aria-hidden="true">Selected</span>
             <span class="creator-top">
                 <span>
                     <strong><?php echo htmlspecialchars((string) ($creator['nom'] ?? '')); ?></strong>
@@ -278,7 +279,7 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
     <link rel="stylesheet" href="offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre.css')); ?>">
 </head>
 <body>
-    <?php require_once dirname(__DIR__) . '/header.php'; ?>
+    <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
     <main class="container py-5">
         <div class="offre-page-shell">
             <section class="module-hero">
@@ -391,11 +392,11 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
                                             <h3 class="section-title">No creators to show</h3>
                                             <p class="section-subtitle">Try changing the search field, then open the browser again.</p>
                                         </div>
-                                    </div>
-                                    <div class="creator-modal-footer">
-                                        <button type="button" class="btn btn-primary" data-creator-modal-load-more<?php echo $creatorHasMore ? '' : ' hidden'; ?>>Load more</button>
-                                        <span class="creator-search-status" data-creator-modal-results>Showing <?php echo count($availableCreators); ?> creators.</span>
-                                        <span class="creator-search-status creator-modal-end" data-creator-modal-end<?php echo $creatorHasMore ? ' hidden' : ''; ?>>There are no more creators to load.</span>
+                                        <div class="creator-modal-footer">
+                                            <button type="button" class="btn btn-primary" data-creator-modal-load-more<?php echo $creatorHasMore ? '' : ' hidden'; ?>>Load more</button>
+                                            <span class="creator-search-status" data-creator-modal-results>Showing <?php echo count($availableCreators); ?> creators.</span>
+                                            <span class="creator-search-status creator-modal-end" data-creator-modal-end<?php echo $creatorHasMore ? ' hidden' : ''; ?>>There are no more creators to load.</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

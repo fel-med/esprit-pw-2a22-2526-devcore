@@ -36,11 +36,17 @@ function initCreatorPicker(picker) {
     const defaultEmptyCopy = emptyCopy ? emptyCopy.textContent.trim() : '';
     let loadedCount = initialCount;
     let hasMore = picker.dataset.hasMore === '1';
+    let modalLoadedCount = initialCount;
+    let modalHasMore = hasMore;
     let currentKeyword = '';
     let debounceTimer = null;
     let activeRequest = null;
     let requestNonce = 0;
     let selectedCreator = readSelectedCreatorFromDataset(picker);
+
+    if (modal && modal.parentElement !== document.body) {
+        document.body.appendChild(modal);
+    }
 
     function syncPickerDataset() {
         if (selectedCreator && selectedCreator.id) {
@@ -115,12 +121,14 @@ function initCreatorPicker(picker) {
         grid.querySelectorAll('.creator-option').forEach(function (card) {
             const isSelected = !!selectedCreator && selectedCreator.id && card.dataset.creatorId === selectedCreator.id;
             card.classList.toggle('is-selected', isSelected);
+            card.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
         });
 
         if (modalGrid) {
             modalGrid.querySelectorAll('.creator-option').forEach(function (card) {
                 const isSelected = !!selectedCreator && selectedCreator.id && card.dataset.creatorId === selectedCreator.id;
                 card.classList.toggle('is-selected', isSelected);
+                card.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
             });
         }
     }
@@ -143,8 +151,8 @@ function initCreatorPicker(picker) {
         dispatchPickerEvent('creatorpicker:clear');
     }
 
-    function setLoadingState(isLoading) {
-        if (grid) {
+    function setLoadingState(isLoading, target) {
+        if (grid && target !== 'modal') {
             grid.classList.toggle('is-loading', isLoading);
         }
 
@@ -182,17 +190,17 @@ function initCreatorPicker(picker) {
 
         if (modalResultsNote) {
             const label = currentKeyword ? 'matching creators' : 'creators';
-            modalResultsNote.textContent = loadedCount === 0
+            modalResultsNote.textContent = modalLoadedCount === 0
                 ? 'No creators are currently loaded.'
-                : 'Showing ' + loadedCount + ' ' + label + '.';
+                : 'Showing ' + modalLoadedCount + ' ' + label + '.';
         }
 
         if (modalLoadMoreButton) {
-            modalLoadMoreButton.hidden = !hasMore || loadedCount === 0;
+            modalLoadMoreButton.hidden = !modalHasMore || modalLoadedCount === 0;
         }
 
         if (modalEndNote) {
-            modalEndNote.hidden = hasMore || loadedCount === 0;
+            modalEndNote.hidden = modalHasMore || modalLoadedCount === 0;
             modalEndNote.textContent = currentKeyword
                 ? 'There are no more matching creators to load.'
                 : 'There are no more creators to load.';
@@ -249,6 +257,30 @@ function initCreatorPicker(picker) {
         dispatchPickerEvent('creatorpicker:render');
     }
 
+    function renderModalCreators(items, replaceExisting) {
+        if (!modalGrid) {
+            return;
+        }
+
+        if (replaceExisting) {
+            modalGrid.innerHTML = '';
+            modalLoadedCount = 0;
+        }
+
+        items.forEach(function (item) {
+            modalGrid.appendChild(buildCreatorCard(normalizeCreator(item)));
+            modalLoadedCount += 1;
+        });
+
+        const hasItems = modalLoadedCount > 0;
+        if (modalEmpty) {
+            modalEmpty.classList.toggle('is-hidden', hasItems);
+        }
+
+        refreshSelectionStyling();
+        updateNotes();
+    }
+
     function readCreatorFromCard(card) {
         return normalizeCreator({
             id: card.dataset.creatorId,
@@ -270,6 +302,8 @@ function initCreatorPicker(picker) {
         grid.querySelectorAll('.creator-option').forEach(function (card) {
             modalGrid.appendChild(buildCreatorCard(readCreatorFromCard(card)));
         });
+        modalLoadedCount = modalGrid.children.length;
+        modalHasMore = hasMore;
 
         const hasItems = modalGrid.children.length > 0;
         if (modalEmpty) {
@@ -288,20 +322,28 @@ function initCreatorPicker(picker) {
             renderModalFromInlineGrid();
             modal.hidden = false;
             modal.setAttribute('aria-hidden', 'false');
+            modal.setAttribute('tabindex', '-1');
+            document.documentElement.classList.add('creator-modal-open');
             document.body.classList.add('creator-modal-open');
-            const firstCard = modalGrid ? modalGrid.querySelector('.creator-option') : null;
-            const focusTarget = firstCard || modalLoadMoreButton || modal.querySelector('[data-close-creator-modal]');
+            const modalBody = modal.querySelector('.creator-modal-body');
+            if (modalBody) {
+                modalBody.scrollTop = 0;
+            }
+            const focusTarget = modal.querySelector('[data-close-creator-modal]') || modalLoadMoreButton;
             if (focusTarget) {
                 window.setTimeout(function () {
-                    focusTarget.focus();
+                    focusTarget.focus({ preventScroll: true });
                 }, 20);
+            } else if (typeof modal.focus === 'function') {
+                modal.focus({ preventScroll: true });
             }
         } else {
             modal.hidden = true;
             modal.setAttribute('aria-hidden', 'true');
+            document.documentElement.classList.remove('creator-modal-open');
             document.body.classList.remove('creator-modal-open');
             if (openModalButton) {
-                openModalButton.focus();
+                openModalButton.focus({ preventScroll: true });
             }
         }
     }
@@ -312,7 +354,8 @@ function initCreatorPicker(picker) {
         }
 
         const isReset = !!options.reset;
-        const offset = isReset ? 0 : loadedCount;
+        const target = options.target === 'modal' ? 'modal' : 'inline';
+        const offset = isReset ? 0 : (target === 'modal' ? modalLoadedCount : loadedCount);
         const keyword = typeof options.keyword === 'string' ? options.keyword.trim() : currentKeyword;
         const params = new URLSearchParams();
         params.set('keyword', keyword);
@@ -327,7 +370,7 @@ function initCreatorPicker(picker) {
         }
 
         activeRequest = typeof AbortController !== 'undefined' ? new AbortController() : null;
-        setLoadingState(true);
+        setLoadingState(true, target);
 
         fetch(endpoint + '&' + params.toString(), {
             headers: {
@@ -348,8 +391,13 @@ function initCreatorPicker(picker) {
                 }
 
                 const items = Array.isArray(payload.items) ? payload.items : [];
-                hasMore = !!payload.hasMore;
-                renderCreators(items, isReset);
+                if (target === 'modal') {
+                    modalHasMore = !!payload.hasMore;
+                    renderModalCreators(items, isReset);
+                } else {
+                    hasMore = !!payload.hasMore;
+                    renderCreators(items, isReset);
+                }
                 dispatchPickerEvent('creatorpicker:results');
             })
             .catch(function (error) {
@@ -370,7 +418,7 @@ function initCreatorPicker(picker) {
                     return;
                 }
 
-                setLoadingState(false);
+                setLoadingState(false, target);
             });
     }
 
@@ -404,20 +452,23 @@ function initCreatorPicker(picker) {
     }
 
     if (loadMoreButton) {
-        loadMoreButton.addEventListener('click', function () {
+        loadMoreButton.addEventListener('click', function (event) {
+            event.preventDefault();
             fetchCreators({ keyword: currentKeyword, reset: false });
         });
     }
 
     if (openModalButton) {
-        openModalButton.addEventListener('click', function () {
+        openModalButton.addEventListener('click', function (event) {
+            event.preventDefault();
             setModalOpen(true);
         });
     }
 
     if (modalLoadMoreButton) {
-        modalLoadMoreButton.addEventListener('click', function () {
-            fetchCreators({ keyword: currentKeyword, reset: false });
+        modalLoadMoreButton.addEventListener('click', function (event) {
+            event.preventDefault();
+            fetchCreators({ keyword: currentKeyword, reset: false, target: 'modal' });
         });
     }
 
@@ -476,8 +527,10 @@ function buildCreatorCard(creator) {
     card.dataset.statusClass = creator.statusClass;
     card.dataset.targeted = String(creator.targetedOffers);
     card.dataset.live = String(creator.liveOffers);
+    card.setAttribute('aria-pressed', 'false');
     card.innerHTML = [
         '<span class="creator-option-body">',
+        '  <span class="creator-selected-badge" aria-hidden="true">Selected</span>',
         '  <span class="creator-top">',
         '    <span>',
         '      <strong>' + escapeHtml(creator.name) + '</strong>',

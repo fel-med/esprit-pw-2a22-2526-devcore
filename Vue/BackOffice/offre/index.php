@@ -405,8 +405,11 @@ if (!empty($liveBudgetOffers)) {
     <link rel="stylesheet" href="../css/backoffice.css">
     <link rel="stylesheet" href="offre-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre-admin.css')); ?>">
 </head>
-<body>
-    <?php require_once dirname(__DIR__) . '/header.php'; ?>
+<body class="cre8-admin-layout">
+    <div class="cre8-admin-page">
+        <?php require_once dirname(__DIR__) . '/layout/sidebar.php'; ?>
+        <main class="cre8-admin-main">
+            <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
     <div class="admin-shell">
         <header class="admin-header">
             <h1>Offer administration</h1>
@@ -644,6 +647,8 @@ if (!empty($liveBudgetOffers)) {
             </div>
         </div>
     </dialog>
+        </main>
+    </div>
     <script src="offre-admin-validation.js"></script>
     <script src="offre-admin-delete.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre-admin-delete.js')); ?>"></script>
     <script>

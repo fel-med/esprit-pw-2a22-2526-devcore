@@ -23,6 +23,11 @@
   const negotiationPanel = panels.get("negotiate") || null;
   const negotiationMessage = negotiationPanel?.querySelector("#negotiationModalMessage") || null;
   const decisionNote = decisionPanel?.querySelector("#decisionModalNote") || null;
+  const modalForms = Array.from(overlay.querySelectorAll("form"));
+
+  if (overlay.parentElement !== document.body) {
+    document.body.appendChild(overlay);
+  }
 
   const decisionConfig = {
     acceptee: {
@@ -43,6 +48,169 @@
 
   let activePanelName = "";
   let lastFocusedElement = null;
+
+  function getField(form, name) {
+    return form.querySelector(`[name="${name}"]`);
+  }
+
+  function fieldValue(form, name) {
+    const field = getField(form, name);
+    return field ? field.value.trim() : "";
+  }
+
+  function isPositiveNumber(value) {
+    return value !== "" && !Number.isNaN(Number(value)) && Number(value) > 0;
+  }
+
+  function isPositiveInteger(value) {
+    return /^[0-9]+$/.test(value) && Number(value) > 0;
+  }
+
+  function addError(errors, form, name, message) {
+    const field = getField(form, name);
+
+    if (field) {
+      errors.push({ field, message });
+    }
+  }
+
+  function validateBrandActionForm(form) {
+    const errors = [];
+    const action = fieldValue(form, "brandAction");
+    const note = fieldValue(form, "noteDecision");
+    const message = fieldValue(form, "message");
+    const budget = fieldValue(form, "budgetPropose");
+    const delay = fieldValue(form, "delaiPropose");
+
+    if (note.length > 1500) {
+      addError(errors, form, "noteDecision", "Decision note must stay under 1500 characters.");
+    }
+
+    if (action !== "negotiate") {
+      return errors;
+    }
+
+    if (message === "") {
+      addError(errors, form, "message", "Add a negotiation message before sending this reply.");
+    } else if (message.length > 2500) {
+      addError(errors, form, "message", "Negotiation message must stay under 2500 characters.");
+    }
+
+    if (budget !== "" && !isPositiveNumber(budget)) {
+      addError(errors, form, "budgetPropose", "Enter a valid budget greater than 0, or leave it empty.");
+    }
+
+    if (delay !== "" && !isPositiveInteger(delay)) {
+      addError(errors, form, "delaiPropose", "Enter a valid timeline in days, or leave it empty.");
+    }
+
+    return errors;
+  }
+
+  function clearValidation(form) {
+    form.querySelectorAll(".modal-validation-summary").forEach((summary) => summary.remove());
+    form.querySelectorAll(".modal-field-error").forEach((error) => error.remove());
+    form.querySelectorAll(".is-invalid").forEach((field) => {
+      field.classList.remove("is-invalid");
+      field.removeAttribute("aria-invalid");
+    });
+  }
+
+  function getFieldErrorAnchor(field) {
+    return field.closest(".input-group") || field;
+  }
+
+  function renderFieldErrors(errors) {
+    errors.forEach((error) => {
+      const anchor = getFieldErrorAnchor(error.field);
+      const message = document.createElement("div");
+      message.className = "modal-field-error";
+      message.textContent = error.message;
+      error.field.classList.add("is-invalid");
+      error.field.setAttribute("aria-invalid", "true");
+      anchor.insertAdjacentElement("afterend", message);
+    });
+  }
+
+  function renderSummary(form, errors) {
+    if (!errors.length) {
+      return;
+    }
+
+    const summary = document.createElement("div");
+    summary.className = "modal-validation-summary";
+    summary.setAttribute("role", "alert");
+    summary.innerHTML = `<strong>Please fix the highlighted fields.</strong><ul>${errors
+      .map((error) => `<li>${error.message}</li>`)
+      .join("")}</ul>`;
+
+    const body = form.querySelector(".response-modal-body") || form;
+    body.insertBefore(summary, body.firstElementChild || null);
+  }
+
+  function revealFirstError(error) {
+    if (!error || !error.field) {
+      return;
+    }
+
+    const body = error.field.closest(".response-modal-body");
+
+    if (body) {
+      const bodyRect = body.getBoundingClientRect();
+      const fieldRect = error.field.getBoundingClientRect();
+      body.scrollTo({
+        top: body.scrollTop + fieldRect.top - bodyRect.top - 90,
+        behavior: "smooth",
+      });
+    }
+
+    window.setTimeout(() => error.field.focus({ preventScroll: true }), 180);
+  }
+
+  function runValidation(form, touchedOnly = false) {
+    clearValidation(form);
+    const errors = validateBrandActionForm(form);
+    const visibleErrors = touchedOnly
+      ? errors.filter((error) => error.field.dataset.validationTouched === "1")
+      : errors;
+
+    renderFieldErrors(visibleErrors);
+
+    if (!touchedOnly) {
+      renderSummary(form, errors);
+
+      if (errors.length) {
+        revealFirstError(errors[0]);
+      }
+    }
+
+    return errors.length === 0;
+  }
+
+  function initializeValidation() {
+    modalForms.forEach((form) => {
+      form.setAttribute("novalidate", "novalidate");
+
+      form.querySelectorAll("input:not([type='hidden']), textarea, select").forEach((field) => {
+        field.addEventListener("blur", () => {
+          field.dataset.validationTouched = "1";
+          runValidation(form, true);
+        });
+
+        field.addEventListener("input", () => {
+          if (field.dataset.validationTouched === "1") {
+            runValidation(form, true);
+          }
+        });
+      });
+
+      form.addEventListener("submit", (event) => {
+        if (!runValidation(form, false)) {
+          event.preventDefault();
+        }
+      });
+    });
+  }
 
   function hideAllPanels() {
     panels.forEach((panel) => {
@@ -84,11 +252,12 @@
     overlay.classList.remove("is-open");
     overlay.style.display = "none";
     overlay.setAttribute("hidden", "hidden");
+    document.documentElement.classList.remove("offre-modal-open");
     document.body.classList.remove("offre-modal-open");
     activePanelName = "";
 
     if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
-      lastFocusedElement.focus();
+      lastFocusedElement.focus({ preventScroll: true });
     }
   }
 
@@ -108,25 +277,33 @@
     }
 
     overlay.removeAttribute("hidden");
+    overlay.setAttribute("tabindex", "-1");
     overlay.style.display = "flex";
     overlay.classList.add("is-open");
     panel.removeAttribute("hidden");
+    document.documentElement.classList.add("offre-modal-open");
     document.body.classList.add("offre-modal-open");
+    const modalBody = panel.querySelector(".response-modal-body");
+
+    if (modalBody) {
+      modalBody.scrollTop = 0;
+    }
 
     window.requestAnimationFrame(() => {
       if (panelName === "negotiate" && negotiationMessage) {
-        negotiationMessage.focus();
+        negotiationMessage.focus({ preventScroll: true });
         return;
       }
 
       if (panelName === "decision" && decisionNote) {
-        decisionNote.focus();
+        decisionNote.focus({ preventScroll: true });
       }
     });
   }
 
   triggers.forEach((trigger) => {
-    trigger.addEventListener("click", () => {
+    trigger.addEventListener("click", (event) => {
+      event.preventDefault();
       const modalName = trigger.dataset.responseModalTrigger || "";
       const decisionStatus = trigger.dataset.decisionStatus || "";
 
@@ -151,6 +328,8 @@
   });
 
   const defaultModal = (overlay.dataset.defaultModal || "").trim();
+  initializeValidation();
+
   if (defaultModal !== "") {
     openModal(defaultModal, {
       decisionStatus: overlay.dataset.defaultDecisionStatus || "acceptee",

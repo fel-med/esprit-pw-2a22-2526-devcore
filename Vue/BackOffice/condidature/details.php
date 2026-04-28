@@ -139,8 +139,11 @@ $canReview = $condidature && $condidature->getStatutCandidature() !== 'retiree';
     <link rel="stylesheet" href="../offre/offre-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../offre/offre-admin.css')); ?>">
     <link rel="stylesheet" href="condidature-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/condidature-admin.css')); ?>">
 </head>
-<body>
-    <?php require_once dirname(__DIR__) . '/header.php'; ?>
+<body class="cre8-admin-layout">
+    <div class="cre8-admin-page">
+        <?php require_once dirname(__DIR__) . '/layout/sidebar.php'; ?>
+        <main class="cre8-admin-main">
+            <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
     <div class="admin-shell">
         <header class="admin-header">
             <h1>Candidature review</h1>
@@ -371,6 +374,8 @@ $canReview = $condidature && $condidature->getStatutCandidature() !== 'retiree';
                 </aside>
             </div>
         <?php endif; ?>
+    </div>
+        </main>
     </div>
 </body>
 </html>

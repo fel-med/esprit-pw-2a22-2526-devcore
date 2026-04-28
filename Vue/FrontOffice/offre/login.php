@@ -90,7 +90,7 @@ $admins = $directory['admin'] ?? [];
     <link rel="stylesheet" href="offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre.css')); ?>">
 </head>
 <body>
-    <?php require_once dirname(__DIR__) . '/header.php'; ?>
+    <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
     <main class="container py-5">
         <div class="offre-page-shell login-directory-shell">
             <section class="module-hero">

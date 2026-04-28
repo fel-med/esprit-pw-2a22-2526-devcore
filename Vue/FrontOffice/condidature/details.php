@@ -399,7 +399,7 @@ if (!empty($errors) && !$lockedForCreator) {
     <link rel="stylesheet" href="condidature.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/condidature.css')); ?>">
 </head>
 <body>
-    <?php require_once dirname(__DIR__) . '/header.php'; ?>
+    <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
     <main class="container py-5">
         <div class="offre-page-shell">
             <?php if ($notice !== ''): ?>

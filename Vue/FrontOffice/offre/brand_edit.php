@@ -70,6 +70,7 @@ function renderCreatorPickerCard(array $creator, $selectedCreatorId = 0)
         data-live="<?php echo $liveOffers; ?>"
     >
         <span class="creator-option-body">
+            <span class="creator-selected-badge" aria-hidden="true">Selected</span>
             <span class="creator-top">
                 <span>
                     <strong><?php echo htmlspecialchars((string) ($creator['nom'] ?? '')); ?></strong>
@@ -285,7 +286,7 @@ $draftButtonLabel = $isDraftOffer ? 'Keep as draft' : 'Save as draft';
     <link rel="stylesheet" href="offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre.css')); ?>">
 </head>
 <body>
-    <?php require_once dirname(__DIR__) . '/header.php'; ?>
+    <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
     <main class="container py-5">
         <div class="offre-page-shell">
             <?php if (!$offer && $_SERVER['REQUEST_METHOD'] !== 'POST'): ?>

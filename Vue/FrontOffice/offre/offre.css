@@ -1,3 +1,5 @@
+@import url("../layout/front-layout.css");
+
 /* Offre module - FrontOffice */
 
 :root {
@@ -848,6 +850,7 @@
 }
 
 .creator-option-body {
+  position: relative;
   display: grid;
   gap: 0.75rem;
   min-height: 100%;
@@ -870,9 +873,45 @@
 }
 
 .creator-option.is-selected .creator-option-body {
-  background: rgba(30, 48, 243, 0.05);
-  border-color: rgba(30, 48, 243, 0.4);
-  box-shadow: 0 18px 35px rgba(30, 48, 243, 0.12);
+  background:
+    radial-gradient(circle at top right, rgba(108, 92, 231, 0.16), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(243, 240, 255, 0.96));
+  border-color: rgba(108, 92, 231, 0.82);
+  box-shadow:
+    0 0 0 3px rgba(108, 92, 231, 0.12),
+    0 20px 42px rgba(108, 92, 231, 0.22);
+  transform: translateY(-2px);
+}
+
+.creator-selected-badge {
+  position: absolute;
+  bottom: 0.85rem;
+  right: 0.85rem;
+  display: none;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.32rem 0.58rem;
+  border-radius: 999px;
+  background: #6c5ce7;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  box-shadow: 0 12px 24px rgba(108, 92, 231, 0.24);
+}
+
+.creator-selected-badge::before {
+  content: "OK";
+  font-size: 0.72rem;
+}
+
+.creator-option.is-selected .creator-selected-badge {
+  display: inline-flex;
+}
+
+.creator-option.is-selected .creator-meta {
+  padding-right: 6.5rem;
 }
 
 .creator-top {
@@ -928,21 +967,26 @@
   align-items: center;
 }
 
-.creator-modal-open {
+html.creator-modal-open,
+body.creator-modal-open {
   overflow: hidden;
 }
 
 .creator-modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 1060;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 99999;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  padding: clamp(1.5rem, 6vh, 4rem) 1.5rem 1.5rem;
+  padding: 1.5rem;
   background: rgba(15, 23, 42, 0.42);
   backdrop-filter: blur(14px);
-  overflow-y: auto;
+  overflow: hidden;
+  overscroll-behavior: contain;
 }
 
 .creator-modal-overlay[hidden] {
@@ -950,10 +994,10 @@
 }
 
 .creator-modal-card {
-  width: min(44rem, 100%);
-  max-height: min(82vh, 46rem);
+  width: min(58rem, 100%);
+  max-height: min(88vh, 48rem);
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr);
   border-radius: 1.55rem;
   border: 1px solid rgba(30, 48, 243, 0.18);
   background:
@@ -1025,13 +1069,17 @@
 
 .creator-modal-stack {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.85rem;
 }
 
 .creator-modal-footer {
   align-items: center;
-  border-top: 1px solid rgba(148, 163, 184, 0.16);
-  background: rgba(255, 255, 255, 0.72);
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.84);
 }
 
 .creator-modal-end {
@@ -2188,6 +2236,15 @@ dialog.delete-dialog {
     max-height: calc(100vh - 2rem);
   }
 
+  .creator-modal-stack {
+    grid-template-columns: 1fr;
+  }
+
+  .creator-modal-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
   .offer-tab-list {
     overflow-x: auto;
     flex-wrap: nowrap;
@@ -2198,5 +2255,110 @@ dialog.delete-dialog {
   .offer-tab-button {
     width: auto;
     flex: 0 0 auto;
+  }
+}
+
+/* Shared team-style refinement: closer to the product/campaign FrontOffice screens. */
+body {
+  background:
+    radial-gradient(circle at top left, rgba(108, 92, 231, 0.08), transparent 30rem),
+    radial-gradient(circle at top right, rgba(236, 72, 153, 0.06), transparent 26rem),
+    #f6f4fc;
+  color: var(--offre-title);
+}
+
+body > main.container,
+body > main.container-fluid {
+  width: min(1400px, calc(100vw - 3rem));
+  max-width: none;
+  padding-top: 2rem !important;
+  padding-bottom: 2.25rem !important;
+}
+
+.module-hero {
+  padding: 1.55rem 1.75rem;
+  border-radius: 1.15rem;
+  background:
+    radial-gradient(circle at top right, rgba(236, 72, 153, 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(252, 251, 255, 0.96));
+  box-shadow: 0 14px 34px rgba(30, 48, 243, 0.08);
+}
+
+.module-hero::after {
+  opacity: 0.55;
+}
+
+.module-hero .display-5,
+.module-hero h1 {
+  font-size: clamp(2rem, 4vw, 3.1rem);
+  line-height: 1.05;
+}
+
+.section-card,
+.filter-card,
+.offer-card,
+.empty-state-card,
+.info-card,
+.response-card,
+.invitation-card,
+.wizard-card,
+.wizard-sidebar,
+.stat-card {
+  border-color: rgba(108, 92, 231, 0.13);
+  box-shadow: 0 14px 34px rgba(30, 48, 243, 0.07);
+}
+
+.stat-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  padding: 1rem 1.15rem;
+}
+
+.stat-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, #6c5ce7, #22c55e, #f59e0b, #ef476f);
+}
+
+.stat-value {
+  font-size: 1.65rem;
+}
+
+.btn-primary,
+.search-actions button,
+.candidature-review-actions button {
+  border-color: #4f46e5 !important;
+  background: #4f46e5 !important;
+  box-shadow: 0 14px 28px rgba(79, 70, 229, 0.18);
+}
+
+.btn-primary:hover,
+.search-actions button:hover,
+.candidature-review-actions button:hover {
+  border-color: #4338ca !important;
+  background: #4338ca !important;
+}
+
+.btn-outline-secondary,
+.clear-link {
+  border-color: rgba(108, 92, 231, 0.22) !important;
+  color: #4f46e5 !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+}
+
+.btn-outline-secondary:hover,
+.clear-link:hover {
+  background: #ece8ff !important;
+  color: #4338ca !important;
+}
+
+@media (max-width: 768px) {
+  body > main.container,
+  body > main.container-fluid {
+    width: min(100vw - 1rem, 1400px);
+    padding-top: 1rem !important;
   }
 }

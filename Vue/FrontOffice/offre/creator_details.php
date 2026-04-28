@@ -136,7 +136,7 @@ $declineWorkspaceUrl = $idOffre !== null ? buildResponseWorkspaceUrl($idOffre, '
     <link rel="stylesheet" href="offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre.css')); ?>">
 </head>
 <body>
-    <?php require_once dirname(__DIR__) . '/header.php'; ?>
+    <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
     <main class="container py-5">
         <div class="offre-page-shell">
             <?php if ($error): ?>
@@ -267,46 +267,20 @@ $declineWorkspaceUrl = $idOffre !== null ? buildResponseWorkspaceUrl($idOffre, '
                         <section class="response-card">
                             <h2 class="section-title">Response workflow</h2>
                             <p class="section-subtitle">
-                                Start from this offer, then finish the structured response in the candidature workspace.
+                                Complete your response, terms, availability, and negotiation from the candidature workspace.
                             </p>
 
-                            <?php if ($isResponseLocked): ?>
-                                <div class="response-callout response-callout-accepted mt-4">
-                                    <strong>Response locked</strong>
-                                    <div class="mt-2 text-muted small">
-                                        This invitation already moved into a locked stage. You can still open the response workspace and review the final response details.
-                                    </div>
+                            <div class="response-callout mt-4">
+                                <strong><?php echo $isResponseLocked ? 'Response already stored' : ($isNegotiationOnly ? 'Negotiation continues in candidature' : 'Ready to respond'); ?></strong>
+                                <div class="mt-2 text-muted small">
+                                    <?php echo $isResponseLocked
+                                        ? 'Open the candidature workspace to review the final response details and decision history.'
+                                        : 'Use the candidature workspace for the real Accept, Decline, Negotiate, and Save as draft actions.'; ?>
                                 </div>
-                                <div class="compact-actions mt-4">
-                                    <a class="btn btn-primary w-100" href="<?php echo htmlspecialchars($responseWorkspaceUrl); ?>">Open response workspace</a>
-                                </div>
-                            <?php elseif ($isNegotiationOnly): ?>
-                                <div class="response-action-grid mt-4">
-                                    <a class="response-action-card response-action-card-accent" href="<?php echo htmlspecialchars($negotiateWorkspaceUrl); ?>">
-                                        <strong>Continue negotiation</strong>
-                                        <span>Update only the message, budget, and delivery timeline for this ongoing negotiation.</span>
-                                    </a>
-                                    <a class="response-action-card" href="<?php echo htmlspecialchars($responseWorkspaceUrl); ?>">
-                                        <strong>Open full response workspace</strong>
-                                        <span>Review the source context and continue the negotiation without losing your previous values.</span>
-                                    </a>
-                                </div>
-                            <?php else: ?>
-                                <div class="response-action-grid mt-4">
-                                    <a class="response-action-card response-action-card-accept" href="<?php echo htmlspecialchars($acceptWorkspaceUrl); ?>">
-                                        <strong>Accept</strong>
-                                        <span>Send a standard acceptance response and move the invitation into review.</span>
-                                    </a>
-                                    <a class="response-action-card response-action-card-negotiate" href="<?php echo htmlspecialchars($negotiateWorkspaceUrl); ?>">
-                                        <strong>Negotiate</strong>
-                                        <span>Adjust budget, timing, or context before you confirm the collaboration.</span>
-                                    </a>
-                                    <a class="response-action-card response-action-card-decline response-action-card-center" href="<?php echo htmlspecialchars($declineWorkspaceUrl); ?>">
-                                        <strong>Decline</strong>
-                                        <span>Keep the offer visible in your history while clearly declining the invitation.</span>
-                                    </a>
-                                </div>
-                            <?php endif; ?>
+                            </div>
+                            <div class="compact-actions mt-4">
+                                <a class="btn btn-primary w-100" href="<?php echo htmlspecialchars($responseWorkspaceUrl); ?>">Open candidature workspace</a>
+                            </div>
                         </section>
 
                         <div class="compact-actions">

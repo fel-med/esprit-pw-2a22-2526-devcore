@@ -734,13 +734,18 @@
 .response-modal-overlay {
   position: fixed;
   inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
   display: none;
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
   background: rgba(15, 23, 42, 0.4);
   backdrop-filter: blur(12px);
-  z-index: 1050;
+  z-index: 99999;
+  overflow: hidden;
+  overscroll-behavior: contain;
 }
 
 .response-modal-overlay.is-open {
@@ -760,7 +765,7 @@
 
 .response-modal-card {
   width: min(42rem, 100%);
-  max-height: min(90vh, 48rem);
+  max-height: min(88vh, 46rem);
   position: relative;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
@@ -795,7 +800,7 @@
 }
 
 .response-modal-card[data-modal-variant="negotiate"] {
-  width: min(34rem, 100%);
+  width: min(38rem, 100%);
   max-height: min(88vh, 43rem);
   border-color: rgba(245, 158, 11, 0.2);
   background:
@@ -866,6 +871,11 @@
     linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(247, 249, 255, 0.93));
 }
 
+html.offre-modal-open,
+body.offre-modal-open {
+  overflow: hidden;
+}
+
 .response-modal-card[data-modal-variant="negotiate"] .response-modal-body {
   gap: 0.9rem;
   padding: 1.15rem 1.25rem 1.35rem;
@@ -906,6 +916,45 @@
   color: var(--offre-muted);
   font-size: 0.97rem;
   line-height: 1.7;
+}
+
+.modal-validation-summary {
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(180, 35, 24, 0.2);
+  background: rgba(180, 35, 24, 0.08);
+  color: #b42318;
+}
+
+.modal-validation-summary strong {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-weight: 900;
+}
+
+.modal-validation-summary ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.modal-field-error {
+  display: block;
+  margin-top: 0.42rem;
+  color: #b42318;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.response-modal-card .form-control.is-invalid,
+.response-modal-card .form-select.is-invalid {
+  border-color: rgba(180, 35, 24, 0.56);
+  box-shadow: 0 0 0 0.18rem rgba(180, 35, 24, 0.12);
+}
+
+.response-modal-card[data-modal-variant="negotiate"] .form-control.is-invalid,
+.response-modal-card[data-modal-variant="negotiate"] .form-select.is-invalid {
+  border-color: rgba(180, 35, 24, 0.56);
+  box-shadow: 0 0 0 0.18rem rgba(180, 35, 24, 0.12);
 }
 
 .response-modal-preview {
