@@ -33,115 +33,128 @@ $liste = $reclamationC->afficherReclamationsAvecReponsesUser($_SESSION['id']);
     <style>
         /* Mode Jour/Nuit - CSS Complet */
         body.light-mode {
-            background-color: #ffffff !important;
-            color: #000 !important;
+            background-color: #1a1a1a !important;
+            color: #ffffff !important;
         }
 
         .light-mode * {
-            background-color: inherit;
-            color: inherit;
+            background-color: #1a1a1a !important;
+            color: #ffffff !important;
         }
 
         .light-mode .navbar {
-            background-color: #ffffff !important;
-            border-bottom: 1px solid #dee2e6;
+            background-color: #0d0d0d !important;
+            border-bottom: 1px solid #333 !important;
         }
 
         .light-mode .navbar-light .navbar-nav .nav-link {
-            color: #000 !important;
+            color: #ffffff !important;
         }
 
         .light-mode .card {
-            background-color: #f8f9fa !important;
-            color: #000 !important;
-            border-color: #dee2e6 !important;
+            background-color: #2d2d2d !important;
+            border-color: #444 !important;
+            color: #ffffff !important;
         }
 
         .light-mode .card-body {
-            background-color: #f8f9fa !important;
-            color: #000 !important;
+            background-color: #2d2d2d !important;
+            color: #ffffff !important;
         }
 
         .light-mode .form-control,
         .light-mode .form-select {
-            background-color: #ffffff !important;
-            color: #000 !important;
-            border-color: #dee2e6 !important;
+            background-color: #3d3d3d !important;
+            color: #ffffff !important;
+            border-color: #555 !important;
         }
 
         .light-mode .form-control:focus,
         .light-mode .form-select:focus {
-            background-color: #ffffff !important;
-            color: #000 !important;
-            border-color: #0d6efd !important;
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+            background-color: #3d3d3d !important;
+            color: #ffffff !important;
+            border-color: #9B5DE0 !important;
+            box-shadow: 0 0 0 0.2rem rgba(155, 93, 224, 0.25) !important;
         }
 
         .light-mode textarea.form-control {
-            background-color: #ffffff !important;
-            color: #000 !important;
+            background-color: #3d3d3d !important;
+            color: #ffffff !important;
         }
 
         .light-mode .form-label {
-            color: #000 !important;
+            color: #ffffff !important;
         }
 
         .light-mode .btn-secondary {
-            background-color: #6c757d !important;
-            border-color: #6c757d !important;
-            color: #fff !important;
+            background-color: #444 !important;
+            border-color: #555 !important;
+            color: #ffffff !important;
         }
 
         .light-mode .btn-secondary:hover {
-            background-color: #5a6268 !important;
-            border-color: #545b62 !important;
+            background-color: #555 !important;
+            border-color: #666 !important;
         }
 
         .light-mode .modal-content {
-            background-color: #f8f9fa !important;
-            color: #000 !important;
-            border-color: #dee2e6 !important;
+            background-color: #2d2d2d !important;
+            color: #ffffff !important;
+            border-color: #444 !important;
         }
 
         .light-mode .modal-header {
-            background-color: #e9ecef !important;
-            border-color: #dee2e6 !important;
-            color: #000 !important;
+            background-color: #1a1a1a !important;
+            border-color: #444 !important;
+            color: #ffffff !important;
         }
 
         .light-mode .modal-title {
-            color: #000 !important;
+            color: #ffffff !important;
         }
 
         .light-mode .alert {
-            background-color: #f8f9fa !important;
-            border-color: #dee2e6 !important;
+            background-color: #2d2d2d !important;
+            border-color: #444 !important;
+            color: #ffffff !important;
         }
 
         .light-mode .alert-success {
-            background-color: #d4edda !important;
-            border-color: #c3e6cb !important;
-            color: #155724 !important;
+            background-color: #1e4620 !important;
+            border-color: #2d6a2f !important;
+            color: #90ee90 !important;
         }
 
         .light-mode .alert-warning {
-            background-color: #fff3cd !important;
-            border-color: #ffeaa7 !important;
-            color: #856404 !important;
+            background-color: #664d1a !important;
+            border-color: #995500 !important;
+            color: #ffcc99 !important;
         }
 
         .light-mode footer {
-            background-color: #ffffff !important;
-            color: #000 !important;
-            border-top: 1px solid #dee2e6;
+            background-color: #0d0d0d !important;
+            color: #ffffff !important;
+            border-top: 1px solid #333 !important;
         }
 
         .light-mode .text-muted {
-            color: #6c757d !important;
+            color: #aaaaaa !important;
         }
 
         .light-mode .text-gradient {
-            color: #0d6efd !important;
+            color: #D78FEE !important;
+        }
+
+        .light-mode .bg-light {
+            background-color: #1a1a1a !important;
+        }
+
+        .light-mode .bg-white {
+            background-color: #0d0d0d !important;
+        }
+
+        .light-mode .bg-gradient-primary-to-secondary {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
         }
 
         /* Transitions lisses */
@@ -420,6 +433,121 @@ $liste = $reclamationC->afficherReclamationsAvecReponsesUser($_SESSION['id']);
     <!-- Core theme JS-->
     <script src="js/scripts.js"></script>
 
+    <!-- Contrôle de Saisie JavaScript -->
+    <script>
+        // ===== VALIDATION FORMULAIRE RÉCLAMATION =====
+        function validateReclamation(form) {
+            const descriptionInput = document.getElementById('descriptionInput');
+            const descriptionError = document.getElementById('descriptionError');
+            
+            const description = descriptionInput.value.trim();
+            
+            // Réinitialiser les styles d'erreur
+            descriptionInput.classList.remove('border-danger');
+            descriptionError.classList.add('d-none');
+            
+            // Vérification 1: Le champ ne doit pas être vide
+            if (description === '') {
+                descriptionError.textContent = '❌ La description est obligatoire.';
+                descriptionError.classList.remove('d-none');
+                descriptionInput.classList.add('border-danger');
+                descriptionInput.focus();
+                return false;
+            }
+            
+            // Vérification 2: Minimum 10 caractères
+            if (description.length < 10) {
+                descriptionError.textContent = `❌ La description doit contenir au minimum 10 caractères. (${description.length}/10)`;
+                descriptionError.classList.remove('d-none');
+                descriptionInput.classList.add('border-danger');
+                descriptionInput.focus();
+                return false;
+            }
+            
+            // Vérification 3: Maximum 50 caractères
+            if (description.length > 50) {
+                descriptionError.textContent = `❌ La description ne doit pas dépasser 50 caractères. (${description.length}/50)`;
+                descriptionError.classList.remove('d-none');
+                descriptionInput.classList.add('border-danger');
+                descriptionInput.focus();
+                return false;
+            }
+            
+            // Vérification 4: Pas que des espaces
+            if (!/\S/.test(description)) {
+                descriptionError.textContent = '❌ La description ne peut pas contenir uniquement des espaces.';
+                descriptionError.classList.remove('d-none');
+                descriptionInput.classList.add('border-danger');
+                descriptionInput.focus();
+                return false;
+            }
+            
+            // Succès - tout est validé
+            descriptionError.classList.add('d-none');
+            descriptionInput.classList.remove('border-danger');
+            return true;
+        }
+        
+        // ===== AFFICHAGE DYNAMIQUE DU COMPTEUR =====
+        const descriptionInput = document.getElementById('descriptionInput');
+        if (descriptionInput) {
+            // Créer un élément pour afficher le compteur
+            const counterElement = document.createElement('small');
+            counterElement.id = 'charCounter';
+            counterElement.className = 'text-muted d-block mt-2';
+            counterElement.textContent = '0/50 caractères';
+            descriptionInput.parentNode.insertBefore(counterElement, descriptionInput.nextSibling);
+            
+            // Mettre à jour le compteur au fur et à mesure
+            descriptionInput.addEventListener('input', function() {
+                const length = this.value.length;
+                const counter = document.getElementById('charCounter');
+                
+                if (counter) {
+                    counter.textContent = `${length}/50 caractères`;
+                    
+                    // Couleur du compteur selon la longueur
+                    if (length < 10) {
+                        counter.className = 'text-danger d-block mt-2 fw-bold';
+                    } else if (length <= 50) {
+                        counter.className = 'text-success d-block mt-2 fw-bold';
+                    } else {
+                        counter.className = 'text-danger d-block mt-2 fw-bold';
+                    }
+                }
+            });
+        }
+        
+        // ===== EFFACER LES ERREURS AU FOCUS =====
+        descriptionInput.addEventListener('focus', function() {
+            const descriptionError = document.getElementById('descriptionError');
+            descriptionError.classList.add('d-none');
+            this.classList.remove('border-danger');
+        });
+        
+        // ===== MODE JOUR/NUIT =====
+        function toggleDarkMode() {
+            document.body.classList.toggle('light-mode');
+            
+            let icon = document.getElementById('themeIcon');
+            if (document.body.classList.contains('light-mode')) {
+                localStorage.setItem('theme', 'light');
+                if (icon) icon.className = 'bi bi-brightness-high';
+            } else {
+                localStorage.setItem('theme', 'dark');
+                if (icon) icon.className = 'bi bi-moon-stars';
+            }
+        }
+        
+        // Appliquer le thème au chargement
+        window.addEventListener('DOMContentLoaded', function() {
+            let icon = document.getElementById('themeIcon');
+            if (localStorage.getItem('theme') === 'light') {
+                document.body.classList.add('light-mode');
+                if (icon) icon.className = 'bi bi-brightness-high';
+            }
+        });
+    </script>
 
 </body>
 
