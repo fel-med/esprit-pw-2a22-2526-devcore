@@ -25,7 +25,7 @@
         'asshole', 'ass',
         'bastard',
         'cunt',
-        'dick', 'dicks',
+        
         'pussy',
         'whore',
         'slut',
