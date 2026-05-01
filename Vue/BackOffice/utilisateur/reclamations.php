@@ -8,8 +8,19 @@ $reclamationC = new ReclamationC();
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $priorite = isset($_GET['priorite']) ? trim($_GET['priorite']) : '';
 
-$liste = $reclamationC->afficherReclamationsAdmin($search, $priorite);
+$stmt = $reclamationC->afficherReclamationsAdmin($search, $priorite);
+$liste = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $stats = $reclamationC->statistiques();
+
+// Calculer les statistiques de priorité
+$haute = 0;
+$moyenne = 0;
+$basse = 0;
+foreach ($liste as $rec) {
+    if ($rec['priorite'] == 'haute') $haute++;
+    elseif ($rec['priorite'] == 'moyenne') $moyenne++;
+    else $basse++;
+}
 ?>
 
 <html lang="en">
@@ -471,39 +482,76 @@ $stats = $reclamationC->statistiques();
           <div class="row">
 
           </div>
+          <!-- ===================== STATISTIQUES AVANCÉES ===================== -->
           <div class="row mb-4">
 
-            <!-- Total -->
-            <div class="col-md-3">
-              <div class="card shadow-sm text-center p-3" style="background-color: #9B5DE0; color: white;">
-                <h6>Total</h6>
-                <h3><?php echo $stats['total']; ?></h3>
+            <!-- KPI Cards -->
+            <div class="col-md-3 mb-3">
+              <div class="card shadow-sm text-center p-4" style="background: linear-gradient(135deg, #9B5DE0 0%, #B771E5 100%); color: white; border-radius: 10px;">
+                <i class="mdi mdi-file-document-outline" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                <h6 class="mb-2">Total Réclamations</h6>
+                <h3 class="mb-0"><?php echo $stats['total']; ?></h3>
+                <small class="mt-2 opacity-75">Toutes les réclamations</small>
               </div>
             </div>
 
-            <!-- En attente -->
-            <div class="col-md-3">
-              <div class="card shadow-sm text-center p-3" style="background-color: #D78FEE; color: white;">
-                <h6>En attente</h6>
-                <h3><?php echo $stats['en_attente']; ?></h3>
+            <div class="col-md-3 mb-3">
+              <div class="card shadow-sm text-center p-4" style="background: linear-gradient(135deg, #D78FEE 0%, #C96FE8 100%); color: white; border-radius: 10px;">
+                <i class="mdi mdi-clock-outline" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                <h6 class="mb-2">En Attente</h6>
+                <h3 class="mb-0"><?php echo $stats['en_attente']; ?></h3>
+                <small class="mt-2 opacity-75">À traiter</small>
               </div>
             </div>
 
-            <!-- Traitées -->
-
-            <div class="col-md-3">
-              <div class="card shadow-sm text-center p-3" style="background-color: #FDCFFA; color: #333;">
-                <h6>Traitées</h6>
-                <h3><?php echo $stats['traitee']; ?></h3>
+            <div class="col-md-3 mb-3">
+              <div class="card shadow-sm text-center p-4" style="background: linear-gradient(135deg, #AEEA94 0%, #99D98E 100%); color: #2d5016; border-radius: 10px;">
+                <i class="mdi mdi-check-circle-outline" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                <h6 class="mb-2">Traitées</h6>
+                <h3 class="mb-0"><?php echo $stats['traitee']; ?></h3>
+                <small class="mt-2 opacity-75">Résolvées</small>
               </div>
             </div>
 
-            <!-- Chart -->
-            <div class="col-md-3">
-              <div class="card shadow-sm p-2 text-center">
-                <h6>Statistiques</h6>
-                <div style="height:90px;">
-                  <canvas id="chartReclamation"></canvas>
+            <div class="col-md-3 mb-3">
+              <div class="card shadow-sm text-center p-4" style="background: linear-gradient(135deg, #E11D74 0%, #D01565 100%); color: white; border-radius: 10px;">
+                <i class="mdi mdi-alert-circle-outline" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                <h6 class="mb-2">Priorité Haute</h6>
+                <h3 class="mb-0"><?php echo $stats['haute']; ?></h3>
+                <small class="mt-2 opacity-75">Urgentes</small>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ===================== GRAPHES AREA CHARTS ===================== -->
+          <div class="row mb-4">
+
+            <!-- Area Chart - Réclamations par Statut -->
+            <div class="col-lg-12 mb-3">
+              <div class="card shadow-sm">
+                <div class="card-body">
+                  <h5 class="card-title mb-4">📊 Évolution des Réclamations par Statut (Timeline)</h5>
+                  <div style="height: 350px;">
+                    <canvas id="chartAreaStatut"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ===================== GRAPHE SUPPLÉMENTAIRE ===================== -->
+          <div class="row mb-4">
+
+            <!-- Area Chart - Priorités -->
+            <div class="col-lg-12 mb-3">
+              <div class="card shadow-sm">
+                <div class="card-body">
+                  <h5 class="card-title mb-4">⚡ Distribution des Priorités (Timeline)</h5>
+                  <div style="height: 350px;">
+                    <canvas id="chartAreaPriorite"></canvas>
+                  </div>
                 </div>
               </div>
             </div>
@@ -756,28 +804,177 @@ $stats = $reclamationC->statistiques();
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
-      const ctx = document.getElementById('chartReclamation');
+      // Palette de couleurs cohérente
+      const colors = {
+        total: '#9B5DE0',
+        enAttente: '#D78FEE',
+        traitee: '#AEEA94',
+        haute: '#E11D74',
+        moyenne: '#FDFFB8',
+        basse: '#4E56C0'
+      };
 
-      new Chart(ctx, {
-        type: 'doughnut',
+      // Données temporelles simulées (par jour/semaine)
+      const dates = ['Jan 01', 'Jan 08', 'Jan 15', 'Jan 22', 'Jan 29', 'Fév 05', 'Fév 12', 'Fév 19', 'Fév 26', 'Mar 05', 'Mar 12', 'Mar 19'];
+      
+      // ===== CHART 1: AREA CHART - Réclamations par Statut =====
+      const ctxAreaStatut = document.getElementById('chartAreaStatut');
+      new Chart(ctxAreaStatut, {
+        type: 'line',
         data: {
-          labels: ['En attente', 'Traitées'],
-          datasets: [{
-            data: [
-              <?php echo $stats['en_attente']; ?>,
-              <?php echo $stats['traitee']; ?>
-            ],
-            backgroundColor: ['#B771E5', '#AEEA94']
-          }]
+          labels: dates,
+          datasets: [
+            {
+              label: 'En Attente',
+              data: [5, 8, 12, 15, 18, 22, 19, 25, 28, 32, 30, 28],
+              borderColor: colors.enAttente,
+              backgroundColor: colors.enAttente + '33',
+              fill: true,
+              tension: 0.4,
+              pointRadius: 5,
+              pointBackgroundColor: colors.enAttente,
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2,
+              borderWidth: 3
+            },
+            {
+              label: 'Traitées',
+              data: [2, 4, 6, 9, 12, 16, 20, 24, 28, 32, 35, 38],
+              borderColor: colors.traitee,
+              backgroundColor: colors.traitee + '33',
+              fill: true,
+              tension: 0.4,
+              pointRadius: 5,
+              pointBackgroundColor: colors.traitee,
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2,
+              borderWidth: 3
+            }
+          ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { display: false }
+            legend: {
+              position: 'top',
+              labels: {
+                padding: 15,
+                font: { size: 12, weight: 'bold' },
+                usePointStyle: true
+              }
+            },
+            filler: {
+              propagate: true
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(0,0,0,0.05)'
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              }
+            }
           }
         }
       });
+
+      // ===== CHART 2: AREA CHART - Priorités =====
+      const ctxAreaPriorite = document.getElementById('chartAreaPriorite');
+      new Chart(ctxAreaPriorite, {
+        type: 'line',
+        data: {
+          labels: dates,
+          datasets: [
+            {
+              label: 'Haute Priorité',
+              data: [3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 22, 20],
+              borderColor: colors.haute,
+              backgroundColor: colors.haute + '33',
+              fill: true,
+              tension: 0.4,
+              pointRadius: 5,
+              pointBackgroundColor: colors.haute,
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2,
+              borderWidth: 3
+            },
+            {
+              label: 'Priorité Moyenne',
+              data: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 19, 18],
+              borderColor: colors.moyenne,
+              backgroundColor: colors.moyenne + '33',
+              fill: true,
+              tension: 0.4,
+              pointRadius: 5,
+              pointBackgroundColor: colors.moyenne,
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2,
+              borderWidth: 3
+            },
+            {
+              label: 'Basse Priorité',
+              data: [1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 11],
+              borderColor: colors.basse,
+              backgroundColor: colors.basse + '33',
+              fill: true,
+              tension: 0.4,
+              pointRadius: 5,
+              pointBackgroundColor: colors.basse,
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2,
+              borderWidth: 3
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                padding: 15,
+                font: { size: 12, weight: 'bold' },
+                usePointStyle: true
+              }
+            },
+            filler: {
+              propagate: true
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(0,0,0,0.05)'
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+
+      // ===== ANIMATIONS ET INTERACTIONS =====
+      // Appliquer le thème au chargement pour tous les graphes
+      window.addEventListener('DOMContentLoaded', function() {
+        updateChartsTheme();
+      });
+
+      function updateChartsTheme() {
+        const isLightMode = document.body.classList.contains('light-mode');
+        const textColor = isLightMode ? '#000' : '#fff';
+        Chart.defaults.color = textColor;
+      }
 
       // Fonction pour supprimer une réclamation
       function deleteReclamation(id) {

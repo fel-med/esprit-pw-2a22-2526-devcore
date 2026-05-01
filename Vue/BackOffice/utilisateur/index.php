@@ -12,8 +12,6 @@ $users = $userC->afficherUsers($search, $role);
 $stats = $userC->getStatistiquesUtilisateurs();
 ?>
 
-<html lang="en">
-
 <head>
   <!-- Required meta tags -->
   <meta charset="utf-8">
@@ -486,52 +484,82 @@ $stats = $userC->getStatistiquesUtilisateurs();
 
           </div>
 
-          <!-- Statistiques Utilisateurs -->
+          <!-- ===================== STATISTIQUES AVANCÉES ===================== -->
+        <div class="row mb-4 align-items-stretch">
+
+  <!-- Total Utilisateurs -->
+  <div class="col-md-3 mb-3 d-flex">
+    <div class="card shadow-sm text-center p-4 h-100 w-100" style="background: linear-gradient(135deg, #9B5DE0 0%, #B771E5 100%); color: white; border-radius: 10px;">
+      <i class="mdi mdi-account-multiple" style="font-size: 2rem; margin-bottom: 10px;"></i>
+      <h6 class="mb-2">Total Utilisateurs</h6>
+      <h3 class="mb-0"><?php echo $stats['total']; ?></h3>
+      <small class="mt-2 opacity-75">Tous les comptes</small>
+    </div>
+  </div>
+
+  <!-- Admin -->
+  <div class="col-md-3 mb-3 d-flex">
+    <div class="card shadow-sm text-center p-4 h-100 w-100" style="background: linear-gradient(135deg, #D78FEE 0%, #C96FE8 100%); color: white; border-radius: 10px;">
+      <i class="mdi mdi-shield-admin" style="font-size: 2rem; margin-bottom: 10px;"></i>
+      <h6 class="mb-2">Administrateurs</h6>
+      <h3 class="mb-0"><?php echo $stats['admin']; ?></h3>
+      <small class="mt-2 opacity-75">Comptes admin</small>
+    </div>
+  </div>
+
+  <!-- Créateurs -->
+  <div class="col-md-3 mb-3 d-flex">
+    <div class="card shadow-sm text-center p-4 h-100 w-100" style="background: linear-gradient(135deg, #AEEA94 0%, #99D98E 100%); color: #2d5016; border-radius: 10px;">
+      <i class="mdi mdi-account-convert" style="font-size: 2rem; margin-bottom: 10px;"></i>
+      <h6 class="mb-2">Créateurs</h6>
+      <h3 class="mb-0"><?php echo $stats['createur']; ?></h3>
+      <small class="mt-2 opacity-75">Comptes créateur</small>
+    </div>
+  </div>
+
+  <!-- Marques -->
+  <div class="col-md-3 mb-3 d-flex">
+    <div class="card shadow-sm text-center p-4 h-100 w-100" style="background: linear-gradient(135deg, #E11D74 0%, #D01565 100%); color: white; border-radius: 10px;">
+      <i class="mdi mdi-store" style="font-size: 2rem; margin-bottom: 10px;"></i>
+      <h6 class="mb-2">Marques</h6>
+      <h3 class="mb-0"><?php echo $stats['marque']; ?></h3>
+      <small class="mt-2 opacity-75">Comptes marque</small>
+    </div>
+  </div>
+
+</div>
+          <!-- ===================== GRAPHES AREA CHARTS ===================== -->
           <div class="row mb-4">
-            <div class="col-md-3">
-              <div class="card shadow-sm text-center p-3" style="background-color: #9B5DE0; color: white;">
-                <h6>Total Utilisateurs</h6>
-                <h3><?php echo $stats['total']; ?></h3>
+
+            <!-- Area Chart - Distribution des Rôles -->
+            <div class="col-lg-12 mb-3">
+              <div class="card shadow-sm">
+                <div class="card-body">
+                  <h5 class="card-title mb-4">📊 Évolution des Utilisateurs par Rôle (Timeline)</h5>
+                  <div style="height: 350px;">
+                    <canvas id="chartAreaRole"></canvas>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="col-md-3">
-              <div class="card shadow-sm text-center p-3" style="background-color: #D78FEE; color: white;">
-                <h6>Admin</h6>
-                <h3><?php echo $stats['admin']; ?></h3>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="card shadow-sm text-center p-3" style="background-color: #FDCFFA; color: #333;">
-                <h6>Créateurs</h6>
-                <h3><?php echo $stats['createur']; ?></h3>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="card shadow-sm text-center p-3" style="background-color: #9B5DE0; color: white;">
-                <h6>Marques</h6>
-                <h3><?php echo $stats['marque']; ?></h3>
-              </div>
-            </div>
+
           </div>
 
-          <!-- Charts -->
+          <!-- ===================== GRAPHE SUPPLÉMENTAIRE ===================== -->
           <div class="row mb-4">
-            <div class="col-md-6">
-              <div class="card shadow-sm p-3">
-                <h6 class="text-center mb-3">Répartition par Rôle</h6>
-                <div style="height:200px;">
-                  <canvas id="chartRole"></canvas>
+
+            <!-- Area Chart - Statut des Utilisateurs -->
+            <div class="col-lg-12 mb-3">
+              <div class="card shadow-sm">
+                <div class="card-body">
+                  <h5 class="card-title mb-4">👥 Statut des Utilisateurs (Timeline)</h5>
+                  <div style="height: 350px;">
+                    <canvas id="chartAreaStatus"></canvas>
+                  </div>
                 </div>
               </div>
             </div>
-            <div class="col-md-6">
-              <div class="card shadow-sm p-3">
-                <h6 class="text-center mb-3">Statut des Utilisateurs</h6>
-                <div style="height:200px;">
-                  <canvas id="chartStatus"></canvas>
-                </div>
-              </div>
-            </div>
+
           </div>
           <div class="row ">
             <div class="col-12 grid-margin">
@@ -695,59 +723,174 @@ $stats = $userC->getStatistiquesUtilisateurs();
   <div class="jvectormap-tip" style="display: none; left: 605.948px; top: 2089px;">United States</div>
 
   <script>
-    // Chart - Répartition par Rôle
-    const ctxRole = document.getElementById('chartRole');
-    if (ctxRole) {
-      new Chart(ctxRole, {
-        type: 'doughnut',
-        data: {
-          labels: ['Admin', 'Créateurs', 'Marques'],
-          datasets: [{
-            data: [
-              <?php echo $stats['admin']; ?>,
-              <?php echo $stats['createur']; ?>,
-              <?php echo $stats['marque']; ?>
-            ],
-            backgroundColor: ['#9B5DE0', '#D78FEE', '#FDCFFA']
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'bottom' }
-          }
-        }
-      });
-    }
+    // Palette de couleurs cohérente
+    const colors = {
+      admin: '#9B5DE0',
+      createur: '#AEEA94',
+      marque: '#E11D74',
+      actif: '#9B5DE0',
+      inactif: '#D78FEE'
+    };
 
-    // Chart - Statut des Utilisateurs
-    const ctxStatus = document.getElementById('chartStatus');
-    if (ctxStatus) {
-      new Chart(ctxStatus, {
-        type: 'bar',
-        data: {
-          labels: ['Actif', 'Inactif'],
-          datasets: [{
-            label: 'Nombre',
-            data: [
-              <?php echo $stats['actif']; ?>,
-              <?php echo $stats['inactif']; ?>
-            ],
-            backgroundColor: ['#9B5DE0', '#D78FEE']
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'bottom' }
+    // Données temporelles simulées
+    const dates = ['Jan 01', 'Jan 08', 'Jan 15', 'Jan 22', 'Jan 29', 'Fév 05', 'Fév 12', 'Fév 19', 'Fév 26', 'Mar 05', 'Mar 12', 'Mar 19'];
+    
+    // ===== CHART 1: AREA CHART - Utilisateurs par Rôle =====
+    const ctxAreaRole = document.getElementById('chartAreaRole');
+    new Chart(ctxAreaRole, {
+      type: 'line',
+      data: {
+        labels: dates,
+        datasets: [
+          {
+            label: 'Administrateurs',
+            data: [2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4],
+            borderColor: colors.admin,
+            backgroundColor: colors.admin + '33',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 5,
+            pointBackgroundColor: colors.admin,
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            borderWidth: 3
           },
-          scales: {
-            y: { beginAtZero: true }
+          {
+            label: 'Créateurs',
+            data: [8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30],
+            borderColor: colors.createur,
+            backgroundColor: colors.createur + '33',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 5,
+            pointBackgroundColor: colors.createur,
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            borderWidth: 3
+          },
+          {
+            label: 'Marques',
+            data: [5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17],
+            borderColor: colors.marque,
+            backgroundColor: colors.marque + '33',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 5,
+            pointBackgroundColor: colors.marque,
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            borderWidth: 3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              padding: 15,
+              font: { size: 12, weight: 'bold' },
+              usePointStyle: true
+            }
+          },
+          filler: {
+            propagate: true
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(0,0,0,0.05)'
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            }
           }
         }
-      });
+      }
+    });
+
+    // ===== CHART 2: AREA CHART - Statut des Utilisateurs =====
+    const ctxAreaStatus = document.getElementById('chartAreaStatus');
+    new Chart(ctxAreaStatus, {
+      type: 'line',
+      data: {
+        labels: dates,
+        datasets: [
+          {
+            label: 'Actif',
+            data: [15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48],
+            borderColor: colors.actif,
+            backgroundColor: colors.actif + '33',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 5,
+            pointBackgroundColor: colors.actif,
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            borderWidth: 3
+          },
+          {
+            label: 'Inactif',
+            data: [0, 0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 6],
+            borderColor: colors.inactif,
+            backgroundColor: colors.inactif + '33',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 5,
+            pointBackgroundColor: colors.inactif,
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            borderWidth: 3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              padding: 15,
+              font: { size: 12, weight: 'bold' },
+              usePointStyle: true
+            }
+          },
+          filler: {
+            propagate: true
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(0,0,0,0.05)'
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            }
+          }
+        }
+      }
+    });
+
+    // Appliquer le thème au chargement pour tous les graphes
+    window.addEventListener('DOMContentLoaded', function() {
+      updateChartsTheme();
+    });
+
+    function updateChartsTheme() {
+      const isLightMode = document.body.classList.contains('light-mode');
+      const textColor = isLightMode ? '#000' : '#fff';
+      Chart.defaults.color = textColor;
     }
   </script>
 

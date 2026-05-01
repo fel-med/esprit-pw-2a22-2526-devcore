@@ -1,11 +1,16 @@
 <?php
 require_once '../../../Controleur/utilisateurC.php';
 
-$message = "";
+$loginMessage = "";
+$resetMessage = "";
+
+$userC = new UtilisateurC();
 
 if (isset($_POST['login'])) {
-    $userC = new UtilisateurC();
-    $message = $userC->login($_POST['email'], $_POST['password']);
+    $loginMessage = $userC->login($_POST['email'], $_POST['password']);
+}
+if (isset($_POST['reset_email'])) {
+    $resetMessage = $userC->sendResetLink($_POST['reset_email']);
 }
 ?>
 
@@ -69,7 +74,11 @@ if (isset($_POST['login'])) {
                             you dont  have an account?
                             <a href="register.php">sign up</a>
                         </p>
-
+<p class="mt-2 text-end">
+    <a href="#" data-bs-toggle="modal" data-bs-target="#forgotModal">
+        Mot de passe oublié ?
+    </a>
+</p>
                     </div>
 
                     <!-- IMAGE (DROITE) -->
@@ -86,9 +95,40 @@ if (isset($_POST['login'])) {
         </div>
     </div>
 </div>
-
 </main>
-        
+<div class="modal fade" id="forgotModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content p-4" style="border-radius: 15px;">
+
+      <div class="modal-header border-0">
+        <h5 class="modal-title">🔐 Mot de passe oublié</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <form method="POST" id="resetForm">
+
+          <input type="email" name="reset_email" id="emailInput"
+                 class="form-control mb-2"
+                 placeholder="Entrer votre email" required>
+
+          <small id="emailError" class="text-danger d-none">
+            Email invalide
+          </small>
+
+          <button name="reset" class="btn btn-primary w-100 mt-2" id="resetBtn">
+            <span id="btnText">Envoyer le lien</span>
+            <span id="btnLoader" class="spinner-border spinner-border-sm d-none"></span>
+          </button>
+
+        </form>
+
+      </div>
+
+    </div>
+  </div>
+</div>
         <!-- Footer-->
         <footer class="bg-white py-4 mt-auto">
             <div class="container px-5">
@@ -103,10 +143,54 @@ if (isset($_POST['login'])) {
                     </div>
                 </div>
             </div>
+            
         </footer>
         <!-- Bootstrap core JS-->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
         <!-- Core theme JS-->
         <script src="js/scripts.js"></script>
+        <script>
+const form = document.getElementById("resetForm");
+const emailInput = document.getElementById("emailInput");
+const emailError = document.getElementById("emailError");
+const btnText = document.getElementById("btnText");
+const btnLoader = document.getElementById("btnLoader");
+
+// 📧 validation live
+emailInput.addEventListener("input", function() {
+    const email = emailInput.value;
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!regex.test(email)) {
+        emailError.classList.remove("d-none");
+        emailInput.classList.add("is-invalid");
+    } else {
+        emailError.classList.add("d-none");
+        emailInput.classList.remove("is-invalid");
+    }
+});
+
+// ⏳ loader
+form.addEventListener("submit", function() {
+    btnText.classList.add("d-none");
+    btnLoader.classList.remove("d-none");
+});
+</script>
+<div class="toast position-fixed bottom-0 end-0 m-4" id="toastMsg">
+  <div class="toast-body bg-success text-white rounded">
+    <?= $resetMessage ?? "" ?>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- 🔥 Script toast -->
+<?php if (!empty($resetMessage)) { ?>
+<script>
+    var toast = new bootstrap.Toast(document.getElementById('toastMsg'));
+    toast.show();
+</script>
+<?php } ?>
     </body>
 </html>

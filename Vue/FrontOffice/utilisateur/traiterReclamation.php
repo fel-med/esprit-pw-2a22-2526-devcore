@@ -5,7 +5,7 @@ require_once __DIR__ . '/../../../Controleur/reclamationC.php';
 
 session_start();
 
-// 🔐 Vérification utilisateur connecté
+// Vérification utilisateur connecté
 if (!isset($_SESSION['id'])) {
     header('Location: login.php');
     exit();
