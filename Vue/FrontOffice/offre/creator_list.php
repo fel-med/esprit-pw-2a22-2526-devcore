@@ -7,10 +7,34 @@ if (!isset($_SESSION['utilisateur'])) {
 }
 
 require_once __DIR__ . '/../../../Controleur/offreC.php';
+require_once __DIR__ . '/../../../Controleur/condidatureC.php';
 
 $controller = new OffreC();
+$candidatureController = new CondidatureC();
 $creatorId = $_SESSION['utilisateur']['id'];
-$savedOffers = $_SESSION['saved_offer_ids'] ?? [];
+$notificationController = $candidatureController;
+$notificationUserId = (int) $creatorId;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['notificationAction'])) {
+    $notificationAction = (string) $_POST['notificationAction'];
+    if ($notificationAction === 'mark_one') {
+        $notificationController->markNotificationActionAsRead((int) ($_POST['idNotificationAction'] ?? 0), $notificationUserId);
+    } elseif ($notificationAction === 'mark_all') {
+        $notificationController->markAllNotificationActionsAsRead($notificationUserId);
+    }
+
+    $redirect = basename((string) ($_SERVER['SCRIPT_NAME'] ?? 'creator_list.php'));
+    if (!empty($_SERVER['QUERY_STRING'])) {
+        $redirect .= '?' . $_SERVER['QUERY_STRING'];
+    }
+    header('Location: ' . $redirect);
+    exit;
+}
+
+if ($notificationUserId > 0) {
+    $notificationController->generateCreatorDeadlineSoonNotifications($notificationUserId);
+}
+
 $offres = [];
 $error = null;
 $notice = isset($_GET['notice']) ? trim((string) $_GET['notice']) : null;
@@ -207,7 +231,7 @@ function buildCreatorOfferSections(array $offres, array $responseGroups, array $
             'themeClass' => 'section-waiting',
             'title' => 'Saved invitations',
             'subtitle' => 'Offers you bookmarked so you can come back to them later.',
-            'empty' => 'No saved invitations yet.',
+            'empty' => 'No saved invitations yet. Save invitations to review them later.',
             'cards' => $savedOfferList,
         ],
     ];
@@ -269,21 +293,27 @@ function excerptText($text, $length = 155)
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggleSaved'], $_POST['idOffre']) && is_numeric($_POST['idOffre'])) {
     $offerId = (int) $_POST['idOffre'];
-    $savedOffers = $_SESSION['saved_offer_ids'] ?? [];
+    $wasSaved = $controller->isOffreSavedByCreator($creatorId, $offerId);
+    $noticeMessage = '';
+    $noticeTypeForRedirect = 'success';
 
-    if (in_array($offerId, $savedOffers, true)) {
-        $savedOffers = array_values(array_filter($savedOffers, static fn($id) => (int) $id !== $offerId));
+    if ($wasSaved) {
+        $controller->unsaveOffreForCreator($creatorId, $offerId);
+        $noticeMessage = 'Invitation removed from your saved list.';
     } else {
-        $savedOffers[] = $offerId;
-        $savedOffers = array_values(array_unique(array_map('intval', $savedOffers)));
+        if ($controller->saveOffreForCreator($creatorId, $offerId)) {
+            $noticeMessage = 'Invitation saved for later.';
+        } else {
+            $noticeMessage = 'This invitation cannot be saved anymore.';
+            $noticeTypeForRedirect = 'danger';
+        }
     }
 
-    $_SESSION['saved_offer_ids'] = $savedOffers;
     if (!$isAjaxRequest) {
-        $redirect = 'creator_list.php';
-        if (!empty($_SERVER['QUERY_STRING'])) {
-            $redirect .= '?' . $_SERVER['QUERY_STRING'];
-        }
+        $redirectQuery = $_GET;
+        $redirectQuery['notice'] = $noticeMessage;
+        $redirectQuery['noticeType'] = $noticeTypeForRedirect;
+        $redirect = 'creator_list.php?' . http_build_query($redirectQuery);
         header('Location: ' . $redirect);
         exit;
     }
@@ -293,12 +323,41 @@ $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : null;
 $budgetFrom = isset($_GET['budgetFrom']) && is_numeric($_GET['budgetFrom']) ? (float) $_GET['budgetFrom'] : null;
 $budgetTo = isset($_GET['budgetTo']) && is_numeric($_GET['budgetTo']) ? (float) $_GET['budgetTo'] : null;
 $dateLimite = isset($_GET['dateLimite']) && $_GET['dateLimite'] !== '' ? $_GET['dateLimite'] : null;
+$dateLimiteTo = isset($_GET['dateLimiteTo']) && $_GET['dateLimiteTo'] !== '' ? $_GET['dateLimiteTo'] : null;
+$sort = isset($_GET['sort']) ? trim((string) $_GET['sort']) : '';
+$savedOfferFilters = [
+    'keyword' => $keyword,
+    'budgetFrom' => $budgetFrom,
+    'budgetTo' => $budgetTo,
+    'deadlineFrom' => $dateLimite,
+    'deadlineTo' => $dateLimiteTo,
+];
+$page = max(1, (int) ($_GET['page'] ?? 1));
+$perPage = 10;
+$offset = ($page - 1) * $perPage;
+$hasNextPage = false;
+$creatorMetrics = [
+    'invitationsToAnswer' => 0,
+    'negotiationsWaitingReply' => 0,
+    'closestDeadline' => null,
+    'bestProposedBudget' => 0,
+    'applicationsWaitingDecision' => 0,
+    'draftApplications' => 0,
+    'acceptedCollaborations' => 0,
+];
 
 try {
-    $offres = $controller->searchOffers($creatorId, $keyword, $budgetFrom, $budgetTo, $dateLimite);
+    $offres = $controller->searchOffers($creatorId, $keyword, $budgetFrom, $budgetTo, $dateLimite, $dateLimiteTo, $sort ?: 'budget_high', $perPage + 1, $offset);
+    if (count($offres) > $perPage) {
+        $hasNextPage = true;
+        array_pop($offres);
+    }
     $offerIds = array_map(static fn($offre) => $offre->getIdOffre(), $offres);
     $responseGroups = $controller->getCandidaturesGroupedByOfferIds($offerIds);
-    $offres = sortCreatorOffersForDisplay($offres, $responseGroups, $creatorId);
+    if ($sort === '') {
+        $offres = sortCreatorOffersForDisplay($offres, $responseGroups, $creatorId);
+    }
+    $creatorMetrics = $candidatureController->getCreatorActionMetrics($creatorId);
 } catch (Exception $exception) {
     $error = 'An error occurred while loading your invitations.';
 }
@@ -307,21 +366,17 @@ $offerIds = array_map(static fn($offre) => $offre->getIdOffre(), $offres);
 $brandIds = array_map(static fn($offre) => $offre->getIdMarque(), $offres);
 $brandMap = $controller->getUsersByIds($brandIds, 'marque');
 $responseGroups = $controller->getCandidaturesGroupedByOfferIds($offerIds);
-$savedOffers = $_SESSION['saved_offer_ids'] ?? [];
+$savedOffers = $controller->getSavedOffreIdsByCreator($creatorId);
 $savedOfferList = [];
 $savedBrandMap = [];
 $savedResponseGroups = [];
 
 if (!empty($savedOffers)) {
-    $allCreatorOffers = $controller->getOffresByCreateurCible($creatorId);
-    $savedOfferList = array_values(array_filter($allCreatorOffers, static fn($offre) => in_array($offre->getIdOffre(), $savedOffers, true)));
-    $savedOffers = array_values(array_map(static fn($offre) => (int) $offre->getIdOffre(), $savedOfferList));
-    $_SESSION['saved_offer_ids'] = $savedOffers;
+    $savedOfferList = $controller->getSavedOffresByCreator($creatorId, $savedOfferFilters, $sort === '' ? 'recently_saved' : $sort, 100, 0);
     $savedOfferIds = array_map(static fn($offre) => $offre->getIdOffre(), $savedOfferList);
     $savedBrandIds = array_map(static fn($offre) => $offre->getIdMarque(), $savedOfferList);
     $savedBrandMap = $controller->getUsersByIds($savedBrandIds, 'marque');
     $savedResponseGroups = $controller->getCandidaturesGroupedByOfferIds($savedOfferIds);
-    $savedOfferList = sortCreatorOffersForDisplay($savedOfferList, $savedResponseGroups, $creatorId);
 }
 
 $creatorSections = buildCreatorOfferSections($offres, $responseGroups, $savedOfferList, $creatorId);
@@ -360,6 +415,10 @@ if (!empty($offres)) {
         }
     }
 }
+$paginationBase = $_GET;
+unset($paginationBase['page']);
+$prevPageUrl = $page > 1 ? 'creator_list.php?' . http_build_query($paginationBase + ['page' => $page - 1]) : '';
+$nextPageUrl = $hasNextPage ? 'creator_list.php?' . http_build_query($paginationBase + ['page' => $page + 1]) : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -374,39 +433,40 @@ if (!empty($offres)) {
     <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
     <main class="container py-5">
         <div class="offre-page-shell">
-            <section class="module-hero">
-                <span class="module-eyebrow">Creator inbox</span>
-                <h1 class="display-5 fw-bold mt-3 mb-2 gradient-title">Offers for you</h1>
-                <p class="lead text-muted">Browse targeted invitations from brands, save the ones you want to revisit, and respond when the collaboration feels right.</p>
+            <section class="module-hero module-hero-notification-shell">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                    <div>
+                        <span class="module-eyebrow">Creator inbox</span>
+                        <h1 class="display-5 fw-bold mt-3 mb-2 gradient-title">Offers for you</h1>
+                        <p class="lead text-muted">Browse targeted invitations from brands, save the ones you want to revisit, and respond when the collaboration feels right.</p>
+                    </div>
+                    <div class="compact-actions">
+                        <?php require __DIR__ . '/../condidature/notification_widget.php'; ?>
+                    </div>
+                </div>
             </section>
 
             <div class="creator-live-region" data-creator-live-region>
                 <section class="stats-grid">
                 <article class="stat-card">
-                    <span class="stat-label">Visible invitations</span>
-                    <span class="stat-value"><?php echo count($offres); ?></span>
-                    <span class="stat-note">Offers currently matching your filters</span>
+                    <span class="stat-label">Invitations to answer</span>
+                    <span class="stat-value"><?php echo (int) ($creatorMetrics['invitationsToAnswer'] ?? 0); ?></span>
+                    <span class="stat-note">Active offers without a final response</span>
                 </article>
                 <article class="stat-card">
-                    <span class="stat-label">Saved for later</span>
-                    <span class="stat-value"><?php echo count($savedOfferList); ?></span>
-                    <span class="stat-note">Session-based shortlist</span>
+                    <span class="stat-label">Negotiations waiting reply</span>
+                    <span class="stat-value"><?php echo (int) ($creatorMetrics['negotiationsWaitingReply'] ?? 0); ?></span>
+                    <span class="stat-note">Active negotiation candidatures</span>
                 </article>
                 <article class="stat-card">
-                    <span class="stat-label">Closing soon</span>
-                    <span class="stat-value"><?php echo $closingSoon; ?></span>
-                    <span class="stat-note">Deadlines within the next 7 days</span>
+                    <span class="stat-label">Closest deadline</span>
+                    <span class="stat-value"><?php echo htmlspecialchars($creatorMetrics['closestDeadline'] ?: 'None'); ?></span>
+                    <span class="stat-note">Nearest active invitation or candidature</span>
                 </article>
                 <article class="stat-card">
-                    <span class="stat-label">Average budget</span>
-                    <span class="stat-value"><?php echo count($offres) ? htmlspecialchars(formatMoney($averageBudget)) : 'EUR 0.00'; ?></span>
-                    <span class="stat-note">
-                        <?php if ($topBudgetOffer): ?>
-                            Top budget: <?php echo htmlspecialchars(formatMoney($topBudgetOffer->getBudgetPropose())); ?>
-                        <?php else: ?>
-                            No premium invitations yet
-                        <?php endif; ?>
-                    </span>
+                    <span class="stat-label">Best proposed budget</span>
+                    <span class="stat-value"><?php echo htmlspecialchars(formatMoney($creatorMetrics['bestProposedBudget'] ?? 0)); ?></span>
+                    <span class="stat-note"><?php echo (int) ($creatorMetrics['draftApplications'] ?? 0); ?> draft applications</span>
                 </article>
             </section>
 
@@ -493,6 +553,23 @@ if (!empty($offres)) {
                         <div>
                             <label for="dateLimite" class="form-label fw-semibold">Deadline from</label>
                             <input type="date" class="form-control" id="dateLimite" name="dateLimite" value="<?php echo htmlspecialchars($dateLimite ?? ''); ?>">
+                        </div>
+                        <div>
+                            <label for="dateLimiteTo" class="form-label fw-semibold">Deadline to</label>
+                            <input type="date" class="form-control" id="dateLimiteTo" name="dateLimiteTo" value="<?php echo htmlspecialchars($dateLimiteTo ?? ''); ?>">
+                        </div>
+                        <div>
+                            <label for="sort" class="form-label fw-semibold">Sort</label>
+                            <select class="form-select" id="sort" name="sort">
+                                <option value=""<?php echo $sort === '' ? ' selected' : ''; ?>>Recommended</option>
+                                <option value="recently_saved"<?php echo $sort === 'recently_saved' ? ' selected' : ''; ?>>Recently saved</option>
+                                <option value="newest"<?php echo $sort === 'newest' ? ' selected' : ''; ?>>Newest</option>
+                                <option value="oldest"<?php echo $sort === 'oldest' ? ' selected' : ''; ?>>Oldest</option>
+                                <option value="deadline_soon"<?php echo $sort === 'deadline_soon' ? ' selected' : ''; ?>>Deadline soon</option>
+                                <option value="budget_high"<?php echo $sort === 'budget_high' ? ' selected' : ''; ?>>Budget high to low</option>
+                                <option value="budget_low"<?php echo $sort === 'budget_low' ? ' selected' : ''; ?>>Budget low to high</option>
+                                <option value="status"<?php echo $sort === 'status' ? ' selected' : ''; ?>>Status</option>
+                            </select>
                         </div>
                     </div>
                     <div class="filter-actions">
@@ -598,7 +675,7 @@ if (!empty($offres)) {
                                                     <div class="saved-offer-actions">
                                                         <form method="post" action="creator_list.php<?php echo !empty($_SERVER['QUERY_STRING']) ? '?' . htmlspecialchars($_SERVER['QUERY_STRING']) : ''; ?>" data-save-toggle-form>
                                                             <input type="hidden" name="idOffre" value="<?php echo (int) $offre->getIdOffre(); ?>">
-                                                            <button type="submit" name="toggleSaved" class="btn btn-outline-secondary">Remove</button>
+                                                            <button type="submit" name="toggleSaved" class="btn btn-outline-secondary">Remove saved</button>
                                                         </form>
                                                     </div>
                                                 </article>
@@ -636,12 +713,14 @@ if (!empty($offres)) {
                                                             <h2 class="offer-card-title"><?php echo htmlspecialchars($offre->getTitre()); ?></h2>
                                                             <p class="offer-summary mt-2"><?php echo htmlspecialchars(excerptText($offre->getDescription(), 155)); ?></p>
                                                         </div>
-                                                        <form method="post" action="creator_list.php<?php echo !empty($_SERVER['QUERY_STRING']) ? '?' . htmlspecialchars($_SERVER['QUERY_STRING']) : ''; ?>" data-save-toggle-form>
-                                                            <input type="hidden" name="idOffre" value="<?php echo (int) $offre->getIdOffre(); ?>">
-                                                            <button type="submit" name="toggleSaved" class="saved-toggle <?php echo $saved ? 'saved' : ''; ?>">
-                                                                <?php echo $saved ? 'Saved' : 'Save for later'; ?>
-                                                            </button>
-                                                        </form>
+                                                        <?php if (!$creatorResponse): ?>
+                                                            <form method="post" action="creator_list.php<?php echo !empty($_SERVER['QUERY_STRING']) ? '?' . htmlspecialchars($_SERVER['QUERY_STRING']) : ''; ?>" data-save-toggle-form>
+                                                                <input type="hidden" name="idOffre" value="<?php echo (int) $offre->getIdOffre(); ?>">
+                                                                <button type="submit" name="toggleSaved" class="saved-toggle <?php echo $saved ? 'saved' : ''; ?>">
+                                                                    <?php echo $saved ? 'Remove saved' : 'Save for later'; ?>
+                                                                </button>
+                                                            </form>
+                                                        <?php endif; ?>
                                                     </div>
 
                                                     <div class="offer-meta">
@@ -714,6 +793,17 @@ if (!empty($offres)) {
                         <?php endforeach; ?>
                     </div>
                 </section>
+                <nav class="front-pagination" aria-label="Creator invitation pages">
+                    <span>Page <?php echo $page; ?> · Showing up to <?php echo $perPage; ?> filtered invitations</span>
+                    <div>
+                        <?php if ($prevPageUrl !== ''): ?>
+                            <a class="btn btn-outline-secondary" href="<?php echo htmlspecialchars($prevPageUrl); ?>">Previous</a>
+                        <?php endif; ?>
+                        <?php if ($nextPageUrl !== ''): ?>
+                            <a class="btn btn-primary" href="<?php echo htmlspecialchars($nextPageUrl); ?>">Load more</a>
+                        <?php endif; ?>
+                    </div>
+                </nav>
             <?php else: ?>
                 <section class="empty-state-card">
                     <div class="empty-state-icon">!</div>
@@ -732,5 +822,16 @@ if (!empty($offres)) {
     <script src="offre-tabs.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre-tabs.js')); ?>"></script>
     <script src="offre-validation.js"></script>
     <script src="creator-list-live.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/creator-list-live.js')); ?>"></script>
+<?php
+$cre8PilotContext = [
+    'page' => 'creator_offer_workspace',
+    'mode' => 'list',
+    'role' => 'createur',
+    'allowedActions' => ['normal_chat', 'summarize_page', 'analyze_page', 'apply_filters', 'recommend_next_action', 'apply_search', 'sort_results'],
+    'formTarget' => 'filter_form',
+    'visibleEntityType' => 'offre',
+];
+require __DIR__ . '/../condidature/cre8pilot_widget.php';
+?>
 </body>
 </html>

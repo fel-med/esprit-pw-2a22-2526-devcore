@@ -6,6 +6,10 @@ require_once __DIR__ . '/../../../Controleur/offreC.php';
 $controller = new OffreC();
 $errors = [];
 
+if (isset($_GET['logout'])) {
+    unset($_SESSION['utilisateur']);
+}
+
 function getWorkspaceRedirectByRole($role)
 {
     return match ((string) $role) {
@@ -90,10 +94,10 @@ $admins = $directory['admin'] ?? [];
     <link rel="stylesheet" href="offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre.css')); ?>">
 </head>
 <body>
-    <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
     <main class="container py-5">
         <div class="offre-page-shell login-directory-shell">
             <section class="module-hero">
+                <div class="theme-toggle-corner"><?php require __DIR__ . '/../condidature/theme_toggle.php'; ?></div>
                 <span class="module-eyebrow">Workspace access</span>
                 <h1 class="display-5 fw-bold mt-3 mb-2 gradient-title">Choose a user and enter the module</h1>
                 <p class="lead text-muted">Pick a brand, creator, or admin account below. Each card logs you in immediately and sends you to the matching workspace.</p>

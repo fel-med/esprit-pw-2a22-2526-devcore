@@ -1,6 +1,7 @@
 (() => {
     const REGION_SELECTOR = '[data-candidature-live-region]';
     const SAVE_FORM_SELECTOR = 'form[data-candidature-save-toggle-form]';
+    const SOURCE_SHELL_SELECTOR = '[data-brand-source-tab-shell]';
     let latestRequestId = 0;
 
     function getRegion() {
@@ -10,6 +11,91 @@
     function getActiveTabKey(root = document) {
         const activeTab = root.querySelector('[data-offer-tab].is-active, [data-offer-tab][aria-selected="true"]');
         return activeTab ? activeTab.getAttribute('data-offer-tab') : null;
+    }
+
+    function getActiveSourceKey(root = document) {
+        const activeTab = root.querySelector('[data-brand-source-tab].is-active, [data-brand-source-tab][aria-selected="true"]');
+        return activeTab ? activeTab.getAttribute('data-brand-source-tab') : null;
+    }
+
+    function getActiveTabState(root = document) {
+        const sourceKey = getActiveSourceKey(root);
+        const sourcePanel = sourceKey
+            ? root.querySelector(`[data-brand-source-tab-panel="${sourceKey}"]`)
+            : null;
+
+        return {
+            source: sourceKey,
+            workflow: getActiveTabKey(sourcePanel || root)
+        };
+    }
+
+    function activateSourceTab(shell, key) {
+        const tabs = shell.querySelectorAll('[data-brand-source-tab]');
+        const panels = shell.querySelectorAll('[data-brand-source-tab-panel]');
+
+        tabs.forEach((tab) => {
+            const isActive = tab.getAttribute('data-brand-source-tab') === key;
+            tab.classList.toggle('is-active', isActive);
+            tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            tab.tabIndex = isActive ? 0 : -1;
+        });
+
+        panels.forEach((panel) => {
+            const isActive = panel.getAttribute('data-brand-source-tab-panel') === key;
+            panel.hidden = !isActive;
+        });
+    }
+
+    function bindBrandSourceTabs(root = document) {
+        root.querySelectorAll(SOURCE_SHELL_SELECTOR).forEach((shell) => {
+            const tabs = Array.from(shell.querySelectorAll('[data-brand-source-tab]'));
+            if (!tabs.length) {
+                return;
+            }
+
+            if (shell.dataset.brandSourceTabsBound !== '1') {
+                tabs.forEach((tab) => {
+                    tab.addEventListener('click', () => {
+                        activateSourceTab(shell, tab.getAttribute('data-brand-source-tab'));
+                    });
+
+                    tab.addEventListener('keydown', (event) => {
+                        const currentIndex = tabs.indexOf(tab);
+                        let nextIndex = null;
+
+                        if (event.key === 'ArrowRight') {
+                            nextIndex = (currentIndex + 1) % tabs.length;
+                        } else if (event.key === 'ArrowLeft') {
+                            nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+                        } else if (event.key === 'Home') {
+                            nextIndex = 0;
+                        } else if (event.key === 'End') {
+                            nextIndex = tabs.length - 1;
+                        }
+
+                        if (nextIndex === null) {
+                            return;
+                        }
+
+                        event.preventDefault();
+                        const nextTab = tabs[nextIndex];
+                        activateSourceTab(shell, nextTab.getAttribute('data-brand-source-tab'));
+                        nextTab.focus();
+                    });
+                });
+
+                shell.dataset.brandSourceTabsBound = '1';
+            }
+
+            const requestedDefault = shell.getAttribute('data-default-source-tab');
+            const firstKey = tabs[0].getAttribute('data-brand-source-tab');
+            const defaultKey = tabs.some((tab) => tab.getAttribute('data-brand-source-tab') === requestedDefault)
+                ? requestedDefault
+                : firstKey;
+
+            activateSourceTab(shell, defaultKey);
+        });
     }
 
     function appendSubmitter(formData, submitter) {
@@ -30,7 +116,7 @@
         HTMLFormElement.prototype.submit.call(form);
     }
 
-    async function replaceRegion(requestUrl, fetchOptions, activeTab) {
+    async function replaceRegion(requestUrl, fetchOptions, activeState) {
         const currentRegion = getRegion();
         if (!currentRegion) {
             return false;
@@ -68,12 +154,24 @@
 
             currentRegion.replaceWith(nextRegion);
 
-            if (activeTab) {
-                const nextShell = nextRegion.querySelector('[data-offer-tab-shell]');
-                if (nextShell) {
-                    nextShell.setAttribute('data-default-tab', activeTab);
+            if (activeState?.source) {
+                const nextSourceShell = nextRegion.querySelector(SOURCE_SHELL_SELECTOR);
+                if (nextSourceShell) {
+                    nextSourceShell.setAttribute('data-default-source-tab', activeState.source);
                 }
             }
+
+            if (activeState?.workflow) {
+                const nextSourcePanel = activeState.source
+                    ? nextRegion.querySelector(`[data-brand-source-tab-panel="${activeState.source}"]`)
+                    : null;
+                const nextShell = (nextSourcePanel || nextRegion).querySelector('[data-offer-tab-shell]');
+                if (nextShell) {
+                    nextShell.setAttribute('data-default-tab', activeState.workflow);
+                }
+            }
+
+            bindBrandSourceTabs(nextRegion);
 
             if (typeof window.initOfferTabs === 'function') {
                 window.initOfferTabs(nextRegion);
@@ -96,7 +194,7 @@
 
         const requestUrl = new URL(form.action, window.location.href);
         const button = submitter || form.querySelector('button[type="submit"], input[type="submit"]');
-        const activeTab = getActiveTabKey();
+        const activeState = getActiveTabState();
 
         if (button) {
             button.disabled = true;
@@ -106,7 +204,7 @@
             await replaceRegion(requestUrl.toString(), {
                 method: 'POST',
                 body: formData
-            }, activeTab);
+            }, activeState);
         } catch (error) {
             nativeSubmit(form, submitter);
         } finally {
@@ -130,4 +228,6 @@
         event.preventDefault();
         handleSaveToggle(saveForm, event.submitter);
     });
+
+    document.addEventListener('DOMContentLoaded', () => bindBrandSourceTabs(document));
 })();

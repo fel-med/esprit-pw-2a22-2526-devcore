@@ -66,6 +66,30 @@
     return /^[0-9]+$/.test(value) && Number(value) > 0;
   }
 
+  function normalizeNumberText(value) {
+    if (value === "" || Number.isNaN(Number(value))) {
+      return "";
+    }
+
+    return String(Number(value));
+  }
+
+  function hasNegotiationDelta(form, message, budget, delay) {
+    if (form.dataset.requireNegotiationDelta !== "1") {
+      return true;
+    }
+
+    const baselineMessage = (form.dataset.baselineMessage || "").trim();
+    const baselineBudget = normalizeNumberText((form.dataset.baselineBudget || "").trim());
+    const baselineDelay = normalizeNumberText((form.dataset.baselineDelay || "").trim());
+
+    return (
+      message.trim() !== baselineMessage ||
+      normalizeNumberText(budget) !== baselineBudget ||
+      normalizeNumberText(delay) !== baselineDelay
+    );
+  }
+
   function addError(errors, form, name, message) {
     const field = getField(form, name);
 
@@ -102,6 +126,10 @@
 
     if (delay !== "" && !isPositiveInteger(delay)) {
       addError(errors, form, "delaiPropose", "Enter a valid timeline in days, or leave it empty.");
+    }
+
+    if (!hasNegotiationDelta(form, message, budget, delay)) {
+      addError(errors, form, "message", "Change the negotiation message, budget, or timeline before saving this proposal.");
     }
 
     return errors;

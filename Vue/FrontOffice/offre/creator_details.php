@@ -87,19 +87,22 @@ function buildResponseWorkspaceUrl($idOffre, $mode = null)
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggleSaved'], $_POST['idOffre']) && is_numeric($_POST['idOffre'])) {
     $offerId = (int) $_POST['idOffre'];
-    $savedOffers = $_SESSION['saved_offer_ids'] ?? [];
+    $message = '';
+    $redirectNoticeType = 'success';
 
-    if (in_array($offerId, $savedOffers, true)) {
-        $savedOffers = array_values(array_filter($savedOffers, static fn($id) => (int) $id !== $offerId));
+    if ($offreController->isOffreSavedByCreator($idCreateur, $offerId)) {
+        $offreController->unsaveOffreForCreator($idCreateur, $offerId);
         $message = 'Offer removed from your saved list.';
     } else {
-        $savedOffers[] = $offerId;
-        $savedOffers = array_values(array_unique(array_map('intval', $savedOffers)));
-        $message = 'Offer saved for later.';
+        if ($offreController->saveOffreForCreator($idCreateur, $offerId)) {
+            $message = 'Offer saved for later.';
+        } else {
+            $message = 'This offer cannot be saved anymore.';
+            $redirectNoticeType = 'danger';
+        }
     }
 
-    $_SESSION['saved_offer_ids'] = $savedOffers;
-    header('Location: creator_details.php?idOffre=' . $offerId . '&idCreateur=' . $idCreateur . '&notice=' . urlencode($message) . '&noticeType=success');
+    header('Location: creator_details.php?idOffre=' . $offerId . '&idCreateur=' . $idCreateur . '&notice=' . urlencode($message) . '&noticeType=' . urlencode($redirectNoticeType));
     exit;
 }
 
@@ -110,6 +113,9 @@ if ($idOffre !== null && $idCreateur !== null) {
         $brand = $brandMap[$offre->getIdMarque()] ?? null;
         $responseContext = $candidatureController->getCreatorCandidatureBySource($idCreateur, 'par_offre', $idOffre);
         $response = $responseContext['condidature'] ?? null;
+        if ($response) {
+            $offreController->removeSavedOffreWhenResponseExists($idCreateur, $idOffre);
+        }
     } else {
         $error = 'Offer not found or not available to you.';
     }
@@ -117,7 +123,7 @@ if ($idOffre !== null && $idCreateur !== null) {
     $error = 'Invalid parameters for displaying the offer.';
 }
 
-$isSaved = $idOffre !== null ? in_array($idOffre, $_SESSION['saved_offer_ids'] ?? [], true) : false;
+$isSaved = $idOffre !== null && $idCreateur !== null ? $offreController->isOffreSavedByCreator($idCreateur, $idOffre) : false;
 $currentResponseMode = $response ? $response->getResponseMode() : 'accept';
 $isNegotiationOnly = $response && $response->canCreatorEditNegotiationOnly();
 $isResponseLocked = $response && $response->isCreatorLocked();
@@ -158,12 +164,14 @@ $declineWorkspaceUrl = $idOffre !== null ? buildResponseWorkspaceUrl($idOffre, '
                         </div>
                         <div class="compact-actions">
                             <span class="offer-status <?php echo htmlspecialchars(offerStatusClass($offre->getStatutOffre())); ?>"><?php echo htmlspecialchars(translateOfferStatus($offre->getStatutOffre())); ?></span>
-                            <form method="post" action="creator_details.php?idOffre=<?php echo (int) $idOffre; ?>&idCreateur=<?php echo (int) $idCreateur; ?>">
-                                <input type="hidden" name="idOffre" value="<?php echo (int) $idOffre; ?>">
-                                <button type="submit" name="toggleSaved" class="saved-toggle <?php echo $isSaved ? 'saved' : ''; ?>">
-                                    <?php echo $isSaved ? 'Saved for later' : 'Save for later'; ?>
-                                </button>
-                            </form>
+                            <?php if (!$response): ?>
+                                <form method="post" action="creator_details.php?idOffre=<?php echo (int) $idOffre; ?>&idCreateur=<?php echo (int) $idCreateur; ?>">
+                                    <input type="hidden" name="idOffre" value="<?php echo (int) $idOffre; ?>">
+                                    <button type="submit" name="toggleSaved" class="saved-toggle <?php echo $isSaved ? 'saved' : ''; ?>">
+                                        <?php echo $isSaved ? 'Remove saved' : 'Save for later'; ?>
+                                    </button>
+                                </form>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </section>
@@ -293,5 +301,17 @@ $declineWorkspaceUrl = $idOffre !== null ? buildResponseWorkspaceUrl($idOffre, '
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+<?php
+$cre8PilotContext = [
+    'page' => 'creator_offer_workspace',
+    'mode' => 'details',
+    'role' => 'createur',
+    'allowedActions' => ['normal_chat', 'summarize_page', 'analyze_page'],
+    'formTarget' => null,
+    'visibleEntityType' => 'offre',
+    'visibleEntityId' => $idOffre ?? null,
+];
+require __DIR__ . '/../condidature/cre8pilot_widget.php';
+?>
 </body>
 </html>

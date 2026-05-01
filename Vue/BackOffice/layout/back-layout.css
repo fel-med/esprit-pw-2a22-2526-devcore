@@ -16,18 +16,24 @@ body.cre8-admin-layout {
 
 .cre8-admin-page {
   min-height: 100vh;
-  display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
+  display: block;
+  padding-left: 300px;
 }
 
 .cre8-admin-sidebar {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  bottom: 0;
+  width: 300px;
   height: 100vh;
+  z-index: 50;
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--cre8-admin-line);
   background: #181820;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .cre8-admin-brand {
@@ -147,9 +153,16 @@ body.cre8-admin-layout {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  min-height: 100vh;
+  padding-top: 86px;
 }
 
 .cre8-admin-topbar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 300px;
+  z-index: 40;
   min-height: 86px;
   display: flex;
   align-items: center;
@@ -224,14 +237,75 @@ body.cre8-admin-layout {
   box-shadow: 0 16px 32px rgba(124, 92, 255, 0.22);
 }
 
+.cre8-admin-action-exit {
+  border-color: rgba(248, 113, 113, 0.34);
+  background: rgba(127, 29, 29, 0.28);
+  color: #fecaca;
+}
+
+.cre8-admin-action-exit:hover {
+  border-color: rgba(248, 113, 113, 0.58);
+  background: rgba(153, 27, 27, 0.42);
+  color: #fff;
+}
+
+.cre8-admin-topbar-actions .theme-toggle {
+  min-height: 42px;
+  padding: 0 0.95rem;
+  box-shadow: none;
+}
+
+[data-theme="light"] .cre8-admin-search {
+  background: #ffffff;
+  color: #64748b;
+  border-color: rgba(30, 48, 243, 0.12);
+}
+
+[data-theme="light"] .cre8-admin-search input {
+  color: #101828;
+}
+
+[data-theme="light"] .cre8-admin-search input::placeholder {
+  color: #94a3b8;
+}
+
+[data-theme="light"] .cre8-admin-action {
+  background: #ffffff;
+  color: #1f2937;
+  border-color: rgba(30, 48, 243, 0.12);
+}
+
+[data-theme="light"] .cre8-admin-action-primary {
+  background: #7c5cff;
+  color: #ffffff;
+}
+
+[data-theme="light"] .cre8-admin-breadcrumb {
+  color: #64748b;
+}
+
+[data-theme="light"] .cre8-admin-breadcrumb strong {
+  color: #101828;
+}
+
 @media (max-width: 1100px) {
   .cre8-admin-page {
-    grid-template-columns: 1fr;
+    padding-left: 0;
   }
 
   .cre8-admin-sidebar {
     position: relative;
+    width: auto;
     height: auto;
+  }
+
+  .cre8-admin-main {
+    padding-top: 0;
+  }
+
+  .cre8-admin-topbar {
+    position: relative;
+    inset: auto;
   }
 
   .cre8-admin-nav {

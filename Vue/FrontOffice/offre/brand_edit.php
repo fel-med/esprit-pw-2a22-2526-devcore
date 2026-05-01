@@ -464,15 +464,15 @@ $draftButtonLabel = $isDraftOffer ? 'Keep as draft' : 'Save as draft';
                             <div class="row g-3">
                                 <div class="col-12">
                                     <label for="raisonChoix" class="form-label fw-semibold">Why this creator?</label>
-                                    <textarea class="form-control" id="raisonChoix" name="raisonChoix" rows="3" placeholder="Audience fit, delivery style, category expertise..."><?php echo htmlspecialchars($form['raisonChoix']); ?></textarea>
+                                    <textarea class="form-control" id="raisonChoix" name="raisonChoix" rows="3" data-cre8pilot-field="raisonChoix" placeholder="Audience fit, delivery style, category expertise..."><?php echo htmlspecialchars($form['raisonChoix']); ?></textarea>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="attenteCollaboration" class="form-label fw-semibold">Expected collaboration fit</label>
-                                    <textarea class="form-control" id="attenteCollaboration" name="attenteCollaboration" rows="4" placeholder="Outline the working style or deliverable expectations."><?php echo htmlspecialchars($form['attenteCollaboration']); ?></textarea>
+                                    <textarea class="form-control" id="attenteCollaboration" name="attenteCollaboration" rows="4" data-cre8pilot-field="attenteCollaboration" placeholder="Outline the working style or deliverable expectations."><?php echo htmlspecialchars($form['attenteCollaboration']); ?></textarea>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="messagePersonnalise" class="form-label fw-semibold">Personal note</label>
-                                    <textarea class="form-control" id="messagePersonnalise" name="messagePersonnalise" rows="4" placeholder="Optional direct note to the creator."><?php echo htmlspecialchars($form['messagePersonnalise']); ?></textarea>
+                                    <textarea class="form-control" id="messagePersonnalise" name="messagePersonnalise" rows="4" data-cre8pilot-field="messagePersonnalise" placeholder="Optional direct note to the creator."><?php echo htmlspecialchars($form['messagePersonnalise']); ?></textarea>
                                 </div>
                             </div>
                         </section>
@@ -489,22 +489,22 @@ $draftButtonLabel = $isDraftOffer ? 'Keep as draft' : 'Save as draft';
                             <div class="row g-3">
                                 <div class="col-12">
                                     <label for="titre" class="form-label fw-semibold">Offer title</label>
-                                    <input type="text" class="form-control form-control-lg" id="titre" name="titre" value="<?php echo htmlspecialchars($form['titre']); ?>">
+                                    <input type="text" class="form-control form-control-lg" id="titre" name="titre" data-cre8pilot-field="titre" value="<?php echo htmlspecialchars($form['titre']); ?>">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="objectif" class="form-label fw-semibold">Objective</label>
-                                    <input type="text" class="form-control" id="objectif" name="objectif" value="<?php echo htmlspecialchars($form['objectif']); ?>">
+                                    <input type="text" class="form-control" id="objectif" name="objectif" data-cre8pilot-field="objectif" value="<?php echo htmlspecialchars($form['objectif']); ?>">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="budgetPropose" class="form-label fw-semibold">Proposed budget</label>
                                     <div class="input-group">
                                         <span class="input-group-text">EUR</span>
-                                        <input type="number" class="form-control" id="budgetPropose" name="budgetPropose" step="0.01" value="<?php echo htmlspecialchars($form['budgetPropose']); ?>">
+                                        <input type="number" class="form-control" id="budgetPropose" name="budgetPropose" step="0.01" data-cre8pilot-field="budgetPropose" value="<?php echo htmlspecialchars($form['budgetPropose']); ?>">
                                     </div>
                                 </div>
                                 <div class="col-12">
                                     <label for="description" class="form-label fw-semibold">Detailed description</label>
-                                    <textarea class="form-control" id="description" name="description" rows="5"><?php echo htmlspecialchars($form['description']); ?></textarea>
+                                    <textarea class="form-control" id="description" name="description" rows="5" data-cre8pilot-field="description"><?php echo htmlspecialchars($form['description']); ?></textarea>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="<?php echo $isPublicationDateLocked ? 'datePublicationDisplay' : 'datePublication'; ?>" class="form-label fw-semibold">Publication date</label>
@@ -518,7 +518,7 @@ $draftButtonLabel = $isDraftOffer ? 'Keep as draft' : 'Save as draft';
                                 </div>
                                 <div class="col-md-6">
                                     <label for="dateLimite" class="form-label fw-semibold">Deadline</label>
-                                    <input type="date" class="form-control" id="dateLimite" name="dateLimite" value="<?php echo htmlspecialchars($form['dateLimite']); ?>">
+                                    <input type="date" class="form-control" id="dateLimite" name="dateLimite" data-cre8pilot-field="dateLimite" value="<?php echo htmlspecialchars($form['dateLimite']); ?>">
                                 </div>
                             </div>
                         </section>
@@ -793,5 +793,17 @@ $draftButtonLabel = $isDraftOffer ? 'Keep as draft' : 'Save as draft';
             updateReviewCompletion();
         });
     </script>
+<?php
+$cre8PilotContext = [
+    'page' => 'brand_offer_workspace',
+    'mode' => 'edit_offer',
+    'role' => 'marque',
+    'allowedActions' => ['normal_chat', 'fill_offer_form', 'recommend_creator', 'suggest_budget', 'improve_offer_text', 'summarize_page'],
+    'formTarget' => 'offer_form',
+    'visibleEntityType' => 'offre',
+    'visibleEntityId' => $idOffre ?? null,
+];
+require __DIR__ . '/../condidature/cre8pilot_widget.php';
+?>
 </body>
 </html>

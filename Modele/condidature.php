@@ -170,24 +170,7 @@ class Condidature
 
     public function getMessageMotivationForStorage()
     {
-        $messageMotivation = trim((string) $this->messageMotivation);
-        $meta = array_filter([
-            'dateDisponibilite' => $this->getDateDisponibilite(),
-            'conditionsCreateur' => $this->getConditionsCreateur(),
-            'cvPath' => $this->getCvPath(),
-            'portfolioUrl' => $this->getPortfolioUrl(),
-            'motifRefus' => $this->getMotifRefus(),
-        ], static fn($value) => $value !== null && trim((string) $value) !== '');
-
-        if (empty($meta)) {
-            return $messageMotivation;
-        }
-
-        $payload = base64_encode(json_encode($meta, JSON_UNESCAPED_UNICODE));
-
-        return $messageMotivation === ''
-            ? '<!--cre8connect-condidature-form-meta:' . $payload . '-->'
-            : $messageMotivation . "\n\n<!--cre8connect-condidature-form-meta:" . $payload . "-->";
+        return trim((string) $this->messageMotivation);
     }
 
     public function getBudgetPropose()
@@ -227,21 +210,7 @@ class Condidature
 
     public function getNoteDecisionForStorage()
     {
-        $noteDecision = trim((string) $this->noteDecision);
-        $meta = array_filter([
-            'responseMode' => $this->getResponseMode(),
-            'typeReponse' => $this->getTypeReponse(),
-        ], static fn($value) => $value !== null && $value !== '');
-
-        if (empty($meta)) {
-            return $noteDecision;
-        }
-
-        $payload = base64_encode(json_encode($meta, JSON_UNESCAPED_UNICODE));
-
-        return $noteDecision === ''
-            ? '<!--cre8connect-condidature-meta:' . $payload . '-->'
-            : $noteDecision . "\n\n<!--cre8connect-condidature-meta:" . $payload . "-->";
+        return trim((string) $this->noteDecision);
     }
 
     public function getDateDerniereModification()
@@ -327,6 +296,10 @@ class Condidature
 
     public function getTypeReponse()
     {
+        if ($this->origineCandidature === 'par_campagne' && $this->getResponseMode() === 'accept') {
+            return 'application';
+        }
+
         return match ($this->getResponseMode()) {
             'negotiate' => 'negociation',
             'decline' => 'refus',
@@ -338,6 +311,10 @@ class Condidature
     {
         if ($this->getResponseMode() === 'negotiate' && $this->statutCandidature === 'acceptee') {
             return 'Negotiated agreement';
+        }
+
+        if ($this->origineCandidature === 'par_campagne' && $this->getResponseMode() === 'accept') {
+            return 'Campaign application';
         }
 
         return match ($this->getResponseMode()) {
@@ -354,13 +331,13 @@ class Condidature
         return match ($this->statutCandidature) {
             'brouillon' => $mode === 'negotiate'
                 ? 'Negotiation draft'
-                : ($mode === 'decline' ? 'Decline draft' : 'Response draft'),
-            'envoyee' => 'Accepted invitation',
+                : ($mode === 'decline' ? 'Decline draft' : ($this->isCampaignResponse() ? 'Application draft' : 'Response draft')),
+            'envoyee' => $this->isCampaignResponse() ? 'Application sent' : 'Accepted invitation',
             'en_etude' => $mode === 'negotiate' ? 'Negotiation under review' : 'Response under review',
             'negociation' => 'Negotiation requested',
             'acceptee' => 'Accepted terms',
             'refusee' => 'Refused by brand',
-            'retiree' => 'Declined invitation',
+            'retiree' => $this->isCampaignResponse() ? 'Application withdrawn' : 'Declined invitation',
             default => ucwords(str_replace('_', ' ', (string) $this->statutCandidature)),
         };
     }
@@ -484,8 +461,20 @@ class Condidature
         };
     }
 
+    private static function responseModeFromTypeReponse($typeReponse)
+    {
+        return match (trim((string) $typeReponse)) {
+            'application', 'acceptation' => 'accept',
+            'negociation' => 'negotiate',
+            'refus' => 'decline',
+            default => null,
+        };
+    }
+
     public static function fromArray(array $data)
     {
+        $responseMode = $data['responseMode'] ?? self::responseModeFromTypeReponse($data['typeReponse'] ?? null);
+
         return new self(
             $data['idCandidature'] ?? null,
             $data['idCreateur'] ?? null,
@@ -499,7 +488,7 @@ class Condidature
             $data['noteDecision'] ?? null,
             $data['dateDerniereModification'] ?? null,
             $data['dateDecision'] ?? null,
-            $data['responseMode'] ?? null,
+            $responseMode,
             $data['dateDisponibilite'] ?? null,
             $data['conditionsCreateur'] ?? null,
             $data['cvPath'] ?? null,

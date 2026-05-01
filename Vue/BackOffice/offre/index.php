@@ -1,7 +1,46 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 require_once __DIR__ . '/../../../Controleur/offreC.php';
+require_once __DIR__ . '/../../../Controleur/condidatureC.php';
 
 $offreController = new OffreC();
+$candidatureController = new CondidatureC();
+$sessionUser = $_SESSION['utilisateur'] ?? [];
+
+if (!isset($sessionUser['id']) || (($sessionUser['role'] ?? '') !== 'admin')) {
+    $defaultAdmin = $candidatureController->getDefaultUserByRole('admin');
+    if ($defaultAdmin) {
+        $_SESSION['utilisateur'] = [
+            'id' => (int) $defaultAdmin['id'],
+            'role' => 'admin',
+            'nom' => $defaultAdmin['nom'],
+            'email' => $defaultAdmin['email'],
+        ];
+        $sessionUser = $_SESSION['utilisateur'];
+    }
+}
+
+$notificationController = $candidatureController;
+$notificationUserId = isset($sessionUser['id']) ? (int) $sessionUser['id'] : 0;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['notificationAction'])) {
+    $notificationAction = (string) $_POST['notificationAction'];
+    if ($notificationAction === 'mark_one') {
+        $notificationController->markNotificationActionAsRead((int) ($_POST['idNotificationAction'] ?? 0), $notificationUserId);
+    } elseif ($notificationAction === 'mark_all') {
+        $notificationController->markAllNotificationActionsAsRead($notificationUserId);
+    }
+
+    $redirect = basename((string) ($_SERVER['SCRIPT_NAME'] ?? 'index.php'));
+    if (!empty($_SERVER['QUERY_STRING'])) {
+        $redirect .= '?' . $_SERVER['QUERY_STRING'];
+    }
+    header('Location: ' . $redirect);
+    exit;
+}
 
 $message = '';
 $searchKeyword = trim($_GET['keyword'] ?? '');
@@ -9,6 +48,11 @@ $searchStatut = trim($_GET['statut'] ?? '');
 $searchBudgetFrom = trim($_GET['budgetFrom'] ?? '');
 $searchBudgetTo = trim($_GET['budgetTo'] ?? '');
 $searchDateLimite = trim($_GET['dateLimite'] ?? '');
+$searchDateLimiteTo = trim($_GET['dateLimiteTo'] ?? '');
+$searchSort = trim($_GET['sort'] ?? '');
+$page = max(1, (int) ($_GET['page'] ?? 1));
+$perPage = 10;
+$offset = ($page - 1) * $perPage;
 
 $filterValues = [
     $searchKeyword,
@@ -16,8 +60,10 @@ $filterValues = [
     $searchBudgetFrom,
     $searchBudgetTo,
     $searchDateLimite,
+    $searchDateLimiteTo,
+    $searchSort,
 ];
-$activeFilterCount = count(array_filter($filterValues, static fn($value) => $value !== '' && $value !== null));
+$activeFilterCount = count(array_filter($filterValues, static fn($value) => $value !== '' && $value !== null && $value !== 'newest'));
 $hasActiveFilters = $activeFilterCount > 0;
 
 function translateOfferStatus($status)
@@ -45,14 +91,42 @@ function formatMoney($value)
     return 'EUR ' . number_format((float) $value, 2, '.', ',');
 }
 
+function cleanHiddenMetadata($text)
+{
+    return trim((string) preg_replace(
+        '/\s*<!--cre8connect-(?:condidature-form-meta|condidature-meta|offre-meta):.*?-->\s*/s',
+        ' ',
+        (string) $text
+    ));
+}
+
 function excerptText($text, $length = 80)
 {
-    $text = trim((string) $text);
+    $text = cleanHiddenMetadata($text);
     if (strlen($text) <= $length) {
         return $text;
     }
 
     return rtrim(substr($text, 0, max(0, $length - 3))) . '...';
+}
+
+function responseTypeLabel(array $response)
+{
+    return (string) ($response['responseTypeLabel'] ?? ucwords(str_replace('_', ' ', (string) ($response['typeReponse'] ?? 'Response'))));
+}
+
+function formatDateLabel($value, $fallback = 'Not available')
+{
+    if (!$value) {
+        return $fallback;
+    }
+
+    $timestamp = strtotime((string) $value);
+    if ($timestamp === false) {
+        return (string) $value;
+    }
+
+    return date('Y-m-d', $timestamp);
 }
 
 function buildInspectUrl($offerId, array $filters)
@@ -61,6 +135,54 @@ function buildInspectUrl($offerId, array $filters)
     $query['idOffre'] = (int) $offerId;
 
     return 'index.php?' . http_build_query($query);
+}
+
+function renderOfferResponsesPanelHtml($offer, array $responses)
+{
+    ob_start();
+    ?>
+    <section class="offer-responses-panel">
+        <div class="offer-responses-summary">
+            <span class="quick-overview-tag">Offer responses</span>
+            <strong><?php echo htmlspecialchars($offer ? $offer->getTitre() : 'Selected offer'); ?></strong>
+            <span><?php echo count($responses); ?> related candidature<?php echo count($responses) === 1 ? '' : 's'; ?></span>
+        </div>
+
+        <?php if (empty($responses)): ?>
+            <div class="detail-empty-state">
+                <span class="detail-empty-icon">i</span>
+                <h4>No creator responses yet for this offer.</h4>
+                <p>This panel only shows creator responses attached to this offer invitation.</p>
+            </div>
+        <?php else: ?>
+            <div class="offer-responses-list">
+                <?php foreach ($responses as $response): ?>
+                    <?php
+                    $messagePreview = excerptText((string) ($response['messageMotivation'] ?? ''), 120);
+                    $delay = isset($response['delaiPropose']) && $response['delaiPropose'] !== '' ? (int) $response['delaiPropose'] . ' days' : 'No delay shared';
+                    ?>
+                    <article class="offer-response-row">
+                        <div class="offer-response-main">
+                            <strong><?php echo htmlspecialchars($response['createurNom'] ?: ('Creator #' . $response['idCreateur'])); ?></strong>
+                            <span><?php echo htmlspecialchars($response['createurEmail'] ?? ''); ?></span>
+                            <p><?php echo htmlspecialchars($messagePreview !== '' ? $messagePreview : 'No response message was provided.'); ?></p>
+                        </div>
+                        <div class="offer-response-meta">
+                            <span class="status-pill"><?php echo htmlspecialchars(responseTypeLabel($response)); ?></span>
+                            <span class="status-pill"><?php echo htmlspecialchars(responseStatusLabel($response)); ?></span>
+                            <span><?php echo htmlspecialchars(formatDateLabel($response['dateCandidature'] ?? null)); ?></span>
+                            <span><?php echo htmlspecialchars(formatMoney($response['budgetPropose'] ?? 0)); ?></span>
+                            <span><?php echo htmlspecialchars($delay); ?></span>
+                        </div>
+                        <a class="inspect-link offer-response-review" href="../condidature/details.php?idCandidature=<?php echo (int) ($response['idCandidature'] ?? 0); ?>">Review</a>
+                    </article>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </section>
+    <?php
+
+    return trim((string) ob_get_clean());
 }
 
 function renderOfferInsightsHtml($selectedOffer, $selectedBrand, $selectedCreator, array $selectedResponses, array $selectedBreakdown, $selectedOfferOutsideFilters)
@@ -231,11 +353,12 @@ function renderOfferInspectCardHtml($selectedOffer, $selectedBrand, $selectedCre
             <section class="inspect-card-block inspect-card-response">
                 <h4>Latest creator signal</h4>
                 <?php if ($latestResponse): ?>
+                    <?php $latestMessage = cleanHiddenMetadata((string) ($latestResponse['messageMotivation'] ?? '')); ?>
                     <div class="inspect-card-response-top">
                         <span class="status-pill"><?php echo htmlspecialchars(responseStatusLabel($latestResponse)); ?></span>
                         <span class="status-pill"><?php echo htmlspecialchars(formatMoney($latestResponse['budgetPropose'])); ?></span>
                     </div>
-                    <p><?php echo htmlspecialchars((string) ($latestResponse['messageMotivation'] ?? 'No response message was provided.')); ?></p>
+                    <p><?php echo htmlspecialchars($latestMessage !== '' ? $latestMessage : 'No response message was provided.'); ?></p>
                 <?php else: ?>
                     <p>No creator response has been submitted for this offer yet.</p>
                 <?php endif; ?>
@@ -275,8 +398,16 @@ $offres = $offreController->searchOffresAdmin(
     null,
     $searchBudgetFrom !== '' ? $searchBudgetFrom : null,
     $searchBudgetTo !== '' ? $searchBudgetTo : null,
-    $searchDateLimite ?: null
+    $searchDateLimite ?: null,
+    $searchDateLimiteTo ?: null,
+    $searchSort ?: 'newest',
+    $perPage + 1,
+    $offset
 );
+$hasNextPage = count($offres) > $perPage;
+if ($hasNextPage) {
+    array_pop($offres);
+}
 
 $persistedFilters = [
     'keyword' => $searchKeyword,
@@ -284,6 +415,8 @@ $persistedFilters = [
     'budgetFrom' => $searchBudgetFrom,
     'budgetTo' => $searchBudgetTo,
     'dateLimite' => $searchDateLimite,
+    'dateLimiteTo' => $searchDateLimiteTo,
+    'sort' => $searchSort,
 ];
 
 $offerIds = array_map(static fn($offre) => $offre->getIdOffre(), $offres);
@@ -361,6 +494,14 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'insights') {
     exit;
 }
 
+$paginationBase = $_GET;
+unset($paginationBase['page'], $paginationBase['ajax']);
+$prevPageUrl = $page > 1 ? 'index.php?' . http_build_query($paginationBase + ['page' => $page - 1]) : '';
+$nextPageUrl = $hasNextPage ? 'index.php?' . http_build_query($paginationBase + ['page' => $page + 1]) : '';
+$adminOfferMetrics = $offreController->getAdminOfferMetrics();
+$platformMetrics = $candidatureController->getAdminPlatformMetrics();
+$adminPieChartStats = $candidatureController->getAdminPieChartStats();
+
 $liveCount = 0;
 $pendingCount = 0;
 $offersWithResponses = 0;
@@ -412,8 +553,13 @@ if (!empty($liveBudgetOffers)) {
             <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
     <div class="admin-shell">
         <header class="admin-header">
-            <h1>Offer administration</h1>
-            <p>Track targeted offers, understand creator response behavior, and keep the collaboration pipeline visible for admins.</p>
+            <div class="admin-header-main">
+                <div>
+                    <h1>Offer administration</h1>
+                    <p>Track targeted offers, understand creator response behavior, and keep the collaboration pipeline visible for admins.</p>
+                </div>
+                <?php require __DIR__ . '/../condidature/notification_widget.php'; ?>
+            </div>
         </header>
 
         <?php if (!empty($message)): ?>
@@ -469,6 +615,23 @@ if (!empty($liveBudgetOffers)) {
                         <label for="dateLimite">Deadline from</label>
                         <input id="dateLimite" name="dateLimite" type="date" value="<?php echo htmlspecialchars($searchDateLimite); ?>">
                     </div>
+
+                    <div class="search-group">
+                        <label for="dateLimiteTo">Deadline to</label>
+                        <input id="dateLimiteTo" name="dateLimiteTo" type="date" value="<?php echo htmlspecialchars($searchDateLimiteTo); ?>">
+                    </div>
+
+                    <div class="search-group">
+                        <label for="sort">Sort</label>
+                        <select id="sort" name="sort">
+                            <option value=""<?php echo $searchSort === '' ? ' selected' : ''; ?>>Newest</option>
+                            <option value="oldest"<?php echo $searchSort === 'oldest' ? ' selected' : ''; ?>>Oldest</option>
+                            <option value="deadline_soon"<?php echo $searchSort === 'deadline_soon' ? ' selected' : ''; ?>>Deadline soon</option>
+                            <option value="budget_high"<?php echo $searchSort === 'budget_high' ? ' selected' : ''; ?>>Budget high to low</option>
+                            <option value="budget_low"<?php echo $searchSort === 'budget_low' ? ' selected' : ''; ?>>Budget low to high</option>
+                            <option value="status"<?php echo $searchSort === 'status' ? ' selected' : ''; ?>>Status</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="search-actions">
@@ -480,29 +643,38 @@ if (!empty($liveBudgetOffers)) {
 
         <section class="admin-summary">
             <article class="admin-card">
-                <h3>Offers in view</h3>
-                <p><?php echo count($offres); ?></p>
+                <h3>Real offers</h3>
+                <p><?php echo (int) ($adminOfferMetrics['realOffers'] ?? 0); ?></p>
+                <small>Total targeted invitations</small>
             </article>
             <article class="admin-card">
-                <h3>Live now</h3>
-                <p><?php echo $liveCount; ?></p>
-                <small>Visible to creators today</small>
+                <h3>Real candidatures</h3>
+                <p><?php echo (int) ($platformMetrics['realCandidatures'] ?? 0); ?></p>
+                <small>Placeholders excluded</small>
             </article>
             <article class="admin-card">
-                <h3>Pending launch</h3>
-                <p><?php echo $pendingCount; ?></p>
-                <small>Scheduled for a future publication date</small>
+                <h3>Pending reviews</h3>
+                <p><?php echo (int) ($platformMetrics['pendingReviews'] ?? 0); ?></p>
+                <small>Sent or under review</small>
             </article>
             <article class="admin-card">
-                <h3>With creator responses</h3>
-                <p><?php echo $offersWithResponses; ?></p>
+                <h3>Open negotiations</h3>
+                <p><?php echo (int) ($platformMetrics['openNegotiations'] ?? 0); ?></p>
+                <small>Active negotiation candidatures</small>
             </article>
             <article class="admin-card">
-                <h3>Average budget</h3>
-                <p><?php echo count($liveBudgetOffers) ? htmlspecialchars(formatMoney($averageBudget)) : 'EUR 0.00'; ?></p>
-                <small><?php echo $closingSoon; ?> closing soon<?php echo $pendingCount > 0 ? ' | Pending launches excluded' : ''; ?></small>
+                <h3>Expired offers</h3>
+                <p><?php echo (int) ($adminOfferMetrics['expiredOffers'] ?? 0); ?></p>
+                <small>Past deadline and not archived</small>
+            </article>
+            <article class="admin-card">
+                <h3>Activity this week</h3>
+                <p><?php echo (int) ($platformMetrics['activityThisWeek'] ?? 0); ?></p>
+                <small><?php echo htmlspecialchars((string) ($platformMetrics['acceptanceRate'] ?? 0)); ?>% acceptance rate</small>
             </article>
         </section>
+
+        <?php require __DIR__ . '/../condidature/statistics_charts.php'; ?>
 
         <div class="admin-layout">
             <section class="admin-panel admin-table-panel">
@@ -511,7 +683,17 @@ if (!empty($liveBudgetOffers)) {
                 </div>
                 <div class="admin-panel-body">
                     <div class="admin-table-wrapper">
-                        <table class="admin-table">
+                        <table class="admin-table admin-offer-table">
+                            <colgroup>
+                                <col class="offer-col-main">
+                                <col class="offer-col-brand">
+                                <col class="offer-col-creator">
+                                <col class="offer-col-budget">
+                                <col class="offer-col-date">
+                                <col class="offer-col-status">
+                                <col class="offer-col-responses">
+                                <col class="offer-col-actions">
+                            </colgroup>
                             <thead>
                                 <tr>
                                     <th>Offer</th>
@@ -557,10 +739,21 @@ if (!empty($liveBudgetOffers)) {
                                         <td class="entity-cell">
                                             <strong class="entity-primary table-hover-text" title="<?php echo htmlspecialchars($creatorName, ENT_QUOTES); ?>"><?php echo htmlspecialchars($creatorName); ?></strong>
                                         </td>
-                                        <td><?php echo htmlspecialchars(formatMoney($offre->getBudgetPropose())); ?></td>
+                                        <td class="money-cell"><?php echo htmlspecialchars(formatMoney($offre->getBudgetPropose())); ?></td>
                                         <td><?php echo htmlspecialchars($offre->getDateLimite()); ?></td>
                                         <td><span class="badge-status <?php echo htmlspecialchars($displayStatus); ?>"><?php echo htmlspecialchars(translateOfferStatus($displayStatus)); ?></span></td>
-                                        <td><?php echo count($responses); ?></td>
+                                        <td class="responses-cell">
+                                            <button
+                                                type="button"
+                                                class="responses-link"
+                                                data-offer-responses-trigger
+                                                data-offer-id="<?php echo (int) $offre->getIdOffre(); ?>"
+                                                data-offer-title="<?php echo htmlspecialchars($offerTitle, ENT_QUOTES); ?>"
+                                            >
+                                                <strong><?php echo count($responses); ?></strong>
+                                                <span>Responses</span>
+                                            </button>
+                                        </td>
                                         <td class="admin-actions">
                                             <div class="admin-actions-stack">
                                                 <a class="inspect-link" href="<?php echo htmlspecialchars($inspectUrl); ?>">Inspect</a>
@@ -581,6 +774,29 @@ if (!empty($liveBudgetOffers)) {
                             </tbody>
                         </table>
                     </div>
+                    <div class="offer-response-templates" hidden>
+                        <?php foreach ($offres as $offre): ?>
+                            <?php $responses = $responseGroups[$offre->getIdOffre()] ?? []; ?>
+                            <template id="offerResponsesTemplate-<?php echo (int) $offre->getIdOffre(); ?>">
+                                <?php echo renderOfferResponsesPanelHtml($offre, $responses); ?>
+                            </template>
+                        <?php endforeach; ?>
+                    </div>
+                    <nav class="admin-pagination" aria-label="Offer pages">
+                        <span>Page <?php echo $page; ?> · Showing up to <?php echo $perPage; ?> offers</span>
+                        <div>
+                            <?php if ($prevPageUrl !== ''): ?>
+                                <a class="clear-link" href="<?php echo htmlspecialchars($prevPageUrl); ?>">Previous</a>
+                            <?php else: ?>
+                                <span class="clear-link is-disabled">Previous</span>
+                            <?php endif; ?>
+                            <?php if ($nextPageUrl !== ''): ?>
+                                <a class="clear-link" href="<?php echo htmlspecialchars($nextPageUrl); ?>">Next</a>
+                            <?php else: ?>
+                                <span class="clear-link is-disabled">Next</span>
+                            <?php endif; ?>
+                        </div>
+                    </nav>
                 </div>
             </section>
 
@@ -623,6 +839,25 @@ if (!empty($liveBudgetOffers)) {
             </div>
             </div>
     </dialog>
+    <dialog class="responses-dialog" id="offerResponsesDialog" aria-labelledby="offerResponsesDialogTitle">
+        <div class="responses-dialog-card">
+            <div class="responses-dialog-header">
+                <div>
+                    <span class="inspect-dialog-kicker">Related candidatures</span>
+                    <h2 id="offerResponsesDialogTitle">Offer responses</h2>
+                    <p>Creator responses linked to this offer invitation only.</p>
+                </div>
+                <button type="button" class="inspect-dialog-close" data-close-responses-dialog aria-label="Close offer responses">Close</button>
+            </div>
+            <div class="responses-dialog-body" id="offerResponsesDialogBody">
+                <div class="detail-empty-state">
+                    <span class="detail-empty-icon">i</span>
+                    <h4>No creator responses yet for this offer.</h4>
+                    <p>Select an offer response button from the table to load related candidatures.</p>
+                </div>
+            </div>
+        </div>
+    </dialog>
     <dialog class="delete-dialog" id="offerDeleteDialog" aria-labelledby="offerDeleteDialogTitle">
         <div class="delete-dialog-card">
             <div class="delete-dialog-header">
@@ -657,6 +892,10 @@ if (!empty($liveBudgetOffers)) {
             const insightsBody = document.getElementById('offerInsightsBody');
             const inspectDialog = document.getElementById('offerInspectDialog');
             const inspectDialogBody = document.getElementById('offerInspectDialogBody');
+            const responsesDialog = document.getElementById('offerResponsesDialog');
+            const responsesDialogBody = document.getElementById('offerResponsesDialogBody');
+            const responsesDialogTitle = document.getElementById('offerResponsesDialogTitle');
+            const responseTriggers = document.querySelectorAll('[data-offer-responses-trigger]');
             const tablePanel = document.querySelector('.admin-table-panel');
             const tablePanelBody = tablePanel ? tablePanel.querySelector('.admin-panel-body') : null;
             const tableWrapper = tablePanel ? tablePanel.querySelector('.admin-table-wrapper') : null;
@@ -736,6 +975,49 @@ if (!empty($liveBudgetOffers)) {
                 }
 
                 inspectDialog.removeAttribute('open');
+            }
+
+            function openResponsesDialog(trigger) {
+                if (!responsesDialog || !responsesDialogBody || !trigger) {
+                    return;
+                }
+
+                const template = document.getElementById(`offerResponsesTemplate-${trigger.dataset.offerId || ''}`);
+                responsesDialogBody.innerHTML = template ? template.innerHTML : `
+                    <div class="detail-empty-state">
+                        <span class="detail-empty-icon">i</span>
+                        <h4>No creator responses yet for this offer.</h4>
+                        <p>This panel only shows creator responses attached to this offer invitation.</p>
+                    </div>
+                `;
+
+                if (responsesDialogTitle) {
+                    responsesDialogTitle.textContent = trigger.dataset.offerTitle
+                        ? `Responses for ${trigger.dataset.offerTitle}`
+                        : 'Offer responses';
+                }
+
+                if (typeof responsesDialog.showModal === 'function') {
+                    if (!responsesDialog.open) {
+                        responsesDialog.showModal();
+                    }
+                    return;
+                }
+
+                responsesDialog.setAttribute('open', 'open');
+            }
+
+            function closeResponsesDialog() {
+                if (!responsesDialog) {
+                    return;
+                }
+
+                if (typeof responsesDialog.close === 'function' && responsesDialog.open) {
+                    responsesDialog.close();
+                    return;
+                }
+
+                responsesDialog.removeAttribute('open');
             }
 
             function setSelectedRow(selectedId) {
@@ -835,6 +1117,14 @@ if (!empty($liveBudgetOffers)) {
                 });
             });
 
+            responseTriggers.forEach((trigger) => {
+                trigger.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    openResponsesDialog(trigger);
+                });
+            });
+
             if (inspectDialog) {
                 inspectDialog.addEventListener('click', (event) => {
                     if (event.target === inspectDialog || event.target.closest('[data-close-inspect-dialog]')) {
@@ -844,6 +1134,18 @@ if (!empty($liveBudgetOffers)) {
 
                 inspectDialog.addEventListener('cancel', () => {
                     closeInspectDialog();
+                });
+            }
+
+            if (responsesDialog) {
+                responsesDialog.addEventListener('click', (event) => {
+                    if (event.target === responsesDialog || event.target.closest('[data-close-responses-dialog]')) {
+                        closeResponsesDialog();
+                    }
+                });
+
+                responsesDialog.addEventListener('cancel', () => {
+                    closeResponsesDialog();
                 });
             }
 
@@ -858,5 +1160,16 @@ if (!empty($liveBudgetOffers)) {
             }
         })();
     </script>
+<?php
+$cre8PilotContext = [
+    'page' => 'admin_offer_workspace',
+    'mode' => 'table',
+    'role' => 'admin',
+    'allowedActions' => ['normal_chat', 'summarize_page', 'analyze_page', 'explain_statistics', 'detect_risky_items', 'apply_filters', 'apply_search', 'sort_results'],
+    'formTarget' => 'filter_form',
+    'visibleEntityType' => 'offre',
+];
+require __DIR__ . '/../../FrontOffice/condidature/cre8pilot_widget.php';
+?>
 </body>
 </html>

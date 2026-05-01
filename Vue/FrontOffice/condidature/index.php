@@ -21,6 +21,29 @@ if (!isset($sessionUser['id']) || (($sessionUser['role'] ?? '') !== 'createur'))
 
 $creatorId = isset($sessionUser['id']) ? (int) $sessionUser['id'] : null;
 $creatorUser = $creatorId ? ($controller->getUsersByIds([$creatorId], 'createur')[$creatorId] ?? null) : null;
+$notificationController = $controller;
+$notificationUserId = (int) ($creatorId ?? 0);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['notificationAction'])) {
+    $notificationAction = (string) $_POST['notificationAction'];
+    if ($notificationAction === 'mark_one') {
+        $notificationController->markNotificationActionAsRead((int) ($_POST['idNotificationAction'] ?? 0), $notificationUserId);
+    } elseif ($notificationAction === 'mark_all') {
+        $notificationController->markAllNotificationActionsAsRead($notificationUserId);
+    }
+
+    $redirect = basename((string) ($_SERVER['SCRIPT_NAME'] ?? 'index.php'));
+    if (!empty($_SERVER['QUERY_STRING'])) {
+        $redirect .= '?' . $_SERVER['QUERY_STRING'];
+    }
+    header('Location: ' . $redirect);
+    exit;
+}
+
+if ($notificationUserId > 0) {
+    $notificationController->generateCreatorDeadlineSoonNotifications($notificationUserId);
+}
+
 $notice = trim((string) ($_GET['notice'] ?? ''));
 $noticeType = trim((string) ($_GET['noticeType'] ?? 'success'));
 $error = null;
@@ -59,7 +82,7 @@ function translateOrigin($origin)
 {
     return match ((string) $origin) {
         'par_offre' => 'Offer invitation',
-        'par_campagne' => 'Campaign response',
+        'par_campagne' => 'Campaign application',
         default => ucwords(str_replace('_', ' ', (string) $origin)),
     };
 }
@@ -188,8 +211,18 @@ $filters = [
     'keyword' => trim((string) ($_GET['keyword'] ?? '')),
     'status' => trim((string) ($_GET['status'] ?? '')),
     'origin' => trim((string) ($_GET['origin'] ?? '')),
+    'typeReponse' => trim((string) ($_GET['typeReponse'] ?? '')),
+    'dateFrom' => trim((string) ($_GET['dateFrom'] ?? '')),
+    'dateTo' => trim((string) ($_GET['dateTo'] ?? '')),
+    'hasCv' => trim((string) ($_GET['hasCv'] ?? '')),
+    'hasPortfolio' => trim((string) ($_GET['hasPortfolio'] ?? '')),
+    'sort' => trim((string) ($_GET['sort'] ?? '')),
     'editableOnly' => isset($_GET['editableOnly']) && $_GET['editableOnly'] === '1',
 ];
+$page = max(1, (int) ($_GET['page'] ?? 1));
+$perPage = 10;
+$offset = ($page - 1) * $perPage;
+$hasNextPage = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $creatorId && isset($_POST['toggleSaved'], $_POST['idCandidature']) && is_numeric($_POST['idCandidature'])) {
     $idCandidature = (int) $_POST['idCandidature'];
@@ -218,6 +251,15 @@ $allContexts = [];
 $contexts = [];
 $offerFeed = [];
 $actionableOffers = [];
+$creatorMetrics = [
+    'invitationsToAnswer' => 0,
+    'negotiationsWaitingReply' => 0,
+    'closestDeadline' => null,
+    'bestProposedBudget' => 0,
+    'applicationsWaitingDecision' => 0,
+    'draftApplications' => 0,
+    'acceptedCollaborations' => 0,
+];
 $summary = [
     'total' => 0,
     'editable' => 0,
@@ -230,9 +272,18 @@ $summary = [
 if ($creatorId) {
     try {
         $allContexts = $controller->getCreatorCandidatures($creatorId);
-        $contexts = $controller->getCreatorCandidatures($creatorId, $filters);
+        $pagedFilters = $filters + [
+            'limit' => $perPage + 1,
+            'offset' => $offset,
+        ];
+        $contexts = $controller->getCreatorCandidatures($creatorId, $pagedFilters);
+        if (count($contexts) > $perPage) {
+            $hasNextPage = true;
+            array_pop($contexts);
+        }
         $offerFeed = $controller->getCreatorOfferFeed($creatorId, ['keyword' => $filters['keyword']]);
         $summary = $controller->summarizeContexts($allContexts);
+        $creatorMetrics = $controller->getCreatorActionMetrics($creatorId);
         $actionableOffers = array_values(array_filter($offerFeed, static function ($item) {
             $condidature = $item['condidature'];
 
@@ -250,8 +301,18 @@ $activeFilterCount = count(array_filter([
     $filters['keyword'],
     $filters['status'],
     $filters['origin'],
+    $filters['typeReponse'],
+    $filters['dateFrom'],
+    $filters['dateTo'],
+    $filters['hasCv'],
+    $filters['hasPortfolio'],
+    $filters['sort'],
     $filters['editableOnly'] ? '1' : '',
 ], static fn($value) => $value !== ''));
+$paginationBase = $_GET;
+unset($paginationBase['page']);
+$prevPageUrl = $page > 1 ? 'index.php?' . http_build_query($paginationBase + ['page' => $page - 1]) : '';
+$nextPageUrl = $hasNextPage ? 'index.php?' . http_build_query($paginationBase + ['page' => $page + 1]) : '';
 $savedCandidatureIds = $creatorId ? getSavedCreatorCandidatureIds($creatorId) : [];
 
 $creatorSectionBuckets = [
@@ -361,7 +422,7 @@ if ($requestedCreatorTab !== '') {
     <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
     <main class="container py-5">
         <div class="offre-page-shell" data-candidature-live-region>
-            <section class="module-hero">
+            <section class="module-hero module-hero-notification-shell">
                 <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
                     <div>
                         <span class="module-eyebrow">Creator candidature workspace</span>
@@ -370,12 +431,15 @@ if ($requestedCreatorTab !== '') {
                             Track every response you sent, keep drafts moving, and follow each targeted collaboration from first reply to final decision.
                         </p>
                     </div>
-                    <?php if ($creatorUser): ?>
-                        <div class="note-block">
-                            <strong><?php echo htmlspecialchars($creatorUser['nom']); ?></strong>
-                            <p><?php echo htmlspecialchars($creatorUser['email']); ?></p>
-                        </div>
-                    <?php endif; ?>
+                    <div class="compact-actions">
+                        <?php require __DIR__ . '/notification_widget.php'; ?>
+                        <?php if ($creatorUser): ?>
+                            <div class="note-block">
+                                <strong><?php echo htmlspecialchars($creatorUser['nom']); ?></strong>
+                                <p><?php echo htmlspecialchars($creatorUser['email']); ?></p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </section>
 
@@ -395,29 +459,34 @@ if ($requestedCreatorTab !== '') {
 
             <section class="stats-grid candidature-stats-grid">
                 <article class="stat-card">
-                    <span class="stat-label">Total candidatures</span>
-                    <span class="stat-value"><?php echo (int) ($summary['total'] ?? 0); ?></span>
-                    <span class="stat-note">All saved and submitted responses</span>
+                    <span class="stat-label">Invitations to answer</span>
+                    <span class="stat-value"><?php echo (int) ($creatorMetrics['invitationsToAnswer'] ?? 0); ?></span>
+                    <span class="stat-note">Active offers without a final response</span>
                 </article>
                 <article class="stat-card">
-                    <span class="stat-label">Editable now</span>
-                    <span class="stat-value"><?php echo (int) ($summary['editable'] ?? 0); ?></span>
-                    <span class="stat-note">Drafts and negotiation rounds</span>
+                    <span class="stat-label">Negotiations waiting reply</span>
+                    <span class="stat-value"><?php echo (int) ($creatorMetrics['negotiationsWaitingReply'] ?? 0); ?></span>
+                    <span class="stat-note">Active negotiation candidatures</span>
                 </article>
                 <article class="stat-card">
-                    <span class="stat-label">Awaiting review</span>
-                    <span class="stat-value"><?php echo $awaitingReviewCount; ?></span>
-                    <span class="stat-note">Accepted responses currently moving through brand review</span>
+                    <span class="stat-label">Closest deadline</span>
+                    <span class="stat-value"><?php echo htmlspecialchars($creatorMetrics['closestDeadline'] ?: 'None'); ?></span>
+                    <span class="stat-note">Nearest active invitation or candidature</span>
                 </article>
                 <article class="stat-card">
-                    <span class="stat-label">Negotiation loops</span>
-                    <span class="stat-value"><?php echo (int) ($summary['negociation'] ?? 0); ?></span>
-                    <span class="stat-note"><?php echo (int) ($summary['negotiationMessages'] ?? 0); ?> message<?php echo (int) ($summary['negotiationMessages'] ?? 0) === 1 ? '' : 's'; ?> stored across active threads</span>
+                    <span class="stat-label">Best proposed budget</span>
+                    <span class="stat-value"><?php echo htmlspecialchars(formatMoney($creatorMetrics['bestProposedBudget'] ?? 0)); ?></span>
+                    <span class="stat-note">Highest active invitation budget</span>
                 </article>
                 <article class="stat-card">
-                    <span class="stat-label">Accepted</span>
-                    <span class="stat-value"><?php echo (int) ($summary['acceptee'] ?? 0); ?></span>
-                    <span class="stat-note">Positive outcomes in your pipeline</span>
+                    <span class="stat-label">Draft applications</span>
+                    <span class="stat-value"><?php echo (int) ($creatorMetrics['draftApplications'] ?? 0); ?></span>
+                    <span class="stat-note">Saved candidatures to finish</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Accepted collaborations</span>
+                    <span class="stat-value"><?php echo (int) ($creatorMetrics['acceptedCollaborations'] ?? 0); ?></span>
+                    <span class="stat-note"><?php echo (int) ($creatorMetrics['applicationsWaitingDecision'] ?? 0); ?> waiting decision</span>
                 </article>
             </section>
 
@@ -427,7 +496,10 @@ if ($requestedCreatorTab !== '') {
                         <h2 class="section-title">Offers ready for your response</h2>
                         <p class="section-subtitle">Start a candidature from the targeted invitations currently visible in your creator inbox.</p>
                     </div>
-                    <span class="offer-chip"><?php echo count($actionableOffers); ?> ready</span>
+                    <div class="compact-actions">
+                        <a class="btn btn-outline-secondary" href="campaign_opportunities.php">Browse campaign opportunities</a>
+                        <span class="offer-chip"><?php echo count($actionableOffers); ?> ready</span>
+                    </div>
                 </div>
 
                 <?php if (!empty($actionableOffers)): ?>
@@ -508,7 +580,54 @@ if ($requestedCreatorTab !== '') {
                             <select class="form-select" id="origin" name="origin">
                                 <option value="">All origins</option>
                                 <option value="par_offre"<?php echo $filters['origin'] === 'par_offre' ? ' selected' : ''; ?>>Offer invitation</option>
-                                <option value="par_campagne"<?php echo $filters['origin'] === 'par_campagne' ? ' selected' : ''; ?>>Campaign response</option>
+                                <option value="par_campagne"<?php echo $filters['origin'] === 'par_campagne' ? ' selected' : ''; ?>>Campaign application</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="typeReponse" class="form-label fw-semibold">Response type</label>
+                            <select class="form-select" id="typeReponse" name="typeReponse">
+                                <option value="">All types</option>
+                                <option value="application"<?php echo $filters['typeReponse'] === 'application' ? ' selected' : ''; ?>>Application</option>
+                                <option value="acceptation"<?php echo $filters['typeReponse'] === 'acceptation' ? ' selected' : ''; ?>>Acceptance</option>
+                                <option value="negociation"<?php echo $filters['typeReponse'] === 'negociation' ? ' selected' : ''; ?>>Negotiation</option>
+                                <option value="refus"<?php echo $filters['typeReponse'] === 'refus' ? ' selected' : ''; ?>>Refusal</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="dateFrom" class="form-label fw-semibold">Submitted from</label>
+                            <input type="date" class="form-control" id="dateFrom" name="dateFrom" value="<?php echo htmlspecialchars($filters['dateFrom']); ?>">
+                        </div>
+                        <div>
+                            <label for="dateTo" class="form-label fw-semibold">Submitted to</label>
+                            <input type="date" class="form-control" id="dateTo" name="dateTo" value="<?php echo htmlspecialchars($filters['dateTo']); ?>">
+                        </div>
+                        <div>
+                            <label for="hasCv" class="form-label fw-semibold">CV file</label>
+                            <select class="form-select" id="hasCv" name="hasCv">
+                                <option value="">All</option>
+                                <option value="1"<?php echo $filters['hasCv'] === '1' ? ' selected' : ''; ?>>Has CV</option>
+                                <option value="0"<?php echo $filters['hasCv'] === '0' ? ' selected' : ''; ?>>No CV</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="hasPortfolio" class="form-label fw-semibold">Portfolio</label>
+                            <select class="form-select" id="hasPortfolio" name="hasPortfolio">
+                                <option value="">All</option>
+                                <option value="1"<?php echo $filters['hasPortfolio'] === '1' ? ' selected' : ''; ?>>Has portfolio</option>
+                                <option value="0"<?php echo $filters['hasPortfolio'] === '0' ? ' selected' : ''; ?>>No portfolio</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="sort" class="form-label fw-semibold">Sort</label>
+                            <select class="form-select" id="sort" name="sort">
+                                <option value=""<?php echo $filters['sort'] === '' ? ' selected' : ''; ?>>Workflow priority</option>
+                                <option value="newest"<?php echo $filters['sort'] === 'newest' ? ' selected' : ''; ?>>Newest</option>
+                                <option value="oldest"<?php echo $filters['sort'] === 'oldest' ? ' selected' : ''; ?>>Oldest</option>
+                                <option value="budget_high"<?php echo $filters['sort'] === 'budget_high' ? ' selected' : ''; ?>>Budget high to low</option>
+                                <option value="budget_low"<?php echo $filters['sort'] === 'budget_low' ? ' selected' : ''; ?>>Budget low to high</option>
+                                <option value="proposed_delay"<?php echo $filters['sort'] === 'proposed_delay' ? ' selected' : ''; ?>>Proposed delay</option>
+                                <option value="decision_date"<?php echo $filters['sort'] === 'decision_date' ? ' selected' : ''; ?>>Decision date</option>
+                                <option value="status"<?php echo $filters['sort'] === 'status' ? ' selected' : ''; ?>>Status</option>
                             </select>
                         </div>
                         <div>
@@ -711,11 +830,33 @@ if ($requestedCreatorTab !== '') {
                     <?php endforeach; ?>
                 </div>
             </section>
+            <nav class="front-pagination" aria-label="Candidature pages">
+                <span>Page <?php echo $page; ?> · Showing up to <?php echo $perPage; ?> filtered candidatures</span>
+                <div>
+                    <?php if ($prevPageUrl !== ''): ?>
+                        <a class="btn btn-outline-secondary" href="<?php echo htmlspecialchars($prevPageUrl); ?>">Previous</a>
+                    <?php endif; ?>
+                    <?php if ($nextPageUrl !== ''): ?>
+                        <a class="btn btn-primary" href="<?php echo htmlspecialchars($nextPageUrl); ?>">Load more</a>
+                    <?php endif; ?>
+                </div>
+            </nav>
         </div>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
     <script src="../offre/offre-tabs.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../offre/offre-tabs.js')); ?>"></script>
     <script src="candidature-list-live.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/candidature-list-live.js')); ?>"></script>
+<?php
+$cre8PilotContext = [
+    'page' => 'creator_candidature_workspace',
+    'mode' => 'list',
+    'role' => 'createur',
+    'allowedActions' => ['normal_chat', 'summarize_page', 'analyze_page', 'apply_filters', 'recommend_next_action', 'security_check'],
+    'formTarget' => 'filter_form',
+    'visibleEntityType' => 'candidature',
+];
+require __DIR__ . '/cre8pilot_widget.php';
+?>
 </body>
 </html>

@@ -415,22 +415,22 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
                         <div class="row g-3">
                             <div class="col-12">
                                 <label for="titre" class="form-label fw-semibold">Offer title</label>
-                                <input type="text" class="form-control form-control-lg" id="titre" name="titre" value="<?php echo htmlspecialchars($form['titre']); ?>" placeholder="Example: Short-form product launch package">
+                                <input type="text" class="form-control form-control-lg" id="titre" name="titre" data-cre8pilot-field="titre" value="<?php echo htmlspecialchars($form['titre']); ?>" placeholder="Example: Short-form product launch package">
                             </div>
                             <div class="col-md-6">
                                 <label for="objectif" class="form-label fw-semibold">Objective</label>
-                                <input type="text" class="form-control" id="objectif" name="objectif" value="<?php echo htmlspecialchars($form['objectif']); ?>" placeholder="Example: Drive 10 product demo videos in 2 weeks">
+                                <input type="text" class="form-control" id="objectif" name="objectif" data-cre8pilot-field="objectif" value="<?php echo htmlspecialchars($form['objectif']); ?>" placeholder="Example: Drive 10 product demo videos in 2 weeks">
                             </div>
                             <div class="col-md-6">
                                 <label for="budgetPropose" class="form-label fw-semibold">Proposed budget</label>
                                 <div class="input-group">
                                     <span class="input-group-text">EUR</span>
-                                    <input type="number" class="form-control" id="budgetPropose" name="budgetPropose" step="0.01" value="<?php echo htmlspecialchars($form['budgetPropose']); ?>" placeholder="1500">
+                                    <input type="number" class="form-control" id="budgetPropose" name="budgetPropose" step="0.01" data-cre8pilot-field="budgetPropose" value="<?php echo htmlspecialchars($form['budgetPropose']); ?>" placeholder="1500">
                                 </div>
                             </div>
                             <div class="col-12">
                                 <label for="description" class="form-label fw-semibold">Detailed description</label>
-                                <textarea class="form-control" id="description" name="description" rows="5" placeholder="Explain the deliverables, expected tone, product context, and what success looks like."><?php echo htmlspecialchars($form['description']); ?></textarea>
+                                <textarea class="form-control" id="description" name="description" rows="5" data-cre8pilot-field="description" placeholder="Explain the deliverables, expected tone, product context, and what success looks like."><?php echo htmlspecialchars($form['description']); ?></textarea>
                             </div>
                             <div class="col-md-6">
                                 <label for="datePublication" class="form-label fw-semibold">Publication date</label>
@@ -438,7 +438,7 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
                             </div>
                             <div class="col-md-6">
                                 <label for="dateLimite" class="form-label fw-semibold">Deadline</label>
-                                <input type="date" class="form-control" id="dateLimite" name="dateLimite" value="<?php echo htmlspecialchars($form['dateLimite']); ?>">
+                                <input type="date" class="form-control" id="dateLimite" name="dateLimite" data-cre8pilot-field="dateLimite" value="<?php echo htmlspecialchars($form['dateLimite']); ?>">
                             </div>
                         </div>
                     </section>
@@ -455,16 +455,16 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
                         <div class="row g-3">
                             <div class="col-12">
                                 <label for="raisonChoix" class="form-label fw-semibold">Why was this creator selected? <span class="optional-field-mark">Optional</span></label>
-                                <textarea class="form-control" id="raisonChoix" name="raisonChoix" rows="3" placeholder="Audience fit, previous work, tone, niche expertise..."><?php echo htmlspecialchars($form['raisonChoix']); ?></textarea>
+                                <textarea class="form-control" id="raisonChoix" name="raisonChoix" rows="3" data-cre8pilot-field="raisonChoix" placeholder="Audience fit, previous work, tone, niche expertise..."><?php echo htmlspecialchars($form['raisonChoix']); ?></textarea>
                                 <p class="field-helper-text">Use this only if you want to explain the audience match, tone, or previous work that made this creator a good fit.</p>
                             </div>
                             <div class="col-md-6">
                                 <label for="attenteCollaboration" class="form-label fw-semibold">Expected collaboration fit <span class="optional-field-mark">Optional</span></label>
-                                <textarea class="form-control" id="attenteCollaboration" name="attenteCollaboration" rows="4" placeholder="What kind of partnership, energy, deliverables, or rhythm do you expect?"><?php echo htmlspecialchars($form['attenteCollaboration']); ?></textarea>
+                                <textarea class="form-control" id="attenteCollaboration" name="attenteCollaboration" rows="4" data-cre8pilot-field="attenteCollaboration" placeholder="What kind of partnership, energy, deliverables, or rhythm do you expect?"><?php echo htmlspecialchars($form['attenteCollaboration']); ?></textarea>
                             </div>
                             <div class="col-md-6">
                                 <label for="messagePersonnalise" class="form-label fw-semibold">Personal note <span class="optional-field-mark">Optional</span></label>
-                                <textarea class="form-control" id="messagePersonnalise" name="messagePersonnalise" rows="4" placeholder="Optional warm introduction or context for this creator."><?php echo htmlspecialchars($form['messagePersonnalise']); ?></textarea>
+                                <textarea class="form-control" id="messagePersonnalise" name="messagePersonnalise" rows="4" data-cre8pilot-field="messagePersonnalise" placeholder="Optional warm introduction or context for this creator."><?php echo htmlspecialchars($form['messagePersonnalise']); ?></textarea>
                             </div>
                         </div>
                     </section>
@@ -752,5 +752,16 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
             updateDraftButtonState();
         });
     </script>
+<?php
+$cre8PilotContext = [
+    'page' => 'brand_offer_workspace',
+    'mode' => 'create_offer',
+    'role' => 'marque',
+    'allowedActions' => ['normal_chat', 'fill_offer_form', 'recommend_creator', 'suggest_budget', 'improve_offer_text', 'summarize_page'],
+    'formTarget' => 'offer_form',
+    'visibleEntityType' => 'offre',
+];
+require __DIR__ . '/../condidature/cre8pilot_widget.php';
+?>
 </body>
 </html>

@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../Modele/offre.php';
 require_once __DIR__ . '/../Modele/condidature.php';
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/condidatureC.php';
 
 class OffreC
 {
@@ -66,6 +67,12 @@ class OffreC
         }
 
         $condidature = Condidature::fromArray($row);
+        $row['messageMotivation'] = $condidature->getMessageMotivation();
+        $row['dateDisponibilite'] = $condidature->getDateDisponibilite();
+        $row['conditionsCreateur'] = $condidature->getConditionsCreateur();
+        $row['cvPath'] = $condidature->getCvPath();
+        $row['portfolioUrl'] = $condidature->getPortfolioUrl();
+        $row['motifRefus'] = $condidature->getMotifRefus();
         $row['noteDecision'] = $condidature->getNoteDecision();
         $row['responseMode'] = $condidature->getResponseMode();
         $row['typeReponse'] = $condidature->getTypeReponse();
@@ -84,13 +91,350 @@ class OffreC
         );
     }
 
-    public function getOffresByMarque($idMarque)
+    private function getOfferOrderBySql($sort, $alias = 'o')
     {
-        $sql = 'SELECT * FROM offre WHERE idMarque = :idMarque ORDER BY datePublication DESC, idOffre DESC';
+        $alias = preg_replace('/[^a-zA-Z0-9_]/', '', (string) $alias) ?: 'o';
+
+        return match ((string) $sort) {
+            'oldest' => "{$alias}.datePublication ASC, {$alias}.idOffre ASC",
+            'deadline_soon' => "{$alias}.dateLimite ASC, {$alias}.datePublication DESC, {$alias}.idOffre DESC",
+            'budget_high' => "{$alias}.budgetPropose DESC, {$alias}.datePublication DESC, {$alias}.idOffre DESC",
+            'budget_low' => "{$alias}.budgetPropose ASC, {$alias}.datePublication DESC, {$alias}.idOffre DESC",
+            'status' => "{$alias}.statutOffre ASC, {$alias}.datePublication DESC, {$alias}.idOffre DESC",
+            default => "{$alias}.datePublication DESC, {$alias}.idOffre DESC",
+        };
+    }
+
+    private function appendOfferPagination(&$sql, &$params, $limit = null, $offset = 0)
+    {
+        if ($limit === null || !is_numeric($limit)) {
+            return;
+        }
+
+        $params['__limit'] = max(1, min(100, (int) $limit));
+        $params['__offset'] = max(0, (int) $offset);
+        $sql .= ' LIMIT :__limit OFFSET :__offset';
+    }
+
+    private function executeOfferSearch($sql, array $params)
+    {
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(['idMarque' => $idMarque]);
+        foreach ($params as $key => $value) {
+            if ($key === '__limit' || $key === '__offset') {
+                $stmt->bindValue(':' . $key, (int) $value, PDO::PARAM_INT);
+            } else {
+                $stmt->bindValue(':' . $key, $value);
+            }
+        }
+        $stmt->execute();
 
         return $this->hydrateOffres($stmt);
+    }
+
+    private function savedOfferHasResponseCondition($creatorAlias = 'so', $offerAlias = 'o')
+    {
+        $creatorAlias = preg_replace('/[^a-zA-Z0-9_]/', '', (string) $creatorAlias) ?: 'so';
+        $offerAlias = preg_replace('/[^a-zA-Z0-9_]/', '', (string) $offerAlias) ?: 'o';
+
+        return "
+            EXISTS (
+                SELECT 1
+                FROM candidature c
+                WHERE c.idCreateur = {$creatorAlias}.idCreateur
+                  AND c.origineCandidature = 'par_offre'
+                  AND c.idSource = {$offerAlias}.idOffre
+                  AND (c.noteDecision IS NULL OR TRIM(c.noteDecision) <> 'SYSTEM_PLACEHOLDER_CAMPAIGN')
+            )
+        ";
+    }
+
+    private function appendSavedOfferFilters(&$sql, &$params, array $filters)
+    {
+        $keyword = trim((string) ($filters['keyword'] ?? ''));
+        $budgetFrom = trim((string) ($filters['budgetFrom'] ?? ($filters['budgetMin'] ?? '')));
+        $budgetTo = trim((string) ($filters['budgetTo'] ?? ($filters['budgetMax'] ?? '')));
+        $deadlineFrom = trim((string) ($filters['deadlineFrom'] ?? ($filters['dateLimite'] ?? '')));
+        $deadlineTo = trim((string) ($filters['deadlineTo'] ?? ($filters['dateLimiteTo'] ?? '')));
+        $status = trim((string) ($filters['status'] ?? ($filters['statut'] ?? '')));
+
+        if ($keyword !== '') {
+            $sql .= ' AND (
+                o.titre LIKE :savedKeyword
+                OR o.objectif LIKE :savedKeyword
+                OR o.description LIKE :savedKeyword
+                OR marque.nom LIKE :savedKeyword
+                OR marque.email LIKE :savedKeyword
+            )';
+            $params['savedKeyword'] = '%' . $keyword . '%';
+        }
+
+        if ($budgetFrom !== '' && is_numeric($budgetFrom)) {
+            $sql .= ' AND o.budgetPropose >= :savedBudgetFrom';
+            $params['savedBudgetFrom'] = (float) $budgetFrom;
+        }
+
+        if ($budgetTo !== '' && is_numeric($budgetTo)) {
+            $sql .= ' AND o.budgetPropose <= :savedBudgetTo';
+            $params['savedBudgetTo'] = (float) $budgetTo;
+        }
+
+        if ($deadlineFrom !== '') {
+            $sql .= ' AND o.dateLimite >= :savedDeadlineFrom';
+            $params['savedDeadlineFrom'] = $deadlineFrom;
+        }
+
+        if ($deadlineTo !== '') {
+            $sql .= ' AND o.dateLimite <= :savedDeadlineTo';
+            $params['savedDeadlineTo'] = $deadlineTo;
+        }
+
+        if ($status !== '') {
+            $sql .= ' AND o.statutOffre = :savedStatus';
+            $params['savedStatus'] = $status;
+        }
+    }
+
+    public function saveOffreForCreator($idCreateur, $idOffre)
+    {
+        $idCreateur = (int) $idCreateur;
+        $idOffre = (int) $idOffre;
+        if ($idCreateur <= 0 || $idOffre <= 0) {
+            return false;
+        }
+
+        $offer = $this->getPublishedOffreById($idOffre, $idCreateur);
+        if (!$offer) {
+            return false;
+        }
+
+        $deadline = DateTime::createFromFormat('Y-m-d', (string) $offer->getDateLimite());
+        if ($deadline && $deadline < new DateTime('today', $this->getModuleTimezone())) {
+            return false;
+        }
+
+        if ($this->getOfferResponseByCreator($idCreateur, $idOffre)) {
+            $this->removeSavedOffreWhenResponseExists($idCreateur, $idOffre);
+            return false;
+        }
+
+        $stmt = $this->pdo->prepare('
+            INSERT IGNORE INTO saved_offre (
+                idCreateur,
+                idOffre,
+                dateSaved
+            ) VALUES (
+                :idCreateur,
+                :idOffre,
+                NOW()
+            )
+        ');
+
+        return $stmt->execute([
+            'idCreateur' => $idCreateur,
+            'idOffre' => $idOffre,
+        ]);
+    }
+
+    public function unsaveOffreForCreator($idCreateur, $idOffre)
+    {
+        $stmt = $this->pdo->prepare('
+            DELETE FROM saved_offre
+            WHERE idCreateur = :idCreateur
+              AND idOffre = :idOffre
+        ');
+
+        return $stmt->execute([
+            'idCreateur' => (int) $idCreateur,
+            'idOffre' => (int) $idOffre,
+        ]);
+    }
+
+    public function isOffreSavedByCreator($idCreateur, $idOffre)
+    {
+        $stmt = $this->pdo->prepare('
+            SELECT 1
+            FROM saved_offre
+            WHERE idCreateur = :idCreateur
+              AND idOffre = :idOffre
+            LIMIT 1
+        ');
+        $stmt->execute([
+            'idCreateur' => (int) $idCreateur,
+            'idOffre' => (int) $idOffre,
+        ]);
+
+        return (bool) $stmt->fetchColumn();
+    }
+
+    public function getSavedOffreIdsByCreator($idCreateur)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT so.idOffre
+            FROM saved_offre so
+            INNER JOIN offre o ON o.idOffre = so.idOffre
+            WHERE so.idCreateur = :idCreateur
+              AND o.idCreateurCible = :idCreateurTarget
+              AND NOT " . $this->savedOfferHasResponseCondition('so', 'o') . "
+            ORDER BY so.dateSaved DESC, so.idSavedOffre DESC
+        ");
+        $stmt->execute([
+            'idCreateur' => (int) $idCreateur,
+            'idCreateurTarget' => (int) $idCreateur,
+        ]);
+
+        return array_values(array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN)));
+    }
+
+    public function getSavedOffresByCreator($idCreateur, $filters = [], $sort = 'recently_saved', $limit = 10, $offset = 0)
+    {
+        $sql = "
+            SELECT o.*
+            FROM saved_offre so
+            INNER JOIN offre o ON o.idOffre = so.idOffre
+            LEFT JOIN utilisateur marque ON marque.id = o.idMarque
+            WHERE so.idCreateur = :idCreateur
+              AND o.idCreateurCible = :idCreateurTarget
+              AND NOT " . $this->savedOfferHasResponseCondition('so', 'o') . "
+        ";
+        $params = [
+            'idCreateur' => (int) $idCreateur,
+            'idCreateurTarget' => (int) $idCreateur,
+        ];
+
+        $this->appendSavedOfferFilters($sql, $params, (array) $filters);
+
+        $sql .= ' ORDER BY ' . match ((string) $sort) {
+            '', 'recently_saved', 'saved_newest' => 'so.dateSaved DESC, so.idSavedOffre DESC',
+            'newest' => 'o.datePublication DESC, o.idOffre DESC',
+            'oldest' => 'o.datePublication ASC, o.idOffre ASC',
+            'deadline_soon' => 'o.dateLimite ASC, so.dateSaved DESC, o.idOffre DESC',
+            'budget_high' => 'o.budgetPropose DESC, so.dateSaved DESC, o.idOffre DESC',
+            'budget_low' => 'o.budgetPropose ASC, so.dateSaved DESC, o.idOffre DESC',
+            'status' => 'o.statutOffre ASC, so.dateSaved DESC, o.idOffre DESC',
+            default => 'so.dateSaved DESC, so.idSavedOffre DESC',
+        };
+
+        $this->appendOfferPagination($sql, $params, $limit, $offset);
+
+        return $this->executeOfferSearch($sql, $params);
+    }
+
+    public function countSavedOffresByCreator($idCreateur, $filters = [])
+    {
+        $sql = "
+            SELECT COUNT(*) AS total
+            FROM saved_offre so
+            INNER JOIN offre o ON o.idOffre = so.idOffre
+            LEFT JOIN utilisateur marque ON marque.id = o.idMarque
+            WHERE so.idCreateur = :idCreateur
+              AND o.idCreateurCible = :idCreateurTarget
+              AND NOT " . $this->savedOfferHasResponseCondition('so', 'o') . "
+        ";
+        $params = [
+            'idCreateur' => (int) $idCreateur,
+            'idCreateurTarget' => (int) $idCreateur,
+        ];
+
+        $this->appendSavedOfferFilters($sql, $params, (array) $filters);
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        return (int) ($row['total'] ?? 0);
+    }
+
+    public function removeSavedOffreWhenResponseExists($idCreateur, $idOffre)
+    {
+        $stmt = $this->pdo->prepare("
+            DELETE so
+            FROM saved_offre so
+            WHERE so.idCreateur = :idCreateur
+              AND so.idOffre = :idOffre
+              AND EXISTS (
+                  SELECT 1
+                  FROM candidature c
+                  WHERE c.idCreateur = so.idCreateur
+                    AND c.origineCandidature = 'par_offre'
+                    AND c.idSource = so.idOffre
+                    AND (c.noteDecision IS NULL OR TRIM(c.noteDecision) <> 'SYSTEM_PLACEHOLDER_CAMPAIGN')
+              )
+        ");
+
+        return $stmt->execute([
+            'idCreateur' => (int) $idCreateur,
+            'idOffre' => (int) $idOffre,
+        ]);
+    }
+
+    public function getOffresByMarque($idMarque, array $filters = [])
+    {
+        $sql = "
+            SELECT o.*
+            FROM offre o
+            LEFT JOIN utilisateur createur ON createur.id = o.idCreateurCible
+            WHERE o.idMarque = :idMarque
+        ";
+        $params = [
+            'idMarque' => (int) $idMarque,
+        ];
+
+        $keyword = trim((string) ($filters['keyword'] ?? ''));
+        $status = trim((string) ($filters['status'] ?? ''));
+        $budgetMin = $filters['budgetFrom'] ?? $filters['budgetMin'] ?? null;
+        $budgetMax = $filters['budgetTo'] ?? $filters['budgetMax'] ?? null;
+        $deadlineFrom = trim((string) ($filters['deadlineFrom'] ?? $filters['dateLimite'] ?? ''));
+        $deadlineTo = trim((string) ($filters['deadlineTo'] ?? ''));
+
+        if ($keyword !== '') {
+            $sql .= ' AND (
+                o.titre LIKE :keyword
+                OR o.objectif LIKE :keyword
+                OR o.description LIKE :keyword
+                OR o.raisonChoix LIKE :keyword
+                OR o.attenteCollaboration LIKE :keyword
+                OR o.messagePersonnalise LIKE :keyword
+                OR createur.nom LIKE :keyword
+                OR createur.email LIKE :keyword
+            )';
+            $params['keyword'] = '%' . $keyword . '%';
+        }
+
+        if ($status !== '') {
+            if ($status === 'pending') {
+                $sql .= " AND o.statutOffre = 'publiee' AND o.datePublication > CURDATE()";
+            } elseif ($status === 'publiee') {
+                $sql .= " AND o.statutOffre = 'publiee' AND o.datePublication <= CURDATE()";
+            } else {
+                $sql .= ' AND o.statutOffre = :status';
+                $params['status'] = $status;
+            }
+        }
+
+        if ($budgetMin !== null && $budgetMin !== '' && is_numeric($budgetMin)) {
+            $sql .= ' AND o.budgetPropose >= :budgetMin';
+            $params['budgetMin'] = (float) $budgetMin;
+        }
+
+        if ($budgetMax !== null && $budgetMax !== '' && is_numeric($budgetMax)) {
+            $sql .= ' AND o.budgetPropose <= :budgetMax';
+            $params['budgetMax'] = (float) $budgetMax;
+        }
+
+        if ($deadlineFrom !== '') {
+            $sql .= ' AND o.dateLimite >= :deadlineFrom';
+            $params['deadlineFrom'] = $deadlineFrom;
+        }
+
+        if ($deadlineTo !== '') {
+            $sql .= ' AND o.dateLimite <= :deadlineTo';
+            $params['deadlineTo'] = $deadlineTo;
+        }
+
+        $sql .= ' ORDER BY ' . $this->getOfferOrderBySql($filters['sort'] ?? 'newest', 'o');
+        $this->appendOfferPagination($sql, $params, $filters['limit'] ?? null, $filters['offset'] ?? 0);
+
+        return $this->executeOfferSearch($sql, $params);
     }
 
     public function getOffreById($idOffre, $idMarque)
@@ -103,11 +447,13 @@ class OffreC
         return $row ? $this->rowToOffre($row) : null;
     }
 
-    public function getAllOffres()
+    public function getAllOffres($limit = null, $offset = 0, $sort = 'newest')
     {
-        $stmt = $this->pdo->query('SELECT * FROM offre ORDER BY datePublication DESC, idOffre DESC');
+        $sql = 'SELECT * FROM offre ORDER BY ' . $this->getOfferOrderBySql($sort, 'offre');
+        $params = [];
+        $this->appendOfferPagination($sql, $params, $limit, $offset);
 
-        return $this->hydrateOffres($stmt);
+        return $this->executeOfferSearch($sql, $params);
     }
 
     public function getOffreByIdAdmin($idOffre)
@@ -470,42 +816,62 @@ class OffreC
         return $this->hydrateOffres($stmt);
     }
 
-    public function searchOffers($idCreateurCible, $keyword = null, $budgetMin = null, $budgetMax = null, $dateLimite = null)
+    public function searchOffers($idCreateurCible, $keyword = null, $budgetMin = null, $budgetMax = null, $dateLimite = null, $dateLimiteTo = null, $sort = 'budget_high', $limit = null, $offset = 0)
     {
-        $sql = 'SELECT * FROM offre WHERE idCreateurCible = :idCreateurCible AND statutOffre = :statut AND datePublication <= CURDATE()';
+        $sql = "
+            SELECT o.*
+            FROM offre o
+            LEFT JOIN utilisateur marque ON marque.id = o.idMarque
+            WHERE o.idCreateurCible = :idCreateurCible
+              AND o.statutOffre = :statut
+              AND o.datePublication <= CURDATE()
+        ";
         $params = [
             'idCreateurCible' => $idCreateurCible,
             'statut' => 'publiee',
         ];
 
         if ($keyword !== null && trim((string) $keyword) !== '') {
-            $sql .= ' AND (titre LIKE :keyword OR objectif LIKE :keyword OR description LIKE :keyword OR raisonChoix LIKE :keyword OR attenteCollaboration LIKE :keyword OR messagePersonnalise LIKE :keyword)';
+            $sql .= ' AND (
+                o.titre LIKE :keyword
+                OR o.objectif LIKE :keyword
+                OR o.description LIKE :keyword
+                OR o.raisonChoix LIKE :keyword
+                OR o.attenteCollaboration LIKE :keyword
+                OR o.messagePersonnalise LIKE :keyword
+                OR marque.nom LIKE :keyword
+                OR marque.email LIKE :keyword
+            )';
             $params['keyword'] = '%' . trim((string) $keyword) . '%';
         }
 
         if ($budgetMin !== null && is_numeric($budgetMin)) {
-            $sql .= ' AND budgetPropose >= :budgetMin';
+            $sql .= ' AND o.budgetPropose >= :budgetMin';
             $params['budgetMin'] = $budgetMin;
         }
 
         if ($budgetMax !== null && is_numeric($budgetMax)) {
-            $sql .= ' AND budgetPropose <= :budgetMax';
+            $sql .= ' AND o.budgetPropose <= :budgetMax';
             $params['budgetMax'] = $budgetMax;
         }
 
         if ($dateLimite) {
-            $sql .= ' AND dateLimite >= :dateLimite';
+            $sql .= ' AND o.dateLimite >= :dateLimite';
             $params['dateLimite'] = $dateLimite;
         }
 
-        $sql .= ' ORDER BY budgetPropose DESC, datePublication DESC, idOffre DESC';
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($params);
+        if ($dateLimiteTo) {
+            $sql .= ' AND o.dateLimite <= :dateLimiteTo';
+            $params['dateLimiteTo'] = $dateLimiteTo;
+        }
 
-        return $this->hydrateOffres($stmt);
+        $sql .= ' ORDER BY ' . $this->getOfferOrderBySql($sort, 'o');
+        $this->appendOfferPagination($sql, $params, $limit, $offset);
+
+        return $this->executeOfferSearch($sql, $params);
     }
 
-    public function searchOffresAdmin($keyword = null, $statut = null, $idMarque = null, $idCreateurCible = null, $budgetMin = null, $budgetMax = null, $dateLimite = null)
+    public function searchOffresAdmin($keyword = null, $statut = null, $idMarque = null, $idCreateurCible = null, $budgetMin = null, $budgetMax = null, $dateLimite = null, $dateLimiteTo = null, $sort = 'newest', $limit = null, $offset = 0)
     {
         $sql = "
             SELECT o.*
@@ -573,11 +939,69 @@ class OffreC
             $params['dateLimite'] = $dateLimite;
         }
 
-        $sql .= ' ORDER BY o.datePublication DESC, o.idOffre DESC';
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($params);
+        if ($dateLimiteTo) {
+            $sql .= ' AND o.dateLimite <= :dateLimiteTo';
+            $params['dateLimiteTo'] = $dateLimiteTo;
+        }
 
-        return $this->hydrateOffres($stmt);
+        $sql .= ' ORDER BY ' . $this->getOfferOrderBySql($sort, 'o');
+        $this->appendOfferPagination($sql, $params, $limit, $offset);
+
+        return $this->executeOfferSearch($sql, $params);
+    }
+
+    public function getBrandOfferActionMetrics($idMarque)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT
+                COUNT(*) AS totalOffers,
+                SUM(CASE WHEN statutOffre = 'brouillon' OR (statutOffre = 'publiee' AND datePublication > CURDATE()) THEN 1 ELSE 0 END) AS draftOffers,
+                SUM(
+                    CASE
+                        WHEN dateLimite BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+                         AND statutOffre NOT IN ('cloturee', 'archivee', 'expiree')
+                        THEN 1 ELSE 0
+                    END
+                ) AS expiringSoon
+            FROM offre
+            WHERE idMarque = :idMarque
+        ");
+        $stmt->execute([
+            'idMarque' => (int) $idMarque,
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        return [
+            'totalOffers' => (int) ($row['totalOffers'] ?? 0),
+            'draftOffers' => (int) ($row['draftOffers'] ?? 0),
+            'expiringSoon' => (int) ($row['expiringSoon'] ?? 0),
+        ];
+    }
+
+    public function getAdminOfferMetrics()
+    {
+        $stmt = $this->pdo->query("
+            SELECT
+                COUNT(*) AS realOffers,
+                SUM(
+                    CASE
+                        WHEN dateLimite < CURDATE()
+                         AND statutOffre NOT IN ('cloturee', 'archivee')
+                        THEN 1 ELSE 0
+                    END
+                ) AS expiredOffers,
+                SUM(
+                    CASE WHEN YEARWEEK(datePublication, 1) = YEARWEEK(CURDATE(), 1) THEN 1 ELSE 0 END
+                ) AS offersThisWeek
+            FROM offre
+        ");
+        $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        return [
+            'realOffers' => (int) ($row['realOffers'] ?? 0),
+            'expiredOffers' => (int) ($row['expiredOffers'] ?? 0),
+            'offersThisWeek' => (int) ($row['offersThisWeek'] ?? 0),
+        ];
     }
 
     public function getPublishedOffreById($idOffre, $idCreateurCible)
@@ -627,7 +1051,7 @@ class OffreC
         ';
         $stmt = $this->pdo->prepare($sql);
 
-        return $stmt->execute([
+        $created = $stmt->execute([
             'idMarque' => $offre->getIdMarque(),
             'idCreateurCible' => $offre->getIdCreateurCible(),
             'titre' => $offre->getTitre(),
@@ -641,6 +1065,31 @@ class OffreC
             'attenteCollaboration' => $offre->getAttenteCollaboration(),
             'messagePersonnalise' => $offre->getMessagePersonnalise(),
         ]);
+
+        if (!$created) {
+            return false;
+        }
+
+        $idOffre = (int) $this->pdo->lastInsertId();
+        if ($idOffre > 0) {
+            $offre->setIdOffre($idOffre);
+        }
+
+        if (
+            $idOffre > 0
+            && (int) $offre->getIdCreateurCible() > 0
+            && (string) ($offre->getStatutOffre() ?: 'publiee') !== 'brouillon'
+            && !$offre->isDraftSansCreateur()
+        ) {
+            $notificationController = new CondidatureC();
+            $notificationController->notifyOfferCreatedForCreatorAndAdmins(
+                $idOffre,
+                (int) $offre->getIdCreateurCible(),
+                (string) $offre->getTitre()
+            );
+        }
+
+        return true;
     }
 
     public function updateOffre(Offre $offre)
@@ -786,22 +1235,30 @@ class OffreC
                 SET
                     dateCandidature = CURDATE(),
                     statutCandidature = :statutCandidature,
+                    typeReponse = :typeReponse,
                     messageMotivation = :messageMotivation,
                     budgetPropose = :budgetPropose,
                     delaiPropose = :delaiPropose,
                     noteDecision = :noteDecision
                 WHERE idCandidature = :idCandidature
-            ';
+        ';
             $stmt = $this->pdo->prepare($sql);
 
-            return $stmt->execute([
+            $saved = $stmt->execute([
                 'statutCandidature' => $statusMap[$responseType],
+                'typeReponse' => $record->getTypeReponse(),
                 'messageMotivation' => $finalMessage,
                 'budgetPropose' => $finalBudget,
                 'delaiPropose' => $finalDelay,
                 'noteDecision' => $storedNoteDecision,
                 'idCandidature' => $existing['idCandidature'],
             ]);
+
+            if ($saved) {
+                $this->removeSavedOffreWhenResponseExists($idCreateur, $idOffre);
+            }
+
+            return $saved;
         }
 
         $sql = '
@@ -811,6 +1268,7 @@ class OffreC
                 idSource,
                 dateCandidature,
                 statutCandidature,
+                typeReponse,
                 messageMotivation,
                 budgetPropose,
                 delaiPropose,
@@ -821,6 +1279,7 @@ class OffreC
                 :idSource,
                 CURDATE(),
                 :statutCandidature,
+                :typeReponse,
                 :messageMotivation,
                 :budgetPropose,
                 :delaiPropose,
@@ -829,16 +1288,23 @@ class OffreC
         ';
         $stmt = $this->pdo->prepare($sql);
 
-        return $stmt->execute([
+        $saved = $stmt->execute([
             'idCreateur' => $idCreateur,
             'origineCandidature' => 'par_offre',
             'idSource' => $idOffre,
             'statutCandidature' => $statusMap[$responseType],
+            'typeReponse' => $record->getTypeReponse(),
             'messageMotivation' => $finalMessage,
             'budgetPropose' => $finalBudget,
             'delaiPropose' => $finalDelay,
             'noteDecision' => $storedNoteDecision,
         ]);
+
+        if ($saved) {
+            $this->removeSavedOffreWhenResponseExists($idCreateur, $idOffre);
+        }
+
+        return $saved;
     }
 
     public function createCandidature($idCreateur, $origineCandidature, $idSource, $messageMotivation = '', $budgetPropose = null, $delaiPropose = null, $statutCandidature = 'envoyee')
@@ -854,6 +1320,7 @@ class OffreC
         $delay = $delaiPropose !== null && $delaiPropose !== '' && is_numeric($delaiPropose)
             ? max(1, (int) $delaiPropose)
             : 7;
+        $typeReponse = $origineCandidature === 'par_campagne' ? 'application' : 'acceptation';
 
         $stmt = $this->pdo->prepare('
             INSERT INTO candidature (
@@ -862,6 +1329,7 @@ class OffreC
                 idSource,
                 dateCandidature,
                 statutCandidature,
+                typeReponse,
                 messageMotivation,
                 budgetPropose,
                 delaiPropose,
@@ -872,6 +1340,7 @@ class OffreC
                 :idSource,
                 CURDATE(),
                 :statutCandidature,
+                :typeReponse,
                 :messageMotivation,
                 :budgetPropose,
                 :delaiPropose,
@@ -884,6 +1353,7 @@ class OffreC
             'origineCandidature' => $origineCandidature,
             'idSource' => $idSource,
             'statutCandidature' => $statutCandidature,
+            'typeReponse' => $typeReponse,
             'messageMotivation' => trim((string) $messageMotivation) ?: 'Submitted from a platform invitation.',
             'budgetPropose' => (float) $budgetPropose,
             'delaiPropose' => $delay,

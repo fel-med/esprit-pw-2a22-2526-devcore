@@ -3,6 +3,16 @@
   gap: 0.85rem;
 }
 
+.theme-toggle [data-theme-toggle-icon] {
+  width: 1rem;
+  height: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
 [data-candidature-live-region].is-loading {
   opacity: 0.68;
   transition: opacity 0.18s ease;
@@ -26,6 +36,44 @@
   margin-top: 0.38rem;
   font-size: 0.82rem;
   line-height: 1.45;
+}
+
+.front-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(108, 92, 231, 0.14);
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at top right, rgba(108, 92, 231, 0.08), transparent 34%),
+    linear-gradient(180deg, #ffffff, #f8faff);
+  box-shadow: 0 16px 34px rgba(20, 31, 80, 0.06);
+}
+
+.front-pagination > div {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.front-pagination span {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.34rem 0.68rem;
+  border-radius: 999px;
+  background: rgba(108, 92, 231, 0.08);
+  color: #5b21b6;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.front-pagination {
+  margin-top: 1rem;
 }
 
 .candidature-badge,
@@ -80,6 +128,97 @@
 .origin-badge {
   background: rgba(16, 24, 40, 0.05);
   color: #344054;
+}
+
+.brand-source-tab-shell {
+  display: grid;
+  gap: 1rem;
+}
+
+.brand-source-tab-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.brand-source-tab-button {
+  min-width: 0;
+  min-height: 4.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--offre-border);
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at top right, rgba(30, 48, 243, 0.06), transparent 34%),
+    linear-gradient(180deg, #ffffff, #f8faff);
+  color: var(--offre-muted);
+  font-size: 0.98rem;
+  font-weight: 900;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 16px 38px rgba(20, 31, 80, 0.08);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease, color 0.18s ease;
+}
+
+.brand-source-tab-button:hover {
+  border-color: rgba(30, 48, 243, 0.2);
+  color: var(--offre-title);
+  transform: translateY(-1px);
+}
+
+.brand-source-tab-button.is-active {
+  border-color: rgba(108, 92, 231, 0.34);
+  color: var(--offre-title);
+  box-shadow: 0 20px 42px rgba(108, 92, 231, 0.16);
+}
+
+.brand-source-tab-button strong {
+  min-width: 2.2rem;
+  height: 2.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(16, 24, 40, 0.06);
+  color: inherit;
+  font-size: 0.9rem;
+}
+
+.brand-source-tab-button.is-active strong {
+  background: #6c5ce7;
+  color: #fff;
+}
+
+.brand-source-tab-panels,
+.brand-source-tab-panel {
+  min-width: 0;
+}
+
+.brand-source-tab-panel[hidden] {
+  display: none !important;
+}
+
+.brand-source-panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.2rem;
+  border: 1px solid var(--offre-border);
+  border-radius: 1.15rem;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 16px 34px rgba(20, 31, 80, 0.06);
+}
+
+.brand-workflow-tab-shell {
+  margin-top: 1rem;
+}
+
+.brand-workflow-tab-list {
+  box-shadow: none;
 }
 
 .source-feed-grid,
@@ -683,6 +822,21 @@
   min-height: 8.2rem;
 }
 
+.creator-action-grid {
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  align-items: stretch;
+}
+
+.creator-action-grid .brand-action-launch {
+  width: 100%;
+  justify-self: stretch;
+}
+
+.creator-action-grid .brand-action-launch-negotiate {
+  grid-column: auto;
+  width: 100%;
+}
+
 .creator-response-modal-card,
 .creator-response-modal-card[data-modal-variant="negotiate"] {
   width: min(43rem, 100%);
@@ -729,6 +883,29 @@
   color: var(--offre-muted);
   line-height: 1.55;
   font-size: 0.94rem;
+}
+
+.upload-helper,
+.current-upload-link {
+  display: block;
+  margin-top: 0.42rem;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.upload-helper {
+  color: var(--offre-muted);
+}
+
+.current-upload-link {
+  width: fit-content;
+  color: var(--offre-accent);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.current-upload-link:hover {
+  text-decoration: underline;
 }
 
 .response-modal-overlay {
@@ -1156,6 +1333,14 @@ body.offre-modal-open {
 }
 
 @media (max-width: 900px) {
+  .brand-source-tab-list {
+    grid-template-columns: 1fr;
+  }
+
+  .brand-source-panel-heading {
+    flex-direction: column;
+  }
+
   .source-feed-grid,
   .candidature-card-grid,
   .candidature-summary-grid,
@@ -1362,4 +1547,221 @@ body.offre-modal-open {
   .brand-action-launch-negotiate {
     min-height: auto;
   }
+}
+
+.campaign-opportunities-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.campaign-opportunity-search-grid {
+  grid-template-columns: minmax(240px, 1.7fr) minmax(180px, 0.8fr);
+}
+
+.campaign-opportunity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.campaign-opportunity-card {
+  display: grid;
+  gap: 0.95rem;
+  min-width: 0;
+  padding: 1.15rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(124, 58, 237, 0.12);
+  background: #fff;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+}
+
+.campaign-opportunity-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.campaign-opportunity-card h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 1.18rem;
+  line-height: 1.35;
+}
+
+.campaign-opportunity-card p {
+  margin: 0;
+  color: #64748b;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.campaign-opportunity-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.campaign-opportunity-meta span {
+  display: inline-flex;
+  max-width: 100%;
+  padding: 0.36rem 0.65rem;
+  border-radius: 999px;
+  background: #f5f3ff;
+  color: #5b21b6;
+  font-size: 0.8rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.campaign-application-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.campaign-application-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+@media (max-width: 720px) {
+  .campaign-opportunities-hero {
+    flex-direction: column;
+  }
+
+  .campaign-opportunity-search-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .campaign-application-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+[data-theme="dark"] .brand-source-tab-button,
+[data-theme="dark"] .brand-source-panel-heading,
+[data-theme="dark"] .source-feed-card,
+[data-theme="dark"] .candidature-card,
+[data-theme="dark"] .candidature-card.is-draft,
+[data-theme="dark"] .candidature-card.is-review,
+[data-theme="dark"] .candidature-card.is-accepted,
+[data-theme="dark"] .candidature-card.is-declined,
+[data-theme="dark"] .candidature-card.is-outdated,
+[data-theme="dark"] .composer-card,
+[data-theme="dark"] .locked-state-card,
+[data-theme="dark"] .decision-note-card,
+[data-theme="dark"] .timeline-card,
+[data-theme="dark"] .brand-action-card,
+[data-theme="dark"] .composer-mode-card,
+[data-theme="dark"] .composer-mode-card[data-mode="accept"],
+[data-theme="dark"] .composer-mode-card[data-mode="negotiate"],
+[data-theme="dark"] .composer-mode-card[data-mode="decline"],
+[data-theme="dark"] .composer-mode-card[data-mode="accept"].is-active,
+[data-theme="dark"] .composer-mode-card[data-mode="negotiate"].is-active,
+[data-theme="dark"] .composer-mode-card[data-mode="decline"].is-active,
+[data-theme="dark"] .composer-field-card,
+[data-theme="dark"] .composer-negotiation-panel,
+[data-theme="dark"] .composer-decline-panel,
+[data-theme="dark"] .creator-modal-section,
+[data-theme="dark"] .creator-modal-section-warning,
+[data-theme="dark"] .creator-modal-section-danger,
+[data-theme="dark"] .response-callout-review,
+[data-theme="dark"] .response-modal-card,
+[data-theme="dark"] .response-modal-card[data-modal-variant="negotiate"],
+[data-theme="dark"] .response-modal-preview,
+[data-theme="dark"] .response-modal-card[data-modal-variant="accept"] .response-modal-preview,
+[data-theme="dark"] .response-modal-card[data-modal-variant="refuse"] .response-modal-preview,
+[data-theme="dark"] .response-modal-card[data-modal-variant="negotiate"] .response-modal-preview,
+[data-theme="dark"] .campaign-opportunity-card {
+  background: var(--card-bg) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
+  box-shadow: 0 18px 42px var(--shadow-color) !important;
+}
+
+[data-theme="dark"] .response-modal-header,
+[data-theme="dark"] .response-modal-body,
+[data-theme="dark"] .response-modal-card[data-modal-variant="negotiate"] .response-modal-body,
+[data-theme="dark"] .response-modal-actions,
+[data-theme="dark"] .response-modal-card[data-modal-variant="accept"] .response-modal-actions,
+[data-theme="dark"] .response-modal-card[data-modal-variant="refuse"] .response-modal-actions,
+[data-theme="dark"] .response-modal-card[data-modal-variant="negotiate"] .response-modal-actions {
+  background: var(--card-bg-soft) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .negotiation-entry,
+[data-theme="dark"] .negotiation-entry-createur,
+[data-theme="dark"] .negotiation-entry-marque {
+  background: var(--card-bg-soft) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
+  box-shadow: 0 16px 34px var(--shadow-color) !important;
+}
+
+[data-theme="dark"] .candidature-card-title,
+[data-theme="dark"] .source-feed-title,
+[data-theme="dark"] .composer-mode-card strong,
+[data-theme="dark"] .composer-field-card-top strong,
+[data-theme="dark"] .creator-modal-section-head strong,
+[data-theme="dark"] .response-modal-header h2,
+[data-theme="dark"] .response-modal-preview strong,
+[data-theme="dark"] .response-modal-summary strong,
+[data-theme="dark"] .negotiation-author-block strong,
+[data-theme="dark"] .brand-action-card h2,
+[data-theme="dark"] .brand-action-launch strong,
+[data-theme="dark"] .response-callout-review strong,
+[data-theme="dark"] .campaign-opportunity-card h2 {
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .candidature-card-copy,
+[data-theme="dark"] .source-feed-copy,
+[data-theme="dark"] .composer-mode-card span,
+[data-theme="dark"] .composer-field-card-top p,
+[data-theme="dark"] .creator-modal-section-head span,
+[data-theme="dark"] .response-modal-subtitle,
+[data-theme="dark"] .response-modal-copy,
+[data-theme="dark"] .response-modal-preview span:last-child,
+[data-theme="dark"] .response-modal-preview span:not(.response-modal-preview-label),
+[data-theme="dark"] .negotiation-author-block span,
+[data-theme="dark"] .negotiation-entry-message,
+[data-theme="dark"] .brand-action-launch span,
+[data-theme="dark"] .response-callout-review .candidature-signal-copy,
+[data-theme="dark"] .campaign-opportunity-card p {
+  color: var(--muted-text) !important;
+}
+
+[data-theme="dark"] .brand-source-tab-button strong,
+[data-theme="dark"] .candidature-badge,
+[data-theme="dark"] .origin-badge,
+[data-theme="dark"] .campaign-opportunity-meta span,
+[data-theme="dark"] .candidature-inline-meta .offer-chip,
+[data-theme="dark"] .negotiation-role,
+[data-theme="dark"] .response-modal-kicker {
+  background: var(--badge-bg) !important;
+  color: #ddd6fe !important;
+  border-color: var(--border-color-strong) !important;
+}
+
+[data-theme="dark"] .brand-action-launch,
+[data-theme="dark"] .brand-action-launch-accept,
+[data-theme="dark"] .brand-action-launch-refuse,
+[data-theme="dark"] .brand-action-launch-negotiate {
+  background: var(--card-bg-soft) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color-strong) !important;
+  box-shadow: none !important;
+}
+
+[data-theme="dark"] .response-modal-secondary {
+  background: var(--card-bg) !important;
+  color: var(--text-color) !important;
+  border: 1px solid var(--border-color-strong) !important;
 }

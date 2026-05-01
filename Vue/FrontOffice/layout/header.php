@@ -10,6 +10,7 @@ $cre8FrontDisplayName = $cre8FrontName !== '' ? $cre8FrontName : ($cre8FrontEmai
 $cre8FrontInitial = strtoupper(substr($cre8FrontDisplayName, 0, 1));
 $cre8FrontInitial = $cre8FrontInitial !== '' ? $cre8FrontInitial : 'C';
 $cre8FrontLogo = $cre8FrontBase . '/Vue/public/images/logo.png';
+$cre8FrontLogoutHref = $cre8FrontBase . '/Vue/FrontOffice/offre/login.php?logout=1';
 
 $cre8FrontRoleLabel = match ($cre8FrontRole) {
     'marque' => 'Brand',
@@ -25,6 +26,16 @@ $cre8FrontOffersHref = match ($cre8FrontRole) {
     default => $cre8FrontBase . '/Vue/FrontOffice/offre/login.php',
 };
 
+$cre8FrontCampaignsHref = match ($cre8FrontRole) {
+    'marque' => $cre8FrontBase . '/Vue/FrontOffice/condidature/brand_campaigns.php',
+    'createur' => $cre8FrontBase . '/Vue/FrontOffice/condidature/campaign_opportunities.php',
+    'admin' => $cre8FrontBase . '/Vue/BackOffice/condidature/index.php?origin=par_campagne',
+    default => $cre8FrontBase . '/Vue/FrontOffice/offre/login.php',
+};
+$cre8FrontIsCampaignsPage = strpos($cre8FrontPath, '/FrontOffice/condidature/campaign_opportunities.php') !== false
+    || strpos($cre8FrontPath, '/FrontOffice/condidature/brand_campaigns.php') !== false;
+$cre8FrontIsCandidaturePage = strpos($cre8FrontPath, '/FrontOffice/condidature/') !== false && !$cre8FrontIsCampaignsPage;
+
 $cre8FrontCandidatureHref = match ($cre8FrontRole) {
     'marque' => $cre8FrontBase . '/Vue/FrontOffice/condidature/brand_index.php',
     'createur' => $cre8FrontBase . '/Vue/FrontOffice/condidature/index.php',
@@ -36,15 +47,16 @@ $cre8FrontNav = $cre8FrontRole === 'createur'
     ? [
         ['label' => 'Dashboard', 'href' => $cre8FrontOffersHref, 'active' => false],
         ['label' => 'Offers', 'href' => $cre8FrontOffersHref, 'active' => strpos($cre8FrontPath, '/FrontOffice/offre/') !== false],
-        ['label' => 'Candidatures', 'href' => $cre8FrontCandidatureHref, 'active' => strpos($cre8FrontPath, '/FrontOffice/condidature/') !== false],
+        ['label' => 'Candidatures', 'href' => $cre8FrontCandidatureHref, 'active' => $cre8FrontIsCandidaturePage],
+        ['label' => 'Campaigns', 'href' => $cre8FrontCampaignsHref, 'active' => $cre8FrontIsCampaignsPage],
         ['label' => 'Events', 'href' => '#', 'active' => false],
         ['label' => 'Forum', 'href' => '#', 'active' => false],
     ]
     : [
         ['label' => 'Dashboard', 'href' => $cre8FrontOffersHref, 'active' => false],
         ['label' => 'My Offers', 'href' => $cre8FrontOffersHref, 'active' => strpos($cre8FrontPath, '/FrontOffice/offre/') !== false],
-        ['label' => 'Candidatures', 'href' => $cre8FrontCandidatureHref, 'active' => strpos($cre8FrontPath, '/FrontOffice/condidature/') !== false],
-        ['label' => 'Campaigns', 'href' => '#', 'active' => false],
+        ['label' => 'Candidatures', 'href' => $cre8FrontCandidatureHref, 'active' => $cre8FrontIsCandidaturePage],
+        ['label' => 'Campaigns', 'href' => $cre8FrontCampaignsHref, 'active' => $cre8FrontIsCampaignsPage],
         ['label' => 'My Profile', 'href' => '#', 'active' => false],
     ];
 ?>
@@ -66,6 +78,8 @@ $cre8FrontNav = $cre8FrontRole === 'createur'
   </nav>
 
   <div class="cre8-front-user">
+    <?php require __DIR__ . '/../condidature/theme_toggle.php'; ?>
+    <a class="cre8-front-logout" href="<?php echo htmlspecialchars($cre8FrontLogoutHref); ?>">Logout</a>
     <span class="cre8-front-role-pill"><?php echo htmlspecialchars($cre8FrontRoleLabel); ?></span>
     <span class="cre8-front-avatar" title="<?php echo htmlspecialchars($cre8FrontDisplayName); ?>"><?php echo htmlspecialchars($cre8FrontInitial); ?></span>
   </div>

@@ -71,6 +71,30 @@
     return /^[0-9]+$/.test(value) && Number(value) > 0;
   }
 
+  function normalizeNumberText(value) {
+    if (value === "" || Number.isNaN(Number(value))) {
+      return "";
+    }
+
+    return String(Number(value));
+  }
+
+  function hasNegotiationDelta(form, messageValue, budgetValue, delayValue) {
+    if (form.dataset.requireNegotiationDelta !== "1") {
+      return true;
+    }
+
+    const baselineMessage = (form.dataset.baselineMessage || "").trim();
+    const baselineBudget = normalizeNumberText((form.dataset.baselineBudget || "").trim());
+    const baselineDelay = normalizeNumberText((form.dataset.baselineDelay || "").trim());
+
+    return (
+      messageValue.trim() !== baselineMessage ||
+      normalizeNumberText(budgetValue) !== baselineBudget ||
+      normalizeNumberText(delayValue) !== baselineDelay
+    );
+  }
+
   function isValidUrl(value) {
     if (value === "") {
       return true;
@@ -82,6 +106,27 @@
     } catch (error) {
       return false;
     }
+  }
+
+  function validateUploadedFile(field) {
+    if (!field || field.type !== "file" || !field.files || field.files.length === 0) {
+      return "";
+    }
+
+    const file = field.files[0];
+    const allowedExtensions = ["pdf", "doc", "docx", "png", "jpg", "jpeg"];
+    const extension = (file.name.split(".").pop() || "").toLowerCase();
+    const maxSize = 5 * 1024 * 1024;
+
+    if (!allowedExtensions.includes(extension)) {
+      return "Upload a CV/reference file as PDF, DOC, DOCX, PNG, JPG, or JPEG.";
+    }
+
+    if (file.size > maxSize) {
+      return "The CV/reference file must be 5 MB or smaller.";
+    }
+
+    return "";
   }
 
   function addError(errors, form, name, message) {
@@ -103,7 +148,7 @@
     const refusalValue = fieldValue(form, "motifRefus");
     const portfolioValue = fieldValue(form, "portfolioUrl");
     const conditionsValue = fieldValue(form, "conditionsCreateur");
-    const cvValue = fieldValue(form, "cvPath");
+    const cvFileField = getField(form, "cvFile");
 
     if (messageValue.length > 2500) {
       addError(errors, form, "messageMotivation", "Your message must stay under 2500 characters.");
@@ -113,8 +158,9 @@
       addError(errors, form, "conditionsCreateur", "Creator terms must stay under 2000 characters.");
     }
 
-    if (cvValue.length > 255) {
-      addError(errors, form, "cvPath", "The CV field must stay under 255 characters.");
+    const uploadError = validateUploadedFile(cvFileField);
+    if (uploadError) {
+      addError(errors, form, "cvFile", uploadError);
     }
 
     if (portfolioValue.length > 255) {
@@ -186,6 +232,10 @@
 
       if (budgetValue === "") {
         addError(errors, form, "budgetPropose", "Enter a valid proposed budget greater than 0.");
+      }
+
+      if (!hasNegotiationDelta(form, messageValue, budgetValue, delayValue)) {
+        addError(errors, form, "messageMotivation", "Change the negotiation message, budget, or timeline before saving this proposal.");
       }
     }
 
@@ -287,6 +337,16 @@
         });
 
         field.addEventListener("input", () => {
+          if (field.dataset.validationTouched === "1") {
+            runValidation(form, { touchedOnly: true, strictRequired: true });
+          }
+        });
+
+        field.addEventListener("change", () => {
+          if (field.type === "file") {
+            field.dataset.validationTouched = "1";
+          }
+
           if (field.dataset.validationTouched === "1") {
             runValidation(form, { touchedOnly: true, strictRequired: true });
           }

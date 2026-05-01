@@ -49,7 +49,7 @@ function translateOrigin($origin)
 {
     return match ((string) $origin) {
         'par_offre' => 'Offer invitation',
-        'par_campagne' => 'Campaign response',
+        'par_campagne' => 'Campaign application',
         default => ucwords(str_replace('_', ' ', (string) $origin)),
     };
 }
@@ -85,6 +85,35 @@ function formatShortDate($value, $fallback = 'Not available')
     }
 
     return date('Y-m-d', $timestamp);
+}
+
+function candidatureStoredFileHref($path)
+{
+    $path = trim(str_replace('\\', '/', (string) $path));
+    if ($path === '') {
+        return '';
+    }
+
+    if (preg_match('/^https?:\/\//i', $path) || str_starts_with($path, '/')) {
+        return $path;
+    }
+
+    if (str_starts_with($path, 'Vue/public/')) {
+        return '../../public/' . substr($path, strlen('Vue/public/'));
+    }
+
+    if (str_starts_with($path, 'public/')) {
+        return '../../' . $path;
+    }
+
+    return $path;
+}
+
+function candidatureStoredFileName($path)
+{
+    $path = trim(str_replace('\\', '/', (string) $path));
+
+    return $path !== '' ? basename($path) : '';
 }
 
 if ($brandId && $idCandidature !== null) {
@@ -180,10 +209,30 @@ $actionHubStateLabel = $brandCanDecide && $brandCanNegotiate
     ? 'Decision and negotiation open'
     : ($brandCanDecide ? 'Decision open' : ($brandCanNegotiate ? 'Negotiation open' : 'Actions locked'));
 $latestCreatorEntry = $negotiation['latestCreator'] ?? null;
+$latestNegotiationEntry = $negotiation['latest'] ?? null;
+$brandIsLatestNegotiationSender = $latestNegotiationEntry && ($latestNegotiationEntry['auteur'] ?? '') === 'marque';
 $latestCreatorMessage = trim((string) ($latestCreatorEntry['message'] ?? '')) !== ''
     ? (string) $latestCreatorEntry['message']
     : (trim((string) $condidature->getMessageMotivation()) !== '' ? (string) $condidature->getMessageMotivation() : 'No creator message was added yet.');
 $latestCreatorLabel = $latestCreatorEntry ? 'Latest creator update' : 'Initial context';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' && $brandIsLatestNegotiationSender) {
+    $form['message'] = (string) ($latestNegotiationEntry['message'] ?? $form['message']);
+    if (($latestNegotiationEntry['budgetPropose'] ?? null) !== null) {
+        $form['budgetPropose'] = (string) $latestNegotiationEntry['budgetPropose'];
+    }
+    if (($latestNegotiationEntry['delaiPropose'] ?? null) !== null) {
+        $form['delaiPropose'] = (string) $latestNegotiationEntry['delaiPropose'];
+    }
+}
+
+$brandNegotiationBaselineMessage = $brandIsLatestNegotiationSender ? (string) ($latestNegotiationEntry['message'] ?? '') : '';
+$brandNegotiationBaselineBudget = $brandIsLatestNegotiationSender && ($latestNegotiationEntry['budgetPropose'] ?? null) !== null
+    ? (string) $latestNegotiationEntry['budgetPropose']
+    : (string) ($condidature ? $condidature->getBudgetPropose() : $form['budgetPropose']);
+$brandNegotiationBaselineDelay = $brandIsLatestNegotiationSender && ($latestNegotiationEntry['delaiPropose'] ?? null) !== null
+    ? (string) $latestNegotiationEntry['delaiPropose']
+    : (string) ($condidature ? $condidature->getDelaiPropose() : $form['delaiPropose']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -257,12 +306,36 @@ $latestCreatorLabel = $latestCreatorEntry ? 'Latest creator update' : 'Initial c
                                     <p><?php echo htmlspecialchars($brand['email']); ?></p>
                                 </div>
                                 <div class="offer-detail-item">
-                                    <strong>Source objective</strong>
+                                    <strong><?php echo ($source['origin'] ?? '') === 'par_campagne' ? 'Campaign description' : 'Offer objective'; ?></strong>
                                     <span><?php echo htmlspecialchars($source['objective'] ?: 'No source objective was attached to this candidature.'); ?></span>
                                 </div>
                                 <div class="offer-detail-item">
-                                    <strong>Source deadline</strong>
+                                    <strong><?php echo ($source['origin'] ?? '') === 'par_campagne' ? 'Campaign start date' : 'Source published'; ?></strong>
+                                    <span><?php echo htmlspecialchars(formatShortDate($source['datePublication'] ?? null)); ?></span>
+                                </div>
+                                <div class="offer-detail-item">
+                                    <strong><?php echo ($source['origin'] ?? '') === 'par_campagne' ? 'Campaign end date' : 'Source deadline'; ?></strong>
                                     <span><?php echo htmlspecialchars(formatShortDate($source['dateLimite'] ?? null)); ?></span>
+                                </div>
+                                <div class="offer-detail-item">
+                                    <strong>CV/reference file</strong>
+                                    <?php if (trim((string) $condidature->getCvPath()) !== ''): ?>
+                                        <a class="current-upload-link" href="<?php echo htmlspecialchars(candidatureStoredFileHref($condidature->getCvPath())); ?>" target="_blank" rel="noopener noreferrer">
+                                            <?php echo htmlspecialchars(candidatureStoredFileName($condidature->getCvPath()) ?: $condidature->getCvPath()); ?>
+                                        </a>
+                                    <?php else: ?>
+                                        <span>No file attached yet</span>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="offer-detail-item">
+                                    <strong>Portfolio URL</strong>
+                                    <?php if (trim((string) $condidature->getPortfolioUrl()) !== ''): ?>
+                                        <a class="current-upload-link" href="<?php echo htmlspecialchars($condidature->getPortfolioUrl()); ?>" target="_blank" rel="noopener noreferrer">
+                                            <?php echo htmlspecialchars($condidature->getPortfolioUrl()); ?>
+                                        </a>
+                                    <?php else: ?>
+                                        <span>No portfolio link attached yet</span>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </section>
@@ -395,8 +468,8 @@ $latestCreatorLabel = $latestCreatorEntry ? 'Latest creator update' : 'Initial c
                                             class="brand-action-launch brand-action-launch-negotiate"
                                             data-response-modal-trigger="negotiate"
                                         >
-                                            <strong><?php echo htmlspecialchars($composerTitle); ?></strong>
-                                            <span><?php echo htmlspecialchars($composerHint); ?></span>
+                                            <strong><?php echo htmlspecialchars($brandIsLatestNegotiationSender ? 'Update your proposal' : $composerTitle); ?></strong>
+                                            <span><?php echo htmlspecialchars($brandIsLatestNegotiationSender ? 'You sent the latest negotiation step, so edit that proposal instead of adding a duplicate message.' : $composerHint); ?></span>
                                         </button>
                                     <?php endif; ?>
                                 </div>
@@ -481,6 +554,7 @@ $latestCreatorLabel = $latestCreatorEntry ? 'Latest creator update' : 'Initial c
                                                 class="form-control"
                                                 id="decisionModalNote"
                                                 name="noteDecision"
+                                                data-cre8pilot-field="noteDecision"
                                                 rows="5"
                                                 placeholder="Add optional feedback for the creator or your internal review trail."
                                             ><?php echo htmlspecialchars($decisionForm['noteDecision']); ?></textarea>
@@ -504,6 +578,10 @@ $latestCreatorLabel = $latestCreatorEntry ? 'Latest creator update' : 'Initial c
                                     class="response-modal-card"
                                     data-response-modal-card
                                     data-modal-variant="negotiate"
+                                    data-require-negotiation-delta="1"
+                                    data-baseline-message="<?php echo htmlspecialchars($brandNegotiationBaselineMessage); ?>"
+                                    data-baseline-budget="<?php echo htmlspecialchars($brandNegotiationBaselineBudget); ?>"
+                                    data-baseline-delay="<?php echo htmlspecialchars($brandNegotiationBaselineDelay); ?>"
                                     role="dialog"
                                     aria-modal="true"
                                     aria-labelledby="brandNegotiationModalTitle"
@@ -511,8 +589,8 @@ $latestCreatorLabel = $latestCreatorEntry ? 'Latest creator update' : 'Initial c
                                     <div class="response-modal-header">
                                         <div>
                                             <span class="response-modal-kicker">Negotiation</span>
-                                            <h2 id="brandNegotiationModalTitle"><?php echo htmlspecialchars($composerTitle); ?></h2>
-                                            <p class="response-modal-subtitle"><?php echo htmlspecialchars($composerHint); ?></p>
+                                            <h2 id="brandNegotiationModalTitle"><?php echo htmlspecialchars($brandIsLatestNegotiationSender ? 'Update your proposal' : $composerTitle); ?></h2>
+                                            <p class="response-modal-subtitle"><?php echo htmlspecialchars($brandIsLatestNegotiationSender ? 'Change your latest message, budget, or timeline. It will update the last brand proposal instead of creating a duplicate history step.' : $composerHint); ?></p>
                                         </div>
                                     </div>
                                     <div class="response-modal-body">
@@ -530,15 +608,17 @@ $latestCreatorLabel = $latestCreatorEntry ? 'Latest creator update' : 'Initial c
                                         <input type="hidden" name="brandAction" value="negotiate">
 
                                         <p class="response-modal-copy">
-                                            Your reply will be added to the negotiation history only as a real counter-proposal. If you already agree with the latest creator terms, close the workflow with a final decision instead of repeating them here.
+                                            <?php echo $brandIsLatestNegotiationSender
+                                                ? 'Your latest brand proposal will be updated in place. Change at least one field before saving it.'
+                                                : 'Your reply will be added to the negotiation history only as a real counter-proposal. If you already agree with the latest creator terms, close the workflow with a final decision instead of repeating them here.'; ?>
                                         </p>
 
                                         <div class="response-modal-preview">
-                                            <span class="response-modal-preview-label">Latest creator update</span>
-                                            <strong><?php echo htmlspecialchars($latestCreatorLabel); ?></strong>
-                                            <span><?php echo htmlspecialchars($latestCreatorMessage); ?></span>
-                                            <?php if ($latestCreatorEntry): ?>
-                                                <span><?php echo htmlspecialchars(formatDateLabel($latestCreatorEntry['dateMessage'] ?? null)); ?></span>
+                                            <span class="response-modal-preview-label"><?php echo $brandIsLatestNegotiationSender ? 'Your latest proposal' : 'Latest creator update'; ?></span>
+                                            <strong><?php echo htmlspecialchars($brandIsLatestNegotiationSender ? 'Latest brand proposal' : $latestCreatorLabel); ?></strong>
+                                            <span><?php echo htmlspecialchars($brandIsLatestNegotiationSender ? (string) ($latestNegotiationEntry['message'] ?? 'No message body was added to this negotiation step.') : $latestCreatorMessage); ?></span>
+                                            <?php if ($brandIsLatestNegotiationSender || $latestCreatorEntry): ?>
+                                                <span><?php echo htmlspecialchars(formatDateLabel($brandIsLatestNegotiationSender ? ($latestNegotiationEntry['dateMessage'] ?? null) : ($latestCreatorEntry['dateMessage'] ?? null))); ?></span>
                                             <?php endif; ?>
                                         </div>
 
@@ -548,6 +628,7 @@ $latestCreatorLabel = $latestCreatorEntry ? 'Latest creator update' : 'Initial c
                                                 class="form-control"
                                                 id="negotiationModalMessage"
                                                 name="message"
+                                                data-cre8pilot-field="messageNegociation"
                                                 rows="4"
                                                 placeholder="Explain the adjustment you want to propose or clarify the current terms."
                                             ><?php echo htmlspecialchars($form['message']); ?></textarea>
@@ -558,18 +639,18 @@ $latestCreatorLabel = $latestCreatorEntry ? 'Latest creator update' : 'Initial c
                                                 <label for="negotiationModalBudget" class="form-label fw-semibold">Budget proposal</label>
                                                 <div class="input-group">
                                                     <span class="input-group-text">EUR</span>
-                                                    <input type="number" class="form-control" id="negotiationModalBudget" name="budgetPropose" step="0.01" value="<?php echo htmlspecialchars($form['budgetPropose']); ?>">
+                                                    <input type="number" class="form-control" id="negotiationModalBudget" name="budgetPropose" step="0.01" data-cre8pilot-field="budgetPropose" value="<?php echo htmlspecialchars($form['budgetPropose']); ?>">
                                                 </div>
                                             </div>
                                             <div>
                                                 <label for="negotiationModalDelay" class="form-label fw-semibold">Timeline proposal</label>
-                                                <input type="number" class="form-control" id="negotiationModalDelay" name="delaiPropose" step="1" value="<?php echo htmlspecialchars($form['delaiPropose']); ?>">
+                                                <input type="number" class="form-control" id="negotiationModalDelay" name="delaiPropose" step="1" data-cre8pilot-field="delaiPropose" value="<?php echo htmlspecialchars($form['delaiPropose']); ?>">
                                             </div>
                                         </div>
 
                                         <div class="response-modal-actions">
                                             <button type="button" class="response-modal-secondary" data-response-modal-close>Keep reviewing</button>
-                                            <button type="submit" class="response-modal-primary response-modal-primary-negotiate"><?php echo htmlspecialchars($condidature->isNegotiation() ? 'Send negotiation reply' : 'Start negotiation'); ?></button>
+                                            <button type="submit" class="response-modal-primary response-modal-primary-negotiate"><?php echo htmlspecialchars($brandIsLatestNegotiationSender ? 'Update proposal' : ($condidature->isNegotiation() ? 'Send negotiation reply' : 'Start negotiation')); ?></button>
                                         </div>
                                     </div>
                                 </form>
@@ -585,5 +666,19 @@ $latestCreatorLabel = $latestCreatorEntry ? 'Latest creator update' : 'Initial c
     <?php if (!$error && ($brandCanDecide || $brandCanNegotiate)): ?>
         <script src="brand-actions-modal.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/brand-actions-modal.js')); ?>"></script>
     <?php endif; ?>
+<?php
+$cre8PilotContext = [
+    'page' => 'brand_candidature_workspace',
+    'mode' => ($condidature && $condidature->isNegotiation()) ? 'negotiation_reply' : 'review_details',
+    'role' => 'marque',
+    'allowedActions' => ($condidature && $condidature->isNegotiation())
+        ? ['normal_chat', 'prepare_negotiation_reply', 'summarize_negotiation', 'improve_negotiation_message', 'security_check']
+        : ['normal_chat', 'summarize_candidature', 'prepare_acceptance_note', 'prepare_refusal_note', 'prepare_negotiation_reply', 'analyze_candidature_quality', 'security_check'],
+    'formTarget' => ($condidature && $condidature->isNegotiation()) ? 'negotiation_form' : 'brand_decision_form',
+    'visibleEntityType' => ($condidature && $condidature->isNegotiation()) ? 'negociation' : 'candidature',
+    'visibleEntityId' => $idCandidature ?? null,
+];
+require __DIR__ . '/cre8pilot_widget.php';
+?>
 </body>
 </html>

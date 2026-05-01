@@ -6,9 +6,34 @@ if (!isset($_SESSION['utilisateur'])) {
 }
 
 require_once __DIR__ . '/../../../Controleur/offreC.php';
+require_once __DIR__ . '/../../../Controleur/condidatureC.php';
 
 $brandId = $_SESSION['utilisateur']['id'];
 $controller = new OffreC();
+$candidatureController = new CondidatureC();
+$notificationController = $candidatureController;
+$notificationUserId = (int) $brandId;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['notificationAction'])) {
+    $notificationAction = (string) $_POST['notificationAction'];
+    if ($notificationAction === 'mark_one') {
+        $notificationController->markNotificationActionAsRead((int) ($_POST['idNotificationAction'] ?? 0), $notificationUserId);
+    } elseif ($notificationAction === 'mark_all') {
+        $notificationController->markAllNotificationActionsAsRead($notificationUserId);
+    }
+
+    $redirect = basename((string) ($_SERVER['SCRIPT_NAME'] ?? 'brand_index.php'));
+    if (!empty($_SERVER['QUERY_STRING'])) {
+        $redirect .= '?' . $_SERVER['QUERY_STRING'];
+    }
+    header('Location: ' . $redirect);
+    exit;
+}
+
+if ($notificationUserId > 0) {
+    $notificationController->generateBrandDeadlineSoonNotifications($notificationUserId);
+}
+
 $offres = [];
 $error = null;
 
@@ -283,8 +308,30 @@ function getDefaultBrandSectionKey(array $sections)
     return 'published';
 }
 
+$filters = [
+    'keyword' => trim((string) ($_GET['keyword'] ?? '')),
+    'status' => trim((string) ($_GET['status'] ?? '')),
+    'budgetFrom' => trim((string) ($_GET['budgetFrom'] ?? '')),
+    'budgetTo' => trim((string) ($_GET['budgetTo'] ?? '')),
+    'deadlineFrom' => trim((string) ($_GET['deadlineFrom'] ?? '')),
+    'deadlineTo' => trim((string) ($_GET['deadlineTo'] ?? '')),
+    'sort' => trim((string) ($_GET['sort'] ?? '')),
+];
+$page = max(1, (int) ($_GET['page'] ?? 1));
+$perPage = 10;
+$offset = ($page - 1) * $perPage;
+$hasNextPage = false;
+
 if ($brandId !== null) {
-    $offres = $controller->getOffresByMarque($brandId);
+    $pagedFilters = $filters + [
+        'limit' => $perPage + 1,
+        'offset' => $offset,
+    ];
+    $offres = $controller->getOffresByMarque($brandId, $pagedFilters);
+    if (count($offres) > $perPage) {
+        $hasNextPage = true;
+        array_pop($offres);
+    }
 } else {
     $error = 'Brand ID is missing.';
 }
@@ -298,6 +345,22 @@ $offerCards = buildBrandOfferCards($offres, $creatorMap, $responseGroups);
 $acceptedOfferCards = array_values(array_filter($offerCards, static fn($card) => $card['isAccepted']));
 $brandSections = buildBrandOfferSections($offerCards);
 $brandDefaultSectionKey = getDefaultBrandSectionKey($brandSections);
+$brandOfferMetrics = $brandId ? $controller->getBrandOfferActionMetrics($brandId) : [
+    'draftOffers' => 0,
+    'expiringSoon' => 0,
+];
+$brandCandidatureMetrics = $brandId ? $candidatureController->getBrandActionMetrics($brandId) : [
+    'responsesToReview' => 0,
+    'negotiationsWaitingReply' => 0,
+    'acceptedCollaborations' => 0,
+    'acceptedBudgetTotal' => 0,
+    'recentlyAccepted' => 0,
+];
+$activeFilterCount = count(array_filter($filters, static fn($value) => $value !== ''));
+$paginationBase = $_GET;
+unset($paginationBase['page'], $paginationBase['notificationPing']);
+$prevPageUrl = $page > 1 ? 'brand_index.php?' . http_build_query($paginationBase + ['page' => $page - 1]) : '';
+$nextPageUrl = $hasNextPage ? 'brand_index.php?' . http_build_query($paginationBase + ['page' => $page + 1]) : '';
 
 if (isset($_GET['notificationPing']) && $_GET['notificationPing'] === '1') {
     header('Content-Type: application/json; charset=utf-8');
@@ -366,7 +429,7 @@ if (!empty($averageBudgetCards)) {
     <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
     <main class="container py-5">
         <div class="offre-page-shell">
-            <section class="module-hero">
+            <section class="module-hero module-hero-notification-shell">
                 <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
                     <div>
                         <span class="module-eyebrow">Brand workspace</span>
@@ -374,6 +437,7 @@ if (!empty($averageBudgetCards)) {
                         <p class="lead text-muted">Track every invitation you sent to creators, monitor response signals, and keep the next collaboration moving.</p>
                     </div>
                     <div class="compact-actions">
+                        <?php require __DIR__ . '/../condidature/notification_widget.php'; ?>
                         <a class="btn btn-primary btn-lg" href="brand_create.php">Create a new offer</a>
                         <a class="btn btn-outline-secondary btn-lg" href="../condidature/brand_index.php">Open response workspace</a>
                     </div>
@@ -394,81 +458,95 @@ if (!empty($averageBudgetCards)) {
                 </div>
             <?php endif; ?>
 
-            <section
-                id="acceptedOfferBanner"
-                class="notification-banner notification-banner-success<?php echo $acceptedCount > 0 ? '' : ' is-hidden'; ?>"
-                data-accepted-ids="<?php echo htmlspecialchars(implode(',', $acceptedOfferIds)); ?>"
-            >
-                <div>
-                    <span class="notification-pill">Accepted offers</span>
-                    <h2 id="acceptedBannerTitle">
-                        <?php if ($acceptedCount > 0): ?>
-                            <?php echo $acceptedCount; ?> offer<?php echo $acceptedCount === 1 ? '' : 's'; ?> accepted by creators
-                        <?php else: ?>
-                            No accepted offers yet
-                        <?php endif; ?>
-                    </h2>
-                    <p id="acceptedBannerText">
-                        <?php if ($acceptedCount > 0): ?>
-                            Review accepted offers in the dedicated Accepted tab.
-                        <?php else: ?>
-                            This area updates automatically when a creator accepts one of your offers.
-                        <?php endif; ?>
-                    </p>
-                </div>
-                <div class="notification-banner-list" id="acceptedBannerList">
-                    <?php foreach (array_slice($acceptedOfferCards, 0, 3) as $card): ?>
-                        <span class="notification-chip">
-                            <?php echo htmlspecialchars($card['offre']->getTitre()); ?> - <?php echo htmlspecialchars($card['creator']['nom'] ?? 'No creator selected yet'); ?>
-                        </span>
-                    <?php endforeach; ?>
-                </div>
-            </section>
-
-            <div id="liveNotificationStack" class="live-notification-stack" aria-live="polite"></div>
-
             <section class="stats-grid brand-stats-grid">
                 <article class="stat-card">
-                    <span class="stat-label">Total offers</span>
-                    <span class="stat-value"><?php echo count($offerCards); ?></span>
-                    <span class="stat-note">All invitations in your pipeline</span>
+                    <span class="stat-label">Responses to review</span>
+                    <span class="stat-value"><?php echo (int) ($brandCandidatureMetrics['responsesToReview'] ?? 0); ?></span>
+                    <span class="stat-note">Sent or under review</span>
                 </article>
                 <article class="stat-card">
-                    <span class="stat-label">Live invitations</span>
-                    <span class="stat-value"><?php echo $liveCount; ?></span>
-                    <span class="stat-note">Currently published to creators</span>
+                    <span class="stat-label">Negotiations waiting reply</span>
+                    <span class="stat-value"><?php echo (int) ($brandCandidatureMetrics['negotiationsWaitingReply'] ?? 0); ?></span>
+                    <span class="stat-note">Active negotiation candidatures</span>
                 </article>
                 <article class="stat-card">
-                    <span class="stat-label">Pending launch</span>
-                    <span class="stat-value"><?php echo $pendingCount; ?></span>
-                    <span class="stat-note">Scheduled but not visible yet</span>
+                    <span class="stat-label">Offers expiring soon</span>
+                    <span class="stat-value"><?php echo (int) ($brandOfferMetrics['expiringSoon'] ?? 0); ?></span>
+                    <span class="stat-note">Deadlines within the next 7 days</span>
                 </article>
                 <article class="stat-card">
-                    <span class="stat-label">Creator accepted</span>
-                    <span class="stat-value"><?php echo $acceptedCount; ?></span>
-                    <span class="stat-note"><?php echo $responseCount; ?> total response<?php echo $responseCount === 1 ? '' : 's'; ?> received</span>
+                    <span class="stat-label">Draft offers</span>
+                    <span class="stat-value"><?php echo (int) ($brandOfferMetrics['draftOffers'] ?? 0); ?></span>
+                    <span class="stat-note">Not published yet</span>
                 </article>
                 <article class="stat-card">
-                    <span class="stat-label">Average budget</span>
-                    <span class="stat-value"><?php echo count($averageBudgetCards) ? htmlspecialchars(formatMoney($averageBudget)) : 'EUR 0.00'; ?></span>
-                    <span class="stat-note">
-                        <?php
-                        $budgetNote = $liveCount > 0
-                            ? 'Based on live invitations'
-                            : 'No live invitations yet';
-                        if ($closestDeadline) {
-                            $budgetNote .= '<br />Closest deadline: ' . htmlspecialchars($closestDeadline);
-                        }
-                        if ($declinedOfferCount > 0) {
-                            $budgetNote .= ' | Declined offers excluded';
-                        }
-                        if ($pendingCount > 0) {
-                            $budgetNote .= ' | Pending launches excluded';
-                        }
-                        echo $budgetNote;
-                        ?>
-                    </span>
+                    <span class="stat-label">Accepted collaborations</span>
+                    <span class="stat-value"><?php echo (int) ($brandCandidatureMetrics['acceptedCollaborations'] ?? 0); ?></span>
+                    <span class="stat-note"><?php echo htmlspecialchars(formatMoney($brandCandidatureMetrics['acceptedBudgetTotal'] ?? 0)); ?> accepted budget</span>
                 </article>
+            </section>
+
+            <section class="filter-card">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                    <div>
+                        <h2 class="section-title">Filter offers</h2>
+                        <p class="section-subtitle">Search by offer text, target creator, budget, deadline, or status.</p>
+                    </div>
+                    <?php if ($activeFilterCount > 0): ?>
+                        <span class="offer-chip"><?php echo $activeFilterCount; ?> active filter<?php echo $activeFilterCount > 1 ? 's' : ''; ?></span>
+                    <?php endif; ?>
+                </div>
+                <form method="get" action="brand_index.php" class="filter-stack mt-4">
+                    <div class="filter-grid">
+                        <div>
+                            <label for="keyword" class="form-label fw-semibold">Keyword</label>
+                            <input type="text" class="form-control" id="keyword" name="keyword" value="<?php echo htmlspecialchars($filters['keyword']); ?>" placeholder="Offer, objective, creator...">
+                        </div>
+                        <div>
+                            <label for="status" class="form-label fw-semibold">Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">All statuses</option>
+                                <option value="brouillon"<?php echo $filters['status'] === 'brouillon' ? ' selected' : ''; ?>>Draft</option>
+                                <option value="publiee"<?php echo $filters['status'] === 'publiee' ? ' selected' : ''; ?>>Published</option>
+                                <option value="pending"<?php echo $filters['status'] === 'pending' ? ' selected' : ''; ?>>Pending launch</option>
+                                <option value="cloturee"<?php echo $filters['status'] === 'cloturee' ? ' selected' : ''; ?>>Closed</option>
+                                <option value="expiree"<?php echo $filters['status'] === 'expiree' ? ' selected' : ''; ?>>Expired</option>
+                                <option value="archivee"<?php echo $filters['status'] === 'archivee' ? ' selected' : ''; ?>>Archived</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="budgetFrom" class="form-label fw-semibold">Budget min</label>
+                            <input type="number" step="0.01" class="form-control" id="budgetFrom" name="budgetFrom" value="<?php echo htmlspecialchars($filters['budgetFrom']); ?>">
+                        </div>
+                        <div>
+                            <label for="budgetTo" class="form-label fw-semibold">Budget max</label>
+                            <input type="number" step="0.01" class="form-control" id="budgetTo" name="budgetTo" value="<?php echo htmlspecialchars($filters['budgetTo']); ?>">
+                        </div>
+                        <div>
+                            <label for="deadlineFrom" class="form-label fw-semibold">Deadline from</label>
+                            <input type="date" class="form-control" id="deadlineFrom" name="deadlineFrom" value="<?php echo htmlspecialchars($filters['deadlineFrom']); ?>">
+                        </div>
+                        <div>
+                            <label for="deadlineTo" class="form-label fw-semibold">Deadline to</label>
+                            <input type="date" class="form-control" id="deadlineTo" name="deadlineTo" value="<?php echo htmlspecialchars($filters['deadlineTo']); ?>">
+                        </div>
+                        <div>
+                            <label for="sort" class="form-label fw-semibold">Sort</label>
+                            <select class="form-select" id="sort" name="sort">
+                                <option value=""<?php echo $filters['sort'] === '' ? ' selected' : ''; ?>>Newest</option>
+                                <option value="oldest"<?php echo $filters['sort'] === 'oldest' ? ' selected' : ''; ?>>Oldest</option>
+                                <option value="deadline_soon"<?php echo $filters['sort'] === 'deadline_soon' ? ' selected' : ''; ?>>Deadline soon</option>
+                                <option value="budget_high"<?php echo $filters['sort'] === 'budget_high' ? ' selected' : ''; ?>>Budget high to low</option>
+                                <option value="budget_low"<?php echo $filters['sort'] === 'budget_low' ? ' selected' : ''; ?>>Budget low to high</option>
+                                <option value="status"<?php echo $filters['sort'] === 'status' ? ' selected' : ''; ?>>Status</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="filter-actions">
+                        <button type="submit" class="btn btn-primary">Apply filters</button>
+                        <a class="btn btn-outline-secondary" href="brand_index.php">Reset</a>
+                    </div>
+                </form>
             </section>
 
             <?php if (!empty($offerCards)): ?>
@@ -642,6 +720,17 @@ if (!empty($averageBudgetCards)) {
                         <?php endforeach; ?>
                     </div>
                 </section>
+                <nav class="front-pagination" aria-label="Brand offer pages">
+                    <span>Page <?php echo $page; ?> · Showing up to <?php echo $perPage; ?> filtered offers</span>
+                    <div>
+                        <?php if ($prevPageUrl !== ''): ?>
+                            <a class="btn btn-outline-secondary" href="<?php echo htmlspecialchars($prevPageUrl); ?>">Previous</a>
+                        <?php endif; ?>
+                        <?php if ($nextPageUrl !== ''): ?>
+                            <a class="btn btn-primary" href="<?php echo htmlspecialchars($nextPageUrl); ?>">Load more</a>
+                        <?php endif; ?>
+                    </div>
+                </nav>
             <?php else: ?>
                 <section class="empty-state-card">
                     <div class="empty-state-icon">+</div>
@@ -687,7 +776,7 @@ if (!empty($averageBudgetCards)) {
                 banner.dataset.acceptedIds = offers.map((offer) => offer.idOffre).join(',');
 
                 if (!offers.length) {
-                    banner.classList.add('is-hidden');
+                    banner.classList.remove('is-hidden');
                     list.innerHTML = '';
                     return;
                 }
@@ -843,5 +932,16 @@ if (!empty($averageBudgetCards)) {
             window.setInterval(pollAcceptedOffers, 20000);
         })();
     </script>
+<?php
+$cre8PilotContext = [
+    'page' => 'brand_offer_workspace',
+    'mode' => 'list',
+    'role' => 'marque',
+    'allowedActions' => ['normal_chat', 'summarize_page', 'analyze_page', 'apply_filters', 'recommend_next_action', 'find_urgent_offers', 'explain_statuses', 'apply_search', 'sort_results'],
+    'formTarget' => 'filter_form',
+    'visibleEntityType' => 'offre',
+];
+require __DIR__ . '/../condidature/cre8pilot_widget.php';
+?>
 </body>
 </html>

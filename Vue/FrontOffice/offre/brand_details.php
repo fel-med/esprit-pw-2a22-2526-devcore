@@ -259,5 +259,17 @@ $isEditLocked = $response && isAcceptedResponseLockStatus($response['statutCandi
         </div>
     </main>
     <script src="offre-delete-confirm.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre-delete-confirm.js')); ?>"></script>
+<?php
+$cre8PilotContext = [
+    'page' => 'brand_offer_workspace',
+    'mode' => 'details',
+    'role' => 'marque',
+    'allowedActions' => ['normal_chat', 'summarize_page', 'analyze_page', 'suggest_budget'],
+    'formTarget' => null,
+    'visibleEntityType' => 'offre',
+    'visibleEntityId' => $idOffre ?? null,
+];
+require __DIR__ . '/../condidature/cre8pilot_widget.php';
+?>
 </body>
 </html>

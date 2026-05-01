@@ -19,6 +19,25 @@ if (!isset($sessionUser['id']) || (($sessionUser['role'] ?? '') !== 'admin')) {
     }
 }
 
+$notificationController = $controller;
+$notificationUserId = isset($sessionUser['id']) ? (int) $sessionUser['id'] : 0;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['notificationAction'])) {
+    $notificationAction = (string) $_POST['notificationAction'];
+    if ($notificationAction === 'mark_one') {
+        $notificationController->markNotificationActionAsRead((int) ($_POST['idNotificationAction'] ?? 0), $notificationUserId);
+    } elseif ($notificationAction === 'mark_all') {
+        $notificationController->markAllNotificationActionsAsRead($notificationUserId);
+    }
+
+    $redirect = basename((string) ($_SERVER['SCRIPT_NAME'] ?? 'index.php'));
+    if (!empty($_SERVER['QUERY_STRING'])) {
+        $redirect .= '?' . $_SERVER['QUERY_STRING'];
+    }
+    header('Location: ' . $redirect);
+    exit;
+}
+
 $notice = trim((string) ($_GET['notice'] ?? ''));
 $noticeType = trim((string) ($_GET['noticeType'] ?? 'success'));
 $error = null;
@@ -41,7 +60,7 @@ function translateOrigin($origin)
 {
     return match ((string) $origin) {
         'par_offre' => 'Offer invitation',
-        'par_campagne' => 'Campaign response',
+        'par_campagne' => 'Campaign application',
         default => ucwords(str_replace('_', ' ', (string) $origin)),
     };
 }
@@ -79,9 +98,18 @@ function formatShortDate($value, $fallback = 'Not available')
     return date('Y-m-d', $timestamp);
 }
 
+function cleanHiddenMetadata($text)
+{
+    return trim((string) preg_replace(
+        '/\s*<!--cre8connect-(?:condidature-form-meta|condidature-meta):.*?-->\s*/s',
+        ' ',
+        (string) $text
+    ));
+}
+
 function excerptText($text, $length = 90)
 {
-    $text = trim((string) $text);
+    $text = cleanHiddenMetadata($text);
     if ($text === '') {
         return '';
     }
@@ -97,12 +125,26 @@ $filters = [
     'keyword' => trim((string) ($_GET['keyword'] ?? '')),
     'status' => trim((string) ($_GET['status'] ?? '')),
     'origin' => trim((string) ($_GET['origin'] ?? '')),
+    'typeReponse' => trim((string) ($_GET['typeReponse'] ?? '')),
     'creatorId' => trim((string) ($_GET['creatorId'] ?? '')),
     'brandId' => trim((string) ($_GET['brandId'] ?? '')),
     'dateFrom' => trim((string) ($_GET['dateFrom'] ?? '')),
+    'dateTo' => trim((string) ($_GET['dateTo'] ?? '')),
+    'hasCv' => trim((string) ($_GET['hasCv'] ?? '')),
+    'hasPortfolio' => trim((string) ($_GET['hasPortfolio'] ?? '')),
+    'sort' => trim((string) ($_GET['sort'] ?? '')),
 ];
+$page = max(1, (int) ($_GET['page'] ?? 1));
+$perPage = 10;
+$offset = ($page - 1) * $perPage;
 
 $contexts = [];
+$hasNextPage = false;
+$adminPieChartStats = [
+    'candidatureStatus' => [],
+    'offerStatus' => [],
+    'candidatureOrigin' => [],
+];
 $summary = [
     'total' => 0,
     'brouillon' => 0,
@@ -116,17 +158,40 @@ $summary = [
 ];
 $creatorOptions = $controller->getUsersByRole('createur');
 $brandOptions = $controller->getUsersByRole('marque');
+$platformMetrics = [
+    'realOffers' => 0,
+    'realCandidatures' => 0,
+    'pendingReviews' => 0,
+    'openNegotiations' => 0,
+    'expiredOffers' => 0,
+    'acceptanceRate' => 0,
+    'activityThisWeek' => 0,
+];
 
 try {
-    $contexts = $controller->getAdminCandidatures($filters);
+    $pagedFilters = $filters + [
+        'limit' => $perPage + 1,
+        'offset' => $offset,
+    ];
+    $contexts = $controller->getAdminCandidatures($pagedFilters);
+    if (count($contexts) > $perPage) {
+        $hasNextPage = true;
+        array_pop($contexts);
+    }
     $summary = $controller->summarizeContexts($contexts);
+    $platformMetrics = $controller->getAdminPlatformMetrics();
+    $adminPieChartStats = $controller->getAdminPieChartStats();
 } catch (Throwable $exception) {
     $error = 'The admin candidature dashboard could not be loaded right now.';
 }
 
 $awaitingReviewCount = (int) ($summary['envoyee'] ?? 0) + (int) ($summary['en_etude'] ?? 0);
 $finalCount = (int) ($summary['acceptee'] ?? 0) + (int) ($summary['refusee'] ?? 0) + (int) ($summary['retiree'] ?? 0);
-$activeFilterCount = count(array_filter($filters, static fn($value) => $value !== ''));
+$activeFilterCount = count(array_filter($filters, static fn($value) => $value !== '' && $value !== 'newest'));
+$paginationBase = $_GET;
+unset($paginationBase['page']);
+$prevPageUrl = $page > 1 ? 'index.php?' . http_build_query($paginationBase + ['page' => $page - 1]) : '';
+$nextPageUrl = $hasNextPage ? 'index.php?' . http_build_query($paginationBase + ['page' => $page + 1]) : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -145,8 +210,13 @@ $activeFilterCount = count(array_filter($filters, static fn($value) => $value !=
             <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
     <div class="admin-shell">
         <header class="admin-header">
-            <h1>Candidature administration</h1>
-            <p>Inspect creator responses, follow review stages, and keep every targeted candidature visible from the same dashboard.</p>
+            <div class="admin-header-main">
+                <div>
+                    <h1>Candidature administration</h1>
+                    <p>Inspect creator responses, follow review stages, and keep every targeted candidature visible from the same dashboard.</p>
+                </div>
+                <?php require __DIR__ . '/notification_widget.php'; ?>
+            </div>
         </header>
 
         <?php if ($notice !== ''): ?>
@@ -157,25 +227,20 @@ $activeFilterCount = count(array_filter($filters, static fn($value) => $value !=
             <div class="admin-flash error"><?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>
 
-        <details class="search-panel" <?php echo $activeFilterCount > 0 ? 'open' : ''; ?>>
-            <summary class="search-panel-summary">
-                <span class="search-panel-heading">
+        <section class="search-panel search-panel-simple">
+            <div class="search-panel-head">
+                <div class="search-panel-copy">
                     <span class="search-panel-title">Admin filters</span>
                     <span class="search-panel-subtitle">
                         <?php echo $activeFilterCount > 0 ? $activeFilterCount . ' filter' . ($activeFilterCount > 1 ? 's' : '') . ' applied to this candidature view.' : 'Filter by source, creator, brand, date, or workflow state.'; ?>
                     </span>
-                </span>
+                </div>
                 <span class="search-panel-status">
                     <?php if ($activeFilterCount > 0): ?>
                         <span class="search-panel-badge"><?php echo $activeFilterCount; ?> active</span>
                     <?php endif; ?>
-                    <span class="search-panel-toggle">
-                        <span class="search-panel-toggle-label search-panel-toggle-label-closed">Open filters</span>
-                        <span class="search-panel-toggle-label search-panel-toggle-label-open">Close filters</span>
-                        <span class="search-panel-toggle-icon" aria-hidden="true"></span>
-                    </span>
                 </span>
-            </summary>
+            </div>
 
             <form method="get" class="search-form">
                 <div class="search-grid">
@@ -203,7 +268,18 @@ $activeFilterCount = count(array_filter($filters, static fn($value) => $value !=
                         <select id="origin" name="origin">
                             <option value="">All</option>
                             <option value="par_offre"<?php echo $filters['origin'] === 'par_offre' ? ' selected' : ''; ?>>Offer invitation</option>
-                            <option value="par_campagne"<?php echo $filters['origin'] === 'par_campagne' ? ' selected' : ''; ?>>Campaign response</option>
+                            <option value="par_campagne"<?php echo $filters['origin'] === 'par_campagne' ? ' selected' : ''; ?>>Campaign application</option>
+                        </select>
+                    </div>
+
+                    <div class="search-group">
+                        <label for="typeReponse">Response type</label>
+                        <select id="typeReponse" name="typeReponse">
+                            <option value="">All</option>
+                            <option value="application"<?php echo $filters['typeReponse'] === 'application' ? ' selected' : ''; ?>>Application</option>
+                            <option value="acceptation"<?php echo $filters['typeReponse'] === 'acceptation' ? ' selected' : ''; ?>>Acceptance</option>
+                            <option value="negociation"<?php echo $filters['typeReponse'] === 'negociation' ? ' selected' : ''; ?>>Negotiation</option>
+                            <option value="refus"<?php echo $filters['typeReponse'] === 'refus' ? ' selected' : ''; ?>>Refusal</option>
                         </select>
                     </div>
 
@@ -235,6 +311,43 @@ $activeFilterCount = count(array_filter($filters, static fn($value) => $value !=
                         <label for="dateFrom">Submitted from</label>
                         <input id="dateFrom" name="dateFrom" type="date" value="<?php echo htmlspecialchars($filters['dateFrom']); ?>">
                     </div>
+
+                    <div class="search-group">
+                        <label for="dateTo">Submitted to</label>
+                        <input id="dateTo" name="dateTo" type="date" value="<?php echo htmlspecialchars($filters['dateTo']); ?>">
+                    </div>
+
+                    <div class="search-group">
+                        <label for="hasCv">CV file</label>
+                        <select id="hasCv" name="hasCv">
+                            <option value="">All</option>
+                            <option value="1"<?php echo $filters['hasCv'] === '1' ? ' selected' : ''; ?>>Has CV</option>
+                            <option value="0"<?php echo $filters['hasCv'] === '0' ? ' selected' : ''; ?>>No CV</option>
+                        </select>
+                    </div>
+
+                    <div class="search-group">
+                        <label for="hasPortfolio">Portfolio</label>
+                        <select id="hasPortfolio" name="hasPortfolio">
+                            <option value="">All</option>
+                            <option value="1"<?php echo $filters['hasPortfolio'] === '1' ? ' selected' : ''; ?>>Has portfolio</option>
+                            <option value="0"<?php echo $filters['hasPortfolio'] === '0' ? ' selected' : ''; ?>>No portfolio</option>
+                        </select>
+                    </div>
+
+                    <div class="search-group">
+                        <label for="sort">Sort</label>
+                        <select id="sort" name="sort">
+                            <option value=""<?php echo $filters['sort'] === '' ? ' selected' : ''; ?>>Workflow priority</option>
+                            <option value="newest"<?php echo $filters['sort'] === 'newest' ? ' selected' : ''; ?>>Newest</option>
+                            <option value="oldest"<?php echo $filters['sort'] === 'oldest' ? ' selected' : ''; ?>>Oldest</option>
+                            <option value="budget_high"<?php echo $filters['sort'] === 'budget_high' ? ' selected' : ''; ?>>Budget high to low</option>
+                            <option value="budget_low"<?php echo $filters['sort'] === 'budget_low' ? ' selected' : ''; ?>>Budget low to high</option>
+                            <option value="proposed_delay"<?php echo $filters['sort'] === 'proposed_delay' ? ' selected' : ''; ?>>Proposed delay</option>
+                            <option value="decision_date"<?php echo $filters['sort'] === 'decision_date' ? ' selected' : ''; ?>>Decision date</option>
+                            <option value="status"<?php echo $filters['sort'] === 'status' ? ' selected' : ''; ?>>Status</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="search-actions">
@@ -242,35 +355,42 @@ $activeFilterCount = count(array_filter($filters, static fn($value) => $value !=
                     <a class="clear-link" href="index.php">Reset</a>
                 </div>
             </form>
-        </details>
+        </section>
 
         <section class="admin-summary">
             <article class="admin-card">
-                <h3>Candidatures in view</h3>
-                <p><?php echo (int) ($summary['total'] ?? 0); ?></p>
-                <small>Current filtered result set</small>
+                <h3>Real candidatures</h3>
+                <p><?php echo (int) ($platformMetrics['realCandidatures'] ?? 0); ?></p>
+                <small>Technical campaign placeholders excluded</small>
             </article>
             <article class="admin-card">
-                <h3>Draft responses</h3>
-                <p><?php echo (int) ($summary['brouillon'] ?? 0); ?></p>
-                <small>Saved but not submitted yet</small>
+                <h3>Pending reviews</h3>
+                <p><?php echo (int) ($platformMetrics['pendingReviews'] ?? 0); ?></p>
+                <small>Sent or under review</small>
             </article>
             <article class="admin-card">
-                <h3>Waiting review</h3>
-                <p><?php echo $awaitingReviewCount; ?></p>
-                <small>Submitted creator responses currently moving through review</small>
+                <h3>Open negotiations</h3>
+                <p><?php echo (int) ($platformMetrics['openNegotiations'] ?? 0); ?></p>
+                <small>Active negotiation candidatures</small>
             </article>
             <article class="admin-card">
-                <h3>Negotiation requests</h3>
-                <p><?php echo (int) ($summary['negociation'] ?? 0); ?></p>
-                <small><?php echo (int) ($summary['negotiationMessages'] ?? 0); ?> stored message<?php echo (int) ($summary['negotiationMessages'] ?? 0) === 1 ? '' : 's'; ?></small>
+                <h3>Expired offers</h3>
+                <p><?php echo (int) ($platformMetrics['expiredOffers'] ?? 0); ?></p>
+                <small>Past deadline and not archived</small>
             </article>
             <article class="admin-card">
-                <h3>Average budget</h3>
-                <p><?php echo (int) ($summary['total'] ?? 0) > 0 ? htmlspecialchars(formatMoney($summary['averageBudget'] ?? 0)) : 'EUR 0.00'; ?></p>
-                <small><?php echo $finalCount; ?> final outcome<?php echo $finalCount === 1 ? '' : 's'; ?></small>
+                <h3>Acceptance rate</h3>
+                <p><?php echo htmlspecialchars((string) ($platformMetrics['acceptanceRate'] ?? 0)); ?>%</p>
+                <small>Accepted over accepted + refused</small>
+            </article>
+            <article class="admin-card">
+                <h3>Activity this week</h3>
+                <p><?php echo (int) ($platformMetrics['activityThisWeek'] ?? 0); ?></p>
+                <small><?php echo (int) ($platformMetrics['offersThisWeek'] ?? 0); ?> offers + <?php echo (int) ($platformMetrics['candidaturesThisWeek'] ?? 0); ?> candidatures</small>
             </article>
         </section>
+
+        <?php require __DIR__ . '/statistics_charts.php'; ?>
 
         <div class="admin-layout">
             <section class="admin-panel admin-table-panel">
@@ -279,7 +399,18 @@ $activeFilterCount = count(array_filter($filters, static fn($value) => $value !=
                 </div>
                 <div class="admin-panel-body">
                     <div class="admin-table-wrapper">
-                        <table class="admin-table">
+                        <table class="admin-table admin-candidature-table">
+                            <colgroup>
+                                <col class="cand-col-creator">
+                                <col class="cand-col-source">
+                                <col class="cand-col-origin">
+                                <col class="cand-col-action">
+                                <col class="cand-col-status">
+                                <col class="cand-col-date">
+                                <col class="cand-col-budget">
+                                <col class="cand-col-updated">
+                                <col class="cand-col-actions">
+                            </colgroup>
                             <thead>
                                 <tr>
                                     <th>Creator</th>
@@ -306,6 +437,13 @@ $activeFilterCount = count(array_filter($filters, static fn($value) => $value !=
                                     $creator = $context['creator'];
                                     $source = $context['source'];
                                     $brand = $context['brand'];
+                                    $originLabel = translateOrigin($source['origin']);
+                                    $primaryPreview = $condidature->getResponseMode() === 'decline'
+                                        ? (string) $condidature->getMotifRefus()
+                                        : (string) $condidature->getMessageMotivation();
+                                    if (trim($primaryPreview) === '') {
+                                        $primaryPreview = (string) $condidature->getConditionsCreateur();
+                                    }
                                     ?>
                                     <tr>
                                         <td class="candidature-table-person">
@@ -313,34 +451,49 @@ $activeFilterCount = count(array_filter($filters, static fn($value) => $value !=
                                             <span><?php echo htmlspecialchars($creator['email']); ?></span>
                                         </td>
                                         <td class="candidature-table-source">
+                                            <span class="source-kind"><?php echo htmlspecialchars($originLabel); ?></span>
                                             <strong title="<?php echo htmlspecialchars($source['title']); ?>"><?php echo htmlspecialchars(excerptText($source['title'], 40)); ?></strong>
+                                            <span><?php echo htmlspecialchars(($source['origin'] === 'par_campagne' ? 'Campaign' : 'Offer') . ' #' . (int) $source['id']); ?></span>
                                             <span><?php echo htmlspecialchars($brand['nom'] ?: 'Unknown brand'); ?></span>
                                         </td>
-                                        <td><span class="candidature-origin-pill"><?php echo htmlspecialchars(translateOrigin($source['origin'])); ?></span></td>
+                                        <td><span class="candidature-origin-pill"><?php echo htmlspecialchars($originLabel); ?></span></td>
                                         <td class="candidature-table-response">
                                             <span class="candidature-detail-pill"><?php echo htmlspecialchars($condidature->getResponseTypeLabel()); ?></span>
+                                            <?php if (trim($primaryPreview) !== ''): ?>
+                                                <small class="response-preview" title="<?php echo htmlspecialchars(cleanHiddenMetadata($primaryPreview)); ?>">
+                                                    <?php echo htmlspecialchars(excerptText($primaryPreview, 64)); ?>
+                                                </small>
+                                            <?php endif; ?>
                                             <?php if ($condidature->getDateDisponibilite()): ?>
                                                 <small>Available: <?php echo htmlspecialchars(formatShortDate($condidature->getDateDisponibilite())); ?></small>
-                                            <?php endif; ?>
-                                            <?php if ($condidature->getResponseMode() === 'decline' && trim((string) $condidature->getMotifRefus()) !== ''): ?>
-                                                <small title="<?php echo htmlspecialchars($condidature->getMotifRefus()); ?>">
-                                                    <?php echo htmlspecialchars(excerptText($condidature->getMotifRefus(), 54)); ?>
-                                                </small>
-                                            <?php elseif (trim((string) $condidature->getConditionsCreateur()) !== ''): ?>
-                                                <small title="<?php echo htmlspecialchars($condidature->getConditionsCreateur()); ?>">
-                                                    <?php echo htmlspecialchars(excerptText($condidature->getConditionsCreateur(), 54)); ?>
-                                                </small>
                                             <?php endif; ?>
                                             <?php if ((int) ($context['negotiation']['count'] ?? 0) > 0): ?>
                                                 <small><?php echo (int) $context['negotiation']['count']; ?> negotiation message<?php echo (int) $context['negotiation']['count'] === 1 ? '' : 's'; ?></small>
                                             <?php endif; ?>
                                         </td>
                                         <td><span class="badge-status <?php echo htmlspecialchars($condidature->getStatutCandidature()); ?>"><?php echo htmlspecialchars($condidature->getDisplayStatusLabel()); ?></span></td>
-                                        <td><?php echo htmlspecialchars(formatShortDate($condidature->getDateCandidature())); ?></td>
-                                        <td><?php echo htmlspecialchars(formatMoney($condidature->getBudgetPropose())); ?></td>
-                                        <td><?php echo htmlspecialchars(formatDateLabel($condidature->getDateDerniereModification())); ?></td>
+                                        <td class="date-cell"><?php echo htmlspecialchars(formatShortDate($condidature->getDateCandidature())); ?></td>
+                                        <td class="money-cell"><?php echo htmlspecialchars(formatMoney($condidature->getBudgetPropose())); ?></td>
+                                        <td class="date-cell"><?php echo htmlspecialchars(formatDateLabel($condidature->getDateDerniereModification())); ?></td>
                                         <td class="admin-actions">
                                             <div class="admin-actions-stack">
+                                                <button
+                                                    type="button"
+                                                    class="inspect-link source-preview-trigger"
+                                                    data-source-preview-trigger
+                                                    data-source-origin="<?php echo htmlspecialchars($source['origin']); ?>"
+                                                    data-source-origin-label="<?php echo htmlspecialchars($originLabel); ?>"
+                                                    data-source-id="<?php echo (int) $source['id']; ?>"
+                                                    data-source-title="<?php echo htmlspecialchars($source['title']); ?>"
+                                                    data-source-brand="<?php echo htmlspecialchars($brand['nom'] ?: 'Unknown brand'); ?>"
+                                                    data-source-brand-email="<?php echo htmlspecialchars($brand['email'] ?? ''); ?>"
+                                                    data-source-objective="<?php echo htmlspecialchars(cleanHiddenMetadata($source['objective'] ?? '')); ?>"
+                                                    data-source-description="<?php echo htmlspecialchars(cleanHiddenMetadata($source['description'] ?? '')); ?>"
+                                                    data-source-budget="<?php echo htmlspecialchars($source['budgetPropose'] !== null ? formatMoney($source['budgetPropose']) : 'Not shared'); ?>"
+                                                    data-source-start="<?php echo htmlspecialchars(formatShortDate($source['datePublication'] ?? null)); ?>"
+                                                    data-source-end="<?php echo htmlspecialchars(formatShortDate($source['dateLimite'] ?? null)); ?>"
+                                                    data-source-status="<?php echo htmlspecialchars(trim((string) ($source['status'] ?? '')) !== '' ? ucwords(str_replace('_', ' ', (string) $source['status'])) : 'Not set'); ?>"
+                                                >Source</button>
                                                 <a class="inspect-link" href="details.php?idCandidature=<?php echo (int) $condidature->getIdCandidature(); ?>">Review</a>
                                             </div>
                                         </td>
@@ -349,11 +502,132 @@ $activeFilterCount = count(array_filter($filters, static fn($value) => $value !=
                             </tbody>
                         </table>
                     </div>
+                    <nav class="admin-pagination" aria-label="Candidature pages">
+                        <span>Page <?php echo $page; ?> · Showing up to <?php echo $perPage; ?> candidatures</span>
+                        <div>
+                            <?php if ($prevPageUrl !== ''): ?>
+                                <a class="clear-link" href="<?php echo htmlspecialchars($prevPageUrl); ?>">Previous</a>
+                            <?php else: ?>
+                                <span class="clear-link is-disabled">Previous</span>
+                            <?php endif; ?>
+                            <?php if ($nextPageUrl !== ''): ?>
+                                <a class="clear-link" href="<?php echo htmlspecialchars($nextPageUrl); ?>">Next</a>
+                            <?php else: ?>
+                                <span class="clear-link is-disabled">Next</span>
+                            <?php endif; ?>
+                        </div>
+                    </nav>
                 </div>
             </section>
         </div>
     </div>
         </main>
     </div>
+
+    <div class="source-preview-overlay" data-source-preview-overlay hidden>
+        <section class="source-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="sourcePreviewTitle">
+            <div class="source-preview-header">
+                <div>
+                    <span class="source-preview-kicker" data-source-preview-origin>Source</span>
+                    <h2 id="sourcePreviewTitle" data-source-preview-title>Source details</h2>
+                    <p data-source-preview-brand>Brand</p>
+                </div>
+                <button type="button" class="source-preview-close" data-source-preview-close aria-label="Close source preview">&times;</button>
+            </div>
+
+            <div class="source-preview-meta">
+                <span data-source-preview-id>Source #</span>
+                <span data-source-preview-status>Status</span>
+                <span data-source-preview-budget>Budget</span>
+                <span data-source-preview-start>Start</span>
+                <span data-source-preview-end>End</span>
+            </div>
+
+            <div class="source-preview-grid">
+                <article>
+                    <strong data-source-preview-objective-label>Objective</strong>
+                    <p data-source-preview-objective>No objective was joined for this source.</p>
+                </article>
+                <article>
+                    <strong>Description</strong>
+                    <p data-source-preview-description>No description was joined for this source.</p>
+                </article>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        (() => {
+            const overlay = document.querySelector('[data-source-preview-overlay]');
+            if (!overlay) {
+                return;
+            }
+
+            const dialog = overlay.querySelector('.source-preview-dialog');
+            const closeButton = overlay.querySelector('[data-source-preview-close]');
+            const setText = (selector, value, fallback = '') => {
+                const node = overlay.querySelector(selector);
+                if (node) {
+                    node.textContent = value || fallback;
+                }
+            };
+
+            const openPreview = (button) => {
+                const data = button.dataset;
+                const isCampaign = data.sourceOrigin === 'par_campagne';
+
+                setText('[data-source-preview-origin]', data.sourceOriginLabel, 'Source');
+                setText('[data-source-preview-title]', data.sourceTitle, isCampaign ? 'Campaign source' : 'Offer source');
+                setText('[data-source-preview-brand]', `${data.sourceBrand || 'Unknown brand'}${data.sourceBrandEmail ? ` - ${data.sourceBrandEmail}` : ''}`);
+                setText('[data-source-preview-id]', `${isCampaign ? 'Campaign' : 'Offer'} #${data.sourceId || ''}`);
+                setText('[data-source-preview-status]', `Status: ${data.sourceStatus || 'Not set'}`);
+                setText('[data-source-preview-budget]', `Budget: ${data.sourceBudget || 'Not shared'}`);
+                setText('[data-source-preview-start]', `${isCampaign ? 'Start' : 'Published'}: ${data.sourceStart || 'Not available'}`);
+                setText('[data-source-preview-end]', `${isCampaign ? 'End' : 'Deadline'}: ${data.sourceEnd || 'Not available'}`);
+                setText('[data-source-preview-objective-label]', isCampaign ? 'Campaign brief' : 'Offer objective');
+                setText('[data-source-preview-objective]', data.sourceObjective, isCampaign ? 'No campaign brief was joined for this source.' : 'No offer objective was joined for this source.');
+                setText('[data-source-preview-description]', data.sourceDescription, 'No description was joined for this source.');
+
+                overlay.hidden = false;
+                document.body.classList.add('source-preview-open');
+                closeButton?.focus({ preventScroll: true });
+            };
+
+            const closePreview = () => {
+                overlay.hidden = true;
+                document.body.classList.remove('source-preview-open');
+            };
+
+            document.querySelectorAll('[data-source-preview-trigger]').forEach((button) => {
+                button.addEventListener('click', () => openPreview(button));
+            });
+
+            closeButton?.addEventListener('click', closePreview);
+            overlay.addEventListener('click', (event) => {
+                if (event.target === overlay) {
+                    closePreview();
+                }
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && !overlay.hidden) {
+                    closePreview();
+                }
+            });
+
+            dialog?.addEventListener('click', (event) => event.stopPropagation());
+        })();
+    </script>
+<?php
+$cre8PilotContext = [
+    'page' => 'admin_candidature_workspace',
+    'mode' => 'table',
+    'role' => 'admin',
+    'allowedActions' => ['normal_chat', 'summarize_page', 'analyze_page', 'explain_statistics', 'detect_risky_items', 'explain_statuses', 'apply_filters', 'apply_search'],
+    'formTarget' => 'filter_form',
+    'visibleEntityType' => 'candidature',
+];
+require __DIR__ . '/../../FrontOffice/condidature/cre8pilot_widget.php';
+?>
 </body>
 </html>

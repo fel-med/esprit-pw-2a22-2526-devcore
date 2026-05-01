@@ -44,7 +44,7 @@ function translateOrigin($origin)
 {
     return match ((string) $origin) {
         'par_offre' => 'Offer invitation',
-        'par_campagne' => 'Campaign response',
+        'par_campagne' => 'Campaign application',
         default => ucwords(str_replace('_', ' ', (string) $origin)),
     };
 }
@@ -80,6 +80,35 @@ function formatShortDate($value, $fallback = 'Not available')
     }
 
     return date('Y-m-d', $timestamp);
+}
+
+function candidatureStoredFileHref($path)
+{
+    $path = trim(str_replace('\\', '/', (string) $path));
+    if ($path === '') {
+        return '';
+    }
+
+    if (preg_match('/^https?:\/\//i', $path) || str_starts_with($path, '/')) {
+        return $path;
+    }
+
+    if (str_starts_with($path, 'Vue/public/')) {
+        return '../../public/' . substr($path, strlen('Vue/public/'));
+    }
+
+    if (str_starts_with($path, 'public/')) {
+        return '../../' . $path;
+    }
+
+    return $path;
+}
+
+function candidatureStoredFileName($path)
+{
+    $path = trim(str_replace('\\', '/', (string) $path));
+
+    return $path !== '' ? basename($path) : '';
 }
 
 if ($idCandidature !== null) {
@@ -146,8 +175,12 @@ $canReview = $condidature && $condidature->getStatutCandidature() !== 'retiree';
             <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
     <div class="admin-shell">
         <header class="admin-header">
-            <h1>Candidature review</h1>
-            <p>Inspect the creator response, compare it to the targeted offer context, and record the current review outcome clearly.</p>
+            <div class="admin-header-main">
+                <div>
+                    <h1>Candidature review</h1>
+                    <p>Inspect the creator response, compare it to the targeted offer context, and record the current review outcome clearly.</p>
+                </div>
+            </div>
         </header>
 
         <?php if ($notice !== ''): ?>
@@ -258,7 +291,15 @@ $canReview = $condidature && $condidature->getStatutCandidature() !== 'retiree';
                         <div class="candidature-decision-grid" style="margin-top: 1rem;">
                             <section class="candidature-message-card">
                                 <h3>CV reference</h3>
-                                <p><?php echo htmlspecialchars(trim((string) $condidature->getCvPath()) !== '' ? $condidature->getCvPath() : 'No CV reference was attached.'); ?></p>
+                                <p>
+                                    <?php if (trim((string) $condidature->getCvPath()) !== ''): ?>
+                                        <a class="admin-inline-link" href="<?php echo htmlspecialchars(candidatureStoredFileHref($condidature->getCvPath())); ?>" target="_blank" rel="noopener noreferrer">
+                                            <?php echo htmlspecialchars(candidatureStoredFileName($condidature->getCvPath()) ?: $condidature->getCvPath()); ?>
+                                        </a>
+                                    <?php else: ?>
+                                        No CV/reference file was attached.
+                                    <?php endif; ?>
+                                </p>
                             </section>
                             <section class="candidature-message-card">
                                 <h3>Portfolio URL</h3>
@@ -353,7 +394,7 @@ $canReview = $condidature && $condidature->getStatutCandidature() !== 'retiree';
 
                                 <div class="search-group">
                                     <label for="noteDecision">Decision note</label>
-                                    <textarea id="noteDecision" name="noteDecision" rows="8" placeholder="Explain the current review decision, next step, or the reason behind this outcome."><?php echo htmlspecialchars($form['noteDecision']); ?></textarea>
+                                    <textarea id="noteDecision" name="noteDecision" rows="8" data-cre8pilot-field="noteDecision" placeholder="Explain the current review decision, next step, or the reason behind this outcome."><?php echo htmlspecialchars($form['noteDecision']); ?></textarea>
                                 </div>
 
                                 <div class="candidature-review-actions">
@@ -377,5 +418,17 @@ $canReview = $condidature && $condidature->getStatutCandidature() !== 'retiree';
     </div>
         </main>
     </div>
+<?php
+$cre8PilotContext = [
+    'page' => 'admin_candidature_workspace',
+    'mode' => 'details',
+    'role' => 'admin',
+    'allowedActions' => ['normal_chat', 'summarize_page', 'analyze_page', 'prepare_negotiation_reply'],
+    'formTarget' => null,
+    'visibleEntityType' => 'candidature',
+    'visibleEntityId' => $idCandidature ?? null,
+];
+require __DIR__ . '/../../FrontOffice/condidature/cre8pilot_widget.php';
+?>
 </body>
 </html>
