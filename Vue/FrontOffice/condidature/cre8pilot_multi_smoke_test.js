@@ -12,9 +12,14 @@
         results: 'cre8pilot_multi_test_results',
         running: 'cre8pilot_multi_test_running',
     };
-    const DEFAULT_DELAY_BETWEEN_PROMPTS_MS = 2500;
-    const DEFAULT_DELAY_BETWEEN_PAGES_MS = 4000;
-    const DEFAULT_MAX_LLM_PROMPTS_PER_PAGE = 2;
+    const CONFIG = Object.assign({
+        lightMode: true,
+        delayBetweenPromptsMs: 3000,
+        delayBetweenPagesMs: 5000,
+        maxLlmPromptsPerPage: 2,
+        stopOnManyRateLimits: true,
+        maxRateLimitProblems: 3,
+    }, window.CRE8PILOT_SMOKE_CONFIG || {});
 
     const DEFAULT_PAGE_TESTS = [
         {
@@ -116,7 +121,8 @@
     ];
 
     window.CRE8PILOT_PAGE_TESTS = window.CRE8PILOT_PAGE_TESTS || DEFAULT_PAGE_TESTS;
-    window.CRE8PILOT_SMOKE_LIGHT_MODE = window.CRE8PILOT_SMOKE_LIGHT_MODE !== false;
+    window.CRE8PILOT_SMOKE_CONFIG = CONFIG;
+    window.CRE8PILOT_SMOKE_LIGHT_MODE = window.CRE8PILOT_SMOKE_LIGHT_MODE !== false && CONFIG.lightMode !== false;
 
     function readJson(key, fallback) {
         try {
@@ -289,8 +295,10 @@
         if (isSafetyPrompt(prompt)) {
             return false;
         }
+        if (containsAny(prompt, ['show expired', 'filter', 'sort', 'explain these tabs', 'explain origins', 'which candidatures are pending', 'which offers are expired'])) {
+            return false;
+        }
         return containsAny(prompt, [
-            'what can you do',
             'summarize',
             'professional',
             'suggest',
@@ -322,6 +330,7 @@
 
     function detectProblems(pageKey, prompt, data, summary) {
         const reasons = [];
+        const warningReasons = [];
         const status = String(data.status || '');
         const llmMode = data.debug && data.debug.llmMode ? String(data.debug.llmMode) : '';
         const llmEnabled = Boolean(data.debug && data.debug.llmEnabled);
@@ -348,6 +357,27 @@
             reasons.push('expected_form_fill_missing');
         }
 
+        if (expectedFormFill(pageKey, prompt)) {
+            const expectedTarget = pageKey === 'brand_create'
+                ? 'offer_form'
+                : (pageKey === 'negotiation_page' ? 'negotiation_form' : (pageKey === 'creator_candidature_form' ? 'candidature_form' : ''));
+            if (expectedTarget && summaryText.includes('fill_form') && !summaryText.includes(expectedTarget)) {
+                reasons.push('wrong_form_target');
+            }
+        }
+
+        if (data && data.intent === 'invalid_json') {
+            reasons.push('invalid_json_response');
+        }
+
+        if (data && data.status === 'error') {
+            reasons.push('backend_error');
+        }
+
+        if (llmMode === 'mock_fallback_rate_limited') {
+            warningReasons.push('provider_rate_limited');
+        }
+
         if (llmEnabled && llmMode === 'mock_fallback_api_error') {
             reasons.push('llm_provider_failed');
         }
@@ -355,6 +385,8 @@
         return {
             problem: reasons.length > 0,
             problemReason: reasons,
+            warning: warningReasons.length > 0,
+            warningReason: warningReasons,
         };
     }
 
@@ -425,8 +457,37 @@
             llmFinalFailureReason: debug.llmFinalFailureReason || null,
             llmAttempts: debug.llmAttempts || [],
             policyDecision: debug.policyDecision || null,
+            llmSkipReason: debug.llmSkipReason || null,
+            cacheHit: Boolean(debug.cacheHit),
+            providerCooldowns: debug.providerCooldowns || null,
             error: error ? String(error.message || error) : null,
         }, problem);
+    }
+
+    function summarizeResults(results) {
+        const total = results.length;
+        const problems = results.filter((result) => result.problem).length;
+        const rateLimitCount = results.filter((result) => result.warningReason && result.warningReason.includes('provider_rate_limited')).length;
+        const safetyFailures = results.filter((result) => (result.problemReason || []).some((reason) => /safety|privacy|forbidden/.test(reason))).length;
+        const formFillFailures = results.filter((result) => (result.problemReason || []).some((reason) => /form_fill|form_target/.test(reason))).length;
+
+        return {
+            total,
+            passed: total - problems,
+            problems,
+            rateLimitCount,
+            safetyFailures,
+            formFillFailures,
+        };
+    }
+
+    function shouldStopForRateLimits(campaign, results) {
+        if (!campaign.stopOnManyRateLimits) {
+            return false;
+        }
+
+        const count = results.filter((result) => result.warningReason && result.warningReason.includes('provider_rate_limited')).length;
+        return count >= Number(campaign.maxRateLimitProblems || CONFIG.maxRateLimitProblems);
     }
 
     function downloadJson(data, filename) {
@@ -481,7 +542,7 @@
 
         const results = getResults();
         let llmPromptCount = 0;
-        const maxLlmPrompts = Number(campaign.maxLlmPromptsPerPage || DEFAULT_MAX_LLM_PROMPTS_PER_PAGE);
+        const maxLlmPrompts = Number(campaign.maxLlmPromptsPerPage || CONFIG.maxLlmPromptsPerPage);
         for (const prompt of pageTest.prompts) {
             if (isLikelyLlmPrompt(prompt)) {
                 if (llmPromptCount >= maxLlmPrompts) {
@@ -501,7 +562,13 @@
             results.push(result);
             setResults(results);
             console.log('[Cre8Pilot multi smoke]', result);
-            await sleep(campaign.delayBetweenPromptsMs || DEFAULT_DELAY_BETWEEN_PROMPTS_MS);
+            if (shouldStopForRateLimits(campaign, results)) {
+                console.warn('[Cre8Pilot multi smoke] Rate limit detected. Stopping early to protect free API quota.');
+                window.downloadCre8PilotMultiSmokeResults();
+                window.localStorage.removeItem(STORAGE.running);
+                return;
+            }
+            await sleep(campaign.delayBetweenPromptsMs || CONFIG.delayBetweenPromptsMs);
         }
 
         const nextIndex = index + 1;
@@ -512,7 +579,7 @@
             return;
         }
 
-        await sleep(campaign.delayBetweenPagesMs || DEFAULT_DELAY_BETWEEN_PAGES_MS);
+        await sleep(campaign.delayBetweenPagesMs || CONFIG.delayBetweenPagesMs);
         window.location.href = campaign.pages[nextIndex].url;
     }
 
@@ -524,9 +591,11 @@
             runId: 'cre8pilot-smoke-' + new Date().toISOString().replace(/[:.]/g, '-'),
             startedAt: new Date().toISOString(),
             lightMode,
-            delayBetweenPromptsMs: Number(options.delayBetweenPromptsMs || DEFAULT_DELAY_BETWEEN_PROMPTS_MS),
-            delayBetweenPagesMs: Number(options.delayBetweenPagesMs || DEFAULT_DELAY_BETWEEN_PAGES_MS),
-            maxLlmPromptsPerPage: Number(options.maxLlmPromptsPerPage || DEFAULT_MAX_LLM_PROMPTS_PER_PAGE),
+            delayBetweenPromptsMs: Number(options.delayBetweenPromptsMs || CONFIG.delayBetweenPromptsMs),
+            delayBetweenPagesMs: Number(options.delayBetweenPagesMs || CONFIG.delayBetweenPagesMs),
+            maxLlmPromptsPerPage: Number(options.maxLlmPromptsPerPage || CONFIG.maxLlmPromptsPerPage),
+            stopOnManyRateLimits: options.stopOnManyRateLimits !== undefined ? Boolean(options.stopOnManyRateLimits) : Boolean(CONFIG.stopOnManyRateLimits),
+            maxRateLimitProblems: Number(options.maxRateLimitProblems || CONFIG.maxRateLimitProblems),
             pages,
         };
 
@@ -550,6 +619,7 @@
             runId: campaign.runId || 'cre8pilot-smoke-manual',
             startedAt: campaign.startedAt || null,
             finishedAt: new Date().toISOString(),
+            summary: summarizeResults(results),
             total: results.length,
             problemCount: results.filter((result) => result.problem).length,
             results,

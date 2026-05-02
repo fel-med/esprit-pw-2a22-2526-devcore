@@ -500,6 +500,233 @@ class CondidatureC
         ], true);
     }
 
+    private function cre8PilotIntentShouldSkipLlm(array $response)
+    {
+        $intent = (string) ($response['intent'] ?? '');
+        $status = (string) ($response['status'] ?? '');
+        $normalized = (string) ($this->cre8PilotDebug['normalizedMessage'] ?? '');
+        $page = (string) ($this->cre8PilotDebug['page'] ?? '');
+        $mode = (string) ($this->cre8PilotDebug['mode'] ?? '');
+
+        if ($status === 'blocked' || empty($this->cre8PilotDebug['policyDecision']['allowed'])) {
+            return 'blocked_or_unsafe';
+        }
+
+        if (in_array($intent, [
+            'blocked_request',
+            'forbidden_auto_action',
+            'dishonest_content_request',
+            'action_not_allowed',
+        ], true)) {
+            return 'blocked_or_unsafe';
+        }
+
+        if (in_array($intent, ['apply_filters', 'apply_search', 'sort_results'], true)) {
+            return 'filter_or_sort_action';
+        }
+
+        if ($intent === 'admin_table_clarification') {
+            return 'simple_clarification';
+        }
+
+        if ($intent === 'need_clarification'
+            && $this->cre8PilotIsListOrTableMode($page, $mode)
+            && $this->messageContainsAny($normalized, ['fill this', 'do it', 'make it better', 'what now', 'is this okay'])
+        ) {
+            return 'simple_clarification';
+        }
+
+        if ($intent === 'explain_statuses') {
+            return 'deterministic_intent';
+        }
+
+        if ($intent === 'normal_chat'
+            && $this->messageContainsAny($normalized, ['what can you do', 'how can you help'])
+        ) {
+            return 'deterministic_intent';
+        }
+
+        if (!$this->cre8PilotIntentAllowsLlm($intent)) {
+            return 'deterministic_intent';
+        }
+
+        return 'none';
+    }
+
+    private function cre8PilotIsListOrTableMode($page, $mode)
+    {
+        return $mode === 'list'
+            || $mode === 'table'
+            || $this->cre8PilotIsPageMode((string) $page, (string) $mode, 'admin_offer_workspace', ['table'])
+            || $this->cre8PilotIsPageMode((string) $page, (string) $mode, 'admin_candidature_workspace', ['table'])
+            || $this->cre8PilotIsPageMode((string) $page, (string) $mode, 'brand_offer_workspace', ['list'])
+            || $this->cre8PilotIsPageMode((string) $page, (string) $mode, 'brand_candidature_workspace', ['list'])
+            || $this->cre8PilotIsPageMode((string) $page, (string) $mode, 'creator_offer_workspace', ['list'])
+            || $this->cre8PilotIsPageMode((string) $page, (string) $mode, 'creator_candidature_workspace', ['list']);
+    }
+
+    private function cre8PilotStorageDir()
+    {
+        return dirname(__DIR__) . DIRECTORY_SEPARATOR . 'storage';
+    }
+
+    private function cre8PilotEnsureDirectory($dir)
+    {
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+
+        return is_dir($dir) && is_writable($dir);
+    }
+
+    private function cre8PilotCacheDir()
+    {
+        return $this->cre8PilotStorageDir() . DIRECTORY_SEPARATOR . 'cre8pilot_cache';
+    }
+
+    private function cre8PilotCacheFile($key)
+    {
+        return $this->cre8PilotCacheDir() . DIRECTORY_SEPARATOR . preg_replace('/[^a-f0-9]/', '', (string) $key) . '.json';
+    }
+
+    private function buildCre8PilotCacheKey(array $response)
+    {
+        $parts = [
+            'v18',
+            (string) ($this->cre8PilotLlmContext['userId'] ?? 0),
+            (string) ($this->cre8PilotDebug['role'] ?? ''),
+            (string) ($this->cre8PilotDebug['page'] ?? ''),
+            (string) ($this->cre8PilotDebug['mode'] ?? ''),
+            (string) ($this->cre8PilotLlmContext['entityType'] ?? ''),
+            (string) ($this->cre8PilotLlmContext['entityId'] ?? ''),
+            (string) ($response['intent'] ?? ''),
+            (string) ($this->cre8PilotDebug['normalizedMessage'] ?? ''),
+            (string) ($this->cre8PilotDebug['formTarget'] ?? ''),
+        ];
+
+        return hash('sha256', implode('|', $parts));
+    }
+
+    private function readCre8PilotLlmCache($key, $ttlSeconds = 300)
+    {
+        $file = $this->cre8PilotCacheFile($key);
+        if (!is_file($file)) {
+            return null;
+        }
+
+        $raw = @file_get_contents($file);
+        $decoded = is_string($raw) ? json_decode($raw, true) : null;
+        if (!is_array($decoded)) {
+            @unlink($file);
+            return null;
+        }
+
+        $createdAt = (int) ($decoded['createdAt'] ?? 0);
+        if ($createdAt <= 0 || time() - $createdAt > $ttlSeconds) {
+            @unlink($file);
+            return null;
+        }
+
+        $data = $decoded['data'] ?? null;
+        return is_array($data) ? $data : null;
+    }
+
+    private function writeCre8PilotLlmCache($key, array $data)
+    {
+        $dir = $this->cre8PilotCacheDir();
+        if (!$this->cre8PilotEnsureDirectory($dir)) {
+            return false;
+        }
+
+        $safeData = [
+            'message' => $this->sanitizeCre8PilotLlmScalar($data['message'] ?? '', 1600),
+            'confidence' => is_numeric($data['confidence'] ?? null) ? (float) $data['confidence'] : null,
+            'avatarState' => in_array((string) ($data['avatarState'] ?? ''), ['idle', 'success', 'thinking', 'filling', 'warning', 'confused'], true)
+                ? (string) $data['avatarState']
+                : '',
+            'fields' => is_array($data['fields'] ?? null) ? $this->sanitizeCre8PilotLlmVisibleData($data['fields']) : [],
+        ];
+
+        $payload = [
+            'createdAt' => time(),
+            'data' => $safeData,
+        ];
+
+        return @file_put_contents($this->cre8PilotCacheFile($key), json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) !== false;
+    }
+
+    private function cre8PilotProviderStateFile()
+    {
+        return $this->cre8PilotStorageDir() . DIRECTORY_SEPARATOR . 'cre8pilot_provider_state.json';
+    }
+
+    private function readCre8PilotProviderState()
+    {
+        $file = $this->cre8PilotProviderStateFile();
+        if (!is_file($file)) {
+            return [];
+        }
+
+        $raw = @file_get_contents($file);
+        $decoded = is_string($raw) ? json_decode($raw, true) : null;
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    private function writeCre8PilotProviderState(array $state)
+    {
+        $dir = $this->cre8PilotStorageDir();
+        if (!$this->cre8PilotEnsureDirectory($dir)) {
+            return false;
+        }
+
+        return @file_put_contents($this->cre8PilotProviderStateFile(), json_encode($state, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)) !== false;
+    }
+
+    private function getCre8PilotProviderCooldowns()
+    {
+        $state = $this->readCre8PilotProviderState();
+        $now = time();
+        $cooldowns = [];
+        foreach ($state as $provider => $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $cooldownUntil = (int) ($item['cooldownUntil'] ?? 0);
+            if ($cooldownUntil > $now) {
+                $cooldowns[(string) $provider] = [
+                    'cooldownUntil' => $cooldownUntil,
+                    'secondsRemaining' => $cooldownUntil - $now,
+                    'lastError' => (string) ($item['lastError'] ?? ''),
+                ];
+            }
+        }
+
+        return $cooldowns;
+    }
+
+    private function cre8PilotProviderCoolingDown($provider)
+    {
+        $provider = strtolower((string) $provider);
+        $cooldowns = $this->getCre8PilotProviderCooldowns();
+        return isset($cooldowns[$provider]);
+    }
+
+    private function markCre8PilotProviderRateLimited($provider, $seconds = 60)
+    {
+        $provider = strtolower((string) $provider);
+        if ($provider === '') {
+            return;
+        }
+
+        $state = $this->readCre8PilotProviderState();
+        $state[$provider] = [
+            'cooldownUntil' => time() + max(10, (int) $seconds),
+            'lastError' => 'rate_limited',
+        ];
+        $this->writeCre8PilotProviderState($state);
+    }
+
     private function getCre8PilotAllowedFieldsForTarget($target)
     {
         return match ((string) $target) {
@@ -581,6 +808,48 @@ class CondidatureC
         return $this->sanitizeCre8PilotLlmScalar($value, 500);
     }
 
+    private function compactCre8PilotLlmVisibleData(array $visibleData)
+    {
+        $compact = [
+            'title' => $this->sanitizeCre8PilotLlmScalar($visibleData['title'] ?? '', 180),
+            'page' => $this->sanitizeCre8PilotLlmScalar($visibleData['page'] ?? '', 80),
+            'mode' => $this->sanitizeCre8PilotLlmScalar($visibleData['mode'] ?? '', 80),
+            'role' => $this->sanitizeCre8PilotLlmScalar($visibleData['role'] ?? '', 80),
+            'formTarget' => $this->sanitizeCre8PilotLlmScalar($visibleData['formTarget'] ?? '', 80),
+        ];
+
+        foreach (['offerForm', 'candidatureForm', 'decisionForm'] as $formKey) {
+            if (!is_array($visibleData[$formKey] ?? null)) {
+                continue;
+            }
+
+            $compact[$formKey] = [];
+            foreach ($visibleData[$formKey] as $field => $value) {
+                $field = preg_replace('/[^a-zA-Z0-9_\\-]/', '', (string) $field);
+                if ($field === '' || str_contains(strtolower($field), 'password') || str_contains(strtolower($field), 'token')) {
+                    continue;
+                }
+                $clean = $this->sanitizeCre8PilotLlmScalar($value, 240);
+                if ($clean !== '') {
+                    $compact[$formKey][$field] = $clean;
+                }
+            }
+        }
+
+        $highlights = $visibleData['highlights'] ?? [];
+        if (is_array($highlights)) {
+            $compact['highlights'] = [];
+            foreach (array_slice($highlights, 0, 5) as $highlight) {
+                $clean = $this->sanitizeCre8PilotLlmScalar($highlight, 220);
+                if ($clean !== '') {
+                    $compact['highlights'][] = $clean;
+                }
+            }
+        }
+
+        return $compact;
+    }
+
     private function buildCre8PilotLlmPrompt(array $context)
     {
         $safeContext = [
@@ -593,7 +862,7 @@ class CondidatureC
             'formTarget' => $this->sanitizeCre8PilotLlmScalar($context['formTarget'] ?? '', 80),
             'allowedActions' => array_values(array_filter(array_map('strval', $context['allowedActions'] ?? []))),
             'allowedFields' => $this->getCre8PilotAllowedFieldsForTarget($context['formTarget'] ?? ''),
-            'visibleData' => $this->sanitizeCre8PilotLlmVisibleData($context['visibleData'] ?? []),
+            'visibleData' => $this->compactCre8PilotLlmVisibleData(is_array($context['visibleData'] ?? null) ? $context['visibleData'] : []),
             'mockResponse' => [
                 'message' => $this->sanitizeCre8PilotLlmScalar($context['mockResponse']['message'] ?? '', 900),
                 'actions' => $context['mockResponse']['actions'] ?? [],
@@ -666,6 +935,7 @@ class CondidatureC
             'forbidden' => 'Provider refused access to this resource.',
             'missing_key' => 'Provider API key is missing.',
             'curl_missing' => 'PHP cURL is not available.',
+            'provider_cooldown_active' => 'Provider was skipped because it recently reached a rate limit.',
             default => 'Provider request failed.',
         };
     }
@@ -778,7 +1048,7 @@ class CondidatureC
             'model' => (string) ($providerConfig['model'] ?? ''),
             'messages' => $messages,
             'temperature' => 0.2,
-            'max_tokens' => 700,
+            'max_tokens' => 450,
         ];
 
         if ($useResponseFormat) {
@@ -842,7 +1112,7 @@ class CondidatureC
         $attempt['httpStatus'] = $httpCode;
         $errorCode = $this->cre8pilotMapProviderError($httpCode, $curlError, $raw);
 
-        if ($raw === '' || $curlError !== '' || $httpCode < 200 || $httpCode >= 300 || $errorCode === 'response_format_unsupported') {
+        if ($errorCode === 'response_format_unsupported') {
             $attempt['retriedWithoutResponseFormat'] = true;
             $retry = $this->cre8PilotProviderHttpRequest($providerConfig, $messages, $timeout, false);
             $raw = $retry['raw'];
@@ -946,6 +1216,16 @@ class CondidatureC
             $slot = (string) ($provider['slot'] ?? '');
             $tried[] = $slot . ':' . $providerName;
 
+            if ($this->cre8PilotProviderCoolingDown($providerName)) {
+                $attempt = $this->cre8PilotProviderAttemptBase($provider);
+                $attempt['errorCode'] = 'provider_cooldown_active';
+                $attempt['safeErrorMessage'] = $this->cre8PilotErrorMessage('provider_cooldown_active');
+                $attempts[] = $attempt;
+                $lastError = 'rate_limited';
+                $lastFailedSlot = $slot;
+                continue;
+            }
+
             $result = $this->callCre8PilotProvider($provider, $messages, [
                 'timeout' => $settings['timeout'],
                 'responseFormat' => true,
@@ -970,13 +1250,35 @@ class CondidatureC
 
             $lastError = (string) ($result['error'] ?? 'api_error');
             $lastFailedSlot = $slot;
+            if ($lastError === 'rate_limited') {
+                $this->markCre8PilotProviderRateLimited($providerName, 60);
+            }
         }
 
         if (!$hasAnyKey) {
             return ['ok' => false, 'data' => null, 'error' => 'missing_key', 'providerTried' => $tried, 'providerUsed' => null, 'providerSlot' => null, 'model' => '', 'attempts' => $attempts, 'finalFailureReason' => 'all_providers_missing_key'];
         }
 
-        return ['ok' => false, 'data' => null, 'error' => $lastError, 'providerTried' => $tried, 'providerUsed' => null, 'providerSlot' => null, 'model' => '', 'attempts' => $attempts, 'finalFailureReason' => ($lastFailedSlot !== '' ? $lastFailedSlot . '_' . $lastError : 'all_providers_failed')];
+        $allTriedWereRateLimited = !empty($tried);
+        foreach ($attempts as $attempt) {
+            $attemptError = (string) ($attempt['errorCode'] ?? '');
+            if (!in_array($attemptError, ['rate_limited', 'provider_cooldown_active'], true)) {
+                $allTriedWereRateLimited = false;
+                break;
+            }
+        }
+
+        return [
+            'ok' => false,
+            'data' => null,
+            'error' => $allTriedWereRateLimited ? 'rate_limited' : $lastError,
+            'providerTried' => $tried,
+            'providerUsed' => null,
+            'providerSlot' => null,
+            'model' => '',
+            'attempts' => $attempts,
+            'finalFailureReason' => $allTriedWereRateLimited ? 'all_providers_rate_limited' : ($lastFailedSlot !== '' ? $lastFailedSlot . '_' . $lastError : 'all_providers_failed'),
+        ];
     }
 
     private function applyCre8PilotLlmToResponse(array $response)
@@ -996,6 +1298,11 @@ class CondidatureC
         $this->cre8PilotDebug['finalActionFields'] = [];
         $this->cre8PilotDebug['formFillApplied'] = false;
         $this->cre8PilotDebug['formFillReason'] = null;
+        $this->cre8PilotDebug['llmSkipReason'] = 'none';
+        $this->cre8PilotDebug['cacheHit'] = false;
+        $this->cre8PilotDebug['providerCooldowns'] = $this->getCre8PilotProviderCooldowns();
+        $this->cre8PilotDebug['llmPromptSizeApprox'] = 0;
+        $this->cre8PilotDebug['llmMaxTokens'] = 450;
         foreach ((array) ($response['actions'] ?? []) as $existingAction) {
             if (is_array($existingAction) && ($existingAction['type'] ?? '') === 'fill_form') {
                 $this->cre8PilotDebug['formFillApplied'] = true;
@@ -1005,18 +1312,22 @@ class CondidatureC
             }
         }
 
-        if (($response['status'] ?? '') === 'blocked'
-            || empty($this->cre8PilotDebug['policyDecision']['allowed'])
-            || !$this->cre8PilotIntentAllowsLlm($response['intent'] ?? '')
-        ) {
+        $skipReason = $this->cre8PilotIntentShouldSkipLlm($response);
+        if ($skipReason !== 'none') {
+            $this->cre8PilotDebug['llmSkipReason'] = $skipReason;
             $this->cre8PilotDebug['llmMode'] = 'mock_only';
             return $response;
         }
 
         if (!$settings['enabled']) {
+            $this->cre8PilotDebug['llmSkipReason'] = 'none';
             $this->cre8PilotDebug['llmMode'] = 'mock_fallback_disabled';
             return $response;
         }
+
+        $cacheKey = $this->buildCre8PilotCacheKey($response);
+        $cachedData = $this->readCre8PilotLlmCache($cacheKey);
+        $llmFromCache = is_array($cachedData);
 
         $messages = $this->buildCre8PilotLlmPrompt([
             'message' => $this->cre8PilotLlmContext['message'] ?? '',
@@ -1030,8 +1341,26 @@ class CondidatureC
             'visibleData' => $this->cre8PilotLlmContext['visibleData'] ?? [],
             'mockResponse' => $response,
         ]);
+        $this->cre8PilotDebug['llmPromptSizeApprox'] = strlen(json_encode($messages, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
-        $llm = $this->callCre8PilotLlm($messages);
+        if ($llmFromCache) {
+            $this->cre8PilotDebug['cacheHit'] = true;
+            $this->cre8PilotDebug['llmSkipReason'] = 'cache_hit';
+            $llm = [
+                'ok' => true,
+                'data' => $cachedData,
+                'error' => null,
+                'providerTried' => [],
+                'providerUsed' => null,
+                'providerSlot' => null,
+                'model' => '',
+                'attempts' => [],
+                'finalFailureReason' => null,
+            ];
+        } else {
+            $this->cre8PilotDebug['cacheHit'] = false;
+            $llm = $this->callCre8PilotLlm($messages);
+        }
         $this->cre8PilotDebug['llmProviderTried'] = $llm['providerTried'] ?? [];
         $this->cre8PilotDebug['llmProviderUsed'] = $llm['providerUsed'] ?? null;
         $this->cre8PilotDebug['llmProvider'] = $llm['providerUsed'] ?? null;
@@ -1039,12 +1368,17 @@ class CondidatureC
         $this->cre8PilotDebug['llmErrorCode'] = $llm['ok'] ? null : ($llm['error'] ?? 'api_error');
         $this->cre8PilotDebug['llmAttempts'] = $llm['attempts'] ?? [];
         $this->cre8PilotDebug['llmFinalFailureReason'] = $llm['ok'] ? null : ($llm['finalFailureReason'] ?? 'all_providers_failed');
+        $this->cre8PilotDebug['providerCooldowns'] = $this->getCre8PilotProviderCooldowns();
 
         if (!$llm['ok']) {
             if (($llm['error'] ?? '') === 'missing_key') {
                 $this->cre8PilotDebug['llmMode'] = 'mock_fallback_missing_key';
             } elseif (in_array(($llm['error'] ?? ''), ['invalid_llm_json', 'invalid_api_json', 'invalid_provider_response', 'missing_choices', 'missing_message_content', 'empty_response'], true)) {
                 $this->cre8PilotDebug['llmMode'] = 'mock_fallback_invalid_json';
+            } elseif (($llm['error'] ?? '') === 'rate_limited' || ($llm['finalFailureReason'] ?? '') === 'all_providers_rate_limited') {
+                $this->cre8PilotDebug['llmMode'] = 'mock_fallback_rate_limited';
+                $this->cre8PilotDebug['llmFinalFailureReason'] = 'all_providers_rate_limited';
+                $this->cre8PilotDebug['llmSkipReason'] = 'provider_rate_limited_recently';
             } else {
                 $this->cre8PilotDebug['llmMode'] = 'mock_fallback_api_error';
             }
@@ -1171,6 +1505,11 @@ class CondidatureC
         $this->cre8PilotDebug['llmMode'] = (($llm['providerSlot'] ?? '') === 'backup')
             ? 'llm_success_backup'
             : 'llm_success_primary';
+        if ($llmFromCache) {
+            $this->cre8PilotDebug['llmMode'] = 'llm_cache_hit';
+        } else {
+            $this->writeCre8PilotLlmCache($cacheKey, $data);
+        }
         return $response;
     }
 
@@ -2735,13 +3074,18 @@ class CondidatureC
         $page = preg_replace('/[^a-z0-9_\\-]/i', '', (string) ($payload['page'] ?? 'unknown'));
         $mode = preg_replace('/[^a-z0-9_\\-]/i', '', (string) ($payload['mode'] ?? ''));
         $formTarget = preg_replace('/[^a-z0-9_\\-]/i', '', (string) ($payload['formTarget'] ?? ''));
+        $entityType = preg_replace('/[^a-z0-9_\\-]/i', '', (string) ($payload['visibleEntityType'] ?? $payload['entityType'] ?? ''));
+        $entityId = preg_replace('/[^a-z0-9_\\-]/i', '', (string) ($payload['visibleEntityId'] ?? $payload['entityId'] ?? ''));
         $allowedActions = $this->normalizeCre8PilotAllowedActions($payload['allowedActions'] ?? []);
         $visibleData = is_array($payload['visibleData'] ?? null) ? $payload['visibleData'] : [];
         $visibleData['page'] = $page;
         $visibleData['mode'] = $mode;
         $this->cre8PilotLlmContext = [
+            'userId' => $userId,
             'message' => $message,
             'visibleData' => $visibleData,
+            'entityType' => $entityType,
+            'entityId' => $entityId,
         ];
         $selectedClarificationId = preg_replace('/[^a-z0-9_\\-]/i', '', (string) ($payload['selectedClarificationId'] ?? ''));
 

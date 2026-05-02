@@ -1,3 +1,5 @@
 .env
 *.env
 !.env.example
+storage/cre8pilot_cache/
+storage/cre8pilot_provider_state.json
