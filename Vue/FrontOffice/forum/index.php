@@ -4,358 +4,151 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Forums - Cre8Connect</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
-            color: #0f172a;
-            min-height: 100vh;
+        :root {
+            --primary:        #5b4fff;
+            --primary-light:  #ece9ff;
+            --primary-hover:  #4438e0;
+            --primary-glow:   rgba(91,79,255,0.15);
+            --primary-border: rgba(91,79,255,0.2);
+            --text-main:      #0f0e1a;
+            --text-sub:       #6b6f80;
+            --text-dim:       #a0a4b2;
+            --border:         #ebebf2;
+            --bg:             #f6f6fc;
+            --white:          #ffffff;
+            --danger:         #f43f5e;
+            --danger-light:   #fff1f3;
+            --success:        #0ea370;
+            --success-light:  #edfaf5;
+            --warning:        #f59e0b;
+            --warning-light:  #fffbeb;
+            --radius:         14px;
+            --radius-sm:      8px;
+            --nav-h:          66px;
+            --card-shadow:    0 1px 3px rgba(15,14,26,0.06), 0 4px 16px rgba(91,79,255,0.06);
+            --card-shadow-hover: 0 8px 32px rgba(91,79,255,0.14);
         }
 
-        /* Header */
-        .header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 16px 32px;
-            border-bottom: 1px solid rgba(226, 232, 240, 0.5);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text-main); min-height: 100vh; }
+
+        /* Mode sombre */
+        body.dark-mode {
+            --primary:        #7c6eff;
+            --primary-light:  #2a2648;
+            --primary-hover:  #8f82ff;
+            --primary-glow:   rgba(124,110,255,0.2);
+            --primary-border: rgba(124,110,255,0.3);
+            --text-main:      #e6edf3;
+            --text-sub:       #8b949e;
+            --text-dim:       #6e7681;
+            --border:         #30363d;
+            --bg:             #0d1117;
+            --white:          #161b22;
+            --danger-light:   #3b1a24;
+            --success-light:  #1a3e2a;
+            --warning-light:  #3b2a1a;
+            --card-shadow:    0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.2);
+            --card-shadow-hover: 0 8px 32px rgba(0,0,0,0.4);
         }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 1.3rem;
-            font-weight: 700;
-            text-decoration: none;
-        }
+        nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 48px; height: var(--nav-h); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 200; box-shadow: 0 1px 0 var(--border), 0 2px 12px rgba(15,14,26,0.04); }
+        .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .nav-logo img { width: 36px; height: 36px; object-fit: contain; border-radius: 9px; }
+        .nav-logo-text { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
+        .nav-links { display: flex; gap: 6px; list-style: none; }
+        .nav-links a { text-decoration: none; color: var(--text-sub); font-size: 13.5px; font-weight: 600; padding: 6px 14px; border-radius: 8px; transition: all 0.18s; }
+        .nav-links a:hover { background: var(--bg); color: var(--text-main); }
+        .nav-links a.active { background: var(--primary-light); color: var(--primary); }
+        .nav-right { display: flex; align-items: center; gap: 12px; }
+        .nav-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; cursor: pointer; border: 2px solid var(--primary-border); }
+        .theme-toggle-btn { background: var(--bg); border: 1px solid var(--border); border-radius: 50%; width: 36px; height: 36px; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+        .theme-toggle-btn:hover { transform: scale(1.05); background: var(--primary-light); }
 
-        .logo-img {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            object-fit: cover;
-            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
-        }
+        .hero { background: linear-gradient(135deg, #5b4fff 0%, #8b7cff 100%); color: white; text-align: center; padding: 48px 24px; margin-bottom: 32px; }
+        .hero h1 { font-family: 'Fraunces', serif; font-size: 2.2rem; font-weight: 800; margin-bottom: 12px; }
+        .hero p { font-size: 1rem; opacity: 0.9; max-width: 500px; margin: 0 auto; }
 
-        .logo-text {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+        .stats-container { max-width: 1200px; margin: -30px auto 32px; padding: 0 24px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+        .stat-card { background: var(--white); border-radius: var(--radius); padding: 24px; text-align: center; box-shadow: var(--card-shadow); border: 1px solid var(--border); transition: all 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: var(--card-shadow-hover); border-color: var(--primary-border); }
+        .stat-icon { font-size: 2rem; margin-bottom: 12px; }
+        .stat-value { font-family: 'Fraunces', serif; font-size: 2rem; font-weight: 800; color: var(--primary); }
+        .stat-label { font-size: 0.8rem; color: var(--text-sub); margin-top: 4px; }
 
-        .nav-links {
-            display: flex;
-            gap: 32px;
-        }
+        .main-container { max-width: 1200px; margin: 0 auto; padding: 0 24px 80px; }
 
-        .nav-links a {
-            text-decoration: none;
-            color: #64748b;
-            font-weight: 500;
-            transition: all 0.2s;
-            padding: 8px 0;
-        }
+        .forum-card { background: var(--white); border-radius: var(--radius); margin-bottom: 20px; border: 1px solid var(--border); transition: all 0.25s; box-shadow: var(--card-shadow); overflow: hidden; }
+        .forum-card:hover { transform: translateY(-3px); box-shadow: var(--card-shadow-hover); border-color: var(--primary-border); }
+        .forum-card-inner { padding: 24px; display: flex; gap: 20px; }
+        .forum-image { width: 80px; height: 80px; flex-shrink: 0; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, var(--primary-light), #ddddf8); display: flex; align-items: center; justify-content: center; }
+        .forum-image img { width: 100%; height: 100%; object-fit: cover; }
+        .forum-image .forum-icon { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 2rem; background: none; }
+        .forum-content { flex: 1; }
+        .forum-title { font-family: 'Fraunces', serif; font-size: 1.2rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px; }
+        .forum-meta { display: flex; flex-wrap: wrap; gap: 20px; font-size: 0.7rem; color: var(--text-sub); margin-bottom: 12px; }
+        .forum-meta span { display: flex; align-items: center; gap: 6px; }
+        .forum-sujet { background: var(--bg); padding: 14px; border-radius: var(--radius-sm); font-size: 0.85rem; color: var(--text-sub); margin-bottom: 16px; border-left: 3px solid var(--primary); }
+        .forum-footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+        .forum-stats { display: flex; gap: 20px; font-size: 0.7rem; color: var(--text-sub); }
+        .forum-stats span { display: flex; align-items: center; gap: 5px; }
+        .btn-discuter { background: var(--primary); color: white; border: none; padding: 10px 24px; border-radius: 40px; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-discuter:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px var(--primary-glow); }
 
-        .nav-links a:hover, .nav-links a.active {
-            color: #4f46e5;
-            border-bottom: 2px solid #4f46e5;
-        }
-
-        /* Container */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 40px 32px;
-        }
-
-        /* Hero */
-        .hero {
-            text-align: center;
-            margin-bottom: 48px;
-        }
-
-        .hero-badge {
-            display: inline-block;
-            background: #ede9fe;
-            color: #4f46e5;
-            padding: 6px 14px;
-            border-radius: 50px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-bottom: 20px;
-        }
-
-        .hero h1 {
-            font-size: 2.2rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 12px;
-        }
-
-        .hero p {
-            color: #64748b;
-            font-size: 1rem;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        /* Stats Cards */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin-bottom: 48px;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: 24px;
-            padding: 24px;
-            border: 1px solid rgba(226, 232, 240, 0.6);
-            transition: all 0.3s;
-            text-align: center;
-            box-shadow: 0 4px 6px -4px rgba(0,0,0,0.02);
-        }
-
-        .stat-card:hover {
-            transform: translateY(-4px);
-            border-color: #c7d2fe;
-            box-shadow: 0 12px 24px -12px rgba(79, 70, 229, 0.15);
-        }
-
-        .stat-icon {
-            width: 56px;
-            height: 56px;
-            background: linear-gradient(135deg, #ede9fe, #e0e7ff);
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.6rem;
-            margin: 0 auto 16px;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 800;
-            color: #0f172a;
-        }
-
-        .stat-label {
-            color: #64748b;
-            font-size: 0.85rem;
-            margin-top: 4px;
-        }
-
-        /* Forum Cards */
-        .forum-card {
-            background: white;
-            border-radius: 24px;
-            border: 1px solid rgba(226, 232, 240, 0.6);
-            margin-bottom: 20px;
-            transition: all 0.3s;
-            overflow: hidden;
-        }
-
-        .forum-card:hover {
-            transform: translateY(-2px);
-            border-color: #c7d2fe;
-            box-shadow: 0 12px 24px -12px rgba(0,0,0,0.1);
-        }
-
-        .forum-card-inner {
-            padding: 24px;
-            display: flex;
-            align-items: flex-start;
-            gap: 20px;
-        }
-
-        .forum-avatar {
-            width: 56px;
-            height: 56px;
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            border-radius: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            flex-shrink: 0;
-            box-shadow: 0 8px 16px -8px rgba(79, 70, 229, 0.3);
-        }
-
-        .forum-content {
-            flex: 1;
-        }
-
-        .forum-title {
-            font-size: 1.15rem;
-            font-weight: 700;
-            color: #0f172a;
-            margin-bottom: 6px;
-        }
-
-        .forum-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            font-size: 0.75rem;
-            color: #64748b;
-            margin-bottom: 12px;
-        }
-
-        .forum-meta span {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .forum-sujet {
-            font-size: 0.85rem;
-            color: #475569;
-            margin-bottom: 14px;
-            line-height: 1.5;
-            padding: 12px;
-            background: #f8fafc;
-            border-radius: 14px;
-        }
-
-        .forum-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .forum-stats {
-            display: flex;
-            gap: 20px;
-            font-size: 0.75rem;
-            color: #64748b;
-        }
-
-        .forum-stats span {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .btn-discuter {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 40px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
-        }
-
-        .btn-discuter:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.35);
-        }
-
-        /* Empty state */
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            background: white;
-            border-radius: 32px;
-            border: 1px solid #e2e8f0;
-        }
+        .empty-state { text-align: center; padding: 60px 24px; background: var(--white); border-radius: var(--radius); border: 1px solid var(--border); }
+        .empty-state-icon { font-size: 4rem; margin-bottom: 16px; }
+        .empty-state h3 { font-family: 'Fraunces', serif; font-size: 1.3rem; margin-bottom: 8px; }
+        .empty-state p { color: var(--text-sub); }
 
         @media (max-width: 768px) {
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 12px;
-            }
-            .header {
-                flex-direction: column;
-                gap: 16px;
-                padding: 16px 20px;
-            }
-            .forum-card-inner {
-                flex-direction: column;
-            }
-            .forum-footer {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .container {
-                padding: 24px 20px;
-            }
-            .hero h1 {
-                font-size: 1.6rem;
-            }
+            nav { padding: 0 20px; }
+            .nav-links { display: none; }
+            .hero h1 { font-size: 1.5rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .forum-card-inner { flex-direction: column; }
+            .forum-footer { flex-direction: column; align-items: flex-start; }
         }
     </style>
 </head>
 <body>
 
-<header class="header">
-    <a href="/ProjetWeb/Esprit-PW-2A22-2526-Devcore/Controleur/forumC.php" class="logo">
-        <img src="/ProjetWeb/Esprit-PW-2A22-2526-Devcore/Vue/public/images/logo.png" alt="Cre8Connect" class="logo-img">
-        <span class="logo-text">Cre8Connect</span>
+<nav>
+    <a href="/ProjetWeb/Esprit-PW-2A22-2526-Devcore/Controleur/evenementC.php" class="nav-logo">
+        <img src="/ProjetWeb/Esprit-PW-2A22-2526-Devcore/Vue/public/images/logo.png" alt="Cre8Connect">
+        <span class="nav-logo-text">Cre8Connect</span>
     </a>
-    <nav class="nav-links">
-        <a href="/ProjetWeb/Esprit-PW-2A22-2526-Devcore/Controleur/evenementC.php">Événements</a>
-        <a href="/ProjetWeb/Esprit-PW-2A22-2526-Devcore/Controleur/forumC.php" class="active">Forums</a>
-    </nav>
-</header>   
-
-<div class="container">
-    <div class="hero">
-        <div class="hero-badge">🗯️ Communauté active</div>
-        <h1>Forums de discussion</h1>
-        <p>Échangez avec la communauté, posez vos questions et partagez vos expériences</p>
+    <ul class="nav-links">
+        <li><a href="/ProjetWeb/Esprit-PW-2A22-2526-Devcore/Controleur/evenementC.php">Événements</a></li>
+        <li><a href="#" class="active">Forums</a></li>
+    </ul>
+    <div class="nav-right">
+        <button id="themeToggle" class="theme-toggle-btn">◑</button>
+        <div class="nav-avatar">👤</div>
     </div>
+</nav>
 
+<section class="hero">
+    <h1> Forums de discussion</h1>
+    <p>Échangez avec la communauté, posez vos questions et partagez vos expériences</p>
+</section>
+
+<div class="stats-container">
     <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-icon">📋</div>
-            <div class="stat-value"><?= count($forums) ?></div>
-            <div class="stat-label">Forums</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">🗯️</div>
-            <div class="stat-value"><?= array_sum(array_column($forums, 'nb_messages')) ?? 0 ?></div>
-            <div class="stat-label">Messages</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">👥</div>
-            <div class="stat-value"><?= count(array_unique(array_column($forums, 'idUtilisateur'))) ?></div>
-            <div class="stat-label">Participants</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">〽️</div>
-            <div class="stat-value"><?= count($forums) ?></div>
-            <div class="stat-label">Discussions actives</div>
-        </div>
+        <div class="stat-card"><div class="stat-icon">🗂️</div><div class="stat-value"><?= count($forums) ?></div><div class="stat-label">Forums</div></div>
+        <div class="stat-card"><div class="stat-icon">💬</div><div class="stat-value"><?= array_sum(array_column($forums, 'nb_messages')) ?></div><div class="stat-label">Messages</div></div>
+        <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value"><?= count(array_unique(array_column($forums, 'idUtilisateur'))) ?></div><div class="stat-label">Participants</div></div>
+        <div class="stat-card"><div class="stat-icon">🔥</div><div class="stat-value"><?= count($forums) ?></div><div class="stat-label">Discussions actives</div></div>
     </div>
+</div>
 
+<div class="main-container">
     <?php if (empty($forums)): ?>
         <div class="empty-state">
-            <div style="font-size: 3rem; margin-bottom: 16px;">🗯️</div>
+            <div class="empty-state-icon">◑</div>
             <h3>Aucun forum pour le moment</h3>
             <p>Soyez le premier à créer une discussion !</p>
         </div>
@@ -363,7 +156,13 @@
         <?php foreach ($forums as $forum): ?>
         <div class="forum-card">
             <div class="forum-card-inner">
-                <div class="forum-avatar">🗯️</div>
+                <div class="forum-image">
+                    <?php if (!empty($forum['image_evenement'])): ?>
+                        <img src="/ProjetWeb/Esprit-PW-2A22-2526-Devcore/<?= $forum['image_evenement'] ?>" alt="<?= htmlspecialchars($forum['nom_evenement']) ?>">
+                    <?php else: ?>
+                        <div class="forum-icon">◑</div>
+                    <?php endif; ?>
+                </div>
                 <div class="forum-content">
                     <div class="forum-title"><?= htmlspecialchars($forum['TitreForum'] ?? $forum['titreForum'] ?? 'Discussion') ?></div>
                     <div class="forum-meta">
@@ -389,6 +188,42 @@
         <?php endforeach; ?>
     <?php endif; ?>
 </div>
+
+<script>
+    function initTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+            document.body.classList.add('dark-mode');
+            const toggleBtn = document.getElementById('themeToggle');
+            if (toggleBtn) toggleBtn.textContent = '◑';
+        } else {
+            document.body.classList.remove('dark-mode');
+            const toggleBtn = document.getElementById('themeToggle');
+            if (toggleBtn) toggleBtn.textContent = '◑';
+        }
+    }
+
+    function toggleTheme() {
+        if (document.body.classList.contains('dark-mode')) {
+            document.body.classList.remove('dark-mode');
+            localStorage.setItem('theme', 'light');
+            document.getElementById('themeToggle').textContent = '◑';
+        } else {
+            document.body.classList.add('dark-mode');
+            localStorage.setItem('theme', 'dark');
+            document.getElementById('themeToggle').textContent = '◑';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initTheme();
+        const toggleBtn = document.getElementById('themeToggle');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', toggleTheme);
+        }
+    });
+</script>
 
 </body>
 </html>

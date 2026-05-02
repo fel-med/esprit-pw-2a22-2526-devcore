@@ -35,8 +35,18 @@ if (!isset($evenements)) {
                 $row['image'] ?? null
             );
         }
+        
+        // Récupération des forums actifs
+        $forumsData = [];
+        $stmtForum = $pdo->prepare("SELECT idFormation, idForum, est_actif FROM forum WHERE est_actif = 1");
+        $stmtForum->execute();
+        while ($row = $stmtForum->fetch(PDO::FETCH_ASSOC)) {
+            $forumsData[$row['idFormation']] = $row;
+        }
+        
     } catch (Exception $e) {
         $evenements = [];
+        $forumsData = [];
     }
 }
 ?>
@@ -47,732 +57,200 @@ if (!isset($evenements)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Événements - Cre8Connect</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #f8fafc;
-            color: #0f172a;
-        }
+    
+            :root {
+    /* Mode clair (par défaut) */
+    --primary:        #5b4fff;
+    --primary-light:  #ece9ff;
+    --primary-hover:  #4438e0;
+    --primary-glow:   rgba(91,79,255,0.15);
+    --primary-border: rgba(91,79,255,0.2);
+    --text-main:      #0f0e1a;
+    --text-sub:       #6b6f80;
+    --text-dim:       #a0a4b2;
+    --border:         #ebebf2;
+    --bg:             #f6f6fc;
+    --white:          #ffffff;
+    --danger:         #f43f5e;
+    --danger-light:   #fff1f3;
+    --success:        #0ea370;
+    --success-light:  #edfaf5;
+    --warning:        #f59e0b;
+    --warning-light:  #fffbeb;
+    --radius:         14px;
+    --radius-sm:      8px;
+    --nav-h:          66px;
+    --card-shadow:    0 1px 3px rgba(15,14,26,0.06), 0 4px 16px rgba(91,79,255,0.06);
+    --card-shadow-hover: 0 8px 32px rgba(91,79,255,0.14);
+}
 
-        /* Header */
-        .header {
-            background: white;
-            padding: 16px 32px;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+/* Mode sombre */
+body.dark-mode {
+    --primary:        #7c6eff;
+    --primary-light:  #2a2648;
+    --primary-hover:  #8f82ff;
+    --primary-glow:   rgba(124,110,255,0.2);
+    --primary-border: rgba(124,110,255,0.3);
+    --text-main:      #e6edf3;
+    --text-sub:       #8b949e;
+    --text-dim:       #6e7681;
+    --border:         #30363d;
+    --bg:             #0d1117;
+    --white:          #161b22;
+    --danger-light:   #3b1a24;
+    --success-light:  #1a3e2a;
+    --warning-light:  #3b2a1a;
+    --card-shadow:    0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.2);
+    --card-shadow-hover: 0 8px 32px rgba(0,0,0,0.4);
+}
+        
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #4f46e5;
-            text-decoration: none;
-        }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text-main); min-height: 100vh; }
 
-        .logo-img {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            object-fit: cover;
-        }
+        /* ── NAV ── */
+        nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 48px; height: var(--nav-h); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 200; box-shadow: 0 1px 0 var(--border), 0 2px 12px rgba(15,14,26,0.04); }
+        .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .nav-logo img { width: 36px; height: 36px; object-fit: contain; border-radius: 9px; }
+        .nav-logo-text { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
+        .nav-links { display: flex; gap: 6px; list-style: none; }
+        .nav-links a { text-decoration: none; color: var(--text-sub); font-size: 13.5px; font-weight: 600; padding: 6px 14px; border-radius: 8px; transition: all 0.18s; }
+        .nav-links a:hover { background: var(--bg); color: var(--text-main); }
+        .nav-links a.active { background: var(--primary-light); color: var(--primary); }
+        .nav-right { display: flex; align-items: center; gap: 12px; }
+        .nav-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; cursor: pointer; border: 2px solid var(--primary-border); }
 
-        .nav-links {
-            display: flex;
-            gap: 32px;
-        }
+        /* ── HERO ── */
+        .hero { background: linear-gradient(135deg, #5b4fff 0%, #8b7cff 100%); color: white; text-align: center; padding: 48px 24px; margin-bottom: 32px; }
+        .hero h1 { font-family: 'Fraunces', serif; font-size: 2.2rem; font-weight: 800; margin-bottom: 12px; }
+        .hero p { font-size: 1rem; opacity: 0.9; max-width: 500px; margin: 0 auto; }
+        .stats-bar { display: flex; justify-content: center; gap: 48px; margin-top: 32px; flex-wrap: wrap; }
+        .stat-item { text-align: center; }
+        .stat-value { font-family: 'Fraunces', serif; font-size: 2rem; font-weight: 800; }
+        .stat-label { font-size: 0.8rem; opacity: 0.8; }
 
-        .nav-links a {
-            text-decoration: none;
-            color: #64748b;
-            font-weight: 500;
-            transition: color 0.2s;
-        }
+        /* ── PAGE WRAPPER ── */
+        .page-wrapper { max-width: 1400px; margin: 0 auto; padding: 0 24px 80px; display: flex; gap: 32px; }
 
-        .nav-links a:hover, .nav-links a.active {
-            color: #4f46e5;
-        }
+        /* ── SIDEBAR FILTERS ── */
+        .sidebar { width: 280px; flex-shrink: 0; }
+        .filter-section { background: var(--white); border-radius: var(--radius); padding: 20px; margin-bottom: 24px; border: 1px solid var(--border); box-shadow: var(--card-shadow); }
+        .filter-title { font-weight: 700; font-size: 0.85rem; margin-bottom: 16px; color: var(--text-main); }
+        .filter-options { display: flex; flex-direction: column; gap: 12px; }
+        .filter-option { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: var(--text-sub); cursor: pointer; }
+        .filter-option input { width: 16px; height: 16px; accent-color: var(--primary); }
+        .search-box { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border: 1px solid var(--border); border-radius: 40px; background: var(--white); margin-bottom: 16px; }
+        .search-box input { border: none; outline: none; font-size: 0.85rem; width: 100%; background: transparent; }
+        .chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
+        .chip { padding: 6px 14px; border-radius: 50px; font-size: 0.75rem; font-weight: 600; border: 1px solid var(--border); background: var(--white); color: var(--text-sub); cursor: pointer; transition: all 0.2s; }
+        .chip:hover, .chip.active { background: var(--primary); border-color: var(--primary); color: white; }
 
-        .user-menu {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
+        /* ── EVENTS SECTION ── */
+        .events-section { flex: 1; }
+        .events-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+        .events-count { font-size: 0.85rem; color: var(--text-sub); font-weight: 600; }
+        .sort-controls { display: flex; gap: 12px; align-items: center; }
+        .sort-controls select { padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.8rem; background: var(--white); cursor: pointer; font-family: 'DM Sans', sans-serif; }
 
-        .avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            cursor: pointer;
-        }
-
-        /* Hero Section */
-        .hero {
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            padding: 48px 32px;
-            text-align: center;
-            color: white;
-        }
-
-        .hero h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 12px;
-        }
-
-        .hero p {
-            font-size: 1rem;
-            opacity: 0.9;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        /* Stats Bar */
-        .stats-bar {
-            display: flex;
-            justify-content: center;
-            gap: 48px;
-            margin-top: 32px;
-        }
-
-        .stat-item {
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-        }
-
-        .stat-label {
-            font-size: 0.8rem;
-            opacity: 0.8;
-        }
-
-        /* Main Layout */
-        .main-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 32px;
-            display: flex;
-            gap: 32px;
-        }
-
-        /* Sidebar Filters */
-        .sidebar {
-            width: 280px;
-            flex-shrink: 0;
-        }
-
-        .filter-section {
-            background: white;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 24px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            border: 1px solid #e2e8f0;
-        }
-
-        .filter-title {
-            font-weight: 600;
-            font-size: 0.9rem;
-            margin-bottom: 16px;
-            color: #0f172a;
-        }
-
-        .filter-options {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .filter-option {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.85rem;
-            color: #475569;
-            cursor: pointer;
-        }
-
-        .filter-option input {
-            width: 16px;
-            height: 16px;
-            accent-color: #4f46e5;
-        }
-
-        .search-box {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 16px;
-            border: 1px solid #e2e8f0;
-            border-radius: 40px;
-            background: white;
-            margin-bottom: 16px;
-        }
-
-        .search-box input {
-            border: none;
-            outline: none;
-            font-size: 0.85rem;
-            width: 100%;
-        }
-
-        .chip-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .chip {
-            padding: 6px 14px;
-            border-radius: 50px;
-            font-size: 0.75rem;
-            font-weight: 500;
-            border: 1px solid #e2e8f0;
-            background: white;
-            color: #475569;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .chip:hover, .chip.active {
-            background: #4f46e5;
-            border-color: #4f46e5;
-            color: white;
-        }
-
-        /* Events Section */
-        .events-section {
-            flex: 1;
-        }
-
-        .events-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-
-        .events-count {
-            font-size: 0.85rem;
-            color: #64748b;
-        }
-
-        .sort-controls {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-
-        .sort-controls select {
-            padding: 8px 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            background: white;
-            cursor: pointer;
-        }
-
-        /* Events Grid */
-        .events-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 24px;
-        }
-
-        .event-card {
-            background: white;
-            border-radius: 16px;
-            overflow: hidden;
-            border: 1px solid #e2e8f0;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .event-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
-        }
-
-        .event-image {
-            height: 180px;
-            background-size: cover;
-            background-position: center;
-            background-color: #e0e7ff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-        }
-
-        .event-info {
-            padding: 16px;
-        }
-
-        .event-type {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .type-formation { background: #dbeafe; color: #1d4ed8; }
-        .type-webinaire { background: #fef3c7; color: #92400e; }
+        /* ── EVENTS GRID ── */
+        .events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; }
+        .event-card { background: var(--white); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); transition: all 0.25s; box-shadow: var(--card-shadow); }
+        .event-card:hover { transform: translateY(-4px); box-shadow: var(--card-shadow-hover); border-color: var(--primary-border); }
+        .event-image { height: 200px; background-size: cover; background-position: center; background-color: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 3rem; }
+        .event-info { padding: 20px; }
+        .event-type { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; margin-bottom: 12px; }
+        .type-formation { background: var(--primary-light); color: var(--primary); }
+        .type-webinaire { background: var(--warning-light); color: var(--warning); }
         .type-meetup { background: #fce7f3; color: #ec4899; }
-        .type-atelier { background: #d1fae5; color: #065f46; }
+        .type-atelier { background: var(--success-light); color: var(--success); }
+        .event-title { font-family: 'Fraunces', serif; font-size: 1.1rem; font-weight: 800; margin-bottom: 10px; color: var(--text-main); }
+        .event-description { font-size: 0.8rem; color: var(--text-sub); line-height: 1.5; margin-bottom: 12px; }
+        .event-meta { display: flex; gap: 16px; font-size: 0.7rem; color: var(--text-sub); margin-bottom: 12px; }
+        .event-meta span { display: flex; align-items: center; gap: 4px; }
+        .event-spots { font-size: 0.7rem; font-weight: 700; margin-bottom: 16px; padding: 8px 12px; border-radius: var(--radius-sm); }
+        .event-spots.available { background: var(--success-light); color: var(--success); }
+        .event-spots.full { background: var(--danger-light); color: var(--danger); }
+        .btn-event { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: var(--radius-sm); font-weight: 700; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; margin-bottom: 10px; }
+        .btn-event:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        .btn-event.outline { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); }
+        .btn-event.outline:hover { background: var(--primary); color: white; }
+        .btn-detail { width: 100%; padding: 10px; background: transparent; color: var(--text-sub); border: 1px solid var(--border); border-radius: var(--radius-sm); font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; margin-bottom: 8px; }
+        .btn-detail:hover { background: var(--bg); color: var(--text-main); border-color: var(--primary-border); }
+        .btn-forum { width: 100%; padding: 10px; background: var(--success); color: white; border: none; border-radius: var(--radius-sm); font-weight: 700; font-size: 0.8rem; text-align: center; display: inline-block; text-decoration: none; cursor: pointer; transition: all 0.2s; }
+        .btn-forum:hover { background: #0c8b5e; transform: translateY(-1px); }
 
-        .event-title {
-            font-weight: 700;
-            font-size: 1rem;
-            margin-bottom: 8px;
-            color: #0f172a;
-        }
+        /* ── MODALS ── */
+        .inscription-modal, .detail-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,14,26,0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; }
+        .inscription-modal.show, .detail-modal.show { display: flex; }
+        .inscription-card, .detail-modal-content { background: var(--white); border-radius: var(--radius); width: 500px; max-width: 90%; max-height: 85vh; overflow-y: auto; animation: slideUp 0.2s ease; }
+        .inscription-card { padding: 28px; }
+        .detail-modal-content { width: 900px; display: flex; flex-direction: column; }
+        .detail-modal-body { display: flex; gap: 0; }
+        .detail-image { flex: 1; min-height: 300px; background: var(--bg); display: flex; align-items: center; justify-content: center; border-radius: var(--radius) 0 0 var(--radius); overflow: hidden; }
+        .detail-image img { width: 100%; height: 100%; object-fit: cover; }
+        .detail-info { flex: 1; padding: 28px; }
+        .detail-info h2 { font-family: 'Fraunces', serif; font-size: 1.5rem; font-weight: 800; margin-bottom: 12px; }
+        .detail-meta { margin: 20px 0; padding: 16px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
+        .inscription-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .inscription-header h3 { font-family: 'Fraunces', serif; font-size: 1.3rem; font-weight: 800; }
+        .inscription-close, .detail-modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-sub); }
+        .inscription-form-group { margin-bottom: 16px; }
+        .inscription-label { display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; }
+        .inscription-input { width: 100%; padding: 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 0.9rem; font-family: inherit; }
+        .inscription-input:focus { outline: none; border-color: var(--primary); }
+        .inscription-buttons { display: flex; gap: 12px; margin-top: 20px; }
+        .btn-inscrire-modal, .btn-annuler-modal { flex: 1; padding: 12px; border-radius: var(--radius-sm); font-weight: 700; cursor: pointer; }
+        .btn-inscrire-modal { background: var(--primary); color: white; border: none; }
+        .btn-inscrire-modal:hover { background: var(--primary-hover); }
+        .btn-annuler-modal { background: var(--bg); color: var(--text-sub); border: 1px solid var(--border); }
+        .toast { position: fixed; bottom: 20px; right: 20px; background: var(--success); color: white; padding: 12px 24px; border-radius: 50px; display: none; z-index: 1002; font-weight: 600; }
+        .toast.error { background: var(--danger); }
 
-        .event-description {
-            font-size: 0.8rem;
-            color: #64748b;
-            line-height: 1.4;
-            margin-bottom: 12px;
-        }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @media (max-width: 1024px) { .page-wrapper { flex-direction: column; } .sidebar { width: 100%; display: flex; gap: 20px; overflow-x: auto; } .filter-section { min-width: 250px; } }
+        @media (max-width: 768px) { nav { padding: 0 20px; } .nav-links { display: none; } .hero h1 { font-size: 1.5rem; } .stats-bar { gap: 24px; } .events-grid { grid-template-columns: 1fr; } .detail-modal-body { flex-direction: column; } .detail-image { border-radius: var(--radius) var(--radius) 0 0; min-height: 200px; } }
 
-        .event-meta {
-            display: flex;
-            gap: 12px;
-            font-size: 0.7rem;
-            color: #64748b;
-            margin-bottom: 12px;
-        }
+        /* Bouton de changement de thème */
+.theme-toggle-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+}
 
-        .event-spots {
-            font-size: 0.7rem;
-            color: #10b981;
-            font-weight: 500;
-            margin-bottom: 12px;
-        }
-
-        .event-spots.full {
-            color: #ef4444;
-        }
-
-        .btn-event {
-            width: 100%;
-            padding: 10px;
-            background: #4f46e5;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .btn-event:hover {
-            background: #4338ca;
-        }
-
-        .btn-event.outline {
-            background: transparent;
-            color: #4f46e5;
-            border: 1.5px solid #4f46e5;
-        }
-
-        .btn-event.outline:hover {
-            background: #4f46e5;
-            color: white;
-        }
-
-        .btn-detail {
-            width: 100%;
-            padding: 10px;
-            background: transparent;
-            color: #4f46e5;
-            border: 1px solid #4f46e5;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 8px;
-        }
-
-        .btn-detail:hover {
-            background: #4f46e5;
-            color: white;
-        }
-
-        /* Modal d'inscription stylé */
-        .inscription-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .inscription-modal.show {
-            display: flex;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .inscription-card {
-            background: white;
-            border-radius: 24px;
-            width: 480px;
-            max-width: 90%;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            animation: slideUp 0.3s ease;
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(30px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .inscription-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 24px 28px 0 28px;
-        }
-
-        .inscription-header h3 {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #0f172a;
-            margin: 0;
-        }
-
-        .inscription-close {
-            background: none;
-            border: none;
-            font-size: 28px;
-            cursor: pointer;
-            color: #94a3b8;
-            transition: color 0.2s;
-        }
-
-        .inscription-close:hover {
-            color: #ef4444;
-        }
-
-        .inscription-subtitle {
-            padding: 8px 28px 0 28px;
-            color: #64748b;
-            font-size: 0.85rem;
-            margin-bottom: 20px;
-        }
-
-        .inscription-form-group {
-            padding: 0 28px;
-            margin-bottom: 20px;
-        }
-
-        .inscription-label {
-            display: block;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: #334155;
-            margin-bottom: 6px;
-        }
-
-        .inscription-input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .input-icon {
-            position: absolute;
-            left: 14px;
-            font-size: 1rem;
-            color: #94a3b8;
-        }
-
-        .inscription-input {
-            width: 100%;
-            padding: 12px 16px 12px 42px;
-            border: 1.5px solid #e2e8f0;
-            border-radius: 14px;
-            font-size: 0.9rem;
-            font-family: inherit;
-            transition: all 0.2s;
-            background: #f8fafc;
-        }
-
-        .inscription-input:focus {
-            outline: none;
-            border-color: #4f46e5;
-            background: white;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-        }
-
-        .inscription-buttons {
-            display: flex;
-            gap: 12px;
-            padding: 8px 28px 28px 28px;
-        }
-
-        .btn-inscrire-modal {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 12px 20px;
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            color: white;
-            border: none;
-            border-radius: 14px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-inscrire-modal:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.4);
-        }
-
-        .btn-annuler-modal {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 12px 20px;
-            background: #f1f5f9;
-            color: #475569;
-            border: none;
-            border-radius: 14px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-annuler-modal:hover {
-            background: #e2e8f0;
-        }
-
-        /* Modal Détail Événement */
-        .detail-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(8px);
-            z-index: 1001;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .detail-modal.show {
-            display: flex;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .detail-modal-content {
-            background: white;
-            border-radius: 28px;
-            width: 900px;
-            max-width: 90%;
-            max-height: 85vh;
-            overflow-y: auto;
-            position: relative;
-            animation: slideUp 0.3s ease;
-        }
-
-        .detail-modal-close {
-            position: absolute;
-            top: 20px;
-            right: 25px;
-            background: white;
-            border: none;
-            font-size: 28px;
-            cursor: pointer;
-            color: #64748b;
-            z-index: 10;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-
-        .detail-modal-close:hover {
-            background: #f1f5f9;
-            color: #ef4444;
-        }
-
-        .detail-modal-body {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0;
-        }
-
-        .detail-image {
-            height: 100%;
-            min-height: 400px;
-            background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 28px 0 0 28px;
-            overflow: hidden;
-        }
-
-        .detail-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .detail-info {
-            padding: 32px;
-        }
-
-        .detail-info h2 {
-            font-size: 1.6rem;
-            font-weight: 700;
-            margin: 12px 0;
-            color: #0f172a;
-        }
-
-        .detail-info p {
-            color: #475569;
-            line-height: 1.6;
-            margin-bottom: 24px;
-        }
-
-        .detail-meta {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            padding: 20px 0;
-            border-top: 1px solid #e2e8f0;
-            border-bottom: 1px solid #e2e8f0;
-            margin-bottom: 24px;
-        }
-
-        .detail-meta span {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
-            color: #475569;
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #10b981;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 50px;
-            display: none;
-            z-index: 1002;
-        }
-        .toast.error { background: #ef4444; }
-
-        @media (max-width: 1024px) {
-            .main-container {
-                flex-direction: column;
-            }
-            .sidebar {
-                width: 100%;
-                display: flex;
-                gap: 20px;
-                overflow-x: auto;
-            }
-            .filter-section {
-                min-width: 250px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                gap: 16px;
-            }
-            .nav-links {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-            .events-header {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .stats-bar {
-                flex-direction: column;
-                gap: 16px;
-            }
-            .detail-modal-body {
-                grid-template-columns: 1fr;
-            }
-            .detail-image {
-                min-height: 200px;
-                border-radius: 28px 28px 0 0;
-            }
-        }
+.theme-toggle-btn:hover {
+    transform: scale(1.05);
+    background: var(--primary-light);
+}
     </style>
 </head>
 <body>
 
-<!-- Header -->
-<header class="header">
-    <a href="#" class="logo">
-        <img src="/ProjetWeb/Esprit-PW-2A22-2526-Devcore/Vue/public/images/logo.png" alt="Cre8Connect" class="logo-img">
-        <span>Cre8Connect</span>
+<!-- Navigation -->
+<nav>
+    <a href="#" class="nav-logo">
+        <img src="/ProjetWeb/Esprit-PW-2A22-2526-Devcore/Vue/public/images/logo.png" alt="Cre8Connect">
+        <span class="nav-logo-text">Cre8Connect</span>
     </a>
-    <nav class="nav-links">
-        <a href="#" class="active">Événements</a>
-        <a href="#">Produits</a>
-        <a href="#">Offres</a>
-        <a href="#">Forum</a>
-    </nav>
-    <div class="user-menu">
-        <div class="avatar"></div>
-    </div>
-</header>
+    <ul class="nav-links">
+        <li><a href="#" class="active">Événements</a></li>
+        <li><a href="/ProjetWeb/Esprit-PW-2A22-2526-Devcore/Controleur/forumC.php" class="nav-item">Forums</a></li>
+    </ul>
+    <div class="nav-right">
+    <button id="themeToggle" class="theme-toggle-btn" title="Changer de thème">🌙</button>
+    <div class="nav-avatar">👤</div>
+</div>
+</nav>
 
 <!-- Hero -->
 <section class="hero">
@@ -794,8 +272,7 @@ if (!isset($evenements)) {
     </div>
 </section>
 
-<!-- Main Content -->
-<div class="main-container">
+<div class="page-wrapper">
     <!-- Sidebar Filters -->
     <aside class="sidebar">
         <div class="filter-section">
@@ -811,18 +288,10 @@ if (!isset($evenements)) {
         <div class="filter-section">
             <div class="filter-title">📂 TYPE</div>
             <div class="filter-options">
-                <label class="filter-option">
-                    <input type="checkbox" value="formation" class="type-filter"> Formation
-                </label>
-                <label class="filter-option">
-                    <input type="checkbox" value="webinaire" class="type-filter"> Webinaire
-                </label>
-                <label class="filter-option">
-                    <input type="checkbox" value="meetup" class="type-filter"> Meetup
-                </label>
-                <label class="filter-option">
-                    <input type="checkbox" value="atelier" class="type-filter"> Atelier
-                </label>
+                <label class="filter-option"><input type="checkbox" value="formation" class="type-filter"> Formation</label>
+                <label class="filter-option"><input type="checkbox" value="webinaire" class="type-filter"> Webinaire</label>
+                <label class="filter-option"><input type="checkbox" value="meetup" class="type-filter"> Meetup</label>
+                <label class="filter-option"><input type="checkbox" value="atelier" class="type-filter"> Atelier</label>
             </div>
         </div>
 
@@ -841,7 +310,7 @@ if (!isset($evenements)) {
         <div class="events-header">
             <div class="events-count" id="eventsCount"><?= count($evenements) ?> événements</div>
             <div class="sort-controls">
-                <span style="font-size:0.8rem; color:#64748b;">TRIER PAR</span>
+                <span>TRIER PAR</span>
                 <select id="sortSelect" onchange="sortEvents()">
                     <option value="date">Date (plus récent)</option>
                     <option value="date_asc">Date (plus ancien)</option>
@@ -855,6 +324,11 @@ if (!isset($evenements)) {
                 $spotsLeft = $event->getCapacite() - $event->getNbInscrits();
                 $isFull = ($spotsLeft <= 0);
                 $isOnline = strpos(strtolower($event->getLieu()), 'en ligne') !== false || empty($event->getLieu());
+                
+                $forumLink = '';
+                if (isset($forumsData[$event->getId()])) {
+                    $forumLink = '<a href="/ProjetWeb/Esprit-PW-2A22-2526-Devcore/Controleur/forumC.php" class="nav-item">💬 Forums</a>';
+                }
             ?>
             <div class="event-card" 
                  data-type="<?= $event->getType() ?>" 
@@ -863,9 +337,7 @@ if (!isset($evenements)) {
                  data-date="<?= strtotime($event->getDateEvenement()) ?>"
                  data-places="<?= $spotsLeft ?>">
                 <div class="event-image" style="<?= $event->getImage() ? 'background-image: url(/ProjetWeb/Esprit-PW-2A22-2526-Devcore/' . $event->getImage() . '); background-size: cover;' : '' ?>">
-                    <?php if (!$event->getImage()): ?>
-                        <?php $emojis = ['🎯', '📚', '💡', '🚀', '✨', '🎨', '💻', '🤝']; echo $emojis[array_rand($emojis)]; ?>
-                    <?php endif; ?>
+                    <?php if (!$event->getImage()): ?><span>🎯</span><?php endif; ?>
                 </div>
                 <div class="event-info">
                     <span class="event-type type-<?= $event->getType() ?>"><?= ucfirst($event->getType()) ?></span>
@@ -875,12 +347,8 @@ if (!isset($evenements)) {
                         <span>📅 <?= date('d M Y', strtotime($event->getDateEvenement())) ?></span>
                         <span>📍 <?= htmlspecialchars($event->getLieu() ?: 'En ligne') ?></span>
                     </div>
-                    <div class="event-spots <?= $isFull ? 'full' : '' ?>">
-                        <?php if ($isFull): ?>
-                            ❌ Complet
-                        <?php else: ?>
-                                 <?= $spotsLeft ?> places restantes
-                        <?php endif; ?>
+                    <div class="event-spots <?= $isFull ? 'full' : 'available' ?>">
+                        <?= $isFull ? '❌ Complet' : '✅ ' . $spotsLeft . ' places restantes' ?>
                     </div>
                     <button onclick="ouvrirModalInscription(<?= $event->getId() ?>)" class="btn-event <?= $isFull ? 'outline' : '' ?>">
                         <?= $isFull ? '📋 Liste d\'attente' : '✨ S\'inscrire' ?>
@@ -888,6 +356,7 @@ if (!isset($evenements)) {
                     <button onclick="voirDetail(<?= $event->getId() ?>)" class="btn-detail">
                         👁 Voir les détails
                     </button>
+                    <?= $forumLink ?>
                 </div>
             </div>
             <?php endforeach; ?>
@@ -902,24 +371,14 @@ if (!isset($evenements)) {
             <h3>✨ Inscription à l'événement</h3>
             <button class="inscription-close" onclick="fermerModalInscription()">&times;</button>
         </div>
-        <p class="inscription-subtitle">Rejoignez cet événement et connectez-vous avec la communauté</p>
-        
         <div class="inscription-form-group">
             <label class="inscription-label">Nom complet</label>
-            <div class="inscription-input-wrapper">
-                <span class="input-icon">👤</span>
-                <input type="text" id="inscrireNom" class="inscription-input" placeholder="Votre nom et prénom" autocomplete="off">
-            </div>
+            <input type="text" id="inscrireNom" class="inscription-input" placeholder="Votre nom et prénom">
         </div>
-        
         <div class="inscription-form-group">
-            <label class="inscription-label">Adresse email</label>
-            <div class="inscription-input-wrapper">
-                <span class="input-icon">📧</span>
-                <input type="email" id="inscrireEmail" class="inscription-input" placeholder="votre@email.com" autocomplete="off">
-            </div>
+            <label class="inscription-label">Email</label>
+            <input type="email" id="inscrireEmail" class="inscription-input" placeholder="votre@email.com">
         </div>
-        
         <div class="inscription-buttons">
             <button class="btn-annuler-modal" onclick="fermerModalInscription()">Annuler</button>
             <button class="btn-inscrire-modal" onclick="confirmerInscription()">S'inscrire</button>
@@ -927,10 +386,12 @@ if (!isset($evenements)) {
     </div>
 </div>
 
-<!-- Modal Détail Événement -->
+<!-- Modal Détail -->
 <div id="detailModal" class="detail-modal">
     <div class="detail-modal-content">
-        <button class="detail-modal-close" onclick="fermerDetailModal()">&times;</button>
+        <div style="display: flex; justify-content: flex-end; padding: 16px;">
+            <button class="detail-modal-close" onclick="fermerDetailModal()">&times;</button>
+        </div>
         <div class="detail-modal-body">
             <div class="detail-image" id="detailImage"></div>
             <div class="detail-info">
@@ -970,7 +431,6 @@ if (!isset($evenements)) {
 
     function fermerModalInscription() {
         document.getElementById('inscriptionModal').classList.remove('show');
-        currentEventId = null;
     }
 
     function confirmerInscription() {
@@ -1009,47 +469,22 @@ if (!isset($evenements)) {
         fetch('/ProjetWeb/Esprit-PW-2A22-2526-Devcore/Controleur/evenementC.php?action=get&id=' + eventId)
             .then(response => response.json())
             .then(data => {
-                if (data.error) {
-                    showToast('Erreur lors du chargement', true);
-                    return;
-                }
-                
+                if (data.error) return;
                 document.getElementById('detailTitre').innerHTML = data.titre;
                 document.getElementById('detailType').innerHTML = data.type;
                 document.getElementById('detailType').className = 'event-type type-' + data.type;
                 document.getElementById('detailDescription').innerHTML = data.description;
-                document.getElementById('detailDate').innerHTML = '📅 ' + new Date(data.date_evenement).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'});
+                document.getElementById('detailDate').innerHTML = '📅 ' + new Date(data.date_evenement).toLocaleDateString('fr-FR');
                 document.getElementById('detailLieu').innerHTML = '📍 ' + (data.lieu || 'En ligne');
-                
                 const placesRestantes = data.capacite - data.nb_inscrits;
-                if (placesRestantes > 0) {
-                    document.getElementById('detailPlaces').innerHTML =  placesRestantes + ' places restantes';
-                } else {
-                    document.getElementById('detailPlaces').innerHTML = '❌ Complet';
-                }
-                
-                if (data.image) {
-                    document.getElementById('detailImage').innerHTML = '<img src="/ProjetWeb/Esprit-PW-2A22-2526-Devcore/' + data.image + '" alt="' + data.titre + '">';
-                } else {
-                    document.getElementById('detailImage').innerHTML = '<span style="font-size: 3rem;">🎯</span>';
-                }
-                
-                const inscrireBtn = document.getElementById('detailInscrireBtn');
-                inscrireBtn.setAttribute('onclick', 'ouvrirModalInscription(' + data.id + ')');
-                if (placesRestantes <= 0) {
-                    inscrireBtn.innerHTML = '📋 Liste d\'attente';
-                    inscrireBtn.classList.add('outline');
-                } else {
-                    inscrireBtn.innerHTML = '✨ S\'inscrire maintenant';
-                    inscrireBtn.classList.remove('outline');
-                }
-                
+                document.getElementById('detailPlaces').innerHTML = placesRestantes > 0 ? placesRestantes + ' places restantes' : '❌ Complet';
+                document.getElementById('detailImage').innerHTML = data.image ? '<img src="/ProjetWeb/Esprit-PW-2A22-2526-Devcore/' + data.image + '">' : '<span style="font-size:3rem;">🎯</span>';
+                const btn = document.getElementById('detailInscrireBtn');
+                btn.setAttribute('onclick', 'ouvrirModalInscription(' + data.id + ')');
+                btn.innerHTML = placesRestantes <= 0 ? '📋 Liste d\'attente' : '✨ S\'inscrire maintenant';
                 document.getElementById('detailModal').classList.add('show');
             })
-            .catch(error => {
-                console.error('Erreur:', error);
-                showToast('Erreur de chargement', true);
-            });
+            .catch(() => showToast('Erreur de chargement', true));
     }
 
     function fermerDetailModal() {
@@ -1096,30 +531,55 @@ if (!isset($evenements)) {
         const cards = Array.from(grid.querySelectorAll('.event-card'));
         
         cards.sort((a, b) => {
-            if (sortBy === 'date') {
-                return parseInt(b.getAttribute('data-date')) - parseInt(a.getAttribute('data-date'));
-            } else if (sortBy === 'date_asc') {
-                return parseInt(a.getAttribute('data-date')) - parseInt(b.getAttribute('data-date'));
-            } else if (sortBy === 'places') {
-                return parseInt(b.getAttribute('data-places')) - parseInt(a.getAttribute('data-places'));
-            }
+            if (sortBy === 'date') return parseInt(b.getAttribute('data-date')) - parseInt(a.getAttribute('data-date'));
+            if (sortBy === 'date_asc') return parseInt(a.getAttribute('data-date')) - parseInt(b.getAttribute('data-date'));
+            if (sortBy === 'places') return parseInt(b.getAttribute('data-places')) - parseInt(a.getAttribute('data-places'));
             return 0;
         });
         
         cards.forEach(card => grid.appendChild(card));
     }
     
-    document.querySelectorAll('.type-filter').forEach(cb => {
-        cb.addEventListener('change', filterEvents);
+    document.querySelectorAll('.type-filter').forEach(cb => cb.addEventListener('change', filterEvents));
+    document.getElementById('inscriptionModal').addEventListener('click', function(e) { if (e.target === this) fermerModalInscription(); });
+    document.getElementById('detailModal').addEventListener('click', function(e) { if (e.target === this) fermerDetailModal(); });
+    // Gestion du thème (dark/light mode)
+    function initTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+            document.body.classList.add('dark-mode');
+            const toggleBtn = document.getElementById('themeToggle');
+            if (toggleBtn) toggleBtn.textContent = ' ◑';
+        } else {
+            document.body.classList.remove('dark-mode');
+            const toggleBtn = document.getElementById('themeToggle');
+            if (toggleBtn) toggleBtn.textContent = ' ◑';
+        }
+    }
+
+    function toggleTheme() {
+        if (document.body.classList.contains('dark-mode')) {
+            document.body.classList.remove('dark-mode');
+            localStorage.setItem('theme', 'light');
+            document.getElementById('themeToggle').textContent = ' ◑';
+        } else {
+            document.body.classList.add('dark-mode');
+            localStorage.setItem('theme', 'dark');
+            document.getElementById('themeToggle').textContent = ' ◑';
+        }
+    }
+
+    // Initialiser le thème au chargement de la page
+    document.addEventListener('DOMContentLoaded', function() {
+        initTheme();
+        const toggleBtn = document.getElementById('themeToggle');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', toggleTheme);
+        }
     });
-    
-    document.getElementById('inscriptionModal').addEventListener('click', function(e) {
-        if (e.target === this) fermerModalInscription();
-    });
-    
-    document.getElementById('detailModal').addEventListener('click', function(e) {
-        if (e.target === this) fermerDetailModal();
-    });
+
 </script>
 
 </body>
