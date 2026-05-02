@@ -22,6 +22,7 @@ window.CRE8PILOT_CONTEXT = Object.assign(
     <?php echo json_encode($cre8PilotContext, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>
 );
 </script>
+<script src="<?php echo htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/FrontOffice/condidature/cre8pilot_multi_smoke_test.js'); ?>"></script>
 <div class="cre8pilot-widget" data-cre8pilot-widget data-cre8pilot-endpoint="<?php echo htmlspecialchars($cre8PilotEndpoint); ?>">
     <button type="button" class="cre8pilot-fab" data-cre8pilot-toggle aria-label="Open Cre8Pilot">
         <span aria-hidden="true">&#10024;</span>
