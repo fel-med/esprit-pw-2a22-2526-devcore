@@ -10,7 +10,17 @@ if (!isset($_SESSION['user']) || $_SESSION['role'] != 'admin') {
 
 $userC = new UtilisateurC();
 $reclamationC = new ReclamationC();
-$users = $userC->afficherUsers();
+
+// Pagination parameters
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$limit = 4; // Records per page
+
+$usersResult = $userC->afficherUsers('', '', $page, $limit);
+$users = is_array($usersResult) && isset($usersResult['data']) ? $usersResult['data'] : [];
+$totalUsers = is_array($usersResult) && isset($usersResult['total']) ? intval($usersResult['total']) : 0;
+$totalPages = is_array($usersResult) && isset($usersResult['totalPages']) ? max(1, intval($usersResult['totalPages'])) : 1;
+$currentPage = is_array($usersResult) && isset($usersResult['page']) ? max(1, intval($usersResult['page'])) : 1;
+
 $stats = $reclamationC->statistiques();
 ?>
 
@@ -149,6 +159,39 @@ $stats = $reclamationC->statistiques();
             flex-wrap: wrap;
         }
 
+        .pagination {
+            margin-bottom: 0;
+        }
+
+        .pagination .page-link {
+            color: #667eea;
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            padding: 0.375rem 0.75rem;
+            margin: 0 2px;
+            border-radius: 0.375rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .pagination .page-link:hover {
+            color: #5568d3;
+            background-color: #f8f9fa;
+            border-color: #adb5bd;
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
+        .pagination .page-item.disabled .page-link {
+            color: #6c757d;
+            background-color: #fff;
+            border-color: #dee2e6;
+        }
+
         .stat-card {
             flex: 1;
             min-width: 200px;
@@ -212,7 +255,7 @@ $stats = $reclamationC->statistiques();
     <div class="stats-row">
         <div class="stat-card" style="border-left: 4px solid #667eea;">
             <h6>Total Utilisateurs</h6>
-            <h3><?= count($users) ?></h3>
+            <h3><?= $totalUsers ?></h3>
         </div>
         <div class="stat-card" style="border-left: 4px solid #9B5DE0;">
             <h6>Administrateurs</h6>
@@ -278,6 +321,65 @@ $stats = $reclamationC->statistiques();
                 </tbody>
             </table>
         </div>
+
+        <!-- Pagination -->
+        <?php if ($totalPages > 1): ?>
+        <div class="d-flex justify-content-center mt-4">
+            <nav aria-label="Pagination utilisateurs">
+                <ul class="pagination">
+                    <!-- Previous button -->
+                    <li class="page-item <?= $currentPage <= 1 ? 'disabled' : '' ?>">
+                        <a class="page-link" href="?page=<?= $currentPage - 1 ?>" aria-label="Précédent">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+
+                    <!-- Page numbers -->
+                    <?php
+                    $startPage = max(1, $currentPage - 2);
+                    $endPage = min($totalPages, $currentPage + 2);
+
+                    if ($startPage > 1): ?>
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">1</a>
+                        </li>
+                        <?php if ($startPage > 2): ?>
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        <?php endif; ?>
+                    <?php endif; ?>
+
+                    <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+                        <li class="page-item <?= $i == $currentPage ? 'active' : '' ?>">
+                            <a class="page-link" href="?page=<?= $i ?>"><?= $i ?></a>
+                        </li>
+                    <?php endfor; ?>
+
+                    <?php if ($endPage < $totalPages): ?>
+                        <?php if ($endPage < $totalPages - 1): ?>
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        <?php endif; ?>
+                        <li class="page-item">
+                            <a class="page-link" href="?page=<?= $totalPages ?>"><?= $totalPages ?></a>
+                        </li>
+                    <?php endif; ?>
+
+                    <!-- Next button -->
+                    <li class="page-item <?= $currentPage >= $totalPages ? 'disabled' : '' ?>">
+                        <a class="page-link" href="?page=<?= $currentPage + 1 ?>" aria-label="Suivant">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        <div class="text-center mt-2 text-muted">
+            Page <?= $currentPage ?> sur <?= $totalPages ?> (<?= $totalUsers ?> utilisateurs au total)
+        </div>
+        <?php endif; ?>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>

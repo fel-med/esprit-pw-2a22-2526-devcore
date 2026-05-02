@@ -7,8 +7,15 @@ $userC = new UtilisateurC();
 // Récupérer les paramètres de recherche et tri
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $role = isset($_GET['role']) ? trim($_GET['role']) : '';
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$limit = 4;
 
-$users = $userC->afficherUsers($search, $role);
+$usersResult = $userC->afficherUsers($search, $role, $page, $limit);
+$users = is_array($usersResult) && isset($usersResult['data']) ? $usersResult['data'] : [];
+$totalUsers = is_array($usersResult) && isset($usersResult['total']) ? intval($usersResult['total']) : count($users);
+$totalPages = is_array($usersResult) && isset($usersResult['totalPages']) ? max(1, intval($usersResult['totalPages'])) : 1;
+$currentPage = is_array($usersResult) && isset($usersResult['page']) ? max(1, intval($usersResult['page'])) : 1;
+
 $stats = $userC->getStatistiquesUtilisateurs();
 ?>
 
@@ -660,15 +667,44 @@ $stats = $userC->getStatistiquesUtilisateurs();
                       </tbody>
                     </table>
                   </div>
+
+                  <?php if ($totalPages > 1): ?>
+                  <div class="d-flex justify-content-center mt-3">
+                    <nav aria-label="Pagination utilisateurs">
+                      <ul class="pagination">
+                        <li class="page-item <?= $currentPage <= 1 ? 'disabled' : '' ?>">
+                          <a class="page-link" href="?search=<?= urlencode($search) ?>&role=<?= urlencode($role) ?>&page=<?= $currentPage - 1 ?>" aria-label="Précédent">&laquo;</a>
+                        </li>
+                        <?php
+                        $startPage = max(1, $currentPage - 2);
+                        $endPage = min($totalPages, $currentPage + 2);
+                        if ($startPage > 1): ?>
+                          <li class="page-item"><a class="page-link" href="?search=<?= urlencode($search) ?>&role=<?= urlencode($role) ?>&page=1">1</a></li>
+                          <?php if ($startPage > 2): ?>
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                          <?php endif; ?>
+                        <?php endif; ?>
+                        <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+                          <li class="page-item <?= $i == $currentPage ? 'active' : '' ?>">
+                            <a class="page-link" href="?search=<?= urlencode($search) ?>&role=<?= urlencode($role) ?>&page=<?= $i ?>"><?= $i ?></a>
+                          </li>
+                        <?php endfor; ?>
+                        <?php if ($endPage < $totalPages): ?>
+                          <?php if ($endPage < $totalPages - 1): ?>
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                          <?php endif; ?>
+                          <li class="page-item"><a class="page-link" href="?search=<?= urlencode($search) ?>&role=<?= urlencode($role) ?>&page=<?= $totalPages ?>"><?= $totalPages ?></a></li>
+                        <?php endif; ?>
+                        <li class="page-item <?= $currentPage >= $totalPages ? 'disabled' : '' ?>">
+                          <a class="page-link" href="?search=<?= urlencode($search) ?>&role=<?= urlencode($role) ?>&page=<?= $currentPage + 1 ?>" aria-label="Suivant">&raquo;</a>
+                        </li>
+                      </ul>
+                    </nav>
+                  </div>
+                  <div class="text-center text-muted">Page <?= $currentPage ?> sur <?= $totalPages ?> (<?= $totalUsers ?> utilisateurs)</div>
+                  <?php endif; ?>
                 </div>
               </div>
-            </div>
-          </div>
-
-
-          <div class="row">
-            <div class="col-12">
-
             </div>
           </div>
         </div>

@@ -68,7 +68,7 @@ public function statistiques() {
     $db = config::getConnexion();
     return $db->query($sql)->fetch();
 }
-public function afficherReclamationsAdmin($search = '', $priorite = '') {
+public function afficherReclamationsAdmin($search = '', $priorite = '', $page = 1, $limit = 10) {
     $sql = "SELECT 
                 r.id,
                 u.nom,
@@ -94,10 +94,56 @@ public function afficherReclamationsAdmin($search = '', $priorite = '') {
     $sql .= " ORDER BY r.date_creation DESC";
 
     $db = config::getConnexion();
-    $stmt = $db->prepare($sql);
+
+    // Backward compatibility: if the method is called without page/limit, return the raw statement.
+    if (func_num_args() < 3) {
+        $stmt = $db->prepare($sql);
+        if (!empty($search)) {
+            $searchTerm = "%$search%";
+            $stmt->bindParam(':search', $searchTerm);
+        }
+        if (!empty($priorite)) {
+            $stmt->bindParam(':priorite', $priorite);
+        }
+        $stmt->execute();
+        return $stmt;
+    }
+    
+    // Get total count for pagination
+    $countSql = "SELECT COUNT(*) FROM reclamation r
+                 JOIN utilisateur u ON r.idUtilisateur = u.id
+                 LEFT JOIN reponse rep ON r.id = rep.idReclamation
+                 WHERE 1=1";
+    
+    if (!empty($search)) {
+        $countSql .= " AND (u.nom LIKE :search OR r.description LIKE :search)";
+    }
+
+    if (!empty($priorite)) {
+        $countSql .= " AND r.priorite = :priorite";
+    }
+
+    $countStmt = $db->prepare($countSql);
 
     if (!empty($search)) {
         $searchTerm = "%$search%";
+        $countStmt->bindParam(':search', $searchTerm);
+    }
+
+    if (!empty($priorite)) {
+        $countStmt->bindParam(':priorite', $priorite);
+    }
+
+    $countStmt->execute();
+    $totalRecords = $countStmt->fetchColumn();
+
+    // Add LIMIT and OFFSET
+    $offset = ($page - 1) * $limit;
+    $sql .= " LIMIT :limit OFFSET :offset";
+
+    $stmt = $db->prepare($sql);
+
+    if (!empty($search)) {
         $stmt->bindParam(':search', $searchTerm);
     }
 
@@ -105,8 +151,18 @@ public function afficherReclamationsAdmin($search = '', $priorite = '') {
         $stmt->bindParam(':priorite', $priorite);
     }
 
+    $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+    $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+
     $stmt->execute();
-    return $stmt;
+    
+    return [
+        'stmt' => $stmt,
+        'total' => $totalRecords,
+        'page' => $page,
+        'limit' => $limit,
+        'totalPages' => ceil($totalRecords / $limit)
+    ];
 }
     // ✔️ Afficher toutes les réclamations avec jointure
     public function afficherReclamations() {

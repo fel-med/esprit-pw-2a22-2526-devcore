@@ -7,9 +7,16 @@ $reclamationC = new ReclamationC();
 // Récupérer les paramètres de recherche et tri
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $priorite = isset($_GET['priorite']) ? trim($_GET['priorite']) : '';
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$limit = 4; // Records per page
 
-$stmt = $reclamationC->afficherReclamationsAdmin($search, $priorite);
-$liste = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$result = $reclamationC->afficherReclamationsAdmin($search, $priorite, $page, $limit);
+$stmt = is_array($result) && isset($result['stmt']) ? $result['stmt'] : false;
+$liste = $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
+$totalReclamations = is_array($result) && isset($result['total']) ? intval($result['total']) : 0;
+$totalPages = is_array($result) && isset($result['totalPages']) ? max(1, intval($result['totalPages'])) : 1;
+$currentPage = is_array($result) && isset($result['page']) ? max(1, intval($result['page'])) : 1;
+
 $stats = $reclamationC->statistiques();
 
 // Calculer les statistiques de priorité
@@ -152,6 +159,39 @@ foreach ($liste as $rec) {
 
     .nav-link:hover i#themeIcon {
       transform: rotate(20deg);
+    }
+
+    .pagination {
+      margin-bottom: 0;
+    }
+
+    .pagination .page-link {
+      color: #9B5DE0;
+      background-color: #fff;
+      border: 1px solid #dee2e6;
+      padding: 0.375rem 0.75rem;
+      margin: 0 2px;
+      border-radius: 0.375rem;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+
+    .pagination .page-link:hover {
+      color: #8a2be2;
+      background-color: #f8f9fa;
+      border-color: #adb5bd;
+    }
+
+    .pagination .page-item.active .page-link {
+      background-color: #9B5DE0;
+      border-color: #9B5DE0;
+      color: white;
+    }
+
+    .pagination .page-item.disabled .page-link {
+      color: #6c757d;
+      background-color: #fff;
+      border-color: #dee2e6;
     }
   </style>
 </head>
@@ -571,11 +611,13 @@ foreach ($liste as $rec) {
                     <div class="col-md-6">
                       <form method="GET" action="reclamations.php" class="d-flex gap-2">
                         <input type="text" name="search" class="form-control" placeholder="Rechercher par utilisateur ou description..." value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+                        <input type="hidden" name="priorite" value="<?php echo isset($_GET['priorite']) ? htmlspecialchars($_GET['priorite']) : ''; ?>">
                         <button type="submit" class="btn btn-sm" style="background-color: #9B5DE0; color: white; width: 80px;">Rechercher</button>
                       </form>
                     </div>
                     <div class="col-md-6">
                       <form method="GET" action="reclamations.php" class="d-flex gap-2">
+                        <input type="hidden" name="search" value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
                         <select name="priorite" class="form-select form-select-sm" onchange="this.form.submit()" style="background-color: #FDCFFA; border-color: #D78FEE;">
                           <option value="">Trier par priorité</option>
                           <option value="haute" <?php echo isset($_GET['priorite']) && $_GET['priorite'] == 'haute' ? 'selected' : ''; ?>>Haute</option>
@@ -756,6 +798,65 @@ foreach ($liste as $rec) {
                       </tbody>
                     </table>
                   </div>
+
+                  <!-- Pagination -->
+                  <?php if ($totalPages > 1): ?>
+                  <div class="d-flex justify-content-center mt-4">
+                      <nav aria-label="Pagination réclamations">
+                          <ul class="pagination">
+                              <!-- Previous button -->
+                              <li class="page-item <?= $currentPage <= 1 ? 'disabled' : '' ?>">
+                                  <a class="page-link" href="?page=<?= $currentPage - 1 ?>&search=<?= urlencode($search) ?>&priorite=<?= urlencode($priorite) ?>" aria-label="Précédent">
+                                      <span aria-hidden="true">&laquo;</span>
+                                  </a>
+                              </li>
+
+                              <!-- Page numbers -->
+                              <?php
+                              $startPage = max(1, $currentPage - 2);
+                              $endPage = min($totalPages, $currentPage + 2);
+
+                              if ($startPage > 1): ?>
+                                  <li class="page-item">
+                                      <a class="page-link" href="?page=1&search=<?= urlencode($search) ?>&priorite=<?= urlencode($priorite) ?>">1</a>
+                                  </li>
+                                  <?php if ($startPage > 2): ?>
+                                      <li class="page-item disabled">
+                                          <span class="page-link">...</span>
+                                      </li>
+                                  <?php endif; ?>
+                              <?php endif; ?>
+
+                              <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+                                  <li class="page-item <?= $i == $currentPage ? 'active' : '' ?>">
+                                      <a class="page-link" href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&priorite=<?= urlencode($priorite) ?>"><?= $i ?></a>
+                                  </li>
+                              <?php endfor; ?>
+
+                              <?php if ($endPage < $totalPages): ?>
+                                  <?php if ($endPage < $totalPages - 1): ?>
+                                      <li class="page-item disabled">
+                                          <span class="page-link">...</span>
+                                      </li>
+                                  <?php endif; ?>
+                                  <li class="page-item">
+                                      <a class="page-link" href="?page=<?= $totalPages ?>&search=<?= urlencode($search) ?>&priorite=<?= urlencode($priorite) ?>"><?= $totalPages ?></a>
+                                  </li>
+                              <?php endif; ?>
+
+                              <!-- Next button -->
+                              <li class="page-item <?= $currentPage >= $totalPages ? 'disabled' : '' ?>">
+                                  <a class="page-link" href="?page=<?= $currentPage + 1 ?>&search=<?= urlencode($search) ?>&priorite=<?= urlencode($priorite) ?>" aria-label="Suivant">
+                                      <span aria-hidden="true">&raquo;</span>
+                                  </a>
+                              </li>
+                          </ul>
+                      </nav>
+                  </div>
+                  <div class="text-center mt-2 text-muted">
+                      Page <?= $currentPage ?> sur <?= $totalPages ?> (<?= $totalReclamations ?> réclamations au total)
+                  </div>
+                  <?php endif; ?>
 
                 </div>
               </div>

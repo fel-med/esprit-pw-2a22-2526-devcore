@@ -40,7 +40,7 @@ public function updateUser($id, $nom, $email, $role) {
         'role' => $role
     ]);
 }
-    public function afficherUsers($search = '', $role = '') {
+    public function afficherUsers($search = '', $role = '', $page = 1, $limit = 10) {
     $db = config::getConnexion();
     $sql = "SELECT * FROM utilisateur WHERE 1=1";
     
@@ -53,7 +53,7 @@ public function updateUser($id, $nom, $email, $role) {
     }
     
     $sql .= " ORDER BY id DESC";
-    
+
     $stmt = $db->prepare($sql);
     
     if (!empty($search)) {
@@ -65,8 +65,54 @@ public function updateUser($id, $nom, $email, $role) {
         $stmt->bindParam(':role', $role);
     }
     
+    // Backward compatibility: if only search and role are passed, return raw result array.
+    if (func_num_args() < 3) {
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Get total count for pagination
+    $countSql = str_replace("SELECT *", "SELECT COUNT(*)", $sql);
+    $countStmt = $db->prepare($countSql);
+    
+    if (!empty($search)) {
+        $countStmt->bindParam(':search', $searchTerm);
+    }
+    
+    if (!empty($role)) {
+        $countStmt->bindParam(':role', $role);
+    }
+    
+    $countStmt->execute();
+    $totalRecords = $countStmt->fetchColumn();
+    
+    // Add LIMIT and OFFSET
+    $offset = ($page - 1) * $limit;
+    $sql .= " LIMIT :limit OFFSET :offset";
+    
+    $stmt = $db->prepare($sql);
+    
+    if (!empty($search)) {
+        $stmt->bindParam(':search', $searchTerm);
+    }
+    
+    if (!empty($role)) {
+        $stmt->bindParam(':role', $role);
+    }
+    
+    $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+    $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+    
     $stmt->execute();
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    return [
+        'data' => $results,
+        'total' => $totalRecords,
+        'page' => $page,
+        'limit' => $limit,
+        'totalPages' => ceil($totalRecords / $limit)
+    ];
 }
 
 public function sendResetLink($email) {
@@ -89,11 +135,10 @@ public function sendResetLink($email) {
    $link = "http://localhost/crea8connect/Esprit-PW-2A22-2526-Devcore/Vue/FrontOffice/utilisateur/reset_password.php?token=" . $token;
 
     $mail = new PHPMailer(true);
-$mail->CharSet = 'UTF-8';
-$mail->Encoding = 'base64';
+
     try {
         $mail->CharSet = 'UTF-8';
-$mail->Encoding = 'base64';
+        $mail->Encoding = 'base64';
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
@@ -106,6 +151,7 @@ $mail->Encoding = 'base64';
         $mail->addAddress($email);
 
         $mail->isHTML(true);
+        $mail->Subject = 'Réinitialisation du mot de passe - Crea8Connect';
        $mail->Body = '
 <!DOCTYPE html>
 <html>
