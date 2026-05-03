@@ -13,9 +13,25 @@ if (!function_exists('comment_user_initial')) {
     }
 }
 
+if (!function_exists('render_voice_language_selector')) {
+    function render_voice_language_selector(string $defaultValue = 'en-US'): void
+    {
+        $allowed = ['fr-FR', 'en-US', 'ar-SA'];
+        $defaultValue = in_array($defaultValue, $allowed, true) ? $defaultValue : 'en-US';
+        ?>
+        <select class="comment-voice-lang-select js-voice-lang-select" aria-label="Transcription language">
+            <option value="fr-FR" <?= $defaultValue === 'fr-FR' ? 'selected' : '' ?>>FR</option>
+            <option value="en-US" <?= $defaultValue === 'en-US' ? 'selected' : '' ?>>EN</option>
+            <option value="ar-SA" <?= $defaultValue === 'ar-SA' ? 'selected' : '' ?>>AR</option>
+        </select>
+        <?php
+    }
+}
+
 if (!function_exists('render_comment_form')) {
     function render_comment_form(string $postId, string $targetId, string $targetType, string $context, string $placeholder = 'Add a comment...', string $submitLabel = 'Post'): void
     {
+        $defaultVoiceLang = 'en-US';
         ?>
         <form action="../comment/createc.php" method="POST" enctype="multipart/form-data" class="js-comment-form" data-post-id="<?= comment_escape($postId) ?>" data-context="<?= comment_escape($context) ?>">
             <input type="hidden" name="postId" value="<?= comment_escape($postId) ?>">
@@ -26,15 +42,32 @@ if (!function_exists('render_comment_form')) {
 
             <textarea name="text" class="comment-textarea" placeholder="<?= comment_escape($placeholder) ?>" rows="2"></textarea>
             <div class="sticker-bar"></div>
+
             <div class="comment-form-toolbar">
                 <button type="button" class="btn-form-icon btn-emoji-toggle" title="Emoji"><i class="bi bi-emoji-smile"></i></button>
+
                 <label class="btn-form-icon" title="Add image" style="cursor:pointer;display:inline-flex;align-items:center;">
                     <i class="bi bi-image"></i>
                     <input type="file" name="image" accept="image/*" class="d-none js-image-input">
                 </label>
-                <button type="button" class="btn-form-icon js-voice-transcript-btn" title="Voice transcription" data-idle-label="Tap the microphone to dictate your comment" data-recording-label="Listening... speak now" data-voice-lang="en-US"><i class="bi bi-mic"></i></button>
+
+             <div class="comment-voice-lang-wrap">
+    <?php render_voice_language_selector($defaultVoiceLang); ?>
+</div>
+
+                <button
+                    type="button"
+                    class="btn-form-icon js-voice-transcript-btn"
+                    title="Voice transcription"
+                    data-idle-label="Tap the microphone to dictate your comment"
+                    data-recording-label="Listening... speak now"
+                    data-voice-lang="<?= comment_escape($defaultVoiceLang) ?>">
+                    <i class="bi bi-mic"></i>
+                </button>
+
                 <button type="submit" class="btn-comment-submit"><i class="bi bi-send"></i> <?= comment_escape($submitLabel) ?></button>
             </div>
+
             <div class="comment-voice-status" aria-live="polite"></div>
             <div class="emoji-picker-panel"></div>
             <div class="img-preview-wrap" style="display:none;">
@@ -52,6 +85,7 @@ if (!function_exists('render_edit_comment_form')) {
         $commentId = (string)($comment['id'] ?? '');
         $selectedSticker = (string)($comment['Sticker'] ?? $comment['sticker'] ?? '');
         $image = (string)($comment['image'] ?? '');
+        $defaultVoiceLang = 'en-US';
         ?>
         <div class="comment-edit-form" id="edit-form-<?= comment_escape($commentId) ?>">
             <form action="../comment/editc.php" method="POST" enctype="multipart/form-data" class="js-comment-edit-form" data-post-id="<?= comment_escape($postId) ?>" data-context="<?= comment_escape($context) ?>">
@@ -74,14 +108,29 @@ if (!function_exists('render_edit_comment_form')) {
 
                 <div class="comment-form-toolbar">
                     <button type="button" class="btn-form-icon btn-emoji-toggle" title="Emoji"><i class="bi bi-emoji-smile"></i></button>
+
                     <label class="btn-form-icon" title="Replace image" style="cursor:pointer;display:inline-flex;align-items:center;">
                         <i class="bi bi-image"></i>
                         <input type="file" name="image" accept="image/*" class="d-none js-image-input">
                     </label>
-                    <button type="button" class="btn-form-icon js-voice-transcript-btn" title="Voice transcription" data-idle-label="Tap the microphone to dictate your comment" data-recording-label="Listening... speak now" data-voice-lang="en-US"><i class="bi bi-mic"></i></button>
+<div class="comment-voice-lang-wrap">
+    <?php render_voice_language_selector($defaultVoiceLang); ?>
+</div>
+
+                    <button
+                        type="button"
+                        class="btn-form-icon js-voice-transcript-btn"
+                        title="Voice transcription"
+                        data-idle-label="Tap the microphone to dictate your comment"
+                        data-recording-label="Listening... speak now"
+                        data-voice-lang="<?= comment_escape($defaultVoiceLang) ?>">
+                        <i class="bi bi-mic"></i>
+                    </button>
+
                     <button type="submit" class="btn-comment-submit"><i class="bi bi-check2-circle"></i> Save</button>
                     <button type="button" class="btn-comment-secondary btn-cancel-edit" data-comment-id="<?= comment_escape($commentId) ?>">Cancel</button>
                 </div>
+
                 <div class="comment-voice-status" aria-live="polite"></div>
                 <div class="emoji-picker-panel"></div>
                 <div class="img-preview-wrap" style="display:none;">
