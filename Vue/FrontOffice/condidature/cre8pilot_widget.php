@@ -387,6 +387,87 @@ window.CRE8PILOT_CONTEXT = Object.assign(
         messages.scrollTop = messages.scrollHeight;
     }
 
+    function appendCre8PilotSecurityCard(messages, security) {
+        if (!messages || !security || typeof security !== 'object') {
+            return;
+        }
+        const level = String(security.riskLevel || 'low').toLowerCase();
+        const score = typeof security.riskScore === 'number' ? security.riskScore : parseInt(security.riskScore, 10) || 0;
+        const categories = Array.isArray(security.riskCategories) ? security.riskCategories : [];
+        const findings = Array.isArray(security.findings) ? security.findings : [];
+        const recs = Array.isArray(security.safeRecommendations) ? security.safeRecommendations : [];
+
+        const item = document.createElement('article');
+        item.className = 'cre8pilot-message cre8pilot-message-assistant cre8pilot-security-card';
+        item.setAttribute('aria-label', 'Cre8Shield security summary');
+
+        const header = document.createElement('div');
+        header.className = 'cre8pilot-security-header';
+        const title = document.createElement('strong');
+        title.className = 'cre8pilot-security-title';
+        title.textContent = 'Cre8Shield';
+        const badge = document.createElement('span');
+        badge.className = 'cre8pilot-security-badge cre8pilot-security-badge--' + (['low', 'medium', 'high'].includes(level) ? level : 'low');
+        badge.textContent = 'Risk: ' + level.charAt(0).toUpperCase() + level.slice(1);
+        const scoreEl = document.createElement('span');
+        scoreEl.className = 'cre8pilot-security-score';
+        scoreEl.textContent = String(score) + '/100';
+        header.appendChild(title);
+        header.appendChild(badge);
+        header.appendChild(scoreEl);
+        if (security.aiReviewed === true) {
+            const aiBadge = document.createElement('span');
+            aiBadge.className = 'cre8pilot-security-ai-reviewed';
+            aiBadge.textContent = 'AI reviewed';
+            header.appendChild(aiBadge);
+        }
+        item.appendChild(header);
+
+        function addSection(heading, lines) {
+            if (!lines || lines.length === 0) {
+                return;
+            }
+            const wrap = document.createElement('div');
+            wrap.className = 'cre8pilot-security-section';
+            const h = document.createElement('div');
+            h.className = 'cre8pilot-security-section-title';
+            h.textContent = heading;
+            wrap.appendChild(h);
+            const ul = document.createElement('ul');
+            ul.className = 'cre8pilot-security-list';
+            lines.forEach((line) => {
+                const li = document.createElement('li');
+                li.textContent = String(line);
+                ul.appendChild(li);
+            });
+            wrap.appendChild(ul);
+            item.appendChild(wrap);
+        }
+
+        if (categories.length > 0) {
+            addSection('Categories', categories);
+        }
+        addSection('Findings', findings);
+        addSection('Recommendations', recs);
+        if (security.aiReviewed === true) {
+            const rationale = String(security.aiRationale || '').trim();
+            const decision = String(security.aiDecision || '').trim();
+            const lines = [];
+            if (decision !== '') {
+                lines.push('AI decision: ' + decision.replace(/_/g, ' '));
+            }
+            if (rationale !== '') {
+                lines.push(rationale);
+            }
+            if (lines.length > 0) {
+                addSection('AI insight', lines);
+            }
+        }
+
+        messages.appendChild(item);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
     function isProbablyVisible(field) {
         if (!field) {
             return false;
@@ -1822,6 +1903,9 @@ window.CRE8PILOT_CONTEXT = Object.assign(
                     const status = data.status || 'ok';
                     const assistantText = data.message || 'Cre8Pilot returned an empty response.';
                     appendMessage(messages, assistantText, 'assistant', status);
+                    if (data.security && typeof data.security === 'object') {
+                        appendCre8PilotSecurityCard(messages, data.security);
+                    }
                     if (data.needsUserConfirmation) {
                         appendMessage(messages, 'Please review the prepared content. I will not submit or save anything automatically.', 'assistant', 'action');
                     }

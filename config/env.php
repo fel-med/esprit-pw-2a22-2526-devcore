@@ -41,12 +41,9 @@ if (!function_exists('cre8connect_load_env')) {
                 $value = substr($value, 1, -1);
             }
 
-            if (getenv($key) === false) {
-                putenv($key . '=' . $value);
-            }
-
-            $_ENV[$key] = $_ENV[$key] ?? $value;
-            $_SERVER[$key] = $_SERVER[$key] ?? $value;
+            $_ENV[$key] = $value;
+            $_SERVER[$key] = $value;
+            putenv($key . '=' . $value);
         }
     }
 }

@@ -3508,6 +3508,95 @@ dialog.delete-dialog {
   box-shadow: 0 0 0 4px rgba(108, 92, 231, 0.1);
 }
 
+/* Cre8Shield V23.1 — security summary card (rules engine) */
+.cre8pilot-security-card {
+  max-width: 100%;
+  align-self: stretch;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.85rem;
+  background: linear-gradient(135deg, rgba(0, 144, 231, 0.1), rgba(124, 92, 255, 0.08));
+  border: 1px solid rgba(0, 144, 231, 0.28);
+}
+
+.cre8pilot-security-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+  margin-bottom: 0.5rem;
+}
+
+.cre8pilot-security-title {
+  font-size: 0.78rem;
+  font-weight: 900;
+  color: var(--text-color);
+  margin-right: auto;
+}
+
+.cre8pilot-security-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+}
+
+.cre8pilot-security-badge--low {
+  background: rgba(74, 222, 128, 0.18);
+  color: #15803d;
+  border-color: rgba(74, 222, 128, 0.45);
+}
+
+.cre8pilot-security-badge--medium {
+  background: rgba(251, 191, 36, 0.22);
+  color: #a16207;
+  border-color: rgba(251, 191, 36, 0.5);
+}
+
+.cre8pilot-security-badge--high {
+  background: rgba(248, 113, 113, 0.2);
+  color: #b91c1c;
+  border-color: rgba(248, 113, 113, 0.45);
+}
+
+.cre8pilot-security-score {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--muted-text);
+}
+
+.cre8pilot-security-ai-reviewed {
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(108, 92, 231, 0.2);
+  color: #5b21b6;
+  border: 1px solid rgba(108, 92, 231, 0.35);
+  white-space: nowrap;
+}
+
+.cre8pilot-security-section {
+  margin-top: 0.45rem;
+}
+
+.cre8pilot-security-section-title {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted-text);
+  margin-bottom: 0.25rem;
+}
+
+.cre8pilot-security-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-color);
+}
+
 .cre8pilot-option-list {
   display: flex;
   flex-wrap: wrap;

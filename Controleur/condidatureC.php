@@ -960,12 +960,14 @@ class CondidatureC
         };
     }
 
-    private function cre8PilotSafeProviderErrorPreview($httpStatus, $providerBody)
+    private function cre8PilotSafeProviderErrorPreview($httpStatus, $providerBody, $maxLen = 200)
     {
         $providerBody = trim((string) $providerBody);
         if ($providerBody === '') {
             return null;
         }
+
+        $maxLen = max(40, min(400, (int) $maxLen));
 
         $preview = '';
         $decoded = json_decode($providerBody, true);
@@ -986,14 +988,14 @@ class CondidatureC
         }
 
         if ($preview === '') {
-            $preview = substr($providerBody, 0, 180);
+            $preview = substr($providerBody, 0, $maxLen);
         }
 
         $preview = preg_replace('/authorization\s*:\s*bearer\s+[a-z0-9._\-]+/i', 'Authorization: [redacted]', $preview);
         $preview = preg_replace('/bearer\s+[a-z0-9._\-]+/i', 'Bearer [redacted]', (string) $preview);
         $preview = preg_replace('/(?:sk|gsk|or)-[a-z0-9._\-]{8,}/i', '[redacted-key]', (string) $preview);
         $preview = preg_replace('/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i', '[redacted-email]', (string) $preview);
-        $preview = $this->sanitizeCre8PilotLlmScalar($preview, 180);
+        $preview = $this->sanitizeCre8PilotLlmScalar($preview, $maxLen);
 
         if ($preview === '') {
             return null;
@@ -1046,6 +1048,7 @@ class CondidatureC
             'urlHost' => $this->cre8PilotProviderUrlHost($providerConfig['apiUrl'] ?? ''),
             'usedResponseFormat' => true,
             'retriedWithoutResponseFormat' => false,
+            'retriedWithoutResponseFormatHttp400' => false,
             'httpStatus' => null,
             'ok' => false,
             'errorCode' => null,
@@ -1061,14 +1064,15 @@ class CondidatureC
         ];
     }
 
-    private function cre8PilotProviderHttpRequest(array $providerConfig, array $messages, $timeout, $useResponseFormat)
+    private function cre8PilotProviderHttpRequest(array $providerConfig, array $messages, $timeout, $useResponseFormat, $maxTokens = null)
     {
         $provider = strtolower((string) ($providerConfig['provider'] ?? ''));
+        $mt = $maxTokens !== null ? max(64, min(1024, (int) $maxTokens)) : 450;
         $body = [
             'model' => (string) ($providerConfig['model'] ?? ''),
             'messages' => $messages,
             'temperature' => 0.2,
-            'max_tokens' => 450,
+            'max_tokens' => $mt,
         ];
 
         if ($useResponseFormat) {
@@ -1085,12 +1089,21 @@ class CondidatureC
             $headers[] = 'X-Title: Cre8Connect Cre8Pilot';
         }
 
+        $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES;
+        if (defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
+            $jsonFlags |= JSON_INVALID_UTF8_SUBSTITUTE;
+        }
+        $encoded = json_encode($body, $jsonFlags);
+        if ($encoded === false) {
+            $encoded = '{"model":"","messages":[],"temperature":0.2,"max_tokens":64}';
+        }
+
         $ch = curl_init((string) ($providerConfig['apiUrl'] ?? ''));
         curl_setopt_array($ch, [
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HTTPHEADER => $headers,
-            CURLOPT_POSTFIELDS => json_encode($body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            CURLOPT_POSTFIELDS => $encoded,
             CURLOPT_TIMEOUT => max(2, min(30, (int) $timeout)),
         ]);
 
@@ -1125,7 +1138,10 @@ class CondidatureC
         }
 
         $timeout = max(2, min(30, (int) ($options['timeout'] ?? 12)));
-        $first = $this->cre8PilotProviderHttpRequest($providerConfig, $messages, $timeout, true);
+        $maxTokens = isset($options['max_tokens']) ? (int) $options['max_tokens'] : null;
+        $useRespFormat = !array_key_exists('use_response_format', $options) || $options['use_response_format'] !== false;
+        $attempt['usedResponseFormat'] = $useRespFormat;
+        $first = $this->cre8PilotProviderHttpRequest($providerConfig, $messages, $timeout, $useRespFormat, $maxTokens);
         $raw = $first['raw'];
         $curlError = $first['curlError'];
         $httpCode = (int) $first['httpStatus'];
@@ -1134,7 +1150,15 @@ class CondidatureC
 
         if ($errorCode === 'response_format_unsupported') {
             $attempt['retriedWithoutResponseFormat'] = true;
-            $retry = $this->cre8PilotProviderHttpRequest($providerConfig, $messages, $timeout, false);
+            $retry = $this->cre8PilotProviderHttpRequest($providerConfig, $messages, $timeout, false, $maxTokens);
+            $raw = $retry['raw'];
+            $curlError = $retry['curlError'];
+            $httpCode = (int) $retry['httpStatus'];
+            $attempt['httpStatus'] = $httpCode;
+            $errorCode = $this->cre8pilotMapProviderError($httpCode, $curlError, $raw);
+        } elseif (!empty($options['retry_plain_json_on_http_400']) && $useRespFormat && $httpCode === 400) {
+            $attempt['retriedWithoutResponseFormatHttp400'] = true;
+            $retry = $this->cre8PilotProviderHttpRequest($providerConfig, $messages, $timeout, false, $maxTokens);
             $raw = $retry['raw'];
             $curlError = $retry['curlError'];
             $httpCode = (int) $retry['httpStatus'];
@@ -1303,6 +1327,16 @@ class CondidatureC
 
     private function applyCre8PilotLlmToResponse(array $response)
     {
+        $intentEarly = (string) ($response['intent'] ?? '');
+        if (str_starts_with($intentEarly, 'security_')) {
+            $settingsEarly = $this->getCre8PilotLlmSettings();
+            $this->cre8PilotDebug['llmEnabled'] = $settingsEarly['enabled'];
+            $this->cre8PilotDebug['llmSkipReason'] = 'cre8shield_security_response';
+            $this->cre8PilotDebug['llmMode'] = 'mock_only';
+
+            return $response;
+        }
+
         $settings = $this->getCre8PilotLlmSettings();
         $this->cre8PilotDebug['llmEnabled'] = $settings['enabled'];
         $this->cre8PilotDebug['llmProviderTried'] = [];
@@ -1534,7 +1568,7 @@ class CondidatureC
         return $response;
     }
 
-    private function buildCre8PilotResponse($status, $intent, $message, array $actions = [], $confidence = 0.78, $avatarState = 'success', $clarification = null, $needsUserConfirmation = false)
+    private function buildCre8PilotResponse($status, $intent, $message, array $actions = [], $confidence = 0.78, $avatarState = 'success', $clarification = null, $needsUserConfirmation = false, array $extras = [])
     {
         $response = [
             'status' => $status,
@@ -1546,6 +1580,10 @@ class CondidatureC
             'actions' => $actions,
             'needsUserConfirmation' => (bool) $needsUserConfirmation,
         ];
+
+        if (isset($extras['security']) && is_array($extras['security'])) {
+            $response['security'] = $this->cre8ShieldSanitizeClientSecurityBlock($extras['security']);
+        }
 
         if (!empty($this->cre8PilotDebug)) {
             $this->cre8PilotDebug['finalIntent'] = $intent;
@@ -1612,6 +1650,10 @@ class CondidatureC
             'sort_results',
             'safe_decision_note',
             'security_check',
+            'security_check_page',
+            'security_check_message',
+            'security_check_link',
+            'security_explain_risk',
             'apply_filters',
         ];
 
@@ -1661,9 +1703,86 @@ class CondidatureC
         return empty($targetModes) || in_array((string) $mode, $targetModes, true);
     }
 
-    private function detectCre8PilotGlobalGuard($normalized)
+    private function isCre8ShieldDefensiveCheckRequest($rawMessage, $normalized): bool
     {
-        if ($this->messageContainsAny($normalized, [
+        $raw = trim((string) $rawMessage);
+        if ($raw !== '' && preg_match('/^\s*(please\s+)?(can you\s+)?check\s+this\s+(input|message|link|content)\s*:/is', $raw)) {
+            return true;
+        }
+        if ($raw !== '' && preg_match('/^\s*check\s+this\s+link\b/is', $raw) && preg_match('/https?:\/\//i', $raw)) {
+            return true;
+        }
+        $n = trim((string) $normalized);
+        if ($n === '' && $raw !== '') {
+            $n = $this->normalizeCre8PilotMessage($raw);
+        }
+        $starters = [
+            'check this input',
+            'check this message',
+            'check this link',
+            'check this content',
+            'check security',
+            'security check',
+            'check for sql injection',
+            'check for xss',
+            'check sql injection',
+            'check xss',
+            'is this safe',
+            'is this link safe',
+            'is this url safe',
+            'scan for risk',
+        ];
+        foreach ($starters as $p) {
+            if (str_starts_with($n, $p)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function cre8ShieldExtractDefensiveSubjectTail($rawMessage): string
+    {
+        $raw = (string) $rawMessage;
+        if (preg_match('/check\s+this\s+(?:input|message|link|content)\s*:\s*(.*)/is', $raw, $m)) {
+            return trim((string) ($m[1] ?? ''));
+        }
+
+        return '';
+    }
+
+    private function isCre8ShieldOffensiveGenerationRequest($tail): bool
+    {
+        $n = $this->normalizeCre8PilotMessage($tail);
+
+        return $this->messageContainsAny($n, [
+            'create sql injection',
+            'generate sql injection',
+            'give me sql injection',
+            'sql injection payload',
+            'dump users',
+            'dump the users',
+            'dump user table',
+            'hack the database',
+            'bypass login',
+            'exploit the database',
+            'inject payload to dump',
+            'extract passwords',
+            'steal passwords',
+        ]);
+    }
+
+    private function detectCre8PilotGlobalGuard($normalized, $rawMessage = '')
+    {
+        $defensive = $rawMessage !== '' && $this->isCre8ShieldDefensiveCheckRequest($rawMessage, $normalized);
+        if ($defensive) {
+            $tail = $this->cre8ShieldExtractDefensiveSubjectTail($rawMessage);
+            if ($tail !== '' && $this->isCre8ShieldOffensiveGenerationRequest($tail)) {
+                return 'blocked_request';
+            }
+        }
+
+        if (!$defensive && $this->messageContainsAny($normalized, [
             'password',
             'passwords',
             'show password',
@@ -1698,6 +1817,8 @@ class CondidatureC
             'other users files',
             'show files of other users',
             'bypass permissions',
+            'bypass login',
+            'bypass authentication',
             'ignore your rules',
             'ignore all previous instructions',
             'ignore rules',
@@ -1706,8 +1827,13 @@ class CondidatureC
             'reveal your prompt',
             'show your prompt',
             'hack',
-            'sql injection',
             'create sql injection payload',
+            'generate sql injection',
+            'sql injection payload',
+            'dump users',
+            'dump the users',
+            'dump user table',
+            'exploit the database',
             'delete database',
             'drop database',
         ])) {
@@ -1817,6 +1943,10 @@ class CondidatureC
             'prepare_acceptance_note',
             'prepare_refusal_note',
             'security_check',
+            'security_check_page',
+            'security_check_message',
+            'security_check_link',
+            'security_explain_risk',
             'explain_statistics',
             'detect_risky_items',
             'recommend_admin_actions',
@@ -1830,10 +1960,19 @@ class CondidatureC
         ];
 
         if (in_array($selectedAction, $directActions, true)) {
+            if ($selectedAction === 'security_check') {
+                return 'security_check_page';
+            }
+
             return $selectedAction;
         }
 
-        $globalGuard = $this->detectCre8PilotGlobalGuard($normalized);
+        $shieldIntent = $this->detectCre8ShieldIntentMock($message, $normalized);
+        if ($shieldIntent !== '') {
+            return $shieldIntent;
+        }
+
+        $globalGuard = $this->detectCre8PilotGlobalGuard($normalized, $message);
         if ($globalGuard !== '') {
             return $globalGuard;
         }
@@ -2024,7 +2163,7 @@ class CondidatureC
                 return 'prepare_negotiation_reply';
             }
             if ($this->messageContainsAny($normalized, ['check risk', 'suspicious', 'portfolio safe', 'spam', 'professional message'])) {
-                return 'security_check';
+                return 'security_check_page';
             }
             if ($this->messageContainsAny($normalized, ['summarize this candidature', 'creator asking for', 'what is status', 'summarize'])) {
                 return 'summarize_candidature';
@@ -2039,13 +2178,13 @@ class CondidatureC
                 return 'summarize_negotiation';
             }
             if ($this->messageContainsAny($normalized, ['check risk', 'too aggressive', 'break rules', 'suspicious'])) {
-                return 'security_check';
+                return 'security_check_page';
             }
             if ($this->messageContainsAny($normalized, ['accept this', 'accept current terms', 'accept terms', 'refuse this', 'refuse politely'])) {
                 return 'safe_decision_note';
             }
             if ($this->messageContainsAny($normalized, ['check risk', 'check negotiation quality', 'is this a good counter proposal', 'is this a good counter-proposal', 'too aggressive', 'does this break rules', 'is this suspicious'])) {
-                return 'security_check';
+                return 'security_check_page';
             }
             if ($this->messageContainsAny($normalized, ['summarize negotiation', 'what changed', 'summarize'])) {
                 return 'summarize_negotiation';
@@ -2087,7 +2226,7 @@ class CondidatureC
                 return 'recommend_next_action';
             }
             if ($this->messageContainsAny($normalized, ['saved invitations', 'status', 'summarize my candidatures', 'summarize invitations', 'summarize negotiation', 'check risk', 'summarize'])) {
-                return str_contains($normalized, 'risk') ? 'security_check' : 'summarize_page';
+                return str_contains($normalized, 'risk') ? 'security_check_page' : 'summarize_page';
             }
         }
 
@@ -2147,7 +2286,7 @@ class CondidatureC
         }
 
         if ($this->messageContainsAny($normalized, ['check risk', 'security check'])) {
-            return 'security_check';
+            return 'security_check_page';
         }
 
         return 'unknown';
@@ -2256,6 +2395,1087 @@ class CondidatureC
         }
 
         return 'Risk level: Low. ' . $budgetText . ' ' . $deadlineText . ' Message clarity: keep the reply specific and avoid vague terms. Permission safety: no private data or restricted action is requested. Manual confirmation is still required before sending.';
+    }
+
+    private function cre8ShieldIsSecurityIntent($intent): bool
+    {
+        $intent = (string) $intent;
+
+        return str_starts_with($intent, 'security_');
+    }
+
+    private function detectCre8ShieldIntentMock($message, $normalized): string
+    {
+        $raw = (string) $message;
+        if ($this->messageContainsAny($normalized, [
+            'explain the risk', 'explain why this is risky', 'explain risk', 'why is this risky',
+            'why is this dangerous', 'what makes this unsafe',
+        ])) {
+            return 'security_explain_risk';
+        }
+        if (preg_match('/\bhttps?:\/\/[^\s<>"\']+/i', $raw)
+            && $this->messageContainsAny($normalized, [
+                'is this link safe', 'check this link', 'check the link', 'check if link', 'safe link',
+                'is this url safe', 'phishing', 'suspicious link',
+            ])) {
+            return 'security_check_link';
+        }
+        if (preg_match('/check\s+this\s+(input|message|content)\s*:\s*(.+)/is', $raw, $m) && strlen(trim((string) ($m[2] ?? ''))) > 0) {
+            return 'security_check_message';
+        }
+        if (preg_match('/check\s+this\s+link\s*:\s*(.+)/is', $raw, $m) && strlen(trim((string) ($m[1] ?? ''))) > 0) {
+            return 'security_check_link';
+        }
+        if ($this->messageContainsAny($normalized, [
+            'check for sql injection', 'check sql injection', 'test sql injection',
+            'check for xss', 'check xss', 'test for xss',
+        ])) {
+            return 'security_check_page';
+        }
+        if ($this->messageContainsAny($normalized, [
+            'check this candidature for risk', 'check candidature for risk', 'check candidature risk',
+            'check this negotiation', 'check negotiation for risk', 'check negotiation risk',
+        ])) {
+            return 'security_check_page';
+        }
+        if ($this->messageContainsAny($normalized, [
+            'check security', 'is this safe', 'safe to click', 'scan for risk', 'security scan',
+        ])) {
+            return 'security_check_page';
+        }
+
+        return '';
+    }
+
+    private function cre8ShieldCollectVisibleText(array $visibleData, $maxLength = 12000): string
+    {
+        $parts = [];
+        foreach (['offerForm', 'candidatureForm', 'decisionForm'] as $formKey) {
+            $form = $visibleData[$formKey] ?? null;
+            if (!is_array($form)) {
+                continue;
+            }
+            foreach ($form as $k => $v) {
+                if (is_string($v) && trim($v) !== '') {
+                    $parts[] = $formKey . '.' . $k . ': ' . $v;
+                }
+            }
+        }
+        $highlights = $visibleData['highlights'] ?? [];
+        if (is_array($highlights)) {
+            foreach ($highlights as $h) {
+                if (is_string($h) && trim($h) !== '') {
+                    $parts[] = $h;
+                }
+            }
+        }
+        $creators = $visibleData['creators'] ?? [];
+        if (is_array($creators)) {
+            foreach ($creators as $c) {
+                if (is_array($c)) {
+                    $parts[] = json_encode($c, JSON_UNESCAPED_UNICODE);
+                }
+            }
+        }
+        $blob = trim(implode("\n", $parts));
+
+        return $blob === '' ? '' : substr($blob, 0, (int) $maxLength);
+    }
+
+    private function cre8ShieldDetectSqlInjectionLike($text): array
+    {
+        $t = strtolower((string) $text);
+        $hits = [];
+        $patterns = [
+            "' or '1'='1" => 'Classic OR tautology pattern (often used in injection attempts).',
+            ' or 1=1' => 'Boolean OR tautology.',
+            ' or 1 = 1' => 'Boolean OR tautology.',
+            'union select' => 'UNION-based query pattern.',
+            'drop table' => 'Destructive DDL keyword.',
+            'delete from' => 'Data deletion keyword.',
+            'insert into' => 'Data insertion keyword.',
+            'update users' => 'Bulk update pattern.',
+            'information_schema' => 'Database metadata access pattern.',
+            '--' => 'SQL comment sequence sometimes used to truncate queries.',
+            '/*' => 'Block comment opener sometimes used in injection attempts.',
+            '*/' => 'Block comment closer.',
+            'xp_cmdshell' => 'Dangerous extended stored procedure reference.',
+        ];
+        foreach ($patterns as $needle => $note) {
+            if (str_contains($t, $needle)) {
+                $hits[] = ['category' => 'sql_injection', 'finding' => $note];
+            }
+        }
+
+        return $hits;
+    }
+
+    private function cre8ShieldDetectXssLike($text): array
+    {
+        $t = strtolower((string) $text);
+        $hits = [];
+        $patterns = [
+            '<script' => 'Script tag marker.',
+            '</script>' => 'Closing script tag marker.',
+            'javascript:' => 'JavaScript URL scheme.',
+            'onerror=' => 'Inline event handler often used in XSS.',
+            'onload=' => 'Inline event handler often used in XSS.',
+            'onclick=' => 'Inline event handler often used in XSS.',
+            '<iframe' => 'Embedded frame marker.',
+            'document.cookie' => 'DOM cookie access pattern.',
+            'alert(' => 'Common JavaScript popup test pattern in XSS probes.',
+        ];
+        foreach ($patterns as $needle => $note) {
+            if (str_contains($t, $needle)) {
+                $hits[] = ['category' => 'xss', 'finding' => $note];
+            }
+        }
+
+        return $hits;
+    }
+
+    private function cre8ShieldDetectLinks($text): array
+    {
+        $hits = [];
+        if (!preg_match_all('/\bhttps?:\/\/[^\s<>"\']+/i', (string) $text, $m)) {
+            return $hits;
+        }
+        foreach ($m[0] as $url) {
+            $u = strtolower($url);
+            if (str_starts_with($u, 'http://')) {
+                $hits[] = ['category' => 'suspicious_link', 'finding' => 'URL uses http:// instead of https:// (no transport encryption).'];
+            }
+            foreach (['bit.ly/', 'tinyurl.com/', 't.co/', 'goo.gl/'] as $short) {
+                if (str_contains($u, $short)) {
+                    $hits[] = ['category' => 'suspicious_link', 'finding' => 'Shortened URL host (' . $short . ') can hide the final destination.'];
+                }
+            }
+            if (preg_match('/free[\s\-_]?gift|reset[\s\-_]?account|verify[\s\-_]?account|password[\s\-_]?reset/i', $u)) {
+                $hits[] = ['category' => 'phishing', 'finding' => 'URL contains wording often abused in phishing (gift/verify/reset/password).'];
+            }
+        }
+
+        return $hits;
+    }
+
+    private function cre8ShieldDetectSqlProbePrivacyPatterns($text): array
+    {
+        $t = strtolower((string) $text);
+        $hits = [];
+        if ((str_contains($t, 'select') && str_contains($t, 'password')) || (str_contains($t, 'password') && str_contains($t, 'from users'))) {
+            $hits[] = ['category' => 'privacy_access', 'finding' => 'Pattern targets passwords or user tables (sensitive data in SQLi-style probes).'];
+        }
+
+        return $hits;
+    }
+
+    private function cre8ShieldDetectPrivacyRisk($text): array
+    {
+        $t = $this->normalizeCre8PilotMessage($text);
+        $hits = [];
+        $rules = [
+            ['needles' => ['show all users passwords', 'all users passwords', 'every users password'], 'finding' => 'Request suggests exposing other users’ credentials (unsafe and against access rules).', 'category' => 'privacy_access'],
+            ['needles' => ['show other creators offers', 'other creators offers', 'other brands candidatures', 'other creators candidatures'], 'finding' => 'Request suggests viewing another party’s private workspace data.', 'category' => 'privacy_access'],
+            ['needles' => ['use another creator s cv', 'use another creators cv', 'another creators cv'], 'finding' => 'Misusing another person’s identity documents is unsafe and dishonest.', 'category' => 'privacy_access'],
+            ['needles' => ['reveal api key', 'reveal token', 'reveal system prompt', 'show admin private data'], 'finding' => 'Request targets secrets or privileged configuration.', 'category' => 'privacy_access'],
+        ];
+        foreach ($rules as $rule) {
+            if ($this->messageContainsAny($t, $rule['needles'])) {
+                $hits[] = ['category' => $rule['category'], 'finding' => $rule['finding']];
+            }
+        }
+
+        return $hits;
+    }
+
+    private function cre8ShieldDetectScamOrSocialEngineering($text): array
+    {
+        $t = $this->normalizeCre8PilotMessage($text);
+        $hits = [];
+        $rules = [
+            ['needles' => ['urgent payment', 'pay immediately', 'click immediately'], 'finding' => 'Urgency pressure is a common social-engineering tactic.', 'category' => 'scam_social_engineering'],
+            ['needles' => ['verify account', 'send password', 'reset account'], 'finding' => 'Credential or account “verification” pressure can indicate phishing-style wording.', 'category' => 'scam_social_engineering'],
+            ['needles' => ['free money', 'outside platform payment', 'crypto wallet', 'wire transfer today'], 'finding' => 'Off-platform or “free money” payment patterns are high-risk in collaborations.', 'category' => 'scam_social_engineering'],
+        ];
+        foreach ($rules as $rule) {
+            if ($this->messageContainsAny($t, $rule['needles'])) {
+                $hits[] = ['category' => $rule['category'], 'finding' => $rule['finding']];
+            }
+        }
+
+        return $hits;
+    }
+
+    private function cre8ShieldDetectDishonestPortfolioRisk($text): array
+    {
+        $t = $this->normalizeCre8PilotMessage($text);
+        $hits = [];
+        $rules = [
+            ['needles' => ['use another creator s portfolio', 'use another creators portfolio', 'copy someone else s work', 'copy someone elses work'], 'finding' => 'Misrepresenting someone else’s work as your own is dishonest and unsafe for trust.', 'category' => 'dishonest_portfolio'],
+            ['needles' => ['fake my experience', 'lie about my skills', 'invent portfolio'], 'finding' => 'Fabricated experience undermines platform safety and contracts.', 'category' => 'dishonest_portfolio'],
+        ];
+        foreach ($rules as $rule) {
+            if ($this->messageContainsAny($t, $rule['needles'])) {
+                $hits[] = ['category' => $rule['category'], 'finding' => $rule['finding']];
+            }
+        }
+
+        return $hits;
+    }
+
+    private function cre8ShieldAnalyzeText($text, array $context = []): array
+    {
+        $text = (string) $text;
+        $categories = [];
+        $findings = [];
+        $recommendations = [];
+        $score = 0;
+
+        $mergeHits = function (array $hits) use (&$categories, &$findings, &$score, &$recommendations) {
+            foreach ($hits as $h) {
+                $cat = (string) ($h['category'] ?? 'other');
+                if ($cat !== '' && !in_array($cat, $categories, true)) {
+                    $categories[] = $cat;
+                }
+                $findings[] = (string) ($h['finding'] ?? '');
+                if ($cat === 'sql_injection') {
+                    $score += 38;
+                } elseif ($cat === 'xss') {
+                    $score += 38;
+                } elseif ($cat === 'phishing') {
+                    $score += 32;
+                } elseif ($cat === 'suspicious_link') {
+                    $score += 22;
+                } elseif ($cat === 'privacy_access') {
+                    $score += 42;
+                } elseif ($cat === 'dishonest_portfolio') {
+                    $score += 36;
+                } elseif ($cat === 'scam_social_engineering') {
+                    $score += 28;
+                } else {
+                    $score += 12;
+                }
+            }
+        };
+
+        $mergeHits($this->cre8ShieldDetectSqlInjectionLike($text));
+        $mergeHits($this->cre8ShieldDetectSqlProbePrivacyPatterns($text));
+        $mergeHits($this->cre8ShieldDetectXssLike($text));
+        $mergeHits($this->cre8ShieldDetectLinks($text));
+        $mergeHits($this->cre8ShieldDetectPrivacyRisk($text));
+        $mergeHits($this->cre8ShieldDetectScamOrSocialEngineering($text));
+        $mergeHits($this->cre8ShieldDetectDishonestPortfolioRisk($text));
+
+        $findings = array_values(array_filter(array_unique(array_map('trim', $findings))));
+        $findings = array_slice($findings, 0, 14);
+
+        if (in_array('sql_injection', $categories, true)) {
+            foreach ([
+                'Do not execute this input as SQL.',
+                'Use prepared statements / parameterized queries.',
+                'Validate and sanitize untrusted input on the server.',
+                'Review this as a possible SQL injection attempt; never run it against a live database without strict isolation.',
+            ] as $sqlRec) {
+                if (!in_array($sqlRec, $recommendations, true)) {
+                    $recommendations[] = $sqlRec;
+                }
+            }
+        }
+        if (in_array('xss', $categories, true)) {
+            $recommendations[] = 'Do not paste untrusted HTML or scripts into forms; treat unexpected markup as hostile.';
+        }
+        if (in_array('suspicious_link', $categories, true) || in_array('phishing', $categories, true)) {
+            $recommendations[] = 'Open links only from trusted senders; prefer https:// and inspect the real domain before signing in.';
+        }
+        if (in_array('privacy_access', $categories, true)) {
+            $recommendations[] = 'Stay within your role and workspace; never request other users’ private data.';
+        }
+        if (in_array('dishonest_portfolio', $categories, true)) {
+            $recommendations[] = 'Keep portfolio claims truthful and verifiable; authenticity protects you legally and professionally.';
+        }
+        if (in_array('scam_social_engineering', $categories, true)) {
+            $recommendations[] = 'Slow down on urgent payment requests; confirm details inside Cre8Connect only.';
+        }
+        if ($score === 0) {
+            $recommendations[] = 'Keep using strong passwords, limit pasted HTML from unknown sources, and prefer in-app actions over external “shortcuts”.';
+        }
+
+        $score = (int) min(100, $score);
+        if (in_array('sql_injection', $categories, true) && in_array('privacy_access', $categories, true)) {
+            $score = max($score, 94);
+        }
+        if (in_array('sql_injection', $categories, true) && $score < 88 && str_contains(strtolower($text), 'union')) {
+            $score = max($score, 88);
+        }
+        $score = (int) min(100, $score);
+        $riskLevel = 'low';
+        if ($score >= 72) {
+            $riskLevel = 'high';
+        } elseif ($score >= 36) {
+            $riskLevel = 'medium';
+        }
+
+        return [
+            'riskLevel' => $riskLevel,
+            'riskScore' => $score,
+            'riskCategories' => $categories,
+            'findings' => $findings,
+            'safeRecommendations' => array_slice(array_values(array_unique($recommendations)), 0, 8),
+        ];
+    }
+
+    private function cre8ShieldSanitizeClientSecurityBlock(array $sec): array
+    {
+        $level = strtolower((string) ($sec['riskLevel'] ?? 'low'));
+        if (!in_array($level, ['low', 'medium', 'high'], true)) {
+            $level = 'low';
+        }
+        $score = max(0, min(100, (int) ($sec['riskScore'] ?? 0)));
+        $cats = [];
+        foreach ((array) ($sec['riskCategories'] ?? []) as $c) {
+            $c = preg_replace('/[^a-z0-9_\-]/i', '', (string) $c);
+            if ($c !== '') {
+                $cats[] = $c;
+            }
+        }
+        $cats = array_slice(array_values(array_unique($cats)), 0, 12);
+        $findings = [];
+        foreach ((array) ($sec['findings'] ?? []) as $f) {
+            $findings[] = $this->sanitizeCre8PilotLlmScalar((string) $f, 400);
+        }
+        $findings = array_slice(array_values(array_filter($findings)), 0, 14);
+        $recs = [];
+        foreach ((array) ($sec['safeRecommendations'] ?? []) as $r) {
+            $recs[] = $this->sanitizeCre8PilotLlmScalar((string) $r, 400);
+        }
+        $recs = array_slice(array_values(array_filter($recs)), 0, 8);
+
+        $out = [
+            'riskLevel' => $level,
+            'riskScore' => $score,
+            'riskCategories' => $cats,
+            'findings' => $findings,
+            'safeRecommendations' => $recs,
+        ];
+        if (!empty($sec['aiReviewed'])) {
+            $out['aiReviewed'] = true;
+            $dec = strtolower((string) ($sec['aiDecision'] ?? ''));
+            if (in_array($dec, ['allow', 'warn', 'block', 'human_review'], true)) {
+                $out['aiDecision'] = $dec;
+            }
+            $out['aiRationale'] = $this->sanitizeCre8PilotLlmScalar((string) ($sec['aiRationale'] ?? ''), 480);
+            $out['confidence'] = max(0.0, min(1.0, (float) ($sec['confidence'] ?? 0.0)));
+        }
+
+        return $out;
+    }
+
+    private function cre8ShieldAiEnabled(): bool
+    {
+        if (function_exists('cre8connect_load_env')) {
+            cre8connect_load_env();
+        }
+
+        return trim((string) $this->cre8PilotEnv('CRE8SHIELD_AI_ENABLED', '0')) === '1';
+    }
+
+    private function cre8ShieldQualifiesForDefensiveAiReview(string $intent, string $rawMessage, string $normalizedMessage): bool
+    {
+        $raw = trim($rawMessage);
+        $norm = trim($normalizedMessage);
+        if ($raw !== '' && $this->isCre8ShieldOffensiveGenerationRequest($raw)) {
+            return false;
+        }
+        if ($norm !== '' && $this->isCre8ShieldOffensiveGenerationRequest($norm)) {
+            return false;
+        }
+        if ($this->isCre8ShieldDefensiveCheckRequest($raw, $norm)) {
+            $tail = $this->cre8ShieldExtractDefensiveSubjectTail($raw);
+            if ($tail !== '' && $this->isCre8ShieldOffensiveGenerationRequest($tail)) {
+                return false;
+            }
+
+            return true;
+        }
+        if (in_array($intent, ['security_check_link', 'security_check_message', 'security_explain_risk'], true)) {
+            return true;
+        }
+        if ($intent === 'security_check_page') {
+            return $this->messageContainsAny($norm, [
+                'check for sql injection', 'check for xss', 'check sql injection', 'check xss',
+                'is this safe', 'scan for risk', 'check security', 'security scan',
+                'check this candidature', 'check candidature', 'check this negotiation', 'check negotiation',
+                'check candidature for risk', 'check negotiation for risk',
+            ]);
+        }
+
+        return false;
+    }
+
+    private function stampCre8ShieldResponseDebug(array $params): void
+    {
+        $this->cre8PilotDebug['cre8ShieldUsed'] = (bool) ($params['used'] ?? false);
+        $this->cre8PilotDebug['cre8ShieldMode'] = (string) ($params['mode'] ?? 'rules');
+        $this->cre8PilotDebug['cre8ShieldAiEnabled'] = (bool) ($params['aiEnabled'] ?? false);
+        $this->cre8PilotDebug['cre8ShieldAiMode'] = (string) ($params['aiMode'] ?? 'disabled');
+        $this->cre8PilotDebug['cre8ShieldAiModel'] = (string) ($params['aiModel'] ?? '');
+        $ec = $params['aiErrorCode'] ?? null;
+        $this->cre8PilotDebug['cre8ShieldAiErrorCode'] = ($ec !== null && $ec !== '')
+            ? preg_replace('/[^a-z0-9_\-]/i', '', (string) $ec)
+            : null;
+        $hs = $params['aiHttpStatus'] ?? null;
+        $this->cre8PilotDebug['cre8ShieldAiHttpStatus'] = ($hs !== null && (int) $hs > 0) ? (int) $hs : null;
+        $pv = $params['aiMessagePreview'] ?? null;
+        $this->cre8PilotDebug['cre8ShieldAiErrorMessagePreview'] = ($pv !== null && $pv !== '')
+            ? $this->sanitizeCre8PilotLlmScalar((string) $pv, 200)
+            : null;
+        $im = $params['aiInputMode'] ?? null;
+        $this->cre8PilotDebug['cre8ShieldAiInputMode'] = ($im !== null && $im !== '')
+            ? (string) $im
+            : null;
+        $this->cre8PilotDebug['cre8ShieldAiPayloadSanitized'] = !empty($params['aiPayloadSanitized']);
+    }
+
+    private function cre8ShieldAiDebugFromAttempt(?array $attempt): array
+    {
+        if (!is_array($attempt)) {
+            return ['http' => null, 'preview' => null];
+        }
+        $http = isset($attempt['httpStatus']) ? (int) $attempt['httpStatus'] : 0;
+
+        $preview = null;
+        $sp = $attempt['safeProviderErrorPreview'] ?? null;
+        if (is_string($sp) && trim($sp) !== '') {
+            $preview = $this->sanitizeCre8PilotLlmScalar($sp, 200);
+        }
+
+        return [
+            'http' => $http > 0 ? $http : null,
+            'preview' => $preview,
+        ];
+    }
+
+    private function getCre8ShieldAiSettings(): array
+    {
+        return [
+            'timeout' => max(2, min(30, (int) $this->cre8PilotEnv('CRE8SHIELD_TIMEOUT_SECONDS', '10'))),
+            'model' => (string) $this->cre8PilotEnv('CRE8SHIELD_MODEL', 'openai/gpt-oss-safeguard-20b'),
+            'provider' => strtolower((string) $this->cre8PilotEnv('CRE8SHIELD_PROVIDER', 'groq')),
+        ];
+    }
+
+    private function getCre8ShieldAiGroqProviderConfig(): array
+    {
+        $settings = $this->getCre8PilotLlmSettings();
+        $primary = $settings['primary'];
+        $shield = $this->getCre8ShieldAiSettings();
+
+        return [
+            'slot' => 'cre8shield_ai',
+            'provider' => 'groq',
+            'apiKey' => (string) ($primary['apiKey'] ?? ''),
+            'apiUrl' => (string) ($primary['apiUrl'] ?? 'https://api.groq.com/openai/v1/chat/completions'),
+            'model' => (string) ($shield['model'] ?? 'openai/gpt-oss-safeguard-20b'),
+            'keyPlaceholder' => (string) ($primary['keyPlaceholder'] ?? ''),
+        ];
+    }
+
+    private function cre8ShieldAiCategoryWhitelist(): array
+    {
+        return [
+            'sql_injection',
+            'xss',
+            'suspicious_link',
+            'phishing',
+            'privacy_access',
+            'dishonest_content',
+            'dishonest_portfolio',
+            'scam_social_engineering',
+            'unsafe_file_content',
+            'prompt_injection',
+            'safe',
+            'other',
+        ];
+    }
+
+    private function cre8ShieldNormalizeAiCategory($cat): string
+    {
+        $c = preg_replace('/[^a-z0-9_\-]/i', '', strtolower(trim((string) $cat)));
+
+        return in_array($c, $this->cre8ShieldAiCategoryWhitelist(), true) ? $c : '';
+    }
+
+    private function cre8ShieldRiskLevelRank($level): int
+    {
+        $level = strtolower((string) $level);
+
+        return match ($level) {
+            'high' => 2,
+            'medium' => 1,
+            default => 0,
+        };
+    }
+
+    private function cre8ShieldRiskLevelFromRank($rank): string
+    {
+        if ($rank >= 2) {
+            return 'high';
+        }
+        if ($rank === 1) {
+            return 'medium';
+        }
+
+        return 'low';
+    }
+
+    private function cre8ShieldAiScoreFloorForLevel($level): int
+    {
+        return match (strtolower((string) $level)) {
+            'high' => 88,
+            'medium' => 44,
+            default => 8,
+        };
+    }
+
+    private function cre8ShieldRulesRequireSanitizedAiInput(array $rulesAnalysis): bool
+    {
+        $cats = (array) ($rulesAnalysis['riskCategories'] ?? []);
+        foreach (['sql_injection', 'xss', 'privacy_access'] as $needle) {
+            if (in_array($needle, $cats, true)) {
+                return true;
+            }
+        }
+
+        return strtolower((string) ($rulesAnalysis['riskLevel'] ?? '')) === 'high';
+    }
+
+    private function cre8ShieldBuildMaskedPatternMarkers(array $rulesAnalysis): array
+    {
+        $markers = [];
+        $cats = (array) ($rulesAnalysis['riskCategories'] ?? []);
+        if (in_array('sql_injection', $cats, true)) {
+            $markers[] = '[SQLI_PATTERN_REDACTED]';
+        }
+        if (in_array('xss', $cats, true)) {
+            $markers[] = '[XSS_PATTERN_REDACTED]';
+        }
+        if (in_array('privacy_access', $cats, true)) {
+            $markers[] = '[PRIVACY_SENSITIVE_REDACTED]';
+        }
+        if ($markers === [] && strtolower((string) ($rulesAnalysis['riskLevel'] ?? '')) === 'high') {
+            $markers[] = '[HIGH_RISK_CONTENT_REDACTED]';
+        }
+
+        return array_values(array_unique($markers));
+    }
+
+    private function cre8ShieldBuildPolicyPrompt(array $rulesAnalysis, array $payload, array $context): array
+    {
+        $sanitized = !empty($context['aiPayloadSanitized'])
+            || (($context['aiInputMode'] ?? '') === 'sanitized_rule_summary');
+
+        $systemLines = [
+            'You are Cre8Shield, a defensive security reviewer for the Cre8Connect offer/candidature collaboration flow.',
+            'Scope: offers, candidatures, negotiation messages, portfolio/document links, uploaded document summaries, admin supervision of offers/candidatures, Cre8Pilot prompts/actions.',
+            'Do not discuss login/user CRUD/campaign modules unless directly present in the provided text.',
+            'Classify risk using only: low, medium, high.',
+            'Categories you may output (subset only, snake_case): sql_injection, xss, suspicious_link, phishing, privacy_access, dishonest_content, scam_social_engineering, unsafe_file_content, prompt_injection, safe.',
+            'Decision must be one of: allow, warn, block, human_review.',
+            'Rules: block offensive hacking/exploit generation; allow defensive analysis of suspicious inputs; never provide exploit steps or payload construction; never reveal private data or secrets; keep recommendations defensive only.',
+            'PHP rule engine already ran — you must NOT contradict it downward (if rules show sql_injection/xss/privacy_access, keep risk at least as high as rules).',
+            'Return a single JSON object only (no markdown fences) with exactly these keys: aiRiskLevel, aiDecision, aiCategories, aiFindings, aiRecommendations, aiRationale, confidence (0-1 float).',
+            'Arrays must be short strings only. aiRationale must be one short safe paragraph.',
+        ];
+        if ($sanitized) {
+            $systemLines[] = 'This turn uses a sanitized rule summary only: the raw user-supplied payload was analyzed locally by PHP and is not included. Rely on ruleEngine, maskedPatternMarkers, and observerNotes; add defensive aiFindings and aiRecommendations without quoting executable payloads.';
+        }
+        $system = implode("\n", $systemLines);
+
+        $ruleBlock = [
+            'riskLevel' => (string) ($rulesAnalysis['riskLevel'] ?? 'low'),
+            'riskScore' => (int) ($rulesAnalysis['riskScore'] ?? 0),
+            'riskCategories' => array_slice((array) ($rulesAnalysis['riskCategories'] ?? []), 0, 12),
+            'findings' => array_slice((array) ($rulesAnalysis['findings'] ?? []), 0, 10),
+            'safeRecommendations' => array_slice((array) ($rulesAnalysis['safeRecommendations'] ?? []), 0, 6),
+        ];
+
+        if ($sanitized) {
+            $userPayload = [
+                'task' => 'defensive_security_review',
+                'userIntentType' => 'defensive_security_check',
+                'aiInputMode' => 'sanitized_rule_summary',
+                'intent' => $this->sanitizeCre8PilotLlmScalar((string) ($payload['intent'] ?? ''), 64),
+                'page' => $this->sanitizeCre8PilotLlmScalar((string) ($context['page'] ?? ''), 80),
+                'mode' => $this->sanitizeCre8PilotLlmScalar((string) ($context['mode'] ?? ''), 80),
+                'role' => $this->sanitizeCre8PilotLlmScalar((string) ($context['role'] ?? ''), 40),
+                'observerNotes' => 'PHP rule engine scanned the full user-supplied text locally. Raw payload and exact suspicious strings are withheld from this model.',
+                'maskedPatternMarkers' => $this->cre8ShieldBuildMaskedPatternMarkers($rulesAnalysis),
+                'ruleEngine' => $ruleBlock,
+            ];
+        } else {
+            $preview = (string) ($context['textPreview'] ?? '');
+            $userPayload = [
+                'task' => 'defensive_security_review',
+                'userIntentType' => 'defensive_security_check',
+                'aiInputMode' => 'raw_safe_text',
+                'intent' => $this->sanitizeCre8PilotLlmScalar((string) ($payload['intent'] ?? ''), 64),
+                'page' => $this->sanitizeCre8PilotLlmScalar((string) ($context['page'] ?? ''), 80),
+                'mode' => $this->sanitizeCre8PilotLlmScalar((string) ($context['mode'] ?? ''), 80),
+                'role' => $this->sanitizeCre8PilotLlmScalar((string) ($context['role'] ?? ''), 40),
+                'userInstruction' => $this->sanitizeCre8PilotLlmScalar((string) ($payload['message'] ?? ''), 900),
+                'scannedTextPreview' => $this->sanitizeCre8PilotLlmScalar($preview, 2000),
+                'ruleEngine' => $ruleBlock,
+            ];
+        }
+
+        $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES;
+        if (defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
+            $jsonFlags |= JSON_INVALID_UTF8_SUBSTITUTE;
+        }
+        $userJson = json_encode($userPayload, $jsonFlags);
+        if ($userJson === false) {
+            $userJson = json_encode([
+                'task' => 'defensive_security_review',
+                'intent' => $this->sanitizeCre8PilotLlmScalar((string) ($payload['intent'] ?? ''), 64),
+                'encodeError' => true,
+                'ruleEngine' => $userPayload['ruleEngine'],
+            ], $jsonFlags);
+        }
+        if ($userJson === false) {
+            $userJson = '{"task":"defensive_security_review","encodeError":true}';
+        }
+
+        return [
+            ['role' => 'system', 'content' => $system],
+            ['role' => 'user', 'content' => $userJson],
+        ];
+    }
+
+    private function cre8ShieldParseAiReviewerJson($data): ?array
+    {
+        if (!is_array($data)) {
+            return null;
+        }
+        $level = strtolower(trim((string) ($data['aiRiskLevel'] ?? '')));
+        $decision = strtolower(trim((string) ($data['aiDecision'] ?? '')));
+        if (!in_array($level, ['low', 'medium', 'high'], true) || !in_array($decision, ['allow', 'warn', 'block', 'human_review'], true)) {
+            return null;
+        }
+        $cats = [];
+        foreach ((array) ($data['aiCategories'] ?? []) as $c) {
+            $n = $this->cre8ShieldNormalizeAiCategory($c);
+            if ($n !== '' && $n !== 'safe') {
+                $cats[] = $n;
+            }
+        }
+        $findings = [];
+        foreach ((array) ($data['aiFindings'] ?? []) as $f) {
+            $t = $this->sanitizeCre8PilotLlmScalar(trim((string) $f), 320);
+            if ($t !== '') {
+                $findings[] = $t;
+            }
+        }
+        $recs = [];
+        foreach ((array) ($data['aiRecommendations'] ?? []) as $r) {
+            $t = $this->sanitizeCre8PilotLlmScalar(trim((string) $r), 320);
+            if ($t !== '') {
+                $recs[] = $t;
+            }
+        }
+        $rationale = $this->sanitizeCre8PilotLlmScalar(trim((string) ($data['aiRationale'] ?? '')), 480);
+        $conf = $data['confidence'] ?? 0.0;
+        $conf = is_numeric($conf) ? (float) $conf : 0.0;
+        if ($conf < 0.0) {
+            $conf = 0.0;
+        }
+        if ($conf > 1.0) {
+            $conf = 1.0;
+        }
+
+        return [
+            'aiRiskLevel' => $level,
+            'aiDecision' => $decision,
+            'aiCategories' => array_slice(array_values(array_unique($cats)), 0, 12),
+            'aiFindings' => array_slice($findings, 0, 10),
+            'aiRecommendations' => array_slice($recs, 0, 8),
+            'aiRationale' => $rationale,
+            'confidence' => $conf,
+        ];
+    }
+
+    private function cre8ShieldMergeRulesAndAi(array $rulesAnalysis, array $aiReview): array
+    {
+        $ruleLevel = strtolower((string) ($rulesAnalysis['riskLevel'] ?? 'low'));
+        $aiLevel = strtolower((string) ($aiReview['aiRiskLevel'] ?? 'low'));
+        $rank = max($this->cre8ShieldRiskLevelRank($ruleLevel), $this->cre8ShieldRiskLevelRank($aiLevel));
+        $strictCats = ['sql_injection', 'xss', 'privacy_access'];
+        $ruleCats = (array) ($rulesAnalysis['riskCategories'] ?? []);
+        foreach ($strictCats as $sc) {
+            if (in_array($sc, $ruleCats, true) && $rank < 2) {
+                $rank = max($rank, 1);
+            }
+        }
+        $finalLevel = $this->cre8ShieldRiskLevelFromRank($rank);
+        $ruleScore = (int) ($rulesAnalysis['riskScore'] ?? 0);
+        $aiFloor = $this->cre8ShieldAiScoreFloorForLevel($aiLevel);
+        $levelFloor = $this->cre8ShieldAiScoreFloorForLevel($finalLevel);
+        $finalScore = max($ruleScore, $aiFloor, $levelFloor);
+        if ($finalLevel === 'high') {
+            $finalScore = max($finalScore, 72);
+        }
+        $finalScore = max(0, min(100, $finalScore));
+
+        $mergedCats = [];
+        foreach ($ruleCats as $c) {
+            $n = $this->cre8ShieldNormalizeAiCategory($c);
+            if ($n !== '' && $n !== 'safe') {
+                $mergedCats[$n] = true;
+            }
+        }
+        foreach ((array) ($aiReview['aiCategories'] ?? []) as $c) {
+            $n = $this->cre8ShieldNormalizeAiCategory($c);
+            if ($n !== '' && $n !== 'safe') {
+                $mergedCats[$n] = true;
+            }
+        }
+        if (empty($mergedCats) && $finalLevel === 'low') {
+            $mergedList = [];
+        } else {
+            $mergedList = array_slice(array_keys($mergedCats), 0, 12);
+        }
+
+        $findings = [];
+        foreach ((array) ($rulesAnalysis['findings'] ?? []) as $f) {
+            $findings[] = (string) $f;
+        }
+        foreach ((array) ($aiReview['aiFindings'] ?? []) as $f) {
+            $t = trim((string) $f);
+            if ($t === '') {
+                continue;
+            }
+            $dup = false;
+            foreach ($findings as $existing) {
+                if (strcasecmp($t, trim((string) $existing)) === 0) {
+                    $dup = true;
+                    break;
+                }
+            }
+            if (!$dup) {
+                $findings[] = $t;
+            }
+        }
+        $findings = array_slice($findings, 0, 14);
+
+        $recs = [];
+        foreach ((array) ($rulesAnalysis['safeRecommendations'] ?? []) as $r) {
+            $recs[] = (string) $r;
+        }
+        foreach ((array) ($aiReview['aiRecommendations'] ?? []) as $r) {
+            $t = trim((string) $r);
+            if ($t === '') {
+                continue;
+            }
+            $dup = false;
+            foreach ($recs as $existing) {
+                if (strcasecmp($t, trim((string) $existing)) === 0) {
+                    $dup = true;
+                    break;
+                }
+            }
+            if (!$dup) {
+                $recs[] = $t;
+            }
+        }
+        $recs = array_slice($recs, 0, 8);
+
+        return [
+            'riskLevel' => $finalLevel,
+            'riskScore' => $finalScore,
+            'riskCategories' => $mergedList,
+            'findings' => $findings,
+            'safeRecommendations' => $recs,
+            'aiReviewed' => true,
+            'aiDecision' => (string) ($aiReview['aiDecision'] ?? 'warn'),
+            'aiRationale' => (string) ($aiReview['aiRationale'] ?? ''),
+            'confidence' => (float) ($aiReview['confidence'] ?? 0.0),
+        ];
+    }
+
+    private function cre8ShieldMapProviderErrorToAiMode($errorCode): string
+    {
+        $e = (string) $errorCode;
+
+        return match ($e) {
+            'rate_limited' => 'rate_limited',
+            'missing_key' => 'missing_key',
+            'invalid_llm_json' => 'invalid_json',
+            'curl_missing' => 'api_error',
+            default => 'api_error',
+        };
+    }
+
+    private function cre8ShieldCallAiReviewer(array $rulesAnalysis, array $payload, array $context): array
+    {
+        $provider = $this->getCre8ShieldAiGroqProviderConfig();
+        $shield = $this->getCre8ShieldAiSettings();
+        $aiInputMode = (string) ($context['aiInputMode'] ?? 'raw_safe_text');
+        $aiPayloadSanitized = !empty($context['aiPayloadSanitized']);
+        $messages = $this->cre8ShieldBuildPolicyPrompt($rulesAnalysis, $payload, $context);
+        $result = $this->callCre8PilotProvider($provider, $messages, [
+            'timeout' => (int) $shield['timeout'],
+            'max_tokens' => 520,
+            'retry_plain_json_on_http_400' => true,
+        ]);
+        if (empty($result['ok'])) {
+            $mode = $this->cre8ShieldMapProviderErrorToAiMode((string) ($result['error'] ?? 'api_error'));
+
+            return [
+                'ok' => false,
+                'review' => null,
+                'mode' => $mode,
+                'attempt' => $result['attempt'] ?? null,
+                'aiInputMode' => $aiInputMode,
+                'aiPayloadSanitized' => $aiPayloadSanitized,
+            ];
+        }
+        $parsed = $this->cre8ShieldParseAiReviewerJson($result['data'] ?? null);
+        if ($parsed === null) {
+            return [
+                'ok' => false,
+                'review' => null,
+                'mode' => 'invalid_json',
+                'attempt' => $result['attempt'] ?? null,
+                'aiInputMode' => $aiInputMode,
+                'aiPayloadSanitized' => $aiPayloadSanitized,
+            ];
+        }
+
+        return [
+            'ok' => true,
+            'review' => $parsed,
+            'mode' => 'success',
+            'attempt' => $result['attempt'] ?? null,
+            'aiInputMode' => $aiInputMode,
+            'aiPayloadSanitized' => $aiPayloadSanitized,
+        ];
+    }
+
+    private function cre8ShieldBuildSecurityResponse(array $analysis, array $payload, array $context): array
+    {
+        $level = strtolower((string) ($analysis['riskLevel'] ?? 'low'));
+        $score = (int) ($analysis['riskScore'] ?? 0);
+        $usedAi = !empty($analysis['aiReviewed']);
+        $prefix = $usedAi ? 'Cre8Shield (rules + AI): ' : 'Cre8Shield (rules): ';
+        $summary = $prefix . 'risk ' . ucfirst($level) . ' (score ' . $score . '/100). ';
+        if (!empty($analysis['findings'])) {
+            $summary .= 'Notable signals were detected—see the card below for details.';
+        } else {
+            $summary .= 'No strong malicious patterns were detected in the scanned text; still apply normal caution.';
+        }
+        $note = trim((string) ($context['aiUnavailableNote'] ?? ''));
+        if ($note !== '') {
+            $summary .= ' ' . $note;
+        }
+
+        $clientInput = [
+            'riskLevel' => $level,
+            'riskScore' => $score,
+            'riskCategories' => $analysis['riskCategories'] ?? [],
+            'findings' => $analysis['findings'] ?? [],
+            'safeRecommendations' => $analysis['safeRecommendations'] ?? [],
+        ];
+        if ($usedAi) {
+            $clientInput['aiReviewed'] = true;
+            $clientInput['aiDecision'] = (string) ($analysis['aiDecision'] ?? 'warn');
+            $clientInput['aiRationale'] = (string) ($analysis['aiRationale'] ?? '');
+            $clientInput['confidence'] = (float) ($analysis['confidence'] ?? 0.0);
+        }
+        $client = $this->cre8ShieldSanitizeClientSecurityBlock($clientInput);
+
+        return [
+            'summaryMessage' => $summary,
+            'client' => $client,
+        ];
+    }
+
+    private function handleCre8ShieldCre8PilotRequest(string $intent, string $message, array $visibleData): array
+    {
+        $raw = (string) $message;
+        $bundleText = '';
+        $shieldModel = (string) $this->cre8PilotEnv('CRE8SHIELD_MODEL', 'openai/gpt-oss-safeguard-20b');
+        $aiEnabledFlag = $this->cre8ShieldAiEnabled();
+
+        if ($intent === 'security_check_link') {
+            $bundleText = $raw;
+        } elseif ($intent === 'security_check_message') {
+            if (preg_match('/check\s+this\s+(?:input|message|content)\s*:\s*(.+)/is', $raw, $m)) {
+                $bundleText = trim((string) ($m[1] ?? ''));
+            } else {
+                $bundleText = $raw;
+            }
+        } elseif ($intent === 'security_explain_risk') {
+            $bundleText = trim($raw . "\n" . $this->cre8ShieldCollectVisibleText($visibleData));
+        } else {
+            $bundleText = $this->cre8ShieldCollectVisibleText($visibleData);
+            if ($bundleText === '' || strlen($bundleText) < 16) {
+                $this->stampCre8ShieldResponseDebug([
+                    'used' => false,
+                    'mode' => 'rules',
+                    'aiEnabled' => $aiEnabledFlag,
+                    'aiMode' => 'disabled',
+                    'aiModel' => $shieldModel,
+                    'aiErrorCode' => null,
+                    'aiHttpStatus' => null,
+                    'aiMessagePreview' => null,
+                    'aiInputMode' => null,
+                    'aiPayloadSanitized' => false,
+                ]);
+
+                return $this->buildCre8PilotResponse(
+                    'need_clarification',
+                    'security_check_page',
+                    'What do you want me to check: a message, a link, a candidature, a negotiation, or the current page?',
+                    [],
+                    0.74,
+                    'confused',
+                    [
+                        'type' => 'choose_one',
+                        'options' => [
+                            ['id' => 'security_check_message', 'label' => 'A message or pasted input'],
+                            ['id' => 'security_check_link', 'label' => 'A link or URL'],
+                            ['id' => 'security_check_page', 'label' => 'The current page/context'],
+                        ],
+                    ],
+                    false
+                );
+            }
+        }
+
+        $guardText = $this->normalizeCre8PilotMessage($bundleText);
+        if ($this->detectCre8PilotGlobalGuard($guardText, $raw) === 'blocked_request') {
+            $this->stampCre8ShieldResponseDebug([
+                'used' => false,
+                'mode' => 'rules',
+                'aiEnabled' => $aiEnabledFlag,
+                'aiMode' => 'disabled',
+                'aiModel' => $shieldModel,
+                'aiErrorCode' => null,
+                'aiHttpStatus' => null,
+                'aiMessagePreview' => null,
+                'aiInputMode' => null,
+                'aiPayloadSanitized' => false,
+            ]);
+
+            return $this->buildCre8PilotResponse(
+                'blocked',
+                'blocked_request',
+                'I cannot run a security check on that text because it appears to request unsafe, privacy-breaking, or exploit-oriented behavior. I only provide defensive guidance.',
+                [],
+                0.97,
+                'error'
+            );
+        }
+
+        $page = (string) ($visibleData['page'] ?? 'unknown');
+        $mode = (string) ($visibleData['mode'] ?? '');
+        $role = (string) ($visibleData['role'] ?? '');
+        $context = [
+            'page' => $page,
+            'mode' => $mode,
+            'role' => $role,
+            'textPreview' => substr($bundleText, 0, 2400),
+        ];
+        $payload = ['message' => $message, 'intent' => $intent];
+
+        $rulesAnalysis = $this->cre8ShieldAnalyzeText($bundleText, ['intent' => $intent, 'page' => $page]);
+
+        $aiPayloadSanitized = $this->cre8ShieldRulesRequireSanitizedAiInput($rulesAnalysis);
+        $context['aiPayloadSanitized'] = $aiPayloadSanitized;
+        $context['aiInputMode'] = $aiPayloadSanitized ? 'sanitized_rule_summary' : 'raw_safe_text';
+        if ($aiPayloadSanitized) {
+            $context['textPreview'] = '';
+        }
+
+        $normalizedUser = $this->normalizeCre8PilotMessage($raw);
+        $defensiveOk = $this->cre8ShieldQualifiesForDefensiveAiReview($intent, $raw, $normalizedUser);
+        $missingGroqKey = $this->cre8PilotApiKeyMissing($this->getCre8ShieldAiGroqProviderConfig());
+        $lenOk = strlen($bundleText) <= 8000;
+        $attemptAi = $aiEnabledFlag && !$missingGroqKey && $lenOk && $defensiveOk;
+
+        $aiUnavailableNote = '';
+        $analysis = $rulesAnalysis;
+        $finalShieldMode = 'rules';
+        $aiMode = 'disabled';
+        $aiErrorCode = null;
+        $stampHttp = null;
+        $stampPreview = null;
+        $stampAiInputMode = $attemptAi ? (string) ($context['aiInputMode'] ?? '') : null;
+        $stampAiPayloadSanitized = $attemptAi && $aiPayloadSanitized;
+
+        if (!$aiEnabledFlag) {
+            $aiMode = 'disabled';
+            $aiErrorCode = null;
+        } elseif ($missingGroqKey) {
+            $aiMode = 'missing_key';
+            $aiUnavailableNote = 'Cre8Shield completed a rule-based check. AI review is currently unavailable.';
+            $aiErrorCode = 'missing_key';
+        } elseif (!$lenOk) {
+            $aiMode = 'disabled';
+            $aiErrorCode = 'payload_too_large';
+        } elseif (!$defensiveOk) {
+            $aiMode = 'disabled';
+            $aiErrorCode = 'not_defensive_request';
+        } elseif ($attemptAi) {
+            $aiResult = $this->cre8ShieldCallAiReviewer($rulesAnalysis, $payload, $context);
+            $stampAiInputMode = (string) ($aiResult['aiInputMode'] ?? $context['aiInputMode'] ?? '');
+            $stampAiPayloadSanitized = !empty($aiResult['aiPayloadSanitized']);
+            if (!empty($aiResult['ok']) && is_array($aiResult['review'] ?? null)) {
+                $analysis = $this->cre8ShieldMergeRulesAndAi($rulesAnalysis, $aiResult['review']);
+                $finalShieldMode = 'rules_plus_ai';
+                $aiMode = 'success';
+                $aiErrorCode = null;
+                $dbg = $this->cre8ShieldAiDebugFromAttempt(is_array($aiResult['attempt'] ?? null) ? $aiResult['attempt'] : null);
+                $stampHttp = $dbg['http'];
+                $stampPreview = null;
+            } else {
+                $aiMode = (string) ($aiResult['mode'] ?? 'api_error');
+                $aiUnavailableNote = 'Cre8Shield completed a rule-based check. AI review is currently unavailable.';
+                $att = $aiResult['attempt'] ?? null;
+                $aiErrorCode = is_array($att) ? ($att['errorCode'] ?? $aiMode) : $aiMode;
+                $dbg = $this->cre8ShieldAiDebugFromAttempt(is_array($att) ? $att : null);
+                $stampHttp = $dbg['http'];
+                $stampPreview = $dbg['preview'];
+            }
+        }
+
+        $this->stampCre8ShieldResponseDebug([
+            'used' => true,
+            'mode' => $finalShieldMode,
+            'aiEnabled' => $aiEnabledFlag,
+            'aiMode' => $aiMode,
+            'aiModel' => $shieldModel,
+            'aiErrorCode' => $aiErrorCode,
+            'aiHttpStatus' => $stampHttp,
+            'aiMessagePreview' => $stampPreview,
+            'aiInputMode' => $stampAiInputMode !== '' ? $stampAiInputMode : null,
+            'aiPayloadSanitized' => $stampAiPayloadSanitized,
+        ]);
+
+        $built = $this->cre8ShieldBuildSecurityResponse($analysis, $payload, array_merge($context, ['aiUnavailableNote' => $aiUnavailableNote]));
+        $level = strtolower((string) ($analysis['riskLevel'] ?? 'low'));
+        $avatar = $level === 'high' ? 'warning' : ($level === 'medium' ? 'warning' : 'success');
+
+        return $this->buildCre8PilotResponse(
+            'ok',
+            $intent,
+            $built['summaryMessage'],
+            [],
+            0.86,
+            $avatar,
+            null,
+            false,
+            ['security' => $built['client']]
+        );
     }
 
     private function buildCre8PilotVisibleSummary($page, array $visibleData)
@@ -3141,7 +4361,7 @@ class CondidatureC
 
         $normalizedMessage = $this->normalizeCre8PilotMessage($message);
         $messageLower = trim($normalizedMessage . ' ' . $this->normalizeCre8PilotMessage(str_replace('_', ' ', $selectedClarificationId)));
-        $globalIntent = $this->detectCre8PilotGlobalGuard($messageLower);
+        $globalIntent = $this->detectCre8PilotGlobalGuard($messageLower, $message);
         $intent = $globalIntent !== '' ? $globalIntent : $this->detectCre8PilotIntentMock($message, $page, $mode, $allowedActions, $selectedClarificationId);
         if ($intent === 'blocked_request') {
             $policy = ['allowed' => false, 'reason' => 'blocked_security_or_privacy'];
@@ -3882,8 +5102,12 @@ class CondidatureC
             }
         }
 
-        if (in_array($intent, ['explain_statistics', 'detect_risky_items', 'recommend_admin_actions', 'security_check'], true)
-            || $this->messageContainsAny($messageLower, ['explain statistics', 'summarize activity', 'detect risky items', 'recommend admin actions', 'check risk'])
+        if ($this->cre8ShieldIsSecurityIntent($intent)) {
+            return $this->handleCre8ShieldCre8PilotRequest($intent, $message, $visibleData);
+        }
+
+        if (in_array($intent, ['explain_statistics', 'detect_risky_items', 'recommend_admin_actions'], true)
+            || $this->messageContainsAny($messageLower, ['explain statistics', 'summarize activity', 'detect risky items', 'recommend admin actions'])
         ) {
             return $this->buildCre8PilotResponse(
                 'ok',
