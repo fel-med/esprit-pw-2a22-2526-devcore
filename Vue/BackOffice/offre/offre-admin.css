@@ -3597,6 +3597,95 @@ dialog.delete-dialog {
   color: var(--text-color);
 }
 
+/* Cre8Pilot V24.2 — trained match model recommendations */
+.cre8pilot-match-card {
+  max-width: 100%;
+  align-self: stretch;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.85rem;
+  background: linear-gradient(135deg, rgba(30, 48, 243, 0.06), rgba(108, 92, 231, 0.08));
+  border: 1px solid rgba(30, 48, 243, 0.22);
+}
+
+.cre8pilot-match-card-head {
+  margin-bottom: 0.45rem;
+}
+
+.cre8pilot-match-card-title {
+  font-size: 0.78rem;
+  font-weight: 900;
+  color: var(--text-color);
+}
+
+.cre8pilot-match-row {
+  padding: 0.45rem 0;
+  border-top: 1px solid var(--border-color);
+}
+
+.cre8pilot-match-row:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.cre8pilot-match-row-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+}
+
+.cre8pilot-match-name {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--text-color);
+  margin-right: auto;
+  min-width: 0;
+}
+
+.cre8pilot-match-score-badge {
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(30, 48, 243, 0.12);
+  color: var(--primary-color-strong);
+  border: 1px solid rgba(30, 48, 243, 0.28);
+}
+
+.cre8pilot-match-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+}
+
+.cre8pilot-match-label--strong {
+  background: rgba(74, 222, 128, 0.18);
+  color: #15803d;
+  border-color: rgba(74, 222, 128, 0.45);
+}
+
+.cre8pilot-match-label--medium {
+  background: rgba(251, 191, 36, 0.2);
+  color: #a16207;
+  border-color: rgba(251, 191, 36, 0.45);
+}
+
+.cre8pilot-match-label--weak {
+  background: rgba(148, 163, 184, 0.22);
+  color: #475569;
+  border-color: rgba(148, 163, 184, 0.45);
+}
+
+.cre8pilot-match-reasons {
+  margin: 0.35rem 0 0;
+  padding-left: 1.05rem;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  color: var(--muted-text);
+}
+
 .cre8pilot-option-list {
   display: flex;
   flex-wrap: wrap;

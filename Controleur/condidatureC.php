@@ -1585,6 +1585,10 @@ class CondidatureC
             $response['security'] = $this->cre8ShieldSanitizeClientSecurityBlock($extras['security']);
         }
 
+        if (isset($extras['matchModel']) && is_array($extras['matchModel'])) {
+            $response['matchModel'] = $this->sanitizeCre8PilotMatchModelClient($extras['matchModel']);
+        }
+
         if (!empty($this->cre8PilotDebug)) {
             $this->cre8PilotDebug['finalIntent'] = $intent;
             if (!empty($actions)) {
@@ -1629,6 +1633,9 @@ class CondidatureC
             'fill_offer_form',
             'fill_candidature_form',
             'recommend_creator',
+            'recommend_creators_with_model',
+            'rank_creators_for_offer',
+            'explain_creator_match_score',
             'suggest_budget',
             'suggest_budget_delay',
             'improve_offer_text',
@@ -1692,6 +1699,1333 @@ class CondidatureC
         $message = preg_replace('/\s+/', ' ', (string) $message);
 
         return trim((string) $message);
+    }
+
+    private function cre8PilotMatchModelPath(): string
+    {
+        return dirname(__DIR__) . DIRECTORY_SEPARATOR . 'ai_recommendation' . DIRECTORY_SEPARATOR . 'models' . DIRECTORY_SEPARATOR . 'creator_match_model.json';
+    }
+
+    private function cre8PilotLoadCreatorMatchModel(): ?array
+    {
+        $path = $this->cre8PilotMatchModelPath();
+        if (!is_readable($path)) {
+            return null;
+        }
+        $raw = @file_get_contents($path);
+        if ($raw === false || $raw === '') {
+            return null;
+        }
+        $data = json_decode($raw, true);
+        if (!is_array($data) || !isset($data['weights'], $data['intercept'], $data['features']) || !is_array($data['features'])) {
+            return null;
+        }
+        if (!is_array($data['weights'])) {
+            return null;
+        }
+
+        return $data;
+    }
+
+    private function cre8PilotSigmoid(float $x): float
+    {
+        if ($x < -40.0) {
+            return 0.0;
+        }
+        if ($x > 40.0) {
+            return 1.0;
+        }
+
+        return 1.0 / (1.0 + exp(-$x));
+    }
+
+    private function cre8PilotParseBudgetAmount(?string $text): ?float
+    {
+        if ($text === null || trim((string) $text) === '') {
+            return null;
+        }
+        $s = preg_replace('/[^\d,.]/', '', (string) $text);
+        $s = str_replace(',', '.', $s);
+        if ($s === '' || !is_numeric($s)) {
+            return null;
+        }
+        $v = (float) $s;
+
+        return $v > 0 ? $v : null;
+    }
+
+    private function cre8PilotMatchStopwordMap(): array
+    {
+        static $map = null;
+        if ($map !== null) {
+            return $map;
+        }
+        $words = [
+            'the', 'and', 'for', 'you', 'your', 'with', 'this', 'that', 'are', 'from', 'have', 'has', 'had', 'was', 'were',
+            'been', 'being', 'their', 'there', 'here', 'about', 'into', 'onto', 'over', 'under', 'after', 'before', 'when',
+            'what', 'which', 'while', 'where', 'will', 'would', 'could', 'should', 'must', 'might', 'may', 'can', 'not',
+            'but', 'our', 'out', 'all', 'any', 'each', 'some', 'such', 'than', 'then', 'them', 'they', 'its', 'also',
+            'more', 'most', 'other', 'only', 'same', 'just', 'like', 'how', 'who', 'why', 'way', 'new', 'one', 'two',
+            'get', 'got', 'use', 'using', 'used', 'make', 'made', 'work', 'need', 'want', 'help', 'please', 'very',
+            'une', 'des', 'les', 'pour', 'dans', 'vous', 'notre', 'votre', 'avec', 'sans', 'sont', 'est', 'ces', 'sur',
+            'par', 'qui', 'aux', 'nous', 'plus', 'tout', 'tous', 'bien', 'chez', 'entre', 'comme', 'aussi', 'cette',
+        ];
+        $map = [];
+        foreach ($words as $w) {
+            $map[$w] = true;
+        }
+
+        return $map;
+    }
+
+    private function cre8PilotExtractMeaningfulTokens(string $text): array
+    {
+        $norm = $this->normalizeCre8PilotMessage($text);
+        $stop = $this->cre8PilotMatchStopwordMap();
+        $words = preg_split('/\s+/u', $norm, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $out = [];
+        foreach ($words as $w) {
+            if (strlen((string) $w) < 3) {
+                continue;
+            }
+            if (isset($stop[$w])) {
+                continue;
+            }
+            $out[$w] = true;
+        }
+
+        return array_keys($out);
+    }
+
+    private function cre8PilotTextSimilarityScore(string $offerBlob, string $creatorBlob, string $creatorName): float
+    {
+        $a = $this->cre8PilotExtractMeaningfulTokens($offerBlob);
+        $b = $this->cre8PilotExtractMeaningfulTokens($creatorBlob . ' ' . $creatorName);
+        $setA = array_flip($a);
+        $inter = 0;
+        foreach ($b as $t) {
+            if (isset($setA[$t])) {
+                $inter++;
+            }
+        }
+        $union = count(array_unique(array_merge($a, $b)));
+        if ($union === 0) {
+            return 0.4;
+        }
+        $jaccard = $inter / max(1, $union);
+        $dice = (2.0 * $inter) / max(1, count($a) + count($b));
+        $base = max(0.0, min(1.0, 0.55 * $jaccard + 0.45 * $dice));
+        $nameBoost = 0.0;
+        foreach (preg_split('/\s+/u', $this->normalizeCre8PilotMessage($creatorName), -1, PREG_SPLIT_NO_EMPTY) ?: [] as $tok) {
+            if (strlen((string) $tok) >= 4 && str_contains($this->normalizeCre8PilotMessage($offerBlob), (string) $tok)) {
+                $nameBoost += 0.06;
+            }
+        }
+        $nameBoost = min(0.18, $nameBoost);
+
+        return max(0.0, min(1.0, $base + $nameBoost));
+    }
+
+    private function cre8PilotMatchBlobFromOffer(array $offerData): string
+    {
+        return strtolower(trim(implode(' ', [
+            (string) ($offerData['titre'] ?? ''),
+            (string) ($offerData['description'] ?? ''),
+            (string) ($offerData['objectif'] ?? ''),
+            (string) ($offerData['category'] ?? ''),
+            (string) ($offerData['raisonChoix'] ?? ''),
+            (string) ($offerData['attenteCollaboration'] ?? ''),
+            (string) ($offerData['messagePersonnalise'] ?? ''),
+            (string) ($offerData['selectedCreatorSummary'] ?? ''),
+        ])));
+    }
+
+    private function cre8PilotMatchBlobFromCreator(array $creatorData): string
+    {
+        return strtolower(trim(implode(' ', [
+            (string) ($creatorData['name'] ?? ''),
+            (string) ($creatorData['details'] ?? ''),
+            (string) ($creatorData['bio'] ?? ''),
+            (string) ($creatorData['niche'] ?? ''),
+            (string) ($creatorData['category'] ?? ''),
+            (string) ($creatorData['portfolio'] ?? ''),
+            (string) ($creatorData['postsSample'] ?? ''),
+            (string) ($creatorData['motivationSample'] ?? ''),
+            (string) ($creatorData['negotiationSample'] ?? ''),
+        ])));
+    }
+
+    private function cre8PilotMatchClusterHits(string $blob): array
+    {
+        $clusters = [
+            'beauty' => ['beauty', 'skincare', 'skin care', 'cosmetic', 'makeup', 'shampoo', 'conditioner', 'hair care', 'fragrance', 'parfum', 'spa', 'wellness', 'hydra', 'serum', 'moistur'],
+            'product' => ['product', 'brand', 'ugc', 'promotion', 'campaign', 'launch', 'commercial', 'advertising', 'sponsor', 'collab', 'influencer marketing'],
+            'lifestyle' => ['lifestyle', 'vlog', 'daily', 'routine', 'creator', 'influencer', 'family', 'mom', 'parent'],
+            'travel' => ['travel', 'trip', 'hotel', 'flight', 'tourism', 'destination', 'vacation'],
+            'photo' => ['photo', 'photography', 'photographer', 'shoot', 'portrait', 'studio', 'camera', 'lens', 'editorial', 'visual'],
+            'video' => ['video', 'motion', 'reel', 'film', 'animation', 'editing', 'premiere', 'after effects'],
+            'design' => ['design', 'graphic', 'logo', 'branding', 'illustration', 'ui', 'ux'],
+            'gaming' => ['gaming', 'gamer', 'esport', 'esports', 'stream', 'twitch', 'gameplay', 'fortnite', 'minecraft', 'headset', 'controller', 'rgb'],
+            'tech' => ['tech', 'gadget', 'software', 'developer', 'coding', 'app', 'saas', 'startup', 'ai', 'hardware', 'unboxing', 'review', 'device'],
+            'diy' => ['diy', 'craft', 'handmade', 'woodwork', 'tutorial', 'maker', 'home decor', 'renovation'],
+            'music' => ['music', 'audio', 'sound', 'podcast', 'dj', 'beat'],
+            'writing' => ['writing', 'copy', 'script', 'blog', 'newsletter', 'seo'],
+        ];
+        $hits = [];
+        foreach ($clusters as $id => $keys) {
+            $c = 0;
+            foreach ($keys as $k) {
+                if ($k !== '' && str_contains($blob, $k)) {
+                    $c++;
+                }
+            }
+            if ($c > 0) {
+                $hits[$id] = $c;
+            }
+        }
+
+        return $hits;
+    }
+
+    private function cre8PilotCreatorVerticalSignals(array $ch, string $creatorBlob, string $name): array
+    {
+        $norm = strtolower(trim($name . ' ' . $creatorBlob));
+
+        return [
+            'beauty' => isset($ch['beauty']) || str_contains($norm, 'beauty') || str_contains($norm, 'skincare'),
+            'lifestyle' => isset($ch['lifestyle']) || str_contains($norm, 'lifestyle'),
+            'photo' => isset($ch['photo']) || str_contains($norm, 'photograph') || str_contains($norm, 'photo'),
+            'video' => isset($ch['video']) || str_contains($norm, 'video') || str_contains($norm, 'motion'),
+            'design' => isset($ch['design']) || str_contains($norm, 'design'),
+            'tech' => isset($ch['tech']) || str_contains($norm, 'tech') || str_contains($norm, 'gadget') || str_contains($norm, 'developer'),
+            'gaming' => isset($ch['gaming']) || str_contains($norm, 'gaming') || str_contains($norm, 'esport') || str_contains($norm, 'stream'),
+            'diy' => isset($ch['diy']) || str_contains($norm, 'diy') || str_contains($norm, 'craft'),
+            'travel' => isset($ch['travel']) || str_contains($norm, 'travel'),
+        ];
+    }
+
+    private function cre8PilotDetectOfferPrimaryVertical(string $offerBlob): string
+    {
+        $scores = [
+            'beauty' => 0,
+            'tech' => 0,
+            'gaming' => 0,
+            'travel_lifestyle' => 0,
+            'diy' => 0,
+        ];
+        $kw = [
+            'beauty' => ['beauty', 'skincare', 'shampoo', 'cosmetic', 'makeup', 'hair care', 'fragrance', 'hydra', 'wellness', 'spa', 'serum', 'skin'],
+            'tech' => ['tech', 'gadget', 'software', 'app', 'saas', 'hardware', 'developer', 'coding', 'device', 'smartphone', 'laptop'],
+            'gaming' => ['gaming', 'gamer', 'esport', 'esports', 'headset', 'controller', 'rgb', 'stream', 'twitch', 'gameplay'],
+            'travel_lifestyle' => ['travel', 'trip', 'hotel', 'flight', 'tourism', 'vacation', 'family', 'lifestyle', 'vlog'],
+            'diy' => ['diy', 'craft', 'handmade', 'woodwork', 'maker', 'home decor', 'renovation'],
+        ];
+        foreach ($kw as $id => $keys) {
+            foreach ($keys as $k) {
+                if ($k !== '' && str_contains($offerBlob, $k)) {
+                    $scores[$id]++;
+                }
+            }
+        }
+        arsort($scores);
+        $best = array_key_first($scores);
+        $bestScore = $scores[$best] ?? 0;
+        if ($bestScore < 1) {
+            return 'unknown';
+        }
+        $secondScore = 0;
+        $i = 0;
+        foreach ($scores as $v) {
+            if ($i === 1) {
+                $secondScore = $v;
+                break;
+            }
+            $i++;
+        }
+        if ($best === 'tech' && ($scores['gaming'] ?? 0) >= $bestScore && str_contains($offerBlob, 'headset')) {
+            return 'gaming';
+        }
+        if ($best === 'gaming' && ($scores['tech'] ?? 0) > 0 && $bestScore <= ($scores['tech'] ?? 0)) {
+            return 'gaming';
+        }
+        if ($bestScore === $secondScore && $secondScore > 0 && $best === 'beauty' && ($scores['travel_lifestyle'] ?? 0) >= $bestScore) {
+            return 'travel_lifestyle';
+        }
+
+        return (string) $best;
+    }
+
+    private function cre8PilotCategoryUnknownOverlapScore(array $oh, array $ch, string $offerBlob, string $creatorBlob, array $creatorData): float
+    {
+        foreach (array_keys($oh) as $k) {
+            if (isset($ch[$k])) {
+                $sum = min((int) ($oh[$k] ?? 0), 3) + min((int) ($ch[$k] ?? 0), 3);
+
+                return $sum >= 3 ? 1.0 : 0.75;
+            }
+        }
+        if (isset($oh['gaming']) && isset($ch['beauty']) && !isset($ch['gaming'])) {
+            return 0.1;
+        }
+        if (isset($oh['beauty']) && isset($ch['gaming']) && !isset($ch['beauty'])) {
+            return 0.1;
+        }
+        $sim = $this->cre8PilotTextSimilarityScore($offerBlob, $creatorBlob, (string) ($creatorData['name'] ?? ''));
+
+        return $sim >= 0.38 ? 0.45 : 0.35;
+    }
+
+    private function cre8PilotCategoryMatchForVertical(string $vertical, string $offerBlob, array $s): float
+    {
+        switch ($vertical) {
+            case 'beauty':
+                if ($s['beauty']) {
+                    return 1.0;
+                }
+                if ($s['lifestyle']) {
+                    return 0.75;
+                }
+                if ($s['photo'] || $s['video'] || $s['design']) {
+                    return 0.45;
+                }
+                if ($s['diy']) {
+                    return 0.45;
+                }
+                if ($s['tech'] && (str_contains($offerBlob, 'review') || str_contains($offerBlob, 'unboxing') || str_contains($offerBlob, 'device'))) {
+                    return 0.45;
+                }
+                if ($s['tech']) {
+                    return 0.1;
+                }
+                if ($s['gaming']) {
+                    return 0.1;
+                }
+
+                return 0.35;
+            case 'tech':
+                if ($s['tech']) {
+                    return 1.0;
+                }
+                if ($s['gaming']) {
+                    return str_contains($offerBlob, 'gaming') || str_contains($offerBlob, 'headset') || str_contains($offerBlob, 'esport') ? 0.75 : 0.45;
+                }
+                if ($s['photo'] || $s['video']) {
+                    return 0.45;
+                }
+                if ($s['lifestyle'] || $s['beauty']) {
+                    return str_contains($offerBlob, 'lifestyle') && str_contains($offerBlob, 'tech') ? 0.45 : 0.1;
+                }
+                if ($s['diy']) {
+                    return 0.35;
+                }
+
+                return 0.35;
+            case 'gaming':
+                if ($s['gaming']) {
+                    return 1.0;
+                }
+                if ($s['tech']) {
+                    return 0.75;
+                }
+                if ($s['photo'] || $s['video'] || $s['lifestyle'] || $s['beauty']) {
+                    return 0.35;
+                }
+                if ($s['diy']) {
+                    return 0.35;
+                }
+
+                return 0.35;
+            case 'travel_lifestyle':
+                if ($s['lifestyle'] || $s['travel']) {
+                    return 1.0;
+                }
+                if ($s['photo']) {
+                    return 0.75;
+                }
+                if ($s['diy']) {
+                    return 0.45;
+                }
+                if ($s['beauty']) {
+                    return 0.45;
+                }
+                if ($s['gaming'] || $s['tech']) {
+                    return str_contains($offerBlob, 'gear') || str_contains($offerBlob, 'camera') ? 0.45 : 0.35;
+                }
+
+                return 0.35;
+            case 'diy':
+                if ($s['diy']) {
+                    return 1.0;
+                }
+                if ($s['lifestyle']) {
+                    return 0.75;
+                }
+                if ($s['photo'] || $s['video']) {
+                    return 0.45;
+                }
+                if ($s['beauty'] || $s['gaming'] || $s['tech']) {
+                    return 0.1;
+                }
+
+                return 0.35;
+            default:
+                return 0.35;
+        }
+    }
+
+    private function cre8PilotCategoryMatchFeature(array $offerData, array $creatorData): float
+    {
+        $offerBlob = $this->cre8PilotMatchBlobFromOffer($offerData);
+        $creatorBlob = $this->cre8PilotMatchBlobFromCreator($creatorData);
+        if (trim($offerBlob) === '' || trim($creatorBlob) === '') {
+            return 0.35;
+        }
+        $oh = $this->cre8PilotMatchClusterHits($offerBlob);
+        $ch = $this->cre8PilotMatchClusterHits($creatorBlob);
+        $vertical = $this->cre8PilotDetectOfferPrimaryVertical($offerBlob);
+        $signals = $this->cre8PilotCreatorVerticalSignals($ch, $creatorBlob, (string) ($creatorData['name'] ?? ''));
+        if ($vertical !== 'unknown') {
+            return max(0.0, min(1.0, $this->cre8PilotCategoryMatchForVertical($vertical, $offerBlob, $signals)));
+        }
+
+        return max(0.0, min(1.0, $this->cre8PilotCategoryUnknownOverlapScore($oh, $ch, $offerBlob, $creatorBlob, $creatorData)));
+    }
+
+    private function cre8PilotBlobHasClearCategorySignals(string $blob): bool
+    {
+        $needles = [
+            'shampoo', 'beauty', 'skincare', 'gaming', 'headset', 'tech', 'gadget', 'travel', 'diy', 'craft',
+            'camera', 'photo', 'video', 'esport', 'app', 'software', 'cosmetic', 'hydra', 'makeup', 'stream',
+            'product launch', 'campaign',
+        ];
+        foreach ($needles as $s) {
+            if ($s !== '' && str_contains($blob, $s)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function cre8PilotOfferMatchContextIsGeneric(array $offerData): bool
+    {
+        $t = strtolower(trim((string) ($offerData['titre'] ?? '')));
+        $d = strtolower(trim((string) ($offerData['description'] ?? '')));
+        $o = strtolower(trim((string) ($offerData['objectif'] ?? '')));
+        $blob = $t . ' ' . $d . ' ' . $o;
+        if (strlen(trim(preg_replace('/\s+/u', ' ', $blob))) < 28) {
+            return true;
+        }
+        $genericPhrases = [
+            'creator collaboration offer',
+            'professional collaboration offer',
+            'short-form product launch package',
+            'hydra shampoo creator collaboration',
+            'prepare an offer draft',
+        ];
+        foreach ($genericPhrases as $g) {
+            if ($g !== '' && str_contains($t, $g) && !$this->cre8PilotBlobHasClearCategorySignals($blob)) {
+                return true;
+            }
+        }
+        if (!$this->cre8PilotBlobHasClearCategorySignals($blob)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function cre8PilotDeterministicInt(string $seed, int $mod): int
+    {
+        $u = unpack('N', substr(hash('sha256', (string) $seed, true), 0, 4));
+
+        return (int) (($u[1] ?? 0) % max(1, $mod));
+    }
+
+    private function cre8PilotInferCreatorExpectedBudget(array $creatorData, ?float $offerBudget): float
+    {
+        $blob = $this->cre8PilotMatchBlobFromCreator($creatorData);
+        $base = 340.0;
+        if (str_contains($blob, 'gaming') || str_contains($blob, 'tech') || str_contains($blob, 'developer')) {
+            $base = 495.0;
+        } elseif (str_contains($blob, 'diy') || str_contains($blob, 'craft') || str_contains($blob, 'small studio')) {
+            $base = 215.0;
+        } elseif (str_contains($blob, 'beauty') || str_contains($blob, 'lifestyle') || str_contains($blob, 'photo') || str_contains($blob, 'video') || str_contains($blob, 'content')) {
+            $base = 395.0;
+        } elseif (str_contains($blob, 'music') || str_contains($blob, 'podcast')) {
+            $base = 305.0;
+        }
+        if ($offerBudget !== null && $offerBudget > 0) {
+            $base = 0.35 * $base + 0.65 * (0.55 * $offerBudget + 0.45 * $base);
+        }
+
+        return max(80.0, $base);
+    }
+
+    private function cre8PilotInferCreatorDeliveryDays(array $creatorData, ?float $offerDays): float
+    {
+        $blob = $this->cre8PilotMatchBlobFromCreator($creatorData);
+        $days = 11.0;
+        if (str_contains($blob, 'photo') || str_contains($blob, 'photography') || str_contains($blob, 'shoot')) {
+            $days = 16.0;
+        } elseif (str_contains($blob, 'video') || str_contains($blob, 'motion') || str_contains($blob, 'animation')) {
+            $days = 14.0;
+        } elseif (str_contains($blob, 'gaming') || str_contains($blob, 'stream')) {
+            $days = 6.5;
+        } elseif (str_contains($blob, 'beauty') || str_contains($blob, 'ugc') || str_contains($blob, 'reel')) {
+            $days = 9.0;
+        } elseif (str_contains($blob, 'design') || str_contains($blob, 'graphic')) {
+            $days = 10.0;
+        }
+        $m = [];
+        if (preg_match('/(\d+)\s*(?:day|jour|jours)/i', (string) ($creatorData['details'] ?? ''), $m)) {
+            $days = (float) ($m[1] ?? $days);
+        }
+        if ($offerDays !== null && $offerDays > 0) {
+            $days = 0.25 * $days + 0.75 * max(3.0, min(28.0, $days + ($offerDays > 18 ? 1.5 : -0.5)));
+        }
+
+        return max(3.0, min(35.0, $days));
+    }
+
+    private function cre8PilotHasPortfolioFeature(array $creatorData): float
+    {
+        $parts = [
+            (string) ($creatorData['portfolioUrl'] ?? ''),
+            (string) ($creatorData['portfolio'] ?? ''),
+            (string) ($creatorData['socialUrl'] ?? ''),
+            (string) ($creatorData['bio'] ?? ''),
+            (string) ($creatorData['details'] ?? ''),
+            (string) ($creatorData['postsSample'] ?? ''),
+        ];
+        foreach ($parts as $p) {
+            if ($p !== '' && (preg_match('#https?://#i', $p) || strlen($p) > 160)) {
+                return 1.0;
+            }
+        }
+        $blob = strtolower(implode(' ', $parts));
+        $signals = ['portfolio', 'behance', 'dribbble', 'youtube', 'tiktok', 'instagram', 'linkedin', 'vimeo', 'twitter', 'substack', 'linktr', 'http', 'www.'];
+        foreach ($signals as $s) {
+            if ($s !== '' && str_contains($blob, $s)) {
+                return 1.0;
+            }
+        }
+        if (str_contains($blob, ' reel') || str_contains($blob, ' post') || str_contains($blob, ' feed')) {
+            return 1.0;
+        }
+
+        return strlen($blob) > 220 ? 1.0 : 0.0;
+    }
+
+    private function cre8PilotAcceptRateFromHistory(array $creatorData): float
+    {
+        $fin = isset($creatorData['candidatureFinalized']) ? (int) $creatorData['candidatureFinalized'] : null;
+        $acc = isset($creatorData['candidatureAccepted']) ? (int) $creatorData['candidatureAccepted'] : null;
+        if ($fin !== null && $fin > 0 && $acc !== null) {
+            return max(0.0, min(1.0, $acc / $fin));
+        }
+        if (isset($creatorData['acceptRate'])) {
+            return max(0.0, min(1.0, (float) $creatorData['acceptRate']));
+        }
+
+        return 0.5;
+    }
+
+    private function cre8PilotPreviousCollabsFeature(array $creatorData): float
+    {
+        $prev = isset($creatorData['previousCollabs']) ? (int) $creatorData['previousCollabs'] : 0;
+        if ($prev <= 0 && isset($creatorData['acceptedCollabs'])) {
+            $prev = (int) $creatorData['acceptedCollabs'];
+        }
+        $det = strtolower((string) ($creatorData['details'] ?? ''));
+        if ($prev <= 0 && preg_match('/(\d+)\s*(?:collab|project|job|campaign)/i', $det, $mm)) {
+            $prev = min(20, (int) ($mm[1] ?? 0));
+        }
+
+        return max(0.0, min(1.0, $prev / 20.0));
+    }
+
+    private function cre8PilotResponseQualityFromTexts(array $creatorData, array $visibleData): float
+    {
+        $chunks = [
+            (string) ($creatorData['details'] ?? ''),
+            (string) ($creatorData['bio'] ?? ''),
+            (string) ($creatorData['motivationSample'] ?? ''),
+            (string) ($creatorData['negotiationSample'] ?? ''),
+            (string) ($creatorData['postsSample'] ?? ''),
+        ];
+        if (!empty($visibleData['candidatureForm']) && is_array($visibleData['candidatureForm'])) {
+            $cf = $visibleData['candidatureForm'];
+            $chunks[] = (string) ($cf['messageMotivation'] ?? '');
+            $chunks[] = (string) ($cf['conditionsCreateur'] ?? '');
+        }
+        if (!empty($visibleData['decisionForm']) && is_array($visibleData['decisionForm'])) {
+            $df = $visibleData['decisionForm'];
+            $chunks[] = (string) ($df['messageNegociation'] ?? '');
+        }
+        $text = trim(implode("\n", array_filter($chunks)));
+        $len = strlen($text);
+        if ($len < 12) {
+            return 0.55;
+        }
+        $toks = $this->cre8PilotExtractMeaningfulTokens($text);
+        $uniq = count(array_unique($toks));
+        $ratio = $len > 0 ? min(1.0, $uniq / max(8, $len / 12)) : 0.0;
+        $punct = preg_match_all('/[.!?;:]/', $text) ?: 0;
+        $punctScore = min(0.15, $punct * 0.02);
+        $lenScore = $len > 900 ? 0.88 : ($len > 500 ? 0.78 : ($len > 240 ? 0.68 : ($len > 120 ? 0.58 : 0.48)));
+
+        return max(0.35, min(0.92, $lenScore * 0.74 + $ratio * 0.22 + $punctScore));
+    }
+
+    private function cre8PilotBuildCreatorOfferFeatures(array $offerData, array $creatorData, array $visibleData = []): array
+    {
+        $offerBudget = $this->cre8PilotParseBudgetAmount((string) ($offerData['budgetPropose'] ?? ''));
+        $creatorBudget = $this->cre8PilotParseBudgetAmount((string) ($creatorData['expectedBudget'] ?? $creatorData['budget'] ?? ''));
+        if ($creatorBudget === null) {
+            $creatorBudget = $this->cre8PilotInferCreatorExpectedBudget($creatorData, $offerBudget);
+        }
+        $budget_fit = 0.55;
+        if ($offerBudget !== null && $creatorBudget !== null && $offerBudget > 0) {
+            $lo = min($offerBudget, $creatorBudget);
+            $hi = max($offerBudget, $creatorBudget);
+            $budget_fit = max(0.0, min(1.0, $hi > 0 ? $lo / $hi : 0.55));
+        }
+
+        $deadline_fit = 0.55;
+        $offerDays = isset($offerData['deadlineDays']) ? (float) $offerData['deadlineDays'] : null;
+        if ($offerDays === null && !empty($offerData['dateLimite'])) {
+            $ts = strtotime((string) $offerData['dateLimite']);
+            if ($ts !== false) {
+                $offerDays = max(1.0, ($ts - time()) / 86400.0);
+            }
+        }
+        $creatorDays = isset($creatorData['avgDeliveryDays']) ? (float) $creatorData['avgDeliveryDays'] : null;
+        if ($creatorDays === null) {
+            $creatorDays = $this->cre8PilotInferCreatorDeliveryDays($creatorData, $offerDays);
+        }
+        if ($offerDays !== null && $offerDays > 0) {
+            if ($creatorDays <= $offerDays) {
+                $deadline_fit = 1.0;
+            } else {
+                $deadline_fit = max(0.0, min(1.0, 1.0 - (($creatorDays - $offerDays) / max($offerDays, 1.0))));
+            }
+        }
+
+        $has_portfolio = $this->cre8PilotHasPortfolioFeature($creatorData);
+        $creator_accept_rate = $this->cre8PilotAcceptRateFromHistory($creatorData);
+        $previous_collabs_scaled = $this->cre8PilotPreviousCollabsFeature($creatorData);
+
+        $rating_score = isset($creatorData['rating']) ? (float) $creatorData['rating'] : 0.6;
+        if ($rating_score > 1.0 && $rating_score <= 5.0) {
+            $rating_score = $rating_score / 5.0;
+        }
+        $rating_score = max(0.0, min(1.0, $rating_score));
+
+        $response_quality_score = $this->cre8PilotResponseQualityFromTexts($creatorData, $visibleData);
+
+        $offerBlob = $this->cre8PilotMatchBlobFromOffer($offerData);
+        $creatorBlob = $this->cre8PilotMatchBlobFromCreator($creatorData);
+        $text_similarity_score = $this->cre8PilotTextSimilarityScore($offerBlob, $creatorBlob, (string) ($creatorData['name'] ?? ''));
+
+        $category_match = $this->cre8PilotCategoryMatchFeature($offerData, $creatorData);
+
+        return [
+            'category_match' => max(0.0, min(1.0, $category_match)),
+            'budget_fit' => max(0.0, min(1.0, $budget_fit)),
+            'deadline_fit' => max(0.0, min(1.0, $deadline_fit)),
+            'has_portfolio' => max(0.0, min(1.0, $has_portfolio)),
+            'creator_accept_rate' => max(0.0, min(1.0, $creator_accept_rate)),
+            'previous_collabs_scaled' => max(0.0, min(1.0, $previous_collabs_scaled)),
+            'rating_score' => $rating_score,
+            'response_quality_score' => max(0.0, min(1.0, $response_quality_score)),
+            'text_similarity_score' => max(0.0, min(1.0, $text_similarity_score)),
+        ];
+    }
+
+    private function cre8PilotApplyMatchCalibration(int $logisticScore, array $features, bool $offerGeneric): array
+    {
+        $cm = (float) ($features['category_match'] ?? 0.35);
+        $ts = (float) ($features['text_similarity_score'] ?? 0.4);
+        $score = max(0, min(100, $logisticScore));
+        if ($cm < 0.3) {
+            $score = min($score, 49);
+        } elseif ($cm < 0.5) {
+            $score = min($score, 69);
+        }
+        if ($cm < 0.7 && $ts < 0.45) {
+            $score = min($score, 74);
+        }
+        $veryStrongTopic = ($cm >= 0.8 || $ts >= 0.7);
+        if ($offerGeneric && !$veryStrongTopic) {
+            $score = min($score, 79);
+        }
+        $strongEligible = ($cm >= 0.65 || $ts >= 0.65);
+        $label = 'weak';
+        if ($score >= 80 && $strongEligible) {
+            $label = 'strong';
+        } elseif ($score >= 80 && !$strongEligible) {
+            $label = 'medium';
+        } elseif ($score >= 60) {
+            $label = 'medium';
+        } elseif ($score >= 40) {
+            $label = 'weak';
+        } else {
+            $label = 'weak';
+        }
+        if ($score >= 80 && $cm < 0.65 && $ts < 0.65) {
+            $label = 'medium';
+        }
+        $p = max(0.0, min(1.0, $score / 100.0));
+
+        return [
+            'score' => $score,
+            'probability' => round($p, 4),
+            'label' => $label,
+            'strongEligible' => $strongEligible,
+            'needsOperationalReview' => ($score >= 65 && !$strongEligible),
+        ];
+    }
+
+    private function cre8PilotPickOperationalDifferentiators(array $features): array
+    {
+        $bf = (float) ($features['budget_fit'] ?? 0.55);
+        $df = (float) ($features['deadline_fit'] ?? 0.55);
+        $hp = (float) ($features['has_portfolio'] ?? 0.0);
+        $ar = (float) ($features['creator_accept_rate'] ?? 0.5);
+        $pc = (float) ($features['previous_collabs_scaled'] ?? 0.0);
+        $rq = (float) ($features['response_quality_score'] ?? 0.55);
+        $rt = (float) ($features['rating_score'] ?? 0.6);
+        $rows = [
+            ['k' => 'budget', 'v' => $bf, 'w' => abs($bf - 0.55)],
+            ['k' => 'deadline', 'v' => $df, 'w' => abs($df - 0.55)],
+            ['k' => 'portfolio', 'v' => $hp, 'w' => $hp],
+            ['k' => 'accept', 'v' => $ar, 'w' => abs($ar - 0.5)],
+            ['k' => 'collabs', 'v' => $pc, 'w' => $pc],
+            ['k' => 'response', 'v' => $rq, 'w' => abs($rq - 0.55)],
+            ['k' => 'rating', 'v' => $rt, 'w' => abs($rt - 0.6)],
+        ];
+        usort($rows, static function ($a, $b) {
+            return ($b['w'] ?? 0) <=> ($a['w'] ?? 0);
+        });
+
+        return $rows;
+    }
+
+    private function cre8PilotBuildNarrativeMatchReasons(array $features, array $offerData, array $creatorData, array $calibration): array
+    {
+        $offerBlob = $this->cre8PilotMatchBlobFromOffer($offerData);
+        $creatorBlob = $this->cre8PilotMatchBlobFromCreator($creatorData);
+        $oh = $this->cre8PilotMatchClusterHits($offerBlob);
+        $ch = $this->cre8PilotMatchClusterHits($creatorBlob);
+        $vertical = $this->cre8PilotDetectOfferPrimaryVertical($offerBlob);
+        $s = $this->cre8PilotCreatorVerticalSignals($ch, $creatorBlob, (string) ($creatorData['name'] ?? ''));
+        $cm = (float) ($features['category_match'] ?? 0.35);
+        $ts = (float) ($features['text_similarity_score'] ?? 0.4);
+        $lines = [];
+
+        if ($vertical === 'beauty') {
+            if ($s['beauty']) {
+                $lines[] = 'Strong fit for beauty, skincare, or similar consumer products.';
+            } elseif ($s['lifestyle']) {
+                $lines[] = 'Good match if the offer targets lifestyle and everyday consumer content.';
+            } elseif ($s['photo'] || $s['video']) {
+                $lines[] = 'Strong visual storytelling angle for product promotion (photo/video).';
+            } elseif ($s['tech']) {
+                $lines[] = 'Tech-focused profile: strong only if the product needs a tech or review angle.';
+            } elseif ($s['gaming']) {
+                $lines[] = 'Weak topical fit for beauty or personal-care campaigns unless the brief is gaming-adjacent.';
+            } else {
+                $lines[] = 'Category relevance should be double-checked against the product brief.';
+            }
+        } elseif ($vertical === 'tech') {
+            if ($s['tech']) {
+                $lines[] = 'Strong tech and gadget angle aligned with software/hardware campaigns.';
+            } elseif ($s['gaming']) {
+                $lines[] = 'Gaming-adjacent profile: best when the offer is explicitly gaming or peripherals.';
+            } elseif ($s['photo'] || $s['video']) {
+                $lines[] = 'Visual production strength; weaker unless the campaign needs explainers or demos.';
+            } elseif ($s['beauty'] || $s['lifestyle']) {
+                $lines[] = 'Beauty/lifestyle profile: only a fit if the device targets that audience.';
+            } else {
+                $lines[] = 'Verify that the creator audience matches the tech product positioning.';
+            }
+        } elseif ($vertical === 'gaming') {
+            if ($s['gaming']) {
+                $lines[] = 'Strong fit for gaming, esports, or peripheral-focused campaigns.';
+            } elseif ($s['tech']) {
+                $lines[] = 'Tech angle pairs well with headsets, rigs, and gaming hardware.';
+            } elseif ($s['beauty'] || $s['lifestyle'] || $s['photo']) {
+                $lines[] = 'Weak fit for pure gaming briefs unless the activation blends lifestyle with gaming.';
+            } else {
+                $lines[] = 'Confirm audience overlap before inviting for a gaming-first activation.';
+            }
+        } elseif ($vertical === 'travel_lifestyle') {
+            if ($s['travel'] || $s['lifestyle']) {
+                $lines[] = 'Strong lifestyle or travel storytelling fit.';
+            } elseif ($s['photo']) {
+                $lines[] = 'Photography strength supports travel and lifestyle visuals.';
+            } elseif ($s['gaming'] || $s['tech']) {
+                $lines[] = 'Tech/gaming profile: weaker unless the trip involves gear or gadgets.';
+            } else {
+                $lines[] = 'Check whether the creator audience matches travel or family-oriented messaging.';
+            }
+        } elseif ($vertical === 'diy') {
+            if ($s['diy']) {
+                $lines[] = 'Strong fit for DIY, craft, or home-project style campaigns.';
+            } elseif ($s['lifestyle']) {
+                $lines[] = 'Lifestyle overlap can work for approachable how-to or home content.';
+            } elseif ($s['photo'] || $s['video']) {
+                $lines[] = 'Visual production helps tutorials; confirm the niche matches DIY audiences.';
+            } elseif ($s['beauty'] || $s['gaming'] || $s['tech']) {
+                $lines[] = 'Likely mismatch for DIY/home briefs unless the product clearly bridges categories.';
+            } else {
+                $lines[] = 'Validate audience fit for hands-on or maker-style formats.';
+            }
+        } else {
+            if ($cm >= 0.75) {
+                $lines[] = 'Topics line up well with the wording of this offer draft.';
+            } elseif ($cm >= 0.45) {
+                $lines[] = 'Partial topical overlap; confirm fit before inviting.';
+            } else {
+                $lines[] = 'Limited topical overlap with the offer draft—manual review recommended.';
+            }
+        }
+
+        $ops = $this->cre8PilotPickOperationalDifferentiators($features);
+        $picked = [];
+        foreach ($ops as $row) {
+            if (count($picked) >= 2) {
+                break;
+            }
+            $k = (string) ($row['k'] ?? '');
+            $v = (float) ($row['v'] ?? 0.0);
+            if ($k === 'budget' && $v >= 0.62) {
+                $picked[] = 'Budget alignment versus your draft looks favorable.';
+            } elseif ($k === 'deadline' && $v >= 0.62) {
+                $picked[] = 'Delivery cadence looks realistic for the stated timeline.';
+            } elseif ($k === 'portfolio' && $v >= 0.5) {
+                $picked[] = 'Portfolio or visible links strengthen credibility for this brief.';
+            } elseif ($k === 'accept' && $v >= 0.62) {
+                $picked[] = 'Historical acceptance rate on finalized candidatures looks healthy.';
+            } elseif ($k === 'collabs' && $v >= 0.2) {
+                $picked[] = 'Prior collaboration volume suggests platform experience.';
+            } elseif ($k === 'response' && $v >= 0.62) {
+                $picked[] = 'Written profile or sample messages look detailed and structured.';
+            } elseif ($k === 'rating' && $v >= 0.68) {
+                $picked[] = 'Rating signals are above typical for this pool.';
+            }
+        }
+        foreach ($picked as $p) {
+            if (count($lines) >= 3) {
+                break;
+            }
+            if ($p !== '' && !in_array($p, $lines, true)) {
+                $lines[] = $p;
+            }
+        }
+
+        if (!empty($calibration['needsOperationalReview']) && $cm < 0.65 && $ts < 0.65) {
+            $lines[] = 'Good operational fit (budget/timing), but category relevance needs manual review.';
+        }
+        if (($calibration['label'] ?? '') === 'medium' && (float) $cm < 0.55 && (float) $ts < 0.55 && count($lines) < 3) {
+            $lines[] = 'Score driven partly by logistics; validate audience fit before inviting.';
+        }
+
+        $lines = array_values(array_filter(array_map('trim', $lines)));
+        $lines = array_values(array_unique($lines));
+
+        return array_slice($lines, 0, 3);
+    }
+
+    private function cre8PilotFinalizeCreatorMatch(array $rawBundle, array $offerData, array $creatorData, bool $offerGeneric): array
+    {
+        $features = (array) ($rawBundle['features'] ?? []);
+        $logisticScore = (int) ($rawBundle['logisticScore'] ?? 0);
+        $cal = $this->cre8PilotApplyMatchCalibration($logisticScore, $features, $offerGeneric);
+        $reasons = $this->cre8PilotBuildNarrativeMatchReasons($features, $offerData, $creatorData, $cal);
+
+        return [
+            'score' => (int) ($cal['score'] ?? 0),
+            'probability' => (float) ($cal['probability'] ?? 0.0),
+            'label' => (string) ($cal['label'] ?? 'weak'),
+            'features' => $features,
+            'reasons' => $reasons,
+            'matchFeatureSummary' => $this->cre8PilotMatchFeatureSummaryForClient($features),
+        ];
+    }
+
+    private function cre8PilotMatchFeatureSummaryForClient(array $features): array
+    {
+        $keys = ['category_match', 'budget_fit', 'deadline_fit', 'text_similarity_score', 'has_portfolio', 'creator_accept_rate'];
+
+        $out = [];
+        foreach ($keys as $k) {
+            $out[$k] = round((float) ($features[$k] ?? 0.0), 3);
+        }
+
+        return $out;
+    }
+
+    private function cre8PilotCalculateMatchScore(array $features, array $model): array
+    {
+        $order = (array) ($model['features'] ?? []);
+        $w = (array) ($model['weights'] ?? []);
+        $b = (float) ($model['intercept'] ?? 0.0);
+        $z = $b;
+        foreach ($order as $name) {
+            $nm = (string) $name;
+            $z += (float) ($w[$nm] ?? 0.0) * (float) ($features[$nm] ?? 0.0);
+        }
+        $p = $this->cre8PilotSigmoid($z);
+        $score = (int) max(0, min(100, (int) round($p * 100)));
+
+        return [
+            'logisticScore' => $score,
+            'logisticProbability' => round($p, 4),
+            'features' => $features,
+        ];
+    }
+
+    private function cre8PilotMatchScoresCloseAtTop(array $ranked, int $depth = 4, int $gap = 5): bool
+    {
+        if (count($ranked) < 3) {
+            return false;
+        }
+        $top = array_slice($ranked, 0, min($depth, count($ranked)));
+        $scores = [];
+        foreach ($top as $row) {
+            $scores[] = (int) ($row['matchScore'] ?? 0);
+        }
+        if (count($scores) < 3) {
+            return false;
+        }
+        $max = max($scores);
+        $min = min($scores);
+
+        return ($max - $min) <= $gap;
+    }
+
+    private function sanitizeCre8PilotMatchModelClient(array $mm): array
+    {
+        $out = [
+            'modelUsed' => !empty($mm['modelUsed']),
+            'modelName' => $this->sanitizeCre8PilotLlmScalar((string) ($mm['modelName'] ?? ''), 80),
+            'version' => $this->sanitizeCre8PilotLlmScalar((string) ($mm['version'] ?? ''), 16),
+            'topRecommendations' => [],
+        ];
+        foreach ((array) ($mm['topRecommendations'] ?? []) as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $reasons = [];
+            foreach ((array) ($row['reasons'] ?? []) as $r) {
+                $reasons[] = $this->sanitizeCre8PilotLlmScalar((string) $r, 200);
+            }
+            $reasons = array_slice(array_values(array_filter($reasons)), 0, 5);
+            $cid = $row['creatorId'] ?? '';
+            $cidStr = (string) $cid;
+            $cidOut = is_int($cid)
+                ? $cid
+                : (preg_match('/^[a-zA-Z0-9_\-\.:]+$/', $cidStr) ? $cidStr : '0');
+            $summary = [];
+            $summaryKeys = ['category_match', 'budget_fit', 'deadline_fit', 'text_similarity_score', 'has_portfolio', 'creator_accept_rate'];
+            if (!empty($row['matchFeatureSummary']) && is_array($row['matchFeatureSummary'])) {
+                $ms = (array) $row['matchFeatureSummary'];
+                foreach ($summaryKeys as $key) {
+                    if (!array_key_exists($key, $ms)) {
+                        continue;
+                    }
+                    $summary[$key] = round((float) $ms[$key], 3);
+                }
+            }
+            $out['topRecommendations'][] = [
+                'creatorId' => $cidOut,
+                'creatorName' => $this->sanitizeCre8PilotLlmScalar((string) ($row['creatorName'] ?? ''), 120),
+                'matchScore' => max(0, min(100, (int) ($row['matchScore'] ?? 0))),
+                'label' => in_array((string) ($row['label'] ?? ''), ['strong', 'medium', 'weak'], true)
+                    ? (string) $row['label']
+                    : 'weak',
+                'reasons' => $reasons,
+                'matchFeatureSummary' => $summary,
+            ];
+        }
+
+        return $out;
+    }
+
+    private function cre8PilotNormalizeCreatorRow(array $c): array
+    {
+        return [
+            'id' => $c['id'] ?? '',
+            'name' => (string) ($c['name'] ?? ''),
+            'email' => (string) ($c['email'] ?? ''),
+            'details' => (string) ($c['details'] ?? ''),
+            'bio' => (string) ($c['bio'] ?? $c['biographie'] ?? ''),
+            'niche' => (string) ($c['niche'] ?? ''),
+            'category' => (string) ($c['category'] ?? $c['categorie'] ?? ''),
+            'expectedBudget' => $c['expectedBudget'] ?? $c['budgetAttendu'] ?? null,
+            'budget' => $c['budget'] ?? null,
+            'avgDeliveryDays' => $c['avgDeliveryDays'] ?? $c['delaiMoyen'] ?? null,
+            'acceptRate' => $c['acceptRate'] ?? null,
+            'candidatureAccepted' => $c['candidatureAccepted'] ?? $c['acceptedCandidatures'] ?? null,
+            'candidatureFinalized' => $c['candidatureFinalized'] ?? $c['finalizedCandidatures'] ?? null,
+            'acceptedCollabs' => $c['acceptedCollabs'] ?? null,
+            'previousCollabs' => $c['previousCollabs'] ?? $c['collabsCount'] ?? null,
+            'rating' => $c['rating'] ?? $c['noteMoyenne'] ?? null,
+            'portfolioUrl' => $c['portfolioUrl'] ?? $c['portfolio_url'] ?? null,
+            'portfolio' => $c['portfolio'] ?? null,
+            'socialUrl' => $c['socialUrl'] ?? $c['social'] ?? null,
+            'postsSample' => (string) ($c['postsSample'] ?? $c['posts'] ?? ''),
+            'motivationSample' => (string) ($c['motivationSample'] ?? ''),
+            'negotiationSample' => (string) ($c['negotiationSample'] ?? ''),
+        ];
+    }
+
+    private function cre8PilotFallbackDemoCreators(): array
+    {
+        return [
+            [
+                'id' => 'demo_hedi',
+                'name' => 'Hedi Photography',
+                'category' => 'Photography',
+                'niche' => 'Beauty and product',
+                'details' => 'Fashion and product photography. Portfolio on Behance. Campaign shoots photography reels. https://behance.net/hedi',
+                'portfolioUrl' => 'https://behance.net/hedi',
+                'candidatureAccepted' => 11,
+                'candidatureFinalized' => 14,
+                'previousCollabs' => 9,
+                'rating' => 4.6,
+            ],
+            [
+                'id' => 'demo_alex',
+                'name' => 'Alex Motion Lab',
+                'category' => 'Video',
+                'niche' => 'Motion ads',
+                'details' => 'Video ads motion graphics animation social content. Vimeo showreel linked in profile.',
+                'candidatureAccepted' => 6,
+                'candidatureFinalized' => 11,
+                'previousCollabs' => 4,
+                'rating' => 4.2,
+            ],
+            [
+                'id' => 'demo_sam',
+                'name' => 'Sam Generic Studio',
+                'category' => 'Gaming',
+                'niche' => 'Streams',
+                'details' => 'Twitch stream highlights gameplay commentary. Esports clips.',
+                'candidatureAccepted' => 3,
+                'candidatureFinalized' => 10,
+                'previousCollabs' => 1,
+                'rating' => 3.9,
+            ],
+        ];
+    }
+
+    private function cre8PilotBuildOfferDataForMatch(array $visibleData): array
+    {
+        $of = $visibleData['offerForm'] ?? [];
+
+        return [
+            'titre' => (string) ($of['titre'] ?? ''),
+            'description' => (string) ($of['description'] ?? ''),
+            'objectif' => (string) ($of['objectif'] ?? ''),
+            'category' => (string) ($of['category'] ?? $of['categorie'] ?? ''),
+            'raisonChoix' => (string) ($of['raisonChoix'] ?? ''),
+            'attenteCollaboration' => (string) ($of['attenteCollaboration'] ?? ''),
+            'messagePersonnalise' => (string) ($of['messagePersonnalise'] ?? ''),
+            'selectedCreatorSummary' => (string) ($of['selectedCreator'] ?? ''),
+            'budgetPropose' => (string) ($of['budgetPropose'] ?? ''),
+            'dateLimite' => (string) ($of['dateLimite'] ?? ''),
+            'deadlineDays' => isset($of['deadlineDays']) ? (float) $of['deadlineDays'] : null,
+        ];
+    }
+
+    private function cre8PilotIsBrandOfferWorkspaceContext(string $page, string $mode): bool
+    {
+        if (in_array($page, ['brand_create_offer', 'brand_edit_offer', 'create_offer', 'edit_offer', 'brand_offer_list', 'brand_offer_details'], true)) {
+            return true;
+        }
+
+        return $this->cre8PilotIsPageMode($page, $mode, 'brand_offer_workspace', ['create_offer', 'edit_offer', 'list', 'details']);
+    }
+
+    private function cre8PilotDetectMatchModelIntents(string $normalized, string $rawMessage): string
+    {
+        if ($this->messageContainsAny($normalized, [
+            'why is hedi photography a good match',
+            'why is hedi a good match',
+            'explain creator match',
+            'explain match score',
+            'why this creator is a good match',
+            'why is this creator a good match',
+        ]) || preg_match('/why\s+is\s+(.+?)\s+(?:a\s+)?good\s+match/i', (string) $rawMessage)) {
+            return 'explain_creator_match_score';
+        }
+        if ($this->messageContainsAny($normalized, [
+            'rank creators',
+            'rank creators for this offer',
+            'rank creator for this offer',
+            'sort creators by match',
+        ])) {
+            return 'rank_creators_for_offer';
+        }
+        if ($this->messageContainsAny($normalized, [
+            'recommend creators',
+            'recommend creators for this offer',
+            'recommend the best creator',
+            'who is the best creator',
+            'who is the best creator for this offer',
+            'best creator for this offer',
+            'use match score',
+            'use trained model',
+            'use the match model',
+            'creator match score',
+        ])) {
+            return 'recommend_creators_with_model';
+        }
+
+        return '';
+    }
+
+    private function cre8PilotExtractCreatorNameForExplain(string $message): string
+    {
+        $m = [];
+        if (preg_match('/why\s+is\s+(.+?)\s+(?:a\s+)?good\s+match/i', $message, $m)) {
+            return trim((string) ($m[1] ?? ''));
+        }
+        if (preg_match('/explain\s+(?:match|score)\s+for\s+(.+)/i', $message, $m)) {
+            return trim((string) ($m[1] ?? ''));
+        }
+
+        return '';
+    }
+
+    private function cre8PilotTryCreatorMatchResponse(string $intent, string $message, array $visibleData, string $page, string $mode, string $entityId, string $role): ?array
+    {
+        $intent = (string) $intent;
+        $matchIntents = ['recommend_creators_with_model', 'rank_creators_for_offer', 'explain_creator_match_score', 'recommend_creator'];
+        if (!in_array($intent, $matchIntents, true)) {
+            return null;
+        }
+        if ($role !== 'marque') {
+            return null;
+        }
+        if (!$this->cre8PilotIsBrandOfferWorkspaceContext($page, $mode)) {
+            if (in_array($intent, ['recommend_creators_with_model', 'rank_creators_for_offer', 'explain_creator_match_score'], true)) {
+                return $this->buildCre8PilotResponse(
+                    'need_clarification',
+                    'need_clarification',
+                    'Which offer should I use for creator matching?',
+                    [],
+                    0.72,
+                    'confused'
+                );
+            }
+
+            return null;
+        }
+
+        $listNoEntity = ($mode === 'list' || $page === 'brand_offer_list')
+            && trim((string) $entityId) === '';
+
+        if ($listNoEntity && in_array($intent, ['recommend_creators_with_model', 'rank_creators_for_offer', 'recommend_creator', 'explain_creator_match_score'], true)) {
+            return $this->buildCre8PilotResponse(
+                'need_clarification',
+                'need_clarification',
+                'Which offer should I use for creator matching?',
+                [],
+                0.72,
+                'confused'
+            );
+        }
+
+        $offerData = $this->cre8PilotBuildOfferDataForMatch($visibleData);
+        $hasOfferText = trim(implode(' ', [
+            $offerData['titre'],
+            $offerData['description'],
+            $offerData['objectif'],
+            $offerData['budgetPropose'],
+        ])) !== '';
+
+        if (!$hasOfferText && $listNoEntity) {
+            return $this->buildCre8PilotResponse(
+                'need_clarification',
+                'need_clarification',
+                'Which offer should I use for creator matching?',
+                [],
+                0.72,
+                'confused'
+            );
+        }
+
+        $model = $this->cre8PilotLoadCreatorMatchModel();
+        $relPath = 'ai_recommendation/models/creator_match_model.json';
+
+        if ($model === null) {
+            $this->cre8PilotDebug['matchModelUsed'] = false;
+            $this->cre8PilotDebug['matchModelPath'] = $relPath;
+            $this->cre8PilotDebug['matchModelCreatorCount'] = 0;
+
+            return $this->buildCre8PilotResponse(
+                'ok',
+                $intent === 'recommend_creator' ? 'recommend_creator' : $intent,
+                'The trained match model is not available yet.',
+                [],
+                0.72,
+                'warning',
+                null,
+                false,
+                [
+                    'matchModel' => [
+                        'modelUsed' => false,
+                        'modelName' => '',
+                        'version' => '',
+                        'topRecommendations' => [],
+                    ],
+                ]
+            );
+        }
+
+        $creatorsRaw = $visibleData['creators'] ?? [];
+        $usedFallback = false;
+        if (!is_array($creatorsRaw) || $creatorsRaw === []) {
+            $creatorsRaw = $this->cre8PilotFallbackDemoCreators();
+            $usedFallback = true;
+        }
+
+        $offerGeneric = $this->cre8PilotOfferMatchContextIsGeneric($offerData);
+
+        $ranked = [];
+        foreach ($creatorsRaw as $c) {
+            if (!is_array($c)) {
+                continue;
+            }
+            $cn = $this->cre8PilotNormalizeCreatorRow($c);
+            $features = $this->cre8PilotBuildCreatorOfferFeatures($offerData, $cn, $visibleData);
+            $rawBundle = $this->cre8PilotCalculateMatchScore($features, $model);
+            $bundle = $this->cre8PilotFinalizeCreatorMatch($rawBundle, $offerData, $cn, $offerGeneric);
+            $cid = $cn['id'];
+            $ranked[] = [
+                'creatorId' => is_numeric($cid) ? (int) $cid : (string) $cid,
+                'creatorName' => $this->sanitizeCre8PilotLlmScalar((string) ($cn['name'] ?: 'Creator'), 120),
+                'matchScore' => $bundle['score'],
+                'label' => $bundle['label'],
+                'reasons' => array_slice($bundle['reasons'], 0, 3),
+                'matchFeatureSummary' => $bundle['matchFeatureSummary'] ?? [],
+            ];
+        }
+
+        $this->cre8PilotDebug['matchModelUsed'] = true;
+        $this->cre8PilotDebug['matchModelPath'] = $relPath;
+        $this->cre8PilotDebug['matchModelCreatorCount'] = count($ranked);
+
+        if ($ranked === []) {
+            return $this->buildCre8PilotResponse(
+                'ok',
+                $intent === 'recommend_creator' ? 'recommend_creators_with_model' : $intent,
+                'I could not find creators to rank for this offer.',
+                [],
+                0.68,
+                'warning',
+                null,
+                false,
+                [
+                    'matchModel' => [
+                        'modelUsed' => true,
+                        'modelName' => (string) ($model['modelName'] ?? ''),
+                        'version' => (string) ($model['version'] ?? ''),
+                        'topRecommendations' => [],
+                    ],
+                ]
+            );
+        }
+
+        usort($ranked, static function ($a, $b) {
+            return ($b['matchScore'] ?? 0) <=> ($a['matchScore'] ?? 0);
+        });
+
+        if ($intent === 'explain_creator_match_score') {
+            $needle = strtolower($this->cre8PilotExtractCreatorNameForExplain($message));
+            if ($needle === '') {
+                $needle = strtolower(trim((string) ($ranked[0]['creatorName'] ?? '')));
+            }
+            $pick = null;
+            foreach ($ranked as $row) {
+                if ($needle !== '' && str_contains(strtolower((string) ($row['creatorName'] ?? '')), $needle)) {
+                    $pick = $row;
+                    break;
+                }
+            }
+            $pick = $pick ?? $ranked[0];
+            $reasonBits = array_slice((array) ($pick['reasons'] ?? []), 0, 3);
+            $msg = 'Match score for ' . ($pick['creatorName'] ?? 'creator') . ': about ' . (int) ($pick['matchScore'] ?? 0)
+                . '% (' . ($pick['label'] ?? 'weak') . '). This is a recommendation only; you choose who to invite.';
+            if ($reasonBits !== []) {
+                $msg .= ' Key signals: ' . implode(' ', array_map(static function ($r) {
+                    return (string) $r;
+                }, $reasonBits));
+            }
+
+            return $this->buildCre8PilotResponse(
+                'ok',
+                'explain_creator_match_score',
+                $msg,
+                [],
+                0.84,
+                'success',
+                null,
+                false,
+                [
+                    'matchModel' => [
+                        'modelUsed' => true,
+                        'modelName' => (string) ($model['modelName'] ?? ''),
+                        'version' => (string) ($model['version'] ?? ''),
+                        'topRecommendations' => [$pick],
+                    ],
+                ]
+            );
+        }
+
+        $top = array_slice($ranked, 0, 8);
+        $best = $top[0]['creatorName'] ?? 'a creator';
+        if ($intent === 'rank_creators_for_offer') {
+            $outIntent = 'rank_creators_for_offer';
+        } elseif (in_array($intent, ['recommend_creator', 'recommend_creators_with_model'], true)) {
+            $outIntent = 'recommend_creators_with_model';
+        } else {
+            $outIntent = $intent;
+        }
+        $msg = 'Here are ranked creators for this offer (match model). Top suggestion: ' . $best
+            . '. This is guidance only; nothing is sent automatically.';
+        if ($offerGeneric) {
+            $msg .= ' Ranking confidence is limited because the offer draft does not contain a clear product category yet.';
+        }
+        if ($this->cre8PilotMatchScoresCloseAtTop($ranked, 4, 5)) {
+            $msg .= ' Several creators are close, so review the reasons before choosing.';
+        }
+        if ($usedFallback) {
+            $msg .= ' Using demo creator examples because no creator cards were visible on the page.';
+        }
+
+        return $this->buildCre8PilotResponse(
+            'ok',
+            $outIntent,
+            $msg,
+            [],
+            0.86,
+            'success',
+            null,
+            false,
+            [
+                'matchModel' => [
+                    'modelUsed' => true,
+                    'modelName' => (string) ($model['modelName'] ?? ''),
+                    'version' => (string) ($model['version'] ?? ''),
+                    'topRecommendations' => $top,
+                ],
+            ]
+        );
     }
 
     private function cre8PilotIsPageMode($page, $mode, $targetPage, array $targetModes = [])
@@ -1960,7 +3294,7 @@ class CondidatureC
         ]);
     }
 
-    private function detectCre8PilotIntentMock($message, $page, $mode, array $allowedActions, $selectedClarificationId = '')
+    private function detectCre8PilotIntentMock($message, $page, $mode, array $allowedActions, $selectedClarificationId = '', $role = '')
     {
         $normalized = $this->normalizeCre8PilotMessage($message . ' ' . str_replace('_', ' ', (string) $selectedClarificationId));
         $selectedAction = trim((string) $selectedClarificationId);
@@ -1970,6 +3304,9 @@ class CondidatureC
         $directActions = [
             'fill_offer_form',
             'recommend_creator',
+            'recommend_creators_with_model',
+            'rank_creators_for_offer',
+            'explain_creator_match_score',
             'suggest_budget',
             'improve_offer_text',
             'summarize_page',
@@ -2015,6 +3352,13 @@ class CondidatureC
         $globalGuard = $this->detectCre8PilotGlobalGuard($normalized, $message);
         if ($globalGuard !== '') {
             return $globalGuard;
+        }
+
+        if (strtolower(trim((string) $role)) === 'marque' && $this->cre8PilotIsBrandOfferWorkspaceContext($page, $mode)) {
+            $matchIntent = $this->cre8PilotDetectMatchModelIntents($normalized, $message);
+            if ($matchIntent !== '') {
+                return $matchIntent;
+            }
         }
 
         $isBrandOfferForm = $this->cre8PilotIsPageMode($page, $mode, 'brand_offer_workspace', ['create_offer', 'edit_offer'])
@@ -4986,7 +6330,7 @@ class CondidatureC
         $normalizedMessage = $this->normalizeCre8PilotMessage($message);
         $messageLower = trim($normalizedMessage . ' ' . $this->normalizeCre8PilotMessage(str_replace('_', ' ', $selectedClarificationId)));
         $globalIntent = $this->detectCre8PilotGlobalGuard($messageLower, $message);
-        $intent = $globalIntent !== '' ? $globalIntent : $this->detectCre8PilotIntentMock($message, $page, $mode, $allowedActions, $selectedClarificationId);
+        $intent = $globalIntent !== '' ? $globalIntent : $this->detectCre8PilotIntentMock($message, $page, $mode, $allowedActions, $selectedClarificationId, $role);
         if ($intent === 'blocked_request') {
             $policy = ['allowed' => false, 'reason' => 'blocked_security_or_privacy'];
         } elseif ($intent === 'forbidden_auto_action') {
@@ -5122,6 +6466,11 @@ class CondidatureC
         $this->cre8PilotDebug['documentUpload'] = false;
         $this->cre8PilotDebug['documentExtractedChars'] = (int) ($this->cre8PilotDebug['documentExtractedChars'] ?? 0);
         $this->cre8PilotDebug['documentStored'] = false;
+
+        $matchEarly = $this->cre8PilotTryCreatorMatchResponse($intent, $message, $visibleData, $page, $mode, $entityId, $role);
+        if ($matchEarly !== null) {
+            return $matchEarly;
+        }
 
         $isBrandReviewPage = $page === 'brand_candidature_review'
             || $this->cre8PilotIsPageMode($page, $mode, 'brand_candidature_workspace', ['review_details']);

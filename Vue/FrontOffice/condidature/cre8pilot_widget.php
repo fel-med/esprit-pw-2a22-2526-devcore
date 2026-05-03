@@ -387,6 +387,72 @@ window.CRE8PILOT_CONTEXT = Object.assign(
         messages.scrollTop = messages.scrollHeight;
     }
 
+    function appendCre8PilotMatchModelCard(messages, matchModel) {
+        if (!messages || !matchModel || typeof matchModel !== 'object') {
+            return;
+        }
+        const recs = Array.isArray(matchModel.topRecommendations) ? matchModel.topRecommendations : [];
+        if (recs.length === 0) {
+            return;
+        }
+
+        const wrap = document.createElement('article');
+        wrap.className = 'cre8pilot-message cre8pilot-message-assistant cre8pilot-match-card';
+        wrap.setAttribute('aria-label', 'Creator match recommendations');
+
+        const head = document.createElement('div');
+        head.className = 'cre8pilot-match-card-head';
+        const title = document.createElement('strong');
+        title.className = 'cre8pilot-match-card-title';
+        title.textContent = 'Match recommendations';
+        head.appendChild(title);
+        wrap.appendChild(head);
+
+        recs.forEach((row) => {
+            if (!row || typeof row !== 'object') {
+                return;
+            }
+            const name = String(row.creatorName || 'Creator').trim() || 'Creator';
+            const score = typeof row.matchScore === 'number' ? row.matchScore : parseInt(row.matchScore, 10) || 0;
+            const labelRaw = String(row.label || 'weak').toLowerCase();
+            const labelNice = labelRaw === 'strong' ? 'Strong' : labelRaw === 'medium' ? 'Medium' : 'Weak';
+            const reasons = Array.isArray(row.reasons) ? row.reasons.slice(0, 3) : [];
+
+            const card = document.createElement('div');
+            card.className = 'cre8pilot-match-row';
+
+            const topRow = document.createElement('div');
+            topRow.className = 'cre8pilot-match-row-top';
+            const nm = document.createElement('span');
+            nm.className = 'cre8pilot-match-name';
+            nm.textContent = name;
+            const badge = document.createElement('span');
+            badge.className = 'cre8pilot-match-score-badge';
+            badge.textContent = String(score);
+            const lb = document.createElement('span');
+            lb.className = 'cre8pilot-match-label cre8pilot-match-label--' + (['strong', 'medium', 'weak'].includes(labelRaw) ? labelRaw : 'weak');
+            lb.textContent = labelNice;
+            topRow.appendChild(nm);
+            topRow.appendChild(badge);
+            topRow.appendChild(lb);
+            card.appendChild(topRow);
+
+            if (reasons.length > 0) {
+                const ul = document.createElement('ul');
+                ul.className = 'cre8pilot-match-reasons';
+                reasons.forEach((r) => {
+                    const li = document.createElement('li');
+                    li.textContent = String(r);
+                    ul.appendChild(li);
+                });
+                card.appendChild(ul);
+            }
+            wrap.appendChild(card);
+        });
+
+        messages.appendChild(wrap);
+    }
+
     function appendCre8PilotSecurityCard(messages, security) {
         if (!messages || !security || typeof security !== 'object') {
             return;
@@ -590,11 +656,15 @@ window.CRE8PILOT_CONTEXT = Object.assign(
                 const name = card.dataset.creatorName || card.dataset.name || textOf(card.querySelector('strong, h3, h4, .creator-name'), 80);
                 const email = card.dataset.creatorEmail || card.dataset.email || textOf(card.querySelector('[href^="mailto:"], .creator-email, small'), 90);
                 const id = card.dataset.creatorId || '';
+                const category = card.dataset.creatorCategory || card.dataset.category || '';
+                const niche = card.dataset.creatorNiche || card.dataset.niche || '';
                 return {
                     id,
                     name: name || textOf(card, 80),
                     email,
-                    details: textOf(card, 180),
+                    category,
+                    niche,
+                    details: textOf(card, 420),
                 };
             })
             .filter((creator) => creator.name !== '');
@@ -729,6 +799,7 @@ window.CRE8PILOT_CONTEXT = Object.assign(
                 raisonChoix: safeFieldValue('raisonChoix'),
                 attenteCollaboration: safeFieldValue('attenteCollaboration'),
                 messagePersonnalise: safeFieldValue('messagePersonnalise'),
+                category: safeFieldValue('category') || safeFieldValue('categorie'),
             },
             candidatureForm: {
                 messageMotivation: safeFieldValue('messageMotivation'),
@@ -1945,6 +2016,9 @@ window.CRE8PILOT_CONTEXT = Object.assign(
                     appendMessage(messages, assistantText, 'assistant', status);
                     if (data.security && typeof data.security === 'object') {
                         appendCre8PilotSecurityCard(messages, data.security);
+                    }
+                    if (data.matchModel && typeof data.matchModel === 'object' && Array.isArray(data.matchModel.topRecommendations) && data.matchModel.topRecommendations.length > 0) {
+                        appendCre8PilotMatchModelCard(messages, data.matchModel);
                     }
                     if (data.needsUserConfirmation) {
                         appendMessage(messages, 'Please review the prepared content. I will not submit or save anything automatically.', 'assistant', 'action');
