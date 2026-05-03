@@ -1706,8 +1706,18 @@ class CondidatureC
     private function isCre8ShieldDefensiveCheckRequest($rawMessage, $normalized): bool
     {
         $raw = trim((string) $rawMessage);
-        if ($raw !== '' && preg_match('/^\s*(please\s+)?(can you\s+)?check\s+this\s+(input|message|link|content)\s*:/is', $raw)) {
-            return true;
+        if ($raw !== '') {
+            $linePatternChecks = [
+                '/^\s*(please\s+)?(can you\s+)?check\s+this\s+(?:input|message|link|content|text|document\s+text)\s*:/is',
+                '/^\s*(please\s+)?(can you\s+)?analyze\s+this\s+text\s+for\s+security\s*:/is',
+                '/^\s*(please\s+)?(can you\s+)?security\s+check\s+this\s+text\s*:/is',
+                '/^\s*(please\s+)?(can you\s+)?is\s+this\s+malware[\s\-]*related\s+text\s+safe\s*:/is',
+            ];
+            foreach ($linePatternChecks as $re) {
+                if (preg_match($re, $raw)) {
+                    return true;
+                }
+            }
         }
         if ($raw !== '' && preg_match('/^\s*check\s+this\s+link\b/is', $raw) && preg_match('/https?:\/\//i', $raw)) {
             return true;
@@ -1721,8 +1731,12 @@ class CondidatureC
             'check this message',
             'check this link',
             'check this content',
+            'check this text',
+            'check this document text',
             'check security',
             'security check',
+            'security check this text',
+            'analyze this text for security',
             'check for sql injection',
             'check for xss',
             'check sql injection',
@@ -1730,6 +1744,7 @@ class CondidatureC
             'is this safe',
             'is this link safe',
             'is this url safe',
+            'is this malware related text safe',
             'scan for risk',
         ];
         foreach ($starters as $p) {
@@ -1744,8 +1759,17 @@ class CondidatureC
     private function cre8ShieldExtractDefensiveSubjectTail($rawMessage): string
     {
         $raw = (string) $rawMessage;
-        if (preg_match('/check\s+this\s+(?:input|message|link|content)\s*:\s*(.*)/is', $raw, $m)) {
-            return trim((string) ($m[1] ?? ''));
+        $patterns = [
+            '/check\s+this\s+(?:input|message|link|content|text)\s*:\s*(.*)/is',
+            '/check\s+this\s+document\s+text\s*:\s*(.*)/is',
+            '/analyze\s+this\s+text\s+for\s+security\s*:\s*(.*)/is',
+            '/security\s+check\s+this\s+text\s*:\s*(.*)/is',
+            '/is\s+this\s+malware[\s\-]*related\s+text\s+safe\s*:\s*(.*)/is',
+        ];
+        foreach ($patterns as $re) {
+            if (preg_match($re, $raw, $m)) {
+                return trim((string) ($m[1] ?? ''));
+            }
         }
 
         return '';
@@ -1763,26 +1787,42 @@ class CondidatureC
             'dump users',
             'dump the users',
             'dump user table',
+            'dump passwords',
             'hack the database',
+            'hack database',
             'bypass login',
             'exploit the database',
             'inject payload to dump',
             'extract passwords',
             'steal passwords',
+            'steal cookies',
+            'steal credentials',
+            'create malware',
+            'write malware',
+            'build malware',
+            'make malware',
+            'give me a payload',
+            'give me payload',
+            'write exploit code',
+            'make phishing page',
+            'create phishing page',
         ]);
     }
 
     private function detectCre8PilotGlobalGuard($normalized, $rawMessage = '')
     {
         $defensive = $rawMessage !== '' && $this->isCre8ShieldDefensiveCheckRequest($rawMessage, $normalized);
+
+        if (!$defensive && $this->isCre8ShieldOffensiveGenerationRequest($normalized)) {
+            return 'blocked_request';
+        }
+
         if ($defensive) {
             $tail = $this->cre8ShieldExtractDefensiveSubjectTail($rawMessage);
             if ($tail !== '' && $this->isCre8ShieldOffensiveGenerationRequest($tail)) {
                 return 'blocked_request';
             }
-        }
-
-        if (!$defensive && $this->messageContainsAny($normalized, [
+        } elseif ($this->messageContainsAny($normalized, [
             'password',
             'passwords',
             'show password',
@@ -2420,7 +2460,16 @@ class CondidatureC
             ])) {
             return 'security_check_link';
         }
-        if (preg_match('/check\s+this\s+(input|message|content)\s*:\s*(.+)/is', $raw, $m) && strlen(trim((string) ($m[2] ?? ''))) > 0) {
+        if (preg_match('/check\s+this\s+(?:input|message|content|text|document\s+text)\s*:\s*(.+)/is', $raw, $m) && strlen(trim((string) ($m[1] ?? ''))) > 0) {
+            return 'security_check_message';
+        }
+        if (preg_match('/analyze\s+this\s+text\s+for\s+security\s*:\s*(.+)/is', $raw, $m) && strlen(trim((string) ($m[1] ?? ''))) > 0) {
+            return 'security_check_message';
+        }
+        if (preg_match('/security\s+check\s+this\s+text\s*:\s*(.+)/is', $raw, $m) && strlen(trim((string) ($m[1] ?? ''))) > 0) {
+            return 'security_check_message';
+        }
+        if (preg_match('/is\s+this\s+malware[\s\-]*related\s+text\s+safe\s*:\s*(.+)/is', $raw, $m) && strlen(trim((string) ($m[1] ?? ''))) > 0) {
             return 'security_check_message';
         }
         if (preg_match('/check\s+this\s+link\s*:\s*(.+)/is', $raw, $m) && strlen(trim((string) ($m[1] ?? ''))) > 0) {
@@ -2767,6 +2816,35 @@ class CondidatureC
             $out['confidence'] = max(0.0, min(1.0, (float) ($sec['confidence'] ?? 0.0)));
         }
 
+        $ce = $sec['cyberEntities'] ?? null;
+        if (is_array($ce)) {
+            $buckets = ['indicators', 'malware', 'organizations', 'systems', 'vulnerabilities'];
+            $clean = [];
+            foreach ($buckets as $bk) {
+                $clean[$bk] = [];
+                foreach ((array) ($ce[$bk] ?? []) as $item) {
+                    $s = $this->sanitizeCre8PilotLlmScalar((string) $item, 200);
+                    if ($s !== '') {
+                        $clean[$bk][] = $s;
+                    }
+                }
+                $clean[$bk] = array_slice(array_values(array_unique($clean[$bk])), 0, 12);
+            }
+            $hasAny = false;
+            foreach ($buckets as $bk) {
+                if (!empty($clean[$bk])) {
+                    $hasAny = true;
+                    break;
+                }
+            }
+            if ($hasAny) {
+                $out['cyberEntities'] = $clean;
+            }
+        }
+        if (!empty($sec['nerReviewed'])) {
+            $out['nerReviewed'] = true;
+        }
+
         return $out;
     }
 
@@ -2834,6 +2912,19 @@ class CondidatureC
             ? (string) $im
             : null;
         $this->cre8PilotDebug['cre8ShieldAiPayloadSanitized'] = !empty($params['aiPayloadSanitized']);
+        $this->cre8PilotDebug['cre8ShieldNerEnabled'] = (bool) ($params['nerEnabled'] ?? false);
+        $this->cre8PilotDebug['cre8ShieldNerMode'] = preg_replace('/[^a-z0-9_\-]/i', '', (string) ($params['nerMode'] ?? 'disabled')) ?: 'disabled';
+        $this->cre8PilotDebug['cre8ShieldNerModel'] = $this->sanitizeCre8PilotLlmScalar((string) ($params['nerModel'] ?? ''), 120);
+        $nec = $params['nerErrorCode'] ?? null;
+        $this->cre8PilotDebug['cre8ShieldNerErrorCode'] = ($nec !== null && $nec !== '')
+            ? preg_replace('/[^a-z0-9_\-]/i', '', (string) $nec)
+            : null;
+        $this->cre8PilotDebug['cre8ShieldNerEntityCount'] = max(0, min(50, (int) ($params['nerEntityCount'] ?? 0)));
+        $this->cre8PilotDebug['cre8ShieldNerInputChars'] = max(0, min(10000, (int) ($params['nerInputChars'] ?? 0)));
+        $nep = $params['nerErrorMessagePreview'] ?? null;
+        $this->cre8PilotDebug['cre8ShieldNerErrorMessagePreview'] = ($nep !== null && $nep !== '')
+            ? $this->sanitizeCre8PilotLlmScalar((string) $nep, 200)
+            : null;
     }
 
     private function cre8ShieldAiDebugFromAttempt(?array $attempt): array
@@ -2969,6 +3060,440 @@ class CondidatureC
         return array_values(array_unique($markers));
     }
 
+    private function cre8ShieldNerEnabled(): bool
+    {
+        if (function_exists('cre8connect_load_env')) {
+            cre8connect_load_env();
+        }
+
+        return trim((string) $this->cre8PilotEnv('CRE8SHIELD_NER_ENABLED', '0')) === '1';
+    }
+
+    private function cre8ShieldGetHfToken(): string
+    {
+        if (function_exists('cre8connect_load_env')) {
+            cre8connect_load_env();
+        }
+
+        return trim((string) $this->cre8PilotEnv('CRE8SHIELD_HF_API_KEY', ''));
+    }
+
+    private function cre8ShieldGetNerModel(): string
+    {
+        $m = trim((string) $this->cre8PilotEnv('CRE8SHIELD_NER_MODEL', 'cisco-ai/SecureBERT2.0-NER'));
+
+        return $m !== '' ? $m : 'cisco-ai/SecureBERT2.0-NER';
+    }
+
+    private function cre8ShieldDefaultNerInferenceUrl(): string
+    {
+        $model = $this->cre8ShieldGetNerModel();
+        $segs = array_values(array_filter(explode('/', $model), static fn ($s) => $s !== ''));
+
+        return 'https://api-inference.huggingface.co/models/' . implode('/', array_map('rawurlencode', $segs));
+    }
+
+    private function cre8ShieldGetNerApiUrl(): string
+    {
+        if (function_exists('cre8connect_load_env')) {
+            cre8connect_load_env();
+        }
+        $u = trim((string) $this->cre8PilotEnv('CRE8SHIELD_NER_API_URL', ''));
+        if ($u !== '') {
+            $parsed = @parse_url($u);
+            $scheme = isset($parsed['scheme']) ? strtolower((string) $parsed['scheme']) : '';
+            if (in_array($scheme, ['http', 'https'], true) && !empty($parsed['host'])) {
+                return $u;
+            }
+        }
+
+        return $this->cre8ShieldDefaultNerInferenceUrl();
+    }
+
+    private function cre8ShieldGetNerTimeoutSeconds(): int
+    {
+        return max(2, min(60, (int) $this->cre8PilotEnv('CRE8SHIELD_NER_TIMEOUT_SECONDS', '12')));
+    }
+
+    private function cre8ShieldEmptyCyberEntities(): array
+    {
+        return [
+            'indicators' => [],
+            'malware' => [],
+            'organizations' => [],
+            'systems' => [],
+            'vulnerabilities' => [],
+        ];
+    }
+
+    private function cre8ShieldNerProviderIsHuggingface(): bool
+    {
+        return strtolower(trim((string) $this->cre8PilotEnv('CRE8SHIELD_NER_PROVIDER', 'huggingface'))) === 'huggingface';
+    }
+
+    private function cre8ShieldNerBlockedByContent(string $bundleText, string $rawMessage): bool
+    {
+        $normBundle = $this->normalizeCre8PilotMessage($bundleText);
+        if ($normBundle !== '' && $this->isCre8ShieldOffensiveGenerationRequest($normBundle)) {
+            return true;
+        }
+        $normRaw = $this->normalizeCre8PilotMessage($rawMessage);
+        if ($normRaw !== '' && $this->isCre8ShieldOffensiveGenerationRequest($normRaw)) {
+            return true;
+        }
+        $tail = $this->cre8ShieldExtractDefensiveSubjectTail($rawMessage);
+        if ($tail !== '' && $this->isCre8ShieldOffensiveGenerationRequest($tail)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function cre8ShieldNerIntentOrRiskQualifies(array $analysis, string $intent): bool
+    {
+        if (in_array($intent, ['security_check_link', 'security_check_message', 'security_explain_risk', 'security_check_page'], true)) {
+            return true;
+        }
+        $lvl = strtolower((string) ($analysis['riskLevel'] ?? ''));
+
+        return $lvl === 'medium' || $lvl === 'high';
+    }
+
+    private function cre8ShieldShouldRunNer(array $analysis, array $payload, array $context): bool
+    {
+        if (!$this->cre8ShieldNerEnabled() || !$this->cre8ShieldNerProviderIsHuggingface()) {
+            return false;
+        }
+        if ($this->cre8ShieldGetHfToken() === '') {
+            return false;
+        }
+        if (empty($context['defensiveOk'])) {
+            return false;
+        }
+        $bundle = (string) ($context['bundleText'] ?? '');
+        $raw = (string) ($context['rawMessage'] ?? '');
+        if ($this->cre8ShieldNerBlockedByContent($bundle, $raw)) {
+            return false;
+        }
+        $intent = (string) ($context['intent'] ?? ($payload['intent'] ?? ''));
+        if (!$this->cre8ShieldNerIntentOrRiskQualifies($analysis, $intent)) {
+            return false;
+        }
+        $len = (int) ($context['nerInputLength'] ?? 0);
+
+        return $len >= 3 && $len <= 2000;
+    }
+
+    private function cre8ShieldRedactSecretsForNer(string $text): string
+    {
+        $t = (string) $text;
+        $pairs = [
+            ['#sk-[a-z0-9]{10,}#i', '[REDACTED]'],
+            ['#gsk_[a-z0-9]{10,}#i', '[REDACTED]'],
+            ['#hf_[a-z0-9]{10,}#i', '[REDACTED]'],
+            ['#\beyJ[a-z0-9+/=_-]{20,}\b#i', '[REDACTED]'],
+            ['#\b[0-9a-f]{40,}\b#i', '[REDACTED]'],
+            ['#(?i)(api[_-]?key|password|passwd|pwd|token|secret)\s*[:=]\s*["\']?[^\s"\']+#', '$1=[REDACTED]'],
+        ];
+        foreach ($pairs as [$pattern, $replacement]) {
+            $out = @preg_replace($pattern, $replacement, $t);
+            if ($out !== null) {
+                $t = $out;
+            }
+        }
+
+        return $t;
+    }
+
+    private function cre8ShieldSanitizeNerHttpBodyPreview(string $body): string
+    {
+        $b = strip_tags((string) $body);
+        $b = preg_replace('/\s+/u', ' ', $b) ?? $b;
+        $b = preg_replace('#(?i)\bbearer\s+[a-z0-9_\-\.+/=]{12,}\b#', 'bearer [REDACTED]', $b) ?? $b;
+        $b = preg_replace('#hf_[a-z0-9]{8,}#i', '[REDACTED]', $b) ?? $b;
+        $b = preg_replace('#sk-[a-z0-9]{8,}#i', '[REDACTED]', $b) ?? $b;
+
+        return $this->sanitizeCre8PilotLlmScalar(trim((string) $b), 200);
+    }
+
+    private function cre8ShieldStripTagsNormalizeWhitespace(string $text): string
+    {
+        $t = strip_tags((string) $text);
+        $t = html_entity_decode($t, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $t = preg_replace('/\s+/u', ' ', $t) ?? $t;
+
+        return trim($t);
+    }
+
+    private function cre8ShieldBuildNerInput(string $text, array $analysis, array $payload, array $context): string
+    {
+        $useSanitized = !empty($context['useSanitizedNerInput']);
+        $parts = [];
+        if ($useSanitized) {
+            $cats = implode(', ', array_slice((array) ($analysis['riskCategories'] ?? []), 0, 12));
+            $findings = implode(' ', array_slice((array) ($analysis['findings'] ?? []), 0, 5));
+            $chunk = trim($cats . ' ' . $findings);
+            if ($chunk !== '') {
+                $parts[] = $this->cre8ShieldStripTagsNormalizeWhitespace($chunk);
+            }
+            $markers = implode(' ', $this->cre8ShieldBuildMaskedPatternMarkers($analysis));
+            if ($markers !== '') {
+                $parts[] = $markers;
+            }
+            $raw = (string) ($context['rawMessage'] ?? '');
+            $tail = $this->cre8ShieldExtractDefensiveSubjectTail($raw);
+            if ($tail !== '' && !$this->isCre8ShieldOffensiveGenerationRequest($tail)) {
+                $safeTail = $this->cre8ShieldRedactSecretsForNer($this->cre8ShieldStripTagsNormalizeWhitespace($tail));
+                if ($safeTail !== '') {
+                    $parts[] = substr($safeTail, 0, 500);
+                }
+            }
+        } else {
+            $base = $this->cre8ShieldStripTagsNormalizeWhitespace($text);
+            if ($base !== '') {
+                $parts[] = $this->cre8ShieldRedactSecretsForNer($base);
+            }
+            $vis = $context['visibleData'] ?? [];
+            if (is_array($vis)) {
+                $doc = $vis['documentContext'] ?? null;
+                if (is_array($doc)) {
+                    $pv = trim((string) ($doc['safeTextPreview'] ?? ''));
+                    if ($pv !== '') {
+                        $pv = $this->cre8ShieldRedactSecretsForNer($this->cre8ShieldStripTagsNormalizeWhitespace($pv));
+                        if ($pv !== '') {
+                            $parts[] = substr($pv, 0, 900);
+                        }
+                    }
+                }
+            }
+        }
+        $merged = implode("\n", array_filter($parts, static fn ($p) => is_string($p) && trim($p) !== ''));
+        $merged = $this->cre8ShieldRedactSecretsForNer($this->cre8ShieldStripTagsNormalizeWhitespace($merged));
+
+        return substr($merged, 0, 2000);
+    }
+
+    private function cre8ShieldNormalizeNerLabel($label): string
+    {
+        $s = preg_replace('/^[BI]-/i', '', trim((string) $label));
+        $s = strtolower(preg_replace('/[^a-z0-9_\-]/i', '', $s) ?? '');
+        $map = [
+            'indicator' => 'indicator',
+            'malware' => 'malware',
+            'organization' => 'organization',
+            'system' => 'system',
+            'vulnerability' => 'vulnerability',
+        ];
+
+        return $map[$s] ?? '';
+    }
+
+    private function cre8ShieldCollectHfNerRows($node, array &$rows): void
+    {
+        if (!is_array($node)) {
+            return;
+        }
+        $hasEntity = isset($node['entity_group']) || isset($node['entity']);
+        $hasWord = array_key_exists('word', $node) || array_key_exists('text', $node);
+        if ($hasEntity && $hasWord) {
+            $rows[] = $node;
+
+            return;
+        }
+        $isList = array_keys($node) === range(0, count($node) - 1);
+        if ($isList) {
+            foreach ($node as $item) {
+                $this->cre8ShieldCollectHfNerRows($item, $rows);
+            }
+
+            return;
+        }
+        foreach ($node as $v) {
+            if (is_array($v)) {
+                $this->cre8ShieldCollectHfNerRows($v, $rows);
+            }
+        }
+    }
+
+    private function cre8ShieldNormalizeNerEntities($hfResponse): array
+    {
+        if (!is_array($hfResponse) && !is_object($hfResponse)) {
+            return [];
+        }
+        $data = is_array($hfResponse) ? $hfResponse : json_decode(json_encode($hfResponse), true);
+        if (!is_array($data)) {
+            return [];
+        }
+        if (isset($data['error']) && is_string($data['error'])) {
+            return [];
+        }
+        $rows = [];
+        $this->cre8ShieldCollectHfNerRows($data, $rows);
+        $out = [];
+        $seen = [];
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $eg = $row['entity_group'] ?? $row['entity'] ?? '';
+            $type = $this->cre8ShieldNormalizeNerLabel($eg);
+            if ($type === '') {
+                continue;
+            }
+            $word = trim((string) ($row['word'] ?? $row['text'] ?? ''));
+            if ($word === '') {
+                continue;
+            }
+            $score = $row['score'] ?? null;
+            $score = is_numeric($score) ? (float) $score : 0.0;
+            if ($score < 0.5) {
+                continue;
+            }
+            $key = strtolower($word) . '|' . $type;
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $out[] = [
+                'text' => $word,
+                'type' => $type,
+                'score' => $score,
+            ];
+            if (count($out) >= 20) {
+                break;
+            }
+        }
+
+        return $out;
+    }
+
+    private function cre8ShieldGroupNerEntitiesForClient(array $flat): array
+    {
+        $g = $this->cre8ShieldEmptyCyberEntities();
+        foreach ($flat as $e) {
+            if (!is_array($e)) {
+                continue;
+            }
+            $t = (string) ($e['type'] ?? '');
+            $txt = trim((string) ($e['text'] ?? ''));
+            if ($txt === '') {
+                continue;
+            }
+            match ($t) {
+                'indicator' => $g['indicators'][] = $txt,
+                'malware' => $g['malware'][] = $txt,
+                'organization' => $g['organizations'][] = $txt,
+                'system' => $g['systems'][] = $txt,
+                'vulnerability' => $g['vulnerabilities'][] = $txt,
+                default => null,
+            };
+        }
+        foreach (array_keys($g) as $k) {
+            $g[$k] = array_values(array_unique(array_filter((array) $g[$k])));
+        }
+
+        return $g;
+    }
+
+    private function cre8ShieldFormatNerSummaryForAi(array $flat): ?string
+    {
+        if ($flat === []) {
+            return null;
+        }
+        $lines = [];
+        foreach ($flat as $e) {
+            if (!is_array($e)) {
+                continue;
+            }
+            $lines[] = ($e['type'] ?? '') . ':' . ($e['text'] ?? '');
+        }
+        $s = implode('; ', $lines);
+        $s = $this->sanitizeCre8PilotLlmScalar($s, 650);
+
+        return $s !== '' ? $s : null;
+    }
+
+    private function cre8ShieldMergeNerEntities(array $analysis, array $cyberGrouped, bool $nerReviewed): array
+    {
+        $analysis['cyberEntities'] = $cyberGrouped;
+        $analysis['nerReviewed'] = $nerReviewed;
+
+        return $analysis;
+    }
+
+    private function cre8ShieldCallSecureBertNer(string $text): array
+    {
+        $token = $this->cre8ShieldGetHfToken();
+        if ($token === '') {
+            return ['ok' => false, 'data' => null, 'mode' => 'missing_key', 'error' => 'missing_key', 'http' => null, 'errorPreview' => null];
+        }
+        $path = $this->cre8ShieldGetNerApiUrl();
+        $timeout = $this->cre8ShieldGetNerTimeoutSeconds();
+        $body = json_encode([
+            'inputs' => $text,
+            'parameters' => ['aggregation_strategy' => 'simple'],
+            'options' => ['wait_for_model' => true],
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if ($body === false) {
+            return ['ok' => false, 'data' => null, 'mode' => 'invalid_response', 'error' => 'encode_error', 'http' => null, 'errorPreview' => null];
+        }
+        if (!function_exists('curl_init')) {
+            return ['ok' => false, 'data' => null, 'mode' => 'api_error', 'error' => 'curl_missing', 'http' => null, 'errorPreview' => null];
+        }
+        $ch = curl_init($path);
+        if ($ch === false) {
+            return ['ok' => false, 'data' => null, 'mode' => 'api_error', 'error' => 'curl_init', 'http' => null, 'errorPreview' => null];
+        }
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_HTTPHEADER => [
+                'Authorization: Bearer ' . $token,
+                'Content-Type: application/json',
+            ],
+            CURLOPT_POSTFIELDS => $body,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => $timeout,
+        ]);
+        $raw = curl_exec($ch);
+        $errno = curl_errno($ch);
+        $http = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        $rawStr = is_string($raw) ? $raw : '';
+        $preview = $this->cre8ShieldSanitizeNerHttpBodyPreview($rawStr);
+        if ($raw === false || $errno !== 0) {
+            return ['ok' => false, 'data' => null, 'mode' => 'api_error', 'error' => 'curl_' . $errno, 'http' => $http > 0 ? $http : null, 'errorPreview' => $preview !== '' ? $preview : null];
+        }
+        if ($http === 429) {
+            return ['ok' => false, 'data' => null, 'mode' => 'rate_limited', 'error' => 'rate_limited', 'http' => $http, 'errorPreview' => $preview !== '' ? $preview : null];
+        }
+        if ($http === 401 || $http === 403) {
+            return ['ok' => false, 'data' => null, 'mode' => 'api_error', 'error' => 'unauthorized', 'http' => $http, 'errorPreview' => $preview !== '' ? $preview : null];
+        }
+        if ($http < 200 || $http >= 300) {
+            return ['ok' => false, 'data' => null, 'mode' => 'api_error', 'error' => 'http_' . $http, 'http' => $http, 'errorPreview' => $preview !== '' ? $preview : null];
+        }
+        $decoded = json_decode($rawStr, true);
+        if (!is_array($decoded)) {
+            return ['ok' => false, 'data' => null, 'mode' => 'invalid_response', 'error' => 'invalid_response', 'http' => $http, 'errorPreview' => $preview !== '' ? $preview : null];
+        }
+        if (isset($decoded['error'])) {
+            $errRaw = $decoded['error'];
+            $jeFlags = JSON_UNESCAPED_UNICODE;
+            if (defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
+                $jeFlags |= JSON_INVALID_UTF8_SUBSTITUTE;
+            }
+            $errStr = is_string($errRaw) ? $errRaw : json_encode($errRaw, $jeFlags);
+            if (!is_string($errStr)) {
+                $errStr = '';
+            }
+            $errPreview = $this->cre8ShieldSanitizeNerHttpBodyPreview($errStr);
+
+            return ['ok' => false, 'data' => null, 'mode' => 'api_error', 'error' => 'hf_error', 'http' => $http, 'errorPreview' => $errPreview !== '' ? $errPreview : ($preview !== '' ? $preview : null)];
+        }
+
+        return ['ok' => true, 'data' => $decoded, 'mode' => 'success', 'error' => null, 'http' => $http, 'errorPreview' => null];
+    }
+
     private function cre8ShieldBuildPolicyPrompt(array $rulesAnalysis, array $payload, array $context): array
     {
         $sanitized = !empty($context['aiPayloadSanitized'])
@@ -2983,6 +3508,7 @@ class CondidatureC
             'Decision must be one of: allow, warn, block, human_review.',
             'Rules: block offensive hacking/exploit generation; allow defensive analysis of suspicious inputs; never provide exploit steps or payload construction; never reveal private data or secrets; keep recommendations defensive only.',
             'PHP rule engine already ran — you must NOT contradict it downward (if rules show sql_injection/xss/privacy_access, keep risk at least as high as rules).',
+            'Optional nerEntitySummary lists cybersecurity entities from a separate NER model (indicators, malware, orgs, systems, CVE-like strings). Treat it as auxiliary evidence only; it must not lower risk below rules and must not override defensive blocking.',
             'Return a single JSON object only (no markdown fences) with exactly these keys: aiRiskLevel, aiDecision, aiCategories, aiFindings, aiRecommendations, aiRationale, confidence (0-1 float).',
             'Arrays must be short strings only. aiRationale must be one short safe paragraph.',
         ];
@@ -2999,6 +3525,11 @@ class CondidatureC
             'safeRecommendations' => array_slice((array) ($rulesAnalysis['safeRecommendations'] ?? []), 0, 6),
         ];
 
+        $nerSummary = $context['nerEntitySummary'] ?? null;
+        $nerSummary = is_string($nerSummary) && trim($nerSummary) !== ''
+            ? $this->sanitizeCre8PilotLlmScalar($nerSummary, 680)
+            : null;
+
         if ($sanitized) {
             $userPayload = [
                 'task' => 'defensive_security_review',
@@ -3012,6 +3543,9 @@ class CondidatureC
                 'maskedPatternMarkers' => $this->cre8ShieldBuildMaskedPatternMarkers($rulesAnalysis),
                 'ruleEngine' => $ruleBlock,
             ];
+            if ($nerSummary !== null) {
+                $userPayload['nerEntitySummary'] = $nerSummary;
+            }
         } else {
             $preview = (string) ($context['textPreview'] ?? '');
             $userPayload = [
@@ -3026,6 +3560,9 @@ class CondidatureC
                 'scannedTextPreview' => $this->sanitizeCre8PilotLlmScalar($preview, 2000),
                 'ruleEngine' => $ruleBlock,
             ];
+            if ($nerSummary !== null) {
+                $userPayload['nerEntitySummary'] = $nerSummary;
+            }
         }
 
         $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES;
@@ -3290,6 +3827,12 @@ class CondidatureC
             $clientInput['aiRationale'] = (string) ($analysis['aiRationale'] ?? '');
             $clientInput['confidence'] = (float) ($analysis['confidence'] ?? 0.0);
         }
+        if (isset($analysis['cyberEntities']) && is_array($analysis['cyberEntities'])) {
+            $clientInput['cyberEntities'] = $analysis['cyberEntities'];
+        }
+        if (!empty($analysis['nerReviewed'])) {
+            $clientInput['nerReviewed'] = true;
+        }
         $client = $this->cre8ShieldSanitizeClientSecurityBlock($clientInput);
 
         return [
@@ -3308,7 +3851,13 @@ class CondidatureC
         if ($intent === 'security_check_link') {
             $bundleText = $raw;
         } elseif ($intent === 'security_check_message') {
-            if (preg_match('/check\s+this\s+(?:input|message|content)\s*:\s*(.+)/is', $raw, $m)) {
+            if (preg_match('/check\s+this\s+(?:input|message|content|text|document\s+text)\s*:\s*(.+)/is', $raw, $m)) {
+                $bundleText = trim((string) ($m[1] ?? ''));
+            } elseif (preg_match('/analyze\s+this\s+text\s+for\s+security\s*:\s*(.+)/is', $raw, $m)) {
+                $bundleText = trim((string) ($m[1] ?? ''));
+            } elseif (preg_match('/security\s+check\s+this\s+text\s*:\s*(.+)/is', $raw, $m)) {
+                $bundleText = trim((string) ($m[1] ?? ''));
+            } elseif (preg_match('/is\s+this\s+malware[\s\-]*related\s+text\s+safe\s*:\s*(.+)/is', $raw, $m)) {
                 $bundleText = trim((string) ($m[1] ?? ''));
             } else {
                 $bundleText = $raw;
@@ -3329,6 +3878,13 @@ class CondidatureC
                     'aiMessagePreview' => null,
                     'aiInputMode' => null,
                     'aiPayloadSanitized' => false,
+                    'nerEnabled' => $this->cre8ShieldNerEnabled(),
+                    'nerMode' => 'skipped',
+                    'nerModel' => $this->cre8ShieldGetNerModel(),
+                    'nerErrorCode' => null,
+                    'nerEntityCount' => 0,
+                    'nerInputChars' => 0,
+                    'nerErrorMessagePreview' => null,
                 ]);
 
                 return $this->buildCre8PilotResponse(
@@ -3364,6 +3920,13 @@ class CondidatureC
                 'aiMessagePreview' => null,
                 'aiInputMode' => null,
                 'aiPayloadSanitized' => false,
+                'nerEnabled' => $this->cre8ShieldNerEnabled(),
+                'nerMode' => 'skipped',
+                'nerModel' => $this->cre8ShieldGetNerModel(),
+                'nerErrorCode' => null,
+                'nerEntityCount' => 0,
+                'nerInputChars' => 0,
+                'nerErrorMessagePreview' => null,
             ]);
 
             return $this->buildCre8PilotResponse(
@@ -3401,6 +3964,58 @@ class CondidatureC
         $missingGroqKey = $this->cre8PilotApiKeyMissing($this->getCre8ShieldAiGroqProviderConfig());
         $lenOk = strlen($bundleText) <= 8000;
         $attemptAi = $aiEnabledFlag && !$missingGroqKey && $lenOk && $defensiveOk;
+
+        $nerCyber = $this->cre8ShieldEmptyCyberEntities();
+        $nerReviewed = false;
+        $nerMode = 'disabled';
+        $nerErrorCode = null;
+        $nerErrorMessagePreview = null;
+        $nerEntityCount = 0;
+        $nerInputChars = 0;
+        $nerModel = $this->cre8ShieldGetNerModel();
+        $nerEnabledFlag = $this->cre8ShieldNerEnabled();
+        $useSanitizedNer = $this->cre8ShieldRulesRequireSanitizedAiInput($rulesAnalysis);
+        $nerBuildCtx = array_merge($context, [
+            'visibleData' => $visibleData,
+            'rawMessage' => $raw,
+            'useSanitizedNerInput' => $useSanitizedNer,
+        ]);
+        $nerInputText = $this->cre8ShieldBuildNerInput($bundleText, $rulesAnalysis, $payload, $nerBuildCtx);
+        $nerInputChars = strlen($nerInputText);
+        $context['nerEntitySummary'] = null;
+
+        $nerEvalCtx = [
+            'intent' => $intent,
+            'defensiveOk' => $defensiveOk,
+            'bundleText' => $bundleText,
+            'rawMessage' => $raw,
+            'nerInputLength' => strlen($nerInputText),
+        ];
+        if (!$nerEnabledFlag || !$this->cre8ShieldNerProviderIsHuggingface()) {
+            $nerMode = 'disabled';
+        } elseif ($this->cre8ShieldGetHfToken() === '') {
+            $nerMode = 'missing_key';
+        } elseif (!$this->cre8ShieldShouldRunNer($rulesAnalysis, $payload, $nerEvalCtx)) {
+            $nerMode = 'skipped';
+        } else {
+            $hfRes = $this->cre8ShieldCallSecureBertNer($nerInputText);
+            if (!empty($hfRes['ok'])) {
+                $flat = $this->cre8ShieldNormalizeNerEntities($hfRes['data']);
+                $nerCyber = $this->cre8ShieldGroupNerEntitiesForClient($flat);
+                $nerEntityCount = count($flat);
+                $nerReviewed = true;
+                $nerMode = 'success';
+                $sum = $this->cre8ShieldFormatNerSummaryForAi($flat);
+                if ($sum !== null) {
+                    $context['nerEntitySummary'] = $sum;
+                }
+            } else {
+                $nerMode = (string) ($hfRes['mode'] ?? 'api_error');
+                $nerErrorCode = (string) ($hfRes['error'] ?? 'api_error');
+                $ep = trim((string) ($hfRes['errorPreview'] ?? ''));
+                $nerErrorMessagePreview = $ep !== '' ? $ep : null;
+            }
+        }
 
         $aiUnavailableNote = '';
         $analysis = $rulesAnalysis;
@@ -3448,6 +4063,8 @@ class CondidatureC
             }
         }
 
+        $analysis = $this->cre8ShieldMergeNerEntities($analysis, $nerCyber, $nerReviewed);
+
         $this->stampCre8ShieldResponseDebug([
             'used' => true,
             'mode' => $finalShieldMode,
@@ -3459,6 +4076,13 @@ class CondidatureC
             'aiMessagePreview' => $stampPreview,
             'aiInputMode' => $stampAiInputMode !== '' ? $stampAiInputMode : null,
             'aiPayloadSanitized' => $stampAiPayloadSanitized,
+            'nerEnabled' => $nerEnabledFlag,
+            'nerMode' => $nerMode,
+            'nerModel' => $nerModel,
+            'nerErrorCode' => $nerErrorCode,
+            'nerEntityCount' => $nerEntityCount,
+            'nerInputChars' => $nerInputChars,
+            'nerErrorMessagePreview' => $nerErrorMessagePreview,
         ]);
 
         $built = $this->cre8ShieldBuildSecurityResponse($analysis, $payload, array_merge($context, ['aiUnavailableNote' => $aiUnavailableNote]));

@@ -3365,6 +3365,17 @@ body > main.container-fluid {
   white-space: nowrap;
 }
 
+.cre8pilot-security-ner-extracted {
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(14, 165, 233, 0.18);
+  color: #0369a1;
+  border: 1px solid rgba(14, 165, 233, 0.35);
+  white-space: nowrap;
+}
+
 .cre8pilot-security-section {
   margin-top: 0.45rem;
 }

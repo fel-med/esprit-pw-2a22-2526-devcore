@@ -421,6 +421,12 @@ window.CRE8PILOT_CONTEXT = Object.assign(
             aiBadge.textContent = 'AI reviewed';
             header.appendChild(aiBadge);
         }
+        if (security.nerReviewed === true) {
+            const nerBadge = document.createElement('span');
+            nerBadge.className = 'cre8pilot-security-ner-extracted';
+            nerBadge.textContent = 'NER extracted';
+            header.appendChild(nerBadge);
+        }
         item.appendChild(header);
 
         function addSection(heading, lines) {
@@ -461,6 +467,40 @@ window.CRE8PILOT_CONTEXT = Object.assign(
             }
             if (lines.length > 0) {
                 addSection('AI insight', lines);
+            }
+        }
+
+        const ce = security.cyberEntities;
+        if (ce && typeof ce === 'object') {
+            function joinEntities(arr) {
+                if (!Array.isArray(arr) || arr.length === 0) {
+                    return '';
+                }
+                return arr.map((x) => String(x)).filter(Boolean).join(', ');
+            }
+            const indicatorLine = joinEntities(ce.indicators);
+            const malwareLine = joinEntities(ce.malware);
+            const vulnLine = joinEntities(ce.vulnerabilities);
+            const systemLine = joinEntities(ce.systems);
+            const orgLine = joinEntities(ce.organizations);
+            const cyberLines = [];
+            if (indicatorLine) {
+                cyberLines.push('Indicators: ' + indicatorLine);
+            }
+            if (malwareLine) {
+                cyberLines.push('Malware: ' + malwareLine);
+            }
+            if (vulnLine) {
+                cyberLines.push('Vulnerabilities: ' + vulnLine);
+            }
+            if (systemLine) {
+                cyberLines.push('Systems: ' + systemLine);
+            }
+            if (orgLine) {
+                cyberLines.push('Organizations: ' + orgLine);
+            }
+            if (cyberLines.length > 0) {
+                addSection('Cyber entities', cyberLines);
             }
         }
 

@@ -1,4 +1,7 @@
 <?php
+if (function_exists('ini_set')) {
+    ini_set('display_errors', '0');
+}
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
