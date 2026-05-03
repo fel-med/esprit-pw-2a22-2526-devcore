@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../Modele/comment.php';
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../config_stt.php';
 
 class CommentC
 {
@@ -452,4 +453,67 @@ class CommentC
             'totalDislikes' => 0
         ];
     }
+
+
+    public function transcribeAudioWithGroq(string $filePath, string $originalName = 'comment.webm', string $language = 'en'): array
+    {
+        if (!defined('STT_API_KEY') || trim((string) STT_API_KEY) === '' || (string) STT_API_KEY === 'PASTE_YOUR_GROQ_API_KEY_HERE') {
+            return ['success' => false, 'message' => 'Set your Groq API key in config_stt.php first.'];
+        }
+        if (!function_exists('curl_init')) {
+            return ['success' => false, 'message' => 'cURL is not enabled in PHP. Enable php_curl in XAMPP.'];
+        }
+        if (!is_file($filePath) || filesize($filePath) <= 0) {
+            return ['success' => false, 'message' => 'Audio file is missing or empty.'];
+        }
+
+        $language = strtolower(trim($language));
+        if ($language === '') {
+            $language = 'en';
+        }
+        if (strlen($language) > 2) {
+            $language = substr($language, 0, 2);
+        }
+
+        $mimeType = mime_content_type($filePath) ?: 'audio/webm';
+        $endpoint = rtrim((string) STT_API_BASE_URL, '/') . '/audio/transcriptions';
+        $ch = curl_init($endpoint);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_HTTPHEADER => [
+                'Authorization: Bearer ' . STT_API_KEY,
+            ],
+            CURLOPT_POSTFIELDS => [
+                'model' => defined('STT_MODEL') ? (string) STT_MODEL : 'whisper-large-v3-turbo',
+                'language' => $language,
+                'response_format' => 'json',
+                'temperature' => '0',
+                'file' => new CURLFile($filePath, $mimeType, $originalName),
+            ],
+            CURLOPT_TIMEOUT => 90,
+        ]);
+
+        $response = curl_exec($ch);
+        $curlError = curl_error($ch);
+        $statusCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($response === false) {
+            return ['success' => false, 'message' => 'Speech API request failed: ' . $curlError];
+        }
+
+        $decoded = json_decode($response, true);
+        if ($statusCode < 200 || $statusCode >= 300) {
+            return ['success' => false, 'message' => $decoded['error']['message'] ?? ('Speech API HTTP error ' . $statusCode)];
+        }
+
+        $text = trim((string) ($decoded['text'] ?? ''));
+        if ($text === '') {
+            return ['success' => false, 'message' => 'No transcription text was returned.'];
+        }
+
+        return ['success' => true, 'text' => $text];
+    }
+
 }

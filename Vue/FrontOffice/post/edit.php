@@ -8,7 +8,8 @@ $pageTitle = 'Edit Post';
 $currentPage = 'portfolio';
 
 function handleUploadedPostFile(string $inputName, array $allowedExtensions, int $maxBytes, string $prefix): ?string
-{    if (empty($_FILES[$inputName]['name'])) {
+{
+    if (empty($_FILES[$inputName]['name'])) {
         return null;
     }
     if ($_FILES[$inputName]['error'] !== 0) {
@@ -59,7 +60,6 @@ if (!$post) {
 $errorMessage = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    
     $subject = trim($_POST['subject'] ?? '');
     $textContent = trim($_POST['textContent'] ?? '');
 
@@ -119,6 +119,8 @@ require_once '../partials/header.php';
                     <?php endif; ?>
 
                     <form id="postForm" method="POST" enctype="multipart/form-data" novalidate>
+                        <input type="hidden" id="existingImagePath" name="existingImagePath" value="<?= htmlspecialchars($post['imageContent'] ?? '') ?>">
+
                         <div class="mb-4">
                             <label for="subject" class="social-label">Subject *</label>
                             <input
@@ -131,6 +133,56 @@ require_once '../partials/header.php';
                             >
                             <div id="subjectError" class="validation-error"></div>
                             <div id="subjectCounter" class="input-counter"></div>
+                        </div>
+
+                        <div class="mb-4 p-3 rounded-4 border bg-light-subtle">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                                <div>
+                                    <label for="aiBrief" class="social-label mb-1">Enhance content with AI</label>
+                                    <p class="text-muted small mb-0">Describe what you want to improve. The AI will rewrite the content field without changing the rest of your form.</p>
+                                </div>
+                                <span class="badge text-bg-light border">Enhance current text</span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="aiBrief" class="social-label">Describe your idea *</label>
+                                <textarea
+                                    class="form-control social-textarea"
+                                    id="aiBrief"
+                                    name="aiBrief"
+                                    rows="3"
+                                    placeholder="Example: make the text more artistic and emotional, and mention the symbolic meaning of the artwork."></textarea>
+                            </div>
+
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-6">
+                                    <label for="aiStyle" class="social-label">Style</label>
+                                    <input
+                                        type="text"
+                                        class="form-control social-input"
+                                        id="aiStyle"
+                                        name="aiStyle"
+                                        placeholder="Artistic, emotional, professional, storytelling..."
+                                    >
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="aiSentenceCount" class="social-label">Number of phrases</label>
+                                    <input
+                                        type="number"
+                                        class="form-control social-input"
+                                        id="aiSentenceCount"
+                                        name="aiSentenceCount"
+                                        min="1"
+                                        max="12"
+                                        value="4"
+                                    >
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="button" class="btn social-create-btn w-100 js-ai-generate" data-ai-mode="enhance">Enhance</button>
+                                </div>
+                            </div>
+
+                            <div class="ai-status small mt-3" aria-live="polite"></div>
                         </div>
 
                         <div class="mb-4">
@@ -159,6 +211,7 @@ require_once '../partials/header.php';
                         <div class="mb-4">
                             <label for="image" class="social-label">Replace Image</label>
                             <input type="file" class="form-control social-input" id="image" name="image" accept=".jpg,.jpeg,.png,.webp">
+                            <div class="form-text">If you click Enhance after choosing a new image, the AI will use the new image first. Otherwise it will use the current post image if one exists.</div>
                             <div id="imageError" class="validation-error"></div>
                             <div id="imagePreview" class="preview-box"></div>
                         </div>

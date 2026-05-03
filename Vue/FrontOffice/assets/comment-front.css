@@ -1,3 +1,4 @@
+
 /* =============================================
    COMMENT SYSTEM — Harmonized with Nour's style
    ============================================= */
@@ -511,3 +512,9 @@
   from { opacity: 0; transform: translateY(-5px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+comment-front.css
+
+.comment-voice-status{font-size:.76rem;font-weight:600;color:#7a7f92;margin-top:.35rem;padding-left:.25rem;min-height:1.1rem}
+.comment-voice-status.is-error{color:#e11d48}
+.comment-voice-status.is-active{color:#5b4fff}
+.js-voice-transcript-btn.is-recording{color:#e11d48;background:rgba(225,29,72,.10)}

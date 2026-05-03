@@ -32,8 +32,10 @@ if (!function_exists('render_comment_form')) {
                     <i class="bi bi-image"></i>
                     <input type="file" name="image" accept="image/*" class="d-none js-image-input">
                 </label>
+                <button type="button" class="btn-form-icon js-voice-transcript-btn" title="Voice transcription" data-idle-label="Tap the microphone to dictate your comment" data-recording-label="Listening... speak now" data-voice-lang="en-US"><i class="bi bi-mic"></i></button>
                 <button type="submit" class="btn-comment-submit"><i class="bi bi-send"></i> <?= comment_escape($submitLabel) ?></button>
             </div>
+            <div class="comment-voice-status" aria-live="polite"></div>
             <div class="emoji-picker-panel"></div>
             <div class="img-preview-wrap" style="display:none;">
                 <img src="" alt="preview" class="js-img-preview">
@@ -76,9 +78,11 @@ if (!function_exists('render_edit_comment_form')) {
                         <i class="bi bi-image"></i>
                         <input type="file" name="image" accept="image/*" class="d-none js-image-input">
                     </label>
+                    <button type="button" class="btn-form-icon js-voice-transcript-btn" title="Voice transcription" data-idle-label="Tap the microphone to dictate your comment" data-recording-label="Listening... speak now" data-voice-lang="en-US"><i class="bi bi-mic"></i></button>
                     <button type="submit" class="btn-comment-submit"><i class="bi bi-check2-circle"></i> Save</button>
                     <button type="button" class="btn-comment-secondary btn-cancel-edit" data-comment-id="<?= comment_escape($commentId) ?>">Cancel</button>
                 </div>
+                <div class="comment-voice-status" aria-live="polite"></div>
                 <div class="emoji-picker-panel"></div>
                 <div class="img-preview-wrap" style="display:none;">
                     <img src="" alt="preview" class="js-img-preview">

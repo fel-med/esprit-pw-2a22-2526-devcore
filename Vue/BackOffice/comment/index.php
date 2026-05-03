@@ -20,38 +20,16 @@ $totalDislikes = (int)($stats['totalDislikes'] ?? 0);
 $approvalPct   = ($totalLikes + $totalDislikes) > 0
     ? round($totalLikes / ($totalLikes + $totalDislikes) * 100) : 0;
 
-/* ── Répartitions calculées côté PHP ── */
-$withText    = count(array_filter($comments, fn($c) => !empty(trim((string)($c['text'] ?? '')))));
-$withSticker = count(array_filter($comments, fn($c) => !empty($c['Sticker'] ?? $c['sticker'] ?? '')));
-$withImage   = count(array_filter($comments, fn($c) => !empty($c['image'] ?? '')));
-$onPost      = count(array_filter($comments, fn($c) => ($c['commentedItem'] ?? '') === 'post'));
-$onComment   = count(array_filter($comments, fn($c) => ($c['commentedItem'] ?? '') === 'comment'));
-
-/* ── Activité par utilisateur ── */
-$userMap = [];
-foreach ($comments as $c) {
-    $name = $c['userName'] ?? ('User #' . $c['idUser']);
-    if (!isset($userMap[$name])) $userMap[$name] = ['comments' => 0, 'likes' => 0];
-    $userMap[$name]['comments']++;
-    $userMap[$name]['likes'] += (int)($c['numberOfLike'] ?? 0);
-}
-uasort($userMap, fn($a, $b) => $b['comments'] - $a['comments']);
-
-/* ── Top commentaires par likes ── */
-$topByLikes = $comments;
-usort($topByLikes, fn($a, $b) => (int)($b['numberOfLike'] ?? 0) - (int)($a['numberOfLike'] ?? 0));
-$topByLikes = array_slice($topByLikes, 0, 8);
-
 /* ── JSON pour JS ── */
 $commentsJson = json_encode(array_map(fn($c) => [
-    'user'      => $c['userName'] ?? ('User #' . $c['idUser']),
-    'type'      => $c['commentedItem'] ?? 'post',
-    'likes'     => (int)($c['numberOfLike']    ?? 0),
-    'dislikes'  => (int)($c['numberOfDislike'] ?? 0),
-    'hasText'   => !empty(trim((string)($c['text']    ?? ''))),
-    'hasSticker'=> !empty($c['Sticker'] ?? $c['sticker'] ?? ''),
-    'hasImage'  => !empty($c['image'] ?? ''),
-    'text'      => mb_strimwidth((string)($c['text'] ?? ''), 0, 40, '…'),
+    'user'       => $c['userName'] ?? ('User #' . $c['idUser']),
+    'type'       => $c['commentedItem'] ?? 'post',
+    'likes'      => (int)($c['numberOfLike']    ?? 0),
+    'dislikes'   => (int)($c['numberOfDislike'] ?? 0),
+    'hasText'    => !empty(trim((string)($c['text']    ?? ''))),
+    'hasSticker' => !empty($c['Sticker'] ?? $c['sticker'] ?? ''),
+    'hasImage'   => !empty($c['image'] ?? ''),
+    'text'       => mb_strimwidth((string)($c['text'] ?? ''), 0, 40, '…'),
 ], $comments), JSON_UNESCAPED_UNICODE);
 
 require_once '../partials/header.php';
@@ -60,54 +38,41 @@ require_once '../partials/header.php';
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
-/* ── Toggle dark/light ── */
 .theme-toggle-btn {
     display: inline-flex; align-items: center; gap: 7px;
     padding: 7px 18px; border-radius: 999px;
-    border: 1.5px solid rgba(255,255,255,.18);
+    border: 1.5px solid rgba(233,30,140,.28);
     background: transparent; color: inherit;
     font-size: 13px; font-weight: 600; cursor: pointer;
-    transition: background .2s, border-color .2s;
+    transition: background .2s;
 }
-.theme-toggle-btn:hover { background: rgba(255,255,255,.08); }
-
-/* ── Metric cards ── */
+.theme-toggle-btn:hover { background: rgba(233,30,140,.10); }
 .stat-card-mini .card-body { min-height: 90px; }
 .stat-card-mini h6 {
     font-size: 11px; font-weight: 600; letter-spacing: .06em;
     text-transform: uppercase; opacity: .5; margin-bottom: 8px;
 }
 .stat-card-mini h2 { font-size: 26px; font-weight: 700; margin: 0; }
-
-/* ── Chart cards ── */
 .chart-card .card-body { padding: 1.4rem; }
 .chart-title { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
 .chart-sub   { font-size: 12px; opacity: .45; margin-bottom: 14px; }
-.chart-legend {
-    display: flex; flex-wrap: wrap; gap: 8px;
-    margin-bottom: 14px; font-size: 12px; font-weight: 500;
-}
+.chart-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; font-size: 12px; font-weight: 500; }
 .chart-legend span { display: flex; align-items: center; gap: 6px; }
-.chart-legend i {
-    width: 11px; height: 11px; border-radius: 3px;
-    display: inline-block; flex-shrink: 0;
-}
+.chart-legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; flex-shrink: 0; }
 
-/* ── Light mode ── */
-body.light-mode { background-color: #f4f6fa !important; color: #1a1a2e !important; }
-body.light-mode .card { background-color: #ffffff !important; border-color: #e0e4ed !important; color: #1a1a2e !important; }
-body.light-mode .chart-sub   { opacity: .5; color: #444; }
-body.light-mode .chart-title { color: #1a1a2e; }
-body.light-mode .chart-legend { color: #333; }
-body.light-mode .stat-card-mini h2 { color: #1a1a2e; }
-body.light-mode .text-muted { color: #666 !important; }
-body.light-mode .table-dark { background-color: #f8f9fc !important; color: #1a1a2e !important; }
-body.light-mode .table-dark thead th { background-color: #eef0f7 !important; color: #444 !important; }
-body.light-mode .table-dark td, body.light-mode .table-dark th { border-color: #dde1ed !important; }
-body.light-mode .theme-toggle-btn { border-color: rgba(0,0,0,.18); color: #1a1a2e; }
-body.light-mode .theme-toggle-btn:hover { background: rgba(0,0,0,.06); }
-body.light-mode .post-creator-badge { color: #555; }
-body.light-mode .admin-delete-btn { background: #fff0f0; }
+body.light-mode { background-color: #f9f0ff !important; color: #2d0045 !important; }
+body.light-mode .card { background-color: #ffffff !important; border-color: rgba(233,30,140,.12) !important; color: #2d0045 !important; }
+body.light-mode .chart-sub   { color: #9c27b0; }
+body.light-mode .chart-title { color: #2d0045; }
+body.light-mode .chart-legend { color: #2d0045; }
+body.light-mode .stat-card-mini h2 { color: #2d0045; }
+body.light-mode .text-muted { color: #9c27b0 !important; }
+body.light-mode .table-dark { background-color: #fff !important; color: #2d0045 !important; }
+body.light-mode .table-dark thead th { background: linear-gradient(90deg,#f3e8ff,#fce7f3) !important; color: #7c3aed !important; }
+body.light-mode .table-dark td, body.light-mode .table-dark th { border-color: rgba(233,30,140,.10) !important; color: #2d0045 !important; }
+body.light-mode .theme-toggle-btn { border-color: rgba(233,30,140,.22); color: #9c27b0; }
+body.light-mode .post-creator-badge { color: #7c3aed; }
+body.light-mode .admin-delete-btn { background: #fff0f8; }
 </style>
 
 <!-- ══ Entête ════════════════════════════════════════════════════ -->
@@ -169,10 +134,8 @@ body.light-mode .admin-delete-btn { background: #fff0f0; }
     </div>
 </div>
 
-<!-- ══ Ligne 1 : Pie engagement + Pie type commentaire ══════════ -->
+<!-- ══ Ligne 1 : Pie engagement + Pie cible ═════════════════════ -->
 <div class="row">
-
-    <!-- Pie : likes / dislikes / neutres -->
     <div class="col-md-6 grid-margin stretch-card">
         <div class="card chart-card">
             <div class="card-body">
@@ -180,13 +143,11 @@ body.light-mode .admin-delete-btn { background: #fff0f0; }
                 <p class="chart-sub">Likes · Dislikes · Sans réaction</p>
                 <div class="chart-legend" id="leg-engagement"></div>
                 <div style="position:relative;height:240px;">
-                    <canvas id="chartEngagement" role="img" aria-label="Pie engagement commentaires">Likes dislikes neutres.</canvas>
+                    <canvas id="chartEngagement"></canvas>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Pie : type de commentaire (sur post / sur commentaire) -->
     <div class="col-md-6 grid-margin stretch-card">
         <div class="card chart-card">
             <div class="card-body">
@@ -194,18 +155,15 @@ body.light-mode .admin-delete-btn { background: #fff0f0; }
                 <p class="chart-sub">Commentaire sur post vs réponse à un commentaire</p>
                 <div class="chart-legend" id="leg-target"></div>
                 <div style="position:relative;height:240px;">
-                    <canvas id="chartTarget" role="img" aria-label="Pie cible commentaires">Sur post vs sur commentaire.</canvas>
+                    <canvas id="chartTarget"></canvas>
                 </div>
             </div>
         </div>
     </div>
-
 </div>
 
 <!-- ══ Ligne 2 : Pie format + Bar utilisateurs ══════════════════ -->
 <div class="row">
-
-    <!-- Pie : format du commentaire -->
     <div class="col-md-4 grid-margin stretch-card">
         <div class="card chart-card">
             <div class="card-body">
@@ -213,48 +171,41 @@ body.light-mode .admin-delete-btn { background: #fff0f0; }
                 <p class="chart-sub">Texte · Sticker · Image</p>
                 <div class="chart-legend" id="leg-format"></div>
                 <div style="position:relative;height:240px;">
-                    <canvas id="chartFormat" role="img" aria-label="Pie format commentaires">Texte sticker image.</canvas>
+                    <canvas id="chartFormat"></canvas>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Bar : top utilisateurs par nombre de commentaires -->
     <div class="col-md-8 grid-margin stretch-card">
         <div class="card chart-card">
             <div class="card-body">
                 <p class="chart-title">Activité des utilisateurs</p>
                 <p class="chart-sub">Top 6 — nombre de commentaires publiés</p>
                 <div style="position:relative;height:240px;">
-                    <canvas id="chartUsers" role="img" aria-label="Barres utilisateurs actifs">Commentaires par utilisateur.</canvas>
+                    <canvas id="chartUsers"></canvas>
                 </div>
             </div>
         </div>
     </div>
-
 </div>
 
 <!-- ══ Ligne 3 : Bar groupée top comments + PolarArea ══════════ -->
 <div class="row">
-
-    <!-- Bar groupée : top 8 commentaires par likes -->
     <div class="col-md-7 grid-margin stretch-card">
         <div class="card chart-card">
             <div class="card-body">
                 <p class="chart-title">Top commentaires par likes</p>
                 <p class="chart-sub">Top 8 — likes et dislikes</p>
                 <div class="chart-legend">
-                    <span><i style="background:#10B981"></i>Likes</span>
-                    <span><i style="background:#EF4444"></i>Dislikes</span>
+                    <span><i style="background:#e91e8c"></i>Likes</span>
+                    <span><i style="background:#7c3aed"></i>Dislikes</span>
                 </div>
                 <div style="position:relative;height:260px;">
-                    <canvas id="chartTopComments" role="img" aria-label="Barres top commentaires">Likes dislikes par commentaire.</canvas>
+                    <canvas id="chartTopComments"></canvas>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- PolarArea : likes cumulés par utilisateur -->
     <div class="col-md-5 grid-margin stretch-card">
         <div class="card chart-card">
             <div class="card-body">
@@ -262,29 +213,28 @@ body.light-mode .admin-delete-btn { background: #fff0f0; }
                 <p class="chart-sub">PolarArea — popularité des commentaires</p>
                 <div class="chart-legend" id="leg-polar"></div>
                 <div style="position:relative;height:260px;">
-                    <canvas id="chartPolar" role="img" aria-label="PolarArea likes utilisateurs">Likes par utilisateur.</canvas>
+                    <canvas id="chartPolar"></canvas>
                 </div>
             </div>
         </div>
     </div>
-
 </div>
 
-<!-- ══ Scripts charts ════════════════════════════════════════════ -->
 <script>
 (function () {
 
-    const C = {
-        green:  '#10B981',
-        red:    '#EF4444',
-        blue:   '#3B82F6',
-        orange: '#F97316',
-        violet: '#8B5CF6',
-        cyan:   '#06B6D4',
-        yellow: '#EAB308',
-        gray:   '#6B7280',
-    };
-    const palette = [C.blue, C.green, C.orange, C.violet, C.cyan, C.yellow];
+    /*
+     * Palette 100% rose / mauve — 6 tons bien distincts
+     * tirés directement des variables CSS du thème admin
+     */
+    const P = [
+        '#e91e8c',  /* rose vif       */
+        '#c026d3',  /* fuchsia        */
+        '#9c27b0',  /* mauve          */
+        '#7c3aed',  /* violet         */
+        '#f472b6',  /* rose doux      */
+        '#6a008a',  /* mauve profond  */
+    ];
 
     const raw = <?= $commentsJson ?>;
 
@@ -301,47 +251,44 @@ body.light-mode .admin-delete-btn { background: #fff0f0; }
         ).join('');
     }
     function gridColor() {
-        return document.body.classList.contains('light-mode') ? 'rgba(0,0,0,.08)' : 'rgba(255,255,255,.08)';
+        return document.body.classList.contains('light-mode')
+            ? 'rgba(156,39,176,.12)' : 'rgba(233,30,140,.10)';
     }
     function tickColor() {
-        return document.body.classList.contains('light-mode') ? '#555' : '#9ca3af';
+        return document.body.classList.contains('light-mode') ? '#9c27b0' : '#c084fc';
     }
 
-    /* 1. Pie — engagement */
+    /* 1. Pie — engagement (rose vif = likes, violet = dislikes, mauve profond = neutres) */
     buildLegend('leg-engagement', [
-        [`Likes (${totalLikes.toLocaleString('fr-FR')})`,       C.green],
-        [`Dislikes (${totalDislikes.toLocaleString('fr-FR')})`,  C.red],
-        [`Neutres (${neutrals.toLocaleString('fr-FR')})`,        C.gray],
+        [`Likes (${totalLikes.toLocaleString('fr-FR')})`,      P[0]],
+        [`Dislikes (${totalDislikes.toLocaleString('fr-FR')})`, P[3]],
+        [`Neutres (${neutrals.toLocaleString('fr-FR')})`,       P[5]],
     ]);
     new Chart(document.getElementById('chartEngagement'), {
         type: 'pie',
         data: {
             labels: ['Likes', 'Dislikes', 'Neutres'],
-            datasets: [{
-                data: [totalLikes, totalDislikes, neutrals],
-                backgroundColor: [C.green, C.red, C.gray],
-                borderWidth: 3, borderColor: 'transparent', hoverOffset: 10
-            }]
+            datasets: [{ data: [totalLikes, totalDislikes, neutrals],
+                backgroundColor: [P[0], P[3], P[5]],
+                borderWidth: 3, borderColor: 'transparent', hoverOffset: 10 }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     });
 
-    /* 2. Pie — cible (sur post / sur commentaire) */
+    /* 2. Pie — cible */
     const onPost    = raw.filter(c => c.type === 'post').length;
     const onComment = raw.filter(c => c.type === 'comment').length;
     buildLegend('leg-target', [
-        [`Sur post (${onPost})`,         C.blue],
-        [`Réponse (${onComment})`,        C.orange],
+        [`Sur post (${onPost})`,   P[0]],
+        [`Réponse (${onComment})`, P[2]],
     ]);
     new Chart(document.getElementById('chartTarget'), {
         type: 'pie',
         data: {
             labels: ['Sur post', 'Réponse à un commentaire'],
-            datasets: [{
-                data: [onPost, onComment],
-                backgroundColor: [C.blue, C.orange],
-                borderWidth: 3, borderColor: 'transparent', hoverOffset: 10
-            }]
+            datasets: [{ data: [onPost, onComment],
+                backgroundColor: [P[0], P[2]],
+                borderWidth: 3, borderColor: 'transparent', hoverOffset: 10 }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     });
@@ -351,19 +298,17 @@ body.light-mode .admin-delete-btn { background: #fff0f0; }
     const withSticker = raw.filter(c => c.hasSticker && !c.hasText).length;
     const withImage   = raw.filter(c => c.hasImage  && !c.hasText && !c.hasSticker).length;
     buildLegend('leg-format', [
-        [`Texte (${withText})`,    C.blue],
-        [`Sticker (${withSticker})`, C.yellow],
-        [`Image (${withImage})`,   C.orange],
+        [`Texte (${withText})`,      P[0]],
+        [`Sticker (${withSticker})`, P[4]],
+        [`Image (${withImage})`,     P[2]],
     ]);
     new Chart(document.getElementById('chartFormat'), {
         type: 'pie',
         data: {
             labels: ['Texte', 'Sticker', 'Image'],
-            datasets: [{
-                data: [withText, withSticker, withImage],
-                backgroundColor: [C.blue, C.yellow, C.orange],
-                borderWidth: 3, borderColor: 'transparent', hoverOffset: 10
-            }]
+            datasets: [{ data: [withText, withSticker, withImage],
+                backgroundColor: [P[0], P[4], P[2]],
+                borderWidth: 3, borderColor: 'transparent', hoverOffset: 10 }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     });
@@ -375,18 +320,15 @@ body.light-mode .admin-delete-btn { background: #fff0f0; }
         umap[c.user].comments++;
         umap[c.user].likes += c.likes;
     });
-    const users = Object.entries(umap).sort((a,b)=>b[1].comments-a[1].comments).slice(0,6);
-
+    const users = Object.entries(umap).sort((a,b) => b[1].comments - a[1].comments).slice(0, 6);
     new Chart(document.getElementById('chartUsers'), {
         type: 'bar',
         data: {
             labels: users.map(u => u[0]),
-            datasets: [{
-                label: 'Commentaires',
+            datasets: [{ label: 'Commentaires',
                 data: users.map(u => u[1].comments),
-                backgroundColor: users.map((_, i) => palette[i % palette.length]),
-                borderRadius: 7, borderSkipped: false
-            }]
+                backgroundColor: users.map((_, i) => P[i % P.length]),
+                borderRadius: 7, borderSkipped: false }]
         },
         options: {
             responsive: true, maintainAspectRatio: false,
@@ -399,14 +341,14 @@ body.light-mode .admin-delete-btn { background: #fff0f0; }
     });
 
     /* 5. Bar groupée — top 8 commentaires par likes */
-    const top8 = [...raw].sort((a,b) => b.likes - a.likes).slice(0,8);
+    const top8 = [...raw].sort((a,b) => b.likes - a.likes).slice(0, 8);
     new Chart(document.getElementById('chartTopComments'), {
         type: 'bar',
         data: {
             labels: top8.map(c => c.text || '(vide)'),
             datasets: [
-                { label: 'Likes',    data: top8.map(c => c.likes),    backgroundColor: C.green,  borderRadius: 5, borderSkipped: false },
-                { label: 'Dislikes', data: top8.map(c => c.dislikes), backgroundColor: C.red,    borderRadius: 5, borderSkipped: false }
+                { label: 'Likes',    data: top8.map(c => c.likes),    backgroundColor: P[0], borderRadius: 5, borderSkipped: false },
+                { label: 'Dislikes', data: top8.map(c => c.dislikes), backgroundColor: P[3], borderRadius: 5, borderSkipped: false }
             ]
         },
         options: {
@@ -419,10 +361,9 @@ body.light-mode .admin-delete-btn { background: #fff0f0; }
         }
     });
 
-    /* 6. PolarArea — likes cumulés par utilisateur (top 6) */
+    /* 6. PolarArea — likes cumulés par utilisateur */
     buildLegend('leg-polar', users.map((u, i) => [
-        `${u[0]} (${u[1].likes.toLocaleString('fr-FR')} likes)`,
-        palette[i % palette.length]
+        `${u[0]} (${u[1].likes.toLocaleString('fr-FR')} likes)`, P[i % P.length]
     ]));
     new Chart(document.getElementById('chartPolar'), {
         type: 'polarArea',
@@ -430,8 +371,8 @@ body.light-mode .admin-delete-btn { background: #fff0f0; }
             labels: users.map(u => u[0]),
             datasets: [{
                 data: users.map(u => u[1].likes),
-                backgroundColor: users.map((_, i) => palette[i % palette.length] + 'cc'),
-                borderColor:     users.map((_, i) => palette[i % palette.length]),
+                backgroundColor: users.map((_, i) => P[i % P.length] + 'cc'),
+                borderColor:     users.map((_, i) => P[i % P.length]),
                 borderWidth: 2
             }]
         },
@@ -440,7 +381,7 @@ body.light-mode .admin-delete-btn { background: #fff0f0; }
             plugins: { legend: { display: false } },
             scales: { r: {
                 ticks: { color: tickColor(), font: { size: 10 }, backdropColor: 'transparent' },
-                grid:  { color: gridColor() }
+                grid: { color: gridColor() }
             }}
         }
     });
@@ -448,7 +389,6 @@ body.light-mode .admin-delete-btn { background: #fff0f0; }
 })();
 </script>
 
-<!-- ══ Toggle dark/light ═════════════════════════════════════════ -->
 <script>
 function toggleTheme() {
     const body  = document.body;

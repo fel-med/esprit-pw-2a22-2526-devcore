@@ -104,6 +104,57 @@ require_once '../partials/header.php';
                             <div id="subjectCounter" class="input-counter"></div>
                         </div>
 
+                        <div class="mb-4 p-3 rounded-4 border bg-light-subtle">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                                <div>
+                                    <label for="aiBrief" class="social-label mb-1">Generate content with AI</label>
+                                    <p class="text-muted small mb-0">Describe the idea, choose a style, and let AI fill the content field for you.</p>
+                                </div>
+                                <span class="badge text-bg-light border">Text + optional image</span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="aiBrief" class="social-label">Describe your idea *</label>
+                                <textarea
+                                    class="form-control social-textarea"
+                                    id="aiBrief"
+                                    name="aiBrief"
+                                    rows="3"
+                                    placeholder="Example: this post talks about my last 3D artwork of a president holding people upon his head."><?= htmlspecialchars($_POST['aiBrief'] ?? '') ?></textarea>
+                            </div>
+
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-6">
+                                    <label for="aiStyle" class="social-label">Style</label>
+                                    <input
+                                        type="text"
+                                        class="form-control social-input"
+                                        id="aiStyle"
+                                        name="aiStyle"
+                                        placeholder="Artistic, emotional, professional, storytelling..."
+                                        value="<?= htmlspecialchars($_POST['aiStyle'] ?? '') ?>"
+                                    >
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="aiSentenceCount" class="social-label">Number of phrases</label>
+                                    <input
+                                        type="number"
+                                        class="form-control social-input"
+                                        id="aiSentenceCount"
+                                        name="aiSentenceCount"
+                                        min="1"
+                                        max="12"
+                                        value="<?= htmlspecialchars($_POST['aiSentenceCount'] ?? '4') ?>"
+                                    >
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="button" class="btn social-create-btn w-100 js-ai-generate" data-ai-mode="generate">Generate</button>
+                                </div>
+                            </div>
+
+                            <div class="ai-status small mt-3" aria-live="polite"></div>
+                        </div>
+
                         <div class="mb-4">
                             <label for="textContent" class="social-label">Content *</label>
                             <textarea
@@ -119,6 +170,7 @@ require_once '../partials/header.php';
                         <div class="mb-4">
                             <label for="image" class="social-label">Image</label>
                             <input type="file" class="form-control social-input" id="image" name="image" accept=".jpg,.jpeg,.png,.webp">
+                            <div class="form-text">If you generate content with AI after choosing an image, the image will be used as extra context.</div>
                             <div id="imageError" class="validation-error"></div>
                             <div id="imagePreview" class="preview-box"></div>
                         </div>

@@ -182,6 +182,97 @@ document.addEventListener("DOMContentLoaded", function () {
     cards.forEach((card) => observer.observe(card));
   }
 
+  function setAiStatus(scope, message, type = "info") {
+    const statusEl = scope.querySelector(".ai-status") || document.querySelector(".ai-status");
+    if (!statusEl) return;
+    statusEl.textContent = message;
+    statusEl.classList.remove("text-danger", "text-success", "text-muted");
+    if (type === "error") statusEl.classList.add("text-danger");
+    else if (type === "success") statusEl.classList.add("text-success");
+    else statusEl.classList.add("text-muted");
+  }
+
+  async function handleAiGenerate(event) {
+    event.preventDefault();
+
+    const button = event.currentTarget;
+    const scope = button.closest("form") || document;
+    const briefField = scope.querySelector("#aiBrief, [name='aiBrief']");
+    const styleField = scope.querySelector("#aiStyle, [name='aiStyle']");
+    const sentenceCountField = scope.querySelector("#aiSentenceCount, [name='aiSentenceCount']");
+    const contentField = scope.querySelector("#textContent, [name='textContent']");
+    const imageField = scope.querySelector("#image, [name='image']");
+    const existingImageField = scope.querySelector("#existingImagePath, [name='existingImagePath']");
+
+    const brief = (briefField?.value || "").trim();
+    const style = (styleField?.value || "").trim();
+    const sentenceCount = (sentenceCountField?.value || "4").trim();
+    const currentContent = (contentField?.value || "").trim();
+    const existingImagePath = (existingImageField?.value || "").trim();
+    const mode = button.dataset.aiMode || "generate";
+
+    if (!brief) {
+      setAiStatus(scope, "Please fill in the 'Describe your idea' field first.", "error");
+      if (briefField) briefField.focus();
+      return;
+    }
+
+    if (!contentField) {
+      setAiStatus(scope, "Content field not found.", "error");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("brief", brief);
+    formData.append("style", style);
+    formData.append("sentenceCount", sentenceCount);
+    formData.append("mode", mode);
+    formData.append("currentContent", currentContent);
+    if (existingImagePath) {
+      formData.append("existingImagePath", existingImagePath);
+    }
+    if (imageField && imageField.files && imageField.files[0]) {
+      formData.append("image", imageField.files[0]);
+    }
+
+    button.disabled = true;
+    const previousLabel = button.innerHTML;
+    button.innerHTML = mode === "enhance" ? "Enhancing..." : "Generating...";
+    setAiStatus(scope, mode === "enhance" ? "Enhancing content with AI..." : "Generating content with AI...", "info");
+
+    try {
+      const response = await fetch("./ai-generate.php", {
+        method: "POST",
+        headers: {
+          "X-Requested-With": "XMLHttpRequest"
+        },
+        body: formData
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "AI generation failed.");
+      }
+
+      contentField.value = data.content || "";
+      updateCounters();
+      validateTextContent();
+      setAiStatus(scope, data.message || "AI content ready.", "success");
+    } catch (error) {
+      console.error(error);
+      setAiStatus(scope, error.message || "Unable to generate AI content right now.", "error");
+    } finally {
+      button.disabled = false;
+      button.innerHTML = previousLabel;
+    }
+  }
+
+  function setupAiButtons() {
+    document.querySelectorAll(".js-ai-generate").forEach((button) => {
+      button.addEventListener("click", handleAiGenerate);
+    });
+  }
+
   subject?.addEventListener("input", function () { validateSubject(); updateCounters(); });
   textContent?.addEventListener("input", function () { validateTextContent(); updateCounters(); });
   image?.addEventListener("change", function () { validateImage(); renderImagePreview(); });
@@ -191,6 +282,7 @@ document.addEventListener("DOMContentLoaded", function () {
   setupFeedVideos();
   setupReactionButtons();
   setupViewTracking();
+  setupAiButtons();
 
   if (!form) return;
   form.addEventListener("submit", function (e) {

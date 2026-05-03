@@ -8,7 +8,7 @@ if (!isset($currentPage)) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,7 +20,15 @@ if (!isset($currentPage)) {
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
     <link href="../assets/css/styles.css" rel="stylesheet" />
-    <link href="../assets/post-front.css?v=2" rel="stylesheet" />
+    <link href="../assets/post-front.css?v=3" rel="stylesheet" />
+    <!-- Anti-flash: applique le thème avant le premier rendu -->
+    <script>
+      (function(){
+        var t = localStorage.getItem('cre8_theme');
+        if(!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+      })();
+    </script>
 </head>
 <body class="d-flex flex-column min-vh-100 social-body">
 <main class="flex-shrink-0">
@@ -56,7 +64,43 @@ if (!isset($currentPage)) {
                         <i class="bi bi-plus-circle"></i> Create Post
                     </a>
                 </li>
+
+                <!-- Dark / Light toggle -->
+                <li class="nav-item">
+                    <button id="themeToggleBtn" class="theme-toggle-btn" title="Toggle dark/light mode">
+                        <span class="theme-toggle-track">
+                            <span class="theme-toggle-knob"></span>
+                        </span>
+                        <span class="theme-toggle-label">Dark</span>
+                    </button>
+                </li>
             </ul>
         </div>
     </div>
 </nav>
+
+<script>
+(function(){
+  var KEY = 'cre8_theme';
+  function applyTheme(t){
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem(KEY, t);
+  }
+  function syncBtn(t){
+    var btn = document.getElementById('themeToggleBtn');
+    if(!btn) return;
+    var lbl = btn.querySelector('.theme-toggle-label');
+    if(lbl) lbl.textContent = t === 'dark' ? 'Light' : 'Dark';
+  }
+  var btn = document.getElementById('themeToggleBtn');
+  if(btn){
+    var cur = document.documentElement.getAttribute('data-theme') || 'light';
+    syncBtn(cur);
+    btn.addEventListener('click', function(){
+      var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+      syncBtn(next);
+    });
+  }
+})();
+</script>
