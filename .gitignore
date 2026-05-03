@@ -6,3 +6,7 @@ storage/cre8pilot_provider_state.json
 storage/cre8pilot_documents/**
 !storage/cre8pilot_documents/.htaccess
 vendor/
+
+ai_recommendation/.venv/
+ai_recommendation/__pycache__/
+ai_recommendation/scripts/__pycache__/
