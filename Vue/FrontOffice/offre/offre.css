@@ -3066,7 +3066,7 @@ body > main.container-fluid {
   border-color: var(--border-color-strong) !important;
 }
 
-/* Cre8Pilot V1 mock assistant */
+/* Cre8Pilot panel — refreshed composer + tools menu */
 .cre8pilot-widget {
   position: fixed;
   right: 1.25rem;
@@ -3106,7 +3106,7 @@ body > main.container-fluid {
   height: min(680px, calc(100vh - 6rem));
   max-height: calc(100vh - 6rem);
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto;
   overflow: hidden;
   overflow-x: hidden;
   border: 1px solid var(--border-color-strong);
@@ -3122,52 +3122,77 @@ body > main.container-fluid {
 
 .cre8pilot-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 1rem;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border-color);
   background: var(--card-bg-soft);
 }
 
-.cre8pilot-kicker {
-  display: inline-flex;
-  color: var(--primary-color);
-  font-size: 0.78rem;
-  font-weight: 900;
+.cre8pilot-header-main {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  flex: 1;
 }
 
-.cre8pilot-header h2 {
-  margin: 0.25rem 0;
-  color: var(--text-color);
-  font-size: 1.15rem;
+.cre8pilot-header-text {
+  min-width: 0;
+  flex: 1;
 }
 
-.cre8pilot-header p {
+.cre8pilot-header-title {
   margin: 0;
+  color: var(--text-color);
+  font-size: 1.05rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.cre8pilot-header-sub {
+  margin: 0.15rem 0 0;
   color: var(--muted-text);
-  font-size: 0.82rem;
-  line-height: 1.45;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .cre8pilot-close {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  line-height: 1;
   border: 1px solid var(--border-color);
   border-radius: 999px;
   background: var(--card-bg);
   color: var(--text-color);
-  padding: 0.35rem 0.65rem;
-  font-size: 0.76rem;
-  font-weight: 800;
+  font-size: 1.25rem;
+  font-weight: 700;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cre8pilot-close:hover {
+  background: var(--badge-bg);
 }
 
 .cre8pilot-messages {
-  display: grid;
-  align-content: start;
-  gap: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.55rem;
   min-height: 0;
   overflow-y: auto;
-  padding: 1rem;
+  overflow-x: hidden;
+  padding: 0.75rem 1rem;
   scrollbar-width: thin;
   scrollbar-color: rgba(108, 92, 231, 0.45) transparent;
 }
@@ -3186,10 +3211,10 @@ body > main.container-fluid {
 }
 
 .cre8pilot-message {
-  max-width: 88%;
+  max-width: min(88%, 100%);
   min-width: 0;
   position: relative;
-  padding: 0.72rem 0.85rem;
+  padding: 0.65rem 0.8rem;
   border-radius: 1rem;
   background: var(--card-bg-soft);
   border: 1px solid var(--border-color);
@@ -3198,9 +3223,14 @@ body > main.container-fluid {
   overflow-wrap: anywhere;
 }
 
+.cre8pilot-message-assistant,
+.cre8pilot-message:not(.cre8pilot-message-user) {
+  align-self: flex-start;
+}
+
 .cre8pilot-message p {
   margin: 0;
-  font-size: 0.88rem;
+  font-size: 0.86rem;
   line-height: 1.45;
 }
 
@@ -3209,10 +3239,15 @@ body > main.container-fluid {
 }
 
 .cre8pilot-message-user {
-  justify-self: end;
+  align-self: flex-end;
   background: linear-gradient(135deg, #6c5ce7, #8b5cf6);
   color: #ffffff;
   border-color: transparent;
+}
+
+.cre8pilot-message.is-clarification {
+  align-self: stretch;
+  max-width: 100%;
 }
 
 .cre8pilot-message.is-blocked,
@@ -3289,28 +3324,29 @@ body > main.container-fluid {
 
 .cre8pilot-quick-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
+  flex-wrap: nowrap;
+  gap: 0.4rem;
   overflow: hidden;
-  overflow-x: hidden;
-  padding: 0.75rem 1rem;
+  padding: 0.55rem 1rem;
   border-top: 1px solid var(--border-color);
   background: var(--card-bg-soft);
-  scrollbar-width: thin;
 }
 
 .cre8pilot-quick-actions button,
 .cre8pilot-quick-action-btn {
-  flex: 1 1 auto;
+  flex: 1 1 0;
+  min-width: 0;
   max-width: 100%;
-  white-space: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   border: 1px solid var(--border-color-strong);
   border-radius: 999px;
   background: var(--card-bg);
   color: var(--primary-color);
-  padding: 0.45rem 0.7rem;
-  font-size: 0.76rem;
-  font-weight: 900;
+  padding: 0.42rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 800;
   line-height: 1.2;
   cursor: pointer;
 }
@@ -3319,77 +3355,263 @@ body > main.container-fluid {
   background: var(--badge-bg);
 }
 
+.cre8pilot-attach-panel {
+  border-top: 1px solid var(--border-color);
+  background: var(--card-bg-soft);
+  padding: 0.55rem 1rem;
+}
+
+.cre8pilot-attach-panel[hidden] {
+  display: none;
+}
+
+.cre8pilot-attach-panel-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.cre8pilot-attach-filename {
+  flex: 1 1 100%;
+  font-size: 0.76rem;
+  color: var(--muted-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cre8pilot-attach-pick,
+.cre8pilot-attach-upload,
+.cre8pilot-attach-cancel {
+  border: 1px solid var(--border-color-strong);
+  border-radius: 0.65rem;
+  background: var(--card-bg);
+  color: var(--text-color);
+  padding: 0.4rem 0.65rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cre8pilot-attach-upload {
+  background: #6c5ce7;
+  color: #fff;
+  border-color: transparent;
+}
+
+.cre8pilot-attach-upload:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cre8pilot-attach-label {
+  flex: 1 1 140px;
+  min-width: 0;
+  border: 1px solid var(--input-border);
+  border-radius: 0.55rem;
+  background: var(--input-bg);
+  color: var(--input-text);
+  padding: 0.4rem 0.55rem;
+  font-size: 0.78rem;
+}
+
+.cre8pilot-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .cre8pilot-composer {
-  display: grid;
-  gap: 0.65rem;
-  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.75rem 1rem 1rem;
   border-top: 1px solid var(--border-color);
   background: var(--card-bg);
   min-height: 0;
 }
 
-.cre8pilot-composer label {
-  color: var(--muted-text);
-  font-size: 0.78rem;
+.cre8pilot-composer-input-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 0.45rem;
+  align-items: flex-end;
+}
+
+.cre8pilot-tools {
+  position: relative;
+  align-self: stretch;
+  display: flex;
+  align-items: flex-end;
+}
+
+.cre8pilot-tools-trigger {
+  width: 2.35rem;
+  height: 2.35rem;
+  padding: 0;
+  border: 1px solid var(--border-color-strong);
+  border-radius: 0.75rem;
+  background: var(--card-bg-soft);
+  color: var(--text-color);
+  font-size: 1.35rem;
+  font-weight: 300;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cre8pilot-tools-trigger:hover {
+  background: var(--badge-bg);
+}
+
+.cre8pilot-tools-menu {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 6px);
+  min-width: 12.5rem;
+  max-width: min(280px, calc(100vw - 2rem));
+  padding: 0.35rem 0;
+  border: 1px solid var(--border-color-strong);
+  border-radius: 0.85rem;
+  background: var(--card-bg);
+  box-shadow: 0 12px 40px var(--shadow-color);
+  z-index: 5;
+}
+
+.cre8pilot-tools-menu[hidden] {
+  display: none;
+}
+
+.cre8pilot-tools-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--text-color);
+  padding: 0.5rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cre8pilot-tools-menu-item:hover {
+  background: var(--badge-bg);
+}
+
+.cre8pilot-tools-menu-divider {
+  padding: 0.35rem 0.85rem 0.25rem;
+  border-top: 1px solid var(--border-color);
+  margin-top: 0.25rem;
+}
+
+.cre8pilot-tools-menu-heading {
+  display: block;
+  font-size: 0.68rem;
   font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-text);
+  margin-bottom: 0.35rem;
+}
+
+.cre8pilot-tools-overflow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
 }
 
 .cre8pilot-composer textarea {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  resize: vertical;
-  min-height: 80px;
+  resize: none;
+  min-height: 2.5rem;
+  max-height: 10rem;
   border: 1px solid var(--input-border);
   border-radius: 0.85rem;
   background: var(--input-bg);
   color: var(--input-text);
-  padding: 0.75rem;
+  padding: 0.55rem 0.7rem;
+  font-family: inherit;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.cre8pilot-send-btn {
+  border: 0;
+  border-radius: 0.85rem;
+  background: #6c5ce7;
+  color: #ffffff;
+  padding: 0 0.95rem;
+  min-height: 2.35rem;
+  font-weight: 800;
+  font-size: 0.82rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.cre8pilot-send-btn:hover {
+  filter: brightness(1.05);
 }
 
 .cre8pilot-voice-status {
-  min-height: 1.1rem;
   color: var(--muted-text);
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   line-height: 1.35;
+  padding: 0 0.1rem;
 }
 
-.cre8pilot-composer-actions {
+.cre8pilot-voice-status[hidden] {
+  display: none;
+}
+
+.cre8pilot-composer-meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  min-height: 1rem;
 }
 
-.cre8pilot-composer-actions span {
+.cre8pilot-activity {
+  font-size: 0.72rem;
   color: var(--muted-text);
-  font-size: 0.78rem;
 }
 
-.cre8pilot-composer-actions button {
-  border: 0;
-  border-radius: 999px;
-  background: #6c5ce7;
-  color: #ffffff;
-  padding: 0.55rem 1rem;
-  font-weight: 900;
-  cursor: pointer;
+.cre8pilot-activity[hidden] {
+  display: none;
 }
 
-.cre8pilot-voice-controls {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
+.cre8pilot-mode-badge {
   margin-left: auto;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--muted-text);
+  opacity: 0.72;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg-soft);
 }
 
-.cre8pilot-composer-actions .cre8pilot-voice-btn {
+.cre8pilot-composer-input-row .cre8pilot-voice-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.15rem;
-  min-width: 2.15rem;
-  height: 2.15rem;
+  width: 2.35rem;
+  min-width: 2.35rem;
+  height: 2.35rem;
   padding: 0;
   border: 1px solid var(--border-color-strong);
   border-radius: 999px;
@@ -3399,13 +3621,13 @@ body > main.container-fluid {
   transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
 }
 
-.cre8pilot-composer-actions .cre8pilot-voice-btn:hover {
+.cre8pilot-composer-input-row .cre8pilot-voice-btn:hover {
   background: var(--badge-bg);
   transform: translateY(-1px);
 }
 
-.cre8pilot-composer-actions .cre8pilot-voice-btn.is-listening,
-.cre8pilot-widget.is-listening .cre8pilot-composer-actions .cre8pilot-voice-btn[data-cre8pilot-mic] {
+.cre8pilot-composer-input-row .cre8pilot-voice-btn.is-listening,
+.cre8pilot-widget.is-listening .cre8pilot-composer-input-row .cre8pilot-voice-btn[data-cre8pilot-mic] {
   background: rgba(226, 30, 128, 0.14);
   border-color: rgba(226, 30, 128, 0.55);
   color: #e21e80;
@@ -3413,17 +3635,9 @@ body > main.container-fluid {
   animation: cre8pilotVoicePulse 1.4s ease-in-out infinite;
 }
 
-.cre8pilot-composer-actions .cre8pilot-voice-btn:disabled {
+.cre8pilot-composer-input-row .cre8pilot-voice-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
-}
-
-.cre8pilot-composer-actions .cre8pilot-voice-mode-btn {
-  border: 1px solid var(--border-color-strong);
-  background: var(--card-bg-soft);
-  color: var(--primary-color);
-  box-shadow: none;
-  white-space: nowrap;
 }
 
 @keyframes cre8pilotVoicePulse {
@@ -3603,6 +3817,845 @@ body > main.container-fluid {
   50% { transform: scale(1.04); }
 }
 
+.cre8pilot-attach-status {
+  padding: 0 1rem 0.35rem;
+  font-size: 0.76rem;
+  color: var(--muted-text);
+}
+
+/* Cre8Pilot V22.4 — torso orientation, shoulder sockets, connected limbs */
+.cre8pilot-avatar {
+  --avatar-voice-level: 0;
+  --voice-level: 0;
+  --vl: var(--voice-level, var(--avatar-voice-level, 0));
+  position: relative;
+  flex-shrink: 0;
+  width: 72px;
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 240px;
+  transform-style: preserve-3d;
+  filter: drop-shadow(0 8px 18px rgba(54, 40, 136, 0.34));
+  transition: transform 0.2s ease, filter 0.3s ease;
+}
+
+.cre8pilot-avatar--small {
+  width: 60px;
+  height: 70px;
+}
+
+.cre8pilot-avatar--large {
+  width: 200px;
+  height: 230px;
+  filter: drop-shadow(0 16px 36px rgba(34, 24, 100, 0.44));
+}
+
+.cre8pilot-voice-avatar-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.25rem;
+  max-width: 100%;
+}
+
+.cre8pilot-bot {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: cre8pilotFloat 3.8s ease-in-out infinite;
+}
+
+.cre8pilot-bot-ring {
+  position: absolute;
+  left: 50%;
+  top: 60%;
+  width: 108%;
+  height: 32%;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  transform: translate(-50%, -50%) rotateX(72deg);
+  border: 1.5px dashed rgba(120, 105, 255, 0.42);
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.2), inset 0 0 8px rgba(45, 212, 191, 0.08);
+  opacity: 0.62;
+  animation: cre8pilotRingIdle 5s ease-in-out infinite;
+}
+
+.cre8pilot-bot-head {
+  position: absolute;
+  z-index: 10;
+  left: 50%;
+  top: 24%;
+  width: 62%;
+  height: 34%;
+  transform: translateX(-50%);
+  border-radius: 10px 10px 13px 13px;
+  background: linear-gradient(155deg, rgba(232, 230, 255, 0.58), rgba(132, 113, 224, 0.46) 42%, rgba(50, 36, 104, 0.76));
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.26), inset 0 -8px 16px rgba(22, 14, 54, 0.45), 0 4px 12px rgba(46, 30, 114, 0.3);
+  transform-origin: 50% 84%;
+  transition: transform 0.25s ease;
+  isolation: isolate;
+}
+
+.cre8pilot-bot-visor {
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  top: 28%;
+  height: 58%;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #030712 0%, #0f172a 48%, #101935 100%);
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.64), 0 0 0 1px rgba(38, 54, 95, 0.9), 0 0 12px rgba(79, 70, 229, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22%;
+  overflow: hidden;
+}
+
+.cre8pilot-bot-eye {
+  width: 18%;
+  height: 52%;
+  border-radius: 3px;
+  background: linear-gradient(180deg, rgba(201, 255, 255, 0.98), rgba(56, 189, 248, 0.8));
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.92), 0 0 14px rgba(129, 140, 248, 0.5);
+  transform-origin: center;
+  animation: cre8pilotBlink 4.2s ease-in-out infinite;
+}
+
+.cre8pilot-bot-eye--right {
+  animation-delay: 0.14s;
+}
+
+/* Mast grows upward from head; beacon sits on top (reads upright, not “hanging”) */
+.cre8pilot-bot-antenna {
+  position: absolute;
+  left: 50%;
+  top: 23%;
+  z-index: 12;
+  width: 3px;
+  height: 11px;
+  margin-left: -1.5px;
+  margin-top: -11px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, rgba(200, 190, 255, 0.55), rgba(90, 70, 170, 0.65));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 1px 4px rgba(30, 20, 80, 0.35);
+  transform-origin: 50% 100%;
+}
+
+.cre8pilot-bot-antenna::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -9px;
+  width: 9px;
+  height: 9px;
+  margin-left: -4.5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.95), rgba(186, 230, 253, 0.9) 42%, rgba(56, 189, 248, 0.75) 100%);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+
+.cre8pilot-bot-body {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  z-index: 2;
+  width: 56%;
+  height: 26%;
+  transform: translateX(-50%);
+  /* Wide under the head (shoulders), taper toward base — avoids “inverted” wide-hip look */
+  border-radius: 14px 14px 11px 11px;
+  clip-path: polygon(0 0, 100% 0, 90% 100%, 10% 100%);
+  background: linear-gradient(188deg, rgba(225, 220, 255, 0.58) 0%, rgba(110, 88, 198, 0.52) 48%, rgba(28, 18, 72, 0.88) 100%);
+  box-shadow: inset 0 4px 7px rgba(255, 255, 255, 0.24), inset 0 -4px 10px rgba(12, 7, 36, 0.38), 0 4px 10px rgba(38, 24, 96, 0.32);
+  transition: transform 0.25s ease;
+}
+
+/* Soft hover thrust under the narrow base (not joint-like) */
+.cre8pilot-bot-body::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -18%;
+  z-index: 0;
+  width: 34%;
+  height: 28%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(ellipse 80% 55% at 50% 0%, rgba(56, 189, 248, 0.38), transparent 72%);
+  opacity: 0.85;
+}
+
+.cre8pilot-bot-core {
+  position: absolute;
+  left: 50%;
+  top: -18%;
+  z-index: 0;
+  width: 26%;
+  height: 52%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(117, 246, 255, 0.86), rgba(56, 189, 248, 0.32) 58%, transparent 70%);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.56);
+  pointer-events: none;
+}
+
+/* Shoulder mount sockets (top of torso) — reads as arm anchors, not bottom “joints” */
+.cre8pilot-bot-thruster {
+  position: absolute;
+  top: -4%;
+  bottom: auto;
+  z-index: 3;
+  width: 15%;
+  height: 28%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(12, 10, 40, 0.92) 0%, rgba(12, 10, 40, 0.55) 45%, transparent 62%),
+    linear-gradient(165deg, rgba(200, 192, 255, 0.45), rgba(55, 42, 120, 0.82));
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.55),
+    inset 0 -1px 0 rgba(56, 189, 248, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 2px 6px rgba(30, 20, 80, 0.45);
+}
+
+.cre8pilot-bot-thruster--left {
+  left: 6%;
+}
+
+.cre8pilot-bot-thruster--right {
+  right: 6%;
+}
+
+.cre8pilot-bot-thruster::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 18%;
+  width: 46%;
+  height: 26%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 30%, rgba(56, 189, 248, 0.55), transparent 68%);
+}
+
+.cre8pilot-bot-arm {
+  position: absolute;
+  /* Align column with upper torso / shoulder sockets (was too high beside the visor) */
+  top: 51%;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 19%;
+  height: 34%;
+  pointer-events: none;
+  transform-origin: 50% 0;
+  animation: cre8pilotWaveHands 5.5s ease-in-out infinite;
+}
+
+.cre8pilot-bot-arm--left {
+  left: 0;
+  transform: rotate(20deg);
+}
+
+.cre8pilot-bot-arm--right {
+  right: 0;
+  transform: scaleX(-1) rotate(20deg);
+  animation: cre8pilotWaveHandsRight 5.5s ease-in-out infinite;
+  animation-delay: 0.32s;
+}
+
+.cre8pilot-bot-shoulder {
+  width: 11px;
+  height: 6px;
+  margin-bottom: -3px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(165deg, rgba(240, 236, 255, 0.62), rgba(105, 88, 185, 0.68) 52%, rgba(36, 26, 88, 0.94));
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.4),
+    0 0 0 1px rgba(56, 189, 248, 0.22),
+    0 2px 4px rgba(22, 14, 60, 0.45);
+}
+
+.cre8pilot-bot-upper-arm {
+  width: 48%;
+  height: 28%;
+  margin-top: -4px;
+  border-radius: 3px 3px 7px 7px;
+  background: linear-gradient(95deg, rgba(215, 210, 255, 0.5), rgba(95, 78, 188, 0.56) 52%, rgba(32, 22, 78, 0.92));
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.24),
+    inset -2px 0 4px rgba(0, 0, 0, 0.2),
+    0 -1px 0 rgba(56, 189, 248, 0.12);
+}
+
+.cre8pilot-bot-elbow {
+  width: 7px;
+  height: 5px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(210, 204, 250, 0.72), rgba(55, 42, 118, 0.9));
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+
+.cre8pilot-bot-forearm {
+  width: 42%;
+  height: 24%;
+  margin-top: -4px;
+  border-radius: 4px 4px 6px 6px;
+  background: linear-gradient(100deg, rgba(200, 194, 255, 0.48), rgba(88, 72, 168, 0.6) 55%, rgba(26, 18, 68, 0.94));
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.2);
+}
+
+/* Wider palm + thumb bump so it reads as a hand, not a third capsule */
+.cre8pilot-bot-hand {
+  position: relative;
+  width: 58%;
+  min-width: 10px;
+  height: 24%;
+  margin-top: -3px;
+  border-radius: 4px 5px 12px 11px;
+  transform: rotate(-4deg);
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.14) 0%, transparent 22%, transparent 78%, rgba(255, 255, 255, 0.1) 100%),
+    linear-gradient(172deg, rgba(244, 252, 255, 0.98) 0%, rgba(150, 130, 230, 0.52) 52%, rgba(65, 50, 155, 0.88) 100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.32);
+  box-shadow:
+    inset 0 -4px 6px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 2px 6px rgba(56, 189, 248, 0.32);
+}
+
+.cre8pilot-bot-hand::before {
+  content: '';
+  position: absolute;
+  top: 8%;
+  left: -18%;
+  width: 38%;
+  height: 52%;
+  border-radius: 45% 55% 50% 50%;
+  background: linear-gradient(145deg, rgba(252, 255, 255, 0.95), rgba(120, 100, 200, 0.55) 70%, rgba(70, 55, 150, 0.85));
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.35), 1px 1px 3px rgba(22, 14, 60, 0.35);
+  pointer-events: none;
+}
+
+.cre8pilot-bot-hand::after {
+  content: '';
+  position: absolute;
+  left: 18%;
+  right: 14%;
+  bottom: 14%;
+  height: 22%;
+  border-radius: 0 0 6px 6px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(56, 189, 248, 0.12) 20%,
+    rgba(56, 189, 248, 0.12) 28%,
+    transparent 34%,
+    transparent 48%,
+    rgba(56, 189, 248, 0.1) 54%,
+    rgba(56, 189, 248, 0.1) 62%,
+    transparent 68%,
+    transparent 100%
+  );
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.cre8pilot-avatar--small .cre8pilot-bot-ring {
+  width: 94%;
+  height: 28%;
+  opacity: 0.56;
+}
+
+.cre8pilot-avatar--small .cre8pilot-bot-head {
+  width: 66%;
+  height: 36%;
+}
+
+.cre8pilot-avatar--small .cre8pilot-bot-eye {
+  width: 19%;
+  min-width: 3px;
+}
+
+.cre8pilot-avatar--small .cre8pilot-bot-arm {
+  width: 19%;
+  height: 34%;
+}
+
+.cre8pilot-avatar--small .cre8pilot-bot-shoulder {
+  width: 6px;
+  height: 6px;
+}
+
+.cre8pilot-avatar--small .cre8pilot-bot-hand::before {
+  opacity: 0.6;
+}
+
+.cre8pilot-avatar--small .cre8pilot-bot-hand::after {
+  opacity: 0.65;
+}
+
+.cre8pilot-avatar--large .cre8pilot-bot-head {
+  width: 58%;
+  height: 33%;
+}
+
+.cre8pilot-avatar--large .cre8pilot-bot-body {
+  width: 52%;
+  height: 25%;
+}
+
+.cre8pilot-avatar--large .cre8pilot-bot-arm {
+  width: 20%;
+  height: 38%;
+}
+
+/* State choreography */
+.cre8pilot-avatar--idle {
+  filter: drop-shadow(0 8px 18px rgba(93, 76, 210, 0.3));
+}
+
+.cre8pilot-avatar--idle .cre8pilot-bot-body {
+  animation: cre8pilotBodyBreathe 3.5s ease-in-out infinite;
+}
+
+.cre8pilot-avatar--thinking .cre8pilot-bot-head {
+  animation: cre8pilotHeadThink 2.1s ease-in-out infinite;
+}
+
+.cre8pilot-avatar--thinking .cre8pilot-bot-eye {
+  animation: cre8pilotBlink 2.8s ease-in-out infinite, cre8pilotLookAround 1.8s ease-in-out infinite;
+}
+
+.cre8pilot-avatar--thinking .cre8pilot-bot-arm--left {
+  animation: cre8pilotThinkingHand 1.7s ease-in-out infinite;
+}
+
+.cre8pilot-avatar--thinking .cre8pilot-bot-antenna {
+  animation: cre8pilotAntennaThink 1.1s ease-in-out infinite;
+}
+
+.cre8pilot-avatar--thinking .cre8pilot-bot-antenna::after {
+  animation: cre8pilotBeaconThinkPulse 1.1s ease-in-out infinite;
+}
+
+.cre8pilot-avatar--thinking .cre8pilot-bot-ring {
+  animation: cre8pilotRingHoloPulse 2.2s ease-in-out infinite;
+  border-style: dashed;
+  border-color: rgba(251, 191, 36, 0.58);
+  box-shadow: 0 0 14px rgba(251, 191, 36, 0.22), inset 0 0 10px rgba(251, 191, 36, 0.08);
+}
+
+.cre8pilot-avatar--filling .cre8pilot-bot {
+  transform: translateY(1px) rotateX(4deg);
+}
+
+.cre8pilot-avatar--filling .cre8pilot-bot-arm--left {
+  animation: cre8pilotTypingHands 0.7s ease-in-out infinite;
+}
+
+.cre8pilot-avatar--filling .cre8pilot-bot-arm--right {
+  animation: cre8pilotTypingHandsRight 0.7s ease-in-out infinite;
+  animation-delay: 0.28s;
+}
+
+.cre8pilot-avatar--filling .cre8pilot-bot-visor::after {
+  content: '';
+  position: absolute;
+  left: -45%;
+  top: 0;
+  width: 38%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.42), transparent);
+  animation: cre8pilotScan 1s ease-in-out infinite;
+}
+
+.cre8pilot-avatar--filling .cre8pilot-bot-ring {
+  border-color: rgba(34, 211, 238, 0.58);
+}
+
+.cre8pilot-avatar--success .cre8pilot-bot {
+  animation: cre8pilotSuccessBounce 0.75s ease-out 1;
+}
+
+.cre8pilot-avatar--success .cre8pilot-bot-arm--left {
+  animation: cre8pilotSuccessHands 0.75s ease-out 1;
+}
+
+.cre8pilot-avatar--success .cre8pilot-bot-arm--right {
+  animation: cre8pilotSuccessHandsRight 0.75s ease-out 1;
+}
+
+.cre8pilot-avatar--success .cre8pilot-bot-eye {
+  animation: cre8pilotEyePulse 0.7s ease-out 1;
+}
+
+.cre8pilot-avatar--success .cre8pilot-bot-ring {
+  border-color: rgba(74, 222, 128, 0.62);
+  box-shadow: 0 0 16px rgba(74, 222, 128, 0.32);
+}
+
+.cre8pilot-avatar--warning .cre8pilot-bot {
+  animation: cre8pilotAlertShake 0.65s ease-in-out infinite;
+}
+
+.cre8pilot-avatar--warning .cre8pilot-bot-arm--left {
+  animation: cre8pilotWarningHands 0.65s ease-in-out infinite;
+}
+
+.cre8pilot-avatar--warning .cre8pilot-bot-arm--right {
+  animation: cre8pilotWarningHandsRight 0.65s ease-in-out infinite;
+}
+
+.cre8pilot-avatar--warning .cre8pilot-bot-eye {
+  animation: cre8pilotWarningEyes 1.1s ease-in-out infinite;
+}
+
+.cre8pilot-avatar--warning .cre8pilot-bot-ring {
+  border-color: rgba(249, 115, 22, 0.58);
+  box-shadow: 0 0 16px rgba(249, 115, 22, 0.3);
+}
+
+.cre8pilot-avatar--confused .cre8pilot-bot-head {
+  animation: cre8pilotConfusedTilt 1s ease-in-out infinite;
+}
+
+.cre8pilot-avatar--confused .cre8pilot-bot-arm--right {
+  animation: cre8pilotConfusedHand 1s ease-in-out infinite;
+}
+
+.cre8pilot-avatar--confused .cre8pilot-bot-eye--left {
+  animation: cre8pilotBlink 2.9s ease-in-out infinite;
+}
+
+.cre8pilot-avatar--confused .cre8pilot-bot-eye--right {
+  animation: cre8pilotBlink 1.7s ease-in-out infinite;
+}
+
+.cre8pilot-avatar--confused .cre8pilot-bot-ring {
+  border-color: rgba(232, 121, 249, 0.54);
+}
+
+.cre8pilot-avatar--listening .cre8pilot-bot {
+  transform: translateY(1px) rotateX(4deg);
+}
+
+.cre8pilot-avatar--listening .cre8pilot-bot-antenna {
+  animation: cre8pilotAntennaListen 0.9s ease-in-out infinite;
+}
+
+.cre8pilot-avatar--listening .cre8pilot-bot-arm--left {
+  animation: none;
+  transform: rotate(18deg);
+}
+
+.cre8pilot-avatar--listening .cre8pilot-bot-arm--right {
+  animation: none;
+  transform: scaleX(-1) rotate(18deg);
+}
+
+.cre8pilot-avatar--listening .cre8pilot-bot-eye {
+  animation: cre8pilotEyePulse 1s ease-in-out infinite;
+}
+
+.cre8pilot-avatar--listening .cre8pilot-bot-ring {
+  border-color: rgba(56, 189, 248, 0.55);
+}
+
+.cre8pilot-avatar--user-speaking {
+  transform: scale(calc(1 + var(--vl) * 0.08));
+}
+
+.cre8pilot-avatar--user-speaking .cre8pilot-bot-eye {
+  animation: cre8pilotEyePulse 0.45s ease-in-out infinite;
+}
+
+.cre8pilot-avatar--user-speaking .cre8pilot-bot-arm--left {
+  animation: cre8pilotWaveHandsUser 1.4s ease-in-out infinite;
+}
+
+.cre8pilot-avatar--user-speaking .cre8pilot-bot-arm--right {
+  animation: cre8pilotWaveHandsUserRight 1.4s ease-in-out infinite;
+}
+
+.cre8pilot-avatar--user-speaking .cre8pilot-bot-ring {
+  opacity: calc(0.7 + var(--vl) * 0.22);
+  border-color: rgba(96, 165, 250, 0.58);
+}
+
+.cre8pilot-avatar--ai-speaking .cre8pilot-bot-arm--right,
+.cre8pilot-avatar--speaking .cre8pilot-bot-arm--right {
+  animation: cre8pilotSpeakingGesture 0.72s ease-in-out infinite;
+}
+
+.cre8pilot-avatar--ai-speaking .cre8pilot-bot-arm--right .cre8pilot-bot-forearm,
+.cre8pilot-avatar--speaking .cre8pilot-bot-arm--right .cre8pilot-bot-forearm {
+  animation: cre8pilotForeSpeak 0.62s ease-in-out infinite;
+  transform-origin: 50% 0;
+}
+
+.cre8pilot-avatar--ai-speaking .cre8pilot-bot-visor,
+.cre8pilot-avatar--speaking .cre8pilot-bot-visor {
+  animation: cre8pilotVisorWave 0.72s ease-in-out infinite;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.64), 0 0 0 1px rgba(45, 212, 191, 0.66), 0 0 14px rgba(45, 212, 191, 0.36);
+}
+
+.cre8pilot-avatar--ai-speaking .cre8pilot-bot-eye,
+.cre8pilot-avatar--speaking .cre8pilot-bot-eye {
+  animation: cre8pilotEyePulse 0.55s ease-in-out infinite;
+}
+
+.cre8pilot-avatar--ai-speaking .cre8pilot-bot-ring,
+.cre8pilot-avatar--speaking .cre8pilot-bot-ring {
+  border-color: rgba(45, 212, 191, 0.56);
+}
+
+.cre8pilot-avatar--error .cre8pilot-bot {
+  animation: cre8pilotErrorPause 1.2s ease-in-out infinite;
+}
+
+.cre8pilot-avatar--error .cre8pilot-bot-arm {
+  animation: none;
+  opacity: 0.85;
+}
+
+.cre8pilot-avatar--error .cre8pilot-bot-arm--left {
+  transform: rotate(30deg);
+}
+
+.cre8pilot-avatar--error .cre8pilot-bot-arm--right {
+  transform: scaleX(-1) rotate(30deg);
+}
+
+.cre8pilot-avatar--error .cre8pilot-bot-eye {
+  animation: cre8pilotWarningEyes 1.4s ease-in-out infinite;
+  background: linear-gradient(180deg, rgba(255, 205, 205, 0.9), rgba(248, 113, 113, 0.86));
+}
+
+.cre8pilot-avatar--error .cre8pilot-bot-ring {
+  border-color: rgba(248, 113, 113, 0.58);
+}
+
+@keyframes cre8pilotFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes cre8pilotBodyBreathe {
+  0%, 100% { transform: translateX(-50%) scaleY(1); }
+  50% { transform: translateX(-50%) scaleY(1.05); }
+}
+
+@keyframes cre8pilotRingIdle {
+  0%, 100% { opacity: 0.64; }
+  50% { opacity: 0.86; }
+}
+
+@keyframes cre8pilotRingHoloPulse {
+  0%, 100% {
+    opacity: 0.52;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.78;
+    filter: brightness(1.12);
+  }
+}
+
+@keyframes cre8pilotBlink {
+  0%, 90%, 100% { transform: scaleY(1); opacity: 1; }
+  93%, 96% { transform: scaleY(0.14); opacity: 0.5; }
+}
+
+@keyframes cre8pilotLookAround {
+  0%, 100% { transform: translateX(0) scaleY(1); }
+  30% { transform: translateX(-9%) scaleY(0.95); }
+  68% { transform: translateX(9%) scaleY(0.95); }
+}
+
+@keyframes cre8pilotEyePulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.35); }
+}
+
+@keyframes cre8pilotWarningEyes {
+  0%, 100% { transform: scaleY(0.88); filter: brightness(1); }
+  50% { transform: scaleY(0.7); filter: brightness(1.2); }
+}
+
+@keyframes cre8pilotWaveHands {
+  0%, 100% { transform: rotate(20deg); }
+  50% { transform: rotate(26deg); }
+}
+
+@keyframes cre8pilotWaveHandsRight {
+  0%, 100% { transform: scaleX(-1) rotate(20deg); }
+  50% { transform: scaleX(-1) rotate(26deg); }
+}
+
+@keyframes cre8pilotWaveHandsUser {
+  0%, 100% { transform: rotate(20deg); }
+  50% { transform: rotate(28deg); }
+}
+
+@keyframes cre8pilotWaveHandsUserRight {
+  0%, 100% { transform: scaleX(-1) rotate(20deg); }
+  50% { transform: scaleX(-1) rotate(28deg); }
+}
+
+@keyframes cre8pilotThinkingHand {
+  0%, 100% { transform: rotate(20deg); }
+  50% { transform: rotate(-20deg); }
+}
+
+@keyframes cre8pilotTypingHands {
+  0%, 100% { transform: rotate(20deg); }
+  50% { transform: rotate(10deg); }
+}
+
+@keyframes cre8pilotTypingHandsRight {
+  0%, 100% { transform: scaleX(-1) rotate(20deg); }
+  50% { transform: scaleX(-1) rotate(10deg); }
+}
+
+@keyframes cre8pilotSuccessHands {
+  0% { transform: rotate(20deg); }
+  40% { transform: rotate(-14deg); }
+  100% { transform: rotate(20deg); }
+}
+
+@keyframes cre8pilotSuccessHandsRight {
+  0% { transform: scaleX(-1) rotate(20deg); }
+  40% { transform: scaleX(-1) rotate(-14deg); }
+  100% { transform: scaleX(-1) rotate(20deg); }
+}
+
+@keyframes cre8pilotWarningHands {
+  0%, 100% { transform: rotate(18deg); }
+  50% { transform: rotate(34deg); }
+}
+
+@keyframes cre8pilotWarningHandsRight {
+  0%, 100% { transform: scaleX(-1) rotate(18deg); }
+  50% { transform: scaleX(-1) rotate(34deg); }
+}
+
+@keyframes cre8pilotConfusedHand {
+  0%, 100% { transform: scaleX(-1) rotate(20deg); }
+  50% { transform: scaleX(-1) rotate(-12deg); }
+}
+
+@keyframes cre8pilotSpeakingGesture {
+  0%, 100% { transform: scaleX(-1) rotate(20deg); }
+  50% { transform: scaleX(-1) rotate(12deg); }
+}
+
+@keyframes cre8pilotForeSpeak {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-14deg); }
+}
+
+@keyframes cre8pilotHeadThink {
+  0%, 100% { transform: translateX(-50%) rotate(0deg); }
+  45% { transform: translateX(-50%) rotate(-7deg); }
+  75% { transform: translateX(-50%) rotate(3deg); }
+}
+
+@keyframes cre8pilotConfusedTilt {
+  0%, 100% { transform: translateX(-50%) rotate(0deg); }
+  33% { transform: translateX(-50%) rotate(-7deg); }
+  66% { transform: translateX(-50%) rotate(7deg); }
+}
+
+@keyframes cre8pilotAntennaThink {
+  0%, 100% { filter: brightness(1); }
+  50% {
+    filter: brightness(1.15);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 1px 4px rgba(30, 20, 80, 0.35), 0 0 12px rgba(251, 191, 36, 0.45);
+  }
+}
+
+@keyframes cre8pilotAntennaListen {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.12); }
+}
+
+@keyframes cre8pilotBeaconThinkPulse {
+  0%, 100% { filter: brightness(1); box-shadow: 0 0 10px rgba(56, 189, 248, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.22); }
+  50% { filter: brightness(1.2); box-shadow: 0 0 16px rgba(251, 191, 36, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.28); }
+}
+
+@keyframes cre8pilotScan {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(320%); }
+}
+
+@keyframes cre8pilotSuccessBounce {
+  0% { transform: translateY(0); }
+  40% { transform: translateY(-5px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes cre8pilotAlertShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+@keyframes cre8pilotVisorWave {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(1.06); }
+}
+
+@keyframes cre8pilotErrorPause {
+  0%, 100% { transform: translateX(0); }
+  35% { transform: translateX(-1.5px); }
+  70% { transform: translateX(1.5px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cre8pilot-avatar,
+  .cre8pilot-avatar *,
+  .cre8pilot-bot,
+  .cre8pilot-bot-head,
+  .cre8pilot-bot-arm,
+  .cre8pilot-bot-shoulder,
+  .cre8pilot-bot-upper-arm,
+  .cre8pilot-bot-elbow,
+  .cre8pilot-bot-forearm,
+  .cre8pilot-bot-hand,
+  .cre8pilot-bot-eye,
+  .cre8pilot-bot-ring,
+  .cre8pilot-bot-antenna,
+  .cre8pilot-bot-visor,
+  .cre8pilot-bot-body {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.18s !important;
+  }
+
+  .cre8pilot-avatar--warning .cre8pilot-bot,
+  .cre8pilot-avatar--error .cre8pilot-bot {
+    animation: none !important;
+  }
+
+  .cre8pilot-avatar--filling .cre8pilot-bot-visor::after {
+    display: none;
+  }
+}
+
 .cre8pilot-field-highlight {
   outline: 3px solid rgba(226, 30, 128, 0.38) !important;
   box-shadow: 0 0 0 6px rgba(108, 92, 231, 0.16) !important;
@@ -3626,5 +4679,10 @@ body > main.container-fluid {
 
   .cre8pilot-fab strong {
     display: none;
+  }
+
+  .cre8pilot-avatar--large {
+    width: min(200px, 52vw);
+    height: min(240px, 62vw);
   }
 }

@@ -3,3 +3,6 @@
 !.env.example
 storage/cre8pilot_cache/
 storage/cre8pilot_provider_state.json
+storage/cre8pilot_documents/**
+!storage/cre8pilot_documents/.htaccess
+vendor/

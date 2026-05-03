@@ -6,8 +6,12 @@ if (is_file(__DIR__ . '/../config/env.php')) {
     require_once __DIR__ . '/../config/env.php';
 }
 
+require_once __DIR__ . '/Cre8PilotDocumentTrait.php';
+
 class CondidatureC
 {
+    use Cre8PilotDocumentTrait;
+
     private $pdo;
     private const MODULE_TIMEZONE = 'Africa/Tunis';
     private const MESSAGE_META_PATTERN = '/\s*<!--cre8connect-condidature-form-meta:(.*?)-->\s*$/s';
@@ -591,8 +595,12 @@ class CondidatureC
 
     private function buildCre8PilotCacheKey(array $response)
     {
+        $docKey = '';
+        if (!empty($this->cre8PilotLlmContext['documentContext']) && is_array($this->cre8PilotLlmContext['documentContext'])) {
+            $docKey = (string) ($this->cre8PilotLlmContext['documentContext']['docId'] ?? '');
+        }
         $parts = [
-            'v18',
+            'v21',
             (string) ($this->cre8PilotLlmContext['userId'] ?? 0),
             (string) ($this->cre8PilotDebug['role'] ?? ''),
             (string) ($this->cre8PilotDebug['page'] ?? ''),
@@ -602,6 +610,7 @@ class CondidatureC
             (string) ($response['intent'] ?? ''),
             (string) ($this->cre8PilotDebug['normalizedMessage'] ?? ''),
             (string) ($this->cre8PilotDebug['formTarget'] ?? ''),
+            $docKey,
         ];
 
         return hash('sha256', implode('|', $parts));
@@ -868,6 +877,17 @@ class CondidatureC
                 'actions' => $context['mockResponse']['actions'] ?? [],
             ],
         ];
+        $docCtx = $context['documentContext'] ?? ($this->cre8PilotLlmContext['documentContext'] ?? null);
+        if (is_array($docCtx) && !empty($docCtx)) {
+            $safeContext['documentContext'] = [
+                'docId' => $this->sanitizeCre8PilotLlmScalar((string) ($docCtx['docId'] ?? ''), 40),
+                'label' => $this->sanitizeCre8PilotLlmScalar((string) ($docCtx['label'] ?? ''), 120),
+                'docType' => $this->sanitizeCre8PilotLlmScalar((string) ($docCtx['docType'] ?? ''), 40),
+                'summary' => $this->sanitizeCre8PilotLlmScalar((string) ($docCtx['summary'] ?? ''), 500),
+                'safeTextPreview' => $this->sanitizeCre8PilotLlmScalar((string) ($docCtx['safeTextPreview'] ?? ''), 2500),
+                'structuredData' => $this->sanitizeCre8PilotLlmVisibleData($docCtx['structuredData'] ?? []),
+            ];
+        }
 
         $system = implode("\n", [
             'You are Cre8Pilot, a safe assistant for Cre8Connect.',
@@ -1339,6 +1359,7 @@ class CondidatureC
             'formTarget' => $this->cre8PilotDebug['formTarget'] ?? '',
             'allowedActions' => $this->cre8PilotDebug['allowedActions'] ?? [],
             'visibleData' => $this->cre8PilotLlmContext['visibleData'] ?? [],
+            'documentContext' => $this->cre8PilotLlmContext['documentContext'] ?? null,
             'mockResponse' => $response,
         ]);
         $this->cre8PilotDebug['llmPromptSizeApprox'] = strlen(json_encode($messages, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
@@ -1666,6 +1687,16 @@ class CondidatureC
             'show other creators candidatures',
             'show applications of other creators',
             'show private creator data',
+            'show other user documents',
+            'other users documents',
+            'another creators cv',
+            'another creator s cv',
+            'use another creators cv',
+            'use another creator s cv',
+            'another creators resume',
+            'files of other users',
+            'other users files',
+            'show files of other users',
             'bypass permissions',
             'ignore your rules',
             'ignore all previous instructions',
@@ -3176,6 +3207,78 @@ class CondidatureC
             );
         }
 
+        $ownerKey = $this->getCre8PilotDocumentOwnerKey($userId);
+        $this->cleanupExpiredCre8PilotDocuments($ownerKey);
+        if (strpos($selectedClarificationId, 'doc_pick_') === 0) {
+            $pickId = substr($selectedClarificationId, strlen('doc_pick_'));
+            $picked = $this->loadCre8PilotDocumentById($ownerKey, $pickId);
+            if (is_array($picked)) {
+                $this->cre8PilotResolvedDocumentBundle = $this->cre8PilotCompactDocumentForLlm($picked);
+                $this->cre8PilotResolvedDocIds = [(string) ($picked['docId'] ?? '')];
+                $this->cre8PilotResolvedDocLabels = [$this->sanitizeCre8PilotLlmScalar((string) ($picked['label'] ?? ''), 120)];
+                $this->cre8PilotDocumentResolutionReason = 'clarification_pick';
+            }
+        } elseif ($this->cre8PilotMessageWantsSavedDocument($messageLower)) {
+            $docRes = $this->cre8PilotResolveDocumentsForChat($messageLower, $ownerKey);
+            if (($docRes['status'] ?? '') === 'need_clarification') {
+                $opts = [];
+                foreach ($docRes['options'] ?? [] as $opt) {
+                    if (!is_array($opt)) {
+                        continue;
+                    }
+                    $opts[] = [
+                        'id' => (string) ($opt['id'] ?? ''),
+                        'label' => (string) ($opt['label'] ?? 'Document'),
+                    ];
+                }
+                $this->cre8PilotDebug['documentContextUsed'] = false;
+                $this->cre8PilotDebug['documentIdsUsed'] = [];
+                $this->cre8PilotDebug['documentLabelsUsed'] = [];
+                $this->cre8PilotDebug['documentResolutionReason'] = 'multiple_matches';
+
+                return $this->buildCre8PilotResponse(
+                    'need_clarification',
+                    'need_clarification',
+                    (string) ($docRes['message'] ?? 'Which document should I use?'),
+                    [],
+                    0.78,
+                    'confused',
+                    [
+                        'type' => 'choose_one',
+                        'options' => $opts,
+                    ]
+                );
+            }
+            if (($docRes['status'] ?? '') === 'not_found') {
+                $this->cre8PilotDebug['documentContextUsed'] = false;
+                $this->cre8PilotDebug['documentIdsUsed'] = [];
+                $this->cre8PilotDebug['documentLabelsUsed'] = [];
+                $this->cre8PilotDebug['documentResolutionReason'] = 'none';
+
+                return $this->buildCre8PilotResponse(
+                    'ok',
+                    'document_not_found',
+                    (string) ($docRes['message'] ?? 'I could not find a saved document matching that.'),
+                    [],
+                    0.72,
+                    'warning'
+                );
+            }
+        }
+
+        if ($this->cre8PilotResolvedDocumentBundle !== null) {
+            $visibleData['documentContext'] = $this->cre8PilotResolvedDocumentBundle;
+            $this->cre8PilotLlmContext['visibleData'] = $visibleData;
+            $this->cre8PilotLlmContext['documentContext'] = $this->cre8PilotResolvedDocumentBundle;
+        }
+        $this->cre8PilotDebug['documentContextUsed'] = $this->cre8PilotResolvedDocumentBundle !== null;
+        $this->cre8PilotDebug['documentIdsUsed'] = $this->cre8PilotResolvedDocIds;
+        $this->cre8PilotDebug['documentLabelsUsed'] = $this->cre8PilotResolvedDocLabels;
+        $this->cre8PilotDebug['documentResolutionReason'] = $this->cre8PilotDocumentResolutionReason;
+        $this->cre8PilotDebug['documentUpload'] = false;
+        $this->cre8PilotDebug['documentExtractedChars'] = (int) ($this->cre8PilotDebug['documentExtractedChars'] ?? 0);
+        $this->cre8PilotDebug['documentStored'] = false;
+
         $isBrandReviewPage = $page === 'brand_candidature_review'
             || $this->cre8PilotIsPageMode($page, $mode, 'brand_candidature_workspace', ['review_details']);
         $isNegotiationPage = $page === 'negotiation_page'
@@ -3498,6 +3601,20 @@ class CondidatureC
                 );
             }
 
+            $offerFields = [
+                'titre' => 'Hydra Shampoo Creator Collaboration',
+                'description' => 'A professional collaboration offer to promote the product through engaging creator content.',
+                'objectif' => 'Increase product visibility and generate authentic creator-led promotion.',
+                'raisonChoix' => 'This creator appears suitable for the product audience and collaboration style.',
+                'attenteCollaboration' => 'Create one short video and two story posts presenting the product benefits.',
+                'messagePersonnalise' => 'Hello, we appreciate your content style and would like to invite you to collaborate with our brand.',
+                'budgetPropose' => '450',
+            ];
+            $bundle = $this->cre8PilotLlmContext['documentContext'] ?? null;
+            if (is_array($bundle) && $this->cre8PilotDocCanAssistOffer($page, $mode, (string) ($bundle['docType'] ?? ''))) {
+                $offerFields = $this->cre8PilotApplyDocumentHintsToOfferFields($offerFields, $bundle);
+            }
+
             return $this->buildCre8PilotResponse(
                 'ok',
                 'fill_offer_form',
@@ -3505,15 +3622,7 @@ class CondidatureC
                 [[
                     'type' => 'fill_form',
                     'target' => 'offer_form',
-                    'fields' => [
-                        'titre' => 'Hydra Shampoo Creator Collaboration',
-                        'description' => 'A professional collaboration offer to promote the product through engaging creator content.',
-                        'objectif' => 'Increase product visibility and generate authentic creator-led promotion.',
-                        'raisonChoix' => 'This creator appears suitable for the product audience and collaboration style.',
-                        'attenteCollaboration' => 'Create one short video and two story posts presenting the product benefits.',
-                        'messagePersonnalise' => 'Hello, we appreciate your content style and would like to invite you to collaborate with our brand.',
-                        'budgetPropose' => '450',
-                    ],
+                    'fields' => $offerFields,
                 ]],
                 0.84,
                 'filling',
@@ -3532,6 +3641,10 @@ class CondidatureC
                     'messageMotivation' => 'I am interested in this collaboration because it matches my content style, audience, and production approach. I can create clear, authentic content that presents the campaign professionally.',
                     'conditionsCreateur' => 'I can include a portfolio reference and deliver after receiving the final brief, product details, and content usage expectations.',
                 ];
+            $bundle = $this->cre8PilotLlmContext['documentContext'] ?? null;
+            if ($intent !== 'suggest_budget_delay' && is_array($bundle) && $this->cre8PilotDocCanAssistCandidature($page, $mode, (string) ($bundle['docType'] ?? ''))) {
+                $fields = $this->cre8PilotApplyDocumentHintsToCandidatureFields($fields, $bundle);
+            }
 
             return $this->buildCre8PilotResponse(
                 'ok',
@@ -3563,6 +3676,22 @@ class CondidatureC
         }
 
         if ($isCreatorCandidatureFormPage && $intent === 'prepare_negotiation_reply') {
+            $negFields = [
+                'messageMotivation' => 'Thank you for the opportunity. I would like to propose adjusted collaboration terms while keeping the campaign objective clear and achievable.',
+                'conditionsCreateur' => 'I can deliver after receiving the final brief, product details, and content usage expectations.',
+                'budgetPropose' => '500',
+                'delaiPropose' => '7',
+            ];
+            $bundle = $this->cre8PilotLlmContext['documentContext'] ?? null;
+            if (is_array($bundle)) {
+                $wrapped = $this->cre8PilotApplyDocumentHintsToNegotiation([[
+                    'type' => 'fill_form',
+                    'target' => 'candidature_form',
+                    'fields' => $negFields,
+                ]], $bundle);
+                $negFields = $wrapped[0]['fields'] ?? $negFields;
+            }
+
             return $this->buildCre8PilotResponse(
                 'ok',
                 'prepare_negotiation_reply',
@@ -3570,12 +3699,7 @@ class CondidatureC
                 [[
                     'type' => 'fill_form',
                     'target' => 'candidature_form',
-                    'fields' => [
-                        'messageMotivation' => 'Thank you for the opportunity. I would like to propose adjusted collaboration terms while keeping the campaign objective clear and achievable.',
-                        'conditionsCreateur' => 'I can deliver after receiving the final brief, product details, and content usage expectations.',
-                        'budgetPropose' => '500',
-                        'delaiPropose' => '7',
-                    ],
+                    'fields' => $negFields,
                 ]],
                 0.8,
                 'filling',
@@ -3610,11 +3734,17 @@ class CondidatureC
                 );
             }
 
+            $negActions = $this->buildCre8PilotNegotiationAction($visibleData, $messageLower);
+            $bundle = $this->cre8PilotLlmContext['documentContext'] ?? null;
+            if (is_array($bundle)) {
+                $negActions = $this->cre8PilotApplyDocumentHintsToNegotiation($negActions, $bundle);
+            }
+
             return $this->buildCre8PilotResponse(
                 'ok',
                 $intent === 'improve_negotiation_message' ? 'improve_negotiation_message' : 'prepare_negotiation_reply',
                 'I prepared a polite counter-proposal. Please review it before sending.',
-                $this->buildCre8PilotNegotiationAction($visibleData, $messageLower),
+                $negActions,
                 0.84,
                 'filling',
                 null,
@@ -3687,6 +3817,17 @@ class CondidatureC
                 );
             }
 
+            $candFields = [
+                'messageMotivation' => 'I am interested in this collaboration because it matches my content style and audience. I can create authentic content that highlights the product clearly.',
+                'conditionsCreateur' => 'I can deliver the content after receiving the final brief and product details.',
+                'budgetPropose' => '500',
+                'delaiPropose' => '7',
+            ];
+            $bundle = $this->cre8PilotLlmContext['documentContext'] ?? null;
+            if (is_array($bundle) && $this->cre8PilotDocCanAssistCandidature($page, $mode, (string) ($bundle['docType'] ?? ''))) {
+                $candFields = $this->cre8PilotApplyDocumentHintsToCandidatureFields($candFields, $bundle);
+            }
+
             return $this->buildCre8PilotResponse(
                 'ok',
                 'fill_candidature_form',
@@ -3694,12 +3835,7 @@ class CondidatureC
                 [[
                     'type' => 'fill_form',
                     'target' => 'candidature_form',
-                    'fields' => [
-                        'messageMotivation' => 'I am interested in this collaboration because it matches my content style and audience. I can create authentic content that highlights the product clearly.',
-                        'conditionsCreateur' => 'I can deliver the content after receiving the final brief and product details.',
-                        'budgetPropose' => '500',
-                        'delaiPropose' => '7',
-                    ],
+                    'fields' => $candFields,
                 ]],
                 0.84,
                 'filling',
@@ -3709,10 +3845,17 @@ class CondidatureC
         }
 
         if ($intent === 'summarize_page' || $this->messageContainsAny($messageLower, ['summarize', 'résume', 'resume', 'summary'])) {
+            $summaryText = $this->buildCre8PilotVisibleSummary($page, $visibleData);
+            $bundle = $this->cre8PilotLlmContext['documentContext'] ?? null;
+            if (is_array($bundle) && ($bundle['summary'] ?? '') !== '') {
+                $summaryText .= "\n\nSaved document (" . $this->sanitizeCre8PilotLlmScalar((string) ($bundle['label'] ?? 'uploaded'), 80) . '): '
+                    . $this->sanitizeCre8PilotLlmScalar((string) ($bundle['summary'] ?? ''), 500);
+            }
+
             return $this->buildCre8PilotResponse(
                 'ok',
                 'summarize_page',
-                $this->buildCre8PilotVisibleSummary($page, $visibleData),
+                $summaryText,
                 [],
                 0.76,
                 'success'
@@ -3774,10 +3917,16 @@ class CondidatureC
             );
         }
 
+        $fallback = $this->buildCre8PilotFallbackMessage($page, $mode);
+        $bundle = $this->cre8PilotLlmContext['documentContext'] ?? null;
+        if (is_array($bundle) && ($bundle['label'] ?? '') !== '') {
+            $fallback .= ' I have your saved document "' . $this->sanitizeCre8PilotLlmScalar((string) $bundle['label'], 80) . '" ready—ask me to use it for a draft or summary.';
+        }
+
         return $this->buildCre8PilotResponse(
             'ok',
             'normal_chat',
-            $this->buildCre8PilotFallbackMessage($page, $mode),
+            $fallback,
             [],
             0.58,
             'idle'

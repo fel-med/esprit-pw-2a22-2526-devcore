@@ -31,12 +31,44 @@ window.CRE8PILOT_CONTEXT = Object.assign(
 
     <section class="cre8pilot-panel" data-cre8pilot-panel hidden aria-label="Cre8Pilot chat panel">
         <header class="cre8pilot-header">
-            <div>
-                <span class="cre8pilot-kicker">&#10024; Cre8Pilot</span>
-                <h2>Cre8Pilot</h2>
-                <p>Your smart assistant for offers, candidatures, and collaboration decisions.</p>
+            <div class="cre8pilot-header-main">
+                <div class="cre8pilot-header-text">
+                    <h2 class="cre8pilot-header-title">Cre8Pilot</h2>
+                    <p class="cre8pilot-header-sub">Summaries, drafts, and page-aware help.</p>
+                </div>
+                <div class="cre8pilot-avatar cre8pilot-avatar--small cre8pilot-avatar--idle" data-cre8pilot-avatar data-cre8pilot-avatar-panel aria-hidden="true" title="Cre8Pilot is idle" style="--avatar-voice-level: 0; --voice-level: 0;">
+                    <div class="cre8pilot-bot">
+                        <div class="cre8pilot-bot-antenna" aria-hidden="true"></div>
+                        <div class="cre8pilot-bot-head">
+                            <div class="cre8pilot-bot-visor">
+                                <span class="cre8pilot-bot-eye cre8pilot-bot-eye--left" aria-hidden="true"></span>
+                                <span class="cre8pilot-bot-eye cre8pilot-bot-eye--right" aria-hidden="true"></span>
+                            </div>
+                        </div>
+                        <div class="cre8pilot-bot-arm cre8pilot-bot-arm--left" aria-hidden="true">
+                            <span class="cre8pilot-bot-shoulder"></span>
+                            <span class="cre8pilot-bot-upper-arm"></span>
+                            <span class="cre8pilot-bot-elbow"></span>
+                            <span class="cre8pilot-bot-forearm"></span>
+                            <span class="cre8pilot-bot-hand"></span>
+                        </div>
+                        <div class="cre8pilot-bot-arm cre8pilot-bot-arm--right" aria-hidden="true">
+                            <span class="cre8pilot-bot-shoulder"></span>
+                            <span class="cre8pilot-bot-upper-arm"></span>
+                            <span class="cre8pilot-bot-elbow"></span>
+                            <span class="cre8pilot-bot-forearm"></span>
+                            <span class="cre8pilot-bot-hand"></span>
+                        </div>
+                        <div class="cre8pilot-bot-body" aria-hidden="true">
+                            <div class="cre8pilot-bot-core"></div>
+                            <div class="cre8pilot-bot-thruster cre8pilot-bot-thruster--left"></div>
+                            <div class="cre8pilot-bot-thruster cre8pilot-bot-thruster--right"></div>
+                        </div>
+                        <div class="cre8pilot-bot-ring" aria-hidden="true"></div>
+                    </div>
+                </div>
             </div>
-            <button type="button" class="cre8pilot-close" data-cre8pilot-close aria-label="Close Cre8Pilot">Close</button>
+            <button type="button" class="cre8pilot-close" data-cre8pilot-close aria-label="Close Cre8Pilot"><span aria-hidden="true">&times;</span></button>
         </header>
 
         <div class="cre8pilot-messages" data-cre8pilot-messages>
@@ -47,17 +79,43 @@ window.CRE8PILOT_CONTEXT = Object.assign(
 
         <div class="cre8pilot-quick-actions" data-cre8pilot-quick-actions aria-label="Cre8Pilot quick actions"></div>
 
+        <div class="cre8pilot-attach-panel" data-cre8pilot-attach-panel hidden>
+            <div class="cre8pilot-attach-panel-inner">
+                <input type="file" accept=".pdf,.txt,application/pdf,text/plain" data-cre8pilot-file hidden>
+                <span class="cre8pilot-attach-filename" data-cre8pilot-attach-filename>No file selected</span>
+                <button type="button" class="cre8pilot-attach-pick" data-cre8pilot-attach-pick>Choose file</button>
+                <input type="text" class="cre8pilot-attach-label" data-cre8pilot-doc-label maxlength="200" placeholder="Label (optional)" aria-label="Document label">
+                <button type="button" class="cre8pilot-attach-upload" data-cre8pilot-attach-upload disabled>Upload</button>
+                <button type="button" class="cre8pilot-attach-cancel" data-cre8pilot-attach-cancel>Cancel</button>
+            </div>
+        </div>
+        <div class="cre8pilot-attach-status" data-cre8pilot-attach-status aria-live="polite"></div>
+
         <form class="cre8pilot-composer" data-cre8pilot-form>
-            <label for="cre8pilotPrompt">Message Cre8Pilot</label>
-            <textarea id="cre8pilotPrompt" data-cre8pilot-input rows="3" placeholder="Ask Cre8Pilot to summarize, prepare an offer, or draft a response..."></textarea>
-            <div class="cre8pilot-voice-status" data-cre8pilot-voice-status aria-live="polite">Voice ready.</div>
-            <div class="cre8pilot-composer-actions">
-                <span data-cre8pilot-state>Mock mode</span>
-                <div class="cre8pilot-voice-controls" aria-label="Cre8Pilot voice controls">
-                    <button type="button" class="cre8pilot-voice-mode-btn" data-cre8pilot-voice-mode-open title="Open Voice Mode" aria-label="Open Voice Mode">Voice Mode</button>
-                    <button type="button" class="cre8pilot-voice-btn" data-cre8pilot-mic title="Speak to Cre8Pilot" aria-label="Speak to Cre8Pilot">&#127897;&#65039;</button>
+            <label class="cre8pilot-sr-only" for="cre8pilotPrompt">Message Cre8Pilot</label>
+            <div class="cre8pilot-composer-input-row">
+                <div class="cre8pilot-tools" data-cre8pilot-tools>
+                    <button type="button" class="cre8pilot-tools-trigger" data-cre8pilot-tools-toggle aria-label="Open Cre8Pilot tools" title="Open Cre8Pilot tools" aria-expanded="false" aria-haspopup="true">+</button>
+                    <div class="cre8pilot-tools-menu" data-cre8pilot-tools-menu hidden role="menu" aria-label="Cre8Pilot tools">
+                        <button type="button" class="cre8pilot-tools-menu-item" role="menuitem" data-cre8pilot-tool="attach">Attach file</button>
+                        <button type="button" class="cre8pilot-tools-menu-item" role="menuitem" data-cre8pilot-tool="voice">Voice Mode</button>
+                        <button type="button" class="cre8pilot-tools-menu-item" role="menuitem" data-cre8pilot-tool="security">Security Check</button>
+                        <button type="button" class="cre8pilot-tools-menu-item" role="menuitem" data-cre8pilot-tool="summarize">Summarize page</button>
+                        <button type="button" class="cre8pilot-tools-menu-item" role="menuitem" data-cre8pilot-tool="clear">Clear conversation</button>
+                        <div class="cre8pilot-tools-menu-divider" data-cre8pilot-tools-overflow-wrap hidden>
+                            <span class="cre8pilot-tools-menu-heading">More for this page</span>
+                            <div class="cre8pilot-tools-overflow" data-cre8pilot-tools-overflow></div>
+                        </div>
+                    </div>
                 </div>
-                <button type="submit">Send</button>
+                <textarea id="cre8pilotPrompt" data-cre8pilot-input rows="2" placeholder="Message Cre8Pilot…"></textarea>
+                <button type="button" class="cre8pilot-voice-btn" data-cre8pilot-mic title="Speak to Cre8Pilot" aria-label="Speak to Cre8Pilot">&#127897;&#65039;</button>
+                <button type="submit" class="cre8pilot-send-btn">Send</button>
+            </div>
+            <div class="cre8pilot-voice-status" data-cre8pilot-voice-status aria-live="polite" hidden></div>
+            <div class="cre8pilot-composer-meta">
+                <span class="cre8pilot-activity" data-cre8pilot-activity hidden></span>
+                <span class="cre8pilot-mode-badge" data-cre8pilot-state>Mock mode</span>
             </div>
         </form>
     </section>
@@ -65,6 +123,39 @@ window.CRE8PILOT_CONTEXT = Object.assign(
     <section class="cre8pilot-voice-overlay" data-cre8pilot-voice-overlay data-voice-state="idle" hidden aria-label="Cre8Pilot voice mode">
         <button type="button" class="cre8pilot-voice-close" data-cre8pilot-voice-close aria-label="Exit voice mode">Exit</button>
         <div class="cre8pilot-voice-stage">
+            <div class="cre8pilot-voice-avatar-wrap">
+                <div class="cre8pilot-avatar cre8pilot-avatar--large cre8pilot-avatar--idle" data-cre8pilot-avatar data-cre8pilot-avatar-voice aria-hidden="true" title="Cre8Pilot is idle" style="--avatar-voice-level: 0; --voice-level: 0;">
+                    <div class="cre8pilot-bot">
+                        <div class="cre8pilot-bot-antenna" aria-hidden="true"></div>
+                        <div class="cre8pilot-bot-head">
+                            <div class="cre8pilot-bot-visor">
+                                <span class="cre8pilot-bot-eye cre8pilot-bot-eye--left" aria-hidden="true"></span>
+                                <span class="cre8pilot-bot-eye cre8pilot-bot-eye--right" aria-hidden="true"></span>
+                            </div>
+                        </div>
+                        <div class="cre8pilot-bot-arm cre8pilot-bot-arm--left" aria-hidden="true">
+                            <span class="cre8pilot-bot-shoulder"></span>
+                            <span class="cre8pilot-bot-upper-arm"></span>
+                            <span class="cre8pilot-bot-elbow"></span>
+                            <span class="cre8pilot-bot-forearm"></span>
+                            <span class="cre8pilot-bot-hand"></span>
+                        </div>
+                        <div class="cre8pilot-bot-arm cre8pilot-bot-arm--right" aria-hidden="true">
+                            <span class="cre8pilot-bot-shoulder"></span>
+                            <span class="cre8pilot-bot-upper-arm"></span>
+                            <span class="cre8pilot-bot-elbow"></span>
+                            <span class="cre8pilot-bot-forearm"></span>
+                            <span class="cre8pilot-bot-hand"></span>
+                        </div>
+                        <div class="cre8pilot-bot-body" aria-hidden="true">
+                            <div class="cre8pilot-bot-core"></div>
+                            <div class="cre8pilot-bot-thruster cre8pilot-bot-thruster--left"></div>
+                            <div class="cre8pilot-bot-thruster cre8pilot-bot-thruster--right"></div>
+                        </div>
+                        <div class="cre8pilot-bot-ring" aria-hidden="true"></div>
+                    </div>
+                </div>
+            </div>
             <div class="cre8pilot-voice-orb-wrap">
                 <div class="cre8pilot-voice-circle cre8pilot-voice-circle--idle" data-cre8pilot-voice-circle style="--voice-level: 0;"></div>
             </div>
@@ -90,6 +181,151 @@ window.CRE8PILOT_CONTEXT = Object.assign(
         button: null,
         message: null,
     };
+
+    const CRE8PILOT_AVATAR_STATES = new Set([
+        'idle', 'thinking', 'filling', 'success', 'warning', 'confused', 'listening', 'user_speaking', 'ai_speaking', 'speaking', 'error',
+    ]);
+
+    function cre8PilotAvatarStateToModifierClass(stateName) {
+        return 'cre8pilot-avatar--' + String(stateName || 'idle').replace(/_/g, '-');
+    }
+
+    function cre8PilotAvatarClearStateClasses(el) {
+        CRE8PILOT_AVATAR_STATES.forEach((s) => {
+            el.classList.remove('cre8pilot-avatar--' + s);
+            el.classList.remove(cre8PilotAvatarStateToModifierClass(s));
+        });
+    }
+
+    function cre8PilotResolveWidget(target) {
+        if (target && target.closest) {
+            const w = target.closest('[data-cre8pilot-widget]');
+            if (w) {
+                return w;
+            }
+        }
+        if (target && target.dataset && target.dataset.cre8pilotWidget !== undefined) {
+            return target;
+        }
+        return document.querySelector('[data-cre8pilot-widget]');
+    }
+
+    function cre8PilotAvatarTitle(state) {
+        const titles = {
+            idle: 'Cre8Pilot is idle',
+            thinking: 'Cre8Pilot is thinking',
+            filling: 'Cre8Pilot is preparing fields',
+            success: 'Cre8Pilot is done',
+            warning: 'Cre8Pilot detected a warning',
+            confused: 'Cre8Pilot needs clarification',
+            listening: 'Cre8Pilot is listening',
+            user_speaking: 'Listening to you',
+            ai_speaking: 'Cre8Pilot is speaking',
+            speaking: 'Cre8Pilot is speaking',
+            error: 'Something went wrong',
+        };
+        return titles[state] || 'Cre8Pilot';
+    }
+
+    function setCre8PilotAvatarState(state, widgetOrNull, options = {}) {
+        let stateName = String(state || 'idle').toLowerCase();
+        if (stateName === 'speaking') {
+            stateName = 'ai_speaking';
+        }
+        if (!CRE8PILOT_AVATAR_STATES.has(stateName)) {
+            stateName = 'idle';
+        }
+        const widget = widgetOrNull || cre8PilotResolveWidget(null);
+        if (!widget) {
+            return stateName;
+        }
+        widget.cre8PilotAvatarState = stateName;
+        const els = widget.querySelectorAll('[data-cre8pilot-avatar]');
+        const modClass = cre8PilotAvatarStateToModifierClass(stateName);
+        els.forEach((el) => {
+            cre8PilotAvatarClearStateClasses(el);
+            el.classList.add(modClass);
+            el.title = options.title || cre8PilotAvatarTitle(stateName);
+            if (typeof options.voiceLevel === 'number') {
+                const v = String(Math.min(1, Math.max(0, options.voiceLevel)));
+                el.style.setProperty('--avatar-voice-level', v);
+                el.style.setProperty('--voice-level', v);
+            }
+        });
+        return stateName;
+    }
+
+    function getCre8PilotAvatarState(widgetOrNull) {
+        const widget = widgetOrNull || cre8PilotResolveWidget(null);
+        return widget ? (widget.cre8PilotAvatarState || 'idle') : 'idle';
+    }
+
+    function updateCre8PilotAvatarFromResponse(data, widgetOrNull) {
+        const widget = widgetOrNull || cre8PilotResolveWidget(null);
+        if (!widget || !data) {
+            return 'idle';
+        }
+        let state = String(data.avatarState || '').toLowerCase();
+        if (state === 'speaking') {
+            state = 'ai_speaking';
+        }
+        if (!state || !CRE8PILOT_AVATAR_STATES.has(state)) {
+            const status = String(data.status || 'ok');
+            const intent = String(data.intent || '');
+            if (status === 'blocked') {
+                state = 'warning';
+            } else if (status === 'need_clarification') {
+                state = 'confused';
+            } else if (status === 'error') {
+                state = 'error';
+            } else if (intent.indexOf('fill_') !== -1 || intent === 'prepare_negotiation_reply' || intent === 'prepare_acceptance_note' || intent === 'prepare_refusal_note') {
+                state = 'filling';
+            } else if (status === 'ok') {
+                state = 'success';
+            } else {
+                state = 'idle';
+            }
+        }
+        widget.cre8PilotLastResponseAvatarState = state;
+        setCre8PilotAvatarState(state, widget);
+        return state;
+    }
+
+    function setCre8PilotAvatarThinking(widgetOrNull) {
+        return setCre8PilotAvatarState('thinking', widgetOrNull || cre8PilotResolveWidget(null));
+    }
+
+    function setCre8PilotAvatarIdle(widgetOrNull) {
+        return setCre8PilotAvatarState('idle', widgetOrNull || cre8PilotResolveWidget(null));
+    }
+
+    function cre8PilotSyncAvatarsFromVoiceMode(widget, voiceStateName) {
+        let avatarState = String(voiceStateName || 'idle');
+        if (avatarState === 'speaking') {
+            avatarState = 'ai_speaking';
+        } else if (avatarState === 'captured') {
+            avatarState = 'success';
+        }
+        if (!CRE8PILOT_AVATAR_STATES.has(avatarState)) {
+            avatarState = 'idle';
+        }
+        const titles = {
+            idle: 'Cre8Pilot voice mode',
+            listening: 'Cre8Pilot is listening',
+            user_speaking: 'Listening to you',
+            success: 'Voice captured — review and send',
+            thinking: 'Cre8Pilot is thinking',
+            ai_speaking: 'Cre8Pilot is speaking',
+            error: 'Voice error',
+        };
+        setCre8PilotAvatarState(avatarState, widget, { title: titles[avatarState] || cre8PilotAvatarTitle(avatarState) });
+    }
+
+    window.setCre8PilotAvatarState = setCre8PilotAvatarState;
+    window.getCre8PilotAvatarState = getCre8PilotAvatarState;
+    window.updateCre8PilotAvatarFromResponse = updateCre8PilotAvatarFromResponse;
+    window.setCre8PilotAvatarThinking = setCre8PilotAvatarThinking;
+    window.setCre8PilotAvatarIdle = setCre8PilotAvatarIdle;
 
     function appendMessage(messages, text, type = 'assistant', status = 'ok') {
         const item = document.createElement('article');
@@ -290,7 +526,7 @@ window.CRE8PILOT_CONTEXT = Object.assign(
         return true;
     }
 
-    function handleAction(action, messages) {
+    function handleAction(action, messages, widget) {
         if (!action || typeof action !== 'object') {
             return;
         }
@@ -301,6 +537,9 @@ window.CRE8PILOT_CONTEXT = Object.assign(
         }
 
         if (action.type === 'fill_form') {
+            if (widget) {
+                setCre8PilotAvatarState('filling', widget);
+            }
             const fields = action.fields && typeof action.fields === 'object' ? action.fields : {};
             let filled = 0;
             Object.keys(fields).forEach((name) => {
@@ -316,6 +555,10 @@ window.CRE8PILOT_CONTEXT = Object.assign(
                 'assistant',
                 filled > 0 ? 'action' : 'blocked'
             );
+            if (widget) {
+                window.setTimeout(() => setCre8PilotAvatarState('success', widget), 120);
+                window.setTimeout(() => setCre8PilotAvatarState('idle', widget), 2200);
+            }
             return;
         }
 
@@ -552,11 +795,36 @@ window.CRE8PILOT_CONTEXT = Object.assign(
         return navigator.userAgent.includes('Edg/');
     }
 
+    const CRE8PILOT_WELCOME_TEXT = 'Hi, I\'m Cre8Pilot. I can help you summarize, analyze, recommend, or prepare forms depending on this page.';
+
     function setVoiceStatus(widget, message) {
         const status = widget.querySelector('[data-cre8pilot-voice-status]');
-        if (status) {
-            status.textContent = message;
+        if (!status) {
+            return;
         }
+        const text = String(message || '').trim();
+        if (text === '') {
+            status.textContent = '';
+            status.hidden = true;
+            return;
+        }
+        status.textContent = text;
+        status.hidden = false;
+    }
+
+    function setComposerActivity(widget, message) {
+        const el = widget.querySelector('[data-cre8pilot-activity]');
+        if (!el) {
+            return;
+        }
+        const text = String(message || '').trim();
+        if (text === '') {
+            el.textContent = '';
+            el.hidden = true;
+            return;
+        }
+        el.textContent = text;
+        el.hidden = false;
     }
 
     function insertVoiceTextIntoTextarea(input, text) {
@@ -576,6 +844,10 @@ window.CRE8PILOT_CONTEXT = Object.assign(
             window.speechSynthesis.cancel();
         }
         if (cre8PilotCurrentSpeech.message) {
+            const w = cre8PilotCurrentSpeech.message.closest('[data-cre8pilot-widget]');
+            if (w) {
+                setCre8PilotAvatarState('idle', w);
+            }
             cre8PilotCurrentSpeech.message.classList.remove('cre8pilot-speaking');
         }
         if (cre8PilotCurrentSpeech.button) {
@@ -632,18 +904,33 @@ window.CRE8PILOT_CONTEXT = Object.assign(
             options.button.setAttribute('aria-label', 'Stop reading');
         }
         utterance.onstart = () => {
+            const w = options.cre8PilotWidget || (options.messageItem && options.messageItem.closest('[data-cre8pilot-widget]')) || cre8PilotResolveWidget(null);
+            if (w) {
+                setCre8PilotAvatarState('ai_speaking', w);
+            }
             if (typeof options.onStart === 'function') {
                 options.onStart();
             }
         };
         utterance.onend = () => {
+            const w = options.cre8PilotWidget || (options.messageItem && options.messageItem.closest('[data-cre8pilot-widget]')) || cre8PilotResolveWidget(null);
             stopCre8PilotSpeech();
+            if (w) {
+                const fallback = w.cre8PilotLastResponseAvatarState && w.cre8PilotLastResponseAvatarState !== 'ai_speaking'
+                    ? w.cre8PilotLastResponseAvatarState
+                    : 'idle';
+                setCre8PilotAvatarState(fallback, w);
+            }
             if (typeof options.onEnd === 'function') {
                 options.onEnd();
             }
         };
         utterance.onerror = () => {
+            const w = options.cre8PilotWidget || (options.messageItem && options.messageItem.closest('[data-cre8pilot-widget]')) || cre8PilotResolveWidget(null);
             stopCre8PilotSpeech();
+            if (w) {
+                setCre8PilotAvatarState('error', w);
+            }
             if (typeof options.onEnd === 'function') {
                 options.onEnd();
             }
@@ -652,9 +939,11 @@ window.CRE8PILOT_CONTEXT = Object.assign(
     }
 
     function speakCre8PilotMessage(messageItem, button, text) {
+        const w = messageItem ? messageItem.closest('[data-cre8pilot-widget]') : null;
         speakCre8PilotText(text, {
             messageItem,
             button,
+            cre8PilotWidget: w,
             onUnsupported: () => {
                 button.title = 'Voice output is not supported in this browser.';
             },
@@ -668,14 +957,14 @@ window.CRE8PILOT_CONTEXT = Object.assign(
         }
     }
 
-    function scheduleCre8PilotSilenceTimer(widget, input, state, micButton) {
+    function scheduleCre8PilotSilenceTimer(widget, input, voiceStatusEl, micButton) {
         clearCre8PilotSilenceTimer(widget);
         widget.cre8PilotSilenceTimer = window.setTimeout(() => {
             if (!widget.cre8PilotListening) {
                 return;
             }
             widget.cre8PilotSilenceStop = true;
-            stopCre8PilotListening(widget, input, state, micButton, 'Listening stopped after silence.');
+            stopCre8PilotListening(widget, input, voiceStatusEl, micButton, 'Listening stopped after silence.');
         }, 20000);
     }
 
@@ -691,7 +980,7 @@ window.CRE8PILOT_CONTEXT = Object.assign(
         micButton.textContent = listening ? '\u25A0' : '\uD83C\uDFA4';
     }
 
-    function stopCre8PilotListening(widget, input, state, micButton, statusMessage = 'Voice captured. Review and click Send.') {
+    function stopCre8PilotListening(widget, input, voiceStatusEl, micButton, statusMessage = 'Voice captured. Review and click Send.') {
         widget.cre8PilotListening = false;
         clearCre8PilotSilenceTimer(widget);
         setCre8PilotMicState(widget, micButton || widget.querySelector('[data-cre8pilot-mic]'), false);
@@ -705,15 +994,15 @@ window.CRE8PILOT_CONTEXT = Object.assign(
         if (input) {
             input.focus();
         }
-        if (state && statusMessage) {
-            state.textContent = statusMessage;
-        }
         if (statusMessage) {
             setVoiceStatus(widget, statusMessage);
+        } else {
+            setVoiceStatus(widget, '');
         }
+        setCre8PilotAvatarState('idle', widget);
     }
 
-    function startCre8PilotListening(widget, input, messages, state, micButton) {
+    function startCre8PilotListening(widget, input, messages, voiceStatusEl, micButton) {
         const isEdge = isCre8PilotEdgeBrowser();
         if (!isSpeechRecognitionSupported()) {
             setVoiceStatus(widget, 'Voice input is not supported in this browser. Please use Chrome, or type your message manually.');
@@ -724,7 +1013,7 @@ window.CRE8PILOT_CONTEXT = Object.assign(
         }
 
         if (widget.cre8PilotListening) {
-            stopCre8PilotListening(widget, input, state, micButton, 'Voice captured. Review and click Send.');
+            stopCre8PilotListening(widget, input, voiceStatusEl, micButton, 'Voice captured. Review and click Send.');
             return;
         }
 
@@ -742,9 +1031,9 @@ window.CRE8PILOT_CONTEXT = Object.assign(
 
         recognition.onstart = () => {
             setCre8PilotMicState(widget, micButton, true);
-            state.textContent = 'Listening... speak now';
-            setVoiceStatus(widget, 'Listening... speak now');
-            scheduleCre8PilotSilenceTimer(widget, input, state, micButton);
+            setVoiceStatus(widget, 'Listening… speak now');
+            setCre8PilotAvatarState('listening', widget);
+            scheduleCre8PilotSilenceTimer(widget, input, voiceStatusEl, micButton);
         };
 
         recognition.onresult = (event) => {
@@ -761,9 +1050,9 @@ window.CRE8PILOT_CONTEXT = Object.assign(
 
             if (interimText.trim()) {
                 const heard = 'Heard: "' + interimText.trim() + '"';
-                state.textContent = heard;
                 setVoiceStatus(widget, heard);
-                scheduleCre8PilotSilenceTimer(widget, input, state, micButton);
+                setCre8PilotAvatarState('user_speaking', widget);
+                scheduleCre8PilotSilenceTimer(widget, input, voiceStatusEl, micButton);
             }
 
             if (finalText.trim()) {
@@ -772,9 +1061,9 @@ window.CRE8PILOT_CONTEXT = Object.assign(
                     insertVoiceTextIntoTextarea(input, cleanFinal);
                     widget.cre8PilotLastFinalSegment = cleanFinal;
                 }
-                state.textContent = 'Voice captured. Review and click Send.';
                 setVoiceStatus(widget, 'Voice captured. Review and click Send.');
-                scheduleCre8PilotSilenceTimer(widget, input, state, micButton);
+                setCre8PilotAvatarState('success', widget);
+                scheduleCre8PilotSilenceTimer(widget, input, voiceStatusEl, micButton);
                 // Future option: auto-send after voice recognition, disabled by design for safety.
             }
         };
@@ -804,10 +1093,10 @@ window.CRE8PILOT_CONTEXT = Object.assign(
                 widget.cre8PilotEdgeVoiceHintShown = true;
             }
 
-            state.textContent = message;
             widget.cre8PilotListening = false;
             clearCre8PilotSilenceTimer(widget);
             setCre8PilotMicState(widget, micButton, false);
+            setCre8PilotAvatarState('error', widget);
 
             if (isEdge && code === 'network' && micButton) {
                 try {
@@ -830,7 +1119,7 @@ window.CRE8PILOT_CONTEXT = Object.assign(
                         try {
                             recognition.start();
                         } catch (error) {
-                            stopCre8PilotListening(widget, input, state, micButton, 'Voice recognition stopped. You can try again or type manually.');
+                            stopCre8PilotListening(widget, input, voiceStatusEl, micButton, 'Voice recognition stopped. You can try again or type manually.');
                         }
                     }
                 }, 400);
@@ -841,13 +1130,14 @@ window.CRE8PILOT_CONTEXT = Object.assign(
                 stopCre8PilotListening(
                     widget,
                     input,
-                    state,
+                    voiceStatusEl,
                     micButton,
                     widget.cre8PilotSilenceStop ? 'Listening stopped after silence.' : 'Voice captured. Review and click Send.'
                 );
             } else {
                 clearCre8PilotSilenceTimer(widget);
                 setCre8PilotMicState(widget, micButton, false);
+                setCre8PilotAvatarState('idle', widget);
                 input.focus();
             }
         };
@@ -859,10 +1149,11 @@ window.CRE8PILOT_CONTEXT = Object.assign(
             clearCre8PilotSilenceTimer(widget);
             setCre8PilotMicState(widget, micButton, false);
             setVoiceStatus(widget, 'Voice recognition failed. Please try again.');
+            setCre8PilotAvatarState('error', widget);
         }
     }
 
-    function initCre8PilotVoice(widget, input, messages, state) {
+    function initCre8PilotVoice(widget, input, messages, voiceStatusEl) {
         const micButton = widget.querySelector('[data-cre8pilot-mic]');
 
         if (micButton) {
@@ -870,7 +1161,7 @@ window.CRE8PILOT_CONTEXT = Object.assign(
                 micButton.disabled = true;
                 micButton.title = 'Voice input is not supported in this browser. Please use Chrome, or type your message manually.';
             }
-            micButton.addEventListener('click', () => startCre8PilotListening(widget, input, messages, state, micButton));
+            micButton.addEventListener('click', () => startCre8PilotListening(widget, input, messages, voiceStatusEl, micButton));
         }
     }
 
@@ -909,6 +1200,7 @@ window.CRE8PILOT_CONTEXT = Object.assign(
         if (elements.toggle) {
             elements.toggle.textContent = widget.cre8PilotVoiceModeListening ? 'Stop voice' : 'Start voice';
         }
+        cre8PilotSyncAvatarsFromVoiceMode(widget, stateName);
     }
 
     function updateCre8PilotVoiceCaptured(widget, text) {
@@ -956,6 +1248,11 @@ window.CRE8PILOT_CONTEXT = Object.assign(
             elements.circle.style.setProperty('--voice-scale', '1');
             elements.circle.style.setProperty('--voice-glow', '34px');
         }
+        const voiceAvatar = widget.querySelector('[data-cre8pilot-avatar-voice]');
+        if (voiceAvatar) {
+            voiceAvatar.style.setProperty('--avatar-voice-level', '0');
+            voiceAvatar.style.setProperty('--voice-level', '0');
+        }
     }
 
     async function startCre8PilotVoiceAnalyser(widget) {
@@ -998,6 +1295,11 @@ window.CRE8PILOT_CONTEXT = Object.assign(
                 elements.circle.style.setProperty('--voice-level', level);
                 elements.circle.style.setProperty('--voice-scale', (1 + Math.min(0.18, rms * 0.9)).toFixed(3));
                 elements.circle.style.setProperty('--voice-glow', Math.round(34 + Math.min(90, rms * 360)) + 'px');
+                const voiceAvatar = widget.querySelector('[data-cre8pilot-avatar-voice]');
+                if (voiceAvatar && (widget.cre8PilotVoiceModeState === 'listening' || widget.cre8PilotVoiceModeState === 'user_speaking')) {
+                    voiceAvatar.style.setProperty('--avatar-voice-level', level);
+                    voiceAvatar.style.setProperty('--voice-level', level);
+                }
                 widget.cre8PilotVoiceAnalyserFrame = window.requestAnimationFrame(tick);
             };
             tick();
@@ -1177,24 +1479,15 @@ window.CRE8PILOT_CONTEXT = Object.assign(
         if (elements.overlay) {
             elements.overlay.hidden = true;
         }
+        setCre8PilotAvatarState('idle', widget);
     }
 
-    function initCre8PilotVoiceMode(widget, submitPrompt, setOpen) {
+    function initCre8PilotVoiceMode(widget, submitPrompt) {
         const elements = getCre8PilotVoiceModeElements(widget);
         if (!elements.overlay) {
             return;
         }
 
-        const openButton = widget.querySelector('[data-cre8pilot-voice-mode-open]');
-        const openOverlay = () => {
-            setOpen(true);
-            elements.overlay.hidden = false;
-            setCre8PilotVoiceModeState(widget, 'idle', 'Tap the mic and speak.');
-        };
-
-        if (openButton) {
-            openButton.addEventListener('click', openOverlay);
-        }
         [elements.close, elements.exit].forEach((button) => {
             if (button) {
                 button.addEventListener('click', () => closeCre8PilotVoiceMode(widget));
@@ -1233,6 +1526,7 @@ window.CRE8PILOT_CONTEXT = Object.assign(
                         }
                         setCre8PilotVoiceModeState(widget, 'ai_speaking', responseText);
                         speakCre8PilotText(responseText, {
+                            cre8PilotWidget: widget,
                             onStart: () => setCre8PilotVoiceModeState(widget, 'ai_speaking', responseText),
                             onEnd: () => setCre8PilotVoiceModeState(widget, 'idle', 'Tap the mic and speak.'),
                             onUnsupported: () => setCre8PilotVoiceModeState(widget, 'captured', responseText),
@@ -1256,16 +1550,235 @@ window.CRE8PILOT_CONTEXT = Object.assign(
         const form = widget.querySelector('[data-cre8pilot-form]');
         const input = widget.querySelector('[data-cre8pilot-input]');
         const messages = widget.querySelector('[data-cre8pilot-messages]');
-        const state = widget.querySelector('[data-cre8pilot-state]');
+        const modeBadge = widget.querySelector('[data-cre8pilot-state]');
+        const voiceStatus = widget.querySelector('[data-cre8pilot-voice-status]');
         const quickActions = widget.querySelector('[data-cre8pilot-quick-actions]');
         const endpoint = widget.dataset.cre8pilotEndpoint || '';
-        initCre8PilotVoice(widget, input, messages, state);
+        const attachPanel = widget.querySelector('[data-cre8pilot-attach-panel]');
+        const fileInput = widget.querySelector('[data-cre8pilot-file]');
+        const attachPick = widget.querySelector('[data-cre8pilot-attach-pick]');
+        const attachUpload = widget.querySelector('[data-cre8pilot-attach-upload]');
+        const attachCancel = widget.querySelector('[data-cre8pilot-attach-cancel]');
+        const attachFilename = widget.querySelector('[data-cre8pilot-attach-filename]');
+        const docLabelInput = widget.querySelector('[data-cre8pilot-doc-label]');
+        const attachStatus = widget.querySelector('[data-cre8pilot-attach-status]');
+        const toolsRoot = widget.querySelector('[data-cre8pilot-tools]');
+        const toolsToggle = widget.querySelector('[data-cre8pilot-tools-toggle]');
+        const toolsMenu = widget.querySelector('[data-cre8pilot-tools-menu]');
+        const toolsOverflowWrap = widget.querySelector('[data-cre8pilot-tools-overflow-wrap]');
+        const toolsOverflow = widget.querySelector('[data-cre8pilot-tools-overflow]');
+        initCre8PilotVoice(widget, input, messages, voiceStatus);
+
+        function closeCre8PilotToolsMenu() {
+            if (!toolsMenu || !toolsToggle) {
+                return;
+            }
+            toolsMenu.hidden = true;
+            toolsToggle.setAttribute('aria-expanded', 'false');
+            widget.cre8PilotToolsOpen = false;
+        }
+
+        function openCre8PilotToolsMenu() {
+            if (!toolsMenu || !toolsToggle) {
+                return;
+            }
+            toolsMenu.hidden = false;
+            toolsToggle.setAttribute('aria-expanded', 'true');
+            widget.cre8PilotToolsOpen = true;
+        }
+
+        function toggleCre8PilotToolsMenu() {
+            if (widget.cre8PilotToolsOpen) {
+                closeCre8PilotToolsMenu();
+            } else {
+                openCre8PilotToolsMenu();
+            }
+        }
+
+        function hideCre8PilotAttachPanel() {
+            widget.cre8PilotPendingFile = null;
+            if (fileInput) {
+                fileInput.value = '';
+            }
+            if (attachUpload) {
+                attachUpload.disabled = true;
+            }
+            if (attachFilename) {
+                attachFilename.textContent = 'No file selected';
+            }
+            if (attachPanel) {
+                attachPanel.hidden = true;
+            }
+        }
+
+        function showCre8PilotAttachPanel() {
+            if (attachPanel) {
+                attachPanel.hidden = false;
+            }
+        }
+
+        function uploadCre8PilotDocument(file) {
+            if (!file || !endpoint) {
+                return;
+            }
+            setCre8PilotAvatarState('thinking', widget);
+            if (attachStatus) {
+                attachStatus.textContent = 'Extracting document...';
+            }
+            const fd = new FormData();
+            fd.append('action', 'document_upload');
+            fd.append('file', file);
+            fd.append('label', docLabelInput ? String(docLabelInput.value || '').trim() : '');
+            const ctx = window.CRE8PILOT_CONTEXT || {};
+            fd.append('page', ctx.page || 'unknown');
+            fd.append('mode', ctx.mode || '');
+            fd.append('role', ctx.role || '');
+            fetch(endpoint, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: fd,
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    if (attachStatus) {
+                        attachStatus.textContent = '';
+                    }
+                    if (data && data.debug && window.console && typeof window.console.log === 'function') {
+                        window.console.log('[Cre8Pilot document]', data.debug);
+                    }
+                    const assistantText = (data && data.message) ? data.message : 'Document upload finished.';
+                    const st = (data && data.status) ? data.status : 'ok';
+                    appendMessage(messages, assistantText, 'assistant', st === 'error' ? 'error' : 'ok');
+                    if (data && data.needsUserConfirmation) {
+                        appendMessage(messages, 'Please review the extracted content. I will not submit or save anything automatically.', 'assistant', 'action');
+                    }
+                    if (data) {
+                        updateCre8PilotAvatarFromResponse(data, widget);
+                    }
+                    if (modeBadge) {
+                        modeBadge.textContent = 'Mock mode';
+                    }
+                    hideCre8PilotAttachPanel();
+                })
+                .catch(() => {
+                    if (attachStatus) {
+                        attachStatus.textContent = '';
+                    }
+                    appendMessage(messages, 'Document upload could not reach the server.', 'assistant', 'error');
+                    if (modeBadge) {
+                        modeBadge.textContent = 'Mock mode';
+                    }
+                    setCre8PilotAvatarState('error', widget);
+                });
+        }
+
+        if (attachPick && fileInput) {
+            attachPick.addEventListener('click', () => {
+                fileInput.click();
+            });
+        }
+        if (fileInput) {
+            fileInput.addEventListener('change', () => {
+                const file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+                widget.cre8PilotPendingFile = file || null;
+                if (attachFilename) {
+                    attachFilename.textContent = file ? file.name : 'No file selected';
+                }
+                if (attachUpload) {
+                    attachUpload.disabled = !file;
+                }
+            });
+        }
+        if (attachUpload) {
+            attachUpload.addEventListener('click', () => {
+                const file = widget.cre8PilotPendingFile || (fileInput && fileInput.files && fileInput.files[0] ? fileInput.files[0] : null);
+                if (file) {
+                    uploadCre8PilotDocument(file);
+                }
+            });
+        }
+        if (attachCancel) {
+            attachCancel.addEventListener('click', () => {
+                hideCre8PilotAttachPanel();
+            });
+        }
+
+        if (toolsToggle && toolsMenu) {
+            toolsToggle.addEventListener('click', (event) => {
+                event.stopPropagation();
+                toggleCre8PilotToolsMenu();
+            });
+            toolsMenu.addEventListener('click', (event) => {
+                event.stopPropagation();
+            });
+            document.addEventListener('click', () => {
+                if (widget.cre8PilotToolsOpen) {
+                    closeCre8PilotToolsMenu();
+                }
+            });
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && widget.cre8PilotToolsOpen) {
+                    closeCre8PilotToolsMenu();
+                }
+            });
+        }
+
+        function clearCre8PilotPanelHistory() {
+            if (!messages) {
+                return;
+            }
+            messages.innerHTML = '';
+            appendMessage(messages, CRE8PILOT_WELCOME_TEXT, 'assistant');
+            messages.scrollTop = 0;
+        }
+
+        function bindToolMenuActions() {
+            if (!toolsMenu) {
+                return;
+            }
+            toolsMenu.querySelectorAll('[data-cre8pilot-tool]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const tool = btn.getAttribute('data-cre8pilot-tool') || '';
+                    closeCre8PilotToolsMenu();
+                    if (tool === 'attach') {
+                        showCre8PilotAttachPanel();
+                        return;
+                    }
+                    if (tool === 'voice') {
+                        setOpen(true);
+                        const elements = getCre8PilotVoiceModeElements(widget);
+                        if (elements.overlay) {
+                            elements.overlay.hidden = false;
+                            setCre8PilotVoiceModeState(widget, 'idle', 'Tap the mic and speak.');
+                        }
+                        return;
+                    }
+                    if (tool === 'security') {
+                        submitPrompt('Check security', 'security_check');
+                        return;
+                    }
+                    if (tool === 'summarize') {
+                        submitPrompt('Summarize this page', 'summarize_page');
+                        return;
+                    }
+                    if (tool === 'clear') {
+                        clearCre8PilotPanelHistory();
+                    }
+                });
+            });
+        }
 
         function setOpen(open) {
             panel.hidden = !open;
             widget.classList.toggle('is-open', open);
             if (open) {
                 input.focus();
+                if (typeof widget.cre8PilotResizeInput === 'function') {
+                    widget.cre8PilotResizeInput();
+                }
             }
         }
 
@@ -1282,7 +1795,11 @@ window.CRE8PILOT_CONTEXT = Object.assign(
             if (input.value.trim() === prompt) {
                 input.value = '';
             }
-            state.textContent = 'Cre8Pilot is thinking...';
+            if (typeof widget.cre8PilotResizeInput === 'function') {
+                widget.cre8PilotResizeInput();
+            }
+            setComposerActivity(widget, 'Thinking…');
+            setCre8PilotAvatarThinking(widget);
 
             return fetch(endpoint, {
                 method: 'POST',
@@ -1311,10 +1828,21 @@ window.CRE8PILOT_CONTEXT = Object.assign(
                     if (data.clarification && Array.isArray(data.clarification.options)) {
                         appendClarificationOptions(messages, data.clarification.options, submitPrompt);
                     }
+                    updateCre8PilotAvatarFromResponse(data, widget);
                     if (Array.isArray(data.actions)) {
-                        data.actions.forEach((action) => handleAction(action, messages));
+                        data.actions.forEach((action) => handleAction(action, messages, widget));
                     }
-                    state.textContent = 'Mock mode';
+                    if (!data.actions || data.actions.length === 0) {
+                        window.setTimeout(() => {
+                            if (widget && widget.cre8PilotAvatarState === 'success') {
+                                setCre8PilotAvatarState('idle', widget);
+                            }
+                        }, 3200);
+                    }
+                    setComposerActivity(widget, '');
+                    if (modeBadge) {
+                        modeBadge.textContent = 'Mock mode';
+                    }
                     if (typeof options.onAssistantResponse === 'function') {
                         options.onAssistantResponse(data, assistantText);
                     }
@@ -1322,7 +1850,11 @@ window.CRE8PILOT_CONTEXT = Object.assign(
                 })
                 .catch((error) => {
                     appendMessage(messages, 'Cre8Pilot could not reach the mock endpoint right now.', 'assistant', 'error');
-                    state.textContent = 'Mock mode';
+                    setComposerActivity(widget, '');
+                    if (modeBadge) {
+                        modeBadge.textContent = 'Mock mode';
+                    }
+                    setCre8PilotAvatarState('error', widget);
                     if (typeof options.onError === 'function') {
                         options.onError(error);
                     }
@@ -1334,7 +1866,7 @@ window.CRE8PILOT_CONTEXT = Object.assign(
                 });
         }
 
-        initCre8PilotVoiceMode(widget, submitPrompt, setOpen);
+        initCre8PilotVoiceMode(widget, submitPrompt);
 
         form.addEventListener('submit', (event) => {
             event.preventDefault();
@@ -1344,7 +1876,10 @@ window.CRE8PILOT_CONTEXT = Object.assign(
         if (quickActions) {
             const page = (window.CRE8PILOT_CONTEXT && window.CRE8PILOT_CONTEXT.page) || 'unknown';
             const mode = (window.CRE8PILOT_CONTEXT && window.CRE8PILOT_CONTEXT.mode) || '';
-            quickActionsForContext(page, mode).forEach(([label, id]) => {
+            const allQuick = quickActionsForContext(page, mode);
+            const visibleQuick = allQuick.slice(0, 3);
+            const overflowQuick = allQuick.slice(3);
+            visibleQuick.forEach(([label, id]) => {
                 const button = document.createElement('button');
                 button.type = 'button';
                 button.className = 'cre8pilot-quick-action-btn';
@@ -1352,7 +1887,40 @@ window.CRE8PILOT_CONTEXT = Object.assign(
                 button.addEventListener('click', () => submitPrompt(label, id));
                 quickActions.appendChild(button);
             });
+            if (toolsOverflow && toolsOverflowWrap && overflowQuick.length > 0) {
+                toolsOverflowWrap.hidden = false;
+                overflowQuick.forEach(([label, id]) => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'cre8pilot-tools-menu-item';
+                    button.setAttribute('role', 'menuitem');
+                    button.textContent = label;
+                    button.addEventListener('click', () => {
+                        closeCre8PilotToolsMenu();
+                        submitPrompt(label, id);
+                    });
+                    toolsOverflow.appendChild(button);
+                });
+            }
         }
+
+        bindToolMenuActions();
+
+        function cre8PilotAutosizeTextarea() {
+            if (!input) {
+                return;
+            }
+            input.style.height = 'auto';
+            const maxPx = 160;
+            const next = Math.min(input.scrollHeight, maxPx);
+            input.style.height = next + 'px';
+            input.style.overflowY = input.scrollHeight > maxPx ? 'auto' : 'hidden';
+        }
+        widget.cre8PilotResizeInput = cre8PilotAutosizeTextarea;
+        input.addEventListener('input', cre8PilotAutosizeTextarea);
+        cre8PilotAutosizeTextarea();
+
+        setCre8PilotAvatarIdle(widget);
     });
 })();
 </script>

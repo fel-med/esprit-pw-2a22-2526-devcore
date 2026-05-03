@@ -1,0 +1,8 @@
+{
+    "name": "cre8connect/app",
+    "description": "Cre8Connect — optional Composer deps for Cre8Pilot (PDF parsing)",
+    "require": {
+        "php": ">=7.4",
+        "smalot/pdfparser": "^2.7"
+    }
+}
