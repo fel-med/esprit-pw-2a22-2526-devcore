@@ -1165,7 +1165,7 @@ $cre8PilotContext = [
     'page' => 'admin_offer_workspace',
     'mode' => 'table',
     'role' => 'admin',
-    'allowedActions' => ['normal_chat', 'summarize_page', 'analyze_page', 'explain_statistics', 'detect_risky_items', 'apply_filters', 'apply_search', 'sort_results'],
+    'allowedActions' => ['normal_chat', 'summarize_page', 'analyze_page', 'explain_statistics', 'detect_risky_items', 'explain_statuses', 'recommend_next_action', 'apply_filters', 'apply_search', 'sort_results'],
     'formTarget' => 'filter_form',
     'visibleEntityType' => 'offre',
 ];

@@ -23,6 +23,64 @@ window.CRE8PILOT_CONTEXT = Object.assign(
 );
 </script>
 <script src="<?php echo htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/FrontOffice/condidature/cre8pilot_multi_smoke_test.js'); ?>"></script>
+<?php $cre8PilotStressTestJs = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/FrontOffice/condidature/cre8pilot_full_balanced_stress_test.js'); ?>
+<?php $cre8PilotAiTourStressTestJs = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/FrontOffice/condidature/cre8pilot_ai_tour_stress_test.js'); ?>
+<script>
+(function () {
+    var STRESS_URL = '<?php echo $cre8PilotStressTestJs; ?>';
+    var AI_TOUR_STRESS_URL = '<?php echo $cre8PilotAiTourStressTestJs; ?>';
+    window.startStressTest = function startStressTest(options) {
+        var defs = { delayMs: 15000, maxAiHeavyTests: 12, stopOnCriticalFailure: false };
+        var opts = Object.assign({}, defs, options || {});
+        if (typeof window.runCre8PilotFullBalancedStressTest === 'function') {
+            return window.runCre8PilotFullBalancedStressTest(opts);
+        }
+        var w = document.querySelector('[data-cre8pilot-widget]');
+        var ep = w && w.dataset && w.dataset.cre8pilotEndpoint;
+        var url = STRESS_URL;
+        if (ep && /cre8pilot_endpoint\.php/i.test(ep)) {
+            url = ep.replace(/cre8pilot_endpoint\.php/i, 'cre8pilot_full_balanced_stress_test.js');
+        }
+        return fetch(url, { credentials: 'same-origin' }).then(function (res) {
+            if (!res.ok) {
+                throw new Error('Stress test HTTP ' + res.status);
+            }
+            return res.text();
+        }).then(function (code) {
+            (0, eval)(code);
+            if (typeof window.runCre8PilotFullBalancedStressTest !== 'function') {
+                throw new Error('Stress suite did not register runCre8PilotFullBalancedStressTest.');
+            }
+            return window.runCre8PilotFullBalancedStressTest(opts);
+        });
+    };
+    window.stress_test_just_ai = function stress_test_just_ai(options) {
+        var defs = { delayMs: 15000, maxPages: 10, maxPromptsPerPage: 3, exportJson: true };
+        var opts = Object.assign({}, defs, options || {});
+        if (typeof window.runCre8PilotAiTourStressTest === 'function') {
+            return window.runCre8PilotAiTourStressTest(opts);
+        }
+        var w2 = document.querySelector('[data-cre8pilot-widget]');
+        var ep2 = w2 && w2.dataset && w2.dataset.cre8pilotEndpoint;
+        var urlAi = AI_TOUR_STRESS_URL;
+        if (ep2 && /cre8pilot_endpoint\.php/i.test(ep2)) {
+            urlAi = ep2.replace(/cre8pilot_endpoint\.php/i, 'cre8pilot_ai_tour_stress_test.js');
+        }
+        return fetch(urlAi, { credentials: 'same-origin' }).then(function (res) {
+            if (!res.ok) {
+                throw new Error('AI tour stress test HTTP ' + res.status);
+            }
+            return res.text();
+        }).then(function (code) {
+            (0, eval)(code);
+            if (typeof window.runCre8PilotAiTourStressTest !== 'function') {
+                throw new Error('AI tour stress suite did not register runCre8PilotAiTourStressTest.');
+            }
+            return window.runCre8PilotAiTourStressTest(opts);
+        });
+    };
+})();
+</script>
 <div class="cre8pilot-widget" data-cre8pilot-widget data-cre8pilot-endpoint="<?php echo htmlspecialchars($cre8PilotEndpoint); ?>">
     <button type="button" class="cre8pilot-fab" data-cre8pilot-toggle aria-label="Open Cre8Pilot">
         <span aria-hidden="true">&#10024;</span>

@@ -827,7 +827,7 @@ $cre8PilotContext = [
     'page' => 'creator_offer_workspace',
     'mode' => 'list',
     'role' => 'createur',
-    'allowedActions' => ['normal_chat', 'summarize_page', 'analyze_page', 'apply_filters', 'recommend_next_action', 'apply_search', 'sort_results'],
+    'allowedActions' => ['normal_chat', 'summarize_page', 'analyze_page', 'apply_filters', 'recommend_next_action', 'creator_collaboration_draft', 'explain_statuses', 'apply_search', 'sort_results'],
     'formTarget' => 'filter_form',
     'visibleEntityType' => 'offre',
 ];

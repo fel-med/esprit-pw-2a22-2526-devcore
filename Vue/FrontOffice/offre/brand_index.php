@@ -937,7 +937,7 @@ $cre8PilotContext = [
     'page' => 'brand_offer_workspace',
     'mode' => 'list',
     'role' => 'marque',
-    'allowedActions' => ['normal_chat', 'summarize_page', 'analyze_page', 'apply_filters', 'recommend_next_action', 'find_urgent_offers', 'explain_statuses', 'apply_search', 'sort_results'],
+    'allowedActions' => ['normal_chat', 'summarize_page', 'analyze_page', 'apply_filters', 'recommend_next_action', 'find_urgent_offers', 'explain_statuses', 'draft_invite_message', 'apply_search', 'sort_results'],
     'formTarget' => 'filter_form',
     'visibleEntityType' => 'offre',
 ];
