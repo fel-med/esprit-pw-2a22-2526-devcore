@@ -62,12 +62,103 @@ public function statistiques() {
                 COUNT(*) AS total,
                 SUM(statut = 'en_attente') AS en_attente,
                 SUM(statut = 'traitee') AS traitee,
-                SUM(priorite = 'haute') AS haute
+                SUM(priorite = 'haute') AS haute,
+                SUM(priorite = 'moyenne') AS moyenne,
+                SUM(priorite = 'basse') AS basse
             FROM reclamation";
 
     $db = config::getConnexion();
     return $db->query($sql)->fetch();
 }
+
+private function generateTimelineDates(int $days): array {
+    $dates = [];
+    for ($i = $days - 1; $i >= 0; $i--) {
+        $dates[] = date('Y-m-d', strtotime("-{$i} days"));
+    }
+    return $dates;
+}
+
+public function getReclamationStatusTimeline(int $days = 14): array {
+    $sql = "SELECT DATE(date_creation) AS day,
+                   SUM(statut = 'en_attente') AS en_attente,
+                   SUM(statut = 'traitee') AS traitee
+            FROM reclamation
+            WHERE date_creation >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
+            GROUP BY DATE(date_creation)
+            ORDER BY DATE(date_creation)";
+
+    $db = config::getConnexion();
+    $stmt = $db->prepare($sql);
+    $stmt->bindValue(':days', $days - 1, PDO::PARAM_INT);
+    $stmt->execute();
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $dateMap = [];
+    foreach ($rows as $row) {
+        $dateMap[$row['day']] = [
+            'en_attente' => intval($row['en_attente']),
+            'traitee' => intval($row['traitee'])
+        ];
+    }
+
+    $timeline = [
+        'dates' => [],
+        'en_attente' => [],
+        'traitee' => []
+    ];
+
+    foreach ($this->generateTimelineDates($days) as $date) {
+        $timeline['dates'][] = $date;
+        $timeline['en_attente'][] = $dateMap[$date]['en_attente'] ?? 0;
+        $timeline['traitee'][] = $dateMap[$date]['traitee'] ?? 0;
+    }
+
+    return $timeline;
+}
+
+public function getReclamationPriorityTimeline(int $days = 14): array {
+    $sql = "SELECT DATE(date_creation) AS day,
+                   SUM(priorite = 'haute') AS haute,
+                   SUM(priorite = 'moyenne') AS moyenne,
+                   SUM(priorite = 'basse') AS basse
+            FROM reclamation
+            WHERE date_creation >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
+            GROUP BY DATE(date_creation)
+            ORDER BY DATE(date_creation)";
+
+    $db = config::getConnexion();
+    $stmt = $db->prepare($sql);
+    $stmt->bindValue(':days', $days - 1, PDO::PARAM_INT);
+    $stmt->execute();
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $dateMap = [];
+    foreach ($rows as $row) {
+        $dateMap[$row['day']] = [
+            'haute' => intval($row['haute']),
+            'moyenne' => intval($row['moyenne']),
+            'basse' => intval($row['basse'])
+        ];
+    }
+
+    $timeline = [
+        'dates' => [],
+        'haute' => [],
+        'moyenne' => [],
+        'basse' => []
+    ];
+
+    foreach ($this->generateTimelineDates($days) as $date) {
+        $timeline['dates'][] = $date;
+        $timeline['haute'][] = $dateMap[$date]['haute'] ?? 0;
+        $timeline['moyenne'][] = $dateMap[$date]['moyenne'] ?? 0;
+        $timeline['basse'][] = $dateMap[$date]['basse'] ?? 0;
+    }
+
+    return $timeline;
+}
+
 public function afficherReclamationsAdmin($search = '', $priorite = '', $page = 1, $limit = 10) {
     $sql = "SELECT 
                 r.id,

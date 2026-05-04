@@ -2,9 +2,34 @@
 require_once '../../../Controleur/utilisateurC.php';
 
 $message = "";
+$faceDescriptor = $_POST['faceDescriptor'];
 
+if (empty($faceDescriptor)) {
+    die("Veuillez enregistrer votre visage ❌");
+}
+
+// stocker dans base de données
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
+    // ✅ vérifier si captcha existe
+    if (empty($_POST['g-recaptcha-response'])) {
+        die("Veuillez valider le reCAPTCHA ❌");
+    }
+
+    $secret = "6Le_S9ksAAAAAOEjx9cRk48RuR3fYR1RxZrSWtYk";
+    $response = $_POST['g-recaptcha-response'];
+
+    $verify = file_get_contents(
+        "https://www.google.com/recaptcha/api/siteverify?secret=$secret&response=$response"
+    );
+
+    $result = json_decode($verify);
+
+    if (!$result->success) {
+        die("Vérification humaine échouée ❌");
+    }
+
+    // ✅ TON CODE NORMAL
     if (!empty($_POST['nom']) &&
         filter_var($_POST['email'], FILTER_VALIDATE_EMAIL) &&
         strlen($_POST['password']) >= 6) {
@@ -12,7 +37,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $user = new Utilisateur(null,$_POST['nom'],$_POST['email'],$_POST['password'],$_POST['role']);
         $userC = new UtilisateurC();
         $message = $userC->ajouterUser($user);
- header("Location: ../utilisateur/login.php");
+
+        header("Location: ../utilisateur/login.php");
     } else {
         $message = "Erreur de validation";
     }
@@ -38,6 +64,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet" />
         <!-- Core theme CSS (includes Bootstrap)-->
         <link href="css/styles.css" rel="stylesheet" />
+        <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
     </head>
     <body class="d-flex flex-column h-100 bg-light">
         <main class="flex-shrink-0 d-flex align-items-center justify-content-center" style="min-height: 100vh;">
@@ -56,7 +84,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                         <h2 class="fw-bolder mb-4 text-gradient">Create Account</h2>
 
-                        <form id="registerForm" method="POST">
+                        <form id="registerForm" method="POST" >
 
     <div class="mb-3">
         <input type="text" id="nom" name="nom" class="form-control" placeholder="Nom">
@@ -82,7 +110,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </select>
         <small id="roleError" class="text-danger"></small>
     </div>
+   <div class="g-recaptcha" data-sitekey="6Le_S9ksAAAAALQ8QeII5XANm_kyXmRF-Sq5OBt8"></div>
 
+      <br/>
+      <video id="video" width="300" autoplay></video>
+<button type="button" onclick="registerFace()">Enregistrer visage</button>
+
+<input type="hidden" name="faceDescriptor" id="faceDescriptor">
     <button type="submit" class="btn btn-primary w-100">Register</button>
 
 </form>
@@ -233,5 +267,41 @@ document.getElementById("registerForm").addEventListener("submit", function (e) 
 });
 
 </script>
+<script>
+async function registerFace() {
+
+    const video = document.getElementById("video");
+
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.srcObject = stream;
+
+    // charger modèles
+    await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
+    await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
+    await faceapi.nets.ssdMobilenetv1.loadFromUri('/models');
+
+    setTimeout(async () => {
+
+        const detection = await faceapi
+            .detectSingleFace(video)
+            .withFaceLandmarks()
+            .withFaceDescriptor();
+
+        if (!detection) {
+            alert("Aucun visage ❌");
+            return;
+        }
+
+        // convertir en string
+        let descriptor = Array.from(detection.descriptor);
+        document.getElementById("faceDescriptor").value = JSON.stringify(descriptor);
+
+        alert("Visage enregistré ✅");
+
+    }, 3000);
+}
+</script>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<script src="https://cdn.faceio.net/fio.js"></script>
     </body>
 </html>

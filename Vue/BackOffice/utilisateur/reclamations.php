@@ -18,6 +18,12 @@ $totalPages = is_array($result) && isset($result['totalPages']) ? max(1, intval(
 $currentPage = is_array($result) && isset($result['page']) ? max(1, intval($result['page'])) : 1;
 
 $stats = $reclamationC->statistiques();
+$statusTimeline = $reclamationC->getReclamationStatusTimeline(14);
+$priorityTimeline = $reclamationC->getReclamationPriorityTimeline(14);
+$statusTimeline = $reclamationC->getReclamationStatusTimeline(14);
+$priorityTimeline = $reclamationC->getReclamationPriorityTimeline(14);
+$statusTimeline = $reclamationC->getReclamationStatusTimeline(14);
+$priorityTimeline = $reclamationC->getReclamationPriorityTimeline(14);
 
 // Calculer les statistiques de priorité
 $haute = 0;
@@ -907,46 +913,56 @@ foreach ($liste as $rec) {
     <script>
       // Palette de couleurs cohérente
       const colors = {
-        total: '#9B5DE0',
-        enAttente: '#D78FEE',
-        traitee: '#AEEA94',
-        haute: '#E11D74',
-        moyenne: '#FDFFB8',
-        basse: '#4E56C0'
+        statutEnAttente: '#D78FEE',
+        statutTraitee: '#AEEA94',
+        prioriteHaute: '#E11D74',
+        prioriteMoyenne: '#FDFFB8',
+        prioriteBasse: '#4E56C0'
       };
 
-      // Données temporelles simulées (par jour/semaine)
-      const dates = ['Jan 01', 'Jan 08', 'Jan 15', 'Jan 22', 'Jan 29', 'Fév 05', 'Fév 12', 'Fév 19', 'Fév 26', 'Mar 05', 'Mar 12', 'Mar 19'];
-      
-      // ===== CHART 1: AREA CHART - Réclamations par Statut =====
+      const reclamationStats = {
+        enAttente: <?= intval($stats['en_attente']) ?>,
+        traitee: <?= intval($stats['traitee']) ?>,
+        haute: <?= intval($stats['haute']) ?>,
+        moyenne: <?= intval($stats['moyenne']) ?>,
+        basse: <?= intval($stats['basse']) ?>
+      };
+
+      const dateLabels = <?= json_encode($statusTimeline['dates']) ?>;
+      const statusEnAttente = <?= json_encode($statusTimeline['en_attente']) ?>;
+      const statusTraitee = <?= json_encode($statusTimeline['traitee']) ?>;
+      const priorityHaute = <?= json_encode($priorityTimeline['haute']) ?>;
+      const priorityMoyenne = <?= json_encode($priorityTimeline['moyenne']) ?>;
+      const priorityBasse = <?= json_encode($priorityTimeline['basse']) ?>;
+
       const ctxAreaStatut = document.getElementById('chartAreaStatut');
       new Chart(ctxAreaStatut, {
         type: 'line',
         data: {
-          labels: dates,
+          labels: dateLabels,
           datasets: [
             {
               label: 'En Attente',
-              data: [5, 8, 12, 15, 18, 22, 19, 25, 28, 32, 30, 28],
-              borderColor: colors.enAttente,
-              backgroundColor: colors.enAttente + '33',
+              data: statusEnAttente,
+              borderColor: colors.statutEnAttente,
+              backgroundColor: colors.statutEnAttente + '33',
               fill: true,
               tension: 0.4,
               pointRadius: 5,
-              pointBackgroundColor: colors.enAttente,
+              pointBackgroundColor: colors.statutEnAttente,
               pointBorderColor: '#fff',
               pointBorderWidth: 2,
               borderWidth: 3
             },
             {
               label: 'Traitées',
-              data: [2, 4, 6, 9, 12, 16, 20, 24, 28, 32, 35, 38],
-              borderColor: colors.traitee,
-              backgroundColor: colors.traitee + '33',
+              data: statusTraitee,
+              borderColor: colors.statutTraitee,
+              backgroundColor: colors.statutTraitee + '33',
               fill: true,
               tension: 0.4,
               pointRadius: 5,
-              pointBackgroundColor: colors.traitee,
+              pointBackgroundColor: colors.statutTraitee,
               pointBorderColor: '#fff',
               pointBorderWidth: 2,
               borderWidth: 3
@@ -957,76 +973,73 @@ foreach ($liste as $rec) {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: {
-              position: 'top',
-              labels: {
-                padding: 15,
-                font: { size: 12, weight: 'bold' },
-                usePointStyle: true
+            legend: { display: true },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const value = context.parsed.y;
+                  return value + ' réclamations';
+                }
               }
-            },
-            filler: {
-              propagate: true
             }
           },
           scales: {
             y: {
               beginAtZero: true,
-              grid: {
-                color: 'rgba(0,0,0,0.05)'
-              }
+              ticks: {
+                stepSize: Math.max(1, Math.ceil(Math.max(...statusEnAttente, ...statusTraitee) / 5))
+              },
+              grid: { color: 'rgba(0,0,0,0.05)' }
             },
             x: {
-              grid: {
-                display: false
-              }
+              grid: { display: false },
+              ticks: { maxRotation: 0, minRotation: 0 }
             }
           }
         }
       });
 
-      // ===== CHART 2: AREA CHART - Priorités =====
       const ctxAreaPriorite = document.getElementById('chartAreaPriorite');
       new Chart(ctxAreaPriorite, {
         type: 'line',
         data: {
-          labels: dates,
+          labels: dateLabels,
           datasets: [
             {
-              label: 'Haute Priorité',
-              data: [3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 22, 20],
-              borderColor: colors.haute,
-              backgroundColor: colors.haute + '33',
+              label: 'Haute',
+              data: priorityHaute,
+              borderColor: colors.prioriteHaute,
+              backgroundColor: colors.prioriteHaute + '33',
               fill: true,
               tension: 0.4,
               pointRadius: 5,
-              pointBackgroundColor: colors.haute,
+              pointBackgroundColor: colors.prioriteHaute,
               pointBorderColor: '#fff',
               pointBorderWidth: 2,
               borderWidth: 3
             },
             {
-              label: 'Priorité Moyenne',
-              data: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 19, 18],
-              borderColor: colors.moyenne,
-              backgroundColor: colors.moyenne + '33',
+              label: 'Moyenne',
+              data: priorityMoyenne,
+              borderColor: colors.prioriteMoyenne,
+              backgroundColor: colors.prioriteMoyenne + '33',
               fill: true,
               tension: 0.4,
               pointRadius: 5,
-              pointBackgroundColor: colors.moyenne,
+              pointBackgroundColor: colors.prioriteMoyenne,
               pointBorderColor: '#fff',
               pointBorderWidth: 2,
               borderWidth: 3
             },
             {
-              label: 'Basse Priorité',
-              data: [1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 11],
-              borderColor: colors.basse,
-              backgroundColor: colors.basse + '33',
+              label: 'Basse',
+              data: priorityBasse,
+              borderColor: colors.prioriteBasse,
+              backgroundColor: colors.prioriteBasse + '33',
               fill: true,
               tension: 0.4,
               pointRadius: 5,
-              pointBackgroundColor: colors.basse,
+              pointBackgroundColor: colors.prioriteBasse,
               pointBorderColor: '#fff',
               pointBorderWidth: 2,
               borderWidth: 3
@@ -1037,29 +1050,27 @@ foreach ($liste as $rec) {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: {
-              position: 'top',
-              labels: {
-                padding: 15,
-                font: { size: 12, weight: 'bold' },
-                usePointStyle: true
+            legend: { display: true },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const value = context.parsed.y;
+                  return value + ' réclamations';
+                }
               }
-            },
-            filler: {
-              propagate: true
             }
           },
           scales: {
             y: {
               beginAtZero: true,
-              grid: {
-                color: 'rgba(0,0,0,0.05)'
-              }
+              ticks: {
+                stepSize: Math.max(1, Math.ceil(Math.max(...priorityHaute, ...priorityMoyenne, ...priorityBasse) / 5))
+              },
+              grid: { color: 'rgba(0,0,0,0.05)' }
             },
             x: {
-              grid: {
-                display: false
-              }
+              grid: { display: false },
+              ticks: { maxRotation: 0, minRotation: 0 }
             }
           }
         }

@@ -768,24 +768,31 @@ $stats = $userC->getStatistiquesUtilisateurs();
       inactif: '#D78FEE'
     };
 
-    // Données temporelles simulées
-    const dates = ['Jan 01', 'Jan 08', 'Jan 15', 'Jan 22', 'Jan 29', 'Fév 05', 'Fév 12', 'Fév 19', 'Fév 26', 'Mar 05', 'Mar 12', 'Mar 19'];
-    
-    // ===== CHART 1: AREA CHART - Utilisateurs par Rôle =====
+    const userStats = {
+      admin: <?= intval($stats['admin']) ?>,
+      createur: <?= intval($stats['createur']) ?>,
+      marque: <?= intval($stats['marque']) ?>,
+      actif: <?= intval($stats['actif']) ?>,
+      inactif: <?= intval($stats['inactif']) ?>
+    };
+
+    const roleLabels = ['Administrateurs', 'Créateurs', 'Marques'];
+    const statusLabels = ['Actifs', 'Inactifs'];
+
     const ctxAreaRole = document.getElementById('chartAreaRole');
     new Chart(ctxAreaRole, {
       type: 'line',
       data: {
-        labels: dates,
+        labels: roleLabels,
         datasets: [
           {
             label: 'Administrateurs',
-            data: [2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4],
+            data: [userStats.admin, 0, 0],
             borderColor: colors.admin,
             backgroundColor: colors.admin + '33',
             fill: true,
             tension: 0.4,
-            pointRadius: 5,
+            pointRadius: 6,
             pointBackgroundColor: colors.admin,
             pointBorderColor: '#fff',
             pointBorderWidth: 2,
@@ -793,12 +800,12 @@ $stats = $userC->getStatistiquesUtilisateurs();
           },
           {
             label: 'Créateurs',
-            data: [8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30],
+            data: [0, userStats.createur, 0],
             borderColor: colors.createur,
             backgroundColor: colors.createur + '33',
             fill: true,
             tension: 0.4,
-            pointRadius: 5,
+            pointRadius: 6,
             pointBackgroundColor: colors.createur,
             pointBorderColor: '#fff',
             pointBorderWidth: 2,
@@ -806,12 +813,12 @@ $stats = $userC->getStatistiquesUtilisateurs();
           },
           {
             label: 'Marques',
-            data: [5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17],
+            data: [0, 0, userStats.marque],
             borderColor: colors.marque,
             backgroundColor: colors.marque + '33',
             fill: true,
             tension: 0.4,
-            pointRadius: 5,
+            pointRadius: 6,
             pointBackgroundColor: colors.marque,
             pointBorderColor: '#fff',
             pointBorderWidth: 2,
@@ -823,62 +830,58 @@ $stats = $userC->getStatistiquesUtilisateurs();
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: {
-            position: 'top',
-            labels: {
-              padding: 15,
-              font: { size: 12, weight: 'bold' },
-              usePointStyle: true
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const value = context.parsed.y;
+                const total = userStats.admin + userStats.createur + userStats.marque;
+                const percent = total ? Math.round(value / total * 100) : 0;
+                return value + ' utilisateurs (' + percent + '%)';
+              }
             }
-          },
-          filler: {
-            propagate: true
           }
         },
         scales: {
           y: {
             beginAtZero: true,
-            grid: {
-              color: 'rgba(0,0,0,0.05)'
-            }
+            ticks: {
+              stepSize: Math.max(1, Math.ceil(Math.max(userStats.admin, userStats.createur, userStats.marque) / 5))
+            },
+            grid: { color: 'rgba(0,0,0,0.05)' }
           },
-          x: {
-            grid: {
-              display: false
-            }
-          }
+          x: { grid: { display: false } }
         }
       }
     });
 
-    // ===== CHART 2: AREA CHART - Statut des Utilisateurs =====
     const ctxAreaStatus = document.getElementById('chartAreaStatus');
     new Chart(ctxAreaStatus, {
       type: 'line',
       data: {
-        labels: dates,
+        labels: statusLabels,
         datasets: [
           {
-            label: 'Actif',
-            data: [15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48],
+            label: 'Actifs',
+            data: [userStats.actif, 0],
             borderColor: colors.actif,
             backgroundColor: colors.actif + '33',
             fill: true,
             tension: 0.4,
-            pointRadius: 5,
+            pointRadius: 6,
             pointBackgroundColor: colors.actif,
             pointBorderColor: '#fff',
             pointBorderWidth: 2,
             borderWidth: 3
           },
           {
-            label: 'Inactif',
-            data: [0, 0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 6],
+            label: 'Inactifs',
+            data: [0, userStats.inactif],
             borderColor: colors.inactif,
             backgroundColor: colors.inactif + '33',
             fill: true,
             tension: 0.4,
-            pointRadius: 5,
+            pointRadius: 6,
             pointBackgroundColor: colors.inactif,
             pointBorderColor: '#fff',
             pointBorderWidth: 2,
@@ -890,30 +893,27 @@ $stats = $userC->getStatistiquesUtilisateurs();
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: {
-            position: 'top',
-            labels: {
-              padding: 15,
-              font: { size: 12, weight: 'bold' },
-              usePointStyle: true
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const value = context.parsed.y;
+                const total = userStats.actif + userStats.inactif;
+                const percent = total ? Math.round(value / total * 100) : 0;
+                return value + ' utilisateurs (' + percent + '%)';
+              }
             }
-          },
-          filler: {
-            propagate: true
           }
         },
         scales: {
           y: {
             beginAtZero: true,
-            grid: {
-              color: 'rgba(0,0,0,0.05)'
-            }
+            ticks: {
+              stepSize: Math.max(1, Math.ceil(Math.max(userStats.actif, userStats.inactif) / 5))
+            },
+            grid: { color: 'rgba(0,0,0,0.05)' }
           },
-          x: {
-            grid: {
-              display: false
-            }
-          }
+          x: { grid: { display: false } }
         }
       }
     });
