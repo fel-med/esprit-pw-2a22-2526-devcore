@@ -1237,10 +1237,15 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
         }
 
         if (action.type === 'fill_form') {
+            const fillTarget = String(action.target || '');
+            const fillFields = action.fields && typeof action.fields === 'object' ? action.fields : {};
+            if (fillTarget === 'offer_form' && Object.keys(fillFields).length > 0) {
+                window.__cre8PilotLastPreparedOffer = Object.assign({}, window.__cre8PilotLastPreparedOffer || {}, fillFields);
+            }
             if (widget) {
                 setCre8PilotAvatarState('filling', widget);
             }
-            const fields = action.fields && typeof action.fields === 'object' ? action.fields : {};
+            const fields = fillFields;
             let filled = 0;
             Object.keys(fields).forEach((name) => {
                 if (fillField(name, fields[name])) {
@@ -1285,10 +1290,28 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
         }
     }
 
+    function pickOfferFieldFromDomOrSnapshot(name) {
+        const fromDom = safeFieldValue(name);
+        if (fromDom !== '') {
+            return fromDom;
+        }
+        const snap = window.__cre8PilotLastPreparedOffer;
+        if (!snap || typeof snap !== 'object') {
+            return '';
+        }
+        const v = snap[name];
+        if (v == null) {
+            return '';
+        }
+        const s = String(v).trim();
+        return s.length > 500 ? `${s.slice(0, 497)}...` : s;
+    }
+
     function collectVisibleData() {
         const heading = document.querySelector('h1');
         const title = heading ? heading.textContent.trim() : document.title;
         const context = window.CRE8PILOT_CONTEXT || {};
+        const snap = (typeof window.__cre8PilotLastPreparedOffer === 'object' && window.__cre8PilotLastPreparedOffer) ? window.__cre8PilotLastPreparedOffer : null;
         const data = {
             title,
             url: window.location.pathname,
@@ -1298,17 +1321,18 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
             formTarget: context.formTarget || '',
             visibleEntityType: context.visibleEntityType || '',
             visibleEntityId: context.visibleEntityId || '',
+            lastPreparedOffer: snap || undefined,
             offerForm: {
                 selectedCreator: textOf(document.querySelector('[data-selected-creator-summary], .selected-creator-card, .selected-creator, .creator-option.is-selected'), 260),
-                titre: safeFieldValue('titre'),
-                objectif: safeFieldValue('objectif'),
-                description: safeFieldValue('description'),
-                budgetPropose: safeFieldValue('budgetPropose'),
-                dateLimite: safeFieldValue('dateLimite'),
-                raisonChoix: safeFieldValue('raisonChoix'),
-                attenteCollaboration: safeFieldValue('attenteCollaboration'),
-                messagePersonnalise: safeFieldValue('messagePersonnalise'),
-                category: safeFieldValue('category') || safeFieldValue('categorie'),
+                titre: pickOfferFieldFromDomOrSnapshot('titre'),
+                objectif: pickOfferFieldFromDomOrSnapshot('objectif'),
+                description: pickOfferFieldFromDomOrSnapshot('description'),
+                budgetPropose: pickOfferFieldFromDomOrSnapshot('budgetPropose'),
+                dateLimite: pickOfferFieldFromDomOrSnapshot('dateLimite'),
+                raisonChoix: pickOfferFieldFromDomOrSnapshot('raisonChoix'),
+                attenteCollaboration: pickOfferFieldFromDomOrSnapshot('attenteCollaboration'),
+                messagePersonnalise: pickOfferFieldFromDomOrSnapshot('messagePersonnalise'),
+                category: pickOfferFieldFromDomOrSnapshot('category') || pickOfferFieldFromDomOrSnapshot('categorie'),
             },
             candidatureForm: {
                 messageMotivation: safeFieldValue('messageMotivation'),

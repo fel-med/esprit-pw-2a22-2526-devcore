@@ -1929,8 +1929,8 @@ class CondidatureC
             'photo' => ['photo', 'photography', 'photographer', 'shoot', 'portrait', 'studio', 'camera', 'lens', 'editorial', 'visual'],
             'video' => ['video', 'motion', 'reel', 'film', 'animation', 'editing', 'premiere', 'after effects'],
             'design' => ['design', 'graphic', 'logo', 'branding', 'illustration', 'ui', 'ux'],
-            'gaming' => ['gaming', 'gamer', 'esport', 'esports', 'stream', 'twitch', 'gameplay', 'fortnite', 'minecraft', 'headset', 'controller', 'rgb'],
-            'tech' => ['tech', 'gadget', 'software', 'developer', 'coding', 'app', 'saas', 'startup', 'ai', 'hardware', 'unboxing', 'review', 'device'],
+            'gaming' => ['gaming', 'gamer', 'esport', 'esports', 'stream', 'twitch', 'gameplay', 'fortnite', 'minecraft', 'headset', 'headphones', 'controller', 'rgb', 'console', 'pc gaming', 'streaming setup', 'keyboard', 'mouse', 'peripheral'],
+            'tech' => ['tech', 'gadget', 'software', 'developer', 'coding', 'app', 'saas', 'startup', 'ai', 'hardware', 'unboxing', 'review', 'device', 'consumer tech', 'audio device', 'headphones', 'keyboard', 'mouse', 'console', 'streaming setup'],
             'diy' => ['diy', 'craft', 'handmade', 'woodwork', 'tutorial', 'maker', 'home decor', 'renovation'],
             'music' => ['music', 'audio', 'sound', 'podcast', 'dj', 'beat'],
             'writing' => ['writing', 'copy', 'script', 'blog', 'newsletter', 'seo'],
@@ -1979,8 +1979,8 @@ class CondidatureC
         ];
         $kw = [
             'beauty' => ['beauty', 'skincare', 'shampoo', 'cosmetic', 'makeup', 'hair care', 'fragrance', 'hydra', 'wellness', 'spa', 'serum', 'skin'],
-            'tech' => ['tech', 'gadget', 'software', 'app', 'saas', 'hardware', 'developer', 'coding', 'device', 'smartphone', 'laptop'],
-            'gaming' => ['gaming', 'gamer', 'esport', 'esports', 'headset', 'controller', 'rgb', 'stream', 'twitch', 'gameplay'],
+            'tech' => ['tech', 'gadget', 'software', 'app', 'saas', 'hardware', 'developer', 'coding', 'device', 'smartphone', 'laptop', 'headset', 'headphones', 'keyboard', 'mouse', 'console', 'consumer tech', 'audio device', 'streaming setup', 'tech gadget'],
+            'gaming' => ['gaming', 'gamer', 'esport', 'esports', 'headset', 'headphones', 'controller', 'rgb', 'stream', 'twitch', 'gameplay', 'keyboard', 'mouse', 'console', 'pc gaming', 'streaming setup', 'peripheral'],
             'travel_lifestyle' => ['travel', 'trip', 'hotel', 'flight', 'tourism', 'vacation', 'family', 'lifestyle', 'vlog'],
             'diy' => ['diy', 'craft', 'handmade', 'woodwork', 'maker', 'home decor', 'renovation'],
         ];
@@ -1990,6 +1990,12 @@ class CondidatureC
                     $scores[$id]++;
                 }
             }
+        }
+        if (str_contains($offerBlob, 'gaming') && str_contains($offerBlob, 'headset')) {
+            $scores['gaming'] += 4;
+        }
+        if (str_contains($offerBlob, 'gaming') && (str_contains($offerBlob, 'keyboard') || str_contains($offerBlob, 'mouse') || str_contains($offerBlob, 'controller'))) {
+            $scores['gaming'] += 2;
         }
         arsort($scores);
         $best = array_key_first($scores);
@@ -2055,14 +2061,14 @@ class CondidatureC
                 if ($s['diy']) {
                     return 0.45;
                 }
-                if ($s['tech'] && (str_contains($offerBlob, 'review') || str_contains($offerBlob, 'unboxing') || str_contains($offerBlob, 'device'))) {
-                    return 0.45;
+                if ($s['tech'] && (str_contains($offerBlob, 'review') || str_contains($offerBlob, 'unboxing') || str_contains($offerBlob, 'device') || str_contains($offerBlob, 'tech'))) {
+                    return 0.48;
                 }
                 if ($s['tech']) {
-                    return 0.1;
+                    return 0.15;
                 }
                 if ($s['gaming']) {
-                    return 0.1;
+                    return str_contains($offerBlob, 'gaming') || str_contains($offerBlob, 'esport') || str_contains($offerBlob, 'headset') ? 0.22 : 0.12;
                 }
 
                 return 0.35;
@@ -2071,31 +2077,48 @@ class CondidatureC
                     return 1.0;
                 }
                 if ($s['gaming']) {
-                    return str_contains($offerBlob, 'gaming') || str_contains($offerBlob, 'headset') || str_contains($offerBlob, 'esport') ? 0.75 : 0.45;
+                    $gadj = str_contains($offerBlob, 'gaming') || str_contains($offerBlob, 'headset') || str_contains($offerBlob, 'headphone') || str_contains($offerBlob, 'esport') || str_contains($offerBlob, 'peripheral') || str_contains($offerBlob, 'keyboard') || str_contains($offerBlob, 'mouse');
+
+                    return $gadj ? 0.9 : 0.78;
                 }
                 if ($s['photo'] || $s['video']) {
-                    return 0.45;
+                    $visualProduct = str_contains($offerBlob, 'shoot') || str_contains($offerBlob, 'photo') || str_contains($offerBlob, 'visual') || str_contains($offerBlob, 'unboxing');
+
+                    return $visualProduct ? 0.52 : 0.42;
                 }
-                if ($s['lifestyle'] || $s['beauty']) {
-                    return str_contains($offerBlob, 'lifestyle') && str_contains($offerBlob, 'tech') ? 0.45 : 0.1;
+                if ($s['lifestyle']) {
+                    return 0.42;
+                }
+                if ($s['beauty']) {
+                    return str_contains($offerBlob, 'lifestyle') && str_contains($offerBlob, 'tech') ? 0.22 : 0.15;
                 }
                 if ($s['diy']) {
-                    return 0.35;
+                    return str_contains($offerBlob, 'home') || str_contains($offerBlob, 'craft') ? 0.35 : 0.25;
                 }
 
                 return 0.35;
             case 'gaming':
                 if ($s['gaming']) {
-                    return 1.0;
+                    return 0.96;
                 }
                 if ($s['tech']) {
-                    return 0.75;
+                    $hw = str_contains($offerBlob, 'headset') || str_contains($offerBlob, 'headphone') || str_contains($offerBlob, 'keyboard') || str_contains($offerBlob, 'mouse') || str_contains($offerBlob, 'audio') || str_contains($offerBlob, 'gadget') || str_contains($offerBlob, 'hardware');
+
+                    return $hw ? 0.88 : 0.8;
                 }
-                if ($s['photo'] || $s['video'] || $s['lifestyle'] || $s['beauty']) {
-                    return 0.35;
+                if ($s['lifestyle']) {
+                    return 0.44;
+                }
+                if ($s['photo'] || $s['video']) {
+                    $visualBrief = str_contains($offerBlob, 'shoot') || str_contains($offerBlob, 'photo') || str_contains($offerBlob, 'video') || str_contains($offerBlob, 'visual');
+
+                    return $visualBrief ? 0.5 : 0.42;
+                }
+                if ($s['beauty']) {
+                    return 0.18;
                 }
                 if ($s['diy']) {
-                    return 0.35;
+                    return str_contains($offerBlob, 'home') || str_contains($offerBlob, 'craft') ? 0.35 : 0.26;
                 }
 
                 return 0.35;
@@ -2407,7 +2430,61 @@ class CondidatureC
         ];
     }
 
-    private function cre8PilotApplyMatchCalibration(int $logisticScore, array $features, bool $offerGeneric): array
+    private function cre8PilotMatchSevereCategoryMismatch(array $offerData, array $creatorData, array $features): bool
+    {
+        $offerBlob = $this->cre8PilotMatchBlobFromOffer($offerData);
+        $vertical = $this->cre8PilotDetectOfferPrimaryVertical($offerBlob);
+        $creatorBlob = $this->cre8PilotMatchBlobFromCreator($creatorData);
+        $ch = $this->cre8PilotMatchClusterHits($creatorBlob);
+        $s = $this->cre8PilotCreatorVerticalSignals($ch, $creatorBlob, (string) ($creatorData['name'] ?? ''));
+
+        if ($vertical === 'gaming' || $vertical === 'tech') {
+            if ($s['beauty'] && !$s['gaming'] && !$s['tech']) {
+                return true;
+            }
+        }
+        if ($vertical === 'beauty') {
+            if (($s['gaming'] || $s['tech']) && !$s['beauty']) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function cre8PilotMatchScoreCapForMismatch(array $offerData, array $creatorData, array $features): ?int
+    {
+        $offerBlob = $this->cre8PilotMatchBlobFromOffer($offerData);
+        $vertical = $this->cre8PilotDetectOfferPrimaryVertical($offerBlob);
+        if ($vertical !== 'gaming' && $vertical !== 'tech' && $vertical !== 'beauty') {
+            return null;
+        }
+        $creatorBlob = $this->cre8PilotMatchBlobFromCreator($creatorData);
+        $ch = $this->cre8PilotMatchClusterHits($creatorBlob);
+        $s = $this->cre8PilotCreatorVerticalSignals($ch, $creatorBlob, (string) ($creatorData['name'] ?? ''));
+        $ts = (float) ($features['text_similarity_score'] ?? 0.4);
+
+        if ($vertical === 'gaming' || $vertical === 'tech') {
+            $isBeautyOnly = $s['beauty'] && !$s['gaming'] && !$s['tech'];
+            if ($isBeautyOnly) {
+                return 45;
+            }
+            $isLifestylePhotoOnly = ($s['lifestyle'] || $s['photo'] || $s['video']) && !$s['gaming'] && !$s['tech'] && !$s['beauty'];
+            if ($isLifestylePhotoOnly && $ts < 0.65) {
+                return 65;
+            }
+        }
+        if ($vertical === 'beauty') {
+            $isGamingTechOnly = ($s['gaming'] || $s['tech']) && !$s['beauty'];
+            if ($isGamingTechOnly) {
+                return 45;
+            }
+        }
+
+        return null;
+    }
+
+    private function cre8PilotApplyMatchCalibration(int $logisticScore, array $features, bool $offerGeneric, array $offerData = [], array $creatorData = []): array
     {
         $cm = (float) ($features['category_match'] ?? 0.35);
         $ts = (float) ($features['text_similarity_score'] ?? 0.4);
@@ -2424,7 +2501,15 @@ class CondidatureC
         if ($offerGeneric && !$veryStrongTopic) {
             $score = min($score, 79);
         }
-        $strongEligible = ($cm >= 0.65 || $ts >= 0.65);
+        $mismatchCap = null;
+        if ($offerData !== [] && $creatorData !== []) {
+            $mismatchCap = $this->cre8PilotMatchScoreCapForMismatch($offerData, $creatorData, $features);
+            if ($mismatchCap !== null) {
+                $score = min($score, $mismatchCap);
+            }
+        }
+        $severeMismatch = $offerData !== [] && $creatorData !== [] && $this->cre8PilotMatchSevereCategoryMismatch($offerData, $creatorData, $features);
+        $strongEligible = ($cm >= 0.65 || $ts >= 0.65) && !$severeMismatch;
         $label = 'weak';
         if ($score >= 80 && $strongEligible) {
             $label = 'strong';
@@ -2440,6 +2525,12 @@ class CondidatureC
         if ($score >= 80 && $cm < 0.65 && $ts < 0.65) {
             $label = 'medium';
         }
+        if ($severeMismatch && $label === 'strong') {
+            $label = 'medium';
+        }
+        if ($severeMismatch && $score >= 80) {
+            $label = 'medium';
+        }
         $p = max(0.0, min(1.0, $score / 100.0));
 
         return [
@@ -2448,6 +2539,7 @@ class CondidatureC
             'label' => $label,
             'strongEligible' => $strongEligible,
             'needsOperationalReview' => ($score >= 65 && !$strongEligible),
+            'severeCategoryMismatch' => $severeMismatch,
         ];
     }
 
@@ -2515,7 +2607,32 @@ class CondidatureC
                 $lines[] = 'Verify that the creator audience matches the tech product positioning.';
             }
         } elseif ($vertical === 'gaming') {
-            if ($s['gaming']) {
+            $headsetCampaign = str_contains($offerBlob, 'headset') || str_contains($offerBlob, 'headphone') || str_contains($offerBlob, 'gaming') || str_contains($offerBlob, 'peripheral') || str_contains($offerBlob, 'esport');
+            if ($headsetCampaign) {
+                if ($s['gaming']) {
+                    $lines[] = 'Strong fit for gaming/esports audience.';
+                    $lines[] = 'Product category matches creator niche.';
+                    $lines[] = 'Budget/timeline fit looks acceptable.';
+                } elseif ($s['tech']) {
+                    $lines[] = 'Good fit for tech/gadget review angle.';
+                    $lines[] = 'Relevant for headset/audio/consumer tech promotion.';
+                    $lines[] = 'Budget/timeline fit looks acceptable.';
+                } elseif ($s['beauty']) {
+                    $lines[] = 'Beauty profile is weak for a gaming headset campaign.';
+                    $lines[] = 'Consider only if the campaign targets lifestyle/fashion positioning.';
+                    $lines[] = 'Category relevance should be reviewed manually.';
+                } elseif ($s['lifestyle']) {
+                    $lines[] = 'Lifestyle angle can work only for broad consumer positioning.';
+                    $lines[] = 'Not as direct as gaming or tech creators.';
+                    $lines[] = 'Review audience fit before shortlisting.';
+                } elseif ($s['photo'] || $s['video']) {
+                    $lines[] = 'Useful for product visuals/photo/video.';
+                    $lines[] = 'Category is adjacent, not direct.';
+                    $lines[] = 'Good only if the campaign needs strong visual content.';
+                } else {
+                    $lines[] = 'Confirm audience overlap before inviting for a gaming-first activation.';
+                }
+            } elseif ($s['gaming']) {
                 $lines[] = 'Strong fit for gaming, esports, or peripheral-focused campaigns.';
             } elseif ($s['tech']) {
                 $lines[] = 'Tech angle pairs well with headsets, rigs, and gaming hardware.';
@@ -2606,7 +2723,7 @@ class CondidatureC
     {
         $features = (array) ($rawBundle['features'] ?? []);
         $logisticScore = (int) ($rawBundle['logisticScore'] ?? 0);
-        $cal = $this->cre8PilotApplyMatchCalibration($logisticScore, $features, $offerGeneric);
+        $cal = $this->cre8PilotApplyMatchCalibration($logisticScore, $features, $offerGeneric, $offerData, $creatorData);
         $reasons = $this->cre8PilotBuildNarrativeMatchReasons($features, $offerData, $creatorData, $cal);
 
         return [
@@ -2789,6 +2906,29 @@ class CondidatureC
     private function cre8PilotBuildOfferDataForMatch(array $visibleData): array
     {
         $of = $visibleData['offerForm'] ?? [];
+        if (!is_array($of)) {
+            $of = [];
+        }
+        $snap = $visibleData['lastPreparedOffer'] ?? null;
+        if (is_array($snap)) {
+            $mergeKeys = [
+                'titre', 'description', 'objectif', 'category', 'categorie', 'raisonChoix',
+                'attenteCollaboration', 'messagePersonnalise', 'budgetPropose', 'dateLimite',
+            ];
+            foreach ($mergeKeys as $k) {
+                $cur = trim((string) ($of[$k] ?? ''));
+                if ($cur !== '') {
+                    continue;
+                }
+                if (!isset($snap[$k])) {
+                    continue;
+                }
+                $sv = trim((string) $snap[$k]);
+                if ($sv !== '') {
+                    $of[$k] = $sv;
+                }
+            }
+        }
 
         return [
             'titre' => (string) ($of['titre'] ?? ''),
@@ -3006,7 +3146,12 @@ class CondidatureC
         }
 
         usort($ranked, static function ($a, $b) {
-            return ($b['matchScore'] ?? 0) <=> ($a['matchScore'] ?? 0);
+            $byScore = ($b['matchScore'] ?? 0) <=> ($a['matchScore'] ?? 0);
+            if ($byScore !== 0) {
+                return $byScore;
+            }
+
+            return strcmp((string) ($a['creatorName'] ?? ''), (string) ($b['creatorName'] ?? ''));
         });
 
         if ($intent === 'explain_creator_match_score') {

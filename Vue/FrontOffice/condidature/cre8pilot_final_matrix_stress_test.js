@@ -148,6 +148,47 @@
         ];
     }
 
+    function syntheticOfferGamingDefaults() {
+        return {
+            titre: 'Gaming headset campaign collaboration',
+            description: 'Authentic creator content showcasing the headset in real gaming or lifestyle scenarios, highlighting comfort, audio quality, and differentiators.',
+            objectif: 'Drive awareness and qualified interest for the headset launch among your audience.',
+            budgetPropose: '600',
+            raisonChoix: 'This creator appears suitable for the product audience and collaboration style.',
+            attenteCollaboration: 'One integrated video or short-form reel plus supporting stories that follow the brand safety and disclosure guidelines.',
+            messagePersonnalise: 'Hello, we appreciate your content style and would like to invite you to collaborate with our brand.',
+            category: 'Gaming',
+        };
+    }
+
+    function syntheticOfferBeautyDefaults() {
+        return {
+            titre: 'Hydra Shampoo creator collaboration',
+            description: 'A professional collaboration offer to promote the product through engaging creator content.',
+            objectif: 'Increase product visibility and generate authentic creator-led promotion.',
+            budgetPropose: '450',
+            raisonChoix: 'This creator appears suitable for the product audience and collaboration style.',
+            attenteCollaboration: 'Create one short video and two story posts presenting the product benefits.',
+            messagePersonnalise: 'Hello, we appreciate your content style and would like to invite you to collaborate with our brand.',
+            category: 'Beauty',
+        };
+    }
+
+    function offerTextBlobFromForm(of) {
+        of = of && typeof of === 'object' ? of : {};
+        return String((of.titre || '') + ' ' + (of.description || '') + ' ' + (of.objectif || '') + ' ' + (of.category || '')).toLowerCase();
+    }
+
+    function offerLooksGaming(of) {
+        var s = offerTextBlobFromForm(of);
+        return s.indexOf('gaming') !== -1 || s.indexOf('headset') !== -1 || s.indexOf('headphone') !== -1 || s.indexOf('esport') !== -1 || s.indexOf('peripheral') !== -1;
+    }
+
+    function offerLooksBeauty(of) {
+        var s = offerTextBlobFromForm(of);
+        return s.indexOf('hydra') !== -1 || s.indexOf('shampoo') !== -1 || s.indexOf('beauty') !== -1 || s.indexOf('skincare') !== -1 || s.indexOf('cosmetic') !== -1;
+    }
+
     function defaults(options) {
         options = options || {};
         var mode = String(options.mode || 'full').toLowerCase();
@@ -972,12 +1013,46 @@
             v = deepMergeVisible(v, { creators: syntheticCreatorsGaming() });
         }
         if (scenario.fillOfferHint) {
-            v = deepMergeVisible(v, {
-                offerForm: {
-                    titre: v.offerForm && v.offerForm.titre ? v.offerForm.titre : 'Hydra Shampoo collab',
-                    budgetPropose: v.offerForm && v.offerForm.budgetPropose ? v.offerForm.budgetPropose : '450',
-                },
-            });
+            if (scenario.matchBoost === 'gaming') {
+                var gBase = syntheticOfferGamingDefaults();
+                var gMerged = Object.assign({}, gBase);
+                Object.keys(v.offerForm || {}).forEach(function (k) {
+                    var val = v.offerForm[k];
+                    if (val != null && String(val).trim() !== '') {
+                        gMerged[k] = val;
+                    }
+                });
+                v = deepMergeVisible(v, { offerForm: gMerged });
+            } else if (scenario.matchBoost === 'beauty') {
+                var bBase = syntheticOfferBeautyDefaults();
+                var bMerged = Object.assign({}, bBase);
+                Object.keys(v.offerForm || {}).forEach(function (k) {
+                    var val2 = v.offerForm[k];
+                    if (val2 != null && String(val2).trim() !== '') {
+                        bMerged[k] = val2;
+                    }
+                });
+                v = deepMergeVisible(v, { offerForm: bMerged });
+            } else {
+                v = deepMergeVisible(v, {
+                    offerForm: {
+                        titre: v.offerForm && v.offerForm.titre ? v.offerForm.titre : 'Hydra Shampoo collab',
+                        budgetPropose: v.offerForm && v.offerForm.budgetPropose ? v.offerForm.budgetPropose : '450',
+                    },
+                });
+            }
+        }
+        if (scenario.matchBoost === 'gaming') {
+            var og = v.offerForm || {};
+            if (!offerLooksGaming(og) || offerLooksBeauty(og)) {
+                v = deepMergeVisible(v, { offerForm: syntheticOfferGamingDefaults() });
+            }
+        }
+        if (scenario.matchBoost === 'beauty') {
+            var ob = v.offerForm || {};
+            if (!offerLooksBeauty(ob) || offerLooksGaming(ob)) {
+                v = deepMergeVisible(v, { offerForm: syntheticOfferBeautyDefaults() });
+            }
         }
         return v;
     }
@@ -1313,12 +1388,12 @@
             return out;
         }
         var names = mm.topRecommendations.map(function (r) { return String(r.creatorName || '').toLowerCase(); });
-        var gamingIdx = -1;
+        var techGamingIdx = -1;
         var beautyIdx = -1;
         names.forEach(function (n, i) {
-            if (n.indexOf('amir') !== -1 || n.indexOf('gaming') !== -1) {
-                if (gamingIdx === -1) {
-                    gamingIdx = i;
+            if (n.indexOf('amir') !== -1 || n.indexOf('gaming') !== -1 || n.indexOf('karim') !== -1 || n.indexOf('tech') !== -1) {
+                if (techGamingIdx === -1) {
+                    techGamingIdx = i;
                 }
             }
             if (n.indexOf('lina') !== -1 && n.indexOf('beauty') !== -1) {
@@ -1327,7 +1402,7 @@
                 }
             }
         });
-        if (gamingIdx !== -1 && beautyIdx !== -1 && gamingIdx > beautyIdx) {
+        if (techGamingIdx !== -1 && beautyIdx !== -1 && beautyIdx < techGamingIdx) {
             out.quality.push('gaming_should_rank_before_pure_beauty');
         }
         return out;
@@ -1513,7 +1588,7 @@
             add('F', 'match', false, ['brand_create'], 'Recommend creators for this offer.', 'Gaming rank', 'match_gaming', { matchBoost: 'gaming' });
             add('F', 'match', false, ['brand_create'], 'Rank creators for this offer.', 'Ranking', 'match_beauty', { matchBoost: 'beauty' });
             add('F', 'match', false, ['brand_create'], 'Who is the best creator?', 'Pick', 'match', { matchBoost: 'gaming' });
-            add('F', 'ai', true, ['brand_create'], 'Why is Lina Beauty a good match?', 'Explain match', 'lina_mention', { matchBoost: 'beauty' });
+            add('F', 'ai', true, ['brand_create'], 'Why is Lina Beauty a good match?', 'Explain match', 'lina_mention', { matchBoost: 'gaming' });
         }
         if (groups.indexOf('G') !== -1) {
             add('G', 'security', true, null, 'Is this link safe? http://free-gift-login.example', 'Phish risk', 'security');
