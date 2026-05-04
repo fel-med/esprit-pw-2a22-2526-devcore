@@ -182,6 +182,8 @@ document.addEventListener("DOMContentLoaded", function () {
     cards.forEach((card) => observer.observe(card));
   }
 
+
+
   function setAiStatus(scope, message, type = "info") {
     const statusEl = scope.querySelector(".ai-status") || document.querySelector(".ai-status");
     if (!statusEl) return;
@@ -273,6 +275,217 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+
+  function initCreaChatbot() {
+    const root = document.getElementById("creaChatbot");
+    const fab = document.getElementById("creaChatbotFab");
+    const panel = document.getElementById("creaChatbotPanel");
+    const closeBtn = document.getElementById("creaChatbotClose");
+    const messages = document.getElementById("creaChatbotMessages");
+    const formEl = document.getElementById("creaChatbotForm");
+    const input = document.getElementById("creaChatbotInput");
+    const sendBtn = document.getElementById("creaChatbotSend");
+    const quickActions = document.getElementById("creaChatbotQuickActions");
+    const toolbarSearch = document.querySelector('.toolbar-input[name="search"]');
+
+    if (!root || !fab || !panel || !messages || !formEl || !input || !sendBtn) return;
+
+    root.style.position = "fixed";
+    root.style.left = "24px";
+    root.style.right = "auto";
+    root.style.bottom = "24px";
+    root.style.zIndex = "9999";
+    root.style.display = "flex";
+    root.style.flexDirection = "column";
+    root.style.alignItems = "flex-start";
+    fab.style.display = "inline-flex";
+
+    const postsData = Array.isArray(window.creaChatbotPosts) ? window.creaChatbotPosts : [];
+    const postScopes = Array.from(document.querySelectorAll('.js-post-comments-scope[data-post-id]'));
+
+    const addMessage = (text, role = 'bot', extraClass = '') => {
+      const wrap = document.createElement('div');
+      wrap.className = `crea-message crea-message-${role} ${extraClass}`.trim();
+      const bubble = document.createElement('div');
+      bubble.className = 'crea-message-bubble';
+      bubble.textContent = text;
+      wrap.appendChild(bubble);
+      messages.appendChild(wrap);
+      messages.scrollTop = messages.scrollHeight;
+      return wrap;
+    };
+
+    const setOpen = (open) => {
+      panel.classList.toggle('is-open', open);
+      panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+      root.classList.toggle('is-open', open);
+      if (open) {
+        setTimeout(() => input.focus(), 120);
+      }
+    };
+
+    const resetFeed = ({ keepMessage = true } = {}) => {
+      postScopes.forEach((scope) => {
+        scope.style.display = '';
+        scope.classList.remove('crea-post-highlight');
+      });
+      document.querySelectorAll('.crea-post-highlight').forEach((el) => el.classList.remove('crea-post-highlight'));
+      if (toolbarSearch) toolbarSearch.value = '';
+      if (keepMessage) addMessage('The feed is back to its full view.', 'bot');
+    };
+
+    const highlightPost = (postId, openComments = false) => {
+      const scope = document.querySelector(`.js-post-comments-scope[data-post-id="${CSS.escape(postId)}"]`);
+      if (!scope) return false;
+      postScopes.forEach((item) => item.classList.remove('crea-post-highlight'));
+      scope.classList.add('crea-post-highlight');
+      scope.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (openComments) {
+        const btn = scope.querySelector('.js-open-comments-modal');
+        if (btn) {
+          setTimeout(() => btn.click(), 320);
+        }
+      }
+      return true;
+    };
+
+    const applyPostFilter = (ids, replyIfEmpty) => {
+      const wanted = new Set((ids || []).filter(Boolean));
+      if (!wanted.size) {
+        if (replyIfEmpty) addMessage(replyIfEmpty, 'bot');
+        return false;
+      }
+      let visibleCount = 0;
+      postScopes.forEach((scope) => {
+        const match = wanted.has(scope.dataset.postId || '');
+        scope.style.display = match ? '' : 'none';
+        scope.classList.toggle('crea-post-highlight', match && visibleCount === 0);
+        if (match) visibleCount += 1;
+      });
+      const first = postScopes.find((scope) => wanted.has(scope.dataset.postId || ''));
+      if (first) {
+        first.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      return visibleCount > 0;
+    };
+
+    const handleAssistantAction = (data) => {
+      switch (data.action) {
+        case 'reset_feed':
+          resetFeed({ keepMessage: false });
+          break;
+        case 'highlight_post':
+          if (data.postId) {
+            highlightPost(data.postId, false);
+          }
+          break;
+        case 'open_post_comments':
+          if (data.postId) {
+            highlightPost(data.postId, true);
+          }
+          break;
+        case 'filter_user':
+        case 'filter_subject':
+          applyPostFilter(data.matchedPostIds || [], 'I could not find a matching post in the current feed.');
+          break;
+        default:
+          break;
+      }
+    };
+
+    const sendToAssistant = async (message) => {
+      addMessage(message, 'user');
+      const typing = addMessage('Crea is thinking...', 'bot', 'is-typing');
+      sendBtn.disabled = true;
+
+      try {
+        const response = await fetch('./chatbot.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify({ message, posts: postsData })
+        });
+
+        const data = await response.json();
+        typing.remove();
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || 'Crea could not answer right now.');
+        }
+
+        addMessage(data.reply || 'Done.', 'bot');
+        handleAssistantAction(data);
+      } catch (error) {
+        console.error(error);
+        typing.remove();
+        addMessage('I could not process that request right now. Please try again.', 'bot');
+      } finally {
+        sendBtn.disabled = false;
+      }
+    };
+
+    fab.setAttribute('type', 'button');
+    fab.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setOpen(!panel.classList.contains('is-open'));
+    });
+
+    closeBtn?.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setOpen(false);
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!root.classList.contains('is-open')) return;
+      if (root.contains(event.target)) return;
+      setOpen(false);
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && root.classList.contains('is-open')) {
+        setOpen(false);
+      }
+    });
+
+    formEl.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const message = input.value.trim();
+      if (!message) return;
+      input.value = '';
+      input.style.height = 'auto';
+      await sendToAssistant(message);
+    });
+
+    input.addEventListener('input', () => {
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+    });
+
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        formEl.requestSubmit();
+      }
+    });
+
+    quickActions?.addEventListener('click', (event) => {
+      const chip = event.target.closest('.crea-quick-chip');
+      if (!chip) return;
+      if (chip.dataset.creaAction === 'reset') {
+        resetFeed();
+        return;
+      }
+      const prompt = chip.dataset.creaPrompt || '';
+      if (prompt) {
+        input.value = prompt;
+        formEl.requestSubmit();
+      }
+    });
+  }
   subject?.addEventListener("input", function () { validateSubject(); updateCounters(); });
   textContent?.addEventListener("input", function () { validateTextContent(); updateCounters(); });
   image?.addEventListener("change", function () { validateImage(); renderImagePreview(); });
@@ -283,6 +496,7 @@ document.addEventListener("DOMContentLoaded", function () {
   setupReactionButtons();
   setupViewTracking();
   setupAiButtons();
+  initCreaChatbot();
 
   if (!form) return;
   form.addEventListener("submit", function (e) {
@@ -296,3 +510,4 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
+

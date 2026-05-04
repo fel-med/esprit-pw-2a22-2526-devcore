@@ -421,4 +421,309 @@ class PostC
 
         return $content;
     }
+     private function geminiRequest(array $payload): ?array
+    {
+        if (!defined('GEMINI_API_KEY') || GEMINI_API_KEY === '' || !function_exists('curl_init')) {
+            return null;
+        }
+
+        $endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode(GEMINI_MODEL) . ':generateContent';
+        $ch = curl_init($endpoint);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'x-goog-api-key: ' . GEMINI_API_KEY,
+            ],
+            CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            CURLOPT_TIMEOUT => 35,
+        ]);
+
+        $raw = curl_exec($ch);
+        if ($raw === false) {
+            curl_close($ch);
+            return null;
+        }
+        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($status < 200 || $status >= 300) {
+            return null;
+        }
+
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded)) {
+            return null;
+        }
+
+        $text = $decoded['candidates'][0]['content']['parts'][0]['text'] ?? '';
+        if (!is_string($text) || trim($text) === '') {
+            return null;
+        }
+
+        $json = json_decode(trim($text), true);
+        return is_array($json) ? $json : null;
+    }
+
+    private function computeSubjectMatches(array $postsContext, string $query): array
+    {
+        $query = trim(mb_strtolower($query));
+        if ($query === '') {
+            return [];
+        }
+
+        $scored = [];
+        foreach ($postsContext as $post) {
+            $haystack = mb_strtolower(trim(($post['subject'] ?? '') . ' ' . ($post['textPreview'] ?? '') . ' ' . ($post['creatorName'] ?? '')));
+            $score = 0;
+            if ($haystack !== '') {
+                if (str_contains($haystack, $query)) {
+                    $score += 100;
+                }
+                foreach (preg_split('/\s+/', $query) as $token) {
+                    $token = trim($token);
+                    if ($token !== '' && str_contains($haystack, $token)) {
+                        $score += 8;
+                    }
+                }
+                similar_text($query, $haystack, $percent);
+                $score += (int) round($percent / 10);
+            }
+            if ($score > 0) {
+                $scored[] = [
+                    'id' => (string)($post['id'] ?? ''),
+                    'score' => $score,
+                ];
+            }
+        }
+
+        usort($scored, static fn($a, $b) => $b['score'] <=> $a['score']);
+        return array_slice(array_column($scored, 'id'), 0, 8);
+    }
+
+    private function fallbackCreaAssistant(string $message, array $postsContext): array
+    {
+        $messageLower = mb_strtolower(trim($message));
+        $response = [
+            'reply' => 'I can help you find posts, filter the feed, open comments, or explain how to create and comment on a post.',
+            'action' => 'none',
+            'postId' => '',
+            'matchedPostIds' => [],
+            'creatorName' => '',
+            'subjectQuery' => '',
+            'commenters' => [],
+        ];
+
+        if ($messageLower === '') {
+            return $response;
+        }
+
+        if (str_contains($messageLower, 'how to create') || str_contains($messageLower, 'create a post')) {
+            $response['reply'] = 'To create a post, click the “Create Post” button in the top navigation, add your subject, write your content, optionally attach an image or video, then publish it.';
+            return $response;
+        }
+
+        if (str_contains($messageLower, 'how to comment') || str_contains($messageLower, 'comment on')) {
+            $response['reply'] = 'To comment on a post, click the comment bubble or “See all comments”, write your message in the comment area, then press Post. You can also reply directly to existing comments.';
+            return $response;
+        }
+
+        if (str_contains($messageLower, 'last post') || str_contains($messageLower, 'latest post') || str_contains($messageLower, 'newest post')) {
+            if (!empty($postsContext)) {
+                usort($postsContext, static fn($a, $b) => strcmp((string)($b['creationDate'] ?? ''), (string)($a['creationDate'] ?? '')));
+                $latest = $postsContext[0];
+                $response['action'] = 'highlight_post';
+                $response['postId'] = (string)($latest['id'] ?? '');
+                $response['matchedPostIds'] = $response['postId'] !== '' ? [$response['postId']] : [];
+                $response['reply'] = 'This is the latest post published in the actuality feed.';
+            }
+            return $response;
+        }
+
+        if (preg_match('/(?:only posts of|posts by|filter by|show posts of|show posts by)\s+([\p{L}\p{N}_\- ]+)/ui', $message, $m)) {
+            $creatorQuery = trim($m[1]);
+            $matches = [];
+            $creatorName = '';
+            foreach ($postsContext as $post) {
+                $name = (string)($post['creatorName'] ?? '');
+                if ($name !== '' && str_contains(mb_strtolower($name), mb_strtolower($creatorQuery))) {
+                    $matches[] = (string)($post['id'] ?? '');
+                    if ($creatorName === '') {
+                        $creatorName = $name;
+                    }
+                }
+            }
+            if ($matches) {
+                $response['action'] = 'filter_user';
+                $response['matchedPostIds'] = $matches;
+                $response['creatorName'] = $creatorName ?: $creatorQuery;
+                $response['reply'] = 'I filtered the feed to show only posts from ' . ($creatorName ?: $creatorQuery) . '.';
+                return $response;
+            }
+        }
+
+        if (str_contains($messageLower, 'who commented')) {
+            $subjectQuery = '';
+            if (preg_match('/subject\s+(.+)$/iu', $message, $m)) {
+                $subjectQuery = trim($m[1]);
+            } elseif (preg_match('/about\s+(.+)$/iu', $message, $m)) {
+                $subjectQuery = trim($m[1]);
+            }
+            if ($subjectQuery !== '') {
+                $matchedIds = $this->computeSubjectMatches($postsContext, $subjectQuery);
+                if ($matchedIds) {
+                    $firstId = $matchedIds[0];
+                    foreach ($postsContext as $post) {
+                        if ((string)($post['id'] ?? '') === $firstId) {
+                            $commenters = array_values(array_unique(array_filter(array_map('strval', $post['commenters'] ?? []))));
+                            $response['action'] = 'open_post_comments';
+                            $response['postId'] = $firstId;
+                            $response['matchedPostIds'] = [$firstId];
+                            $response['subjectQuery'] = $subjectQuery;
+                            $response['commenters'] = $commenters;
+                            $response['reply'] = $commenters
+                                ? 'I found the related post and these users commented on it: ' . implode(', ', $commenters) . '.'
+                                : 'I found the related post, but it does not have comments yet.';
+                            return $response;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (str_contains($messageLower, 'subject') || str_contains($messageLower, 'related to') || str_contains($messageLower, 'about ')) {
+            $subjectQuery = '';
+            if (preg_match('/related to\s+(.+)$/iu', $message, $m)) {
+                $subjectQuery = trim($m[1]);
+            } elseif (preg_match('/about\s+(.+)$/iu', $message, $m)) {
+                $subjectQuery = trim($m[1]);
+            } elseif (preg_match('/subject\s+(.+)$/iu', $message, $m)) {
+                $subjectQuery = trim($m[1]);
+            }
+            if ($subjectQuery !== '') {
+                $matchedIds = $this->computeSubjectMatches($postsContext, $subjectQuery);
+                if ($matchedIds) {
+                    $response['action'] = 'filter_subject';
+                    $response['matchedPostIds'] = $matchedIds;
+                    $response['subjectQuery'] = $subjectQuery;
+                    $response['reply'] = 'I filtered the feed to show posts related to “' . $subjectQuery . '”.';
+                    return $response;
+                }
+            }
+        }
+
+        return $response;
+    }
+
+    public function runCreaAssistant(string $message, array $postsContext): array
+    {
+        $message = trim($message);
+        $fallback = $this->fallbackCreaAssistant($message, $postsContext);
+
+        if ($message === '') {
+            return $fallback;
+        }
+
+        $postsContext = array_map(static function (array $post): array {
+            return [
+                'id' => (string)($post['id'] ?? ''),
+                'creatorName' => (string)($post['creatorName'] ?? ''),
+                'subject' => (string)($post['subject'] ?? ''),
+                'textPreview' => (string)($post['textPreview'] ?? ''),
+                'creationDate' => (string)($post['creationDate'] ?? ''),
+                'commentCount' => (int)($post['commentCount'] ?? 0),
+                'commenters' => array_values(array_unique(array_filter(array_map('strval', $post['commenters'] ?? [])))),
+            ];
+        }, $postsContext);
+
+        $schema = [
+            'reply' => 'short friendly answer',
+            'action' => 'one of: none, highlight_post, filter_user, filter_subject, open_post_comments, reset_feed',
+            'postId' => 'single post id or empty string',
+            'matchedPostIds' => ['array of matching post ids'],
+            'creatorName' => 'creator name or empty string',
+            'subjectQuery' => 'subject phrase or empty string',
+            'commenters' => ['array of commenter names if relevant'],
+        ];
+
+        $payload = [
+            'generationConfig' => [
+                'responseMimeType' => 'application/json',
+                'temperature' => 0.2,
+            ],
+            'contents' => [[
+                'parts' => [[
+                    'text' => "You are Crea, the assistant of the Cre8Connect actuality page.
+"
+                        . "Your job is to help users navigate the actuality feed and answer simple usage questions.
+"
+                        . "Only use the posts data provided. Never invent posts or users.
+"
+                        . "If the user asks for the latest post, return action highlight_post with the latest post id.
+"
+                        . "If the user asks to show posts by a creator, return action filter_user and matchedPostIds.
+"
+                        . "If the user asks for posts related to a subject, return action filter_subject and matchedPostIds.
+"
+                        . "If the user asks who commented on a post related to a subject, choose the best matching post, return action open_post_comments, include postId, and include commenters.
+"
+                        . "If the user asks how to create or comment on a post, answer clearly and set action to none.
+"
+                        . "If you cannot find a relevant match, keep action none and explain that politely.
+"
+                        . "Return valid JSON only using this shape: " . json_encode($schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "
+
+"
+                        . "User message: " . $message . "
+
+"
+                        . "Posts data: " . json_encode($postsContext, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+                ]]
+            ]],
+        ];
+
+        $ai = $this->geminiRequest($payload);
+        if (!is_array($ai)) {
+            return $fallback;
+        }
+
+        $result = [
+            'reply' => (string)($ai['reply'] ?? $fallback['reply']),
+            'action' => (string)($ai['action'] ?? 'none'),
+            'postId' => (string)($ai['postId'] ?? ''),
+            'matchedPostIds' => array_values(array_filter(array_map('strval', $ai['matchedPostIds'] ?? []))),
+            'creatorName' => (string)($ai['creatorName'] ?? ''),
+            'subjectQuery' => (string)($ai['subjectQuery'] ?? ''),
+            'commenters' => array_values(array_filter(array_map('strval', $ai['commenters'] ?? []))),
+        ];
+
+        $allowed = ['none', 'highlight_post', 'filter_user', 'filter_subject', 'open_post_comments', 'reset_feed'];
+        if (!in_array($result['action'], $allowed, true)) {
+            $result['action'] = 'none';
+        }
+
+        if ($result['action'] === 'filter_user' && empty($result['matchedPostIds']) && $result['creatorName'] !== '') {
+            foreach ($postsContext as $post) {
+                if ($post['creatorName'] !== '' && str_contains(mb_strtolower($post['creatorName']), mb_strtolower($result['creatorName']))) {
+                    $result['matchedPostIds'][] = $post['id'];
+                }
+            }
+        }
+
+        if ($result['action'] === 'filter_subject' && empty($result['matchedPostIds']) && $result['subjectQuery'] !== '') {
+            $result['matchedPostIds'] = $this->computeSubjectMatches($postsContext, $result['subjectQuery']);
+        }
+
+        if (($result['action'] === 'highlight_post' || $result['action'] === 'open_post_comments') && $result['postId'] === '' && !empty($result['matchedPostIds'])) {
+            $result['postId'] = $result['matchedPostIds'][0];
+        }
+
+        if ($result['reply'] === '') {
+            $result['reply'] = $fallback['reply'];
+        }
+
+        return $result;
+    }
+
+
 }

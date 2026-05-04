@@ -20,6 +20,24 @@ if ($search !== '') {
     $posts = $postC->listPosts();
 }
 
+
+if (!function_exists('collect_commenter_names')) {
+    function collect_commenter_names(array $nodes, array &$names): void
+    {
+        foreach ($nodes as $node) {
+            $name = trim((string)($node['userName'] ?? ''));
+            if ($name !== '') {
+                $names[] = $name;
+            }
+            if (!empty($node['replies']) && is_array($node['replies'])) {
+                collect_commenter_names($node['replies'], $names);
+            }
+        }
+    }
+}
+
+$creaAssistantPosts = [];
+
 require_once '../partials/header.php';
 ?>
 <link rel="stylesheet" href="../assets/post-front.css">
@@ -95,10 +113,25 @@ require_once '../partials/header.php';
                     $previewComments = $commentC->listLatestCommentsByPost($post['id'], 2);
                     $allCommentsTree = $commentC->getCommentsTreeByPost($post['id']);
                     $modalId = 'commentsModal-' . preg_replace('/[^a-zA-Z0-9_-]/', '', $post['id']);
+                    $commenterNames = [];
+                    collect_commenter_names($allCommentsTree, $commenterNames);
+                    $commenterNames = array_values(array_unique(array_filter($commenterNames)));
+                    $creaAssistantPosts[] = [
+                        'id' => (string)$post['id'],
+                        'creatorName' => (string)($post['creatorName'] ?? ('Creator #' . ($post['idCreateur'] ?? ''))),
+                        'subject' => (string)($post['subject'] ?? ''),
+                        'textPreview' => (string)mb_strimwidth((string)($post['textContent'] ?? ''), 0, 320, ''),
+                        'creationDate' => (string)($post['creationDate'] ?? ''),
+                        'commentCount' => (int)$commentCount,
+                        'commenters' => $commenterNames,
+                    ];
                     ?>
                     <div class="social-col js-post-comments-scope js-post-view-track"
                          data-post-id="<?= htmlspecialchars($post['id']) ?>"
-                         data-context="index">
+                         data-context="index"
+                         data-creator-name="<?= htmlspecialchars(mb_strtolower((string)($post['creatorName'] ?? ''))) ?>"
+                         data-subject="<?= htmlspecialchars(mb_strtolower((string)($post['subject'] ?? ''))) ?>"
+                         data-post-date="<?= htmlspecialchars((string)($post['creationDate'] ?? '')) ?>">
 
                         <article class="social-post-card">
 
@@ -298,5 +331,55 @@ require_once '../partials/header.php';
     </div>
 </section>
 
+
+<div class="crea-chatbot" id="creaChatbot">
+    <button type="button" class="crea-chatbot-fab" id="creaChatbotFab" aria-label="Open Crea assistant">
+        <span class="crea-chatbot-fab-icon"><i class="bi bi-chat-dots-fill"></i></span>
+        <span class="crea-chatbot-fab-text">Crea</span>
+    </button>
+
+    <section class="crea-chatbot-panel" id="creaChatbotPanel" aria-hidden="true">
+        <div class="crea-chatbot-shell">
+            <div class="crea-chatbot-header">
+                <div class="crea-chatbot-brand">
+                    <div class="crea-chatbot-avatar">C</div>
+                    <div>
+                        <div class="crea-chatbot-name">Crea</div>
+                        <div class="crea-chatbot-subtitle">Feed assistant</div>
+                    </div>
+                </div>
+                <button type="button" class="crea-chatbot-close" id="creaChatbotClose" aria-label="Close chatbot">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <div class="crea-chatbot-body" id="creaChatbotMessages">
+                <div class="crea-message crea-message-bot">
+                    <div class="crea-message-bubble">Welcome to cre8connect, a platform that connects content creators with big brands. How can I assist you today? I can help you find specific posts, get who commented on one post, find the last post posted, filter the feed by creator or subject, and explain how to create or comment on a post.</div>
+                </div>
+            </div>
+
+            <div class="crea-chatbot-quick-actions" id="creaChatbotQuickActions">
+                <button type="button" class="crea-quick-chip" data-crea-prompt="Find for me the last post posted">Latest post</button>
+                <button type="button" class="crea-quick-chip" data-crea-prompt="Show me posts related to design">Posts by subject</button>
+                <button type="button" class="crea-quick-chip" data-crea-prompt="How do I create a post?">How to create</button>
+                <button type="button" class="crea-quick-chip" data-crea-action="reset">Reset feed</button>
+            </div>
+
+            <form class="crea-chatbot-form" id="creaChatbotForm">
+                <textarea class="crea-chatbot-input" id="creaChatbotInput" rows="1" placeholder="Ask Crea to find or explain something..."></textarea>
+                <button type="submit" class="crea-chatbot-send" id="creaChatbotSend">
+                    <i class="bi bi-arrow-up"></i>
+                </button>
+            </form>
+        </div>
+    </section>
+</div>
+
+<script>
+window.creaChatbotPosts = <?= json_encode($creaAssistantPosts, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+</script>
+
 <script src="../assets/comment-front.js"></script>
+
 <?php require_once '../partials/footer.php'; ?>

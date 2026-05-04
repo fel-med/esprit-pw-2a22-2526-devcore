@@ -1,5 +1,4 @@
 <?php
-
 if (!function_exists('project_load_env')) {
     function project_load_env(string $path): void
     {
@@ -14,7 +13,6 @@ if (!function_exists('project_load_env')) {
 
         foreach ($lines as $line) {
             $line = trim($line);
-
             if ($line === '' || str_starts_with($line, '#')) {
                 continue;
             }
@@ -26,15 +24,11 @@ if (!function_exists('project_load_env')) {
 
             $name = trim($parts[0]);
             $value = trim($parts[1]);
-
             if ($name === '') {
                 continue;
             }
 
-            if (
-                (str_starts_with($value, '"') && str_ends_with($value, '"')) ||
-                (str_starts_with($value, "'") && str_ends_with($value, "'"))
-            ) {
+            if ((str_starts_with($value, '"') && str_ends_with($value, '"')) || (str_starts_with($value, "'") && str_ends_with($value, "'"))) {
                 $value = substr($value, 1, -1);
             }
 
