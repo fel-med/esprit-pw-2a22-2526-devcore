@@ -609,6 +609,22 @@ if (!empty($averageBudgetCards)) {
                                         $isOutdated = $card['isOutdated'];
                                         $displayStatus = $offre->getDisplayStatusKey();
                                         $publicationLabel = $offre->isPendingPublication() ? 'Goes live' : 'Published';
+                                        $cre8PilotSignalSummary = 'Waiting for creator reply';
+                                        if ($targetedResponse) {
+                                            if ($isDeclined) {
+                                                $cre8PilotSignalSummary = 'Declined by creator';
+                                            } elseif (($targetedResponse['statutCandidature'] ?? '') === 'brouillon') {
+                                                $cre8PilotSignalSummary = 'Creator draft response not submitted yet';
+                                            } elseif (in_array((string) ($targetedResponse['statutCandidature'] ?? ''), ['negociation', 'en_etude'], true)) {
+                                                $cre8PilotSignalSummary = 'Negotiation activity — creator budget reply EUR ' . number_format((float) ($targetedResponse['budgetPropose'] ?? 0), 2, '.', ',');
+                                            } else {
+                                                $cre8PilotSignalSummary = responseStatusLabel($targetedResponse) . ' — budget reply EUR ' . number_format((float) ($targetedResponse['budgetPropose'] ?? 0), 2, '.', ',');
+                                            }
+                                        } elseif ($offre->isPendingPublication()) {
+                                            $cre8PilotSignalSummary = 'Scheduled / pending publication';
+                                        } elseif ($isOutdated) {
+                                            $cre8PilotSignalSummary = 'Outdated — deadline passed';
+                                        }
                                         ?>
                                         <article
                                             class="offer-card<?php echo $isAccepted ? ' is-accepted' : ($isDeclined ? ' is-declined' : ($isOutdated ? ' is-outdated' : '')); ?>"
@@ -617,6 +633,14 @@ if (!empty($averageBudgetCards)) {
                                             data-creator-name="<?php echo htmlspecialchars($creator['nom'] ?? 'No creator selected yet', ENT_QUOTES); ?>"
                                             data-brand-section-key="<?php echo htmlspecialchars($section['key']); ?>"
                                             data-card-href="brand_details.php?idOffre=<?php echo (int) $offre->getIdOffre(); ?>"
+                                            data-cre8pilot-budget="<?php echo htmlspecialchars(formatMoney($offre->getBudgetPropose()), ENT_QUOTES); ?>"
+                                            data-cre8pilot-deadline="<?php echo htmlspecialchars((string) $offre->getDateLimite(), ENT_QUOTES); ?>"
+                                            data-cre8pilot-published="<?php echo htmlspecialchars((string) $offre->getDatePublication(), ENT_QUOTES); ?>"
+                                            data-cre8pilot-published-date="<?php echo htmlspecialchars((string) $offre->getDatePublication(), ENT_QUOTES); ?>"
+                                            data-cre8pilot-status="<?php echo htmlspecialchars($isOutdated ? 'Outdated' : translateOfferStatus($displayStatus), ENT_QUOTES); ?>"
+                                            data-cre8pilot-response-count="<?php echo count($responses); ?>"
+                                            data-cre8pilot-objective="<?php echo htmlspecialchars(excerptText($offre->getObjectif(), 260), ENT_QUOTES); ?>"
+                                            data-cre8pilot-signal="<?php echo htmlspecialchars($cre8PilotSignalSummary, ENT_QUOTES); ?>"
                                         >
                                             <div class="offer-card-head">
                                                 <div>

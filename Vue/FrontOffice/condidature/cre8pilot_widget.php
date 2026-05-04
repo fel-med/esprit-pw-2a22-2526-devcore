@@ -1180,6 +1180,7 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
     }
 
     function collectCardHighlights() {
+        const brandOfferShell = document.querySelector('[data-offer-tab-shell]');
         const selectors = [
             '.metric-card',
             '.stat-card',
@@ -1202,9 +1203,59 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
         const items = uniqueFields(selectors.flatMap((selector) => Array.from(document.querySelectorAll(selector))));
         return items
             .filter(isProbablyVisible)
+            .filter((item) => {
+                if (!brandOfferShell || !item.closest) {
+                    return true;
+                }
+                if (item.closest('.brand-stats-grid')) {
+                    return false;
+                }
+                return true;
+            })
             .slice(0, 12)
             .map((item) => textOf(item, 260))
             .filter(Boolean);
+    }
+
+    function collectBrandOfferWorkspaceListSnapshot() {
+        const shell = document.querySelector('[data-offer-tab-shell]');
+        if (!shell) {
+            return null;
+        }
+        const tabCounts = {};
+        shell.querySelectorAll('[data-brand-tab-count]').forEach((el) => {
+            const key = el.getAttribute('data-brand-tab-count') || '';
+            if (!key) {
+                return;
+            }
+            const raw = String(el.textContent || '').replace(/[^\d-]/g, '');
+            const n = parseInt(raw, 10);
+            tabCounts[key] = Number.isFinite(n) ? n : 0;
+        });
+        const activeBtn = document.querySelector('.offer-tab-button.is-active[data-offer-tab]');
+        const activeOfferTab = activeBtn ? (activeBtn.getAttribute('data-offer-tab') || '') : '';
+        const cards = Array.from(shell.querySelectorAll('.offer-card')).slice(0, 40);
+        const offers = cards.map((card) => ({
+            id: card.getAttribute('data-offer-id') || '',
+            title: card.getAttribute('data-offer-title') || '',
+            section: card.getAttribute('data-brand-section-key') || '',
+            status: card.getAttribute('data-cre8pilot-status') || '',
+            budget: card.getAttribute('data-cre8pilot-budget') || '',
+            deadline: card.getAttribute('data-cre8pilot-deadline') || '',
+            published: card.getAttribute('data-cre8pilot-published') || '',
+            publishedDate: card.getAttribute('data-cre8pilot-published-date') || card.getAttribute('data-cre8pilot-published') || '',
+            responseCount: card.getAttribute('data-cre8pilot-response-count') || '0',
+            targetCreator: card.getAttribute('data-creator-name') || '',
+            latestSignal: card.getAttribute('data-cre8pilot-signal') || '',
+            objective: card.getAttribute('data-cre8pilot-objective') || '',
+        })).filter((o) => o.title !== '');
+        return {
+            brandOfferList: true,
+            tabCounts,
+            activeOfferTab,
+            offers,
+            snapshotAt: Date.now(),
+        };
     }
 
     function fillField(name, value) {
@@ -1312,6 +1363,7 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
         const title = heading ? heading.textContent.trim() : document.title;
         const context = window.CRE8PILOT_CONTEXT || {};
         const snap = (typeof window.__cre8PilotLastPreparedOffer === 'object' && window.__cre8PilotLastPreparedOffer) ? window.__cre8PilotLastPreparedOffer : null;
+        const brandListSnap = collectBrandOfferWorkspaceListSnapshot();
         const data = {
             title,
             url: window.location.pathname,
@@ -1353,6 +1405,10 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
             creators: collectCreatorCards(),
             highlights: collectCardHighlights(),
         };
+
+        if (brandListSnap && typeof brandListSnap === 'object') {
+            Object.assign(data, brandListSnap);
+        }
 
         return data;
     }

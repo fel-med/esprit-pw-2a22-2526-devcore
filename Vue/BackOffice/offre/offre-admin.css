@@ -4044,9 +4044,18 @@ dialog.delete-dialog {
     position: fixed;
     inset: 0;
     z-index: 100260;
-    display: grid;
-    place-items: center;
-    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: max(1rem, env(safe-area-inset-top, 0px)) max(1rem, env(safe-area-inset-right, 0px)) max(1rem, env(safe-area-inset-bottom, 0px)) max(1rem, env(safe-area-inset-left, 0px));
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
     background: color-mix(in srgb, var(--bg-color) 70%, rgba(5, 8, 20, 0.86));
     backdrop-filter: blur(18px);
     color: var(--text-color);
@@ -4058,13 +4067,19 @@ dialog.delete-dialog {
 
 .cre8pilot-voice-stage {
     width: min(720px, 100%);
-    min-height: min(680px, calc(100vh - 3rem));
-    display: grid;
-    grid-template-rows: 1fr auto auto auto;
-    justify-items: center;
+    max-width: 100%;
+    box-sizing: border-box;
+    max-height: calc(100vh - 2.5rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    max-height: calc(100dvh - 2.5rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 1.4rem;
-    padding: clamp(1.5rem, 4vw, 3.5rem);
+    gap: clamp(0.45rem, 1.8vmin, 1.15rem);
+    padding: clamp(0.85rem, 2.8vw, 2.25rem);
+    margin-block: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
     border: 1px solid var(--border-color-strong);
     border-radius: 0.7rem;
     background: color-mix(in srgb, var(--card-bg) 90%, transparent);
@@ -4087,14 +4102,15 @@ dialog.delete-dialog {
 .cre8pilot-voice-orb-wrap {
     display: grid;
     place-items: center;
-    width: min(340px, 70vw);
+    flex-shrink: 0;
+    width: min(300px, min(70vw, 44vmin));
     aspect-ratio: 1;
 }
 
 .cre8pilot-voice-circle {
     --voice-scale: 1;
     --voice-glow: 34px;
-    width: min(250px, 58vw);
+    width: min(220px, min(58vw, 36vmin));
     aspect-ratio: 1;
     border-radius: 999px;
     transform: scale(var(--voice-scale));
@@ -4159,6 +4175,10 @@ dialog.delete-dialog {
     flex-wrap: wrap;
     justify-content: center;
     gap: 0.7rem;
+    flex-shrink: 0;
+    width: 100%;
+    max-width: 100%;
+    padding-bottom: 0.15rem;
 }
 
 .cre8pilot-voice-mode-controls button {
@@ -4181,6 +4201,37 @@ dialog.delete-dialog {
 .cre8pilot-voice-mode-controls button:disabled {
     opacity: 0.48;
     cursor: not-allowed;
+}
+
+.cre8pilot-voice-overlay .cre8pilot-avatar--large {
+    width: min(168px, 40vmin);
+    height: min(193px, 46vmin);
+}
+
+@media (max-height: 720px) {
+    .cre8pilot-voice-overlay .cre8pilot-avatar--large {
+        width: min(132px, 34vmin);
+        height: min(152px, 39vmin);
+    }
+
+    .cre8pilot-voice-orb-wrap {
+        width: min(220px, min(64vw, 36vmin));
+    }
+
+    .cre8pilot-voice-circle {
+        width: min(160px, min(52vw, 30vmin));
+    }
+
+    .cre8pilot-voice-subtitle,
+    .cre8pilot-voice-captured {
+        font-size: clamp(0.88rem, 2.6vw, 1.1rem);
+        line-height: 1.45;
+    }
+
+    .cre8pilot-voice-mode-controls button {
+        padding: 0.55rem 0.85rem;
+        font-size: 0.88rem;
+    }
 }
 
 @keyframes cre8pilotVoiceOrbIdle {

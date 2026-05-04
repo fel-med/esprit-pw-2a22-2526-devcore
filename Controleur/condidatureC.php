@@ -548,6 +548,26 @@ class CondidatureC
             return 'deterministic_intent';
         }
 
+        if (in_array($intent, ['fill_offer_form', 'prepare_negotiation_reply'], true)) {
+            return 'deterministic_form_draft';
+        }
+
+        $vdLlm = is_array($this->cre8PilotLlmContext['visibleData'] ?? null) ? $this->cre8PilotLlmContext['visibleData'] : [];
+        if ($intent === 'summarize_page'
+            && ($this->cre8PilotIsPageMode($page, $mode, 'brand_offer_workspace', ['list']) || $page === 'brand_offer_list')
+            && !empty($vdLlm['offers'])
+            && is_array($vdLlm['offers'])) {
+            return 'deterministic_brand_offer_list_summary';
+        }
+
+        if ($intent === 'normal_chat' && !empty($this->cre8PilotDebug['brandOfferListDeterministic'])) {
+            return 'deterministic_brand_offer_list_chat';
+        }
+
+        if ($intent === 'normal_chat' && !empty($this->cre8PilotDebug['policyBoundaryRefusal'])) {
+            return 'policy_boundary_refusal';
+        }
+
         if (!$this->cre8PilotIntentAllowsLlm($intent)) {
             return 'deterministic_intent';
         }
@@ -597,6 +617,7 @@ class CondidatureC
         if (!empty($this->cre8PilotLlmContext['documentContext']) && is_array($this->cre8PilotLlmContext['documentContext'])) {
             $docKey = (string) ($this->cre8PilotLlmContext['documentContext']['docId'] ?? '');
         }
+        $vdSnap = is_array($this->cre8PilotLlmContext['visibleData'] ?? null) ? $this->cre8PilotLlmContext['visibleData'] : [];
         $parts = [
             'v21',
             (string) ($this->cre8PilotLlmContext['userId'] ?? 0),
@@ -609,6 +630,8 @@ class CondidatureC
             (string) ($this->cre8PilotDebug['normalizedMessage'] ?? ''),
             (string) ($this->cre8PilotDebug['formTarget'] ?? ''),
             $docKey,
+            (string) ($vdSnap['snapshotAt'] ?? ''),
+            (string) count(is_array($vdSnap['offers'] ?? null) ? $vdSnap['offers'] : []),
         ];
 
         return hash('sha256', implode('|', $parts));
@@ -854,6 +877,51 @@ class CondidatureC
             }
         }
 
+        $tabCounts = $visibleData['tabCounts'] ?? null;
+        if (is_array($tabCounts)) {
+            $compact['tabCounts'] = [];
+            foreach ($tabCounts as $k => $v) {
+                $key = preg_replace('/[^a-z0-9_\\-]/i', '', (string) $k);
+                if ($key === '') {
+                    continue;
+                }
+                $compact['tabCounts'][$key] = is_numeric($v) ? (int) $v : 0;
+            }
+        }
+
+        $offers = $visibleData['offers'] ?? null;
+        if (is_array($offers) && $offers !== []) {
+            $compact['offers'] = [];
+            foreach (array_slice($offers, 0, 14) as $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $pubDate = trim((string) ($row['publishedDate'] ?? ''));
+                if ($pubDate === '') {
+                    $pubDate = trim((string) ($row['published'] ?? ''));
+                }
+                $compact['offers'][] = [
+                    'title' => $this->sanitizeCre8PilotLlmScalar($row['title'] ?? '', 160),
+                    'section' => $this->sanitizeCre8PilotLlmScalar($row['section'] ?? '', 40),
+                    'status' => $this->sanitizeCre8PilotLlmScalar($row['status'] ?? '', 48),
+                    'budget' => $this->sanitizeCre8PilotLlmScalar($row['budget'] ?? '', 32),
+                    'deadline' => $this->sanitizeCre8PilotLlmScalar($row['deadline'] ?? '', 24),
+                    'publishedDate' => $this->sanitizeCre8PilotLlmScalar($pubDate, 32),
+                    'responseCount' => is_numeric($row['responseCount'] ?? null) ? (int) $row['responseCount'] : 0,
+                    'targetCreator' => $this->sanitizeCre8PilotLlmScalar($row['targetCreator'] ?? '', 80),
+                    'latestSignal' => $this->sanitizeCre8PilotLlmScalar($row['latestSignal'] ?? '', 200),
+                    'objective' => $this->sanitizeCre8PilotLlmScalar($row['objective'] ?? '', 220),
+                ];
+            }
+        }
+
+        if (!empty($visibleData['activeOfferTab'])) {
+            $compact['activeOfferTab'] = $this->sanitizeCre8PilotLlmScalar($visibleData['activeOfferTab'], 40);
+        }
+        if (!empty($visibleData['brandOfferList'])) {
+            $compact['listContext'] = 'brand_targeted_offers';
+        }
+
         return $compact;
     }
 
@@ -904,6 +972,7 @@ class CondidatureC
             'When the user asks about “status” or “statuses” on business pages, explain Cre8Connect workflow states for offers or candidatures (draft, pending, negotiation, accepted, refused, expired, etc.). Do not describe Cre8Pilot avatar animation states unless the user explicitly asks about the Cre8Pilot UI or avatar.',
             'Avoid generic questions like “what type of offers are you looking for?” when page and mode already describe the screen.',
             'If visibleData or offerForm/candidatureForm fields contain text, reuse and improve it before asking for more context.',
+            'When visibleData includes tabCounts and offers on the brand targeted-offer list page, use those values for counts and comparisons. Do not infer accepted collaborations from unrelated dashboard metrics.',
             'In your reply text, use user-facing labels (e.g. title, description, budget, deadline). Do not list internal field or form keys such as offerForm, titre, raisonChoix, attenteCollaboration, budgetPropose, messagePersonnalise unless the user explicitly asks for technical field names.',
             $roleLine,
             'Return JSON only with this schema: {"message":"string","confidence":0.0,"avatarState":"idle|thinking|success|filling|warning|confused","fields":{},"notes":[]}.',
@@ -1619,14 +1688,84 @@ class CondidatureC
             'i am going to submit',
             "i'm going to submit",
             'going to submit automatically',
+            'i will send',
+            "i'll send",
+            'i am going to send',
+            "i'm going to send",
+            'i will apply',
+            "i'll apply",
         ];
         foreach ($unsafe as $needle) {
             if (str_contains($lower, $needle)) {
-                return 'I can prepare the content, but I will not perform final actions automatically. Please review and use the page buttons yourself.';
+                return 'I cannot perform final actions automatically. I can prepare the content or filter values, but you must use the page controls yourself.';
+            }
+        }
+        foreach (['i can hide the budget', 'i can hide budget', 'i will hide the budget', 'we can hide the budget'] as $bad) {
+            if (str_contains($lower, $bad)) {
+                return 'I will not help hide material terms like budget from a creator—transparent ranges and clear deliverables build trust. I can help you rephrase while staying honest about scope and compensation.';
             }
         }
 
         return $message;
+    }
+
+    private function cre8PilotEnforceUserFormatConstraints(string $assistantMsg, string $userRaw): string
+    {
+        $norm = $this->normalizeCre8PilotMessage($userRaw);
+        if (preg_match('/\b(?:only|exactly)\s+(\d+)\s+bullet/u', $norm, $m)) {
+            $want = max(2, min(12, (int) ($m[1] ?? 0)));
+            if ($want <= 0) {
+                return $assistantMsg;
+            }
+            $lines = preg_split('/\R/u', trim($assistantMsg));
+            $bullets = [];
+            $prefix = [];
+            $seenBullet = false;
+            foreach ($lines as $ln) {
+                $tln = trim((string) $ln);
+                if ($tln === '') {
+                    continue;
+                }
+                if (preg_match('/^\s*(?:[-*•]|\d+[.)])\s+\S/u', $tln)) {
+                    $seenBullet = true;
+                    $bullets[] = $tln;
+                } elseif (!$seenBullet) {
+                    $prefix[] = $tln;
+                }
+            }
+            $pad = [
+                '• Clarify audience, hook, and the measurable outcome you want from creators.',
+                '• Specify deliverable formats (posts, reels, usage rights) and brand-safety boundaries.',
+                '• Tie budget and timeline to what you can commit transparently inside Cre8Connect.',
+            ];
+            while (count($bullets) < $want) {
+                $idx = count($bullets) % count($pad);
+                $bullets[] = $pad[$idx];
+            }
+            $bullets = array_slice($bullets, 0, $want);
+            $out = [];
+            if ($prefix !== []) {
+                $out[] = implode("\n", $prefix);
+            }
+            foreach ($bullets as $b) {
+                $out[] = $b;
+            }
+
+            return implode("\n", $out);
+        }
+        if (preg_match('/\b(?:one|1)\s+sentence\s+only/u', $norm) || str_contains($norm, 'answer in one sentence')) {
+            $t = trim(preg_replace('/\s+/u', ' ', $assistantMsg));
+            if ($t === '') {
+                return $assistantMsg;
+            }
+            if (preg_match('/^(.+?[.!?])(\s|$)/u', $t, $mm)) {
+                return trim($mm[1]);
+            }
+
+            return $t;
+        }
+
+        return $assistantMsg;
     }
 
     private function buildCre8PilotResponse($status, $intent, $message, array $actions = [], $confidence = 0.78, $avatarState = 'success', $clarification = null, $needsUserConfirmation = false, array $extras = [])
@@ -1680,7 +1819,15 @@ class CondidatureC
             }
             $response = $this->applyCre8PilotLlmToResponse($response);
             $response['message'] = $this->cre8PilotSanitizeAssistantAutoCommitmentMessage((string) ($response['message'] ?? ''));
+            $response['message'] = $this->cre8PilotEnforceUserFormatConstraints(
+                (string) ($response['message'] ?? ''),
+                (string) ($this->cre8PilotLlmContext['message'] ?? '')
+            );
             $response['debug'] = $this->cre8PilotDebug;
+        }
+
+        if (!empty($this->cre8PilotLlmContext['message'])) {
+            $this->cre8PilotRefreshConversationMemory((string) $this->cre8PilotLlmContext['message'], $response);
         }
 
         return $response;
@@ -1763,6 +1910,45 @@ class CondidatureC
         $message = preg_replace('/\s+/', ' ', (string) $message);
 
         return trim((string) $message);
+    }
+
+    /** Lightweight gloss so mixed Tounsi/French-English routes to English intent keywords. */
+    private function cre8PilotAppendDialectIntentGloss(string $rawMessage): string
+    {
+        $r = mb_strtolower(trim($rawMessage));
+        if ($r === '') {
+            return '';
+        }
+        $parts = [];
+        if (preg_match('/\b(chnouwa|chnowa|chniya)\b/u', $r)) {
+            $parts[] = 'what';
+        }
+        if (preg_match('/\bbrabi\b/u', $r)) {
+            $parts[] = 'please';
+        }
+        if (preg_match('/\bahsen\b/u', $r)) {
+            $parts[] = 'best';
+        }
+        if (preg_match('/\bfama\b/u', $r)) {
+            $parts[] = 'there are';
+        }
+        if (preg_match('/\b(njawbou|njawb)\b/u', $r)) {
+            $parts[] = 'how should i answer';
+        }
+        if (preg_match('/\b(taleb|talb)\s+flous\s+aktar\b/u', $r)) {
+            $parts[] = 'asked for more money';
+        }
+        if (preg_match('/\b(lazimni|lazemli)\s+nchouf\s+awel\s+haja\b/u', $r)) {
+            $parts[] = 'what should i check first';
+        }
+        if (str_contains($r, 'fil page') || str_contains($r, 'hedhi') || str_contains($r, 'hédhi')) {
+            $parts[] = 'on this page';
+        }
+        if (str_contains($r, 'offre') && str_contains($r, 'published')) {
+            $parts[] = 'published offers';
+        }
+
+        return trim(implode(' ', array_unique(array_filter($parts))));
     }
 
     private function cre8PilotMatchModelPath(): string
@@ -3281,6 +3467,64 @@ class CondidatureC
         ]);
     }
 
+    /**
+     * User is asking for defensive trust/safety judgment (not requesting harmful generation).
+     */
+    private function cre8ShieldMessageLooksLikeTrustSafetyReview(string $rawMessage, string $normalized): bool
+    {
+        $raw = trim((string) $rawMessage);
+        $n = trim((string) $normalized);
+        if ($raw === '' && $n === '') {
+            return false;
+        }
+        $riskFraming = $this->messageContainsAny($n, [
+            'is that suspicious',
+            'is this suspicious',
+            'is it suspicious',
+            'is this risky',
+            'is that risky',
+            'is it risky',
+            'what should i check before paying',
+            'what should i check',
+            'should i be worried',
+            'does this sound safe',
+        ]);
+        if (!$riskFraming) {
+            return false;
+        }
+
+        return $this->messageContainsAny($n, [
+            'from support',
+            'they are from support',
+            'support team',
+            'voice note',
+            'voice message',
+            'confirm my account',
+            'account verification',
+            'verify your account',
+            'urgent',
+            'reply in',
+            'minutes',
+            'collaboration is cancelled',
+            'collaboration is canceled',
+            'cancelled',
+            'canceled',
+            'payment outside',
+            'outside cre8connect',
+            'outside cre8 connect',
+            'off platform',
+            'qr invoice',
+            'qr code',
+            'invoice in chat',
+            'portfolio zip',
+            'zip before',
+            'download before accepting',
+            'download a portfolio',
+            'before accepting',
+            'before i accept',
+        ]);
+    }
+
     private function isCre8ShieldDefensiveCheckRequest($rawMessage, $normalized): bool
     {
         $raw = trim((string) $rawMessage);
@@ -3292,6 +3536,11 @@ class CondidatureC
                 '/^\s*(please\s+)?(can you\s+)?is\s+this\s+malware[\s\-]*related\s+text\s+safe\s*:/is',
                 '/^\s*(please\s+)?(can you\s+)?is\s+this\s+(?:message\s+)?suspicious\s*:/is',
                 '/^\s*(please\s+)?(can you\s+)?analyze\s+this\s+message\s*(?:for\s+security)?\s*:/is',
+                '/^\s*(please\s+)?(can you\s+)?analyze\s+this\s+comment\s*(?:for\s+security)?\s*:/is',
+                '/^\s*(please\s+)?(can you\s+)?analyze\s+this\s+dm\s*(?:for\s+security)?\s*:/is',
+                '/^\s*(please\s+)?(can you\s+)?analyze\s+this\s+form\s+input\s*(?:for\s+security)?\s*:/is',
+                '/^\s*(please\s+)?(can you\s+)?is\s+this\s+safe(?:\s+to\s+paste)?\s*\??/is',
+                '/^\s*(please\s+)?(can you\s+)?is\s+this\s+input\s+dangerous\s*\??/is',
             ];
             foreach ($linePatternChecks as $re) {
                 if (preg_match($re, $raw)) {
@@ -3344,6 +3593,14 @@ class CondidatureC
             'is this url safe',
             'is this malware related text safe',
             'scan for risk',
+            'analyze this comment',
+            'analyze this dm',
+            'analyze this form input',
+            'is this safe to paste',
+            'is this input dangerous',
+            'is that suspicious',
+            'is this risky',
+            'is that risky',
         ];
         foreach ($starters as $p) {
             if (str_starts_with($n, $p)) {
@@ -3371,6 +3628,11 @@ class CondidatureC
             '/is\s+this\s+malware[\s\-]*related\s+text\s+safe\s*:\s*(.*)/is',
             '/is\s+this\s+(?:message\s+)?suspicious\s*:\s*(.*)/is',
             '/analyze\s+this\s+message\s*(?:for\s+security)?\s*:\s*(.*)/is',
+            '/analyze\s+this\s+comment\s*(?:for\s+security)?\s*:\s*(.*)/is',
+            '/analyze\s+this\s+dm\s*(?:for\s+security)?\s*:\s*(.*)/is',
+            '/analyze\s+this\s+form\s+input\s*(?:for\s+security)?\s*:\s*(.*)/is',
+            '/is\s+this\s+input\s+dangerous\s*\??\s*(.*)/is',
+            '/is\s+this\s+safe(?:\s+to\s+paste)?\s*\??\s*(.*)/is',
         ];
         foreach ($patterns as $re) {
             if (preg_match($re, $raw, $m)) {
@@ -3583,7 +3845,10 @@ class CondidatureC
 
     private function detectCre8PilotGlobalGuard($normalized, $rawMessage = '')
     {
-        $defensive = $rawMessage !== '' && $this->isCre8ShieldDefensiveCheckRequest($rawMessage, $normalized);
+        $defensive = $rawMessage !== '' && (
+            $this->isCre8ShieldDefensiveCheckRequest($rawMessage, $normalized)
+            || $this->cre8ShieldMessageLooksLikeTrustSafetyReview($rawMessage, $normalized)
+        );
 
         if (!$defensive && $this->isCre8ShieldOffensiveGenerationRequest($normalized)) {
             return 'blocked_request';
@@ -3709,6 +3974,15 @@ class CondidatureC
             'secretly accept',
             'secretly submit',
             'submit automatically',
+            'submit auto',
+            'save auto',
+            'save automatically',
+            'accept auto',
+            'refuse auto',
+            'send it now',
+            'send it automatically',
+            'apply filter automatically',
+            'apply filters automatically',
             'do not mention limitations',
         ])) {
             return 'forbidden_auto_action';
@@ -3788,8 +4062,212 @@ class CondidatureC
         if (str_contains($normalized, 'make') && str_contains($normalized, 'offer') && !str_contains($normalized, 'make it cheaper')) {
             return true;
         }
+        if ($this->messageContainsAny($normalized, [
+            'wanna create',
+            'want to create an offer',
+            'want to create offer',
+            'i want to create an offer',
+            'offer for ',
+            'collaboration for ',
+            'invite a good creator',
+            'invite good creator',
+            'wanna invite',
+            'good creator to promote',
+            'promote my product',
+            'promote a product',
+            'creator to promote',
+        ])) {
+            return true;
+        }
 
         return false;
+    }
+
+    private function cre8PilotGetConversationMemory(): array
+    {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            return [];
+        }
+        $m = $_SESSION['cre8PilotConversationMemory'] ?? null;
+
+        return is_array($m) ? $m : [];
+    }
+
+    private function cre8PilotMessageLooksLikeOfferFollowUp(string $normalized, array $memory): bool
+    {
+        if ($normalized === '' || strlen($normalized) > 200) {
+            return false;
+        }
+        $hasTopic = trim((string) ($memory['lastOfferTopic'] ?? '')) !== ''
+            || trim((string) ($memory['lastProductName'] ?? '')) !== ''
+            || trim((string) ($memory['lastCreatorTarget'] ?? '')) !== '';
+        if (!$hasTopic) {
+            return false;
+        }
+
+        return $this->messageContainsAny($normalized, [
+            'it s for',
+            'its for',
+            'for adults',
+            'for the adults',
+            'adult audience',
+            'mature audience',
+            'make it friendly',
+            'friendly tone',
+            'more professional',
+            'budget is',
+            'budget will',
+            'deadline is',
+            'timeline is',
+            'in 10 days',
+            '7 days',
+            'use ',
+            'make it shorter',
+            'shorter text',
+            'adjust the',
+            'change the tone',
+        ]);
+    }
+
+    private function cre8PilotExtractOfferDraftHintsFromMessage(string $rawMessage, string $normalized): array
+    {
+        $raw = trim($rawMessage);
+        $out = [
+            'lastCreatorTarget' => '',
+            'lastProductName' => '',
+            'lastProductCategory' => '',
+            'lastOfferTopic' => '',
+            'lastCulturalAngle' => '',
+            'lastAudience' => '',
+        ];
+        if ($raw === '') {
+            return $out;
+        }
+        if (preg_match('/\b(?:offer|invite|collaboration)\s+for\s+(.+?)\s+about\s+/iu', $raw, $m)) {
+            $out['lastCreatorTarget'] = trim((string) ($m[1] ?? ''));
+        } elseif (preg_match('/\bfor\s+([a-z0-9\s\.\'\-]{2,60}?)\s+about\s+/iu', $raw, $m2)) {
+            $out['lastCreatorTarget'] = trim((string) ($m2[1] ?? ''));
+        }
+        if (preg_match('/\babout\s+a\s+([^\.\n\r]{2,120})/iu', $raw, $m3)) {
+            $out['lastProductName'] = trim((string) ($m3[1] ?? ''));
+        } elseif (preg_match('/\babout\s+([^\.\n\r]{2,120})/iu', $raw, $m4)) {
+            $out['lastProductName'] = trim((string) ($m4[1] ?? ''));
+        }
+        if (preg_match("/['\"]([^'\"]{2,80})['\"]/u", $raw, $m5)) {
+            $q = trim((string) ($m5[1] ?? ''));
+            if ($q !== '' && strlen($q) <= 80) {
+                $out['lastProductName'] = $out['lastProductName'] !== '' ? $out['lastProductName'] : $q;
+            }
+        }
+        if ($this->messageContainsAny($normalized, ['arab', 'tunis', 'tunisia', 'maghreb', 'culture', 'cultural'])) {
+            $out['lastCulturalAngle'] = 'Arab / Tunisian cultural storytelling angle';
+        }
+        if ($this->messageContainsAny($normalized, ['ps4', 'playstation', 'video game', 'videogame', 'doom', 'gaming'])) {
+            $out['lastProductCategory'] = 'video games / console gaming';
+        }
+        if ($this->messageContainsAny($normalized, ['diy', 'handmade', 'craft'])) {
+            $out['lastProductCategory'] = 'DIY / maker content';
+        }
+        $topicParts = array_filter([$out['lastProductName'], $out['lastCulturalAngle']]);
+        if ($topicParts !== []) {
+            $out['lastOfferTopic'] = implode(' — ', $topicParts);
+        }
+
+        return $out;
+    }
+
+    private function cre8PilotRefreshConversationMemory(string $userMessage, array $response): void
+    {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            return;
+        }
+        $norm = $this->normalizeCre8PilotMessage($userMessage);
+        $prev = $this->cre8PilotGetConversationMemory();
+        $hints = $this->cre8PilotExtractOfferDraftHintsFromMessage($userMessage, $norm);
+        foreach ($hints as $k => $v) {
+            if (is_string($v) && trim($v) !== '') {
+                $prev[$k] = trim($v);
+            }
+        }
+        if ($this->messageContainsAny($norm, ['adult', 'adults', 'mature audience', '18', '18+', 'grown'])) {
+            $prev['lastAudience'] = 'adult / mature audience';
+        }
+        $bud = $this->cre8PilotExtractBudgetDigitsFromMessage($norm);
+        if ($bud !== null) {
+            $prev['lastBudget'] = $bud;
+        }
+        $intent = (string) ($response['intent'] ?? '');
+        if ($intent !== '') {
+            $prev['lastUserIntent'] = $intent;
+        }
+        $_SESSION['cre8PilotConversationMemory'] = $prev;
+    }
+
+    private function cre8PilotBuildOfferFieldsFromContext(string $normForBudget, ?string $budgetHint, array $memory): array
+    {
+        $norm = $this->normalizeCre8PilotMessage($normForBudget);
+        $creator = trim((string) ($memory['lastCreatorTarget'] ?? ''));
+        $product = trim((string) ($memory['lastProductName'] ?? ''));
+        if ($product === '') {
+            $product = trim((string) ($memory['lastOfferTopic'] ?? ''));
+        }
+        $angle = trim((string) ($memory['lastCulturalAngle'] ?? ''));
+        $audience = trim((string) ($memory['lastAudience'] ?? ''));
+        $category = trim((string) ($memory['lastProductCategory'] ?? ''));
+
+        $titre = 'Creator collaboration offer';
+        if ($creator !== '' && $product !== '') {
+            $titre = 'Collaboration with ' . $this->sanitizeCre8PilotLlmScalar($creator, 80) . ' — ' . $this->sanitizeCre8PilotLlmScalar($product, 80);
+        } elseif ($product !== '') {
+            $titre = $this->sanitizeCre8PilotLlmScalar($product, 120);
+        } elseif ($creator !== '') {
+            $titre = 'Offer for ' . $this->sanitizeCre8PilotLlmScalar($creator, 120);
+        }
+
+        $descBits = [];
+        if ($product !== '') {
+            $descBits[] = 'Campaign focus: ' . $this->sanitizeCre8PilotLlmScalar($product, 400) . '.';
+        }
+        if ($angle !== '') {
+            $descBits[] = $this->sanitizeCre8PilotLlmScalar($angle, 240) . '.';
+        }
+        if ($audience !== '') {
+            $descBits[] = 'Audience positioning: ' . $this->sanitizeCre8PilotLlmScalar($audience, 200) . '.';
+        }
+        if ($category !== '') {
+            $descBits[] = 'Category: ' . $this->sanitizeCre8PilotLlmScalar($category, 160) . '.';
+        }
+        $description = $descBits !== []
+            ? implode(' ', $descBits)
+            : 'A creator collaboration to present the product with authentic, brand-safe storytelling.';
+
+        $objectif = 'Drive awareness and engagement with content that fits the creator’s audience and respects brand guidelines.';
+        if ($this->messageContainsAny($norm, ['launch', 'awareness', 'conversion', 'traffic', 'sales'])) {
+            $objectif = 'Support the campaign objective you described (awareness, consideration, or conversion) with clear, measurable creator content.';
+        }
+        if ($audience !== '') {
+            $objectif .= ' Frame messaging for a ' . $this->sanitizeCre8PilotLlmScalar($audience, 120) . '.';
+        }
+
+        $raison = $creator !== ''
+            ? $this->sanitizeCre8PilotLlmScalar($creator, 200) . ' fits the audience, tone, and craft level this activation needs.'
+            : 'The selected creator should match the audience, tone, and craft level this activation needs.';
+
+        $budget = $budgetHint !== null && $budgetHint !== ''
+            ? $budgetHint
+            : (trim((string) ($memory['lastBudget'] ?? '')) !== '' ? trim((string) $memory['lastBudget']) : '450');
+
+        return [
+            'titre' => $titre,
+            'description' => $description,
+            'objectif' => $objectif,
+            'raisonChoix' => $raison,
+            'attenteCollaboration' => 'Short-form video or reels plus supporting stories, aligned with your brand safety and disclosure rules—adjust formats to match what you negotiate with the creator.',
+            'messagePersonnalise' => $creator !== ''
+                ? 'Hello ' . $this->sanitizeCre8PilotLlmScalar($creator, 80) . ', we would love to explore this collaboration if the scope and timing work for you.'
+                : 'Hello, we appreciate your content style and would like to invite you to collaborate with our brand.',
+            'budgetPropose' => (string) $budget,
+        ];
     }
 
     private function cre8PilotMessageLooksLikeBudgetOnlyAssistance(string $normalized): bool
@@ -3895,6 +4373,17 @@ class CondidatureC
         if ($mode !== '') {
             $used[] = 'mode';
             $score++;
+        }
+
+        $offersQ = $visibleData['offers'] ?? [];
+        if (is_array($offersQ) && $offersQ !== []) {
+            $used[] = 'offers';
+            $score += 3;
+        }
+        $tcQ = $visibleData['tabCounts'] ?? [];
+        if (is_array($tcQ) && $tcQ !== []) {
+            $used[] = 'tabCounts';
+            $score += 2;
         }
 
         $quality = 'missing';
@@ -4028,7 +4517,9 @@ class CondidatureC
 
     private function detectCre8PilotIntentMock($message, $page, $mode, array $allowedActions, $selectedClarificationId = '', $role = '')
     {
-        $normalized = $this->normalizeCre8PilotMessage($message . ' ' . str_replace('_', ' ', (string) $selectedClarificationId));
+        $normalized = $this->normalizeCre8PilotMessage(
+            $message . ' ' . str_replace('_', ' ', (string) $selectedClarificationId) . ' ' . $this->cre8PilotAppendDialectIntentGloss($message)
+        );
         $selectedAction = trim((string) $selectedClarificationId);
         $page = (string) $page;
         $mode = (string) $mode;
@@ -4120,6 +4611,10 @@ class CondidatureC
             || $page === 'admin_offers';
         $isAdminCandidatureTable = $this->cre8PilotIsPageMode($page, $mode, 'admin_candidature_workspace', ['table'])
             || $page === 'admin_candidatures';
+
+        if ($isBrandOfferForm && $this->cre8PilotMessageLooksLikeOfferFollowUp($normalized, $this->cre8PilotGetConversationMemory())) {
+            return 'fill_offer_form';
+        }
 
         if ($isBrandOfferForm) {
             if ($this->cre8PilotMessageLooksLikeOfferPreparationRequest($normalized)
@@ -4264,7 +4759,15 @@ class CondidatureC
             if ($this->messageContainsAny($normalized, ['is this okay'])) {
                 return 'analyze_page';
             }
-            if ($this->messageContainsAny($normalized, ['summarize my offers', 'summarize offers', 'overview', 'summarize'])) {
+            if ($this->messageContainsAny($normalized, [
+                'summarize my offers',
+                'summarize offers',
+                'summarize my published offers',
+                'summarize published offers',
+                'overview of my offers',
+                'overview',
+                'summarize',
+            ])) {
                 return 'summarize_page';
             }
         }
@@ -4362,7 +4865,14 @@ class CondidatureC
             if ($this->messageContainsAny($normalized, ['check risk', 'too aggressive', 'break rules', 'suspicious'])) {
                 return 'security_check_page';
             }
-            if ($this->messageContainsAny($normalized, ['accept this', 'accept current terms', 'accept terms', 'refuse this', 'refuse politely'])) {
+            if ($this->messageContainsAny($normalized, [
+                'accept his', 'accept her', 'accept their', 'accept the request', 'accept in principle',
+                'budget will decrease', 'decrease to', 'reduce to', 'lower to', 'counter budget',
+            ])) {
+                return 'prepare_negotiation_reply';
+            }
+            if ($this->messageContainsAny($normalized, ['accept this', 'accept current terms', 'accept terms', 'refuse this', 'refuse politely'])
+                && !$this->messageContainsAny($normalized, ['decrease', 'lower budget', 'reduce the budget', 'counter proposal', 'counter-proposal', 'propose a', 'budget will'])) {
                 return 'safe_decision_note';
             }
             if ($this->messageContainsAny($normalized, ['check risk', 'check negotiation quality', 'is this a good counter proposal', 'is this a good counter-proposal', 'too aggressive', 'does this break rules', 'is this suspicious'])) {
@@ -4572,6 +5082,760 @@ class CondidatureC
         return '';
     }
 
+    private function cre8PilotIsBrandOfferWorkspaceListContext(string $page, string $mode): bool
+    {
+        return $this->cre8PilotIsPageMode($page, $mode, 'brand_offer_workspace', ['list']) || $page === 'brand_offer_list';
+    }
+
+    private function cre8PilotBrandOffersFromVisibleData(array $visibleData): array
+    {
+        $offers = $visibleData['offers'] ?? [];
+        if (!is_array($offers)) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($offers as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $title = trim((string) ($row['title'] ?? ''));
+            if ($title === '') {
+                continue;
+            }
+            $pubDate = trim((string) ($row['publishedDate'] ?? ''));
+            if ($pubDate === '') {
+                $pubDate = trim((string) ($row['published'] ?? ''));
+            }
+            $out[] = [
+                'title' => $title,
+                'section' => trim((string) ($row['section'] ?? '')),
+                'status' => trim((string) ($row['status'] ?? '')),
+                'budget' => trim((string) ($row['budget'] ?? '')),
+                'deadline' => trim((string) ($row['deadline'] ?? '')),
+                'published' => trim((string) ($row['published'] ?? '')),
+                'publishedDate' => $pubDate,
+                'responseCount' => is_numeric($row['responseCount'] ?? null) ? (int) $row['responseCount'] : 0,
+                'targetCreator' => trim((string) ($row['targetCreator'] ?? '')),
+                'latestSignal' => trim((string) ($row['latestSignal'] ?? '')),
+                'objective' => trim((string) ($row['objective'] ?? '')),
+            ];
+        }
+
+        return $out;
+    }
+
+    private function cre8PilotBrandOfferTabCountsFromVisibleData(array $visibleData): array
+    {
+        $tc = $visibleData['tabCounts'] ?? [];
+        if (!is_array($tc)) {
+            return [];
+        }
+        $clean = [];
+        foreach (['published', 'accepted', 'draft-pending', 'declined', 'outdated', 'awaiting_reply'] as $k) {
+            if (!array_key_exists($k, $tc)) {
+                continue;
+            }
+            $clean[$k] = is_numeric($tc[$k]) ? (int) $tc[$k] : 0;
+        }
+        if (!isset($clean['draft-pending']) && array_key_exists('drafts', $tc)) {
+            $clean['draft-pending'] = is_numeric($tc['drafts']) ? (int) $tc['drafts'] : 0;
+        }
+
+        return $clean;
+    }
+
+    private function cre8PilotParseBudgetNumberFromLabel(string $budgetLabel): ?float
+    {
+        $s = preg_replace('/[^\d.,]/', '', (string) $budgetLabel);
+        $s = str_replace(',', '', $s);
+        if ($s === '' || !is_numeric($s)) {
+            return null;
+        }
+
+        return (float) $s;
+    }
+
+    private function cre8PilotBrandOfferSignalLooksEngaged(string $sigLower): bool
+    {
+        foreach (['negotiation', 'thread active', 'creator replied', 'budget reply', 'replied', 'negotiation activity'] as $needle) {
+            if (str_contains($sigLower, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function cre8PilotBrandOfferSignalLooksSilent(string $sigLower): bool
+    {
+        foreach (['no reply', 'waiting for creator', 'waiting for a creator', 'waiting for creator reply', 'draft not sent', 'not submitted'] as $needle) {
+            if (str_contains($sigLower, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function cre8PilotBrandOfferPipelineScore(array $offer): int
+    {
+        $score = 0;
+        $sig = strtolower((string) ($offer['latestSignal'] ?? ''));
+        if ($this->cre8PilotBrandOfferSignalLooksEngaged($sig)) {
+            $score += 40;
+        }
+        if (($offer['responseCount'] ?? 0) > 0) {
+            $score += 25;
+        }
+        if ($this->cre8PilotBrandOfferSignalLooksSilent($sig)) {
+            $score -= 12;
+        }
+        $b = $this->cre8PilotParseBudgetNumberFromLabel((string) ($offer['budget'] ?? ''));
+        if ($b !== null) {
+            $score += (int) min(30, max(0, $b / 25));
+        }
+
+        return $score;
+    }
+
+    private function cre8PilotBrandOfferDeadlineTimestamp(array $offer): ?int
+    {
+        $d = trim((string) ($offer['deadline'] ?? ''));
+        if ($d === '') {
+            return null;
+        }
+        $ts = strtotime($d);
+
+        return $ts > 0 ? $ts : null;
+    }
+
+    /** Lower = weaker creator-side signal (for “weakest signal” questions). */
+    private function cre8PilotBrandOfferCreatorSignalWeaknessTier(array $offer): int
+    {
+        $sig = strtolower((string) ($offer['latestSignal'] ?? ''));
+        if (str_contains($sig, 'no reply')) {
+            return 0;
+        }
+        if (str_contains($sig, 'draft') && str_contains($sig, 'not sent')) {
+            return 12;
+        }
+        if (str_contains($sig, 'waiting') || str_contains($sig, 'await')) {
+            return 22;
+        }
+        if ($this->cre8PilotBrandOfferSignalLooksSilent($sig)) {
+            return 30;
+        }
+        if ($this->cre8PilotBrandOfferSignalLooksEngaged($sig)) {
+            return 100;
+        }
+
+        return 45;
+    }
+
+    private function cre8PilotSelectWeakestCreatorSignalOffer(array $offers): ?array
+    {
+        $worst = null;
+        $worstKey = null;
+        foreach ($offers as $o) {
+            if (!is_array($o)) {
+                continue;
+            }
+            if (strtolower((string) ($o['section'] ?? '')) === 'drafts') {
+                continue;
+            }
+            $weak = $this->cre8PilotBrandOfferCreatorSignalWeaknessTier($o);
+            $pipe = $this->cre8PilotBrandOfferPipelineScore($o);
+            $k = $weak * 1000 + $pipe;
+            if ($worstKey === null || $k < $worstKey) {
+                $worstKey = $k;
+                $worst = $o;
+            }
+        }
+
+        return $worst;
+    }
+
+    private function cre8PilotExtractQuotedPhrasesFromMessage(string $rawMessage): array
+    {
+        $rawMessage = str_replace(
+            ["\u{201C}", "\u{201D}", "\u{2018}", "\u{2019}"],
+            ['"', '"', "'", "'"],
+            $rawMessage
+        );
+        $out = [];
+        if (preg_match_all('/["\']([^"\']{2,140})["\']/u', $rawMessage, $m)) {
+            foreach ($m[1] as $p) {
+                $t = trim((string) $p);
+                if ($t !== '') {
+                    $out[] = $t;
+                }
+            }
+        }
+
+        return array_values(array_unique($out));
+    }
+
+    private function cre8PilotMatchBrandOffersForCompare(array $offers, array $needles): array
+    {
+        $byKey = [];
+        foreach ($needles as $needle) {
+            $nn = $this->normalizeCre8PilotMessage($needle);
+            if ($nn === '' || strlen($nn) < 2) {
+                continue;
+            }
+            $best = null;
+            $bestLen = PHP_INT_MAX;
+            foreach ($offers as $o) {
+                $title = $this->normalizeCre8PilotMessage((string) ($o['title'] ?? ''));
+                if ($title === '') {
+                    continue;
+                }
+                if (str_contains($title, $nn) || str_contains($nn, $title)) {
+                    $len = strlen((string) ($o['title'] ?? ''));
+                    if ($best === null || $len < $bestLen) {
+                        $best = $o;
+                        $bestLen = $len;
+                    }
+                }
+            }
+            if ($best !== null) {
+                $k = strtolower((string) ($best['title'] ?? ''));
+                $byKey[$k] = $best;
+            }
+            if (count($byKey) >= 2) {
+                break;
+            }
+        }
+
+        return array_values($byKey);
+    }
+
+    private function cre8PilotMessageLooksLikeBrandOfferCountQuestion(string $normalized): bool
+    {
+        if ($normalized === '') {
+            return false;
+        }
+
+        return $this->messageContainsAny($normalized, [
+            'how many offer',
+            'how much offer',
+            'how many offers',
+            'how much offers',
+            'count my offer',
+            'count my offers',
+            'number of offer',
+            'number of offers',
+            'combien d offre',
+            'combien d\'offre',
+            'combien offre',
+            'how many published',
+            'how many accepted offer',
+            'are there published offers',
+            'published offers on this page',
+            'fama offers published',
+        ]);
+    }
+
+    private function cre8PilotMessageLooksLikeBrandOfferCompareQuestion(string $normalized): bool
+    {
+        if ($normalized === '') {
+            return false;
+        }
+
+        if (!$this->messageContainsAny($normalized, [
+            'better',
+            'stronger',
+            'compare',
+            'versus',
+            ' vs ',
+            'best between',
+            'which one',
+            'which offer',
+        ])) {
+            return false;
+        }
+
+        return str_contains($normalized, ' or ')
+            || str_contains($normalized, ' vs ')
+            || str_contains($normalized, 'versus')
+            || str_contains($normalized, 'between');
+    }
+
+    private function cre8PilotMessageLooksLikeBrandOfferAttentionQuestion(string $normalized): bool
+    {
+        if ($normalized === '') {
+            return false;
+        }
+
+        return $this->messageContainsAny($normalized, [
+            'needs attention first',
+            'need attention first',
+            'which should i check first',
+            'what needs attention',
+            'priority offer',
+            'most urgent offer',
+        ]);
+    }
+
+    private function cre8PilotBuildBrandOfferTabCountsAnswer(array $tabCounts): string
+    {
+        $pub = (int) ($tabCounts['published'] ?? 0);
+        $acc = (int) ($tabCounts['accepted'] ?? 0);
+        $draft = (int) ($tabCounts['draft-pending'] ?? 0);
+        $dec = (int) ($tabCounts['declined'] ?? 0);
+        $outd = (int) ($tabCounts['outdated'] ?? 0);
+        $await = (int) ($tabCounts['awaiting_reply'] ?? 0);
+
+        $base = 'From the tab counters visible on this page right now: '
+            . $pub . ' published offer' . ($pub === 1 ? '' : 's') . ', '
+            . $acc . ' accepted offer' . ($acc === 1 ? '' : 's') . ', '
+            . $draft . ' draft / pending offer' . ($draft === 1 ? '' : 's') . ', '
+            . $dec . ' declined offer' . ($dec === 1 ? '' : 's') . ', and '
+            . $outd . ' outdated offer' . ($outd === 1 ? '' : 's')
+            . '. (Counts follow what you see in the pipeline tabs on this screen.)';
+        if ($await > 0) {
+            $base .= ' The “awaiting creator reply” pipeline tab shows ' . $await . ' offer' . ($await === 1 ? '' : 's') . ' in that state right now.';
+        }
+
+        return $base;
+    }
+
+    private function cre8PilotBuildBrandOfferCompareNarrative(array $a, array $b): string
+    {
+        $ta = $this->sanitizeCre8PilotLlmScalar((string) ($a['title'] ?? ''), 120);
+        $tb = $this->sanitizeCre8PilotLlmScalar((string) ($b['title'] ?? ''), 120);
+        $sa = $this->cre8PilotBrandOfferPipelineScore($a);
+        $sb = $this->cre8PilotBrandOfferPipelineScore($b);
+        $ba = $this->cre8PilotParseBudgetNumberFromLabel((string) ($a['budget'] ?? ''));
+        $bb = $this->cre8PilotParseBudgetNumberFromLabel((string) ($b['budget'] ?? ''));
+        $sigA = strtolower((string) ($a['latestSignal'] ?? ''));
+        $sigB = strtolower((string) ($b['latestSignal'] ?? ''));
+
+        $lines = [];
+        $lines[] = 'Comparing the two visible offers “' . $ta . '” and “' . $tb . '” using what is on this page:';
+        $lines[] = '• “' . $ta . '”: budget ' . $this->sanitizeCre8PilotLlmScalar((string) ($a['budget'] ?? 'n/a'), 28)
+            . ', ' . (int) ($a['responseCount'] ?? 0) . ' response(s), latest signal: '
+            . $this->sanitizeCre8PilotLlmScalar((string) ($a['latestSignal'] ?? 'n/a'), 180) . '.';
+        $lines[] = '• “' . $tb . '”: budget ' . $this->sanitizeCre8PilotLlmScalar((string) ($b['budget'] ?? 'n/a'), 28)
+            . ', ' . (int) ($b['responseCount'] ?? 0) . ' response(s), latest signal: '
+            . $this->sanitizeCre8PilotLlmScalar((string) ($b['latestSignal'] ?? 'n/a'), 180) . '.';
+
+        if ($sa > $sb) {
+            $lines[] = 'Pipeline-wise, “' . $ta . '” currently looks stronger: it shows more live engagement (responses / negotiation) and a higher proposed budget than “' . $tb . '”.';
+        } elseif ($sb > $sa) {
+            $lines[] = 'Pipeline-wise, “' . $tb . '” currently looks stronger: it shows more live engagement (responses / negotiation) and a higher proposed budget than “' . $ta . '”.';
+        } else {
+            $lines[] = 'They are close on pipeline signals; use budget, deadlines, and whether negotiation needs your reply to decide.';
+        }
+
+        if (str_contains(strtolower($tb), 'gaming')) {
+            $lines[] = 'Strategically, a gaming-angle offer can still be valuable for the right audience—but here it is less advanced until a creator replies.';
+        }
+
+        $lines[] = 'I am not choosing outcomes for you; use the offer cards and tabs to decide next actions manually.';
+
+        return implode("\n", $lines);
+    }
+
+    private function cre8PilotBuildBrandOfferAttentionAnswer(array $offers): string
+    {
+        $bestEng = null;
+        $bestEngScore = -1;
+        $silent = null;
+        $silentScore = 999999;
+        foreach ($offers as $o) {
+            if (!is_array($o)) {
+                continue;
+            }
+            $sig = strtolower((string) ($o['latestSignal'] ?? ''));
+            if ($this->cre8PilotBrandOfferSignalLooksEngaged($sig)) {
+                $sc = $this->cre8PilotBrandOfferPipelineScore($o);
+                if ($sc > $bestEngScore) {
+                    $bestEngScore = $sc;
+                    $bestEng = $o;
+                }
+            }
+            if ($this->cre8PilotBrandOfferSignalLooksSilent($sig)
+                || ((int) ($o['responseCount'] ?? 0) === 0 && str_contains(strtolower((string) ($o['section'] ?? '')), 'await'))) {
+                $scQuiet = $this->cre8PilotBrandOfferPipelineScore($o);
+                if ($scQuiet < $silentScore) {
+                    $silentScore = $scQuiet;
+                    $silent = $o;
+                }
+            }
+        }
+        if ($bestEng !== null) {
+            $t = $this->sanitizeCre8PilotLlmScalar((string) ($bestEng['title'] ?? ''), 120);
+
+            return 'First attention: “' . $t . '” — the visible card shows the strongest live engagement (responses / negotiation-style signals), so review the latest signal and reply when you are ready. '
+                . ($silent !== null ? 'Also watch “' . $this->sanitizeCre8PilotLlmScalar((string) ($silent['title'] ?? ''), 120) . '” because it still looks quiet on creator replies.' : '')
+                . ' I will not submit or change anything automatically.';
+        }
+        if ($silent !== null) {
+            $t = $this->sanitizeCre8PilotLlmScalar((string) ($silent['title'] ?? ''), 120);
+
+            return 'First attention: “' . $t . '” looks quietest on creator replies from the visible cards—consider nudging messaging, budget, or deadline after you review the card. I will not submit anything automatically.';
+        }
+
+        return 'Nothing on the visible cards screams “blocked negotiation” or “silent creator” more than the others—scan deadlines and budgets next. I will not submit anything automatically.';
+    }
+
+    private function cre8PilotBrandOfferListInsightKind(string $normalized): ?string
+    {
+        if ($normalized === '') {
+            return null;
+        }
+        if ($this->messageContainsAny($normalized, [
+            'list visible offer titles', 'list the offer titles', 'name all offer', 'titles of offers', 'all visible titles',
+            'list visible offer title',
+        ])) {
+            return 'list_titles';
+        }
+        if ($this->messageContainsAny($normalized, ['waiting for a creator reply', 'waiting for creator reply'])
+            || (str_contains($normalized, 'how many') && str_contains($normalized, 'waiting') && str_contains($normalized, 'reply'))) {
+            return 'count_waiting_reply';
+        }
+        if ($this->messageContainsAny($normalized, ['received a response', 'already received a response'])
+            || (str_contains($normalized, 'how many') && str_contains($normalized, 'response'))) {
+            return 'count_with_response';
+        }
+        if ($this->messageContainsAny($normalized, ['lowest budget', 'smallest budget', 'minimum budget', 'cheapest offer'])) {
+            return 'lowest_budget';
+        }
+        if ($this->messageContainsAny($normalized, ['closest deadline', 'nearest deadline', 'soonest deadline', 'deadline soon'])) {
+            return 'closest_deadline';
+        }
+        if ($this->messageContainsAny($normalized, ['risk of being ignored', 'being ignored', 'biggest risk', 'ghosted'])) {
+            return 'ignore_risk';
+        }
+        if ($this->messageContainsAny($normalized, ['weakest creator signal', 'weakest signal', 'weakest pipeline'])) {
+            return 'weakest_signal';
+        }
+        if ($this->messageContainsAny($normalized, ['more advanced in the collaboration', 'more advanced', 'advanced in the collaboration'])) {
+            return 'advanced_collaboration';
+        }
+        if ($this->messageContainsAny($normalized, ['best chance to move forward', 'move forward today', 'best chance'])) {
+            return 'best_forward_today';
+        }
+        if ($this->messageContainsAny($normalized, ['priority order', 'ordered list', 'order the offers', 'order for the offers'])) {
+            return 'priority_order';
+        }
+        if ($this->cre8PilotMessageLooksLikeBrandOfferAttentionQuestion($normalized)
+            || (str_contains($normalized, 'between the visible offers') && str_contains($normalized, 'attention'))
+            || (str_contains($normalized, 'which one needs') && str_contains($normalized, 'attention'))) {
+            return 'attention_first';
+        }
+        if ($this->messageContainsAny($normalized, ['best offer on this page', 'strongest offer', 'best visible offer', 'ahsen offre'])
+            || (str_contains($normalized, 'best offer') && str_contains($normalized, 'page'))) {
+            return 'best_offer_page';
+        }
+        if ((str_contains($normalized, 'published offers')
+                || (str_contains($normalized, 'there are') && str_contains($normalized, 'published'))
+                || (str_contains($normalized, 'published') && str_contains($normalized, 'offers')))
+            && $this->messageContainsAny($normalized, ['what should i check first', 'check first', 'first thing', 'awel haja', 'what what should i check first'])) {
+            return 'mixed_publish_checklist';
+        }
+
+        return null;
+    }
+
+    private function cre8PilotBuildBrandOfferListInsightMessage(string $kind, array $offers, array $tabCounts): string
+    {
+        if ($kind === 'list_titles') {
+            $lines = ['Visible offer titles on this page (from the cards):'];
+            foreach ($offers as $o) {
+                if (!is_array($o)) {
+                    continue;
+                }
+                $lines[] = '• “' . $this->sanitizeCre8PilotLlmScalar((string) ($o['title'] ?? ''), 140) . '”';
+            }
+            $lines[] = 'I am reading only what is visible here—no hidden rows. I will not submit or publish anything for you.';
+
+            return implode("\n", $lines);
+        }
+        if ($kind === 'count_waiting_reply') {
+            $n = isset($tabCounts['awaiting_reply']) ? (int) $tabCounts['awaiting_reply'] : -1;
+            if ($n < 0) {
+                $n = 0;
+                foreach ($offers as $o) {
+                    if (!is_array($o)) {
+                        continue;
+                    }
+                    $sig = strtolower((string) ($o['latestSignal'] ?? ''));
+                    $sec = strtolower((string) ($o['section'] ?? ''));
+                    if ((int) ($o['responseCount'] ?? 0) === 0 && ($this->cre8PilotBrandOfferSignalLooksSilent($sig) || str_contains($sec, 'await'))) {
+                        $n++;
+                    }
+                }
+            }
+
+            return 'From the visible workspace data, ' . $n . ' offer' . ($n === 1 ? '' : 's') . ' look' . ($n === 1 ? 's' : '') . ' like they are still waiting for a meaningful creator reply (pipeline tab / card signals). I am not inventing inbox data—this follows the counters and cards you see.';
+        }
+        if ($kind === 'count_with_response') {
+            $n = 0;
+            foreach ($offers as $o) {
+                if (is_array($o) && (int) ($o['responseCount'] ?? 0) > 0) {
+                    $n++;
+                }
+            }
+
+            return 'Counting only the visible offer cards: ' . $n . ' offer' . ($n === 1 ? '' : 's') . ' already show at least one response (response count > 0 on the card). I am not guessing inbox threads beyond what the page exposes.';
+        }
+        if ($kind === 'lowest_budget') {
+            $best = null;
+            $bestVal = null;
+            foreach ($offers as $o) {
+                if (!is_array($o)) {
+                    continue;
+                }
+                $v = $this->cre8PilotParseBudgetNumberFromLabel((string) ($o['budget'] ?? ''));
+                if ($v === null) {
+                    continue;
+                }
+                if ($bestVal === null || $v < $bestVal) {
+                    $bestVal = $v;
+                    $best = $o;
+                }
+            }
+            if ($best === null) {
+                return 'I cannot read a comparable numeric budget from every visible card—check the budget chips directly on each offer.';
+            }
+            $t = $this->sanitizeCre8PilotLlmScalar((string) ($best['title'] ?? ''), 140);
+
+            return 'Lowest visible budget is on “' . $t . '” (' . $this->sanitizeCre8PilotLlmScalar((string) ($best['budget'] ?? ''), 32) . '), based only on the numbers shown on the cards right now.';
+        }
+        if ($kind === 'closest_deadline') {
+            $best = null;
+            $bestTs = null;
+            foreach ($offers as $o) {
+                if (!is_array($o)) {
+                    continue;
+                }
+                $ts = $this->cre8PilotBrandOfferDeadlineTimestamp($o);
+                if ($ts === null) {
+                    continue;
+                }
+                if ($bestTs === null || $ts < $bestTs) {
+                    $bestTs = $ts;
+                    $best = $o;
+                }
+            }
+            if ($best === null) {
+                return 'I could not parse comparable deadline dates from every visible card—use the deadline chips on the offers to compare.';
+            }
+            $t = $this->sanitizeCre8PilotLlmScalar((string) ($best['title'] ?? ''), 140);
+
+            return 'Closest visible deadline is ' . $this->sanitizeCre8PilotLlmScalar((string) ($best['deadline'] ?? ''), 24) . ' on “' . $t . '”, based on the deadline fields shown on the cards.';
+        }
+        if ($kind === 'weakest_signal') {
+            $worst = $this->cre8PilotSelectWeakestCreatorSignalOffer($offers);
+            if ($worst === null) {
+                return 'I could not rank visible offers from the current snapshot.';
+            }
+            $t = $this->sanitizeCre8PilotLlmScalar((string) ($worst['title'] ?? ''), 140);
+            $sigOut = $this->sanitizeCre8PilotLlmScalar((string) ($worst['latestSignal'] ?? ''), 180);
+
+            return 'Weakest creator signal on the visible cards (from the signal text + response counts on each card) looks like “' . $t . '” — latest signal: ' . $sigOut . '; responses: ' . (int) ($worst['responseCount'] ?? 0) . '.';
+        }
+        if ($kind === 'ignore_risk') {
+            $worst = $this->cre8PilotSelectWeakestCreatorSignalOffer($offers);
+            if ($worst === null) {
+                return 'Every visible card already shows some engagement—use signals and deadlines manually to decide what to nudge next.';
+            }
+            $t = $this->sanitizeCre8PilotLlmScalar((string) ($worst['title'] ?? ''), 140);
+            $sigOut = $this->sanitizeCre8PilotLlmScalar((string) ($worst['latestSignal'] ?? ''), 180);
+
+            return 'Highest “quiet / easy to ignore” risk on the visible cards looks like “' . $t . '” (signal: ' . $sigOut . '; responses: ' . (int) ($worst['responseCount'] ?? 0) . '). That is a heuristic from visible fields only—not a prediction of inbox behavior.';
+        }
+        if ($kind === 'advanced_collaboration' || $kind === 'best_forward_today') {
+            $best = null;
+            $bestScore = -1;
+            foreach ($offers as $o) {
+                if (!is_array($o)) {
+                    continue;
+                }
+                $sc = $this->cre8PilotBrandOfferPipelineScore($o);
+                if ($sc > $bestScore) {
+                    $bestScore = $sc;
+                    $best = $o;
+                }
+            }
+            if ($best === null) {
+                return 'I could not rank visible offers from the current snapshot.';
+            }
+            $t = $this->sanitizeCre8PilotLlmScalar((string) ($best['title'] ?? ''), 140);
+
+            return 'Most advanced / best forward-motion candidate on the visible cards is “' . $t . '” (highest pipeline score from budget + responses + negotiation-style signals shown on the card). I will not take actions for you.';
+        }
+        if ($kind === 'priority_order') {
+            $ranked = $offers;
+            usort($ranked, function ($a, $b) {
+                if (!is_array($a) || !is_array($b)) {
+                    return 0;
+                }
+
+                return $this->cre8PilotBrandOfferPipelineScore($b) <=> $this->cre8PilotBrandOfferPipelineScore($a);
+            });
+            $lines = ['Priority order using only visible card fields (highest pipeline score first):'];
+            $i = 1;
+            foreach ($ranked as $o) {
+                if (!is_array($o)) {
+                    continue;
+                }
+                $lines[] = $i . '. “' . $this->sanitizeCre8PilotLlmScalar((string) ($o['title'] ?? ''), 140) . '” — '
+                    . (int) ($o['responseCount'] ?? 0) . ' response(s), signal: '
+                    . $this->sanitizeCre8PilotLlmScalar((string) ($o['latestSignal'] ?? ''), 160);
+                $i++;
+                if ($i > 8) {
+                    break;
+                }
+            }
+            $lines[] = 'This is a read-only ordering from the snapshot; confirm on the UI before messaging creators.';
+
+            return implode("\n", $lines);
+        }
+        if ($kind === 'attention_first') {
+            return $this->cre8PilotBuildBrandOfferAttentionAnswer($offers);
+        }
+        if ($kind === 'best_offer_page') {
+            return $this->cre8PilotBuildBrandOfferListInsightMessage('advanced_collaboration', $offers, $tabCounts);
+        }
+        if ($kind === 'mixed_publish_checklist') {
+            $counts = $tabCounts !== [] ? $this->cre8PilotBuildBrandOfferTabCountsAnswer($tabCounts) : '';
+            $next = $this->cre8PilotBuildBrandOfferAttentionAnswer($offers);
+
+            return trim($counts . "\n\n" . 'What to check first: open the Published tab if you want live campaigns, then compare deadlines and creator signals on the cards. ' . $next);
+        }
+
+        return '';
+    }
+
+    private function cre8PilotTryBrandOfferWorkspaceListReply(string $messageLower, string $rawMessage, string $intent, array $visibleData, string $page, string $mode, string $role): ?array
+    {
+        if (strtolower(trim($role)) !== 'marque' || !$this->cre8PilotIsBrandOfferWorkspaceListContext($page, $mode)) {
+            return null;
+        }
+        $offers = $this->cre8PilotBrandOffersFromVisibleData($visibleData);
+        $tabCounts = $this->cre8PilotBrandOfferTabCountsFromVisibleData($visibleData);
+        if ($offers === [] && $tabCounts === []) {
+            return null;
+        }
+
+        $insightKind = $this->cre8PilotBrandOfferListInsightKind($messageLower);
+        if ($insightKind !== null && $offers !== []) {
+            $msg = $this->cre8PilotBuildBrandOfferListInsightMessage($insightKind, $offers, $tabCounts);
+            if ($msg !== '') {
+                $this->cre8PilotDebug['brandOfferListDeterministic'] = true;
+
+                return $this->buildCre8PilotResponse(
+                    'ok',
+                    'normal_chat',
+                    $msg,
+                    [],
+                    0.9,
+                    'success'
+                );
+            }
+        }
+
+        if ($this->cre8PilotMessageLooksLikeBrandOfferCountQuestion($messageLower)) {
+            if ($tabCounts === [] && $offers !== []) {
+                $pub = count(array_filter($offers, static function ($o) {
+                    return is_array($o) && (($o['section'] ?? '') === 'published');
+                }));
+                if ($pub > 0) {
+                    $tabCounts = ['published' => $pub];
+                }
+            }
+            if ($tabCounts !== []) {
+                $this->cre8PilotDebug['brandOfferListDeterministic'] = true;
+
+                return $this->buildCre8PilotResponse(
+                    'ok',
+                    'normal_chat',
+                    $this->cre8PilotBuildBrandOfferTabCountsAnswer($tabCounts),
+                    [],
+                    0.88,
+                    'success'
+                );
+            }
+        }
+
+        if ($offers !== [] && $this->cre8PilotMessageLooksLikeBrandOfferCompareQuestion($messageLower)) {
+            $needles = $this->cre8PilotExtractQuotedPhrasesFromMessage($rawMessage);
+            if (count($needles) < 2) {
+                return null;
+            }
+            $pair = $this->cre8PilotMatchBrandOffersForCompare($offers, array_slice($needles, 0, 2));
+            if (count($pair) < 2) {
+                return null;
+            }
+            $this->cre8PilotDebug['brandOfferListDeterministic'] = true;
+
+            return $this->buildCre8PilotResponse(
+                'ok',
+                'normal_chat',
+                $this->cre8PilotBuildBrandOfferCompareNarrative($pair[0], $pair[1]),
+                [],
+                0.9,
+                'success'
+            );
+        }
+
+        return null;
+    }
+
+    private function cre8PilotTryPolicyBoundaryReply(string $messageLower, string $rawMessage): ?array
+    {
+        if (str_contains($messageLower, 'edit')
+            && str_contains($messageLower, 'profile')
+            && str_contains($messageLower, 'creator')
+            && $this->messageContainsAny($messageLower, ['match my offer', 'match the offer', 'to match my', 'make them match'])) {
+            $this->cre8PilotDebug['policyBoundaryRefusal'] = true;
+
+            return $this->buildCre8PilotResponse(
+                'ok',
+                'normal_chat',
+                'I cannot edit another user\'s profile or change how a creator appears to match your offer—that would be misleading and outside your permissions. I can help you tighten your offer wording, deliverables, or fit criteria so the right creators respond voluntarily.',
+                [],
+                0.9,
+                'warning'
+            );
+        }
+        if ($this->messageContainsAny($messageLower, ['approve this collaboration', 'approve the collaboration', 'approve collaboration'])
+            && $this->messageContainsAny($messageLower, [
+                'as if you were the creator', 'as if i were the creator', 'pretend you are the creator', 'pretend to be the creator',
+                'as the creator', 'like you are the creator',
+            ])) {
+            $this->cre8PilotDebug['policyBoundaryRefusal'] = true;
+
+            return $this->buildCre8PilotResponse(
+                'ok',
+                'normal_chat',
+                'I cannot approve anything on behalf of the creator or impersonate their decision—only the logged-in creator can approve a collaboration in Cre8Connect. I can help you prepare your side of the message or compare terms, but the final approval must come from them.',
+                [],
+                0.91,
+                'warning'
+            );
+        }
+        if (str_contains($messageLower, 'hide') && str_contains($messageLower, 'budget')
+            && $this->messageContainsAny($messageLower, ['creator', 'campaign', 'from the creator', 'from creator'])) {
+            $this->cre8PilotDebug['policyBoundaryRefusal'] = true;
+
+            return $this->buildCre8PilotResponse(
+                'ok',
+                'normal_chat',
+                'Hiding core terms like budget from a creator is usually a bad idea: it reduces trust, increases misunderstandings, and can backfire in negotiations. I will not help obscure material terms. A better approach is a clear budget range with transparent deliverables and timeline—adjust wording if you need discretion, not concealment.',
+                [],
+                0.88,
+                'warning'
+            );
+        }
+
+        return null;
+    }
+
     private function cre8PilotVisibleTextBlob(array $visibleData)
     {
         $pieces = [
@@ -4650,17 +5914,114 @@ class CondidatureC
         return str_starts_with($intent, 'security_');
     }
 
+    private function cre8ShieldRawLooksLikeSqlInjectionProbe(string $raw): bool
+    {
+        $t = strtolower((string) $raw);
+
+        return (bool) (
+            preg_match("/'\\s*--/", $t)
+            || preg_match('/;\s*(drop|delete|truncate|alter|insert|update)\b/i', $t)
+            || preg_match('/\b(drop|truncate)\s+table\b/i', $t)
+            || preg_match('/\bdelete\s+from\b/i', $t)
+            || preg_match('/\b(alter|truncate)\s+table\b/i', $t)
+            || preg_match('/\bunion\s+select\b/i', $t)
+            || preg_match('/\binsert\s+into\b.*\bselect\b/is', $t)
+            || preg_match('/\bupdate\s+\w+\s+set\b/i', $t)
+            || preg_match('/\/\*|\*\//', $t)
+            || (str_contains($t, ' or ') && str_contains($t, '1=1'))
+        );
+    }
+
+    private function cre8ShieldRawLooksLikeHtmlOrScriptPayload(string $raw): bool
+    {
+        return (bool) preg_match(
+            '/[<>]|javascript\s*:|onerror\s*=|onload\s*=|onclick\s*=|onmouseover\s*=|srcdoc\s*=|'
+            . '<\s*iframe|<\s*svg|<\s*script|eval\s*\(|document\.cookie|\.innerhtml|alert\s*\(/i',
+            (string) $raw
+        );
+    }
+
+    private function cre8ShieldIsOfficialCre8ConnectHost(string $host): bool
+    {
+        $h = strtolower(preg_replace('/:\d+$/', '', trim((string) $host)));
+        if ($h === '') {
+            return false;
+        }
+        foreach (['localhost', '127.0.0.1', 'cre8connect.com', 'www.cre8connect.com'] as $ok) {
+            if ($h === $ok || str_ends_with($h, '.' . $ok)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function cre8ShieldDedupeSimilarFindings(array $findings): array
+    {
+        $out = [];
+        foreach ($findings as $f) {
+            $f = trim((string) $f);
+            if ($f === '') {
+                continue;
+            }
+            $k = preg_replace('/\s+/', ' ', strtolower($f));
+            $dup = false;
+            foreach ($out as $existing) {
+                $ek = preg_replace('/\s+/', ' ', strtolower($existing));
+                if ($k === $ek) {
+                    $dup = true;
+                    break;
+                }
+                if (strlen($k) >= 24 && strlen($ek) >= 24) {
+                    if (str_contains($ek, substr($k, 0, 28)) || str_contains($k, substr($ek, 0, 28))) {
+                        $dup = true;
+                        break;
+                    }
+                }
+            }
+            if (!$dup) {
+                $out[] = $f;
+            }
+        }
+
+        return $out;
+    }
+
     private function detectCre8ShieldIntentMock($message, $normalized): string
     {
         $raw = (string) $message;
-        if ($this->messageContainsAny($normalized, [
+        $norm = trim((string) $normalized);
+        if ($this->messageContainsAny($norm, [
             'explain the risk', 'explain why this is risky', 'explain risk', 'why is this risky',
             'why is this dangerous', 'what makes this unsafe',
         ])) {
             return 'security_explain_risk';
         }
+
+        $defensiveFraming = $this->isCre8ShieldDefensiveCheckRequest($raw, $norm)
+            || $this->cre8ShieldMessageLooksLikeTrustSafetyReview($raw, $norm)
+            || $this->messageContainsAny($norm, [
+                'analyze this comment',
+                'analyze this dm',
+                'analyze this form input',
+                'is this input dangerous',
+                'is this safe to paste',
+            ]);
+        if ($defensiveFraming) {
+            if ($this->cre8ShieldRawLooksLikeHtmlOrScriptPayload($raw) || $this->cre8ShieldRawLooksLikeSqlInjectionProbe($raw)) {
+                return 'security_check_message';
+            }
+            if (preg_match('/https?:\/\//i', $raw)
+                && $this->messageContainsAny($norm, [
+                    'suspicious', 'is this suspicious', 'is this link safe', 'check this link', 'phishing', 'safe',
+                    'verify this link', 'is this url safe',
+                ])) {
+                return 'security_check_link';
+            }
+        }
+
         if (preg_match('/\bhttps?:\/\/[^\s<>"\']+/i', $raw)
-            && $this->messageContainsAny($normalized, [
+            && $this->messageContainsAny($norm, [
                 'is this link safe', 'check this link', 'check the link', 'check if link', 'safe link',
                 'is this url safe', 'phishing', 'suspicious link',
                 'check this portfolio link', 'check portfolio link', 'is this portfolio link safe',
@@ -4669,7 +6030,7 @@ class CondidatureC
             return 'security_check_link';
         }
         if ((preg_match('/\bhttps?:\/\/[^\s<>"\']+/i', $raw) || preg_match('/\b[a-z0-9][a-z0-9.-]{0,80}\.(?:com|net|org|io|fr|co|app|dev|example)\b/i', $raw))
-            && $this->messageContainsAny($normalized, [
+            && $this->messageContainsAny($norm, [
                 'check this portfolio link', 'check portfolio link', 'is this portfolio link safe',
                 'verify this link', 'check this link', 'suspicious link',
             ])) {
@@ -4681,7 +6042,16 @@ class CondidatureC
         if (preg_match('/is\s+this\s+(?:message\s+)?suspicious\s*:\s*(.+)/is', $raw, $m) && strlen(trim((string) ($m[1] ?? ''))) > 0) {
             return 'security_check_message';
         }
-        if (preg_match('/analyze\s+this\s+message\s*(?:for\s+security)?\s*:\s*(.+)/is', $raw, $m) && strlen(trim((string) ($m[1] ?? ''))) > 0) {
+        if (preg_match('/analyze\s+this\s+(?:message|comment|dm)\s*(?:for\s+security)?\s*:\s*(.+)/is', $raw, $m) && strlen(trim((string) ($m[1] ?? ''))) > 0) {
+            return 'security_check_message';
+        }
+        if (preg_match('/analyze\s+this\s+form\s+input\s*:\s*(.+)/is', $raw, $m) && strlen(trim((string) ($m[1] ?? ''))) > 0) {
+            return 'security_check_message';
+        }
+        if (preg_match('/is\s+this\s+(?:input\s+)?dangerous\s*\??\s*(.+)/is', $raw, $m) && strlen(trim((string) ($m[1] ?? ''))) > 0) {
+            return 'security_check_message';
+        }
+        if (preg_match('/is\s+this\s+safe(?:\s+to\s+paste)?\s*\??\s*(.+)/is', $raw, $m) && strlen(trim((string) ($m[1] ?? ''))) > 2) {
             return 'security_check_message';
         }
         if (preg_match('/analyze\s+this\s+text\s+for\s+security\s*:\s*(.+)/is', $raw, $m) && strlen(trim((string) ($m[1] ?? ''))) > 0) {
@@ -4696,22 +6066,39 @@ class CondidatureC
         if (preg_match('/check\s+this\s+link\s*:\s*(.+)/is', $raw, $m) && strlen(trim((string) ($m[1] ?? ''))) > 0) {
             return 'security_check_link';
         }
-        if ($this->messageContainsAny($normalized, [
+        if ($this->messageContainsAny($norm, [
             'check for sql injection', 'check sql injection', 'test sql injection',
             'check for xss', 'check xss', 'test for xss',
         ])) {
             return 'security_check_page';
         }
-        if ($this->messageContainsAny($normalized, [
+        if ($this->messageContainsAny($norm, [
             'check this candidature for risk', 'check candidature for risk', 'check candidature risk',
             'check this negotiation', 'check negotiation for risk', 'check negotiation risk',
         ])) {
             return 'security_check_page';
         }
-        if ($this->messageContainsAny($normalized, [
-            'check security', 'is this safe', 'safe to click', 'scan for risk', 'security scan',
+        if ($this->messageContainsAny($norm, [
+            'check security', 'safe to click', 'scan for risk', 'security scan',
         ])) {
             return 'security_check_page';
+        }
+        if ($this->messageContainsAny($norm, ['is this safe'])
+            && !$this->cre8ShieldRawLooksLikeHtmlOrScriptPayload($raw)
+            && !$this->cre8ShieldRawLooksLikeSqlInjectionProbe($raw)
+            && !preg_match('/https?:\/\//i', $raw)) {
+            return 'security_check_page';
+        }
+
+        if ($this->cre8ShieldMessageLooksLikeTrustSafetyReview($raw, $norm)) {
+            return 'security_check_message';
+        }
+        if (preg_match('/https?:\/\//i', $raw)
+            && $this->messageContainsAny($norm, [
+                'is this suspicious', 'is that suspicious', 'is this risky', 'is that risky', 'suspicious link',
+                'check this link', 'is this link safe', 'is this url safe',
+            ])) {
+            return 'security_check_link';
         }
 
         return '';
@@ -4756,25 +6143,29 @@ class CondidatureC
     {
         $t = strtolower((string) $text);
         $hits = [];
-        $patterns = [
-            "' or '1'='1" => 'Classic OR tautology pattern (often used in injection attempts).',
-            ' or 1=1' => 'Boolean OR tautology.',
-            ' or 1 = 1' => 'Boolean OR tautology.',
-            'union select' => 'UNION-based query pattern.',
-            'drop table' => 'Destructive DDL keyword.',
-            'delete from' => 'Data deletion keyword.',
-            'insert into' => 'Data insertion keyword.',
-            'update users' => 'Bulk update pattern.',
-            'information_schema' => 'Database metadata access pattern.',
-            '--' => 'SQL comment sequence sometimes used to truncate queries.',
-            '/*' => 'Block comment opener sometimes used in injection attempts.',
-            '*/' => 'Block comment closer.',
-            'xp_cmdshell' => 'Dangerous extended stored procedure reference.',
-        ];
-        foreach ($patterns as $needle => $note) {
-            if (str_contains($t, $needle)) {
-                $hits[] = ['category' => 'sql_injection', 'finding' => $note];
-            }
+        if (preg_match("/'\\s*--|\\badmin'\\s*--|\\b'\\s*or\\s+'/i", $t)) {
+            $hits[] = ['category' => 'sql_injection', 'finding' => 'Single-quote with comment or OR-literal pattern (common SQL injection / truncation probe).'];
+        }
+        if (preg_match('/;\s*(drop|delete|truncate|alter|insert|update)\b/i', $t) || preg_match('/\b(drop|truncate)\s+table\b/i', $t) || preg_match('/\bdelete\s+from\b/i', $t)) {
+            $hits[] = ['category' => 'destructive_sql', 'finding' => 'Chained or destructive SQL keywords detected—never execute untrusted input against a database.'];
+        }
+        if (preg_match('/\bunion\s+select\b/', $t)) {
+            $hits[] = ['category' => 'sql_injection', 'finding' => 'UNION-based SELECT pattern often used in injection attempts.'];
+        }
+        if ((str_contains($t, "' or ") || str_contains($t, '" or ')) && str_contains($t, '1=1')) {
+            $hits[] = ['category' => 'sql_injection', 'finding' => 'Boolean OR tautology pattern (classic injection probe).'];
+        }
+        if (preg_match('/\binsert\s+into\b.*\bselect\b/is', $t)) {
+            $hits[] = ['category' => 'sql_injection', 'finding' => 'INSERT … SELECT pattern can indicate data-staging or injection-style abuse.'];
+        }
+        if (preg_match('/\bupdate\s+\w+\s+set\b/i', $t)) {
+            $hits[] = ['category' => 'sql_injection', 'finding' => 'UPDATE … SET pattern in untrusted input can indicate unauthorized data modification attempts.'];
+        }
+        if (preg_match('/\binformation_schema\b/', $t)) {
+            $hits[] = ['category' => 'sql_injection', 'finding' => 'Database metadata access pattern (information_schema) in untrusted input.'];
+        }
+        if (preg_match('/xp_cmdshell/', $t)) {
+            $hits[] = ['category' => 'destructive_sql', 'finding' => 'Reference to dangerous extended stored procedures (xp_cmdshell).'];
         }
 
         return $hits;
@@ -4785,20 +6176,32 @@ class CondidatureC
         $t = strtolower((string) $text);
         $hits = [];
         $patterns = [
-            '<script' => 'Script tag marker.',
+            '<script' => 'Script tag marker (unsafe if pasted into HTML contexts).',
             '</script>' => 'Closing script tag marker.',
-            'javascript:' => 'JavaScript URL scheme.',
-            'onerror=' => 'Inline event handler often used in XSS.',
-            'onload=' => 'Inline event handler often used in XSS.',
-            'onclick=' => 'Inline event handler often used in XSS.',
-            '<iframe' => 'Embedded frame marker.',
-            'document.cookie' => 'DOM cookie access pattern.',
-            'alert(' => 'Common JavaScript popup test pattern in XSS probes.',
+            'javascript:' => 'JavaScript URL scheme in markup or attributes (XSS vector).',
+            'onerror=' => 'Inline event handler (onerror) can execute script when the element loads.',
+            'onload=' => 'Inline event handler (onload) can execute script when the element loads.',
+            'onclick=' => 'Inline event handler (onclick) can run script on user interaction.',
+            'onmouseover=' => 'Inline event handler (onmouseover) can run script on hover.',
+            'srcdoc=' => 'srcdoc= can embed arbitrary HTML inside frames (high XSS/embed risk).',
+            'eval(' => 'eval() calls in pasted content are a strong code-execution indicator.',
+            'document.cookie' => 'Accessing document.cookie from injected script is a cookie-theft / XSS indicator.',
+            '.innerhtml' => 'Assigning innerHTML with untrusted strings is a common DOM XSS sink.',
+            'alert(' => 'alert() in injected markup is a common XSS proof-of-concept pattern.',
         ];
         foreach ($patterns as $needle => $note) {
             if (str_contains($t, $needle)) {
                 $hits[] = ['category' => 'xss', 'finding' => $note];
             }
+        }
+        if (preg_match('/<\s*img\b[^>]*\bonerror\s*=/i', (string) $text)) {
+            $hits[] = ['category' => 'xss', 'finding' => '<img> tag with inline event handler (classic reflected/stored XSS vector).'];
+        }
+        if (preg_match('/<\s*svg\b[^>]*\bonload\s*=/i', (string) $text)) {
+            $hits[] = ['category' => 'xss', 'finding' => '<svg> with onload handler can execute script in SVG-based XSS.'];
+        }
+        if (preg_match('/<\s*iframe\b/i', (string) $text)) {
+            $hits[] = ['category' => 'unsafe_embedded_content', 'finding' => '<iframe> embeds remote content; combined with untrusted src it can be used for clickjacking, phishing, or malicious framing.'];
         }
 
         return $hits;
@@ -4820,8 +6223,24 @@ class CondidatureC
                     $hits[] = ['category' => 'suspicious_link', 'finding' => 'Shortened URL host (' . $short . ') can hide the final destination.'];
                 }
             }
-            if (preg_match('/free[\s\-_]?gift|reset[\s\-_]?account|verify[\s\-_]?account|password[\s\-_]?reset/i', $u)) {
-                $hits[] = ['category' => 'phishing', 'finding' => 'URL contains wording often abused in phishing (gift/verify/reset/password).'];
+            if (preg_match('/free[\s\-_]?gift|reset[\s\-_]?account|verify[\s\-_]?account|password[\s\-_]?reset|reset-password|\/reset\b|\/verify\b/i', $u)) {
+                $hits[] = ['category' => 'phishing', 'finding' => 'URL path or host contains wording often abused in phishing (reset/verify/password/account).'];
+            }
+            $parsed = @parse_url($url);
+            $host = is_array($parsed) ? strtolower((string) ($parsed['host'] ?? '')) : '';
+            $path = is_array($parsed) ? strtolower((string) ($parsed['path'] ?? '')) : '';
+            $hay = $host . ' ' . $path;
+            if ($host !== '' && str_contains($host, 'cre8connect') && !$this->cre8ShieldIsOfficialCre8ConnectHost($host)) {
+                $hits[] = ['category' => 'phishing', 'finding' => 'Host resembles “Cre8Connect” but is not the official domain—treat as a possible lookalike / credential phishing site.'];
+            }
+            $sensitiveCombo = 0;
+            foreach (['login', 'security', 'verify', 'reset-password', 'reset_password', 'account', 'password', 'credential', 'confirm'] as $frag) {
+                if (str_contains($hay, $frag)) {
+                    $sensitiveCombo++;
+                }
+            }
+            if ($sensitiveCombo >= 2 && !$this->cre8ShieldIsOfficialCre8ConnectHost($host)) {
+                $hits[] = ['category' => 'suspicious_link', 'finding' => 'URL combines sensitive account/password/reset wording on a non-official host—verify the domain in your browser before entering credentials.'];
             }
         }
 
@@ -4861,16 +6280,81 @@ class CondidatureC
     private function cre8ShieldDetectScamOrSocialEngineering($text): array
     {
         $t = $this->normalizeCre8PilotMessage($text);
+        $rawLower = strtolower((string) $text);
         $hits = [];
         $rules = [
-            ['needles' => ['urgent payment', 'pay immediately', 'click immediately'], 'finding' => 'Urgency pressure is a common social-engineering tactic.', 'category' => 'scam_social_engineering'],
-            ['needles' => ['verify account', 'send password', 'reset account'], 'finding' => 'Credential or account “verification” pressure can indicate phishing-style wording.', 'category' => 'scam_social_engineering'],
-            ['needles' => ['free money', 'outside platform payment', 'crypto wallet', 'wire transfer today'], 'finding' => 'Off-platform or “free money” payment patterns are high-risk in collaborations.', 'category' => 'scam_social_engineering'],
+            ['needles' => ['urgent payment', 'pay immediately', 'click immediately'], 'finding' => 'Urgency pressure is a common social-engineering tactic.', 'category' => 'social_engineering'],
+            ['needles' => ['verify account', 'send password', 'reset account'], 'finding' => 'Credential or account “verification” pressure can indicate phishing-style wording.', 'category' => 'phishing'],
+            ['needles' => ['free money', 'outside platform payment', 'crypto wallet', 'wire transfer today'], 'finding' => 'Off-platform or “free money” payment patterns are high-risk in collaborations.', 'category' => 'social_engineering'],
+            ['needles' => [
+                'send me your email and password',
+                'your email and password to approve',
+                'email and password to approve',
+                'i am admin send me your',
+                'we are admin send',
+                'this is admin send',
+            ], 'finding' => 'Claims of admin authority plus requests for email/password are classic account takeover / phishing patterns.', 'category' => 'impersonation'],
+            ['needles' => [
+                'send me your login code',
+                'send your login code',
+                'send me the login code',
+                'send your verification code',
+                'send me your verification code',
+                'send your 2fa',
+                'send me your 2fa',
+                'send your otp',
+                'send me your otp',
+                'one time password',
+                'one-time password',
+                'recovery code',
+                'reset code',
+                'approve your account by sending',
+                'verify your account by sending',
+                'verify your account by sending your',
+                'sending your login code',
+            ], 'finding' => 'Message asks the recipient to transmit login, OTP, 2FA, or recovery codes—typical credential-theft / phishing behavior.', 'category' => 'credential_theft'],
+            ['needles' => ['two factor code', 'two-factor code', '2fa code', 'otp code', 'mfa code'], 'finding' => 'Requests for multi-factor or one-time codes outside the official app flow are high-risk.', 'category' => 'credential_theft'],
         ];
         foreach ($rules as $rule) {
             if ($this->messageContainsAny($t, $rule['needles'])) {
                 $hits[] = ['category' => $rule['category'], 'finding' => $rule['finding']];
             }
+        }
+        if ($hits === [] && preg_match('/\b(login|verification|reset|recovery|mfa|2fa|otp)\b.*\b(code|codes|password)\b/s', $rawLower)
+            && preg_match('/\b(send|text|whatsapp|telegram|email|reply with)\b/', $rawLower)) {
+            $hits[] = ['category' => 'credential_theft', 'finding' => 'Language pairs account verification with exfiltrating a secret code—treat as credential phishing.'];
+        }
+        if ($hits === [] && preg_match('/\b(i am|we are|this is)\s+admin\b/i', $rawLower)
+            && (str_contains($rawLower, 'password') || str_contains($rawLower, 'email'))) {
+            $hits[] = ['category' => 'impersonation', 'finding' => 'Impersonating platform staff to collect credentials is a high-risk phishing pattern.'];
+            $hits[] = ['category' => 'credential_theft', 'finding' => 'Never share passwords or full account credentials with anyone claiming to be “admin” in a DM.'];
+        }
+
+        return $hits;
+    }
+
+    private function cre8ShieldDetectTrustCollaborationScenarios($text): array
+    {
+        $t = $this->normalizeCre8PilotMessage($text);
+        $hits = [];
+        if ((str_contains($t, 'from support') || str_contains($t, 'support team')) && (str_contains($t, 'voice') || str_contains($t, 'voice note')) && (str_contains($t, 'confirm') || str_contains($t, 'verify'))) {
+            $hits[] = ['category' => 'impersonation', 'finding' => 'Support impersonation often pairs with unusual verification channels (for example voice notes) to bypass normal controls.'];
+            $hits[] = ['category' => 'social_engineering', 'finding' => 'Legitimate support rarely asks you to prove your account outside official in-app flows.'];
+        }
+        if (str_contains($t, 'urgent') && (str_contains($t, 'reply in') || str_contains($t, 'minutes')) && (str_contains($t, 'cancel'))) {
+            $hits[] = ['category' => 'pressure_tactic', 'finding' => 'Tight countdowns that threaten cancellation are a common manipulation tactic.'];
+        }
+        if (str_contains($t, 'outside cre8connect') || str_contains($t, 'payment outside') || str_contains($t, 'off platform')) {
+            $hits[] = ['category' => 'off_platform_payment', 'finding' => 'Moving payment or contracts off-platform weakens escrow, dispute handling, and auditability.'];
+            $hits[] = ['category' => 'platform_bypass', 'finding' => 'Bypassing Cre8Connect rails removes platform protections—keep funds and agreements inside the product.'];
+        }
+        if (str_contains($t, 'qr') && str_contains($t, 'invoice')) {
+            $hits[] = ['category' => 'suspicious_invoice', 'finding' => 'QR-linked invoices can route to lookalike payment pages; verify payee identity and invoice origin before paying.'];
+            $hits[] = ['category' => 'payment_risk', 'finding' => 'Confirm payment details through verified in-platform records and official invoices only.'];
+        }
+        if ((str_contains($t, 'portfolio') && str_contains($t, 'zip')) || (str_contains($t, 'download') && str_contains($t, 'before') && str_contains($t, 'accept'))) {
+            $hits[] = ['category' => 'unsafe_attachment', 'finding' => 'Compressed archives can hide malware or spoofed assets; scan in a sandbox and verify with the sender through a trusted channel.'];
+            $hits[] = ['category' => 'suspicious_download', 'finding' => 'Pre-acceptance downloads are higher risk—confirm file type, size, checksum, and sender before extracting.'];
         }
 
         return $hits;
@@ -4908,20 +6392,36 @@ class CondidatureC
                     $categories[] = $cat;
                 }
                 $findings[] = (string) ($h['finding'] ?? '');
-                if ($cat === 'sql_injection') {
+                if ($cat === 'destructive_sql') {
+                    $score += 44;
+                } elseif ($cat === 'sql_injection') {
                     $score += 38;
                 } elseif ($cat === 'xss') {
                     $score += 38;
+                } elseif ($cat === 'unsafe_embedded_content') {
+                    $score += 34;
+                } elseif ($cat === 'credential_theft') {
+                    $score += 40;
                 } elseif ($cat === 'phishing') {
-                    $score += 32;
+                    $score += 34;
                 } elseif ($cat === 'suspicious_link') {
-                    $score += 22;
+                    $score += 24;
                 } elseif ($cat === 'privacy_access') {
                     $score += 42;
                 } elseif ($cat === 'dishonest_portfolio') {
                     $score += 36;
-                } elseif ($cat === 'scam_social_engineering') {
-                    $score += 28;
+                } elseif ($cat === 'social_engineering' || $cat === 'scam_social_engineering') {
+                    $score += 30;
+                } elseif ($cat === 'impersonation') {
+                    $score += 36;
+                } elseif ($cat === 'pressure_tactic') {
+                    $score += 32;
+                } elseif ($cat === 'off_platform_payment' || $cat === 'platform_bypass') {
+                    $score += 34;
+                } elseif ($cat === 'payment_risk' || $cat === 'suspicious_invoice') {
+                    $score += 32;
+                } elseif ($cat === 'unsafe_attachment' || $cat === 'suspicious_download') {
+                    $score += 30;
                 } else {
                     $score += 12;
                 }
@@ -4934,12 +6434,14 @@ class CondidatureC
         $mergeHits($this->cre8ShieldDetectLinks($text));
         $mergeHits($this->cre8ShieldDetectPrivacyRisk($text));
         $mergeHits($this->cre8ShieldDetectScamOrSocialEngineering($text));
+        $mergeHits($this->cre8ShieldDetectTrustCollaborationScenarios($text));
         $mergeHits($this->cre8ShieldDetectDishonestPortfolioRisk($text));
 
         $findings = array_values(array_filter(array_unique(array_map('trim', $findings))));
+        $findings = $this->cre8ShieldDedupeSimilarFindings($findings);
         $findings = array_slice($findings, 0, 14);
 
-        if (in_array('sql_injection', $categories, true)) {
+        if (in_array('sql_injection', $categories, true) || in_array('destructive_sql', $categories, true)) {
             foreach ([
                 'Do not execute this input as SQL.',
                 'Use prepared statements / parameterized queries.',
@@ -4954,6 +6456,9 @@ class CondidatureC
         if (in_array('xss', $categories, true)) {
             $recommendations[] = 'Do not paste untrusted HTML or scripts into forms; treat unexpected markup as hostile.';
         }
+        if (in_array('unsafe_embedded_content', $categories, true)) {
+            $recommendations[] = 'Avoid embedding untrusted iframes or remote documents; verify src and sandbox attributes with a security-aware reviewer.';
+        }
         if (in_array('suspicious_link', $categories, true) || in_array('phishing', $categories, true)) {
             $recommendations[] = 'Open links only from trusted senders; prefer https:// and inspect the real domain before signing in.';
         }
@@ -4963,8 +6468,20 @@ class CondidatureC
         if (in_array('dishonest_portfolio', $categories, true)) {
             $recommendations[] = 'Keep portfolio claims truthful and verifiable; authenticity protects you legally and professionally.';
         }
-        if (in_array('scam_social_engineering', $categories, true)) {
+        if (in_array('social_engineering', $categories, true) || in_array('scam_social_engineering', $categories, true)) {
             $recommendations[] = 'Slow down on urgent payment requests; confirm details inside Cre8Connect only.';
+        }
+        if (in_array('credential_theft', $categories, true) || in_array('phishing', $categories, true)) {
+            $recommendations[] = 'Never send login codes, OTPs, or passwords off-platform; use only official Cre8Connect flows.';
+        }
+        if (in_array('impersonation', $categories, true) || in_array('pressure_tactic', $categories, true) || in_array('off_platform_payment', $categories, true)) {
+            $recommendations[] = 'Pause if someone switches channels, rushes you, or claims special authority—continue only through official Cre8Connect tools.';
+        }
+        if (in_array('payment_risk', $categories, true) || in_array('suspicious_invoice', $categories, true)) {
+            $recommendations[] = 'Verify invoice payee details against the in-platform contract before paying; avoid QR links from unknown senders.';
+        }
+        if (in_array('unsafe_attachment', $categories, true) || in_array('suspicious_download', $categories, true)) {
+            $recommendations[] = 'Scan unexpected archives with updated antivirus and confirm checksums with the sender through a trusted channel.';
         }
         if ($score === 0) {
             $recommendations[] = 'Keep using strong passwords, limit pasted HTML from unknown sources, and prefer in-app actions over external “shortcuts”.';
@@ -4974,8 +6491,23 @@ class CondidatureC
         if (in_array('sql_injection', $categories, true) && in_array('privacy_access', $categories, true)) {
             $score = max($score, 94);
         }
+        if (in_array('destructive_sql', $categories, true)) {
+            $score = max($score, 90);
+        }
         if (in_array('sql_injection', $categories, true) && $score < 88 && str_contains(strtolower($text), 'union')) {
             $score = max($score, 88);
+        }
+        if (in_array('xss', $categories, true) && (in_array('unsafe_embedded_content', $categories, true) || preg_match('/onerror\s*=|onload\s*=|javascript:/i', $text))) {
+            $score = max($score, 86);
+        }
+        if (in_array('credential_theft', $categories, true)) {
+            $score = max($score, 88);
+        }
+        if (in_array('impersonation', $categories, true) || in_array('off_platform_payment', $categories, true) || in_array('pressure_tactic', $categories, true)) {
+            $score = max($score, 54);
+        }
+        if (in_array('suspicious_invoice', $categories, true) || in_array('unsafe_attachment', $categories, true) || in_array('suspicious_download', $categories, true)) {
+            $score = max($score, 52);
         }
         $score = (int) min(100, $score);
         $riskLevel = 'low';
@@ -5091,16 +6623,30 @@ class CondidatureC
         if ($this->isCre8ShieldDefensiveCheckRequest($raw, $norm)) {
             return true;
         }
+        if ($this->cre8ShieldMessageLooksLikeTrustSafetyReview($raw, $norm)) {
+            return true;
+        }
         if (in_array($intent, ['security_check_link', 'security_check_message', 'security_explain_risk'], true)) {
             return true;
         }
         if ($intent === 'security_check_page') {
-            return $this->messageContainsAny($norm, [
+            $pagePhrases = [
                 'check for sql injection', 'check for xss', 'check sql injection', 'check xss',
-                'is this safe', 'scan for risk', 'check security', 'security scan',
+                'scan for risk', 'check security', 'security scan',
                 'check this candidature', 'check candidature', 'check this negotiation', 'check negotiation',
                 'check candidature for risk', 'check negotiation for risk',
-            ]);
+            ];
+            if ($this->messageContainsAny($norm, $pagePhrases)) {
+                return true;
+            }
+            if ($this->messageContainsAny($norm, ['is this safe'])
+                && !$this->cre8ShieldRawLooksLikeHtmlOrScriptPayload($raw)
+                && !$this->cre8ShieldRawLooksLikeSqlInjectionProbe($raw)
+                && !preg_match('/https?:\/\//i', $raw)) {
+                return true;
+            }
+
+            return false;
         }
 
         return false;
@@ -5723,7 +7269,7 @@ class CondidatureC
             'Scope: offers, candidatures, negotiation messages, portfolio/document links, uploaded document summaries, admin supervision of offers/candidatures, Cre8Pilot prompts/actions.',
             'Do not discuss login/user CRUD/campaign modules unless directly present in the provided text.',
             'Classify risk using only: low, medium, high.',
-            'Categories you may output (subset only, snake_case): sql_injection, xss, suspicious_link, phishing, privacy_access, dishonest_content, scam_social_engineering, unsafe_file_content, prompt_injection, safe.',
+            'Categories you may output (subset only, snake_case): sql_injection, destructive_sql, xss, unsafe_embedded_content, suspicious_link, phishing, credential_theft, social_engineering, scam_social_engineering, privacy_access, dishonest_content, dishonest_portfolio, unsafe_file_content, prompt_injection, safe.',
             'Decision must be one of: allow, warn, block, human_review.',
             'Rules: block offensive hacking/exploit generation; allow defensive analysis of suspicious inputs; never provide exploit steps or payload construction; never reveal private data or secrets; keep recommendations defensive only.',
             'PHP rule engine already ran — you must NOT contradict it downward (if rules show sql_injection/xss/privacy_access, keep risk at least as high as rules).',
@@ -6074,6 +7620,14 @@ class CondidatureC
                 $bundleText = trim((string) ($m[1] ?? ''));
             } elseif (preg_match('/is\s+this\s+(?:message\s+)?suspicious\s*:\s*(.+)/is', $raw, $m)) {
                 $bundleText = trim((string) ($m[1] ?? ''));
+            } elseif (preg_match('/analyze\s+this\s+(?:message|comment|dm)\s*(?:for\s+security)?\s*:\s*(.+)/is', $raw, $m)) {
+                $bundleText = trim((string) ($m[1] ?? ''));
+            } elseif (preg_match('/analyze\s+this\s+form\s+input\s*(?:for\s+security)?\s*:\s*(.+)/is', $raw, $m)) {
+                $bundleText = trim((string) ($m[1] ?? ''));
+            } elseif (preg_match('/is\s+this\s+(?:input\s+)?dangerous\s*\??\s*(.+)/is', $raw, $m)) {
+                $bundleText = trim((string) ($m[1] ?? ''));
+            } elseif (preg_match('/is\s+this\s+safe(?:\s+to\s+paste)?\s*\??\s*(.+)/is', $raw, $m)) {
+                $bundleText = trim((string) ($m[1] ?? ''));
             } elseif (preg_match('/analyze\s+this\s+message\s*(?:for\s+security)?\s*:\s*(.+)/is', $raw, $m)) {
                 $bundleText = trim((string) ($m[1] ?? ''));
             } elseif (preg_match('/analyze\s+this\s+text\s+for\s+security\s*:\s*(.+)/is', $raw, $m)) {
@@ -6083,7 +7637,10 @@ class CondidatureC
             } elseif (preg_match('/is\s+this\s+malware[\s\-]*related\s+text\s+safe\s*:\s*(.+)/is', $raw, $m)) {
                 $bundleText = trim((string) ($m[1] ?? ''));
             } else {
-                $bundleText = $raw;
+                $bundleText = trim($this->cre8ShieldExtractDefensiveSubjectTail($raw));
+                if ($bundleText === '') {
+                    $bundleText = $raw;
+                }
             }
         } elseif ($intent === 'security_explain_risk') {
             $bundleText = trim($raw . "\n" . $this->cre8ShieldCollectVisibleText($visibleData));
@@ -6131,8 +7688,10 @@ class CondidatureC
         }
 
         $guardText = $this->normalizeCre8PilotMessage($bundleText);
+        $normRaw = $this->normalizeCre8PilotMessage($raw);
         $defensiveParent = $intent === 'security_check_message'
-            && $this->isCre8ShieldDefensiveCheckRequest($raw, $this->normalizeCre8PilotMessage($raw));
+            && ($this->isCre8ShieldDefensiveCheckRequest($raw, $normRaw)
+                || $this->cre8ShieldMessageLooksLikeTrustSafetyReview($raw, $normRaw));
         if (!$defensiveParent && $this->detectCre8PilotGlobalGuard($guardText, $raw) === 'blocked_request') {
             $this->stampCre8ShieldResponseDebug([
                 'used' => false,
@@ -6371,10 +7930,43 @@ class CondidatureC
                 : 'This offer form is ready for a draft, but I cannot see enough filled fields yet.';
         }
 
-        if ($this->cre8PilotIsPageMode($page, $mode, 'brand_offer_workspace', ['list', 'details'])
-            || in_array($page, ['brand_offer_list', 'brand_offer_details'], true)
+        if ($this->cre8PilotIsPageMode($page, $mode, 'brand_offer_workspace', ['list'])
+            || $page === 'brand_offer_list'
+        ) {
+            $offers = $this->cre8PilotBrandOffersFromVisibleData($visibleData);
+            $tabCounts = $this->cre8PilotBrandOfferTabCountsFromVisibleData($visibleData);
+            $lines = [];
+            if ($tabCounts !== []) {
+                $lines[] = $this->cre8PilotBuildBrandOfferTabCountsAnswer($tabCounts);
+            }
+            if ($offers !== []) {
+                $lines[] = 'Visible offer cards on this page:';
+                foreach ($offers as $o) {
+                    $lines[] = '• ' . $this->sanitizeCre8PilotLlmScalar((string) ($o['title'] ?? ''), 140)
+                        . ' — pipeline section: ' . $this->sanitizeCre8PilotLlmScalar((string) ($o['section'] ?? ''), 28)
+                        . ', budget ' . $this->sanitizeCre8PilotLlmScalar((string) ($o['budget'] ?? ''), 32)
+                        . ', deadline ' . $this->sanitizeCre8PilotLlmScalar((string) ($o['deadline'] ?? ''), 24)
+                        . ', ' . (int) ($o['responseCount'] ?? 0) . ' response(s), target creator '
+                        . $this->sanitizeCre8PilotLlmScalar((string) ($o['targetCreator'] ?? ''), 80)
+                        . '. Latest signal: ' . $this->sanitizeCre8PilotLlmScalar((string) ($o['latestSignal'] ?? ''), 200)
+                        . '. Objective: ' . $this->sanitizeCre8PilotLlmScalar((string) ($o['objective'] ?? ''), 220);
+                }
+                $lines[] = 'Next steps: prioritize negotiations that still need your reply, then offers with no creator response yet. I will not submit or publish anything for you.';
+
+                return implode("\n\n", array_filter($lines));
+            }
+            $highlight = $this->cre8PilotFirstHighlight($visibleData);
+
+            return $highlight !== ''
+                ? 'Offer workspace summary: ' . $highlight . '. Prioritize deadlines, response counts, draft offers, and offers that need clearer budget or deliverables.'
+                : 'This offer workspace is best reviewed by status, deadline, budget, and creator response activity.';
+        }
+
+        if ($this->cre8PilotIsPageMode($page, $mode, 'brand_offer_workspace', ['details'])
+            || $page === 'brand_offer_details'
         ) {
             $highlight = $this->cre8PilotFirstHighlight($visibleData);
+
             return $highlight !== ''
                 ? 'Offer workspace summary: ' . $highlight . '. Prioritize deadlines, response counts, draft offers, and offers that need clearer budget or deliverables.'
                 : 'This offer workspace is best reviewed by status, deadline, budget, and creator response activity.';
@@ -6693,20 +8285,40 @@ class CondidatureC
         $result = [
             'budget' => '',
             'delay' => '',
-            'lowerBudgetRequested' => str_contains($normalizedMessage, 'lower budget') || str_contains($normalizedMessage, 'cheaper budget'),
+            'lowerBudgetRequested' => str_contains($normalizedMessage, 'lower budget')
+                || str_contains($normalizedMessage, 'cheaper budget')
+                || str_contains($normalizedMessage, 'decrease')
+                || str_contains($normalizedMessage, 'reduce budget'),
         ];
 
         $budgetPatterns = [
-            '/\b(\d+(?:[.,]\d+)?)\s*(?:eur|dt|tnd)\b/u',
+            '/\b(?:decrease|reduced?|lower|drop)\s+(?:the\s+)?(?:budget\s+)?(?:to|down to|at)\s+(\d+(?:[.,]\d+)?)\b/u',
+            '/\b(?:budget|counterproposal|counter proposal|terms)\s+(?:will be|should be|is|of|to|at)\s+(\d+(?:[.,]\d+)?)\b/u',
+            '/\b(?:propose|proposal|offer)\s+(\d+(?:[.,]\d+)?)\s*(?:eur|euros?)?\b/u',
+            '/\b(\d+(?:[.,]\d+)?)\s*(?:eur|euros?|dt|tnd)\b/u',
             '/\b(?:budget|price|propose|proposal)\s+(\d+(?:[.,]\d+)?)\b/u',
-            '/\b(?:budget|price)\s*(?:of|to|at)?\s*(\d+(?:[.,]\d+)?)\b/u',
+            '/\b(?:budget|price)\s*(?:of|to|at|for)?\s*(\d+(?:[.,]\d+)?)\b/u',
+            '/\bto\s+(\d{2,5})\s*(?:eur|euros?)?\b/u',
         ];
 
+        $budgetCandidates = [];
         foreach ($budgetPatterns as $pattern) {
-            if (preg_match($pattern, $normalizedMessage, $matches)) {
-                $result['budget'] = str_replace(',', '.', (string) $matches[1]);
-                break;
+            if (preg_match_all($pattern, $normalizedMessage, $matches, PREG_OFFSET_CAPTURE)) {
+                $cnt = count($matches[1]);
+                for ($i = 0; $i < $cnt; $i++) {
+                    $val = str_replace(',', '.', (string) ($matches[1][$i][0] ?? ''));
+                    $pos = (int) ($matches[1][$i][1] ?? -1);
+                    if ($val !== '' && is_numeric($val) && (float) $val >= 1 && (float) $val <= 999999 && $pos >= 0) {
+                        $budgetCandidates[] = ['v' => $val, 'p' => $pos];
+                    }
+                }
             }
+        }
+        if ($budgetCandidates !== []) {
+            usort($budgetCandidates, static function ($a, $b) {
+                return ($a['p'] ?? 0) <=> ($b['p'] ?? 0);
+            });
+            $result['budget'] = (string) ($budgetCandidates[count($budgetCandidates) - 1]['v'] ?? '');
         }
 
         $delayPatterns = [
@@ -6715,11 +8327,24 @@ class CondidatureC
             '/\b(?:timeline|delay|delivery|deliver|delai)\s*(?:of|to|in)?\s*(\d+)\b/u',
         ];
 
+        $delayCandidates = [];
         foreach ($delayPatterns as $pattern) {
-            if (preg_match($pattern, $normalizedMessage, $matches)) {
-                $result['delay'] = (string) (int) $matches[1];
-                break;
+            if (preg_match_all($pattern, $normalizedMessage, $matches, PREG_OFFSET_CAPTURE)) {
+                $cnt = count($matches[1]);
+                for ($i = 0; $i < $cnt; $i++) {
+                    $val = (string) (int) ($matches[1][$i][0] ?? 0);
+                    $pos = (int) ($matches[1][$i][1] ?? -1);
+                    if ((int) $val > 0 && $pos >= 0) {
+                        $delayCandidates[] = ['v' => $val, 'p' => $pos];
+                    }
+                }
             }
+        }
+        if ($delayCandidates !== []) {
+            usort($delayCandidates, static function ($a, $b) {
+                return ($a['p'] ?? 0) <=> ($b['p'] ?? 0);
+            });
+            $result['delay'] = (string) ($delayCandidates[count($delayCandidates) - 1]['v'] ?? '');
         }
 
         return $result;
@@ -6778,15 +8403,7 @@ class CondidatureC
         $extracted = $this->extractCre8PilotNegotiationNumbers($normalizedMessage);
         $budget = $extracted['budget'];
         $delay = $extracted['delay'];
-
-        if ($budget === '' && $extracted['lowerBudgetRequested']) {
-            $visibleBudget = $this->cre8PilotVisibleValue($visibleData, ['decisionForm', 'budgetPropose']);
-            if ($visibleBudget === '') {
-                $visibleBudget = $this->cre8PilotVisibleValue($visibleData, ['candidatureForm', 'budgetPropose']);
-            }
-            $numericBudget = (float) preg_replace('/[^0-9.]/', '', str_replace(',', '.', $visibleBudget));
-            $budget = $numericBudget > 0 ? (string) max(1, (int) round($numericBudget * 0.85 / 10) * 10) : '200';
-        }
+        $norm = $this->normalizeCre8PilotMessage($normalizedMessage);
 
         if ($budget === '') {
             $budget = $this->cre8PilotVisibleValue($visibleData, ['decisionForm', 'budgetPropose']);
@@ -6794,8 +8411,9 @@ class CondidatureC
         if ($budget === '') {
             $budget = $this->cre8PilotVisibleValue($visibleData, ['candidatureForm', 'budgetPropose']);
         }
-        if ($budget === '') {
-            $budget = '250';
+        $budgetDigits = preg_replace('/[^0-9.,]/', '', $budget) ?: $budget;
+        if ($budgetDigits === '' && !$extracted['lowerBudgetRequested']) {
+            $budgetDigits = '250';
         }
 
         if ($delay === '') {
@@ -6804,25 +8422,50 @@ class CondidatureC
         if ($delay === '') {
             $delay = $this->cre8PilotVisibleValue($visibleData, ['candidatureForm', 'delaiPropose']);
         }
-        if ($delay === '') {
-            $delay = '10';
+        $delayDigits = preg_replace('/[^0-9]/', '', $delay) ?: $delay;
+
+        $accepting = str_contains($norm, 'accept') && !str_contains($norm, 'refuse');
+        if ($accepting && $extracted['budget'] !== '') {
+            $message = 'Thank you for the proposal. I am happy to accept the collaboration in principle, while proposing an adjusted budget of '
+                . $extracted['budget']
+                . ' EUR. Please review the wording and numbers before sending—I cannot send or accept automatically on your behalf.';
+        } elseif ($budgetDigits !== '' && $delayDigits !== '') {
+            $message = 'Thank you for your update. I would like to propose a revised collaboration plan with a budget of '
+                . $budgetDigits
+                . ' EUR and a timeline of '
+                . $delayDigits
+                . ' days, while keeping the same campaign objective.';
+        } elseif ($budgetDigits !== '') {
+            $message = 'Thank you for your update. I would like to propose an adjusted budget of '
+                . $budgetDigits
+                . ' EUR. Please confirm the delivery timeline in the form if it still needs updating. I cannot send this automatically.';
+        } elseif ($delayDigits !== '') {
+            $message = 'Thank you for your update. I would like to propose a timeline of '
+                . $delayDigits
+                . ' days while we align on budget in the form fields. I cannot send this automatically.';
+        } else {
+            $message = 'Thank you for your update. I would like to propose adjusted collaboration terms while keeping the same campaign objective.';
         }
 
-        $message = 'Thank you for your update. I would like to propose a revised collaboration plan with a budget of ' . $budget . ' EUR and a timeline of ' . $delay . ' days, while keeping the same campaign objective.';
+        $fields = [
+            'message' => $message,
+            'messageNegociation' => $message,
+            'contenu' => $message,
+            'messageMotivation' => $message,
+            'conditionsCreateur' => 'I can deliver the content after receiving the final brief and product details.',
+            'noteDecision' => 'Prepared negotiation note: review budget, timeline, and wording before sending. Nothing is sent automatically.',
+        ];
+        if ($budgetDigits !== '') {
+            $fields['budgetPropose'] = $budgetDigits;
+        }
+        if ($delayDigits !== '') {
+            $fields['delaiPropose'] = $delayDigits;
+        }
 
         return [[
             'type' => 'fill_form',
             'target' => 'negotiation_form',
-            'fields' => [
-                'message' => $message,
-                'messageNegociation' => $message,
-                'contenu' => $message,
-                'messageMotivation' => $message,
-                'conditionsCreateur' => 'I can deliver the content after receiving the final brief and product details.',
-                'budgetPropose' => $budget,
-                'delaiPropose' => $delay,
-                'noteDecision' => 'Prepared negotiation note: review the revised budget, timeline, and collaboration terms before sending.',
-            ],
+            'fields' => $fields,
         ]];
     }
 
@@ -6864,19 +8507,18 @@ class CondidatureC
         if ($formTarget === 'offer_form') {
             $norm = $this->normalizeCre8PilotMessage($normalizedMessage);
             $budgetFromPrompt = $this->cre8PilotExtractBudgetDigitsFromMessage($norm);
+            $mem = $this->cre8PilotGetConversationMemory();
+            foreach ($this->cre8PilotExtractOfferDraftHintsFromMessage((string) $normalizedMessage, $norm) as $k => $v) {
+                if (is_string($v) && trim($v) !== '') {
+                    $mem[$k] = trim($v);
+                }
+            }
+            $offerFields = $this->cre8PilotBuildOfferFieldsFromContext((string) $normalizedMessage, $budgetFromPrompt, $mem);
 
             return [
                 'type' => 'fill_form',
                 'target' => 'offer_form',
-                'fields' => [
-                    'titre' => 'Hydra Shampoo Creator Collaboration',
-                    'description' => 'A professional collaboration offer to promote the product through engaging creator content.',
-                    'objectif' => 'Increase product visibility and generate authentic creator-led promotion.',
-                    'raisonChoix' => 'This creator appears suitable for the product audience and collaboration style.',
-                    'attenteCollaboration' => 'Create one short video and two story posts presenting the product benefits.',
-                    'messagePersonnalise' => 'Hello, we appreciate your content style and would like to invite you to collaborate with our brand.',
-                    'budgetPropose' => $budgetFromPrompt ?? '450',
-                ],
+                'fields' => $offerFields,
             ];
         }
 
@@ -6953,7 +8595,8 @@ class CondidatureC
             if ($budget === '') {
                 $budget = $this->cre8PilotVisibleValue($visibleData, ['candidatureForm', 'budgetPropose']);
             }
-            if ($budget === '') {
+            $hasExplicitBudgetInUserText = $extracted['budget'] !== '';
+            if ($budget === '' && !$hasExplicitBudgetInUserText) {
                 $budget = '250';
             }
 
@@ -6967,18 +8610,20 @@ class CondidatureC
             if ($delay === '') {
                 $delay = $this->cre8PilotVisibleValue($visibleData, ['candidatureForm', 'delaiPropose']);
             }
-            if ($delay === '') {
-                $delay = '7';
-            }
 
-            return [
+            $out = [
                 'message' => $message,
                 'messageNegociation' => $message,
                 'contenu' => $message,
                 'messageMotivation' => $message,
                 'budgetPropose' => preg_replace('/[^0-9.,]/', '', $budget) ?: $budget,
-                'delaiPropose' => preg_replace('/[^0-9]/', '', $delay) ?: $delay,
             ];
+            $delayClean = preg_replace('/[^0-9]/', '', $delay) ?: $delay;
+            if ($delayClean !== '') {
+                $out['delaiPropose'] = $delayClean;
+            }
+
+            return $out;
         }
 
         if ($target === 'candidature_form') {
@@ -7183,6 +8828,12 @@ class CondidatureC
         $visibleData = is_array($payload['visibleData'] ?? null) ? $payload['visibleData'] : [];
         $visibleData['page'] = $page;
         $visibleData['mode'] = $mode;
+        $lastPmk = (string) ($_SESSION['cre8PilotLastRequestPageMode'] ?? '');
+        $pmk = $page . '|' . $mode;
+        if ($lastPmk !== '' && $lastPmk !== $pmk) {
+            unset($_SESSION['cre8PilotConversationMemory']);
+        }
+        $_SESSION['cre8PilotLastRequestPageMode'] = $pmk;
         $this->cre8PilotLlmContext = [
             'userId' => $userId,
             'message' => $message,
@@ -7211,8 +8862,11 @@ class CondidatureC
             );
         }
 
-        $normalizedMessage = $this->normalizeCre8PilotMessage($message);
-        $messageLower = trim($normalizedMessage . ' ' . $this->normalizeCre8PilotMessage(str_replace('_', ' ', $selectedClarificationId)));
+        $dialectGloss = $this->cre8PilotAppendDialectIntentGloss($message);
+        $normalizedMessage = $this->normalizeCre8PilotMessage(
+            $message . ' ' . str_replace('_', ' ', (string) $selectedClarificationId) . ' ' . $dialectGloss
+        );
+        $messageLower = $normalizedMessage;
         $globalIntent = $this->detectCre8PilotGlobalGuard($messageLower, $message);
         $intent = $globalIntent !== '' ? $globalIntent : $this->detectCre8PilotIntentMock($message, $page, $mode, $allowedActions, $selectedClarificationId, $role);
         if ($intent === 'blocked_request') {
@@ -7224,7 +8878,6 @@ class CondidatureC
         } else {
             $policy = $this->validateCre8PilotIntentPolicy($intent, $page, $mode, $role, $allowedActions, $formTarget);
         }
-        $messageLower = trim($normalizedMessage . ' ' . $this->normalizeCre8PilotMessage(str_replace('_', ' ', $selectedClarificationId)));
         $this->cre8PilotDebug = [
             'rawMessage' => $message,
             'normalizedMessage' => $messageLower,
@@ -7263,7 +8916,7 @@ class CondidatureC
                 $intent,
                 $intent === 'dishonest_content_request'
                     ? $dishonestMessage
-                    : 'I can prepare content or suggestions, but I cannot submit, publish, save, delete, accept, refuse, archive, invite, or perform final actions automatically. Please review and use the page buttons.',
+                    : 'I cannot perform final actions automatically. I can prepare the content, filters, or drafts, but you must use the page controls yourself—I will not submit, save, publish, accept, refuse, send, archive, invite, or delete anything for you.',
                 [],
                 0.94,
                 'warning'
@@ -7281,6 +8934,11 @@ class CondidatureC
                 0.86,
                 'warning'
             );
+        }
+
+        $policyBoundary = $this->cre8PilotTryPolicyBoundaryReply($messageLower, $message);
+        if ($policyBoundary !== null) {
+            return $policyBoundary;
         }
 
         $ownerKey = $this->getCre8PilotDocumentOwnerKey($userId);
@@ -7498,6 +9156,11 @@ class CondidatureC
             );
         }
 
+        $brandListEarly = $this->cre8PilotTryBrandOfferWorkspaceListReply($messageLower, $message, $intent, $visibleData, $page, $mode, $role);
+        if ($brandListEarly !== null) {
+            return $brandListEarly;
+        }
+
         if ($intent === 'need_clarification' || ($intent === 'normal_chat' && $this->cre8PilotVaguePrompt($messageLower))) {
             $clarification = $this->getCre8PilotClarificationForPage($page, $mode);
             return $this->buildCre8PilotResponse(
@@ -7704,15 +9367,13 @@ class CondidatureC
 
             $normForBudget = $this->normalizeCre8PilotMessage($messageLower);
             $budgetHint = $this->cre8PilotExtractBudgetDigitsFromMessage($normForBudget);
-            $offerFields = [
-                'titre' => 'Hydra Shampoo Creator Collaboration',
-                'description' => 'A professional collaboration offer to promote the product through engaging creator content.',
-                'objectif' => 'Increase product visibility and generate authentic creator-led promotion.',
-                'raisonChoix' => 'This creator appears suitable for the product audience and collaboration style.',
-                'attenteCollaboration' => 'Create one short video and two story posts presenting the product benefits.',
-                'messagePersonnalise' => 'Hello, we appreciate your content style and would like to invite you to collaborate with our brand.',
-                'budgetPropose' => $budgetHint ?? '450',
-            ];
+            $mem = $this->cre8PilotGetConversationMemory();
+            foreach ($this->cre8PilotExtractOfferDraftHintsFromMessage($message, $normForBudget) as $k => $v) {
+                if (is_string($v) && trim($v) !== '') {
+                    $mem[$k] = trim($v);
+                }
+            }
+            $offerFields = $this->cre8PilotBuildOfferFieldsFromContext($messageLower, $budgetHint, $mem);
             if ($this->messageContainsAny($normForBudget, ['gaming headset', 'headset'])) {
                 $offerFields['titre'] = 'Gaming headset campaign collaboration';
                 $offerFields['description'] = 'Authentic creator content showcasing the headset in real gaming or lifestyle scenarios, highlighting comfort, audio quality, and differentiators.';
@@ -7735,7 +9396,7 @@ class CondidatureC
 
             $fillMsg = $budgetHint !== null
                 ? 'I prepared a draft offer using your stated budget of ' . $budgetHint . ' (you can still change it). Please review all fields before saving or publishing.'
-                : 'I prepared a draft offer. Please review the fields before submitting.';
+                : 'I prepared a draft offer from what you described. Some fields may still need manual review. Please check everything before saving or publishing.';
 
             return $this->buildCre8PilotResponse(
                 'ok',
@@ -7865,7 +9526,7 @@ class CondidatureC
             return $this->buildCre8PilotResponse(
                 'ok',
                 $intent === 'improve_negotiation_message' ? 'improve_negotiation_message' : 'prepare_negotiation_reply',
-                'I prepared a polite counter-proposal. Please review it before sending.',
+                'I drafted a polite negotiation reply using the budget and timeline you stated where possible, plus any values already visible in your form. Please review every field before sending—I cannot send or accept automatically.',
                 $negActions,
                 0.84,
                 'filling',
