@@ -1,115 +1,103 @@
 <?php
+
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../Modele/produit.php';
 
-class ProduitC {
-
+class ProduitC
+{
     // ─── UPLOAD ────────────────────────────────────────────────────────────────
-    public function gererUploadImage($fichier, $ancienneImage = null) {
+    public function gererUploadImage($fichier, ?string $ancienneImage = null): ?string
+    {
         if (!isset($fichier) || $fichier['error'] !== UPLOAD_ERR_OK) {
             return $ancienneImage;
         }
-        $extensionsAutorisees = ['jpg', 'jpeg', 'png', 'webp'];
-        $extension = strtolower(pathinfo($fichier['name'], PATHINFO_EXTENSION));
-        if (!in_array($extension, $extensionsAutorisees)) {
+        $ext = strtolower(pathinfo($fichier['name'], PATHINFO_EXTENSION));
+        if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) {
             return $ancienneImage;
         }
-        $nomFichier  = uniqid('produit_', true) . '.' . $extension;
-        $dossier     = __DIR__ . '/../Vue/public/produits/';
-        $destination = $dossier . $nomFichier;
-        if (move_uploaded_file($fichier['tmp_name'], $destination)) {
-            if ($ancienneImage && file_exists($dossier . $ancienneImage)) {
-                unlink($dossier . $ancienneImage);
+        $nom  = uniqid('produit_', true) . '.' . $ext;
+        $dir  = __DIR__ . '/../Vue/public/produits/';
+        $dest = $dir . $nom;
+        if (move_uploaded_file($fichier['tmp_name'], $dest)) {
+            if ($ancienneImage && file_exists($dir . $ancienneImage)) {
+                unlink($dir . $ancienneImage);
             }
-            return $nomFichier;
+            return $nom;
         }
         return $ancienneImage;
     }
 
-    // ─── SQL MIGRATION HELPER (run once) ───────────────────────────────────────
-    public function migrerColonnes() {
-        $db = config::getConnexion();
-        $alterations = [
-            "ALTER TABLE produit ADD COLUMN IF NOT EXISTS categorie VARCHAR(100) DEFAULT NULL",
-            "ALTER TABLE produit ADD COLUMN IF NOT EXISTS estArchive TINYINT(1) NOT NULL DEFAULT 0",
-            "ALTER TABLE produit ADD COLUMN IF NOT EXISTS estEpingle TINYINT(1) NOT NULL DEFAULT 0",
-            "ALTER TABLE produit ADD COLUMN IF NOT EXISTS sortOrder INT NOT NULL DEFAULT 0",
-            "ALTER TABLE produit ADD COLUMN IF NOT EXISTS dateDisponibilite DATE DEFAULT NULL",
-            "ALTER TABLE produit ADD COLUMN IF NOT EXISTS noteInterne TEXT DEFAULT NULL",
-        ];
-        foreach ($alterations as $sql) {
-            try { $db->exec($sql); } catch (Exception $e) { /* ignore if already exists */ }
-        }
-    }
-
     // ─── AJOUTER ───────────────────────────────────────────────────────────────
-    public function ajouterProduit($produit) {
+    public function ajouterProduit(Produit $produit): void
+    {
         if (empty(trim($produit->getNom())) || $produit->getPrix() < 0) {
-            throw new Exception("Invalid product: name required, price must be >=0");
+            throw new Exception("Invalid product: name required, price >= 0");
         }
         $sql = "INSERT INTO produit
                     (nomProduit, description, caracteristiques, prix, idMarque, image,
                      categorie, estArchive, estEpingle, sortOrder, dateDisponibilite, noteInterne)
                 VALUES
-                    (:nom, :description, :caracteristiques, :prix, :idMarque, :image,
-                     :categorie, :estArchive, :estEpingle, :sortOrder, :dateDisponibilite, :noteInterne)";
+                    (:nom, :desc, :carac, :prix, :idMarque, :image,
+                     :cat, :arch, :pin, :sort, :dispo, :note)";
         $db = config::getConnexion();
-        $query = $db->prepare($sql);
-        $query->execute([
-            'nom'               => $produit->getNom(),
-            'description'       => $produit->getDescription(),
-            'caracteristiques'  => $produit->getCaracteristiques(),
-            'prix'              => $produit->getPrix(),
-            'idMarque'          => $produit->getIdMarque(),
-            'image'             => $produit->getImage(),
-            'categorie'         => $produit->getCategorie(),
-            'estArchive'        => $produit->getEstArchive() ? 1 : 0,
-            'estEpingle'        => $produit->getEstEpingle() ? 1 : 0,
-            'sortOrder'         => $produit->getSortOrder() ?? 0,
-            'dateDisponibilite' => $produit->getDateDisponibilite(),
-            'noteInterne'       => $produit->getNoteInterne(),
+        $q  = $db->prepare($sql);
+        $q->execute([
+            'nom'      => $produit->getNom(),
+            'desc'     => $produit->getDescription(),
+            'carac'    => $produit->getCaracteristiques(),
+            'prix'     => $produit->getPrix(),
+            'idMarque' => $produit->getIdMarque(),
+            'image'    => $produit->getImage(),
+            'cat'      => $produit->getCategorie(),
+            'arch'     => $produit->getEstArchive() ? 1 : 0,
+            'pin'      => $produit->getEstEpingle() ? 1 : 0,
+            'sort'     => $produit->getSortOrder() ?? 0,
+            'dispo'    => $produit->getDateDisponibilite(),
+            'note'     => $produit->getNoteInterne(),
         ]);
     }
 
     // ─── MODIFIER ──────────────────────────────────────────────────────────────
-    public function modifierProduit($produit, $id) {
+    public function modifierProduit(Produit $produit, int $id): void
+    {
         if (empty(trim($produit->getNom())) || $produit->getPrix() < 0) {
-            throw new Exception("Invalid product: name required, price must be >=0");
+            throw new Exception("Invalid product: name required, price >= 0");
         }
         $sql = "UPDATE produit SET
                     nomProduit        = :nom,
-                    description       = :description,
-                    caracteristiques  = :caracteristiques,
+                    description       = :desc,
+                    caracteristiques  = :carac,
                     prix              = :prix,
                     image             = :image,
-                    categorie         = :categorie,
-                    estArchive        = :estArchive,
-                    estEpingle        = :estEpingle,
-                    dateDisponibilite = :dateDisponibilite,
-                    noteInterne       = :noteInterne
+                    categorie         = :cat,
+                    estArchive        = :arch,
+                    estEpingle        = :pin,
+                    dateDisponibilite = :dispo,
+                    noteInterne       = :note
                 WHERE idProduit = :id";
         $db = config::getConnexion();
-        $query = $db->prepare($sql);
-        $query->execute([
-            'nom'               => $produit->getNom(),
-            'description'       => $produit->getDescription(),
-            'caracteristiques'  => $produit->getCaracteristiques(),
-            'prix'              => $produit->getPrix(),
-            'image'             => $produit->getImage(),
-            'categorie'         => $produit->getCategorie(),
-            'estArchive'        => $produit->getEstArchive() ? 1 : 0,
-            'estEpingle'        => $produit->getEstEpingle() ? 1 : 0,
-            'dateDisponibilite' => $produit->getDateDisponibilite(),
-            'noteInterne'       => $produit->getNoteInterne(),
-            'id'                => $id,
+        $q  = $db->prepare($sql);
+        $q->execute([
+            'nom'  => $produit->getNom(),
+            'desc' => $produit->getDescription(),
+            'carac'=> $produit->getCaracteristiques(),
+            'prix' => $produit->getPrix(),
+            'image'=> $produit->getImage(),
+            'cat'  => $produit->getCategorie(),
+            'arch' => $produit->getEstArchive() ? 1 : 0,
+            'pin'  => $produit->getEstEpingle() ? 1 : 0,
+            'dispo'=> $produit->getDateDisponibilite(),
+            'note' => $produit->getNoteInterne(),
+            'id'   => $id,
         ]);
     }
 
-    // ─── AFFICHER (actifs, épinglés en tête, puis ordre drag) ──────────────────
-    public function afficherProduits($idMarque = null) {
+    // ─── AFFICHER (actifs) ─────────────────────────────────────────────────────
+    public function afficherProduits(?int $idMarque = null): array
+    {
         $where = $idMarque ? "WHERE estArchive = 0 AND idMarque = :idMarque" : "WHERE estArchive = 0";
-        $sql = "SELECT * FROM produit $where ORDER BY estEpingle DESC, sortOrder ASC, idProduit DESC";
-        $db = config::getConnexion();
+        $sql   = "SELECT * FROM produit $where ORDER BY estEpingle DESC, sortOrder ASC, idProduit DESC";
+        $db    = config::getConnexion();
         if ($idMarque) {
             $q = $db->prepare($sql);
             $q->execute(['idMarque' => $idMarque]);
@@ -119,10 +107,11 @@ class ProduitC {
     }
 
     // ─── AFFICHER ARCHIVÉS ─────────────────────────────────────────────────────
-    public function afficherProduitsArchives($idMarque = null) {
+    public function afficherProduitsArchives(?int $idMarque = null): array
+    {
         $where = $idMarque ? "WHERE estArchive = 1 AND idMarque = :idMarque" : "WHERE estArchive = 1";
-        $sql = "SELECT * FROM produit $where ORDER BY idProduit DESC";
-        $db = config::getConnexion();
+        $sql   = "SELECT * FROM produit $where ORDER BY idProduit DESC";
+        $db    = config::getConnexion();
         if ($idMarque) {
             $q = $db->prepare($sql);
             $q->execute(['idMarque' => $idMarque]);
@@ -132,69 +121,73 @@ class ProduitC {
     }
 
     // ─── RÉCUPÉRER UN PRODUIT ──────────────────────────────────────────────────
-    public function recupererProduit($id) {
-        $sql = "SELECT * FROM produit WHERE idProduit = :id";
-        $db = config::getConnexion();
-        $query = $db->prepare($sql);
-        $query->execute(['id' => $id]);
-        return $query->fetch();
+    public function recupererProduit(int $id): ?array
+    {
+        $q = config::getConnexion()->prepare("SELECT * FROM produit WHERE idProduit = :id");
+        $q->execute(['id' => $id]);
+        $r = $q->fetch();
+        return $r ?: null;
     }
 
     // ─── SUPPRIMER ─────────────────────────────────────────────────────────────
-    public function supprimerProduit($id) {
-        $produit = $this->recupererProduit($id);
-        if ($produit && $produit['image']) {
-            $fichier = __DIR__ . '/../Vue/public/produits/' . $produit['image'];
-            if (file_exists($fichier)) unlink($fichier);
+    public function supprimerProduit(int $id): void
+    {
+        $p = $this->recupererProduit($id);
+        if ($p && $p['image']) {
+            $f = __DIR__ . '/../Vue/public/produits/' . $p['image'];
+            if (file_exists($f)) unlink($f);
         }
-        $sql = "DELETE FROM produit WHERE idProduit = :id";
-        $db = config::getConnexion();
-        $req = $db->prepare($sql);
-        $req->execute(['id' => $id]);
+        $q = config::getConnexion()->prepare("DELETE FROM produit WHERE idProduit = :id");
+        $q->execute(['id' => $id]);
     }
 
     // ─── ARCHIVER / DÉSARCHIVER ────────────────────────────────────────────────
-    public function toggleArchive($id) {
-        $sql = "UPDATE produit SET estArchive = NOT estArchive WHERE idProduit = :id";
-        $db = config::getConnexion();
-        $q = $db->prepare($sql);
+    public function toggleArchive(int $id): void
+    {
+        $q = config::getConnexion()->prepare(
+            "UPDATE produit SET estArchive = NOT estArchive WHERE idProduit = :id"
+        );
         $q->execute(['id' => $id]);
     }
 
     // ─── ÉPINGLER / DÉSÉPINGLER ────────────────────────────────────────────────
-    public function toggleEpingle($id) {
-        $sql = "UPDATE produit SET estEpingle = NOT estEpingle WHERE idProduit = :id";
-        $db = config::getConnexion();
-        $q = $db->prepare($sql);
+    public function toggleEpingle(int $id): void
+    {
+        $q = config::getConnexion()->prepare(
+            "UPDATE produit SET estEpingle = NOT estEpingle WHERE idProduit = :id"
+        );
         $q->execute(['id' => $id]);
     }
 
-    // ─── RÉORDONNER (drag & drop) ──────────────────────────────────────────────
-    public function reordonnerProduits(array $ordre) {
+    // ─── RÉORDONNER ────────────────────────────────────────────────────────────
+    public function reordonnerProduits(array $ordre): void
+    {
         $db = config::getConnexion();
-        $sql = "UPDATE produit SET sortOrder = :ordre WHERE idProduit = :id";
-        $q = $db->prepare($sql);
+        $q  = $db->prepare("UPDATE produit SET sortOrder = :ordre WHERE idProduit = :id");
         foreach ($ordre as $index => $id) {
             $q->execute(['ordre' => $index, 'id' => (int)$id]);
         }
     }
 
     // ─── CATÉGORIES DISTINCTES ────────────────────────────────────────────────
-    public function getCategories($idMarque = null) {
-        $where = $idMarque ? "WHERE estArchive = 0 AND categorie IS NOT NULL AND idMarque = :idMarque"
-                           : "WHERE estArchive = 0 AND categorie IS NOT NULL";
+    public function getCategories(?int $idMarque = null): array
+    {
+        $where = $idMarque
+            ? "WHERE estArchive = 0 AND categorie IS NOT NULL AND idMarque = :idMarque"
+            : "WHERE estArchive = 0 AND categorie IS NOT NULL";
         $sql = "SELECT DISTINCT categorie FROM produit $where ORDER BY categorie ASC";
-        $db = config::getConnexion();
+        $db  = config::getConnexion();
         if ($idMarque) {
             $q = $db->prepare($sql);
             $q->execute(['idMarque' => $idMarque]);
-            return $q->fetchAll(\PDO::FETCH_COLUMN);
+            return $q->fetchAll(PDO::FETCH_COLUMN);
         }
-        return $db->query($sql)->fetchAll(\PDO::FETCH_COLUMN);
+        return $db->query($sql)->fetchAll(PDO::FETCH_COLUMN);
     }
 
     // ─── TOP PRODUITS ──────────────────────────────────────────────────────────
-    public function getTopProduits($limit = 5) {
+    public function getTopProduits(int $limit = 5): array
+    {
         $sql = "SELECT p.*, COUNT(o.idOffre) as nbOffres
                 FROM produit p
                 LEFT JOIN offre o ON o.idProduit = p.idProduit
@@ -203,61 +196,113 @@ class ProduitC {
                 ORDER BY nbOffres DESC, p.idProduit DESC
                 LIMIT :limit";
         $db = config::getConnexion();
-        $q = $db->prepare($sql);
-        $q->bindValue(':limit', (int)$limit, \PDO::PARAM_INT);
+        $q  = $db->prepare($sql);
+        $q->bindValue(':limit', $limit, PDO::PARAM_INT);
         $q->execute();
         return $q->fetchAll();
     }
 
-    // ════════════════════════════════════════════════════════════════
-    // ─── JOINTURE CAMPAGNE ↔ PRODUIT ────────────────────────────────
-    // ════════════════════════════════════════════════════════════════
+    // ─── JOINTURE CAMPAGNE ↔ PRODUIT ──────────────────────────────────────────
 
-    /**
-     * Retourne tous les produits actifs liés à une campagne donnée.
-     *
-     * @param int $idCampagne
-     * @return array
-     */
-    public function getProduitsByCampagne(int $idCampagne): array {
+    public function getProduitsByCampagne(int $idCampagne): array
+    {
         $sql = "SELECT p.*
                 FROM produit p
                 INNER JOIN campagne_produit cp ON cp.idProduit = p.idProduit
-                WHERE cp.idCampagne = :idCampagne
-                  AND p.estArchive  = 0
+                WHERE cp.idCampagne = :c AND p.estArchive = 0
                 ORDER BY p.estEpingle DESC, p.sortOrder ASC, p.idProduit DESC";
-        $db = config::getConnexion();
-        $q  = $db->prepare($sql);
-        $q->execute(['idCampagne' => $idCampagne]);
+        $q = config::getConnexion()->prepare($sql);
+        $q->execute(['c' => $idCampagne]);
         return $q->fetchAll();
     }
 
-    /**
-     * Retourne tous les produits actifs NON encore liés à une campagne.
-     * Utile pour alimenter le sélecteur d'ajout.
-     *
-     * @param int      $idCampagne
-     * @param int|null $idMarque   Filtrer sur la marque propriétaire (optionnel)
-     * @return array
-     */
-    public function getProduitsDisponiblesPourCampagne(int $idCampagne, int $idMarque = null): array {
-        $whereMarque = $idMarque ? "AND p.idMarque = :idMarque" : "";
+    public function getProduitsDisponiblesPourCampagne(int $idCampagne, ?int $idMarque = null): array
+    {
+        $m   = $idMarque ? "AND p.idMarque = :idMarque" : "";
         $sql = "SELECT p.*
                 FROM produit p
-                WHERE p.estArchive = 0
-                  $whereMarque
+                WHERE p.estArchive = 0 $m
                   AND p.idProduit NOT IN (
-                      SELECT cp.idProduit
-                      FROM campagne_produit cp
-                      WHERE cp.idCampagne = :idCampagne
+                      SELECT cp.idProduit FROM campagne_produit cp WHERE cp.idCampagne = :c
                   )
                 ORDER BY p.estEpingle DESC, p.nomProduit ASC";
-        $db = config::getConnexion();
-        $q  = $db->prepare($sql);
-        $params = ['idCampagne' => $idCampagne];
+        $db     = config::getConnexion();
+        $q      = $db->prepare($sql);
+        $params = ['c' => $idCampagne];
         if ($idMarque) $params['idMarque'] = $idMarque;
         $q->execute($params);
         return $q->fetchAll();
     }
+
+    // ════════════════════════════════════════════════════════════════
+    // ─── IA : OPTIMISATION PRODUIT (MARQUE) ───────────────────────
+    // Utilisée dans : Vue/FrontOffice/produit/index.php
+    // ════════════════════════════════════════════════════════════════
+
+    public function optimiserProduitIA(
+        string $nom, string $description, string $categorie
+    ): ?array {
+        $prompt = "Optimise la fiche produit suivante pour Cre8Connect (collaboration marques-créateurs).
+
+Produit :
+- Nom : $nom
+- Description actuelle : $description
+- Catégorie : $categorie
+
+Réponds UNIQUEMENT avec un objet JSON valide contenant :
+{
+  \"description_amelioree\": \"Description marketing optimisée (200-500 caractères)\",
+  \"mots_cles\": [\"mot1\", \"mot2\", \"mot3\", \"mot4\", \"mot5\"],
+  \"hashtags\": [\"#h1\", \"#h2\", \"#h3\", \"#h4\", \"#h5\", \"#h6\", \"#h7\", \"#h8\"],
+  \"conseil_prix\": \"Conseil sur le positionnement prix\",
+  \"score_attractivite\": \"Note de 1 à 10\"
 }
-?>
+
+Adapté au marché francophone. Ne retourne RIEN d'autre que le JSON.";
+
+        return $this->_parseIA(callOpenRouter($prompt));
+    }
+
+    // ─── IA : AUDIT PRODUIT (ADMIN) ───────────────────────────────
+    // Utilisée dans : Vue/BackOffice/produit/index.php
+
+    public function auditProduitIA(
+        string $nom, string $description, float $prix, string $categorie
+    ): ?array {
+        $prompt = "Tu es un auditeur qualité pour l'admin de Cre8Connect.
+
+Produit à auditer :
+- Nom : $nom
+- Description : $description
+- Prix : {$prix}€
+- Catégorie : $categorie
+
+Réponds UNIQUEMENT en JSON :
+{
+  \"score_qualite\": \"Note de 1 à 10\",
+  \"conformite\": \"conforme / non-conforme / à améliorer\",
+  \"problemes\": [\"problème 1\", \"problème 2\"],
+  \"ameliorations\": [\"amélioration 1\", \"amélioration 2\"],
+  \"prix_coherent\": \"oui/non avec justification\",
+  \"pret_pour_campagne\": \"oui/non avec justification\"
+}
+
+Ne retourne RIEN d'autre que le JSON.";
+
+        return $this->_parseIA(callOpenRouter($prompt));
+    }
+
+    // ─── Utilitaire privé ──────────────────────────────────────────
+
+    private function _parseIA(?string $raw): ?array
+    {
+        if (!$raw) return null;
+        $clean  = trim(preg_replace('/```json\s*|\s*```/', '', $raw));
+        $parsed = json_decode($clean, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log("ProduitC IA: JSON invalide — " . json_last_error_msg());
+            return null;
+        }
+        return $parsed;
+    }
+}

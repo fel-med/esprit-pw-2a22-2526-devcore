@@ -1,5 +1,7 @@
 <?php
-class Campagne {
+
+class Campagne
+{
     private $id;
     private $titre;
     private $description;
@@ -39,14 +41,13 @@ class Campagne {
     public function getObjectif()    { return $this->objectif; }
     public function getEstArchive()  { return $this->estArchive; }
 
-    public function setTitre($titre)            { $this->titre = $titre; }
-    public function setDescription($description){ $this->description = $description; }
-    public function setDateDebut($dateDebut)    { $this->dateDebut = $dateDebut; }
-    public function setDateFin($dateFin)        { $this->dateFin = $dateFin; }
-    public function setBudget($budget)          { $this->budget = $budget; }
-    public function setStatut($statut)          { $this->statut = $statut; }
-    public function setIdMarque($idMarque)      { $this->idMarque = $idMarque; }
-    public function setObjectif($objectif)      { $this->objectif = $objectif; }
-    public function setEstArchive($estArchive)  { $this->estArchive = $estArchive; }
+    public function setTitre($v)       { $this->titre = $v; }
+    public function setDescription($v) { $this->description = $v; }
+    public function setDateDebut($v)   { $this->dateDebut = $v; }
+    public function setDateFin($v)     { $this->dateFin = $v; }
+    public function setBudget($v)      { $this->budget = $v; }
+    public function setStatut($v)      { $this->statut = $v; }
+    public function setIdMarque($v)    { $this->idMarque = $v; }
+    public function setObjectif($v)    { $this->objectif = $v; }
+    public function setEstArchive($v)  { $this->estArchive = $v; }
 }
-?>
