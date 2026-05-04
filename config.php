@@ -30,17 +30,15 @@ class config
  */
 function callOpenRouter(string $prompt): ?string
 {
-    $apiKey = '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';
-    $url    = 'https://openrouter.ai/api/v1/chat/completions';
+    $apiKey = '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';
+    $url    = 'https://api.groq.com/openai/v1/chat/completions';
 
     $data = [
-        'model'       => 'deepseek/deepseek-chat-v3-0324:free',
+        'model'       => 'llama-3.3-70b-versatile',
         'messages'    => [
             [
                 'role'    => 'system',
-                'content' => 'Tu es un assistant expert en marketing digital, campagnes publicitaires '
-                           . 'et contrats de collaboration entre marques et créateurs de contenu. '
-                           . 'Réponds toujours en JSON valide.',
+                'content' => 'Tu es un assistant expert en marketing digital. Réponds toujours en JSON valide uniquement.',
             ],
             [
                 'role'    => 'user',
@@ -58,8 +56,6 @@ function callOpenRouter(string $prompt): ?string
         CURLOPT_HTTPHEADER     => [
             'Content-Type: application/json',
             'Authorization: Bearer ' . $apiKey,
-            'HTTP-Referer: http://localhost/projet/Esprit-PW-2A22-2526-Devcore',
-            'X-Title: Cre8Connect',
         ],
         CURLOPT_POSTFIELDS     => json_encode($data),
         CURLOPT_TIMEOUT        => 30,
@@ -68,11 +64,10 @@ function callOpenRouter(string $prompt): ?string
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curlErr  = curl_error($ch);
     curl_close($ch);
 
-    if ($curlErr || $httpCode !== 200) {
-        error_log("OpenRouter API Error: HTTP $httpCode — $curlErr");
+    if ($httpCode !== 200) {
+        error_log("Groq API Error: HTTP $httpCode — " . $response);
         return null;
     }
 

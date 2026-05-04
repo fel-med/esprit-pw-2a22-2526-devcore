@@ -286,15 +286,26 @@ Ne retourne RIEN d'autre que le JSON.";
 
     // ─── Utilitaire privé ──────────────────────────────────────────
 
-    private function _parseIA(?string $raw): ?array
-    {
-        if (!$raw) return null;
-        $clean  = trim(preg_replace('/```json\s*|\s*```/', '', $raw));
-        $parsed = json_decode($clean, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            error_log("CampagneC IA: JSON invalide — " . json_last_error_msg());
-            return null;
-        }
-        return $parsed;
+   private function _parseIA(?string $raw): ?array
+{
+    if (!$raw) return null;
+
+    // Nettoyer les balises markdown
+    $clean = trim(preg_replace('/```json\s*|\s*```/', '', $raw));
+
+    // Extraire le premier bloc JSON valide si du texte précède
+    if (preg_match('/\{[\s\S]*\}/u', $clean, $matches)) {
+        $clean = $matches[0];
     }
+
+    $parsed = json_decode($clean, true);
+
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        error_log("CampagneC IA: JSON invalide — " . json_last_error_msg());
+        error_log("CampagneC IA: Raw content — " . substr($raw, 0, 500));
+        return null;
+    }
+
+    return $parsed;
+}
 }

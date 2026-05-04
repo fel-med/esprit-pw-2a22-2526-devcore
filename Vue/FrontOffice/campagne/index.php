@@ -2,6 +2,7 @@
 /**
  * Vue/FrontOffice/campagne/index.php
  * Rôle : MARQUE — gestion de ses campagnes + génération IA
+ * Enhanced with: Translation, Dark/Light Mode, Pagination
  */
 
 require_once __DIR__ . '/../../../Controleur/campagneC.php';
@@ -72,7 +73,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'ia_ge
     $budget  = floatval($_POST['ia_budget'] ?? 0);
     if ($produit && $cible && $budget > 0) {
         $iaResult = $campagneC->genererCampagneIA($produit, $cible, $budget);
-        if (!$iaResult) $iaError = "L'IA n'a pas pu générer la campagne. Réessayez.";
+       if (!$iaResult) {
+    $iaError = "L'IA n'a pas pu générer la campagne. Vérifiez les logs PHP (error_log).";
+}
     } else {
         $iaError = "Remplissez tous les champs IA.";
     }
@@ -172,11 +175,26 @@ function statutBg($s)    { return match($s) { 'active'=>'#edfaf5', 'terminee'=>'
     --card-shadow-hover:0 8px 32px rgba(91,79,255,0.14);
     --radius:14px;--radius-sm:8px;--nav-h:66px;
 }
+
+/* ===== ADDED FEATURE: DARK MODE ===== */
+body.dark-mode {
+    --primary:#7c6fff;--primary-hover:#6357e8;--primary-light:#2a2660;
+    --primary-glow:rgba(124,111,255,0.2);--primary-border:rgba(124,111,255,0.3);
+    --text-main:#f0eeff;--text-sub:#a8a4c0;--text-dim:#6b6880;
+    --border:#2e2b45;--bg:#12111e;--white:#1c1a2e;
+    --danger:#f87191;--danger-light:#2a1520;--danger-border:rgba(248,113,145,0.25);
+    --success:#34d399;--success-light:#0d2e22;--success-border:rgba(52,211,153,0.25);
+    --warning:#fbbf24;--warning-light:#271d08;
+    --card-shadow:0 1px 3px rgba(0,0,0,0.3),0 4px 16px rgba(0,0,0,0.2);
+    --card-shadow-hover:0 8px 32px rgba(124,111,255,0.2);
+}
+/* ===== END DARK MODE VARIABLES ===== */
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-main);min-height:100vh;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-main);min-height:100vh;transition:background .3s,color .3s;}
 
 /* NAV */
-nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 48px;height:var(--nav-h);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(15,14,26,0.04);}
+nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 48px;height:var(--nav-h);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(15,14,26,0.04);transition:background .3s,border-color .3s;}
 .nav-logo{font-family:'Fraunces',serif;font-size:20px;font-weight:800;color:var(--primary);text-decoration:none;}
 .nav-links{display:flex;gap:6px;list-style:none;}
 .nav-links a{text-decoration:none;color:var(--text-sub);font-size:13.5px;font-weight:600;padding:6px 14px;border-radius:8px;transition:all .18s;}
@@ -184,6 +202,47 @@ nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 48px
 .nav-right{display:flex;align-items:center;gap:12px;}
 .nav-badge{background:var(--primary);color:#fff;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;}
 .nav-avatar{width:36px;height:36px;border-radius:50%;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;border:2px solid var(--primary-border);}
+
+/* ===== ADDED FEATURE: DARK MODE TOGGLE BUTTON ===== */
+.theme-toggle {
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--text-sub);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all .2s;
+    white-space: nowrap;
+}
+.theme-toggle:hover { border-color: var(--primary); color: var(--primary); }
+/* ===== END DARK MODE TOGGLE ===== */
+
+/* ===== ADDED FEATURE: LANGUAGE SWITCHER ===== */
+.lang-switcher {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+.lang-btn {
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    color: var(--text-sub);
+    font-family: 'DM Sans', sans-serif;
+    transition: all .18s;
+}
+.lang-btn:hover, .lang-btn.active { background: var(--primary-light); color: var(--primary); border-color: var(--primary-border); }
+/* ===== END LANGUAGE SWITCHER ===== */
 
 /* PAGE */
 .page-wrapper{max-width:1160px;margin:0 auto;padding:40px 24px 80px;}
@@ -206,7 +265,7 @@ nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 48px
 
 /* KPI */
 .kpi-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:32px;}
-.kpi-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;position:relative;overflow:hidden;transition:box-shadow .2s;}
+.kpi-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;position:relative;overflow:hidden;transition:box-shadow .2s,background .3s,border-color .3s;}
 .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius) var(--radius) 0 0;}
 .kpi-card:nth-child(1)::before{background:linear-gradient(90deg,var(--primary),#a78bfa);}
 .kpi-card:nth-child(2)::before{background:linear-gradient(90deg,#0ea370,#34d399);}
@@ -223,17 +282,17 @@ nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 48px
 .kpi-label{font-size:11px;font-weight:600;color:var(--text-sub);margin-top:4px;text-transform:uppercase;letter-spacing:.05em;}
 
 /* IA PANEL */
-.ia-panel{background:linear-gradient(135deg,#f0effb,#ece9ff);border:1.5px solid var(--primary-border);border-radius:var(--radius);padding:24px 28px;margin-bottom:32px;}
+.ia-panel{background:linear-gradient(135deg,var(--primary-light),var(--primary-light));border:1.5px solid var(--primary-border);border-radius:var(--radius);padding:24px 28px;margin-bottom:32px;transition:background .3s;}
 .ia-panel-header{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
 .ia-panel-header h2{font-family:'Fraunces',serif;font-size:18px;font-weight:800;color:var(--primary);}
 .ia-form-grid{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end;}
 .ia-form-group{display:flex;flex-direction:column;gap:4px;}
 .ia-form-group label{font-size:12px;font-weight:700;color:var(--text-sub);}
-.ia-form-group input{padding:9px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;background:var(--white);outline:none;transition:border-color .2s;}
+.ia-form-group input{padding:9px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;background:var(--white);color:var(--text-main);outline:none;transition:border-color .2s,background .3s;}
 .ia-form-group input:focus{border-color:var(--primary);}
 .btn-ia{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(135deg,var(--primary),#7c3aed);color:#fff;border:none;border-radius:var(--radius-sm);padding:10px 18px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;white-space:nowrap;transition:all .2s;}
 .btn-ia:hover{opacity:.9;transform:translateY(-1px);}
-.ia-result{background:var(--white);border:1.5px solid var(--primary-border);border-radius:var(--radius-sm);padding:18px;margin-top:16px;}
+.ia-result{background:var(--white);border:1.5px solid var(--primary-border);border-radius:var(--radius-sm);padding:18px;margin-top:16px;transition:background .3s;}
 .ia-result-title{font-size:13px;font-weight:700;color:var(--primary);margin-bottom:10px;}
 .ia-field{margin-bottom:10px;}
 .ia-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:3px;}
@@ -249,14 +308,14 @@ nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 48px
 .tools-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
 .search-wrap{position:relative;}
 .search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-dim);pointer-events:none;width:14px;height:14px;}
-.search-input{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px 8px 32px;font-size:13px;font-family:'DM Sans',sans-serif;width:200px;outline:none;transition:border-color .2s;}
+.search-input{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px 8px 32px;font-size:13px;font-family:'DM Sans',sans-serif;width:200px;outline:none;transition:border-color .2s,background .3s;color:var(--text-main);}
 .search-input:focus{border-color:var(--primary);}
-.filter-select{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;}
+.filter-select{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;color:var(--text-main);transition:background .3s;}
 .count-pill{background:var(--primary-light);color:var(--primary);border-radius:20px;padding:3px 11px;font-size:12px;font-weight:700;}
 
 /* CAMP CARDS */
-.camp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px;margin-bottom:32px;}
-.camp-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--card-shadow);display:flex;flex-direction:column;transition:transform .22s,box-shadow .22s,border-color .22s;position:relative;}
+.camp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px;margin-bottom:24px;}
+.camp-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--card-shadow);display:flex;flex-direction:column;transition:transform .22s,box-shadow .22s,border-color .22s,background .3s;position:relative;}
 .camp-card:hover{transform:translateY(-3px);box-shadow:var(--card-shadow-hover);border-color:var(--primary-border);}
 .camp-card-header{padding:18px 18px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
 .camp-card-title{font-family:'Fraunces',serif;font-size:16px;font-weight:800;flex:1;}
@@ -270,7 +329,7 @@ nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 48px
 .camp-prod-badge.zero{background:var(--bg);color:var(--text-dim);border:1px solid var(--border);}
 .camp-actions{display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--border);flex-wrap:wrap;}
 .btn-edit-camp{flex:1;padding:8px;background:var(--primary-light);color:var(--primary);border:none;border-radius:7px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:5px;transition:background .18s;}
-.btn-edit-camp:hover{background:#ddddf8;}
+.btn-edit-camp:hover{background:var(--primary-border);}
 .btn-del-camp{flex:0 0 auto;padding:8px 10px;background:var(--danger-light);color:var(--danger);border:none;border-radius:7px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .btn-arch-camp{flex:0 0 auto;padding:8px 10px;background:var(--warning-light);color:#92400e;border:none;border-radius:7px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;}
 
@@ -280,7 +339,7 @@ nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 48px
 .empty-state p{font-size:13.5px;color:var(--text-sub);margin-bottom:20px;}
 
 /* FORM */
-.form-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--card-shadow);}
+.form-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--card-shadow);transition:background .3s;}
 .form-card.edit-mode{border:2px solid var(--primary);}
 .form-card-header{padding:22px 26px 0;}
 .form-card-header h2{font-family:'Fraunces',serif;font-size:19px;font-weight:800;}
@@ -292,11 +351,11 @@ nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 48px
 .form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;}
 .form-group{display:flex;flex-direction:column;gap:4px;margin-bottom:14px;}
 .form-group label{font-size:12.5px;font-weight:700;color:var(--text-sub);}
-.form-input{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:13.5px;color:var(--text-main);background:#fafafa;transition:border-color .2s;outline:none;font-family:'DM Sans',sans-serif;}
+.form-input{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:13.5px;color:var(--text-main);background:var(--bg);transition:border-color .2s,background .3s;outline:none;font-family:'DM Sans',sans-serif;}
 .form-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow);}
 .form-input.is-invalid{border-color:var(--danger) !important;}
 textarea.form-input{resize:vertical;min-height:90px;}
-.prefix-wrap{display:flex;align-items:center;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:#fafafa;overflow:hidden;transition:border-color .2s;}
+.prefix-wrap{display:flex;align-items:center;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);overflow:hidden;transition:border-color .2s;}
 .prefix-wrap:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow);}
 .prefix{padding:0 11px;font-size:13px;color:var(--text-dim);border-right:1.5px solid var(--border);background:var(--white);min-height:42px;display:flex;align-items:center;}
 .prefix-wrap .form-input{border:none;background:transparent;}
@@ -308,7 +367,7 @@ textarea.form-input{resize:vertical;min-height:90px;}
 /* DRAWER */
 .drawer-overlay{position:fixed;inset:0;background:rgba(15,14,26,.45);z-index:200;display:none;align-items:flex-end;justify-content:center;}
 .drawer-overlay.open{display:flex;}
-.drawer{width:100%;max-width:680px;background:var(--white);border-radius:var(--radius) var(--radius) 0 0;padding:28px 32px 36px;box-shadow:0 -8px 40px rgba(15,14,26,.15);animation:slideUp .24s ease;max-height:85vh;overflow-y:auto;display:flex;flex-direction:column;gap:20px;}
+.drawer{width:100%;max-width:680px;background:var(--white);border-radius:var(--radius) var(--radius) 0 0;padding:28px 32px 36px;box-shadow:0 -8px 40px rgba(15,14,26,.15);animation:slideUp .24s ease;max-height:85vh;overflow-y:auto;display:flex;flex-direction:column;gap:20px;transition:background .3s;}
 @keyframes slideUp{from{transform:translateY(40px);opacity:0;}to{transform:translateY(0);opacity:1;}}
 .drawer-title{font-family:'Fraunces',serif;font-size:20px;font-weight:800;}
 .drawer-sub{font-size:13px;color:var(--text-sub);margin-top:3px;}
@@ -324,7 +383,7 @@ textarea.form-input{resize:vertical;min-height:90px;}
 .drawer-prod-price{font-family:'Fraunces',serif;font-size:14px;font-weight:800;color:var(--primary);white-space:nowrap;}
 .btn-drawer-remove{background:var(--danger-light);color:var(--danger);border:1px solid var(--danger-border);border-radius:7px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0;}
 .drawer-add-row{display:flex;gap:10px;}
-.drawer-select{flex:1;background:#fafafa;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;}
+.drawer-select{flex:1;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;color:var(--text-main);}
 .drawer-select:focus{border-color:var(--primary);}
 .btn-drawer-add{background:var(--primary);color:#fff;border:none;border-radius:var(--radius-sm);padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .drawer-empty{text-align:center;padding:20px;color:var(--text-dim);font-size:13px;}
@@ -332,7 +391,7 @@ textarea.form-input{resize:vertical;min-height:90px;}
 /* DELETE MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(15,14,26,.55);z-index:300;display:none;align-items:center;justify-content:center;}
 .modal-overlay.open{display:flex;}
-.modal-box{background:var(--white);border-radius:var(--radius);padding:30px 32px;width:400px;max-width:94vw;box-shadow:0 20px 60px rgba(15,14,26,.18);animation:popIn .22s ease;}
+.modal-box{background:var(--white);border-radius:var(--radius);padding:30px 32px;width:400px;max-width:94vw;box-shadow:0 20px 60px rgba(15,14,26,.18);animation:popIn .22s ease;transition:background .3s;}
 @keyframes popIn{from{opacity:0;transform:scale(.93);}to{opacity:1;transform:scale(1);}}
 .modal-title{font-family:'Fraunces',serif;font-size:18px;font-weight:800;margin-bottom:8px;}
 .modal-text{font-size:13.5px;color:var(--text-sub);margin-bottom:24px;line-height:1.6;}
@@ -343,6 +402,50 @@ textarea.form-input{resize:vertical;min-height:90px;}
 /* SECTION HEAD */
 .section-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
 .section-head h2{font-family:'Fraunces',serif;font-size:17px;font-weight:800;}
+
+/* ===== ADDED FEATURE: PAGINATION ===== */
+.pagination-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+}
+.pagination-info {
+    font-size: 13px;
+    color: var(--text-sub);
+    margin-right: 8px;
+}
+.page-btn {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 7px 13px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text-sub);
+    font-family: 'DM Sans', sans-serif;
+    transition: all .18s;
+    min-width: 36px;
+    text-align: center;
+}
+.page-btn:hover { border-color: var(--primary); color: var(--primary); }
+.page-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.page-btn:disabled { opacity: .4; cursor: not-allowed; pointer-events: none; }
+.per-page-select {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 7px 10px;
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    color: var(--text-sub);
+    outline: none;
+}
+/* ===== END PAGINATION ===== */
 </style>
 </head>
 <body>
@@ -351,12 +454,26 @@ textarea.form-input{resize:vertical;min-height:90px;}
     <a href="#" class="nav-logo">Cre8Connect</a>
     <ul class="nav-links">
         <li><a href="#">Dashboard</a></li>
-        <li><a href="#" class="active">Campagnes</a></li>
-        <li><a href="../produit/index.php">Produits</a></li>
-        <li><a href="../contrat/index.php">Contrats</a></li>
+        <li><a href="#" class="active" data-i18n="nav_campagnes">Campagnes</a></li>
+        <li><a href="../produit/index.php" data-i18n="nav_produits">Produits</a></li>
+        <li><a href="../contrat/index.php" data-i18n="nav_contrats">Contrats</a></li>
     </ul>
     <div class="nav-right">
-        <span class="nav-badge">Marque</span>
+        <!-- ===== ADDED FEATURE: LANGUAGE SWITCHER ===== -->
+        <div class="lang-switcher">
+            <button class="lang-btn active" onclick="setLang('fr')" id="btn-fr">FR</button>
+            <button class="lang-btn" onclick="setLang('en')" id="btn-en">EN</button>
+        </div>
+        <!-- ===== END LANGUAGE SWITCHER ===== -->
+
+        <!-- ===== ADDED FEATURE: DARK MODE TOGGLE ===== -->
+        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Changer le thème">
+            <span id="themeIcon">🌙</span>
+            <span id="themeLabel" data-i18n="theme_dark">Mode sombre</span>
+        </button>
+        <!-- ===== END DARK MODE TOGGLE ===== -->
+
+        <span class="nav-badge" data-i18n="role_marque">Marque</span>
         <div class="nav-avatar">M</div>
     </div>
 </nav>
@@ -366,13 +483,13 @@ textarea.form-input{resize:vertical;min-height:90px;}
     <!-- PAGE HEADER -->
     <div class="page-header">
         <div>
-            <h1>⚡ Mes Campagnes</h1>
-            <p>Créez, gérez et analysez vos campagnes de collaboration.</p>
+            <h1>⚡ <span data-i18n="page_title">Mes Campagnes</span></h1>
+            <p data-i18n="page_subtitle">Créez, gérez et analysez vos campagnes de collaboration.</p>
         </div>
         <div class="page-header-actions">
             <a href="#formAnchor" class="btn-primary">
                 <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                Nouvelle campagne
+                <span data-i18n="btn_new_campaign">Nouvelle campagne</span>
             </a>
         </div>
     </div>
@@ -386,83 +503,91 @@ textarea.form-input{resize:vertical;min-height:90px;}
 
     <!-- KPI -->
     <div class="kpi-strip">
-        <div class="kpi-card"><div class="kpi-icon">⚡</div><div class="kpi-value"><?= $totalActives ?></div><div class="kpi-label">Total</div></div>
-        <div class="kpi-card"><div class="kpi-icon">✅</div><div class="kpi-value"><?= $nbActives ?></div><div class="kpi-label">Actives</div></div>
-        <div class="kpi-card"><div class="kpi-icon">📝</div><div class="kpi-value"><?= $nbBrouillons ?></div><div class="kpi-label">Brouillons</div></div>
-        <div class="kpi-card"><div class="kpi-icon">🏁</div><div class="kpi-value"><?= $nbTerminees ?></div><div class="kpi-label">Terminées</div></div>
-        <div class="kpi-card"><div class="kpi-icon">💰</div><div class="kpi-value"><?= number_format($budgetTotal, 0, ',', ' ') ?> €</div><div class="kpi-label">Budget total</div></div>
+        <div class="kpi-card"><div class="kpi-icon">⚡</div><div class="kpi-value"><?= $totalActives ?></div><div class="kpi-label" data-i18n="kpi_total">Total</div></div>
+        <div class="kpi-card"><div class="kpi-icon">✅</div><div class="kpi-value"><?= $nbActives ?></div><div class="kpi-label" data-i18n="kpi_active">Actives</div></div>
+        <div class="kpi-card"><div class="kpi-icon">📝</div><div class="kpi-value"><?= $nbBrouillons ?></div><div class="kpi-label" data-i18n="kpi_draft">Brouillons</div></div>
+        <div class="kpi-card"><div class="kpi-icon">🏁</div><div class="kpi-value"><?= $nbTerminees ?></div><div class="kpi-label" data-i18n="kpi_done">Terminées</div></div>
+        <div class="kpi-card"><div class="kpi-icon">💰</div><div class="kpi-value"><?= number_format($budgetTotal, 0, ',', ' ') ?> €</div><div class="kpi-label" data-i18n="kpi_budget">Budget total</div></div>
     </div>
 
     <!-- IA PANEL -->
     <div class="ia-panel">
         <div class="ia-panel-header">
             <span style="font-size:22px;">🤖</span>
-            <h2>Générer une campagne avec l'IA</h2>
+            <h2 data-i18n="ia_title">Générer une campagne avec l'IA</h2>
         </div>
         <form method="POST" id="iaForm">
             <input type="hidden" name="action" value="ia_generer">
             <div class="ia-form-grid">
                 <div class="ia-form-group">
-                    <label>Produit à promouvoir *</label>
-                    <input type="text" name="ia_produit" placeholder="Ex : Sneakers éco-responsables" value="<?= htmlspecialchars($_POST['ia_produit'] ?? '') ?>">
+                    <label data-i18n="ia_product_label">Produit à promouvoir *</label>
+                    <input type="text" name="ia_produit" data-i18n-placeholder="ia_product_placeholder" placeholder="Ex : Sneakers éco-responsables" value="<?= htmlspecialchars($_POST['ia_produit'] ?? '') ?>">
                 </div>
                 <div class="ia-form-group">
-                    <label>Audience cible *</label>
-                    <input type="text" name="ia_cible" placeholder="Ex : 18-30 ans, mode durable" value="<?= htmlspecialchars($_POST['ia_cible'] ?? '') ?>">
+                    <label data-i18n="ia_audience_label">Audience cible *</label>
+                    <input type="text" name="ia_cible" data-i18n-placeholder="ia_audience_placeholder" placeholder="Ex : 18-30 ans, mode durable" value="<?= htmlspecialchars($_POST['ia_cible'] ?? '') ?>">
                 </div>
                 <div class="ia-form-group">
-                    <label>Budget (€) *</label>
+                    <label data-i18n="ia_budget_label">Budget (€) *</label>
                     <input type="number" name="ia_budget" min="1" step="0.01" placeholder="5000" value="<?= htmlspecialchars($_POST['ia_budget'] ?? '') ?>">
                 </div>
                 <button type="submit" class="btn-ia" onclick="document.getElementById('iaLoading').classList.add('show')">
-                    ✨ Générer
+                    ✨ <span data-i18n="ia_generate_btn">Générer</span>
                 </button>
             </div>
         </form>
-        <div class="ia-loading" id="iaLoading"><div class="spinner"></div> L'IA génère votre campagne…</div>
+        <div class="ia-loading" id="iaLoading"><div class="spinner"></div> <span data-i18n="ia_loading">L'IA génère votre campagne…</span></div>
         <?php if ($iaError): ?>
             <div class="ia-error">⚠️ <?= htmlspecialchars($iaError) ?></div>
         <?php endif; ?>
         <?php if ($iaResult): ?>
         <div class="ia-result">
-            <div class="ia-result-title">🎯 Campagne générée par l'IA</div>
-            <?php if (!empty($iaResult['titre'])): ?><div class="ia-field"><div class="ia-label">Titre</div><div class="ia-value big"><?= htmlspecialchars($iaResult['titre']) ?></div></div><?php endif; ?>
-            <?php if (!empty($iaResult['description'])): ?><div class="ia-field"><div class="ia-label">Description</div><div class="ia-value"><?= htmlspecialchars($iaResult['description']) ?></div></div><?php endif; ?>
-            <?php if (!empty($iaResult['objectif'])): ?><div class="ia-field"><div class="ia-label">Objectif</div><div class="ia-value"><?= htmlspecialchars($iaResult['objectif']) ?></div></div><?php endif; ?>
-            <?php if (!empty($iaResult['type_contenu'])): ?><div class="ia-field"><div class="ia-label">Type de contenu recommandé</div><div class="ia-value"><?= htmlspecialchars($iaResult['type_contenu']) ?></div></div><?php endif; ?>
+            <div class="ia-result-title">🎯 <span data-i18n="ia_result_title">Campagne générée par l'IA</span></div>
+            <?php if (!empty($iaResult['titre'])): ?><div class="ia-field"><div class="ia-label" data-i18n="label_title">Titre</div><div class="ia-value big"><?= htmlspecialchars($iaResult['titre']) ?></div></div><?php endif; ?>
+            <?php if (!empty($iaResult['description'])): ?><div class="ia-field"><div class="ia-label" data-i18n="label_description">Description</div><div class="ia-value"><?= htmlspecialchars($iaResult['description']) ?></div></div><?php endif; ?>
+            <?php if (!empty($iaResult['objectif'])): ?><div class="ia-field"><div class="ia-label" data-i18n="label_objective">Objectif</div><div class="ia-value"><?= htmlspecialchars($iaResult['objectif']) ?></div></div><?php endif; ?>
+            <?php if (!empty($iaResult['type_contenu'])): ?><div class="ia-field"><div class="ia-label" data-i18n="label_content_type">Type de contenu recommandé</div><div class="ia-value"><?= htmlspecialchars($iaResult['type_contenu']) ?></div></div><?php endif; ?>
         </div>
         <?php endif; ?>
     </div>
 
     <!-- CAMPAGNES -->
     <div class="section-head">
-        <h2>📋 Mes campagnes</h2>
+        <h2>📋 <span data-i18n="section_my_campaigns">Mes campagnes</span></h2>
         <span class="count-pill" id="visibleCount"><?= $totalActives ?></span>
     </div>
 
     <div class="tools-bar">
         <div class="search-wrap">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-            <input type="text" id="searchInput" class="search-input" placeholder="Rechercher…">
+            <input type="text" id="searchInput" class="search-input" data-i18n-placeholder="search_placeholder" placeholder="Rechercher…">
         </div>
-        <select id="filterStatut" class="filter-select" onchange="filterCampagnes()">
-            <option value="">Tous statuts</option>
+        <select id="filterStatut" class="filter-select" onchange="filterAndPaginate()">
+            <option value="" data-i18n="filter_all_statuts">Tous statuts</option>
             <?php foreach ($statuts as $s): ?><option value="<?= $s ?>"><?= ucfirst($s) ?></option><?php endforeach; ?>
         </select>
         <select id="sortSelect" class="filter-select" onchange="sortCampagnes()">
-            <option value="">Trier par…</option>
-            <option value="titre">Nom A→Z</option>
-            <option value="budget_desc">Budget ↓</option>
-            <option value="budget_asc">Budget ↑</option>
+            <option value="" data-i18n="sort_default">Trier par…</option>
+            <option value="titre" data-i18n="sort_name">Nom A→Z</option>
+            <option value="budget_desc" data-i18n="sort_budget_desc">Budget ↓</option>
+            <option value="budget_asc" data-i18n="sort_budget_asc">Budget ↑</option>
         </select>
+        <!-- ===== ADDED FEATURE: PER PAGE SELECT ===== -->
+        <select id="perPageSelect" class="per-page-select" onchange="changePerPage()">
+            <option value="6">6 / <span data-i18n="per_page">page</span></option>
+            <option value="9" selected>9 / <span data-i18n="per_page">page</span></option>
+            <option value="12">12 / <span data-i18n="per_page">page</span></option>
+            <option value="999" data-i18n="show_all">Tout afficher</option>
+        </select>
+        <!-- ===== END PER PAGE SELECT ===== -->
     </div>
 
     <?php if (empty($campagnes)): ?>
     <div class="empty-state">
         <div style="font-size:48px;margin-bottom:14px;">⚡</div>
-        <h3>Aucune campagne pour l'instant</h3>
-        <p>Créez votre première campagne pour collaborer avec des créateurs.</p>
-        <a href="#formAnchor" class="btn-primary">➕ Créer ma première campagne</a>
+        <h3 data-i18n="empty_title">Aucune campagne pour l'instant</h3>
+        <p data-i18n="empty_subtitle">Créez votre première campagne pour collaborer avec des créateurs.</p>
+        <a href="#formAnchor" class="btn-primary">➕ <span data-i18n="btn_create_first">Créer ma première campagne</span></a>
     </div>
     <?php else: ?>
     <div class="camp-grid" id="campGrid">
@@ -485,31 +610,41 @@ textarea.form-input{resize:vertical;min-height:90px;}
                 <div>
                     <button class="camp-prod-badge <?= $nbProd === 0 ? 'zero' : '' ?>"
                             onclick="openDrawer(<?= $c['idCampagne'] ?>, '<?= htmlspecialchars(addslashes($c['titreCampagne'])) ?>')">
-                        📦 <?= $nbProd ?> produit<?= $nbProd !== 1 ? 's' : '' ?> +
+                        📦 <?= $nbProd ?> <span data-i18n="products_badge">produit<?= $nbProd !== 1 ? 's' : '' ?></span> +
                     </button>
                 </div>
             </div>
             <div class="camp-actions">
-                <a href="?modifier=<?= $c['idCampagne'] ?>#formAnchor" class="btn-edit-camp">✏️ Modifier</a>
-                <button class="btn-arch-camp" onclick="ajaxArchive(<?= $c['idCampagne'] ?>)">📦</button>
-                <button class="btn-del-camp" onclick="openDeleteModal(<?= $c['idCampagne'] ?>, '<?= htmlspecialchars(addslashes($c['titreCampagne'])) ?>')">🗑</button>
+                <a href="?modifier=<?= $c['idCampagne'] ?>#formAnchor" class="btn-edit-camp">✏️ <span data-i18n="btn_edit">Modifier</span></a>
+                <button class="btn-arch-camp" onclick="ajaxArchive(<?= $c['idCampagne'] ?>)" title="Archiver">📦</button>
+                <button class="btn-del-camp" onclick="openDeleteModal(<?= $c['idCampagne'] ?>, '<?= htmlspecialchars(addslashes($c['titreCampagne'])) ?>')" title="Supprimer">🗑</button>
             </div>
         </div>
         <?php endforeach; ?>
     </div>
+
+    <!-- ===== ADDED FEATURE: PAGINATION BAR ===== -->
+    <div class="pagination-bar" id="paginationBar">
+        <span class="pagination-info" id="paginationInfo"></span>
+        <button class="page-btn" id="btnPrev" onclick="changePage(-1)">← <span data-i18n="prev">Préc.</span></button>
+        <div id="pageNumbers" style="display:flex;gap:4px;"></div>
+        <button class="page-btn" id="btnNext" onclick="changePage(1)"><span data-i18n="next">Suiv.</span> →</button>
+    </div>
+    <!-- ===== END PAGINATION ===== -->
+
     <?php endif; ?>
 
     <!-- FORM -->
     <div id="formAnchor" style="margin-top:40px;">
         <div class="form-card <?= $editCampagne ? 'edit-mode' : '' ?>">
             <div class="form-card-header">
-                <h2><?= $editCampagne ? '✏️ Modifier la campagne' : '➕ Nouvelle campagne' ?></h2>
-                <p><?= $editCampagne ? 'Modifiez les informations ci-dessous.' : 'Remplissez les détails de votre nouvelle campagne.' ?></p>
+                <h2><?= $editCampagne ? '✏️ <span data-i18n="form_edit_title">Modifier la campagne</span>' : '➕ <span data-i18n="form_add_title">Nouvelle campagne</span>' ?></h2>
+                <p><?= $editCampagne ? '<span data-i18n="form_edit_subtitle">Modifiez les informations ci-dessous.</span>' : '<span data-i18n="form_add_subtitle">Remplissez les détails de votre nouvelle campagne.</span>' ?></p>
             </div>
             <?php if ($editCampagne): ?>
             <div class="edit-banner">
-                <span>Modification : <strong><?= htmlspecialchars($editCampagne['titreCampagne']) ?></strong></span>
-                <a href="index.php">✕ Annuler</a>
+                <span><span data-i18n="editing_label">Modification</span> : <strong><?= htmlspecialchars($editCampagne['titreCampagne']) ?></strong></span>
+                <a href="index.php">✕ <span data-i18n="btn_cancel">Annuler</span></a>
             </div>
             <?php endif; ?>
             <div class="form-inner">
@@ -522,14 +657,14 @@ textarea.form-input{resize:vertical;min-height:90px;}
 
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Titre *</label>
+                            <label data-i18n="label_title">Titre *</label>
                             <input type="text" name="titre" id="fTitre" class="form-input" maxlength="100"
                                    value="<?= $editCampagne ? htmlspecialchars($editCampagne['titreCampagne']) : '' ?>"
-                                   placeholder="Ex : Collab Été 2025">
-                            <div class="field-error" id="errTitre">Titre requis (2-100 car., sans HTML)</div>
+                                   data-i18n-placeholder="form_title_placeholder" placeholder="Ex : Collab Été 2025">
+                            <div class="field-error" id="errTitre" data-i18n="err_title">Titre requis (2-100 car., sans HTML)</div>
                         </div>
                         <div class="form-group">
-                            <label>Statut</label>
+                            <label data-i18n="label_status">Statut</label>
                             <select name="statut" class="form-input">
                                 <?php foreach ($statuts as $s): ?>
                                 <option value="<?= $s ?>" <?= ($editCampagne && $editCampagne['statut'] === $s) ? 'selected' : '' ?>><?= ucfirst($s) ?></option>
@@ -539,46 +674,46 @@ textarea.form-input{resize:vertical;min-height:90px;}
                     </div>
 
                     <div class="form-group">
-                        <label>Description</label>
-                        <textarea name="description" class="form-input" placeholder="Décrivez les objectifs, l'audience cible…"><?= $editCampagne ? htmlspecialchars($editCampagne['description']) : '' ?></textarea>
+                        <label data-i18n="label_description">Description</label>
+                        <textarea name="description" class="form-input" data-i18n-placeholder="form_desc_placeholder" placeholder="Décrivez les objectifs, l'audience cible…"><?= $editCampagne ? htmlspecialchars($editCampagne['description']) : '' ?></textarea>
                     </div>
 
                     <div class="form-group">
-                        <label>Objectif</label>
+                        <label data-i18n="label_objective">Objectif</label>
                         <input type="text" name="objectif" class="form-input" maxlength="200"
-                               placeholder="Ex : 50K vues, notoriété marque"
+                               data-i18n-placeholder="form_obj_placeholder" placeholder="Ex : 50K vues, notoriété marque"
                                value="<?= $editCampagne ? htmlspecialchars($editCampagne['objectif'] ?? '') : '' ?>">
                     </div>
 
                     <div class="form-grid-3">
                         <div class="form-group">
-                            <label>Date début</label>
+                            <label data-i18n="label_start_date">Date début</label>
                             <input type="text" name="dateDebut" id="fDateDebut" class="form-input" placeholder="AAAA-MM-JJ"
                                    value="<?= $editCampagne ? htmlspecialchars($editCampagne['dateDebut'] ?? '') : '' ?>">
-                            <div class="field-error" id="errDateDebut">Format AAAA-MM-JJ requis</div>
+                            <div class="field-error" id="errDateDebut" data-i18n="err_date">Format AAAA-MM-JJ requis</div>
                         </div>
                         <div class="form-group">
-                            <label>Date fin</label>
+                            <label data-i18n="label_end_date">Date fin</label>
                             <input type="text" name="dateFin" id="fDateFin" class="form-input" placeholder="AAAA-MM-JJ"
                                    value="<?= $editCampagne ? htmlspecialchars($editCampagne['dateFin'] ?? '') : '' ?>">
-                            <div class="field-error" id="errDateFin">Format AAAA-MM-JJ requis</div>
-                            <div class="field-error" id="errDateCoherence" style="color:#f59e0b;">⚠ La date de fin doit être après le début</div>
+                            <div class="field-error" id="errDateFin" data-i18n="err_date">Format AAAA-MM-JJ requis</div>
+                            <div class="field-error" id="errDateCoherence" style="color:#f59e0b;" data-i18n="err_date_order">⚠ La date de fin doit être après le début</div>
                         </div>
                         <div class="form-group">
-                            <label>Budget (€) *</label>
+                            <label data-i18n="label_budget">Budget (€) *</label>
                             <div class="prefix-wrap" id="budgetWrapper">
                                 <span class="prefix">€</span>
                                 <input type="text" name="budget" id="fBudget" class="form-input"
                                        placeholder="0.00"
                                        value="<?= $editCampagne ? htmlspecialchars($editCampagne['budget'] ?? '') : '' ?>">
                             </div>
-                            <div class="field-error" id="errBudget">Budget valide requis (≥ 0)</div>
+                            <div class="field-error" id="errBudget" data-i18n="err_budget">Budget valide requis (≥ 0)</div>
                         </div>
                     </div>
 
                     <div class="form-actions">
-                        <button type="submit" class="btn-primary"><?= $editCampagne ? '💾 Enregistrer' : '🚀 Créer la campagne' ?></button>
-                        <?php if ($editCampagne): ?><a href="index.php" class="btn-cancel-form">Annuler</a><?php endif; ?>
+                        <button type="submit" class="btn-primary"><?= $editCampagne ? '💾 <span data-i18n="btn_save">Enregistrer</span>' : '🚀 <span data-i18n="btn_create">Créer la campagne</span>' ?></button>
+                        <?php if ($editCampagne): ?><a href="index.php" class="btn-cancel-form" data-i18n="btn_cancel">Annuler</a><?php endif; ?>
                     </div>
                 </form>
             </div>
@@ -593,22 +728,22 @@ textarea.form-input{resize:vertical;min-height:90px;}
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
             <div>
                 <div class="drawer-title" id="drawerTitle">Produits de la campagne</div>
-                <div class="drawer-sub">Ajoutez ou retirez des produits liés.</div>
+                <div class="drawer-sub" data-i18n="drawer_subtitle">Ajoutez ou retirez des produits liés.</div>
             </div>
             <button class="drawer-close" onclick="closeDrawer()">✕</button>
         </div>
-        <div id="drawerContent"><div class="drawer-empty">⏳ Chargement…</div></div>
+        <div id="drawerContent"><div class="drawer-empty">⏳ <span data-i18n="loading">Chargement…</span></div></div>
     </div>
 </div>
 
 <!-- MODAL SUPPRESSION -->
 <div class="modal-overlay" id="deleteModal">
     <div class="modal-box">
-        <div class="modal-title">🗑 Supprimer la campagne ?</div>
+        <div class="modal-title">🗑 <span data-i18n="modal_delete_title">Supprimer la campagne ?</span></div>
         <div class="modal-text" id="deleteModalText"></div>
         <div class="modal-actions">
-            <button class="btn-modal-cancel" onclick="closeDeleteModal()">Annuler</button>
-            <a href="#" class="btn-modal-del" id="deleteModalLink">Supprimer</a>
+            <button class="btn-modal-cancel" onclick="closeDeleteModal()" data-i18n="btn_cancel">Annuler</button>
+            <a href="#" class="btn-modal-del" id="deleteModalLink" data-i18n="btn_delete_confirm">Supprimer</a>
         </div>
     </div>
 </div>
@@ -620,24 +755,317 @@ const BASE_URL = '<?= $baseUrl ?>';
 const flash = document.getElementById('flashMsg');
 if (flash) setTimeout(() => { flash.style.opacity='0'; flash.style.transition='opacity .4s'; setTimeout(()=>flash.remove(),400); }, 4000);
 
-// ── FILTER + SORT ──────────────────────────────────────────────────
-document.getElementById('searchInput').addEventListener('input', filterCampagnes);
-function filterCampagnes() {
-    const q = document.getElementById('searchInput').value.toLowerCase();
-    const s = document.getElementById('filterStatut').value;
-    const cards = document.querySelectorAll('#campGrid .camp-card');
-    let v = 0;
-    cards.forEach(card => {
-        const mQ = !q || (card.dataset.titre||'').includes(q);
-        const mS = !s || card.dataset.statut === s;
-        card.style.display = mQ && mS ? '' : 'none';
-        if (mQ && mS) v++;
-    });
-    const el = document.getElementById('visibleCount');
-    if (el) el.textContent = v;
+// ===== ADDED FEATURE: DARK MODE =====
+(function initTheme() {
+    const saved = localStorage.getItem('cre8_theme_fo');
+    // FrontOffice default = light; only apply dark if explicitly saved
+    if (saved === 'dark') applyDark(true, false);
+})();
+
+function applyDark(isDark, save = true) {
+    document.body.classList.toggle('dark-mode', isDark);
+    const icon  = document.getElementById('themeIcon');
+    const label = document.getElementById('themeLabel');
+    if (icon)  icon.textContent  = isDark ? '☀️' : '🌙';
+    if (label) label.setAttribute('data-i18n', isDark ? 'theme_light' : 'theme_dark');
+    if (save)  localStorage.setItem('cre8_theme_fo', isDark ? 'dark' : 'light');
+    // Re-apply translation for updated i18n keys
+    applyTranslation(currentLang);
 }
+
+function toggleTheme() {
+    applyDark(!document.body.classList.contains('dark-mode'));
+}
+// ===== END DARK MODE =====
+
+// ===== ADDED FEATURE: TRANSLATION SYSTEM =====
+const translations = {
+    fr: {
+        nav_campagnes: 'Campagnes',
+        nav_produits: 'Produits',
+        nav_contrats: 'Contrats',
+        role_marque: 'Marque',
+        theme_dark: 'Mode sombre',
+        theme_light: 'Mode clair',
+        page_title: 'Mes Campagnes',
+        page_subtitle: 'Créez, gérez et analysez vos campagnes de collaboration.',
+        btn_new_campaign: 'Nouvelle campagne',
+        kpi_total: 'Total',
+        kpi_active: 'Actives',
+        kpi_draft: 'Brouillons',
+        kpi_done: 'Terminées',
+        kpi_budget: 'Budget total',
+        ia_title: "Générer une campagne avec l'IA",
+        ia_product_label: 'Produit à promouvoir *',
+        ia_product_placeholder: 'Ex : Sneakers éco-responsables',
+        ia_audience_label: 'Audience cible *',
+        ia_audience_placeholder: 'Ex : 18-30 ans, mode durable',
+        ia_budget_label: 'Budget (€) *',
+        ia_generate_btn: 'Générer',
+        ia_loading: "L'IA génère votre campagne…",
+        ia_result_title: "Campagne générée par l'IA",
+        section_my_campaigns: 'Mes campagnes',
+        search_placeholder: 'Rechercher…',
+        filter_all_statuts: 'Tous statuts',
+        sort_default: 'Trier par…',
+        sort_name: 'Nom A→Z',
+        sort_budget_desc: 'Budget ↓',
+        sort_budget_asc: 'Budget ↑',
+        per_page: 'page',
+        show_all: 'Tout afficher',
+        prev: 'Préc.',
+        next: 'Suiv.',
+        empty_title: 'Aucune campagne pour l\'instant',
+        empty_subtitle: 'Créez votre première campagne pour collaborer avec des créateurs.',
+        btn_create_first: 'Créer ma première campagne',
+        btn_edit: 'Modifier',
+        products_badge: 'produits',
+        form_edit_title: 'Modifier la campagne',
+        form_add_title: 'Nouvelle campagne',
+        form_edit_subtitle: 'Modifiez les informations ci-dessous.',
+        form_add_subtitle: 'Remplissez les détails de votre nouvelle campagne.',
+        editing_label: 'Modification',
+        btn_cancel: 'Annuler',
+        label_title: 'Titre *',
+        label_status: 'Statut',
+        label_description: 'Description',
+        label_objective: 'Objectif',
+        label_start_date: 'Date début',
+        label_end_date: 'Date fin',
+        label_budget: 'Budget (€) *',
+        label_content_type: 'Type de contenu recommandé',
+        form_title_placeholder: 'Ex : Collab Été 2025',
+        form_desc_placeholder: "Décrivez les objectifs, l'audience cible…",
+        form_obj_placeholder: 'Ex : 50K vues, notoriété marque',
+        err_title: 'Titre requis (2-100 car., sans HTML)',
+        err_date: 'Format AAAA-MM-JJ requis',
+        err_date_order: '⚠ La date de fin doit être après le début',
+        err_budget: 'Budget valide requis (≥ 0)',
+        btn_save: 'Enregistrer',
+        btn_create: 'Créer la campagne',
+        drawer_subtitle: 'Ajoutez ou retirez des produits liés.',
+        loading: 'Chargement…',
+        modal_delete_title: 'Supprimer la campagne ?',
+        btn_delete_confirm: 'Supprimer',
+        pagination_showing: 'Affichage',
+        pagination_of: 'sur',
+        pagination_campaigns: 'campagnes',
+    },
+    en: {
+        nav_campagnes: 'Campaigns',
+        nav_produits: 'Products',
+        nav_contrats: 'Contracts',
+        role_marque: 'Brand',
+        theme_dark: 'Dark mode',
+        theme_light: 'Light mode',
+        page_title: 'My Campaigns',
+        page_subtitle: 'Create, manage and analyze your collaboration campaigns.',
+        btn_new_campaign: 'New campaign',
+        kpi_total: 'Total',
+        kpi_active: 'Active',
+        kpi_draft: 'Drafts',
+        kpi_done: 'Completed',
+        kpi_budget: 'Total budget',
+        ia_title: 'Generate a campaign with AI',
+        ia_product_label: 'Product to promote *',
+        ia_product_placeholder: 'E.g. Eco-friendly sneakers',
+        ia_audience_label: 'Target audience *',
+        ia_audience_placeholder: 'E.g. 18-30 y/o, sustainable fashion',
+        ia_budget_label: 'Budget (€) *',
+        ia_generate_btn: 'Generate',
+        ia_loading: 'AI is generating your campaign…',
+        ia_result_title: 'AI-generated campaign',
+        section_my_campaigns: 'My campaigns',
+        search_placeholder: 'Search…',
+        filter_all_statuts: 'All statuses',
+        sort_default: 'Sort by…',
+        sort_name: 'Name A→Z',
+        sort_budget_desc: 'Budget ↓',
+        sort_budget_asc: 'Budget ↑',
+        per_page: 'page',
+        show_all: 'Show all',
+        prev: 'Prev.',
+        next: 'Next',
+        empty_title: 'No campaigns yet',
+        empty_subtitle: 'Create your first campaign to collaborate with creators.',
+        btn_create_first: 'Create my first campaign',
+        btn_edit: 'Edit',
+        products_badge: 'products',
+        form_edit_title: 'Edit campaign',
+        form_add_title: 'New campaign',
+        form_edit_subtitle: 'Update the information below.',
+        form_add_subtitle: 'Fill in the details of your new campaign.',
+        editing_label: 'Editing',
+        btn_cancel: 'Cancel',
+        label_title: 'Title *',
+        label_status: 'Status',
+        label_description: 'Description',
+        label_objective: 'Objective',
+        label_start_date: 'Start date',
+        label_end_date: 'End date',
+        label_budget: 'Budget (€) *',
+        label_content_type: 'Recommended content type',
+        form_title_placeholder: 'E.g. Summer Collab 2025',
+        form_desc_placeholder: 'Describe the goals, target audience…',
+        form_obj_placeholder: 'E.g. 50K views, brand awareness',
+        err_title: 'Title required (2-100 chars, no HTML)',
+        err_date: 'Format YYYY-MM-DD required',
+        err_date_order: '⚠ End date must be after start date',
+        err_budget: 'Valid budget required (≥ 0)',
+        btn_save: 'Save',
+        btn_create: 'Create campaign',
+        drawer_subtitle: 'Add or remove linked products.',
+        loading: 'Loading…',
+        modal_delete_title: 'Delete this campaign?',
+        btn_delete_confirm: 'Delete',
+        pagination_showing: 'Showing',
+        pagination_of: 'of',
+        pagination_campaigns: 'campaigns',
+    }
+};
+
+let currentLang = localStorage.getItem('cre8_lang') || 'fr';
+
+function applyTranslation(lang) {
+    currentLang = lang;
+    localStorage.setItem('cre8_lang', lang);
+    const dict = translations[lang] || translations['fr'];
+
+    // Text content
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.textContent = dict[key];
+    });
+
+    // Placeholders
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (dict[key]) el.placeholder = dict[key];
+    });
+
+    // Active lang button
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    const activeBtn = document.getElementById('btn-' + lang);
+    if (activeBtn) activeBtn.classList.add('active');
+
+    // Update pagination text if rendered
+    renderPaginationInfo();
+}
+
+function setLang(lang) { applyTranslation(lang); }
+
+// Run on load
+applyTranslation(currentLang);
+// ===== END TRANSLATION SYSTEM =====
+
+// ===== ADDED FEATURE: PAGINATION =====
+let currentPage = 1;
+let perPage = 9;
+let filteredCards = [];
+
+function getAllCards() {
+    return Array.from(document.querySelectorAll('#campGrid .camp-card'));
+}
+
+function filterAndPaginate() {
+    const q = document.getElementById('searchInput')?.value.toLowerCase() || '';
+    const s = document.getElementById('filterStatut')?.value || '';
+    const all = getAllCards();
+    filteredCards = all.filter(card => {
+        const mQ = !q || (card.dataset.titre || '').includes(q);
+        const mS = !s || card.dataset.statut === s;
+        return mQ && mS;
+    });
+    const vc = document.getElementById('visibleCount');
+    if (vc) vc.textContent = filteredCards.length;
+    currentPage = 1;
+    renderPage();
+}
+
+function renderPage() {
+    const all = getAllCards();
+    // Hide all
+    all.forEach(c => c.style.display = 'none');
+
+    if (!filteredCards.length) {
+        renderPaginationBar(0, 0);
+        renderPaginationInfo();
+        return;
+    }
+
+    const totalPages = Math.ceil(filteredCards.length / perPage);
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    const start = (currentPage - 1) * perPage;
+    const end   = Math.min(start + perPage, filteredCards.length);
+
+    filteredCards.forEach((card, i) => {
+        card.style.display = (i >= start && i < end) ? '' : 'none';
+    });
+
+    renderPaginationBar(totalPages, currentPage);
+    renderPaginationInfo(start + 1, end, filteredCards.length);
+}
+
+function renderPaginationBar(totalPages, cur) {
+    const bar = document.getElementById('paginationBar');
+    if (!bar) return;
+    bar.style.display = totalPages <= 1 ? 'none' : 'flex';
+
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
+    const pageNums = document.getElementById('pageNumbers');
+
+    if (btnPrev) btnPrev.disabled = cur <= 1;
+    if (btnNext) btnNext.disabled = cur >= totalPages;
+
+    if (!pageNums) return;
+    pageNums.innerHTML = '';
+    // Show up to 5 page number buttons
+    const startPage = Math.max(1, cur - 2);
+    const endPage   = Math.min(totalPages, startPage + 4);
+    for (let i = startPage; i <= endPage; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'page-btn' + (i === cur ? ' active' : '');
+        btn.textContent = i;
+        btn.onclick = (function(p) { return function() { currentPage = p; renderPage(); }; })(i);
+        pageNums.appendChild(btn);
+    }
+}
+
+function renderPaginationInfo(from, to, total) {
+    const info = document.getElementById('paginationInfo');
+    if (!info) return;
+    if (!from) { info.textContent = ''; return; }
+    const dict = translations[currentLang] || translations['fr'];
+    info.textContent = `${dict.pagination_showing || 'Affichage'} ${from}–${to} ${dict.pagination_of || 'sur'} ${total} ${dict.pagination_campaigns || 'campagnes'}`;
+}
+
+function changePage(delta) {
+    currentPage += delta;
+    renderPage();
+}
+
+function changePerPage() {
+    const sel = document.getElementById('perPageSelect');
+    perPage = parseInt(sel?.value) || 9;
+    currentPage = 1;
+    renderPage();
+}
+
+// Initialize pagination on load
+document.addEventListener('DOMContentLoaded', function() {
+    filteredCards = getAllCards();
+    renderPage();
+});
+// ===== END PAGINATION =====
+
+// ── FILTER + SORT (updated to work with pagination) ───────────────
+document.getElementById('searchInput')?.addEventListener('input', filterAndPaginate);
+
 function sortCampagnes() {
-    const mode = document.getElementById('sortSelect').value;
+    const mode = document.getElementById('sortSelect')?.value;
     const grid = document.getElementById('campGrid');
     if (!grid || !mode) return;
     const cards = Array.from(grid.querySelectorAll('.camp-card'));
@@ -648,6 +1076,7 @@ function sortCampagnes() {
         return 0;
     });
     cards.forEach(c => grid.appendChild(c));
+    filterAndPaginate(); // Re-apply filter + paginate after sort
 }
 
 // ── AJAX ARCHIVE ───────────────────────────────────────────────────

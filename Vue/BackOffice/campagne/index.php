@@ -137,6 +137,8 @@ function statutClass($s) { return match($s) { 'active'=>'badge-success','termine
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gestion Campagnes — Admin · Cre8Connect</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<!-- ===== ADDED FEATURE: CHART.JS CDN (Statistics) ===== -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root{
     --bg:#0d0f14;--surface:#141720;--card:#1a1e2a;--hover:#202535;--border:#2a2f42;
@@ -148,11 +150,24 @@ function statutClass($s) { return match($s) { 'active'=>'badge-success','termine
     --text:#eef0f8;--sub:#9097b8;--muted:#5a6080;
     --radius:12px;
 }
+
+/* ===== ADDED FEATURE: LIGHT/DARK MODE ===== */
+body.light-mode {
+    --bg:#f4f5f9;--surface:#ffffff;--card:#ffffff;--hover:#f0f1f6;--border:#e2e4ed;
+    --accent:#6c63ff;--accent-soft:rgba(108,99,255,.10);--accent-hover:#5b53e6;
+    --success:#16a34a;--success-soft:rgba(22,163,74,.10);
+    --warn:#d97706;--warn-soft:rgba(217,119,6,.10);
+    --danger:#dc2626;--danger-soft:rgba(220,38,38,.10);
+    --info:#2563eb;--info-soft:rgba(37,99,235,.10);
+    --text:#12151f;--sub:#4b5280;--muted:#8892b0;
+}
+/* ===== END ADDED FEATURE ===== */
+
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .25s,color .25s;}
 
 .layout{display:flex;min-height:100vh;}
-.sidebar{width:240px;background:var(--surface);border-right:1px solid var(--border);padding:24px 0;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;overflow-y:auto;}
+.sidebar{width:240px;background:var(--surface);border-right:1px solid var(--border);padding:24px 0;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;overflow-y:auto;transition:background .25s,border-color .25s;}
 .sidebar-logo{padding:0 24px 24px;font-size:1.3rem;font-weight:800;color:var(--accent);border-bottom:1px solid var(--border);}
 .sidebar-logo span{color:var(--text);}
 .sidebar-nav{padding:16px 12px;flex:1;}
@@ -160,13 +175,13 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-he
 .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:var(--sub);text-decoration:none;font-size:.88rem;font-weight:600;transition:all .15s;margin-bottom:2px;}
 .nav-item:hover,.nav-item.active{background:var(--accent-soft);color:var(--accent-hover);}
 .main{flex:1;display:flex;flex-direction:column;}
-.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;justify-content:space-between;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;justify-content:space-between;transition:background .25s,border-color .25s;}
 .topbar-title{font-size:1.1rem;font-weight:700;}
 .content{padding:32px;flex:1;}
 
 /* KPI */
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-bottom:28px;}
-.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;transition:background .25s,border-color .25s;}
 .kpi-label{font-size:.7rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
 .kpi-value{font-size:1.9rem;font-weight:800;line-height:1;margin-top:6px;}
 .kpi-card.total .kpi-value{color:var(--text);}
@@ -177,13 +192,13 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-he
 .kpi-card.arch   .kpi-value{color:var(--danger);}
 
 /* IA PANEL */
-.ia-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:24px;}
+.ia-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:24px;transition:background .25s,border-color .25s;}
 .ia-panel-header{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
 .ia-panel-header h2{font-size:1rem;font-weight:700;color:var(--accent);}
 .ia-form-row{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;}
 .ia-form-group{display:flex;flex-direction:column;gap:5px;flex:1;min-width:200px;}
 .ia-form-group label{font-size:.78rem;font-weight:700;color:var(--sub);}
-.ia-select{padding:9px 14px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:.85rem;background:var(--surface);color:var(--text);cursor:pointer;outline:none;}
+.ia-select{padding:9px 14px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:.85rem;background:var(--surface);color:var(--text);cursor:pointer;outline:none;transition:background .25s,border-color .25s,color .25s;}
 .ia-select:focus{border-color:var(--accent);}
 .btn-ia{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:10px;font-family:inherit;font-size:.85rem;font-weight:700;cursor:pointer;border:none;background:var(--accent);color:#fff;transition:opacity .15s;}
 .btn-ia:hover{opacity:.9;}
@@ -206,7 +221,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-he
 .ia-loading.show{display:flex;}
 
 /* PANEL */
-.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);transition:background .25s,border-color .25s;}
 .panel-header{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
 .panel-title{font-size:1rem;font-weight:700;}
 .panel-meta{font-size:.8rem;color:var(--muted);}
@@ -232,7 +247,7 @@ tr:hover td{background:var(--hover);}
 .btn-archive{background:var(--warn-soft);color:var(--warn);}
 
 /* SELECT STATUT */
-.statut-select{background:transparent;border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:.8rem;border-radius:8px;padding:4px 8px;cursor:pointer;}
+.statut-select{background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:.8rem;border-radius:8px;padding:4px 8px;cursor:pointer;transition:background .25s,border-color .25s,color .25s;}
 
 /* CAMP TITLE */
 .camp-title{font-weight:700;}
@@ -246,7 +261,7 @@ tr:hover td{background:var(--hover);}
 .tab-panel{display:none;}.tab-panel.active{display:block;}
 
 /* FORM */
-.form-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-top:22px;}
+.form-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-top:22px;transition:background .25s,border-color .25s;}
 .form-section-title{font-size:.95rem;font-weight:700;margin-bottom:18px;color:var(--accent);}
 .edit-banner{display:flex;align-items:center;justify-content:space-between;background:var(--accent-soft);border:1px solid rgba(108,99,255,.2);border-radius:8px;padding:9px 14px;margin-bottom:16px;font-size:.85rem;}
 .edit-banner a{color:var(--danger);text-decoration:none;font-weight:700;font-size:.78rem;}
@@ -254,7 +269,7 @@ tr:hover td{background:var(--hover);}
 .form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
 .form-group{display:flex;flex-direction:column;gap:4px;}
 .form-group label{font-size:.78rem;font-weight:700;color:var(--sub);}
-.form-input{padding:9px 12px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:.85rem;background:var(--surface);color:var(--text);outline:none;transition:border-color .15s;width:100%;}
+.form-input{padding:9px 12px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:.85rem;background:var(--surface);color:var(--text);outline:none;transition:border-color .15s,background .25s,color .25s;width:100%;}
 .form-input:focus{border-color:var(--accent);}
 textarea.form-input{resize:vertical;min-height:80px;}
 .form-actions{display:flex;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
@@ -266,9 +281,9 @@ textarea.form-input{resize:vertical;min-height:80px;}
 
 /* SEARCH */
 .search-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
-.search-input{padding:8px 12px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:.85rem;background:var(--surface);color:var(--text);outline:none;width:200px;}
+.search-input{padding:8px 12px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:.85rem;background:var(--surface);color:var(--text);outline:none;width:200px;transition:background .25s,border-color .25s,color .25s;}
 .search-input:focus{border-color:var(--accent);}
-.filter-select{padding:8px 12px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:.85rem;background:var(--surface);color:var(--text);cursor:pointer;outline:none;}
+.filter-select{padding:8px 12px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:.85rem;background:var(--surface);color:var(--text);cursor:pointer;outline:none;transition:background .25s,border-color .25s,color .25s;}
 
 /* PRODUCTS PANEL */
 .pp-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:none;align-items:flex-start;justify-content:flex-end;}
@@ -313,6 +328,39 @@ textarea.form-input{resize:vertical;min-height:80px;}
 .alert-info{background:var(--info-soft);color:var(--info);}
 .alert-danger{background:var(--danger-soft);color:var(--danger);}
 .alert-error{background:var(--danger-soft);color:var(--danger);}
+
+/* ===== ADDED FEATURE: LIGHT/DARK MODE TOGGLE BUTTON ===== */
+.theme-toggle{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:6px 13px;font-size:.8rem;font-weight:700;cursor:pointer;color:var(--sub);font-family:inherit;display:inline-flex;align-items:center;gap:6px;transition:all .2s;}
+.theme-toggle:hover{border-color:var(--accent);color:var(--accent);}
+/* ===== END ADDED FEATURE ===== */
+
+/* ===== ADDED FEATURE: LANGUAGE SWITCHER ===== */
+.lang-switcher{display:inline-flex;gap:4px;}
+.lang-btn{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:.75rem;font-weight:700;cursor:pointer;color:var(--sub);font-family:inherit;transition:all .2s;}
+.lang-btn:hover,.lang-btn.active{background:var(--accent-soft);color:var(--accent);border-color:var(--accent);}
+/* ===== END ADDED FEATURE ===== */
+
+/* ===== ADDED FEATURE: PAGINATION ===== */
+.pagination{display:flex;align-items:center;justify-content:center;gap:6px;padding:16px 0 4px;}
+.page-btn{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:.8rem;font-weight:700;cursor:pointer;color:var(--sub);font-family:inherit;transition:all .15s;}
+.page-btn:hover:not(:disabled){background:var(--accent-soft);color:var(--accent);border-color:var(--accent);}
+.page-btn:disabled{opacity:.35;cursor:not-allowed;}
+.page-btn.current{background:var(--accent);color:#fff;border-color:var(--accent);}
+.page-info{font-size:.78rem;color:var(--muted);font-weight:600;padding:0 6px;}
+.per-page-select{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 8px;font-size:.78rem;color:var(--text);font-family:inherit;cursor:pointer;outline:none;}
+/* ===== END ADDED FEATURE ===== */
+
+/* ===== ADDED FEATURE: STATISTICS SECTION ===== */
+.stats-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:24px;transition:background .25s,border-color .25s;}
+.stats-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+.stats-section-title{font-size:1rem;font-weight:700;color:var(--accent);display:flex;align-items:center;gap:8px;}
+.stats-charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;transition:background .25s,border-color .25s;}
+.chart-card-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:12px;}
+.chart-container{position:relative;height:180px;}
+.stats-toggle-btn{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:.75rem;font-weight:700;cursor:pointer;color:var(--sub);font-family:inherit;transition:all .2s;}
+.stats-toggle-btn:hover{border-color:var(--accent);color:var(--accent);}
+/* ===== END ADDED FEATURE ===== */
 </style>
 </head>
 <body>
@@ -339,10 +387,21 @@ textarea.form-input{resize:vertical;min-height:80px;}
 <!-- MAIN -->
 <div class="main">
 <header class="topbar">
-    <span class="topbar-title">⚡ Gestion des Campagnes</span>
-    <div style="display:flex;align-items:center;gap:10px;">
-        <a href="?export_csv=1" class="btn-export">📤 Export CSV</a>
-        <span style="color:var(--sub);font-size:.85rem;">Admin</span>
+    <span class="topbar-title" data-i18n="pageTitle">⚡ Gestion des Campagnes</span>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <!-- ===== ADDED FEATURE: LANGUAGE SWITCHER ===== -->
+        <div class="lang-switcher">
+            <button class="lang-btn active" id="langFR" onclick="setLang('fr')">🇫🇷 FR</button>
+            <button class="lang-btn" id="langEN" onclick="setLang('en')">🇬🇧 EN</button>
+        </div>
+        <!-- ===== END ADDED FEATURE ===== -->
+
+        <!-- ===== ADDED FEATURE: DARK/LIGHT MODE TOGGLE ===== -->
+        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙 <span id="themeLabel">Mode clair</span></button>
+        <!-- ===== END ADDED FEATURE ===== -->
+
+        <a href="?export_csv=1" class="btn-export" data-i18n="exportCsv">📤 Export CSV</a>
+        <span style="color:var(--sub);font-size:.85rem;" data-i18n="adminLabel">Admin</span>
     </div>
 </header>
 
@@ -355,27 +414,58 @@ textarea.form-input{resize:vertical;min-height:80px;}
 
     <!-- KPI -->
     <div class="kpi-grid">
-        <div class="kpi-card total"><div class="kpi-label">Total actives</div><div class="kpi-value"><?= $totalCampagnes ?></div></div>
-        <div class="kpi-card active"><div class="kpi-label">Actives</div><div class="kpi-value"><?= $nbActives ?></div></div>
-        <div class="kpi-card draft"><div class="kpi-label">Brouillons</div><div class="kpi-value"><?= $nbBrouillons ?></div></div>
-        <div class="kpi-card ended"><div class="kpi-label">Terminées</div><div class="kpi-value"><?= $nbTerminees ?></div></div>
-        <div class="kpi-card budget"><div class="kpi-label">Budget total</div><div class="kpi-value"><?= number_format($budgetTotal, 0, ',', ' ') ?> €</div></div>
-        <div class="kpi-card arch"><div class="kpi-label">Archivées</div><div class="kpi-value"><?= $totalArchives ?></div></div>
+        <div class="kpi-card total"><div class="kpi-label" data-i18n="kpiTotal">Total actives</div><div class="kpi-value"><?= $totalCampagnes ?></div></div>
+        <div class="kpi-card active"><div class="kpi-label" data-i18n="kpiActive">Actives</div><div class="kpi-value"><?= $nbActives ?></div></div>
+        <div class="kpi-card draft"><div class="kpi-label" data-i18n="kpiDraft">Brouillons</div><div class="kpi-value"><?= $nbBrouillons ?></div></div>
+        <div class="kpi-card ended"><div class="kpi-label" data-i18n="kpiEnded">Terminées</div><div class="kpi-value"><?= $nbTerminees ?></div></div>
+        <div class="kpi-card budget"><div class="kpi-label" data-i18n="kpiBudget">Budget total</div><div class="kpi-value"><?= number_format($budgetTotal, 0, ',', ' ') ?> €</div></div>
+        <div class="kpi-card arch"><div class="kpi-label" data-i18n="kpiArchived">Archivées</div><div class="kpi-value"><?= $totalArchives ?></div></div>
     </div>
+
+    <!-- ===== ADDED FEATURE: DYNAMIC STATISTICS SECTION (Admin BackOffice only) ===== -->
+    <div class="stats-section" id="statsSection">
+        <div class="stats-section-header">
+            <div class="stats-section-title">📊 <span data-i18n="statsTitle">Statistiques dynamiques</span></div>
+            <button class="stats-toggle-btn" onclick="toggleStats()" id="statsToggleBtn" data-i18n="statsHide">▲ Masquer</button>
+        </div>
+        <div id="statsBody">
+            <div class="stats-charts-grid">
+                <div class="chart-card">
+                    <div class="chart-card-title" data-i18n="chartStatusTitle">Répartition par statut</div>
+                    <div class="chart-container">
+                        <canvas id="chartStatut"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-card-title" data-i18n="chartActiveArchiveTitle">Actives vs Archivées</div>
+                    <div class="chart-container">
+                        <canvas id="chartActiveArchive"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-card-title" data-i18n="chartBudgetTitle">Budget par statut (€)</div>
+                    <div class="chart-container">
+                        <canvas id="chartBudget"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ===== END ADDED FEATURE ===== -->
 
     <!-- IA ANALYSE -->
     <div class="ia-panel">
         <div class="ia-panel-header">
             <span style="font-size:20px;">🧠</span>
-            <h2>Analyser une campagne avec l'IA</h2>
+            <h2 data-i18n="iaTitle">Analyser une campagne avec l'IA</h2>
         </div>
         <form method="POST" id="iaForm">
             <input type="hidden" name="action" value="ia_analyser">
             <div class="ia-form-row">
                 <div class="ia-form-group">
-                    <label>Sélectionner une campagne</label>
+                    <label data-i18n="iaSelectLabel">Sélectionner une campagne</label>
                     <select name="id_campagne" class="ia-select" required>
-                        <option value="">— Choisir —</option>
+                        <option value="" data-i18n="iaSelectPlaceholder">— Choisir —</option>
                         <?php foreach ($toutesCampagnes as $c): ?>
                         <option value="<?= $c['idCampagne'] ?>" <?= (isset($_POST['id_campagne']) && intval($_POST['id_campagne']) === (int)$c['idCampagne']) ? 'selected' : '' ?>>
                             <?= htmlspecialchars($c['titreCampagne']) ?> (<?= $c['statut'] ?>)
@@ -384,59 +474,67 @@ textarea.form-input{resize:vertical;min-height:80px;}
                     </select>
                 </div>
                 <button type="submit" class="btn-ia" onclick="document.getElementById('iaLoading').classList.add('show')">
-                    🧠 Analyser
+                    🧠 <span data-i18n="iaAnalyzeBtn">Analyser</span>
                 </button>
             </div>
         </form>
-        <div class="ia-loading" id="iaLoading"><div class="spinner"></div> Analyse IA en cours…</div>
+        <div class="ia-loading" id="iaLoading"><div class="spinner"></div> <span data-i18n="iaLoading">Analyse IA en cours…</span></div>
         <?php if ($iaError): ?><div class="ia-error">⚠️ <?= htmlspecialchars($iaError) ?></div><?php endif; ?>
         <?php if ($iaResult): ?>
         <div class="ia-result">
-            <div class="ia-result-title">📊 Résultat de l'analyse</div>
-            <?php if (!empty($iaResult['score_qualite'])): ?><div class="ia-field"><div class="ia-label">Score qualité</div><div class="ia-value big">⭐ <?= htmlspecialchars($iaResult['score_qualite']) ?> / 10</div></div><?php endif; ?>
-            <?php if (!empty($iaResult['points_forts'])): ?><div class="ia-field"><div class="ia-label">✅ Points forts</div><div class="pill-list"><?php foreach ($iaResult['points_forts'] as $p): ?><span class="pill pill-g"><?= htmlspecialchars($p) ?></span><?php endforeach; ?></div></div><?php endif; ?>
-            <?php if (!empty($iaResult['points_faibles'])): ?><div class="ia-field"><div class="ia-label">⚠️ Points faibles</div><div class="pill-list"><?php foreach ($iaResult['points_faibles'] as $p): ?><span class="pill pill-w"><?= htmlspecialchars($p) ?></span><?php endforeach; ?></div></div><?php endif; ?>
-            <?php if (!empty($iaResult['risques'])): ?><div class="ia-field"><div class="ia-label">🚨 Risques</div><div class="pill-list"><?php foreach ($iaResult['risques'] as $r): ?><span class="pill pill-r"><?= htmlspecialchars($r) ?></span><?php endforeach; ?></div></div><?php endif; ?>
-            <?php if (!empty($iaResult['recommandations'])): ?><div class="ia-field"><div class="ia-label">💡 Recommandations</div><div class="pill-list"><?php foreach ($iaResult['recommandations'] as $r): ?><span class="pill pill-a"><?= htmlspecialchars($r) ?></span><?php endforeach; ?></div></div><?php endif; ?>
-            <?php if (!empty($iaResult['budget_adequat'])): ?><div class="ia-field"><div class="ia-label">💰 Budget</div><div class="ia-value"><?= htmlspecialchars($iaResult['budget_adequat']) ?></div></div><?php endif; ?>
+            <div class="ia-result-title" data-i18n="iaResultTitle">📊 Résultat de l'analyse</div>
+            <?php if (!empty($iaResult['score_qualite'])): ?><div class="ia-field"><div class="ia-label" data-i18n="iaScore">Score qualité</div><div class="ia-value big">⭐ <?= htmlspecialchars($iaResult['score_qualite']) ?> / 10</div></div><?php endif; ?>
+            <?php if (!empty($iaResult['points_forts'])): ?><div class="ia-field"><div class="ia-label" data-i18n="iaStrengths">✅ Points forts</div><div class="pill-list"><?php foreach ($iaResult['points_forts'] as $p): ?><span class="pill pill-g"><?= htmlspecialchars($p) ?></span><?php endforeach; ?></div></div><?php endif; ?>
+            <?php if (!empty($iaResult['points_faibles'])): ?><div class="ia-field"><div class="ia-label" data-i18n="iaWeaknesses">⚠️ Points faibles</div><div class="pill-list"><?php foreach ($iaResult['points_faibles'] as $p): ?><span class="pill pill-w"><?= htmlspecialchars($p) ?></span><?php endforeach; ?></div></div><?php endif; ?>
+            <?php if (!empty($iaResult['risques'])): ?><div class="ia-field"><div class="ia-label" data-i18n="iaRisks">🚨 Risques</div><div class="pill-list"><?php foreach ($iaResult['risques'] as $r): ?><span class="pill pill-r"><?= htmlspecialchars($r) ?></span><?php endforeach; ?></div></div><?php endif; ?>
+            <?php if (!empty($iaResult['recommandations'])): ?><div class="ia-field"><div class="ia-label" data-i18n="iaRecos">💡 Recommandations</div><div class="pill-list"><?php foreach ($iaResult['recommandations'] as $r): ?><span class="pill pill-a"><?= htmlspecialchars($r) ?></span><?php endforeach; ?></div></div><?php endif; ?>
+            <?php if (!empty($iaResult['budget_adequat'])): ?><div class="ia-field"><div class="ia-label" data-i18n="iaBudget">💰 Budget</div><div class="ia-value"><?= htmlspecialchars($iaResult['budget_adequat']) ?></div></div><?php endif; ?>
         </div>
         <?php endif; ?>
     </div>
 
     <!-- TABS -->
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('active',this)">Actives (<?= $totalCampagnes ?>)</button>
-        <button class="tab-btn" onclick="switchTab('archived',this)">Archivées (<?= $totalArchives ?>)</button>
+        <button class="tab-btn active" onclick="switchTab('active',this)" data-i18n-template="tabActive" data-i18n-count="<?= $totalCampagnes ?>">Actives (<?= $totalCampagnes ?>)</button>
+        <button class="tab-btn" onclick="switchTab('archived',this)" data-i18n-template="tabArchived" data-i18n-count="<?= $totalArchives ?>">Archivées (<?= $totalArchives ?>)</button>
     </div>
 
     <!-- TAB ACTIVE -->
     <div class="tab-panel active" id="tab-active">
         <div class="search-bar">
-            <input type="text" id="searchInput" class="search-input" placeholder="Rechercher…">
-            <select id="filterStatut" class="filter-select" onchange="filterTable()">
-                <option value="">Tous statuts</option>
+            <input type="text" id="searchInput" class="search-input" placeholder="Rechercher…" data-i18n-placeholder="searchPlaceholder">
+            <select id="filterStatut" class="filter-select" onchange="filterAndPaginate()">
+                <option value="" data-i18n="filterAll">Tous statuts</option>
                 <?php foreach ($statuts as $s): ?><option value="<?= $s ?>"><?= ucfirst($s) ?></option><?php endforeach; ?>
             </select>
+            <!-- ===== ADDED FEATURE: PAGINATION per-page selector ===== -->
+            <select class="per-page-select" id="perPageSelect" onchange="changePerPage()">
+                <option value="5">5 / page</option>
+                <option value="10" selected>10 / page</option>
+                <option value="20">20 / page</option>
+                <option value="50">50 / page</option>
+            </select>
+            <!-- ===== END ADDED FEATURE ===== -->
         </div>
         <div class="panel">
             <div class="panel-header">
-                <div class="panel-title">Toutes les campagnes</div>
-                <div class="panel-meta" id="visibleBadge"><?= $totalCampagnes ?> campagne(s)</div>
+                <div class="panel-title" data-i18n="panelTitle">Toutes les campagnes</div>
+                <div class="panel-meta" id="visibleBadge"><?= $totalCampagnes ?> <span data-i18n="campaignCount">campagne(s)</span></div>
             </div>
             <div class="table-wrap">
                 <?php if (empty($liste)): ?>
-                <div style="text-align:center;padding:40px;color:var(--muted);">Aucune campagne.</div>
+                <div style="text-align:center;padding:40px;color:var(--muted);" data-i18n="noCampaign">Aucune campagne.</div>
                 <?php else: ?>
                 <table id="campTable">
                     <thead>
                         <tr>
-                            <th>Titre</th>
-                            <th>Statut</th>
-                            <th>Dates</th>
-                            <th>Budget</th>
-                            <th>Marque</th>
-                            <th>Produits</th>
-                            <th>Actions</th>
+                            <th data-i18n="colTitle">Titre</th>
+                            <th data-i18n="colStatus">Statut</th>
+                            <th data-i18n="colDates">Dates</th>
+                            <th data-i18n="colBudget">Budget</th>
+                            <th data-i18n="colBrand">Marque</th>
+                            <th data-i18n="colProducts">Produits</th>
+                            <th data-i18n="colActions">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="campBody">
@@ -446,11 +544,12 @@ textarea.form-input{resize:vertical;min-height:80px;}
                         $expired = $c['dateFin'] && $c['dateFin'] < $today && $c['statut'] === 'active';
                     ?>
                     <tr data-statut="<?= $c['statut'] ?>"
-                        data-titre="<?= strtolower(htmlspecialchars($c['titreCampagne'])) ?>">
+                        data-titre="<?= strtolower(htmlspecialchars($c['titreCampagne'])) ?>"
+                        data-budget="<?= $c['budget'] ?>">
                         <td>
                             <div class="camp-title"><?= htmlspecialchars($c['titreCampagne']) ?></div>
                             <div class="camp-obj"><?= htmlspecialchars($c['objectif'] ?? '—') ?></div>
-                            <?php if ($expired): ?><div style="font-size:.72rem;color:var(--danger);font-weight:700;margin-top:3px;">⚠ Expirée</div><?php endif; ?>
+                            <?php if ($expired): ?><div style="font-size:.72rem;color:var(--danger);font-weight:700;margin-top:3px;" data-i18n="expired">⚠ Expirée</div><?php endif; ?>
                         </td>
                         <td>
                             <select class="statut-select" onchange="changeStatut(<?= $c['idCampagne'] ?>,this.value)">
@@ -466,18 +565,21 @@ textarea.form-input{resize:vertical;min-height:80px;}
                         <td style="font-size:.82rem;color:var(--sub);"><?= htmlspecialchars($c['nomMarque'] ?? '—') ?></td>
                         <td>
                             <button class="prod-count-badge" onclick="openPP(<?= $c['idCampagne'] ?>,'<?= htmlspecialchars(addslashes($c['titreCampagne'])) ?>')">
-                                📦 <?= $nbProd ?> produit<?= $nbProd !== 1 ? 's' : '' ?>
+                                📦 <?= $nbProd ?> <span data-i18n="productCount"><?= $nbProd !== 1 ? 'produits' : 'produit' ?></span>
                             </button>
                         </td>
                         <td>
-                            <a href="?edit=<?= $c['idCampagne'] ?>#formAnchor" class="btn btn-edit">✏️</a>
-                            <button class="btn btn-archive" onclick="ajaxArchive(<?= $c['idCampagne'] ?>)">📦</button>
-                            <button class="btn btn-delete" onclick="confirmDelete(<?= $c['idCampagne'] ?>,'<?= htmlspecialchars(addslashes($c['titreCampagne'])) ?>')">🗑</button>
+                            <a href="?edit=<?= $c['idCampagne'] ?>#formAnchor" class="btn btn-edit" title="Modifier">✏️</a>
+                            <button class="btn btn-archive" onclick="ajaxArchive(<?= $c['idCampagne'] ?>)" title="Archiver">📦</button>
+                            <button class="btn btn-delete" onclick="confirmDelete(<?= $c['idCampagne'] ?>,'<?= htmlspecialchars(addslashes($c['titreCampagne'])) ?>')" title="Supprimer">🗑</button>
                         </td>
                     </tr>
                     <?php endforeach; ?>
                     </tbody>
                 </table>
+                <!-- ===== ADDED FEATURE: PAGINATION CONTROLS ===== -->
+                <div class="pagination" id="paginationControls"></div>
+                <!-- ===== END ADDED FEATURE ===== -->
                 <?php endif; ?>
             </div>
         </div>
@@ -486,13 +588,21 @@ textarea.form-input{resize:vertical;min-height:80px;}
     <!-- TAB ARCHIVÉES -->
     <div class="tab-panel" id="tab-archived">
         <div class="panel">
-            <div class="panel-header"><div class="panel-title">Campagnes archivées</div><div class="panel-meta"><?= $totalArchives ?></div></div>
+            <div class="panel-header">
+                <div class="panel-title" data-i18n="panelArchivedTitle">Campagnes archivées</div>
+                <div class="panel-meta"><?= $totalArchives ?></div>
+            </div>
             <div class="table-wrap">
                 <?php if (empty($listeArchives)): ?>
-                <div style="text-align:center;padding:40px;color:var(--muted);">Aucune campagne archivée.</div>
+                <div style="text-align:center;padding:40px;color:var(--muted);" data-i18n="noArchived">Aucune campagne archivée.</div>
                 <?php else: ?>
                 <table>
-                    <thead><tr><th>Titre</th><th>Statut</th><th>Budget</th><th>Actions</th></tr></thead>
+                    <thead><tr>
+                        <th data-i18n="colTitle">Titre</th>
+                        <th data-i18n="colStatus">Statut</th>
+                        <th data-i18n="colBudget">Budget</th>
+                        <th data-i18n="colActions">Actions</th>
+                    </tr></thead>
                     <tbody>
                     <?php foreach ($listeArchives as $c): ?>
                     <tr>
@@ -500,7 +610,7 @@ textarea.form-input{resize:vertical;min-height:80px;}
                         <td><span class="badge <?= statutClass($c['statut']) ?>"><?= statutLabel($c['statut']) ?></span></td>
                         <td class="col-budget"><?= number_format((float)$c['budget'], 2, ',', ' ') ?> €</td>
                         <td>
-                            <button class="btn btn-edit" onclick="ajaxArchive(<?= $c['idCampagne'] ?>)" style="background:var(--info-soft);color:var(--info);">🔁 Restaurer</button>
+                            <button class="btn btn-edit" onclick="ajaxArchive(<?= $c['idCampagne'] ?>)" style="background:var(--info-soft);color:var(--info);" data-i18n="restoreBtn">🔁 Restaurer</button>
                             <button class="btn btn-delete" onclick="confirmDelete(<?= $c['idCampagne'] ?>,'<?= htmlspecialchars(addslashes($c['titreCampagne'])) ?>')">🗑</button>
                         </td>
                     </tr>
@@ -514,11 +624,11 @@ textarea.form-input{resize:vertical;min-height:80px;}
 
     <!-- FORM -->
     <div class="form-section" id="formAnchor">
-        <div class="form-section-title"><?= $campagneUpdate ? '✏️ Modifier la campagne' : '➕ Ajouter une campagne' ?></div>
+        <div class="form-section-title"><?= $campagneUpdate ? '✏️ <span data-i18n="formEditTitle">Modifier la campagne</span>' : '➕ <span data-i18n="formAddTitle">Ajouter une campagne</span>' ?></div>
         <?php if ($campagneUpdate): ?>
         <div class="edit-banner">
-            <span>Modification : <strong><?= htmlspecialchars($campagneUpdate['titreCampagne']) ?></strong></span>
-            <a href="index.php">✕ Annuler</a>
+            <span><span data-i18n="editBannerLabel">Modification :</span> <strong><?= htmlspecialchars($campagneUpdate['titreCampagne']) ?></strong></span>
+            <a href="index.php" data-i18n="cancelEdit">✕ Annuler</a>
         </div>
         <?php endif; ?>
         <form method="POST" action="index.php" id="campagneForm">
@@ -529,12 +639,12 @@ textarea.form-input{resize:vertical;min-height:80px;}
             <?php endif; ?>
             <div class="form-grid" style="margin-bottom:14px;">
                 <div class="form-group">
-                    <label>Titre *</label>
+                    <label data-i18n="labelTitle">Titre *</label>
                     <input type="text" name="titre" class="form-input" maxlength="100" required
                            value="<?= $campagneUpdate ? htmlspecialchars($campagneUpdate['titreCampagne']) : '' ?>">
                 </div>
                 <div class="form-group">
-                    <label>Statut</label>
+                    <label data-i18n="labelStatus">Statut</label>
                     <select name="statut" class="form-input">
                         <?php foreach ($statuts as $s): ?>
                         <option value="<?= $s ?>" <?= ($campagneUpdate && $campagneUpdate['statut'] === $s) ? 'selected' : '' ?>><?= ucfirst($s) ?></option>
@@ -543,34 +653,34 @@ textarea.form-input{resize:vertical;min-height:80px;}
                 </div>
             </div>
             <div class="form-group" style="margin-bottom:14px;">
-                <label>Description</label>
+                <label data-i18n="labelDesc">Description</label>
                 <textarea name="description" class="form-input"><?= $campagneUpdate ? htmlspecialchars($campagneUpdate['description']) : '' ?></textarea>
             </div>
             <div class="form-group" style="margin-bottom:14px;">
-                <label>Objectif</label>
+                <label data-i18n="labelObjective">Objectif</label>
                 <input type="text" name="objectif" class="form-input" maxlength="200"
                        value="<?= $campagneUpdate ? htmlspecialchars($campagneUpdate['objectif'] ?? '') : '' ?>">
             </div>
             <div class="form-grid-3" style="margin-bottom:14px;">
                 <div class="form-group">
-                    <label>Date début</label>
+                    <label data-i18n="labelStart">Date début</label>
                     <input type="text" name="dateDebut" class="form-input" placeholder="AAAA-MM-JJ"
                            value="<?= $campagneUpdate ? htmlspecialchars($campagneUpdate['dateDebut'] ?? '') : '' ?>">
                 </div>
                 <div class="form-group">
-                    <label>Date fin</label>
+                    <label data-i18n="labelEnd">Date fin</label>
                     <input type="text" name="dateFin" class="form-input" placeholder="AAAA-MM-JJ"
                            value="<?= $campagneUpdate ? htmlspecialchars($campagneUpdate['dateFin'] ?? '') : '' ?>">
                 </div>
                 <div class="form-group">
-                    <label>Budget (€) *</label>
+                    <label data-i18n="labelBudget">Budget (€) *</label>
                     <input type="text" name="budget" class="form-input" required
                            value="<?= $campagneUpdate ? htmlspecialchars($campagneUpdate['budget'] ?? '') : '' ?>">
                 </div>
             </div>
             <div class="form-actions">
-                <button type="submit" class="btn-submit"><?= $campagneUpdate ? '💾 Enregistrer' : '✅ Ajouter' ?></button>
-                <?php if ($campagneUpdate): ?><a href="index.php" class="btn-cancel-form">Annuler</a><?php endif; ?>
+                <button type="submit" class="btn-submit" data-i18n="<?= $campagneUpdate ? 'btnSave' : 'btnAdd' ?>"><?= $campagneUpdate ? '💾 Enregistrer' : '✅ Ajouter' ?></button>
+                <?php if ($campagneUpdate): ?><a href="index.php" class="btn-cancel-form" data-i18n="btnCancel">Annuler</a><?php endif; ?>
             </div>
         </form>
     </div>
@@ -593,11 +703,11 @@ textarea.form-input{resize:vertical;min-height:80px;}
 <!-- DELETE MODAL -->
 <div class="modal-overlay" id="confirmModal">
     <div class="modal-box">
-        <div class="modal-title" id="modalTitle">Confirmer la suppression</div>
+        <div class="modal-title" id="modalTitle" data-i18n="modalTitle">Confirmer la suppression</div>
         <div class="modal-text" id="modalText"></div>
         <div class="modal-actions">
-            <button class="btn-modal-cancel" onclick="closeModal()">Annuler</button>
-            <a href="#" class="btn-modal-confirm" id="modalConfirmLink">Supprimer</a>
+            <button class="btn-modal-cancel" onclick="closeModal()" data-i18n="modalCancel">Annuler</button>
+            <a href="#" class="btn-modal-confirm" id="modalConfirmLink" data-i18n="modalConfirm">Supprimer</a>
         </div>
     </div>
 </div>
@@ -605,10 +715,11 @@ textarea.form-input{resize:vertical;min-height:80px;}
 <script>
 const BASE_URL = '<?= $baseUrl ?>';
 
+// ── ORIGINAL: Alert auto-hide ─────────────────────────────────────
 const alertEl = document.getElementById('alertMsg');
 if (alertEl) setTimeout(() => alertEl.style.display = 'none', 4500);
 
-// ── TABS ──────────────────────────────────────────────────────────
+// ── ORIGINAL: TABS ────────────────────────────────────────────────
 function switchTab(name, btn) {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -616,22 +727,7 @@ function switchTab(name, btn) {
     btn.classList.add('active');
 }
 
-// ── FILTER + SEARCH ────────────────────────────────────────────────
-document.getElementById('searchInput').addEventListener('input', filterTable);
-function filterTable() {
-    const q = document.getElementById('searchInput').value.toLowerCase();
-    const s = document.getElementById('filterStatut').value;
-    let v = 0;
-    document.querySelectorAll('#campBody tr').forEach(row => {
-        const mQ = !q || (row.dataset.titre||'').includes(q);
-        const mS = !s || row.dataset.statut === s;
-        row.style.display = mQ && mS ? '' : 'none';
-        if (mQ && mS) v++;
-    });
-    document.getElementById('visibleBadge').textContent = v + ' campagne(s)';
-}
-
-// ── AJAX ───────────────────────────────────────────────────────────
+// ── ORIGINAL: AJAX ────────────────────────────────────────────────
 function ajaxArchive(id) {
     fetch('index.php', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'action=archive&id='+id})
         .then(() => location.reload());
@@ -640,16 +736,17 @@ function changeStatut(id, statut) {
     fetch('index.php', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'action=statut&id='+id+'&statut='+encodeURIComponent(statut)});
 }
 
-// ── DELETE MODAL ───────────────────────────────────────────────────
+// ── ORIGINAL: DELETE MODAL ────────────────────────────────────────
 function confirmDelete(id, titre) {
-    document.getElementById('modalText').textContent = `Supprimer "${titre}" ? Action irréversible.`;
+    const t = currentLang === 'fr' ? `Supprimer "${titre}" ? Action irréversible.` : `Delete "${titre}"? This action is irreversible.`;
+    document.getElementById('modalText').textContent = t;
     document.getElementById('modalConfirmLink').href = 'index.php?delete='+id;
     document.getElementById('confirmModal').classList.add('open');
 }
 function closeModal() { document.getElementById('confirmModal').classList.remove('open'); }
 document.getElementById('confirmModal').addEventListener('click', e => { if (e.target.id === 'confirmModal') closeModal(); });
 
-// ── PRODUCTS PANEL ─────────────────────────────────────────────────
+// ── ORIGINAL: PRODUCTS PANEL ──────────────────────────────────────
 function openPP(id, titre) {
     document.getElementById('ppTitle').textContent = '📦 ' + titre;
     document.getElementById('ppBody').innerHTML = '<div class="pp-empty">⏳ Chargement…</div>';
@@ -697,6 +794,463 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal
 <?php if ($campagneUpdate): ?>
 document.addEventListener('DOMContentLoaded', () => document.getElementById('formAnchor').scrollIntoView({behavior:'smooth',block:'start'}));
 <?php endif; ?>
+
+// ═══════════════════════════════════════════════════════════
+// ===== ADDED FEATURE: TRANSLATION SYSTEM =====
+// ═══════════════════════════════════════════════════════════
+const translations = {
+    fr: {
+        pageTitle: '⚡ Gestion des Campagnes',
+        exportCsv: '📤 Export CSV',
+        adminLabel: 'Admin',
+        kpiTotal: 'Total actives',
+        kpiActive: 'Actives',
+        kpiDraft: 'Brouillons',
+        kpiEnded: 'Terminées',
+        kpiBudget: 'Budget total',
+        kpiArchived: 'Archivées',
+        statsTitle: 'Statistiques dynamiques',
+        statsHide: '▲ Masquer',
+        statsShow: '▼ Afficher',
+        chartStatusTitle: 'Répartition par statut',
+        chartActiveArchiveTitle: 'Actives vs Archivées',
+        chartBudgetTitle: 'Budget par statut (€)',
+        iaTitle: "Analyser une campagne avec l'IA",
+        iaSelectLabel: 'Sélectionner une campagne',
+        iaSelectPlaceholder: '— Choisir —',
+        iaAnalyzeBtn: 'Analyser',
+        iaLoading: 'Analyse IA en cours…',
+        iaResultTitle: "📊 Résultat de l'analyse",
+        iaScore: 'Score qualité',
+        iaStrengths: '✅ Points forts',
+        iaWeaknesses: '⚠️ Points faibles',
+        iaRisks: '🚨 Risques',
+        iaRecos: '💡 Recommandations',
+        iaBudget: '💰 Budget',
+        tabActive: 'Actives',
+        tabArchived: 'Archivées',
+        filterAll: 'Tous statuts',
+        searchPlaceholder: 'Rechercher…',
+        panelTitle: 'Toutes les campagnes',
+        campaignCount: 'campagne(s)',
+        noCampaign: 'Aucune campagne.',
+        noArchived: 'Aucune campagne archivée.',
+        colTitle: 'Titre',
+        colStatus: 'Statut',
+        colDates: 'Dates',
+        colBudget: 'Budget',
+        colBrand: 'Marque',
+        colProducts: 'Produits',
+        colActions: 'Actions',
+        expired: '⚠ Expirée',
+        productCount: 'produit(s)',
+        panelArchivedTitle: 'Campagnes archivées',
+        restoreBtn: '🔁 Restaurer',
+        formEditTitle: 'Modifier la campagne',
+        formAddTitle: 'Ajouter une campagne',
+        editBannerLabel: 'Modification :',
+        cancelEdit: '✕ Annuler',
+        labelTitle: 'Titre *',
+        labelStatus: 'Statut',
+        labelDesc: 'Description',
+        labelObjective: 'Objectif',
+        labelStart: 'Date début',
+        labelEnd: 'Date fin',
+        labelBudget: 'Budget (€) *',
+        btnSave: '💾 Enregistrer',
+        btnAdd: '✅ Ajouter',
+        btnCancel: 'Annuler',
+        modalTitle: 'Confirmer la suppression',
+        modalCancel: 'Annuler',
+        modalConfirm: 'Supprimer',
+        themeLabel: 'Mode clair',
+        themeLabelDark: 'Mode sombre',
+        prevPage: '← Préc.',
+        nextPage: 'Suiv. →',
+        pageOf: 'Page',
+        of: 'sur',
+    },
+    en: {
+        pageTitle: '⚡ Campaign Management',
+        exportCsv: '📤 Export CSV',
+        adminLabel: 'Admin',
+        kpiTotal: 'Total active',
+        kpiActive: 'Active',
+        kpiDraft: 'Drafts',
+        kpiEnded: 'Ended',
+        kpiBudget: 'Total budget',
+        kpiArchived: 'Archived',
+        statsTitle: 'Dynamic Statistics',
+        statsHide: '▲ Hide',
+        statsShow: '▼ Show',
+        chartStatusTitle: 'Distribution by status',
+        chartActiveArchiveTitle: 'Active vs Archived',
+        chartBudgetTitle: 'Budget by status (€)',
+        iaTitle: 'Analyze a campaign with AI',
+        iaSelectLabel: 'Select a campaign',
+        iaSelectPlaceholder: '— Choose —',
+        iaAnalyzeBtn: 'Analyze',
+        iaLoading: 'AI analysis in progress…',
+        iaResultTitle: '📊 Analysis result',
+        iaScore: 'Quality score',
+        iaStrengths: '✅ Strengths',
+        iaWeaknesses: '⚠️ Weaknesses',
+        iaRisks: '🚨 Risks',
+        iaRecos: '💡 Recommendations',
+        iaBudget: '💰 Budget',
+        tabActive: 'Active',
+        tabArchived: 'Archived',
+        filterAll: 'All statuses',
+        searchPlaceholder: 'Search…',
+        panelTitle: 'All campaigns',
+        campaignCount: 'campaign(s)',
+        noCampaign: 'No campaigns.',
+        noArchived: 'No archived campaigns.',
+        colTitle: 'Title',
+        colStatus: 'Status',
+        colDates: 'Dates',
+        colBudget: 'Budget',
+        colBrand: 'Brand',
+        colProducts: 'Products',
+        colActions: 'Actions',
+        expired: '⚠ Expired',
+        productCount: 'product(s)',
+        panelArchivedTitle: 'Archived campaigns',
+        restoreBtn: '🔁 Restore',
+        formEditTitle: 'Edit campaign',
+        formAddTitle: 'Add a campaign',
+        editBannerLabel: 'Editing:',
+        cancelEdit: '✕ Cancel',
+        labelTitle: 'Title *',
+        labelStatus: 'Status',
+        labelDesc: 'Description',
+        labelObjective: 'Objective',
+        labelStart: 'Start date',
+        labelEnd: 'End date',
+        labelBudget: 'Budget (€) *',
+        btnSave: '💾 Save',
+        btnAdd: '✅ Add',
+        btnCancel: 'Cancel',
+        modalTitle: 'Confirm deletion',
+        modalCancel: 'Cancel',
+        modalConfirm: 'Delete',
+        themeLabel: 'Light mode',
+        themeLabelDark: 'Dark mode',
+        prevPage: '← Prev',
+        nextPage: 'Next →',
+        pageOf: 'Page',
+        of: 'of',
+    }
+};
+
+let currentLang = localStorage.getItem('cre8_lang') || 'fr';
+
+function setLang(lang) {
+    currentLang = lang;
+    localStorage.setItem('cre8_lang', lang);
+    applyTranslations();
+    document.getElementById('langFR').classList.toggle('active', lang === 'fr');
+    document.getElementById('langEN').classList.toggle('active', lang === 'en');
+    // Update tab labels with counts
+    updateTabLabels();
+    // Refresh pagination labels
+    renderPagination();
+}
+
+function applyTranslations() {
+    const T = translations[currentLang];
+    // Elements with data-i18n
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (T[key] !== undefined) el.textContent = T[key];
+    });
+    // Placeholder translations
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (T[key] !== undefined) el.setAttribute('placeholder', T[key]);
+    });
+    // Theme label
+    const isDark = !document.body.classList.contains('light-mode');
+    document.getElementById('themeLabel').textContent = isDark ? T.themeLabel : T.themeLabelDark;
+    // Stats toggle
+    const statsVisible = document.getElementById('statsBody').style.display !== 'none';
+    document.getElementById('statsToggleBtn').textContent = statsVisible ? T.statsHide : T.statsShow;
+}
+
+function updateTabLabels() {
+    const T = translations[currentLang];
+    document.querySelectorAll('[data-i18n-template]').forEach(el => {
+        const key = el.getAttribute('data-i18n-template');
+        const count = el.getAttribute('data-i18n-count');
+        if (T[key] !== undefined) el.textContent = `${T[key]} (${count})`;
+    });
+}
+// ===== END ADDED FEATURE: TRANSLATION SYSTEM =====
+
+// ═══════════════════════════════════════════════════════════
+// ===== ADDED FEATURE: LIGHT/DARK MODE TOGGLE =====
+// ═══════════════════════════════════════════════════════════
+function toggleTheme() {
+    const isLight = document.body.classList.toggle('light-mode');
+    localStorage.setItem('cre8_theme', isLight ? 'light' : 'dark');
+    const T = translations[currentLang];
+    document.getElementById('themeLabel').textContent = isLight ? T.themeLabelDark : T.themeLabel;
+    document.getElementById('themeToggle').innerHTML = isLight
+        ? '☀️ <span id="themeLabel">' + (T.themeLabelDark || 'Dark mode') + '</span>'
+        : '🌙 <span id="themeLabel">' + (T.themeLabel || 'Light mode') + '</span>';
+    // Redraw charts for new theme colors
+    buildCharts();
+}
+
+function initTheme() {
+    // BackOffice default = dark. Only switch if user explicitly chose light.
+    const saved = localStorage.getItem('cre8_theme');
+    if (saved === 'light') {
+        document.body.classList.add('light-mode');
+        const T = translations[currentLang];
+        document.getElementById('themeToggle').innerHTML = '☀️ <span id="themeLabel">' + (T.themeLabelDark || 'Dark mode') + '</span>';
+    }
+}
+// ===== END ADDED FEATURE =====
+
+// ═══════════════════════════════════════════════════════════
+// ===== ADDED FEATURE: PAGINATION =====
+// ═══════════════════════════════════════════════════════════
+let currentPage = 1;
+let rowsPerPage  = 10;
+let filteredRows = [];
+
+function getAllRows() {
+    return Array.from(document.querySelectorAll('#campBody tr'));
+}
+
+function filterAndPaginate() {
+    const q = (document.getElementById('searchInput').value || '').toLowerCase();
+    const s = document.getElementById('filterStatut').value;
+    filteredRows = getAllRows().filter(row => {
+        const mQ = !q || (row.dataset.titre || '').includes(q);
+        const mS = !s || row.dataset.statut === s;
+        return mQ && mS;
+    });
+    currentPage = 1;
+    applyPagination();
+}
+
+function applyPagination() {
+    const allRows = getAllRows();
+    // Hide all first
+    allRows.forEach(r => r.style.display = 'none');
+    // Show only current page of filtered
+    const start = (currentPage - 1) * rowsPerPage;
+    const end   = start + rowsPerPage;
+    filteredRows.slice(start, end).forEach(r => r.style.display = '');
+    // Update badge
+    const badge = document.getElementById('visibleBadge');
+    if (badge) {
+        const T = translations[currentLang];
+        badge.innerHTML = filteredRows.length + ' <span data-i18n="campaignCount">' + (T.campaignCount || 'campagne(s)') + '</span>';
+    }
+    renderPagination();
+}
+
+function renderPagination() {
+    const container = document.getElementById('paginationControls');
+    if (!container) return;
+    const T = translations[currentLang];
+    const totalPages = Math.ceil(filteredRows.length / rowsPerPage) || 1;
+    let html = '';
+    // Prev
+    html += `<button class="page-btn" onclick="goToPage(${currentPage-1})" ${currentPage <= 1 ? 'disabled' : ''}>${T.prevPage || '← Préc.'}</button>`;
+    // Page numbers (show max 5 around current)
+    const range = 2;
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - range && i <= currentPage + range)) {
+            html += `<button class="page-btn${i === currentPage ? ' current' : ''}" onclick="goToPage(${i})">${i}</button>`;
+        } else if (i === currentPage - range - 1 || i === currentPage + range + 1) {
+            html += `<span class="page-info">…</span>`;
+        }
+    }
+    // Next
+    html += `<button class="page-btn" onclick="goToPage(${currentPage+1})" ${currentPage >= totalPages ? 'disabled' : ''}>${T.nextPage || 'Suiv. →'}</button>`;
+    // Info
+    html += `<span class="page-info">${T.pageOf || 'Page'} ${currentPage} ${T.of || 'sur'} ${totalPages}</span>`;
+    container.innerHTML = html;
+}
+
+function goToPage(page) {
+    const totalPages = Math.ceil(filteredRows.length / rowsPerPage) || 1;
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
+    applyPagination();
+}
+
+function changePerPage() {
+    rowsPerPage = parseInt(document.getElementById('perPageSelect').value) || 10;
+    currentPage = 1;
+    applyPagination();
+}
+
+// Hook search input to combined filter+paginate
+document.addEventListener('DOMContentLoaded', () => {
+    const si = document.getElementById('searchInput');
+    if (si) si.addEventListener('input', filterAndPaginate);
+    // Initialize
+    filteredRows = getAllRows();
+    applyPagination();
+});
+// ===== END ADDED FEATURE: PAGINATION =====
+
+// ═══════════════════════════════════════════════════════════
+// ===== ADDED FEATURE: DYNAMIC STATISTICS (Admin BackOffice) =====
+// ═══════════════════════════════════════════════════════════
+
+// Raw data injected from PHP for chart rendering
+const campData = {
+    active:    <?= $nbActives ?>,
+    brouillon: <?= $nbBrouillons ?>,
+    terminee:  <?= $nbTerminees ?>,
+    annulee:   <?= count(array_filter($liste, fn($c) => $c['statut'] === 'annulee')) ?>,
+    totalActive:   <?= $totalCampagnes ?>,
+    totalArchived: <?= $totalArchives ?>,
+    budgets: {
+        active:    <?= array_sum(array_column(array_filter($liste, fn($c) => $c['statut'] === 'active'), 'budget')) ?>,
+        brouillon: <?= array_sum(array_column(array_filter($liste, fn($c) => $c['statut'] === 'brouillon'), 'budget')) ?>,
+        terminee:  <?= array_sum(array_column(array_filter($liste, fn($c) => $c['statut'] === 'terminee'), 'budget')) ?>,
+        annulee:   <?= array_sum(array_column(array_filter($liste, fn($c) => $c['statut'] === 'annulee'), 'budget')) ?>,
+    }
+};
+
+let chartStatut = null, chartActiveArchive = null, chartBudget = null;
+
+function getChartColors() {
+    const style = getComputedStyle(document.body);
+    return {
+        text:    style.getPropertyValue('--text').trim()    || '#eef0f8',
+        sub:     style.getPropertyValue('--sub').trim()     || '#9097b8',
+        border:  style.getPropertyValue('--border').trim()  || '#2a2f42',
+        success: style.getPropertyValue('--success').trim() || '#22c55e',
+        warn:    style.getPropertyValue('--warn').trim()    || '#f59e0b',
+        info:    style.getPropertyValue('--info').trim()    || '#3b82f6',
+        danger:  style.getPropertyValue('--danger').trim()  || '#ef4444',
+        accent:  style.getPropertyValue('--accent').trim()  || '#6c63ff',
+    };
+}
+
+function buildCharts() {
+    const C = getChartColors();
+    const gridColor = C.border;
+    const textColor = C.text;
+
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                labels: { color: textColor, font: { family: "'Syne', sans-serif", size: 11 }, boxWidth: 12 }
+            }
+        }
+    };
+
+    // Destroy old charts before recreating (handles theme switch)
+    [chartStatut, chartActiveArchive, chartBudget].forEach(ch => { if (ch) ch.destroy(); });
+
+    // Chart 1: Doughnut — répartition par statut
+    chartStatut = new Chart(document.getElementById('chartStatut'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Active', 'Brouillon', 'Terminée', 'Annulée'],
+            datasets: [{
+                data: [campData.active, campData.brouillon, campData.terminee, campData.annulee],
+                backgroundColor: [C.success, C.warn, C.info, C.danger],
+                borderColor: 'transparent',
+                hoverOffset: 6
+            }]
+        },
+        options: {
+            ...baseOptions,
+            cutout: '65%',
+        }
+    });
+
+    // Chart 2: Bar — actives vs archivées
+    chartActiveArchive = new Chart(document.getElementById('chartActiveArchive'), {
+        type: 'bar',
+        data: {
+            labels: ['Actives', 'Archivées'],
+            datasets: [{
+                label: 'Campagnes',
+                data: [campData.totalActive, campData.totalArchived],
+                backgroundColor: [C.accent + 'cc', C.danger + 'cc'],
+                borderColor: [C.accent, C.danger],
+                borderWidth: 1.5,
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            ...baseOptions,
+            scales: {
+                x: { ticks: { color: C.sub }, grid: { color: gridColor } },
+                y: { ticks: { color: C.sub }, grid: { color: gridColor }, beginAtZero: true }
+            },
+            plugins: { ...baseOptions.plugins, legend: { display: false } }
+        }
+    });
+
+    // Chart 3: Bar — budget par statut
+    chartBudget = new Chart(document.getElementById('chartBudget'), {
+        type: 'bar',
+        data: {
+            labels: ['Active', 'Brouillon', 'Terminée', 'Annulée'],
+            datasets: [{
+                label: 'Budget (€)',
+                data: [
+                    campData.budgets.active,
+                    campData.budgets.brouillon,
+                    campData.budgets.terminee,
+                    campData.budgets.annulee
+                ],
+                backgroundColor: [C.success + 'bb', C.warn + 'bb', C.info + 'bb', C.danger + 'bb'],
+                borderColor: [C.success, C.warn, C.info, C.danger],
+                borderWidth: 1.5,
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            ...baseOptions,
+            scales: {
+                x: { ticks: { color: C.sub }, grid: { color: gridColor } },
+                y: { ticks: { color: C.sub, callback: v => v.toLocaleString('fr-FR') + ' €' }, grid: { color: gridColor }, beginAtZero: true }
+            },
+            plugins: { ...baseOptions.plugins, legend: { display: false } }
+        }
+    });
+}
+
+let statsVisible = true;
+function toggleStats() {
+    const body = document.getElementById('statsBody');
+    const btn  = document.getElementById('statsToggleBtn');
+    const T = translations[currentLang];
+    statsVisible = !statsVisible;
+    body.style.display = statsVisible ? '' : 'none';
+    btn.textContent = statsVisible ? (T.statsHide || '▲ Masquer') : (T.statsShow || '▼ Afficher');
+}
+// ===== END ADDED FEATURE: DYNAMIC STATISTICS =====
+
+// ═══════════════════════════════════════════════════════════
+// INIT — run all features on DOM ready
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+    // Theme (BackOffice default = dark)
+    initTheme();
+    // Language
+    applyTranslations();
+    updateTabLabels();
+    document.getElementById('langFR').classList.toggle('active', currentLang === 'fr');
+    document.getElementById('langEN').classList.toggle('active', currentLang === 'en');
+    // Charts (after theme init so CSS vars are correct)
+    buildCharts();
+});
 </script>
 </body>
 </html>
