@@ -4,7 +4,7 @@
  * Usage:
  * 1. Open any Cre8Connect page with Cre8Pilot (same origin as the app).
  * 2. Open DevTools Console.
- * 3. Load this script if not already included.
+ * 3. If the widget is on the page, runCre8PilotAiTourStressTest(...) is already defined and will load this file automatically. Otherwise load this script (script tag or fetch+eval) once.
  * 4. Run:
  *
  *    runCre8PilotAiTourStressTest({

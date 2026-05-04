@@ -4,6 +4,18 @@ $cre8PilotPath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
 $cre8PilotVuePos = strpos($cre8PilotPath, '/Vue/');
 $cre8PilotBase = $cre8PilotVuePos !== false ? substr($cre8PilotPath, 0, $cre8PilotVuePos) : '';
 $cre8PilotEndpoint = rtrim($cre8PilotBase, '/') . '/Vue/FrontOffice/condidature/cre8pilot_endpoint.php';
+$cre8PilotBubbleAssetUrl = static function (string $file) use ($cre8PilotBase): string {
+    $rel = rtrim($cre8PilotBase, '/') . '/Vue/FrontOffice/condidature/' . $file;
+    $path = __DIR__ . DIRECTORY_SEPARATOR . $file;
+    $mtime = @filemtime($path);
+    $v = $mtime !== false ? (string) $mtime : '0';
+
+    return htmlspecialchars($rel . '?v=' . rawurlencode($v), ENT_QUOTES, 'UTF-8');
+};
+$cre8PilotBubbleThinkingUrl = $cre8PilotBubbleAssetUrl('cre8pilot-bubble-thinking.png');
+$cre8PilotBubbleSwearsUrl = $cre8PilotBubbleAssetUrl('cre8pilot-bubble-swears.png');
+$cre8PilotBubbleConfusedUrl = $cre8PilotBubbleAssetUrl('cre8pilot-bubble-confused.png');
+$cre8PilotBubbleSuccessUrl = $cre8PilotBubbleAssetUrl('cre8pilot-bubble-success.png');
 $cre8PilotDefaultContext = [
     'page' => 'unknown',
     'mode' => '',
@@ -22,13 +34,123 @@ window.CRE8PILOT_CONTEXT = Object.assign(
     <?php echo json_encode($cre8PilotContext, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>
 );
 </script>
+<?php
+$cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/FrontOffice/condidature/cre8pilot-bubbles.css?v=' . urlencode((string) (@filemtime(__DIR__ . '/cre8pilot-bubbles.css') ?: 0)), ENT_QUOTES, 'UTF-8');
+?>
+<link rel="stylesheet" href="<?php echo $cre8PilotBubblesCss; ?>">
 <script src="<?php echo htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/FrontOffice/condidature/cre8pilot_multi_smoke_test.js'); ?>"></script>
 <?php $cre8PilotStressTestJs = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/FrontOffice/condidature/cre8pilot_full_balanced_stress_test.js'); ?>
 <?php $cre8PilotAiTourStressTestJs = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/FrontOffice/condidature/cre8pilot_ai_tour_stress_test.js'); ?>
+<?php $cre8PilotFinalMatrixStressTestJs = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/FrontOffice/condidature/cre8pilot_final_matrix_stress_test.js'); ?>
 <script>
 (function () {
     var STRESS_URL = '<?php echo $cre8PilotStressTestJs; ?>';
     var AI_TOUR_STRESS_URL = '<?php echo $cre8PilotAiTourStressTestJs; ?>';
+    var FINAL_MATRIX_STRESS_URL = '<?php echo $cre8PilotFinalMatrixStressTestJs; ?>';
+    var aiTourCore = null;
+    var aiTourLoadPromise = null;
+    var finalMatrixCore = null;
+    var finalMatrixLoadPromise = null;
+    function ensureAiTourScriptLoaded() {
+        if (aiTourCore) {
+            return Promise.resolve(aiTourCore);
+        }
+        if (aiTourLoadPromise) {
+            return aiTourLoadPromise;
+        }
+        var urlAi = AI_TOUR_STRESS_URL;
+        var wAi = document.querySelector('[data-cre8pilot-widget]');
+        var epAi = wAi && wAi.dataset && wAi.dataset.cre8pilotEndpoint;
+        if (epAi && /cre8pilot_endpoint\.php/i.test(epAi)) {
+            urlAi = epAi.replace(/cre8pilot_endpoint\.php/i, 'cre8pilot_ai_tour_stress_test.js');
+        }
+        aiTourLoadPromise = fetch(urlAi, { credentials: 'same-origin' }).then(function (res) {
+            if (!res.ok) {
+                throw new Error('AI tour stress test HTTP ' + res.status);
+            }
+            return res.text();
+        }).then(function (code) {
+            (0, eval)(code);
+            if (typeof window.runCre8PilotAiTourStressTest !== 'function') {
+                throw new Error('AI tour stress suite did not register runCre8PilotAiTourStressTest.');
+            }
+            aiTourCore = window.runCre8PilotAiTourStressTest;
+            aiTourLoadPromise = null;
+            return aiTourCore;
+        }).catch(function (err) {
+            aiTourLoadPromise = null;
+            throw err;
+        });
+        return aiTourLoadPromise;
+    }
+    function ensureFinalMatrixScriptLoaded() {
+        if (finalMatrixCore) {
+            return Promise.resolve(finalMatrixCore);
+        }
+        if (finalMatrixLoadPromise) {
+            return finalMatrixLoadPromise;
+        }
+        var urlMx = FINAL_MATRIX_STRESS_URL;
+        var wMx = document.querySelector('[data-cre8pilot-widget]');
+        var epMx = wMx && wMx.dataset && wMx.dataset.cre8pilotEndpoint;
+        if (epMx && /cre8pilot_endpoint\.php/i.test(epMx)) {
+            urlMx = epMx.replace(/cre8pilot_endpoint\.php/i, 'cre8pilot_final_matrix_stress_test.js');
+        }
+        if (typeof console !== 'undefined' && console.log) {
+            console.log('[Cre8Pilot] loading final matrix stress test:', urlMx);
+        }
+        finalMatrixLoadPromise = fetch(urlMx, { credentials: 'same-origin' }).then(function (res) {
+            if (!res.ok) {
+                throw new Error('Final matrix stress test HTTP ' + res.status);
+            }
+            return res.text();
+        }).then(function (code) {
+            (0, eval)(code);
+            if (typeof window.runCre8PilotFinalMatrixStressTestImpl !== 'function') {
+                throw new Error('Final matrix suite did not register runCre8PilotFinalMatrixStressTestImpl.');
+            }
+            finalMatrixCore = window.runCre8PilotFinalMatrixStressTestImpl;
+            finalMatrixLoadPromise = null;
+            if (typeof console !== 'undefined' && console.log) {
+                console.log('[Cre8Pilot] final matrix stress test script evaluated OK');
+            }
+            return finalMatrixCore;
+        }).catch(function (err) {
+            finalMatrixLoadPromise = null;
+            throw err;
+        });
+        return finalMatrixLoadPromise;
+    }
+    window.runCre8PilotAiTourStressTest = function runCre8PilotAiTourStressTest(options) {
+        return ensureAiTourScriptLoaded().then(function (core) {
+            return core(options);
+        });
+    };
+    window.runCre8PilotFinalMatrixStressTest = function runCre8PilotFinalMatrixStressTest(options) {
+        if (typeof console !== 'undefined' && console.log) {
+            console.log('[Cre8Pilot] runCre8PilotFinalMatrixStressTest invoked (will fetch script once, then run)');
+        }
+        return ensureFinalMatrixScriptLoaded().then(function (core) {
+            return core(options);
+        }).catch(function (err) {
+            console.error('[Cre8Pilot] runCre8PilotFinalMatrixStressTest failed:', err);
+            throw err;
+        });
+    };
+    window.runCre8PilotFinalMatrixAutoSuite = function runCre8PilotFinalMatrixAutoSuite(options) {
+        if (typeof console !== 'undefined' && console.log) {
+            console.log('[Cre8Pilot] runCre8PilotFinalMatrixAutoSuite invoked (will fetch script once, then run)');
+        }
+        return ensureFinalMatrixScriptLoaded().then(function () {
+            if (typeof window.runCre8PilotFinalMatrixAutoSuiteImpl !== 'function') {
+                throw new Error('Final matrix suite did not register runCre8PilotFinalMatrixAutoSuiteImpl.');
+            }
+            return window.runCre8PilotFinalMatrixAutoSuiteImpl(options);
+        }).catch(function (err) {
+            console.error('[Cre8Pilot] runCre8PilotFinalMatrixAutoSuite failed:', err);
+            throw err;
+        });
+    };
     window.startStressTest = function startStressTest(options) {
         var defs = { delayMs: 15000, maxAiHeavyTests: 12, stopOnCriticalFailure: false };
         var opts = Object.assign({}, defs, options || {});
@@ -57,26 +179,8 @@ window.CRE8PILOT_CONTEXT = Object.assign(
     window.stress_test_just_ai = function stress_test_just_ai(options) {
         var defs = { delayMs: 15000, maxPages: 10, maxPromptsPerPage: 3, exportJson: true };
         var opts = Object.assign({}, defs, options || {});
-        if (typeof window.runCre8PilotAiTourStressTest === 'function') {
-            return window.runCre8PilotAiTourStressTest(opts);
-        }
-        var w2 = document.querySelector('[data-cre8pilot-widget]');
-        var ep2 = w2 && w2.dataset && w2.dataset.cre8pilotEndpoint;
-        var urlAi = AI_TOUR_STRESS_URL;
-        if (ep2 && /cre8pilot_endpoint\.php/i.test(ep2)) {
-            urlAi = ep2.replace(/cre8pilot_endpoint\.php/i, 'cre8pilot_ai_tour_stress_test.js');
-        }
-        return fetch(urlAi, { credentials: 'same-origin' }).then(function (res) {
-            if (!res.ok) {
-                throw new Error('AI tour stress test HTTP ' + res.status);
-            }
-            return res.text();
-        }).then(function (code) {
-            (0, eval)(code);
-            if (typeof window.runCre8PilotAiTourStressTest !== 'function') {
-                throw new Error('AI tour stress suite did not register runCre8PilotAiTourStressTest.');
-            }
-            return window.runCre8PilotAiTourStressTest(opts);
+        return ensureAiTourScriptLoaded().then(function (core) {
+            return core(opts);
         });
     };
 })();
@@ -94,7 +198,22 @@ window.CRE8PILOT_CONTEXT = Object.assign(
                     <h2 class="cre8pilot-header-title">Cre8Pilot</h2>
                     <p class="cre8pilot-header-sub">Summaries, drafts, and page-aware help.</p>
                 </div>
-                <div class="cre8pilot-avatar cre8pilot-avatar--small cre8pilot-avatar--idle" data-cre8pilot-avatar data-cre8pilot-avatar-panel aria-hidden="true" title="Cre8Pilot is idle" style="--avatar-voice-level: 0; --voice-level: 0;">
+                <div class="cre8pilot-header-avatar-cluster">
+                    <div class="cre8pilot-avatar-bubbles" aria-hidden="true">
+                        <div class="cre8pilot-bubble cre8pilot-bubble--thinking" data-cre8pilot-bubble="thinking" hidden>
+                            <img src="<?php echo $cre8PilotBubbleThinkingUrl; ?>" width="96" height="72" alt="" loading="lazy" decoding="async">
+                        </div>
+                        <div class="cre8pilot-bubble cre8pilot-bubble--swears" data-cre8pilot-bubble="swears" hidden>
+                            <img src="<?php echo $cre8PilotBubbleSwearsUrl; ?>" width="96" height="72" alt="" loading="lazy" decoding="async">
+                        </div>
+                        <div class="cre8pilot-bubble cre8pilot-bubble--confused" data-cre8pilot-bubble="confused" hidden>
+                            <img src="<?php echo $cre8PilotBubbleConfusedUrl; ?>" width="96" height="72" alt="" loading="lazy" decoding="async">
+                        </div>
+                        <div class="cre8pilot-bubble cre8pilot-bubble--success" data-cre8pilot-bubble="success" hidden>
+                            <img src="<?php echo $cre8PilotBubbleSuccessUrl; ?>" width="96" height="72" alt="" loading="lazy" decoding="async">
+                        </div>
+                    </div>
+                    <div class="cre8pilot-avatar cre8pilot-avatar--small cre8pilot-avatar--idle" data-cre8pilot-avatar data-cre8pilot-avatar-panel aria-hidden="true" title="Cre8Pilot is idle" style="--avatar-voice-level: 0; --voice-level: 0;">
                     <div class="cre8pilot-bot">
                         <div class="cre8pilot-bot-antenna" aria-hidden="true"></div>
                         <div class="cre8pilot-bot-head">
@@ -123,6 +242,7 @@ window.CRE8PILOT_CONTEXT = Object.assign(
                             <div class="cre8pilot-bot-thruster cre8pilot-bot-thruster--right"></div>
                         </div>
                         <div class="cre8pilot-bot-ring" aria-hidden="true"></div>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -182,7 +302,22 @@ window.CRE8PILOT_CONTEXT = Object.assign(
         <button type="button" class="cre8pilot-voice-close" data-cre8pilot-voice-close aria-label="Exit voice mode">Exit</button>
         <div class="cre8pilot-voice-stage">
             <div class="cre8pilot-voice-avatar-wrap">
-                <div class="cre8pilot-avatar cre8pilot-avatar--large cre8pilot-avatar--idle" data-cre8pilot-avatar data-cre8pilot-avatar-voice aria-hidden="true" title="Cre8Pilot is idle" style="--avatar-voice-level: 0; --voice-level: 0;">
+                <div class="cre8pilot-header-avatar-cluster">
+                    <div class="cre8pilot-avatar-bubbles" aria-hidden="true">
+                        <div class="cre8pilot-bubble cre8pilot-bubble--thinking" data-cre8pilot-bubble="thinking" hidden>
+                            <img src="<?php echo $cre8PilotBubbleThinkingUrl; ?>" width="140" height="105" alt="" loading="lazy" decoding="async">
+                        </div>
+                        <div class="cre8pilot-bubble cre8pilot-bubble--swears" data-cre8pilot-bubble="swears" hidden>
+                            <img src="<?php echo $cre8PilotBubbleSwearsUrl; ?>" width="140" height="105" alt="" loading="lazy" decoding="async">
+                        </div>
+                        <div class="cre8pilot-bubble cre8pilot-bubble--confused" data-cre8pilot-bubble="confused" hidden>
+                            <img src="<?php echo $cre8PilotBubbleConfusedUrl; ?>" width="140" height="105" alt="" loading="lazy" decoding="async">
+                        </div>
+                        <div class="cre8pilot-bubble cre8pilot-bubble--success" data-cre8pilot-bubble="success" hidden>
+                            <img src="<?php echo $cre8PilotBubbleSuccessUrl; ?>" width="140" height="105" alt="" loading="lazy" decoding="async">
+                        </div>
+                    </div>
+                    <div class="cre8pilot-avatar cre8pilot-avatar--large cre8pilot-avatar--idle" data-cre8pilot-avatar data-cre8pilot-avatar-voice aria-hidden="true" title="Cre8Pilot is idle" style="--avatar-voice-level: 0; --voice-level: 0;">
                     <div class="cre8pilot-bot">
                         <div class="cre8pilot-bot-antenna" aria-hidden="true"></div>
                         <div class="cre8pilot-bot-head">
@@ -211,6 +346,7 @@ window.CRE8PILOT_CONTEXT = Object.assign(
                             <div class="cre8pilot-bot-thruster cre8pilot-bot-thruster--right"></div>
                         </div>
                         <div class="cre8pilot-bot-ring" aria-hidden="true"></div>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -285,6 +421,313 @@ window.CRE8PILOT_CONTEXT = Object.assign(
         return titles[state] || 'Cre8Pilot';
     }
 
+    const CRE8PILOT_BUBBLE_HIDE_MS = 3000;
+
+    /**
+     * Many “transparent” bubble PNGs bake in the gray/white checkerboard as opaque pixels.
+     * Flood from the image border through neutral / light pixels (low chroma). Stops at ink and saturated colors.
+     * Includes medium gray (#808080) which the first version missed, and re-runs when bubbles are shown (lazy load).
+     */
+    function cre8PilotIsNeutralCheckerPixel(r, g, b, a, mode) {
+        if (a < 18) {
+            return false;
+        }
+        const mx = Math.max(r, g, b);
+        const mn = Math.min(r, g, b);
+        const chroma = mx - mn;
+        const loose = mode === 'loose';
+        const maxChroma = loose ? 58 : 44;
+        const minMx = loose ? 56 : 72;
+        if (chroma > maxChroma || mx < minMx) {
+            return false;
+        }
+        if (mx > 248 && mn > 232) {
+            return true;
+        }
+        if (loose) {
+            if (mx >= 82 && mx <= 235 && mn >= 58) {
+                return true;
+            }
+            if (mx > 235 && mn > 145 && chroma <= 50) {
+                return true;
+            }
+            return false;
+        }
+        if (mx >= 95 && mx <= 215 && mn >= 70 && chroma <= 42) {
+            return true;
+        }
+        if (mx >= 150 && mn >= 115 && chroma <= 36) {
+            return true;
+        }
+        return false;
+    }
+
+    function cre8PilotFloodClearCheckerboard(d, w, h, isBg, maxFrac) {
+        const backup = new Uint8ClampedArray(d);
+        const visited = new Uint8Array(w * h);
+        const qx = [];
+        const qy = [];
+        const idx = (x, y) => y * w + x;
+        const trySeed = (x, y) => {
+            if (x < 0 || y < 0 || x >= w || y >= h) {
+                return;
+            }
+            const i = idx(x, y);
+            if (visited[i]) {
+                return;
+            }
+            const o = i * 4;
+            if (!isBg(d[o], d[o + 1], d[o + 2], d[o + 3])) {
+                return;
+            }
+            visited[i] = 1;
+            qx.push(x);
+            qy.push(y);
+        };
+        trySeed(0, 0);
+        trySeed(w - 1, 0);
+        trySeed(0, h - 1);
+        trySeed(w - 1, h - 1);
+        if (qx.length === 0) {
+            for (let x = 0; x < w; x += 1) {
+                trySeed(x, 0);
+                trySeed(x, h - 1);
+            }
+            for (let y = 0; y < h; y += 1) {
+                trySeed(0, y);
+                trySeed(w - 1, y);
+            }
+        }
+        if (qx.length === 0) {
+            return { ok: false, cleared: 0, backup };
+        }
+        const neighbors = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+        let head = 0;
+        let cleared = 0;
+        const maxClear = Math.max(80, Math.floor(w * h * maxFrac));
+        while (head < qx.length) {
+            const x = qx[head];
+            const y = qy[head];
+            head += 1;
+            const ii = idx(x, y);
+            const o = ii * 4;
+            d[o + 3] = 0;
+            cleared += 1;
+            if (cleared > maxClear) {
+                d.set(backup);
+                return { ok: false, cleared: 0, backup };
+            }
+            for (let ni = 0; ni < 4; ni += 1) {
+                const nx = x + neighbors[ni][0];
+                const ny = y + neighbors[ni][1];
+                if (nx < 0 || ny < 0 || nx >= w || ny >= h) {
+                    continue;
+                }
+                const ii2 = idx(nx, ny);
+                if (visited[ii2]) {
+                    continue;
+                }
+                const o2 = ii2 * 4;
+                if (!isBg(d[o2], d[o2 + 1], d[o2 + 2], d[o2 + 3])) {
+                    continue;
+                }
+                visited[ii2] = 1;
+                qx.push(nx);
+                qy.push(ny);
+            }
+        }
+        if (cleared < 16) {
+            d.set(backup);
+            return { ok: false, cleared: 0, backup };
+        }
+        return { ok: true, cleared, backup };
+    }
+
+    function cre8PilotStripCheckerboardFromBubbleImg(img, force) {
+        if (!img) {
+            return;
+        }
+        if (img.dataset.cre8pilotBubbleStrip === '1') {
+            delete img.dataset.cre8pilotBubbleStrip;
+        }
+        if (img.src && img.src.indexOf('data:image') === 0) {
+            img.dataset.cre8pilotBubbleStrip = 'done';
+            return;
+        }
+        if (img.dataset.cre8pilotBubbleStrip === 'done') {
+            return;
+        }
+        if (!force && img.dataset.cre8pilotBubbleStrip === 'skip') {
+            return;
+        }
+        if (force && img.dataset.cre8pilotBubbleStrip === 'skip') {
+            delete img.dataset.cre8pilotBubbleStrip;
+        }
+        // Success bubble is shipped with transparency; do not run checkerboard (would eat white) or canvas re-encode.
+        if (img.closest && img.closest('.cre8pilot-bubble--success')) {
+            img.dataset.cre8pilotBubbleStrip = 'done';
+            return;
+        }
+        const w = img.naturalWidth;
+        const h = img.naturalHeight;
+        if (!w || !h || w > 2048 || h > 2048) {
+            img.dataset.cre8pilotBubbleStrip = 'skip';
+            return;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            img.dataset.cre8pilotBubbleStrip = 'skip';
+            return;
+        }
+        const tryModes = [['normal', 0.58], ['loose', 0.65]];
+        let lastOk = false;
+        let imgData;
+        let d;
+        for (let mi = 0; mi < tryModes.length; mi += 1) {
+            ctx.drawImage(img, 0, 0);
+            try {
+                imgData = ctx.getImageData(0, 0, w, h);
+            } catch (e) {
+                img.dataset.cre8pilotBubbleStrip = 'skip';
+                return;
+            }
+            d = imgData.data;
+            const mode = tryModes[mi][0];
+            const frac = tryModes[mi][1];
+            const isBg = (r, g, b, a) => cre8PilotIsNeutralCheckerPixel(r, g, b, a, mode);
+            const res = cre8PilotFloodClearCheckerboard(d, w, h, isBg, frac);
+            if (res.ok && res.cleared >= 16) {
+                lastOk = true;
+                break;
+            }
+        }
+        if (!lastOk) {
+            img.dataset.cre8pilotBubbleStrip = 'skip';
+            return;
+        }
+        ctx.putImageData(imgData, 0, 0);
+        let dataUrl;
+        try {
+            dataUrl = canvas.toDataURL('image/png');
+        } catch (e2) {
+            img.dataset.cre8pilotBubbleStrip = 'skip';
+            return;
+        }
+        if (dataUrl && dataUrl.indexOf('data:') === 0) {
+            img.dataset.cre8pilotBubbleStrip = 'done';
+            img.src = dataUrl;
+        } else {
+            img.dataset.cre8pilotBubbleStrip = 'skip';
+        }
+    }
+
+    function cre8PilotPrepareBubbleImages(widget, force) {
+        if (!widget) {
+            return;
+        }
+        widget.querySelectorAll('.cre8pilot-bubble img').forEach((bubbleImg) => {
+            if (bubbleImg.dataset.cre8pilotBubbleStrip === 'done') {
+                return;
+            }
+            if (!force && bubbleImg.dataset.cre8pilotBubbleStrip === 'skip') {
+                return;
+            }
+            const run = () => {
+                try {
+                    cre8PilotStripCheckerboardFromBubbleImg(bubbleImg, !!force);
+                } catch (err) {
+                    bubbleImg.dataset.cre8pilotBubbleStrip = 'skip';
+                }
+            };
+            if (bubbleImg.complete && bubbleImg.naturalWidth > 0) {
+                requestAnimationFrame(run);
+            } else {
+                bubbleImg.addEventListener('load', () => requestAnimationFrame(run), { once: true });
+            }
+        });
+    }
+
+    function cre8PilotBubbleKindForAvatarState(stateName) {
+        const s = String(stateName || '').toLowerCase();
+        if (s === 'thinking' || s === 'filling') {
+            return 'thinking';
+        }
+        if (s === 'warning' || s === 'error') {
+            return 'swears';
+        }
+        if (s === 'confused') {
+            return 'confused';
+        }
+        if (s === 'success') {
+            return 'success';
+        }
+        return null;
+    }
+
+    function cre8PilotClearBubbleHideTimer(widget) {
+        if (widget && widget.cre8PilotBubbleHideTimer) {
+            clearTimeout(widget.cre8PilotBubbleHideTimer);
+            widget.cre8PilotBubbleHideTimer = null;
+        }
+    }
+
+    function cre8PilotHideAvatarBubblesInWidget(widget) {
+        if (!widget) {
+            return;
+        }
+        widget.querySelectorAll('[data-cre8pilot-bubble]').forEach((b) => {
+            b.hidden = true;
+            b.classList.remove('is-visible');
+        });
+    }
+
+    function cre8PilotShowAvatarBubbleKind(widget, kind) {
+        if (!widget || !kind) {
+            cre8PilotHideAvatarBubblesInWidget(widget);
+            return;
+        }
+        cre8PilotHideAvatarBubblesInWidget(widget);
+        widget.querySelectorAll('[data-cre8pilot-bubble="' + kind + '"]').forEach((b) => {
+            b.hidden = false;
+            requestAnimationFrame(() => b.classList.add('is-visible'));
+        });
+        widget.cre8PilotActiveBubbleKind = kind;
+        requestAnimationFrame(() => requestAnimationFrame(() => cre8PilotPrepareBubbleImages(widget, true)));
+    }
+
+    function cre8PilotScheduleBubbleAutoHide(widget) {
+        cre8PilotClearBubbleHideTimer(widget);
+        if (!widget || !widget.cre8PilotActiveBubbleKind) {
+            return;
+        }
+        widget.cre8PilotBubbleHideTimer = setTimeout(() => {
+            widget.cre8PilotBubbleHideTimer = null;
+            if (widget.cre8PilotBubbleHoverHold) {
+                return;
+            }
+            cre8PilotHideAvatarBubblesInWidget(widget);
+            widget.cre8PilotActiveBubbleKind = null;
+        }, CRE8PILOT_BUBBLE_HIDE_MS);
+    }
+
+    function cre8PilotSyncBubblesToAvatarState(widget, stateName) {
+        if (!widget) {
+            return;
+        }
+        const kind = cre8PilotBubbleKindForAvatarState(stateName);
+        if (!kind) {
+            cre8PilotClearBubbleHideTimer(widget);
+            cre8PilotHideAvatarBubblesInWidget(widget);
+            widget.cre8PilotActiveBubbleKind = null;
+            return;
+        }
+        cre8PilotShowAvatarBubbleKind(widget, kind);
+        cre8PilotScheduleBubbleAutoHide(widget);
+    }
+
     function setCre8PilotAvatarState(state, widgetOrNull, options = {}) {
         let stateName = String(state || 'idle').toLowerCase();
         if (stateName === 'speaking') {
@@ -310,6 +753,7 @@ window.CRE8PILOT_CONTEXT = Object.assign(
                 el.style.setProperty('--voice-level', v);
             }
         });
+        cre8PilotSyncBubblesToAvatarState(widget, stateName);
         return stateName;
     }
 
@@ -342,6 +786,13 @@ window.CRE8PILOT_CONTEXT = Object.assign(
                 state = 'success';
             } else {
                 state = 'idle';
+            }
+        }
+        const sec = data.security;
+        if (sec && typeof sec === 'object') {
+            const lvl = String(sec.riskLevel || '').toLowerCase();
+            if (lvl === 'high' || lvl === 'medium') {
+                state = 'warning';
             }
         }
         widget.cre8PilotLastResponseAvatarState = state;
@@ -1793,6 +2244,29 @@ window.CRE8PILOT_CONTEXT = Object.assign(
             return;
         }
         widget.dataset.cre8pilotReady = '1';
+        widget.cre8PilotBubbleHoverHold = false;
+        cre8PilotPrepareBubbleImages(widget);
+        widget.querySelectorAll('[data-cre8pilot-avatar]').forEach((avatarEl) => {
+            avatarEl.addEventListener('mouseenter', () => {
+                widget.cre8PilotBubbleHoverHold = true;
+                cre8PilotClearBubbleHideTimer(widget);
+                const st = widget.cre8PilotAvatarState || 'idle';
+                const kind = cre8PilotBubbleKindForAvatarState(st);
+                if (kind) {
+                    cre8PilotShowAvatarBubbleKind(widget, kind);
+                }
+            });
+            avatarEl.addEventListener('mouseleave', () => {
+                widget.cre8PilotBubbleHoverHold = false;
+                const kind = cre8PilotBubbleKindForAvatarState(widget.cre8PilotAvatarState || 'idle');
+                if (kind) {
+                    cre8PilotScheduleBubbleAutoHide(widget);
+                } else {
+                    cre8PilotHideAvatarBubblesInWidget(widget);
+                    widget.cre8PilotActiveBubbleKind = null;
+                }
+            });
+        });
 
         const toggle = widget.querySelector('[data-cre8pilot-toggle]');
         const panel = widget.querySelector('[data-cre8pilot-panel]');

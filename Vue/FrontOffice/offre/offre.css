@@ -3128,6 +3128,7 @@ body > main.container-fluid {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border-color);
   background: var(--card-bg-soft);
+  overflow: visible;
 }
 
 .cre8pilot-header-main {
@@ -3136,6 +3137,7 @@ body > main.container-fluid {
   gap: 0.65rem;
   min-width: 0;
   flex: 1;
+  overflow: visible;
 }
 
 .cre8pilot-header-text {
@@ -4026,8 +4028,8 @@ body > main.container-fluid {
   justify-content: center;
   perspective: 240px;
   transform-style: preserve-3d;
-  filter: drop-shadow(0 8px 18px rgba(54, 40, 136, 0.34));
-  transition: transform 0.2s ease, filter 0.3s ease;
+  overflow: visible;
+  transition: transform 0.2s ease;
 }
 
 .cre8pilot-avatar--small {
@@ -4038,7 +4040,6 @@ body > main.container-fluid {
 .cre8pilot-avatar--large {
   width: 200px;
   height: 230px;
-  filter: drop-shadow(0 16px 36px rgba(34, 24, 100, 0.44));
 }
 
 .cre8pilot-voice-avatar-wrap {
@@ -4057,6 +4058,12 @@ body > main.container-fluid {
   align-items: center;
   justify-content: center;
   animation: cre8pilotFloat 3.8s ease-in-out infinite;
+  filter: drop-shadow(0 8px 18px rgba(54, 40, 136, 0.34));
+  transition: filter 0.3s ease;
+}
+
+.cre8pilot-avatar--large .cre8pilot-bot {
+  filter: drop-shadow(0 16px 36px rgba(34, 24, 100, 0.44));
 }
 
 .cre8pilot-bot-ring {

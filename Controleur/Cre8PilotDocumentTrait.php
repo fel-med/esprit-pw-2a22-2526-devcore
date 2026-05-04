@@ -422,6 +422,9 @@ trait Cre8PilotDocumentTrait
             'the file i uploaded',
             'file i uploaded',
             'uploaded file',
+            'summarize uploaded file',
+            'summarize the last file',
+            'summarize my document',
             'this document',
             'the document',
             'based on this document',
@@ -432,7 +435,21 @@ trait Cre8PilotDocumentTrait
             return ['reason' => 'latest_file', 'documents' => [array_values($candidates)[0]]];
         }
 
-        $cvMatch = $this->messageContainsAny($normalizedMessage, ['my cv', 'my resume', 'use cv', 'use resume', 'from my cv', 'from my resume', 'using my cv', 'with my cv', 'according to my cv']);
+        $cvMatch = $this->messageContainsAny($normalizedMessage, [
+            'my cv',
+            'my resume',
+            'use cv',
+            'use resume',
+            'from my cv',
+            'from my resume',
+            'using my cv',
+            'with my cv',
+            'according to my cv',
+            'summarize my uploaded cv',
+            'summarize my cv',
+            'my uploaded cv',
+            'uploaded cv',
+        ]);
         $portfolioMatch = $this->messageContainsAny($normalizedMessage, ['portfolio', 'my portfolio']);
         $briefMatch = $this->messageContainsAny($normalizedMessage, ['product brief', 'campaign brief', 'the brief']);
 
@@ -511,6 +528,11 @@ trait Cre8PilotDocumentTrait
             'use the pdf',
             'use uploaded pdf',
             'with the pdf',
+            'summarize my uploaded cv',
+            'summarize my cv',
+            'summarize uploaded file',
+            'summarize the last file',
+            'summarize my document',
         ]);
     }
 
