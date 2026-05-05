@@ -427,6 +427,131 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     fab.setAttribute('type', 'button');
+    /* ── DRAG & DROP ── */
+let isDragging = false;
+let dragStartX = 0, dragStartY = 0;
+let initialLeft = 0, initialBottom = 0;
+
+const getPos = () => {
+  const rect = root.getBoundingClientRect();
+  return {
+    left: rect.left,
+    bottom: window.innerHeight - rect.bottom
+  };
+};
+
+const startDrag = (clientX, clientY) => {
+  isDragging = true;
+  dragStartX = clientX;
+  dragStartY = clientY;
+  const pos = getPos();
+  initialLeft = pos.left;
+  initialBottom = pos.bottom;
+  root.classList.add('is-dragging');
+  // Applique les coordonnées absolues dès le début
+  root.style.left = initialLeft + 'px';
+  root.style.bottom = initialBottom + 'px';
+  root.style.right = 'auto';
+  root.style.top = 'auto';
+};
+
+const moveDrag = (clientX, clientY) => {
+  if (!isDragging) return;
+  const dx = clientX - dragStartX;
+  const dy = clientY - dragStartY; // positif = bas → réduit le bottom
+  let newLeft = initialLeft + dx;
+  let newBottom = initialBottom - dy;
+
+  // Garder dans la fenêtre (avec 12px de marge)
+  const margin = 12;
+  const maxLeft = window.innerWidth - root.offsetWidth - margin;
+  const maxBottom = window.innerHeight - root.offsetHeight - margin;
+  newLeft = Math.max(margin, Math.min(newLeft, maxLeft));
+  newBottom = Math.max(margin, Math.min(newBottom, maxBottom));
+
+  root.style.left = newLeft + 'px';
+  root.style.bottom = newBottom + 'px';
+};
+
+const endDrag = () => {
+  if (!isDragging) return;
+  isDragging = false;
+  root.classList.remove('is-dragging');
+};
+
+// Mouse
+fab.addEventListener('mousedown', (e) => {
+  // Clic simple (pas de mouvement) → ouvre/ferme le panel
+  // On démarre le drag mais on le détecte seulement si mouvement réel
+  dragStartX = e.clientX;
+  dragStartY = e.clientY;
+  const pos = getPos();
+  initialLeft = pos.left;
+  initialBottom = pos.bottom;
+
+  const onMouseMove = (ev) => {
+    const dist = Math.hypot(ev.clientX - dragStartX, ev.clientY - dragStartY);
+    if (!isDragging && dist > 5) {
+      // Mouvement suffisant → on est en drag
+      isDragging = true;
+      root.classList.add('is-dragging');
+      root.style.left = initialLeft + 'px';
+      root.style.bottom = initialBottom + 'px';
+      root.style.right = 'auto';
+      root.style.top = 'auto';
+    }
+    if (isDragging) moveDrag(ev.clientX, ev.clientY);
+  };
+
+  const onMouseUp = (ev) => {
+    const wasDragging = isDragging;
+    endDrag();
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+    if (wasDragging) {
+      // Empêche le clic d'ouvrir le panel après un drag
+      ev.stopImmediatePropagation();
+    }
+  };
+
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
+});
+
+// Touch
+fab.addEventListener('touchstart', (e) => {
+  const touch = e.touches[0];
+  dragStartX = touch.clientX;
+  dragStartY = touch.clientY;
+  const pos = getPos();
+  initialLeft = pos.left;
+  initialBottom = pos.bottom;
+}, { passive: true });
+
+fab.addEventListener('touchmove', (e) => {
+  const touch = e.touches[0];
+  const dist = Math.hypot(touch.clientX - dragStartX, touch.clientY - dragStartY);
+  if (!isDragging && dist > 5) {
+    isDragging = true;
+    root.classList.add('is-dragging');
+    root.style.left = initialLeft + 'px';
+    root.style.bottom = initialBottom + 'px';
+    root.style.right = 'auto';
+    root.style.top = 'auto';
+  }
+  if (isDragging) {
+    e.preventDefault();
+    moveDrag(touch.clientX, touch.clientY);
+  }
+}, { passive: false });
+
+fab.addEventListener('touchend', (e) => {
+  if (isDragging) {
+    endDrag();
+    e.preventDefault(); // évite le clic fantôme
+  }
+}, { passive: false });
+/* ── FIN DRAG & DROP ── */
     fab.addEventListener('click', (event) => {
       event.preventDefault();
       event.stopPropagation();

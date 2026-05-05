@@ -854,8 +854,7 @@ post-front.css
 /* ═══════════════════════════════════════════════════════════
    CREA CHATBOT — 3D Indigo Style
    ═══════════════════════════════════════════════════════════ */
-
-/* ── WRAPPER (fix override inclus) ── */
+/* ── WRAPPER ── */
 .crea-chatbot {
   position: fixed !important;
   left: max(16px, env(safe-area-inset-left)) !important;
@@ -870,9 +869,22 @@ post-front.css
   opacity: 1 !important;
   pointer-events: none;
   perspective: 900px;
+  user-select: none; /* évite la sélection de texte pendant le drag */
 }
 .crea-chatbot > * { pointer-events: auto; }
 
+/* Curseur drag sur le FAB */
+.crea-chatbot-fab {
+  cursor: grab;
+}
+.crea-chatbot-fab:active {
+  cursor: grabbing;
+}
+
+/* Désactive la transition de position pendant le drag */
+.crea-chatbot.is-dragging {
+  transition: none !important;
+}
 /* ── FAB ── */
 .crea-chatbot-fab {
   display: inline-flex !important;
