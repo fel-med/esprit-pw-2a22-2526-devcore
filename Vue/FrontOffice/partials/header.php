@@ -68,10 +68,22 @@ if (!isset($currentPage)) {
                 <!-- Dark / Light toggle -->
                 <li class="nav-item">
                     <button id="themeToggleBtn" class="theme-toggle-btn" title="Toggle dark/light mode">
+                        <span class="theme-toggle-icon theme-icon-sun" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
+                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                                <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
+                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                            </svg>
+                        </span>
                         <span class="theme-toggle-track">
                             <span class="theme-toggle-knob"></span>
                         </span>
-                        <span class="theme-toggle-label">Dark</span>
+                        <span class="theme-toggle-icon theme-icon-moon" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/>
+                            </svg>
+                        </span>
                     </button>
                 </li>
             </ul>
@@ -86,20 +98,11 @@ if (!isset($currentPage)) {
     document.documentElement.setAttribute('data-theme', t);
     localStorage.setItem(KEY, t);
   }
-  function syncBtn(t){
-    var btn = document.getElementById('themeToggleBtn');
-    if(!btn) return;
-    var lbl = btn.querySelector('.theme-toggle-label');
-    if(lbl) lbl.textContent = t === 'dark' ? 'Light' : 'Dark';
-  }
   var btn = document.getElementById('themeToggleBtn');
   if(btn){
-    var cur = document.documentElement.getAttribute('data-theme') || 'light';
-    syncBtn(cur);
     btn.addEventListener('click', function(){
       var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
       applyTheme(next);
-      syncBtn(next);
     });
   }
 })();
