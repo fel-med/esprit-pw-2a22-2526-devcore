@@ -363,4 +363,9 @@
       decisionStatus: overlay.dataset.defaultDecisionStatus || "acceptee",
     });
   }
+
+  window.__cre8connectBrandActionsModal = {
+    open: openModal,
+    close: closeModal,
+  };
 })();

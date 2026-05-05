@@ -510,6 +510,7 @@ $brandNegotiationBaselineDelay = $brandIsLatestNegotiationSender && ($latestNego
                                     action="brand_details.php?idCandidature=<?php echo (int) $condidature->getIdCandidature(); ?>"
                                     class="response-modal-card"
                                     data-response-modal-card
+                                    data-cre8pilot-form="brand_decision_form"
                                     data-modal-variant="<?php echo htmlspecialchars($activeDecisionStatus === 'refusee' ? 'refuse' : 'accept'); ?>"
                                     role="dialog"
                                     aria-modal="true"
@@ -571,12 +572,13 @@ $brandNegotiationBaselineDelay = $brandIsLatestNegotiationSender && ($latestNego
                         <?php endif; ?>
 
                         <?php if ($brandCanNegotiate): ?>
-                            <div class="response-modal-panel" data-response-modal-panel="negotiate" hidden>
+                            <div class="response-modal-panel" data-response-modal-panel="negotiate" data-cre8pilot-section="negotiation" hidden>
                                 <form
                                     method="post"
                                     action="brand_details.php?idCandidature=<?php echo (int) $condidature->getIdCandidature(); ?>"
                                     class="response-modal-card"
                                     data-response-modal-card
+                                    data-cre8pilot-form="negotiation_form"
                                     data-modal-variant="negotiate"
                                     data-require-negotiation-delta="1"
                                     data-baseline-message="<?php echo htmlspecialchars($brandNegotiationBaselineMessage); ?>"
@@ -672,7 +674,7 @@ $cre8PilotContext = [
     'mode' => ($condidature && $condidature->isNegotiation()) ? 'negotiation_reply' : 'review_details',
     'role' => 'marque',
     'allowedActions' => ($condidature && $condidature->isNegotiation())
-        ? ['normal_chat', 'prepare_negotiation_reply', 'summarize_negotiation', 'improve_negotiation_message', 'security_check']
+        ? ['normal_chat', 'prepare_negotiation_reply', 'prepare_acceptance_note', 'prepare_refusal_note', 'summarize_negotiation', 'improve_negotiation_message', 'security_check']
         : ['normal_chat', 'summarize_candidature', 'prepare_acceptance_note', 'prepare_refusal_note', 'prepare_negotiation_reply', 'analyze_candidature_quality', 'security_check'],
     'formTarget' => ($condidature && $condidature->isNegotiation()) ? 'negotiation_form' : 'brand_decision_form',
     'visibleEntityType' => ($condidature && $condidature->isNegotiation()) ? 'negociation' : 'candidature',

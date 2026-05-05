@@ -405,6 +405,15 @@ class OffreC
                 $sql .= " AND o.statutOffre = 'publiee' AND o.datePublication > CURDATE()";
             } elseif ($status === 'publiee') {
                 $sql .= " AND o.statutOffre = 'publiee' AND o.datePublication <= CURDATE()";
+            } elseif ($status === 'expiree' || $status === 'outdated') {
+                // The brand offer workspace surfaces "outdated" cards whose deadline
+                // already passed (computed at runtime — see isOfferOutdated() in
+                // Vue/FrontOffice/offre/brand_index.php). Filtering only on
+                // statutOffre = 'expiree' returned nothing because the seed data
+                // keeps those offers in 'publiee'. We mirror the runtime rule here so
+                // the Expired/Outdated filter (manual or via Cre8Pilot) actually
+                // surfaces what is shown in the Outdated section.
+                $sql .= " AND (o.statutOffre = 'expiree' OR o.dateLimite < CURDATE())";
             } else {
                 $sql .= ' AND o.statutOffre = :status';
                 $params['status'] = $status;

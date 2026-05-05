@@ -14,6 +14,7 @@ $cre8BackItems = [
     ]],
     ['section' => 'MODULES', 'items' => [
         ['label' => 'Offers & Applications', 'icon' => '▱', 'href' => $cre8BackBase . '/Vue/BackOffice/offre/index.php', 'active' => strpos($cre8BackPath, '/BackOffice/offre/') !== false || strpos($cre8BackPath, '/BackOffice/condidature/') !== false],
+        ['label' => 'Cre8Shield Monitor', 'icon' => '◈', 'href' => $cre8BackBase . '/Vue/BackOffice/cre8shield/index.php', 'active' => strpos($cre8BackPath, '/BackOffice/cre8shield/') !== false],
         ['label' => 'Events & Forums', 'icon' => '□', 'href' => '#', 'active' => false],
         ['label' => 'Campaigns', 'icon' => '⚡', 'href' => '#', 'active' => false],
         ['label' => 'Products', 'icon' => '◇', 'href' => '#', 'active' => false],

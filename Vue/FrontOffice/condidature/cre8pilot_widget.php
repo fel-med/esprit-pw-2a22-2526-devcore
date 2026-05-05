@@ -38,6 +38,38 @@ window.CRE8PILOT_CONTEXT = Object.assign(
 $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/FrontOffice/condidature/cre8pilot-bubbles.css?v=' . urlencode((string) (@filemtime(__DIR__ . '/cre8pilot-bubbles.css') ?: 0)), ENT_QUOTES, 'UTF-8');
 ?>
 <link rel="stylesheet" href="<?php echo $cre8PilotBubblesCss; ?>">
+<style>
+.cre8pilot-field-highlight {
+    outline: 3px solid rgba(124, 92, 255, 0.85) !important;
+    box-shadow: 0 0 0 6px rgba(124, 92, 255, 0.18) !important;
+    transition: box-shadow 0.3s ease, outline 0.3s ease;
+}
+.cre8pilot-section-highlight {
+    outline: 2px dashed rgba(124, 92, 255, 0.55) !important;
+    outline-offset: 4px;
+    transition: outline 0.3s ease;
+}
+.cre8pilot-pagescan-banner {
+    margin: 0.55rem 0;
+    padding: 0.6rem 0.85rem;
+    border-radius: 10px;
+    background: rgba(217, 119, 6, 0.08);
+    color: #92400e;
+    border: 1px solid rgba(217, 119, 6, 0.35);
+    font-size: 0.86rem;
+    line-height: 1.35;
+}
+.cre8pilot-pagescan-banner.is-high {
+    background: rgba(220, 38, 38, 0.08);
+    color: #b91c1c;
+    border-color: rgba(220, 38, 38, 0.35);
+}
+.cre8pilot-pagescan-banner ul {
+    margin: 0.4rem 0 0;
+    padding-left: 1rem;
+    color: inherit;
+}
+</style>
 <script src="<?php echo htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/FrontOffice/condidature/cre8pilot_multi_smoke_test.js'); ?>"></script>
 <?php $cre8PilotStressTestJs = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/FrontOffice/condidature/cre8pilot_full_balanced_stress_test.js'); ?>
 <?php $cre8PilotAiTourStressTestJs = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/FrontOffice/condidature/cre8pilot_ai_tour_stress_test.js'); ?>
@@ -1097,29 +1129,57 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
 
     function getFieldAliases(name) {
         const aliases = {
-            message: ['message', 'messageNegociation', 'contenu', 'messageMotivation', 'noteDecision'],
+            message: ['message', 'messageNegociation', 'contenu', 'messageMotivation'],
             messageNegociation: ['messageNegociation', 'message', 'contenu', 'messageMotivation'],
             contenu: ['contenu', 'message', 'messageNegociation', 'messageMotivation'],
             negotiationMessage: ['messageMotivation', 'messageNegociation', 'message', 'contenu'],
             refusalMessage: ['motifRefus', 'noteDecision', 'messageMotivation'],
             decisionNote: ['noteDecision', 'messageMotivation'],
+            acceptNote: ['acceptNote', 'noteDecision', 'accept_message', 'messageAccept'],
+            declineNote: ['declineNote', 'motifRefus', 'noteDecision', 'refuseReason', 'declineReason', 'refusal_message', 'messageRefus'],
+            budget: ['budgetPropose', 'budget', 'montant'],
+            timeline: ['delaiPropose', 'timeline', 'deadline', 'delai'],
         };
 
         return aliases[name] || [name];
     }
 
-    function findField(name) {
+    function cre8pilotQueryById(root, id) {
+        if (!id) {
+            return null;
+        }
+        if (root === document && document.getElementById) {
+            return document.getElementById(id);
+        }
+        if (!root || typeof root.querySelector !== 'function') {
+            return null;
+        }
+        try {
+            const esc = typeof CSS !== 'undefined' && typeof CSS.escape === 'function' ? CSS.escape(id) : id.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+            return root.querySelector('#' + esc);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function findField(name, scopeRoot) {
         if (!name) {
             return null;
         }
+        const root = scopeRoot && typeof scopeRoot.querySelector === 'function' ? scopeRoot : document;
 
         const dataCandidates = [];
         const nameCandidates = [];
         const idCandidates = [];
         getFieldAliases(name).forEach((fieldName) => {
-            dataCandidates.push(document.querySelector('[data-cre8pilot-field="' + fieldName + '"]'));
-            document.getElementsByName(fieldName).forEach((field) => nameCandidates.push(field));
-            idCandidates.push(document.getElementById(fieldName));
+            const fn = String(fieldName).replace(/"/g, '');
+            dataCandidates.push(root.querySelector('[data-cre8pilot-field="' + fn + '"]'));
+            if (root === document) {
+                document.getElementsByName(fn).forEach((field) => nameCandidates.push(field));
+            } else {
+                root.querySelectorAll('[name="' + fn.replace(/"/g, '') + '"]').forEach((field) => nameCandidates.push(field));
+            }
+            idCandidates.push(cre8pilotQueryById(root, fn));
         });
 
         const unique = uniqueFields(dataCandidates.concat(nameCandidates, idCandidates));
@@ -1258,8 +1318,68 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
         };
     }
 
-    function fillField(name, value) {
-        const field = findField(name);
+    function cre8pilotCleanDraftFieldText(raw) {
+        let s = String(raw ?? '');
+        const snippets = [
+            /\s*[—\-]\s*I\s+cannot\s+send\s+this\s+automatically\.?/giu,
+            /\s*[—\-]\s*I\s+cannot\s+accept\s+automatically\s+on\s+your\s+behalf\.?/giu,
+            /\s*[—\-]\s*I\s+cannot\s+refuse\s+automatically[^.]*(?:\.|$)/giu,
+            /\s*Please\s+review\s+the\s+wording\s+and\s+numbers\s+before\s+sending[^.]*(?:\.|$)/giu,
+            /\s*Please\s+review\s+before\s+sending[^.]*(?:\.|$)/giu,
+            /\s*I\s+cannot\s+submit\s+this\s+automatically\.?/giu,
+            /\s*I\s+cannot\s+save\s+this\s+automatically\.?/giu,
+            /\s*I\s+cannot\s+publish\s+this\s+automatically\.?/giu,
+            /\s*I\s+will\s+not\s+submit\s+or\s+save\s+anything\s+automatically\.?/giu,
+            /\s*Please\s+review\s+the\s+prepared\s+content\.?/giu,
+            /\s*Use\s+the\s+page\s+button\s+yourself[^.]*(?:\.|$)/giu,
+            /\s*Some\s+fields\s+may\s+still\s+need\s+manual\s+review\.?/giu,
+            /\s*I\s+filled\s+the\s+available\s+fields\.?/giu,
+            /\s*I\s+cannot\s+send\s+or\s+accept\s+automatically[^.]*(?:\.|$)/giu,
+        ];
+        snippets.forEach((re) => {
+            re.lastIndex = 0;
+            s = s.replace(re, '');
+        });
+        s = s.replace(/\s{2,}/g, ' ').replace(/\s+\./g, '.').replace(/\.{2,}/g, '.').replace(/\s*[—\-]\s*$/u, '').trim();
+        return s;
+    }
+
+    function cre8pilotResetFilterForm() {
+        let form = cre8pilotFindFormForTarget('filter_form');
+        if (!form || form.tagName.toUpperCase() !== 'FORM') {
+            const cands = cre8pilotFindFilterFormCandidates();
+            form = cands[0] || null;
+        }
+        if (!form || form.tagName.toUpperCase() !== 'FORM') {
+            cre8pilotLogSafeUi('safeUiActionBlocked', 'filter_form_not_found');
+            return false;
+        }
+        form.querySelectorAll('input:not([type="hidden"]), select, textarea').forEach((el) => {
+            const typ = String(el.type || '').toLowerCase();
+            const nm = String(el.name || '').toLowerCase();
+            if (nm === '_token' || nm === 'csrf_token') {
+                return;
+            }
+            if (el.tagName === 'SELECT') {
+                el.selectedIndex = 0;
+                return;
+            }
+            if (typ === 'checkbox' || typ === 'radio') {
+                el.checked = false;
+                return;
+            }
+            el.value = '';
+        });
+        try {
+            form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch (e) {}
+        return cre8pilotSubmitFilterForm('filter_form');
+    }
+
+    function fillField(name, value, opts) {
+        const o = opts && typeof opts === 'object' ? opts : {};
+        const scope = o.scopeRoot && typeof o.scopeRoot.querySelector === 'function' ? o.scopeRoot : null;
+        const field = findField(name, scope);
         if (!field) {
             return false;
         }
@@ -1267,14 +1387,596 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
         if (field.type === 'checkbox' || field.type === 'radio') {
             field.checked = Boolean(value);
         } else {
-            field.value = String(value);
+            let v = String(value);
+            const typ = String(field.type || '').toLowerCase();
+            const textLike = field.tagName === 'TEXTAREA'
+                || (field.tagName === 'INPUT' && ['text', 'search', 'url', 'email', 'tel'].indexOf(typ) >= 0);
+            if (!o.skipDraftClean && textLike) {
+                v = cre8pilotCleanDraftFieldText(v);
+            }
+            field.value = v;
         }
 
         field.dispatchEvent(new Event('input', { bubbles: true }));
         field.dispatchEvent(new Event('change', { bubbles: true }));
-        field.classList.add('cre8pilot-field-highlight');
-        window.setTimeout(() => field.classList.remove('cre8pilot-field-highlight'), 2200);
+        cre8pilotEnsureFieldVisible(field);
+        if (!o.skipFieldHighlight) {
+            cre8pilotHighlight(field, 2800);
+        }
         return true;
+    }
+
+    function cre8pilotEnsureFieldVisible(field) {
+        if (!field) {
+            return;
+        }
+        try {
+            const dialog = field.closest('dialog');
+            if (dialog && typeof dialog.showModal === 'function' && !dialog.open) {
+                try { dialog.showModal(); } catch (e) { try { dialog.show(); } catch (e2) {} }
+            }
+            const detailsEl = field.closest('details');
+            if (detailsEl && !detailsEl.open) {
+                detailsEl.open = true;
+            }
+            const hiddenAttrParent = field.closest('[hidden]');
+            if (hiddenAttrParent && hiddenAttrParent !== field) {
+                hiddenAttrParent.removeAttribute('hidden');
+            }
+            const hiddenClassParent = field.closest('.is-hidden, .hidden, .d-none');
+            if (hiddenClassParent && hiddenClassParent !== field) {
+                hiddenClassParent.classList.remove('is-hidden', 'hidden', 'd-none');
+            }
+        } catch (e) {}
+    }
+
+    function cre8pilotHighlight(el, durationMs) {
+        if (!el || !el.classList) {
+            return;
+        }
+        el.classList.add('cre8pilot-field-highlight');
+        const t = Math.max(1500, Math.min(4000, durationMs || 2800));
+        window.setTimeout(() => el.classList.remove('cre8pilot-field-highlight'), t);
+    }
+
+    function cre8pilotFindFormForTarget(target) {
+        const t = String(target || '').toLowerCase();
+        const map = {
+            offer_form: '[data-cre8pilot-form="offer_form"], form#offerForm, form[name="offerForm"], form[data-form="offer"], form.offer-form',
+            candidature_form: '[data-cre8pilot-form="candidature_form"], form#candidatureForm, form[name="candidatureForm"], form.candidature-form',
+            negotiation_form: '[data-cre8pilot-form="negotiation_form"], form#negotiationForm, form[name="negotiationForm"], form.negotiation-form, [data-response-modal-panel="negotiate"] form, [data-cre8pilot-section="negotiation"] form, form[data-modal-variant="negotiate"]',
+            brand_decision_form: '[data-cre8pilot-form="brand_decision_form"], form.brand-decision-form, form#brandDecisionForm, form[name="brandDecisionForm"], [data-response-modal-panel="decision"] form',
+            decision_form: '[data-cre8pilot-form="decision_form"], form.decision-form, form#decisionForm',
+            refusal_form: '[data-cre8pilot-form="refusal_form"], form.refusal-form',
+            filter_form: '[data-cre8pilot-form="filter_form"], form.filter-stack, form.filter-form, form.search-form, form[role="search"], form#filterForm, section.filter-card form[method="get"], form[method="get"][action*="brand_index"]',
+            search_form: '[data-cre8pilot-form="search_form"], form.search-form, form[role="search"]',
+            sort_form: '[data-cre8pilot-form="sort_form"], form.search-form, form.filter-form, form[role="search"], form.filter-stack',
+        };
+        const selector = map[t] || ('[data-cre8pilot-form="' + t + '"]');
+        return document.querySelector(selector);
+    }
+
+    function cre8pilotLogSafeUi(blockReason, detail) {
+        if (window.console && typeof window.console.warn === 'function') {
+            window.console.warn('[Cre8Pilot]', blockReason, detail || '');
+        }
+    }
+
+    function cre8pilotNormalizeButtonText(el) {
+        if (!el) {
+            return '';
+        }
+        const t = (el.innerText || el.textContent || el.value || el.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim().toLowerCase();
+        return t;
+    }
+
+    function cre8pilotIsUnsafeButtonText(label) {
+        const t = String(label || '').toLowerCase();
+        if (t === '') {
+            return true;
+        }
+        const unsafeRes = [
+            /\bsave\b/, /\bpublish\b/, /\bdelete\b/, /\bremove\b/, /\brefuse\b/, /\bdecline\b/, /\bsend\b/, /\bsubmit\b/,
+            /\baccept\b/, /\bapprove\b/, /\bconfirm\b/, /\breject\b/,
+            /\baccepter\b/, /\bconfirmer\b/,
+            /submit\s+candidature/, /negotiation\s+reply/, /send\s+negotiation/, /start\s+negotiation/, /update\s+proposal/,
+            /\benregistrer\b/, /\bpublier\b/, /\bsupprimer\b/, /\brefuser\b/, /\benvoyer\b/, /\bmettre\s+à\s+jour\b/,
+        ];
+        for (let i = 0; i < unsafeRes.length; i++) {
+            unsafeRes[i].lastIndex = 0;
+            if (unsafeRes[i].test(t)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function cre8pilotIsSafeUiButtonText(label) {
+        const t = String(label || '').toLowerCase();
+        if (t === '' || cre8pilotIsUnsafeButtonText(t)) {
+            return false;
+        }
+        const safeTokens = [
+            'apply', 'filter', 'search', 'show', 'sort', 'reset', 'afficher', 'filtrer', 'rechercher', 'trier',
+        ];
+        for (let i = 0; i < safeTokens.length; i++) {
+            if (t.includes(safeTokens[i])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function cre8pilotFindFilterFormCandidates() {
+        const selectors = [
+            '[data-cre8pilot-form="filter_form"]',
+            'form.filter-stack',
+            'section.filter-card form[method="get"]',
+            'form[method="get"][action*="brand_index"]',
+            'form[method="get"].filter-stack',
+        ];
+        const seen = new Set();
+        const out = [];
+        for (let s = 0; s < selectors.length; s++) {
+            document.querySelectorAll(selectors[s]).forEach((form) => {
+                if (!form || form.tagName.toUpperCase() !== 'FORM' || seen.has(form)) {
+                    return;
+                }
+                const method = (form.getAttribute('method') || 'get').toLowerCase();
+                if (method !== 'get') {
+                    return;
+                }
+                seen.add(form);
+                out.push(form);
+            });
+        }
+        return out;
+    }
+
+    function cre8pilotOpenBrandResponseModal(panelName, options) {
+        const api = window.__cre8connectBrandActionsModal;
+        if (api && typeof api.open === 'function') {
+            try {
+                api.open(panelName, options || {});
+                return true;
+            } catch (e) {}
+        }
+        const overlay = document.querySelector('[data-response-modal-overlay]');
+        if (!overlay) {
+            return false;
+        }
+        const panel = overlay.querySelector('[data-response-modal-panel="' + String(panelName || '').replace(/"/g, '') + '"]');
+        if (!panel) {
+            return false;
+        }
+        overlay.querySelectorAll('[data-response-modal-panel]').forEach((p) => p.setAttribute('hidden', 'hidden'));
+        overlay.removeAttribute('hidden');
+        overlay.style.display = 'flex';
+        overlay.classList.add('is-open');
+        panel.removeAttribute('hidden');
+        document.documentElement.classList.add('offre-modal-open');
+        document.body.classList.add('offre-modal-open');
+        if (panelName === 'decision') {
+            const st = (options && options.decisionStatus) || overlay.dataset.defaultDecisionStatus || 'acceptee';
+            const input = panel.querySelector('[data-decision-status-input]');
+            if (input) {
+                input.value = st === 'refusee' ? 'refusee' : 'acceptee';
+            }
+        }
+        return true;
+    }
+
+    function cre8pilotClickNegotiationOpenTriggers() {
+        const triggers = [
+            '[data-response-modal-trigger="negotiate"]',
+            'button.brand-action-launch-negotiate',
+            '[data-cre8pilot-open-negotiation]',
+        ];
+        for (let i = 0; i < triggers.length; i++) {
+            const btn = document.querySelector(triggers[i]);
+            const type = btn ? String(btn.getAttribute('type') || '').toLowerCase() : '';
+            const isNegotiateTrigger = btn && btn.getAttribute('data-response-modal-trigger') === 'negotiate';
+            if (btn && type !== 'submit' && (isNegotiateTrigger || !cre8pilotIsUnsafeButtonText(cre8pilotNormalizeButtonText(btn)))) {
+                try {
+                    btn.click();
+                    return true;
+                } catch (e) {}
+            }
+        }
+        return false;
+    }
+
+    function cre8pilotResolveExclusiveWindowFromAction(action) {
+        if (!action || typeof action !== 'object') {
+            return '';
+        }
+        const ew = String(action.exclusiveWindow || '').trim().toLowerCase();
+        if (ew !== '') {
+            return ew;
+        }
+        const t = String(action.type || '');
+        const tgt = String(action.target || '');
+        if (t === 'fill_negotiation_form' || tgt === 'negotiation_form') {
+            return 'negotiation';
+        }
+        if (t === 'fill_accept_form') {
+            return 'accept';
+        }
+        if (t === 'fill_decline_form') {
+            return 'decline';
+        }
+        return '';
+    }
+
+    function cre8pilotOpenExclusiveWindow(targetWindow) {
+        const w = String(targetWindow || '').trim().toLowerCase();
+        const api = window.__cre8connectBrandActionsModal;
+        if (api && typeof api.close === 'function') {
+            try {
+                api.close();
+            } catch (e) {}
+        }
+        let panel = '';
+        const opts = {};
+        if (w === 'negotiation' || w === 'negotiate') {
+            panel = 'negotiate';
+        } else if (w === 'accept') {
+            panel = 'decision';
+            opts.decisionStatus = 'acceptee';
+        } else if (w === 'decline' || w === 'refuse') {
+            panel = 'decision';
+            opts.decisionStatus = 'refusee';
+        } else {
+            return null;
+        }
+        if (!cre8pilotOpenBrandResponseModal(panel, opts) && panel === 'negotiate') {
+            cre8pilotClickNegotiationOpenTriggers();
+        }
+        const overlay = document.querySelector('[data-response-modal-overlay]');
+        if (!overlay) {
+            return null;
+        }
+        const safePanel = String(panel).replace(/"/g, '');
+        return overlay.querySelector('[data-response-modal-panel="' + safePanel + '"]');
+    }
+
+    function cre8pilotPrepareSectionForFill(action) {
+        if (!action || typeof action !== 'object') {
+            return;
+        }
+        const fillTarget = String(action.target || '');
+        const openSection = String(action.openSection || '').toLowerCase();
+        const hasBrandOverlay = !!document.querySelector('[data-response-modal-overlay]');
+        let ew = cre8pilotResolveExclusiveWindowFromAction(action);
+        if (ew === '' && hasBrandOverlay) {
+            let panel = String(action.openModalPanel || '').trim();
+            if (!panel && (openSection === 'negotiation' || fillTarget === 'negotiation_form')) {
+                panel = 'negotiate';
+            }
+            if (!panel && (openSection === 'accept' || action.type === 'fill_accept_form' || (fillTarget === 'brand_decision_form' && action.openModalDecisionStatus === 'acceptee'))) {
+                panel = 'decision';
+            }
+            if (!panel && (openSection === 'decline' || openSection === 'refusal' || action.type === 'fill_decline_form' || (fillTarget === 'brand_decision_form' && action.openModalDecisionStatus === 'refusee'))) {
+                panel = 'decision';
+            }
+            if (!panel && fillTarget === 'brand_decision_form') {
+                const fields = action.fields && typeof action.fields === 'object' ? action.fields : {};
+                if (fields.motifRefus != null && String(fields.motifRefus).trim() !== '') {
+                    panel = 'decision';
+                }
+            }
+            if (panel === 'negotiate') {
+                ew = 'negotiation';
+            } else if (panel === 'decision') {
+                const ds = String(action.openModalDecisionStatus || '').trim();
+                const fields = action.fields && typeof action.fields === 'object' ? action.fields : {};
+                let status = ds;
+                if (status === '' && fields.motifRefus != null && String(fields.motifRefus).trim() !== '') {
+                    status = 'refusee';
+                }
+                if (status === '') {
+                    status = 'acceptee';
+                }
+                ew = status === 'refusee' ? 'decline' : 'accept';
+            }
+        }
+        if (hasBrandOverlay && ew !== '') {
+            action._cre8pilotFieldScope = cre8pilotOpenExclusiveWindow(ew);
+            return;
+        }
+        let panel = String(action.openModalPanel || '').trim();
+        if (!panel && (openSection === 'negotiation' || fillTarget === 'negotiation_form')) {
+            panel = 'negotiate';
+        }
+        if (!panel && (openSection === 'accept' || action.type === 'fill_accept_form' || (fillTarget === 'brand_decision_form' && action.openModalDecisionStatus === 'acceptee'))) {
+            panel = 'decision';
+        }
+        if (!panel && (openSection === 'decline' || openSection === 'refusal' || action.type === 'fill_decline_form' || (fillTarget === 'brand_decision_form' && action.openModalDecisionStatus === 'refusee'))) {
+            panel = 'decision';
+        }
+        if (!panel && fillTarget === 'brand_decision_form') {
+            const fields = action.fields && typeof action.fields === 'object' ? action.fields : {};
+            if (fields.motifRefus != null && String(fields.motifRefus).trim() !== '') {
+                panel = 'decision';
+            }
+        }
+        if (panel === 'negotiate') {
+            if (!cre8pilotOpenBrandResponseModal('negotiate', {})) {
+                cre8pilotClickNegotiationOpenTriggers();
+            }
+            return;
+        }
+        if (panel === 'decision') {
+            const ds = String(action.openModalDecisionStatus || '').trim();
+            const fields = action.fields && typeof action.fields === 'object' ? action.fields : {};
+            let status = ds;
+            if (status === '' && fields.motifRefus != null && String(fields.motifRefus).trim() !== '') {
+                status = 'refusee';
+            }
+            if (status === '') {
+                status = 'acceptee';
+            }
+            cre8pilotOpenBrandResponseModal('decision', { decisionStatus: status === 'refusee' ? 'refusee' : 'acceptee' });
+        }
+    }
+
+    function cre8pilotFocusChangedFields(action, overrideTargets) {
+        if (!action || typeof action !== 'object') {
+            return;
+        }
+        const fields = action.fields && typeof action.fields === 'object' ? action.fields : {};
+        const target = String(action.target || '');
+        const highlightMs = Math.max(2000, Math.min(6000, parseInt(action.highlightDuration || 3500, 10) || 3500));
+        const doFocus = action.focusAfter !== false;
+        const doHighlight = action.highlightAfter !== false;
+        let namesToFocus = [];
+        if (Array.isArray(overrideTargets) && overrideTargets.length > 0) {
+            namesToFocus = overrideTargets.map((x) => String(x || '').trim()).filter(Boolean);
+        } else if (Array.isArray(action.targets) && action.targets.length > 0) {
+            namesToFocus = action.targets.map((x) => String(x || '').trim()).filter(Boolean);
+        } else {
+            namesToFocus = Object.keys(fields);
+        }
+        const scopeRoot = action._cre8pilotFieldScope && typeof action._cre8pilotFieldScope.querySelector === 'function' ? action._cre8pilotFieldScope : null;
+        const fieldEls = [];
+        for (let i = 0; i < namesToFocus.length; i++) {
+            const f = findField(namesToFocus[i], scopeRoot);
+            if (f) {
+                fieldEls.push(f);
+            }
+        }
+
+        const form = cre8pilotFindFormForTarget(target) || (fieldEls[0] ? fieldEls[0].closest('form, section, dialog') : null);
+        if (form) {
+            try {
+                form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } catch (e) {
+                form.scrollIntoView();
+            }
+            if (doHighlight) {
+                cre8pilotHighlight(form, Math.min(highlightMs, 2200));
+            }
+            form.classList.add('cre8pilot-section-highlight');
+            window.setTimeout(() => form.classList.remove('cre8pilot-section-highlight'), Math.min(highlightMs, 2200));
+        }
+
+        if (fieldEls.length > 0) {
+            fieldEls.forEach((el) => cre8pilotEnsureFieldVisible(el));
+            const first = fieldEls[0];
+            try {
+                first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } catch (e) {
+                first.scrollIntoView();
+            }
+            if (doFocus) {
+                let focusEl = first;
+                for (let j = 0; j < fieldEls.length; j++) {
+                    const tag = (fieldEls[j].tagName || '').toUpperCase();
+                    const typ = String(fieldEls[j].type || '').toLowerCase();
+                    if ((tag === 'TEXTAREA' || tag === 'SELECT' || (tag === 'INPUT' && typ !== 'hidden' && typ !== 'submit' && typ !== 'button')) && !fieldEls[j].disabled && !fieldEls[j].readOnly) {
+                        focusEl = fieldEls[j];
+                        break;
+                    }
+                }
+                try {
+                    focusEl.focus({ preventScroll: true });
+                } catch (e) {}
+            }
+            if (doHighlight) {
+                fieldEls.forEach((el) => cre8pilotHighlight(el, highlightMs));
+            }
+        }
+    }
+
+    function cre8pilotSubmitFilterForm(target) {
+        let form = cre8pilotFindFormForTarget(target || 'filter_form');
+        if (!form || form.tagName.toUpperCase() !== 'FORM') {
+            const cands = cre8pilotFindFilterFormCandidates();
+            form = cands[0] || null;
+        }
+        if (!form || form.tagName.toUpperCase() !== 'FORM') {
+            cre8pilotLogSafeUi('safeUiActionBlocked', 'filter_form_not_found');
+            return false;
+        }
+        const method = (form.getAttribute('method') || 'get').toLowerCase();
+        if (method !== 'get') {
+            cre8pilotLogSafeUi('safeUiActionBlocked', 'non_get_filter_form');
+            return false;
+        }
+        const brandAjax = window.__cre8connectBrandIndexApplyFilterAjax;
+        if (typeof brandAjax === 'function' && brandAjax(form)) {
+            return true;
+        }
+        try {
+            form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch (e) {}
+        const submits = Array.from(form.querySelectorAll('button[type="submit"], input[type="submit"]'));
+        let chosen = null;
+        for (let i = 0; i < submits.length; i++) {
+            const lab = cre8pilotNormalizeButtonText(submits[i]);
+            if (cre8pilotIsSafeUiButtonText(lab)) {
+                chosen = submits[i];
+                break;
+            }
+        }
+        if (chosen) {
+            try {
+                chosen.click();
+                return true;
+            } catch (e) {}
+        }
+        if (submits.length === 0) {
+            try {
+                form.submit();
+                return true;
+            } catch (e3) {
+                return false;
+            }
+        }
+        let anyUnsafe = false;
+        let anySafe = false;
+        for (let j = 0; j < submits.length; j++) {
+            const lab = cre8pilotNormalizeButtonText(submits[j]);
+            if (cre8pilotIsUnsafeButtonText(lab)) {
+                anyUnsafe = true;
+            }
+            if (cre8pilotIsSafeUiButtonText(lab)) {
+                anySafe = true;
+            }
+        }
+        if (anyUnsafe || !anySafe) {
+            cre8pilotLogSafeUi('safeUiActionBlocked', anyUnsafe ? 'unsafe_submit_control' : 'unsafe_button_uncertain');
+            return false;
+        }
+        try {
+            form.submit();
+            return true;
+        } catch (e3) {
+            return false;
+        }
+    }
+
+    function cre8pilotSwitchTab(name) {
+        const v = String(name || '').trim();
+        if (v === '') {
+            return false;
+        }
+        const candidates = [
+            '[data-offer-tab="' + v + '"]',
+            '[data-tab="' + v + '"]',
+            '[data-tab-target="' + v + '"]',
+            '[role="tab"][data-tab-key="' + v + '"]',
+            'button.tab-button[data-tab="' + v + '"]',
+        ];
+        for (let i = 0; i < candidates.length; i++) {
+            const btn = document.querySelector(candidates[i]);
+            if (btn) {
+                try { btn.click(); } catch (e) {}
+                cre8pilotHighlight(btn, 1500);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function cre8pilotOpenModal(modalSelector) {
+        const sel = String(modalSelector || '').trim();
+        if (sel === '') {
+            return false;
+        }
+        const node = document.querySelector(sel);
+        if (!node) {
+            return false;
+        }
+        if (node.tagName && node.tagName.toUpperCase() === 'DIALOG' && typeof node.showModal === 'function') {
+            try { if (!node.open) { node.showModal(); } return true; } catch (e) {}
+        }
+        if (node.hasAttribute && node.hasAttribute('hidden')) {
+            node.removeAttribute('hidden');
+            return true;
+        }
+        if (node.classList && (node.classList.contains('is-hidden') || node.classList.contains('hidden'))) {
+            node.classList.remove('is-hidden', 'hidden');
+            return true;
+        }
+        return false;
+    }
+
+    function cre8pilotHandleSafeUiAction(action, messages) {
+        if (!action || typeof action !== 'object') {
+            return;
+        }
+        const sub = String(action.action || action.subType || '').toLowerCase();
+        const target = String(action.target || '');
+        if (sub === '') {
+            return;
+        }
+
+        if (sub === 'apply_filter_submit' || sub === 'apply_search_submit') {
+            const ok = cre8pilotSubmitFilterForm(target || 'filter_form');
+            if (!ok) {
+                appendMessage(messages, 'I prepared the filter, but could not auto-submit on this page. Please click Apply to refresh the list.', 'assistant', 'action');
+            }
+            return;
+        }
+        if (sub === 'sort_results') {
+            const ok = cre8pilotSubmitFilterForm(target || 'filter_form');
+            if (!ok) {
+                appendMessage(messages, 'I prepared the sort selection, but could not auto-submit on this page.', 'assistant', 'action');
+            }
+            return;
+        }
+        if (sub === 'switch_tab') {
+            cre8pilotSwitchTab(action.tab || target);
+            return;
+        }
+        if (sub === 'open_section') {
+            const sec = String(action.section || target || '').toLowerCase();
+            if (sec === 'negotiation' || sec === 'negotiate') {
+                cre8pilotPrepareSectionForFill({ openModalPanel: 'negotiate', target: 'negotiation_form' });
+            } else if (sec === 'accept' || sec === 'acceptance' || sec === 'decision_accept') {
+                cre8pilotPrepareSectionForFill({ openModalPanel: 'decision', openModalDecisionStatus: 'acceptee', target: 'brand_decision_form' });
+            } else if (sec === 'decline' || sec === 'refusal' || sec === 'refuse' || sec === 'decision_refuse') {
+                cre8pilotPrepareSectionForFill({ openModalPanel: 'decision', openModalDecisionStatus: 'refusee', target: 'brand_decision_form' });
+            }
+            return;
+        }
+        if (sub === 'open_modal') {
+            if (action.openModalPanel || action.panel) {
+                cre8pilotOpenBrandResponseModal(String(action.openModalPanel || action.panel || '').trim(), {
+                    decisionStatus: action.openModalDecisionStatus || action.decisionStatus,
+                });
+                return;
+            }
+            cre8pilotOpenModal(action.selector || action.modal || '');
+            return;
+        }
+        if (sub === 'focus_changed_field') {
+            cre8pilotFocusChangedFields(action);
+            return;
+        }
+        if (sub === 'scroll_to_form') {
+            const form = cre8pilotFindFormForTarget(target);
+            if (form) {
+                try {
+                    form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } catch (e) {}
+                form.classList.add('cre8pilot-section-highlight');
+                window.setTimeout(() => form.classList.remove('cre8pilot-section-highlight'), 1800);
+            }
+        }
+    }
+
+    function cre8pilotMergeFilterPayload(action) {
+        const fields = action.fields && typeof action.fields === 'object' ? Object.assign({}, action.fields) : {};
+        const filter = action.filter && typeof action.filter === 'object' ? action.filter : {};
+        Object.keys(filter).forEach((k) => {
+            if (k === '__proto__' || k === 'constructor') {
+                return;
+            }
+            fields[k] = filter[k];
+        });
+        return fields;
     }
 
     function handleAction(action, messages, widget) {
@@ -1282,12 +1984,99 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
             return;
         }
 
-        if (action.type === 'show_message') {
+        const type = String(action.type || '');
+
+        if (type === 'show_message') {
             appendMessage(messages, String(action.message || ''), 'assistant');
             return;
         }
 
-        if (action.type === 'fill_form') {
+        if (type === 'open_section') {
+            const sec = String(action.section || action.target || '').toLowerCase();
+            if (sec === 'negotiation' || sec === 'negotiate') {
+                cre8pilotPrepareSectionForFill({ openModalPanel: 'negotiate', target: 'negotiation_form' });
+            } else if (sec === 'accept' || sec === 'acceptance' || sec === 'decision_accept') {
+                cre8pilotPrepareSectionForFill({ openModalPanel: 'decision', openModalDecisionStatus: 'acceptee', target: 'brand_decision_form' });
+            } else if (sec === 'decline' || sec === 'refusal' || sec === 'refuse' || sec === 'decision_refuse') {
+                cre8pilotPrepareSectionForFill({ openModalPanel: 'decision', openModalDecisionStatus: 'refusee', target: 'brand_decision_form' });
+            }
+            return;
+        }
+
+        if (type === 'open_modal') {
+            if (action.openModalPanel || action.panel) {
+                cre8pilotOpenBrandResponseModal(String(action.openModalPanel || action.panel || '').trim(), {
+                    decisionStatus: action.openModalDecisionStatus || action.decisionStatus,
+                });
+            } else {
+                cre8pilotOpenModal(action.selector || action.modal || '');
+            }
+            return;
+        }
+
+        if (type === 'switch_tab') {
+            cre8pilotSwitchTab(action.tab || action.target || '');
+            return;
+        }
+
+        if (type === 'scroll_to_form') {
+            const form = cre8pilotFindFormForTarget(String(action.target || ''));
+            if (form) {
+                try {
+                    form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } catch (e) {
+                    form.scrollIntoView();
+                }
+                form.classList.add('cre8pilot-section-highlight');
+                window.setTimeout(() => form.classList.remove('cre8pilot-section-highlight'), 2200);
+            }
+            return;
+        }
+
+        if (type === 'focus_changed_field') {
+            cre8pilotFocusChangedFields(action);
+            return;
+        }
+
+        if (type === 'apply_filter_submit' || type === 'apply_search_submit') {
+            const merged = Object.assign({}, action, {
+                type: 'apply_filter',
+                fields: cre8pilotMergeFilterPayload(action),
+                submit: action.submit !== false && action.submit !== '0',
+            });
+            handleAction(merged, messages, widget);
+            return;
+        }
+
+        const fillTypeAliases = {
+            fill_offer_form: 'offer_form',
+            fill_negotiation_form: 'negotiation_form',
+            fill_accept_form: 'brand_decision_form',
+            fill_decline_form: 'brand_decision_form',
+            fill_candidature_form: 'candidature_form',
+        };
+        if (fillTypeAliases[type]) {
+            const inferred = Object.assign({}, action, {
+                type: 'fill_form',
+                target: action.target || fillTypeAliases[type],
+            });
+            if (type === 'fill_negotiation_form' && !inferred.openModalPanel) {
+                inferred.openModalPanel = 'negotiate';
+                inferred.openSection = inferred.openSection || 'negotiation';
+            }
+            if (type === 'fill_accept_form' && !inferred.openModalPanel) {
+                inferred.openModalPanel = 'decision';
+                inferred.openModalDecisionStatus = inferred.openModalDecisionStatus || 'acceptee';
+            }
+            if (type === 'fill_decline_form' && !inferred.openModalPanel) {
+                inferred.openModalPanel = 'decision';
+                inferred.openModalDecisionStatus = inferred.openModalDecisionStatus || 'refusee';
+            }
+            handleAction(inferred, messages, widget);
+            return;
+        }
+
+        if (type === 'fill_form') {
             const fillTarget = String(action.target || '');
             const fillFields = action.fields && typeof action.fields === 'object' ? action.fields : {};
             if (fillTarget === 'offer_form' && Object.keys(fillFields).length > 0) {
@@ -1296,13 +2085,19 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
             if (widget) {
                 setCre8PilotAvatarState('filling', widget);
             }
-            const fields = fillFields;
+            cre8pilotPrepareSectionForFill(action);
+            const fieldScope = action._cre8pilotFieldScope && typeof action._cre8pilotFieldScope.querySelector === 'function' ? action._cre8pilotFieldScope : null;
+            const fillOpts = { skipFieldHighlight: true, scopeRoot: fieldScope };
             let filled = 0;
-            Object.keys(fields).forEach((name) => {
-                if (fillField(name, fields[name])) {
+            Object.keys(fillFields).forEach((name) => {
+                if (fillField(name, fillFields[name], fillOpts)) {
                     filled++;
                 }
             });
+            if (filled > 0 && (action.focusAfter !== false || action.highlightAfter !== false)) {
+                cre8pilotFocusChangedFields(action);
+            }
+            delete action._cre8pilotFieldScope;
             appendMessage(
                 messages,
                 filled > 0
@@ -1318,26 +2113,75 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
             return;
         }
 
-        if (action.type === 'highlight_field') {
+        if (type === 'highlight_field') {
             const fieldName = action.field || action.name;
             const field = findField(fieldName);
             if (field) {
-                field.classList.add('cre8pilot-field-highlight');
-                field.focus({ preventScroll: false });
-                window.setTimeout(() => field.classList.remove('cre8pilot-field-highlight'), 2200);
+                cre8pilotEnsureFieldVisible(field);
+                try { field.focus({ preventScroll: false }); } catch (e) {}
+                cre8pilotHighlight(field, 3500);
             }
             return;
         }
 
-        if (action.type === 'apply_filter') {
-            const fields = action.fields && typeof action.fields === 'object' ? action.fields : {};
+        if (type === 'reset_filter_submit') {
+            const ok = cre8pilotResetFilterForm();
+            appendMessage(
+                messages,
+                ok
+                    ? 'I reset the filters. This only changes the visible list; nothing was deleted or modified.'
+                    : 'I could not reset filters automatically on this page. Use the Reset control or clear fields manually.',
+                'assistant',
+                ok ? 'action' : 'blocked'
+            );
+            return;
+        }
+
+        if (type === 'apply_filter') {
+            if (action.switchTab) {
+                cre8pilotSwitchTab(action.switchTab);
+            }
+            const fields = cre8pilotMergeFilterPayload(action);
             let touched = 0;
             Object.keys(fields).forEach((name) => {
-                if (fillField(name, fields[name])) {
+                if (fillField(name, fields[name], { skipFieldHighlight: true, skipDraftClean: true })) {
                     touched++;
                 }
             });
-            appendMessage(messages, touched > 0 ? 'I prepared the filter fields. Please apply them manually.' : 'No matching filter fields were found here.', 'assistant', 'action');
+            if (touched > 0) {
+                cre8pilotFocusChangedFields(Object.assign({}, action, { fields }));
+            }
+            const shouldSubmit = action.submit === true || action.autoSubmit === true;
+            const listNote = 'This only changes the visible list; nothing was deleted or modified.';
+            if (shouldSubmit && touched > 0) {
+                window.setTimeout(() => {
+                    const ok = cre8pilotSubmitFilterForm(action.target || 'filter_form');
+                    if (ok) {
+                        appendMessage(messages, 'I applied the filter. ' + listNote, 'assistant', 'action');
+                    } else {
+                        appendMessage(messages, 'I updated the filter fields on this page. If the list did not refresh, use the safe Apply / Search control yourself. ' + listNote, 'assistant', 'action');
+                    }
+                }, 200);
+            } else {
+                appendMessage(
+                    messages,
+                    touched > 0
+                        ? (shouldSubmit
+                            ? 'I prepared the filter values but could not run auto-apply without matching inputs.'
+                            : 'I prepared the filter fields. Please apply them manually.')
+                        : (action.switchTab
+                            ? ('I switched the tab when possible. ' + listNote)
+                            : 'No matching filter fields were found here.'),
+                    'assistant',
+                    'action'
+                );
+            }
+            return;
+        }
+
+        if (type === 'safe_ui_action') {
+            cre8pilotHandleSafeUiAction(action, messages);
+            return;
         }
     }
 
@@ -1429,10 +2273,13 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
                 ['Summarize this form', 'summarize_page'],
             ],
             'brand_offer_workspace:list': [
+                ['Show expired offers', 'apply_filters'],
+                ['Show outdated offers', 'apply_filters'],
+                ['Show published offers', 'apply_filters'],
+                ['Show draft offers', 'apply_filters'],
                 ['Summarize my offers', 'summarize_page'],
                 ['What should I check first?', 'recommend_next_action'],
-                ['Show expired offers', 'find_urgent_offers'],
-                ['Search offer', 'apply_search'],
+                ['Search offers', 'apply_search'],
                 ['Explain statuses', 'explain_statuses'],
             ],
             'brand_offer_workspace:details': [
@@ -2605,6 +3452,40 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
             setComposerActivity(widget, 'Thinking…');
             setCre8PilotAvatarThinking(widget);
 
+            // UX-only minimum visible response time. Avoids the "instant" feel
+            // when the backend answers in <100ms. Backend logic itself is never
+            // slowed; we just hold the thinking animation for a moment.
+            // High-risk security blocks bypass most of this delay so safety
+            // feedback still feels snappy.
+            const cre8pilotMinMs = (typeof window.CRE8PILOT_MIN_RESPONSE_MS === 'number'
+                && window.CRE8PILOT_MIN_RESPONSE_MS >= 0
+                && window.CRE8PILOT_MIN_RESPONSE_MS <= 5000)
+                ? window.CRE8PILOT_MIN_RESPONSE_MS
+                : 1200;
+            const cre8pilotStartedAt = (typeof performance !== 'undefined' && performance.now)
+                ? performance.now()
+                : Date.now();
+
+            function cre8pilotEnforceMinDelay(data) {
+                const nowMs = (typeof performance !== 'undefined' && performance.now)
+                    ? performance.now()
+                    : Date.now();
+                const elapsed = nowMs - cre8pilotStartedAt;
+                const lvl = data && data.security && data.security.riskLevel
+                    ? String(data.security.riskLevel).toLowerCase()
+                    : '';
+                const status = data && data.status ? String(data.status).toLowerCase() : '';
+                const isUrgentSecurity = lvl === 'high' || status === 'blocked';
+                const target = isUrgentSecurity ? Math.min(cre8pilotMinMs, 350) : cre8pilotMinMs;
+                const wait = Math.max(0, target - elapsed);
+                if (wait <= 0) {
+                    return Promise.resolve(data);
+                }
+                return new Promise((resolve) => {
+                    window.setTimeout(() => resolve(data), wait);
+                });
+            }
+
             return fetch(endpoint, {
                 method: 'POST',
                 credentials: 'same-origin',
@@ -2619,6 +3500,7 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
                 })),
             })
                 .then((response) => response.json())
+                .then((data) => cre8pilotEnforceMinDelay(data))
                 .then((data) => {
                     if (data && data.debug && window.console && typeof window.console.log === 'function') {
                         window.console.log('[Cre8Pilot mock]', data.debug);
@@ -2659,20 +3541,22 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
                     return data;
                 })
                 .catch((error) => {
-                    appendMessage(messages, 'Cre8Pilot could not reach the mock endpoint right now.', 'assistant', 'error');
-                    setComposerActivity(widget, '');
-                    if (modeBadge) {
-                        modeBadge.textContent = 'Mock mode';
-                    }
-                    setCre8PilotAvatarState('error', widget);
-                    if (typeof options.onError === 'function') {
-                        options.onError(error);
-                    }
-                    return {
-                        status: 'error',
-                        intent: 'request_error',
-                        message: 'Cre8Pilot could not reach the mock endpoint right now.',
-                    };
+                    return cre8pilotEnforceMinDelay({ status: 'error' }).then(() => {
+                        appendMessage(messages, 'Cre8Pilot could not reach the mock endpoint right now.', 'assistant', 'error');
+                        setComposerActivity(widget, '');
+                        if (modeBadge) {
+                            modeBadge.textContent = 'Mock mode';
+                        }
+                        setCre8PilotAvatarState('error', widget);
+                        if (typeof options.onError === 'function') {
+                            options.onError(error);
+                        }
+                        return {
+                            status: 'error',
+                            intent: 'request_error',
+                            message: 'Cre8Pilot could not reach the mock endpoint right now.',
+                        };
+                    });
                 });
         }
 
@@ -2731,6 +3615,145 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
         cre8PilotAutosizeTextarea();
 
         setCre8PilotAvatarIdle(widget);
+
+        cre8pilotMaybeRunPageScan(widget, messages);
     });
+
+    function cre8pilotCollectVisibleItems() {
+        const items = [];
+        const seenKeys = new Set();
+        const pushItem = (kind, idAttr, labelAttr, textLimit, node, classification) => {
+            if (!node || !isProbablyVisible(node)) {
+                return;
+            }
+            const id = idAttr ? String(node.getAttribute(idAttr) || '').trim() : '';
+            let label = labelAttr ? String(node.getAttribute(labelAttr) || '').trim() : '';
+            if (label === '') {
+                const t = node.querySelector('h1, h2, h3, h4, strong, .title, [data-title]');
+                if (t) {
+                    label = String(t.textContent || '').trim();
+                }
+            }
+            const txt = textOf(node, textLimit || 800);
+            if (txt === '' && label === '') {
+                return;
+            }
+            const key = (classification || kind) + '|' + (id || label || txt.slice(0, 60));
+            if (seenKeys.has(key)) {
+                return;
+            }
+            seenKeys.add(key);
+            items.push({
+                item_type: kind,
+                source_id: id,
+                source_label: label,
+                visible_text: txt,
+            });
+        };
+
+        document.querySelectorAll('[data-offer-id], .offer-card').forEach((node) => {
+            pushItem('offer', 'data-offer-id', 'data-offer-title', 600, node);
+        });
+        document.querySelectorAll('[data-candidature-id], .candidature-card, .candidature-row, .candidature-detail-pill').forEach((node) => {
+            pushItem('candidature', 'data-candidature-id', 'data-candidature-title', 700, node);
+        });
+        document.querySelectorAll('[data-negotiation-id], .negotiation-entry, .negotiation-card').forEach((node) => {
+            pushItem('negotiation', 'data-negotiation-id', 'data-negotiation-title', 700, node);
+        });
+        document.querySelectorAll('[data-message-id], .negotiation-message, .chat-bubble, .message-card').forEach((node) => {
+            pushItem('message', 'data-message-id', 'data-message-title', 600, node);
+        });
+        if (items.length === 0) {
+            const main = document.querySelector('main, .admin-shell, .cre8pilot-page-main, body');
+            if (main) {
+                pushItem('page_text', '', '', 1200, main);
+            }
+        }
+        return items.slice(0, 25);
+    }
+
+    function cre8pilotMaybeRunPageScan(widget, messages) {
+        if (!widget) {
+            return;
+        }
+        try {
+            const ctx = window.CRE8PILOT_CONTEXT || {};
+            const role = String(ctx.role || '').toLowerCase();
+            if (role === 'guest' || role === '') {
+                return;
+            }
+            const items = cre8pilotCollectVisibleItems();
+            if (items.length === 0) {
+                return;
+            }
+            const fingerprint = items.map((it) => (it.item_type || '') + ':' + (it.source_id || '') + ':' + ((it.visible_text || '').length)).join('|');
+            const storageKey = 'cre8pilotPageScan:' + window.location.pathname;
+            let prev = '';
+            try { prev = window.sessionStorage.getItem(storageKey) || ''; } catch (e) { prev = ''; }
+            if (prev === fingerprint) {
+                return;
+            }
+            try { window.sessionStorage.setItem(storageKey, fingerprint); } catch (e) {}
+
+            const endpointAttr = widget.getAttribute('data-cre8pilot-endpoint');
+            if (!endpointAttr) {
+                return;
+            }
+            const visibleData = collectVisibleData();
+            visibleData.visibleItems = items;
+
+            fetch(endpointAttr, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify(Object.assign({}, ctx, {
+                    intent: 'page_scan',
+                    message: '[page_scan]',
+                    visibleData: visibleData,
+                })),
+            })
+                .then((r) => r.json())
+                .then((data) => {
+                    if (!data || !data.security || data.security.pageScan !== true) {
+                        return;
+                    }
+                    const hits = Array.isArray(data.security.hits) ? data.security.hits : [];
+                    if (hits.length === 0) {
+                        return;
+                    }
+                    cre8pilotShowPageScanBanner(messages, data.security);
+                })
+                .catch(() => {});
+        } catch (e) {}
+    }
+
+    function cre8pilotShowPageScanBanner(messages, security) {
+        if (!messages || !security) {
+            return;
+        }
+        const level = String(security.riskLevel || '').toLowerCase();
+        const banner = document.createElement('div');
+        banner.className = 'cre8pilot-pagescan-banner' + (level === 'high' ? ' is-high' : '');
+        const title = document.createElement('strong');
+        title.textContent = 'Cre8Shield found suspicious content on this page.';
+        banner.appendChild(title);
+        const list = document.createElement('ul');
+        const hits = Array.isArray(security.hits) ? security.hits.slice(0, 4) : [];
+        hits.forEach((hit) => {
+            const li = document.createElement('li');
+            const cats = Array.isArray(hit.categories) ? hit.categories.slice(0, 4).join(', ') : '';
+            const lbl = String(hit.source_label || hit.item_type || 'item');
+            li.textContent = lbl + ' — ' + (hit.risk_level || 'medium') + (cats ? ' (' + cats + ')' : '');
+            list.appendChild(li);
+        });
+        banner.appendChild(list);
+        messages.appendChild(banner);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    window.cre8pilotOpenExclusiveWindow = cre8pilotOpenExclusiveWindow;
 })();
 </script>

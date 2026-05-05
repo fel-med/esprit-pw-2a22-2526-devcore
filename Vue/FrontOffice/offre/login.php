@@ -83,6 +83,38 @@ $directory = $controller->getLoginDirectoryUsers(['marque', 'createur', 'admin']
 $brands = $directory['marque'] ?? [];
 $creators = $directory['createur'] ?? [];
 $admins = $directory['admin'] ?? [];
+
+$cre8shieldSuspiciousEmails = [
+    'cre8shield.fake.brand@cre8connect.test',
+    'cre8shield.fake.creator@cre8connect.test',
+];
+
+$cre8shieldVictimEmails = [
+    'sami@cre8connect.tn',
+    'fitboost@cre8connect.tn',
+];
+
+$cre8shieldSuspiciousShownInDirectory = false;
+$cre8shieldVictimShownInDirectory = false;
+
+/** @return 'suspicious'|'victim'|null */
+$cre8shieldLoginHighlight = static function (string $email) use ($cre8shieldSuspiciousEmails, $cre8shieldVictimEmails): ?string {
+    $e = strtolower(trim($email));
+
+    foreach ($cre8shieldSuspiciousEmails as $addr) {
+        if ($e === strtolower($addr)) {
+            return 'suspicious';
+        }
+    }
+
+    foreach ($cre8shieldVictimEmails as $addr) {
+        if ($e === strtolower($addr)) {
+            return 'victim';
+        }
+    }
+
+    return null;
+};
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -92,6 +124,92 @@ $admins = $directory['admin'] ?? [];
     <title>Workspace Login - Cre8Connect</title>
     <link rel="stylesheet" href="../css/frontoffice.css">
     <link rel="stylesheet" href="offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre.css')); ?>">
+    <style>
+        /* Demo-only: highlights Cre8Shield seeded test accounts on this page only */
+        .cre8shield-demo-user {
+            border: 2px solid rgba(239, 68, 68, 0.9) !important;
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.18), 0 0 22px rgba(239, 68, 68, 0.45) !important;
+        }
+
+        .cre8shield-demo-badge {
+            display: inline-flex;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(239, 68, 68, 0.12);
+            color: #b91c1c;
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .cre8shield-victim-user {
+            border: 2px solid rgba(245, 158, 11, 0.95) !important;
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.18), 0 0 22px rgba(245, 158, 11, 0.45) !important;
+        }
+
+        .cre8shield-victim-badge {
+            display: inline-flex;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(245, 158, 11, 0.14);
+            color: #92400e;
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .cre8shield-demo-reference {
+            margin-top: 2rem;
+            border-color: rgba(239, 68, 68, 0.35);
+        }
+
+        .cre8shield-demo-reference-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .cre8shield-demo-reference-item {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            border: 2px solid rgba(239, 68, 68, 0.9);
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.18), 0 0 22px rgba(239, 68, 68, 0.45);
+            font-family: ui-monospace, monospace;
+            font-size: 0.9rem;
+        }
+
+        .cre8shield-victim-reference {
+            margin-top: 2rem;
+            border-color: rgba(245, 158, 11, 0.35);
+        }
+
+        .cre8shield-victim-reference-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .cre8shield-victim-reference-item {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            border: 2px solid rgba(245, 158, 11, 0.95);
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.18), 0 0 22px rgba(245, 158, 11, 0.45);
+            font-family: ui-monospace, monospace;
+            font-size: 0.9rem;
+        }
+    </style>
 </head>
 <body>
     <main class="container py-5">
@@ -127,9 +245,28 @@ $admins = $directory['admin'] ?? [];
                     <?php if (!empty($brands)): ?>
                         <div class="login-user-grid">
                             <?php foreach ($brands as $user): ?>
+                                <?php
+                                $cre8shieldHl = $cre8shieldLoginHighlight((string) ($user['email'] ?? ''));
+                                if ($cre8shieldHl === 'suspicious') {
+                                    $cre8shieldSuspiciousShownInDirectory = true;
+                                } elseif ($cre8shieldHl === 'victim') {
+                                    $cre8shieldVictimShownInDirectory = true;
+                                }
+                                $cre8shieldCardClass = '';
+                                if ($cre8shieldHl === 'suspicious') {
+                                    $cre8shieldCardClass = ' cre8shield-demo-user';
+                                } elseif ($cre8shieldHl === 'victim') {
+                                    $cre8shieldCardClass = ' cre8shield-victim-user';
+                                }
+                                ?>
                                 <form method="post" action="login.php" class="login-user-form">
                                     <input type="hidden" name="id" value="<?php echo (int) $user['id']; ?>">
-                                    <button type="submit" class="login-user-card">
+                                    <button type="submit" class="login-user-card<?php echo $cre8shieldCardClass; ?>">
+                                        <?php if ($cre8shieldHl === 'suspicious'): ?>
+                                            <span class="cre8shield-demo-badge">Cre8Shield suspicious test user</span>
+                                        <?php elseif ($cre8shieldHl === 'victim'): ?>
+                                            <span class="cre8shield-victim-badge">Cre8Shield victim test user</span>
+                                        <?php endif; ?>
                                         <span class="login-user-role brand">Brand</span>
                                         <strong><?php echo htmlspecialchars($user['nom']); ?></strong>
                                         <span class="login-user-id">ID #<?php echo (int) $user['id']; ?></span>
@@ -164,9 +301,28 @@ $admins = $directory['admin'] ?? [];
                     <?php if (!empty($creators)): ?>
                         <div class="login-user-grid">
                             <?php foreach ($creators as $user): ?>
+                                <?php
+                                $cre8shieldHl = $cre8shieldLoginHighlight((string) ($user['email'] ?? ''));
+                                if ($cre8shieldHl === 'suspicious') {
+                                    $cre8shieldSuspiciousShownInDirectory = true;
+                                } elseif ($cre8shieldHl === 'victim') {
+                                    $cre8shieldVictimShownInDirectory = true;
+                                }
+                                $cre8shieldCardClass = '';
+                                if ($cre8shieldHl === 'suspicious') {
+                                    $cre8shieldCardClass = ' cre8shield-demo-user';
+                                } elseif ($cre8shieldHl === 'victim') {
+                                    $cre8shieldCardClass = ' cre8shield-victim-user';
+                                }
+                                ?>
                                 <form method="post" action="login.php" class="login-user-form">
                                     <input type="hidden" name="id" value="<?php echo (int) $user['id']; ?>">
-                                    <button type="submit" class="login-user-card">
+                                    <button type="submit" class="login-user-card<?php echo $cre8shieldCardClass; ?>">
+                                        <?php if ($cre8shieldHl === 'suspicious'): ?>
+                                            <span class="cre8shield-demo-badge">Cre8Shield suspicious test user</span>
+                                        <?php elseif ($cre8shieldHl === 'victim'): ?>
+                                            <span class="cre8shield-victim-badge">Cre8Shield victim test user</span>
+                                        <?php endif; ?>
                                         <span class="login-user-role creator">Creator</span>
                                         <strong><?php echo htmlspecialchars($user['nom']); ?></strong>
                                         <span class="login-user-id">ID #<?php echo (int) $user['id']; ?></span>
@@ -202,9 +358,28 @@ $admins = $directory['admin'] ?? [];
                 <?php if (!empty($admins)): ?>
                     <div class="login-admin-grid">
                         <?php foreach ($admins as $user): ?>
+                            <?php
+                            $cre8shieldHl = $cre8shieldLoginHighlight((string) ($user['email'] ?? ''));
+                            if ($cre8shieldHl === 'suspicious') {
+                                $cre8shieldSuspiciousShownInDirectory = true;
+                            } elseif ($cre8shieldHl === 'victim') {
+                                $cre8shieldVictimShownInDirectory = true;
+                            }
+                            $cre8shieldCardClass = '';
+                            if ($cre8shieldHl === 'suspicious') {
+                                $cre8shieldCardClass = ' cre8shield-demo-user';
+                            } elseif ($cre8shieldHl === 'victim') {
+                                $cre8shieldCardClass = ' cre8shield-victim-user';
+                            }
+                            ?>
                             <form method="post" action="login.php" class="login-user-form">
                                 <input type="hidden" name="id" value="<?php echo (int) $user['id']; ?>">
-                                <button type="submit" class="login-user-card login-user-card-admin">
+                                <button type="submit" class="login-user-card login-user-card-admin<?php echo $cre8shieldCardClass; ?>">
+                                    <?php if ($cre8shieldHl === 'suspicious'): ?>
+                                        <span class="cre8shield-demo-badge">Cre8Shield suspicious test user</span>
+                                    <?php elseif ($cre8shieldHl === 'victim'): ?>
+                                        <span class="cre8shield-victim-badge">Cre8Shield victim test user</span>
+                                    <?php endif; ?>
                                     <span class="login-user-role admin"><?php echo htmlspecialchars(getWorkspaceRoleLabel($user['role'])); ?></span>
                                     <strong><?php echo htmlspecialchars($user['nom']); ?></strong>
                                     <span class="login-user-id">ID #<?php echo (int) $user['id']; ?></span>
@@ -225,6 +400,46 @@ $admins = $directory['admin'] ?? [];
                     </div>
                 <?php endif; ?>
             </section>
+
+            <?php if (!$cre8shieldSuspiciousShownInDirectory): ?>
+                <section class="section-card cre8shield-demo-reference" aria-label="Cre8Shield suspicious test user emails">
+                    <div class="login-directory-head">
+                        <div>
+                            <span class="login-directory-kicker">Testing</span>
+                            <h2 class="section-title">Cre8Shield suspicious test users</h2>
+                            <p class="section-subtitle text-muted">Fake suspicious accounts for Cre8Shield tests. They are not shown in the lists above right now.</p>
+                        </div>
+                    </div>
+                    <ul class="cre8shield-demo-reference-list">
+                        <?php foreach ($cre8shieldSuspiciousEmails as $addr): ?>
+                            <li class="cre8shield-demo-reference-item">
+                                <span class="cre8shield-demo-badge">Cre8Shield suspicious test user</span>
+                                <span><?php echo htmlspecialchars($addr, ENT_QUOTES, 'UTF-8'); ?></span>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </section>
+            <?php endif; ?>
+
+            <?php if (!$cre8shieldVictimShownInDirectory): ?>
+                <section class="section-card cre8shield-victim-reference" aria-label="Cre8Shield victim test user emails">
+                    <div class="login-directory-head">
+                        <div>
+                            <span class="login-directory-kicker">Testing</span>
+                            <h2 class="section-title">Cre8Shield victim test users</h2>
+                            <p class="section-subtitle text-muted">Victim scenario accounts for Cre8Shield tests. They are not shown in the lists above right now.</p>
+                        </div>
+                    </div>
+                    <ul class="cre8shield-victim-reference-list">
+                        <?php foreach ($cre8shieldVictimEmails as $addr): ?>
+                            <li class="cre8shield-victim-reference-item">
+                                <span class="cre8shield-victim-badge">Cre8Shield victim test user</span>
+                                <span><?php echo htmlspecialchars($addr, ENT_QUOTES, 'UTF-8'); ?></span>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </section>
+            <?php endif; ?>
         </div>
     </main>
 </body>

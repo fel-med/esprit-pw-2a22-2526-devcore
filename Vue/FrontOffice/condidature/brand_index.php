@@ -862,7 +862,7 @@ $cre8PilotContext = [
     'page' => 'brand_candidature_workspace',
     'mode' => 'list',
     'role' => 'marque',
-    'allowedActions' => ['normal_chat', 'summarize_page', 'analyze_page', 'apply_filters', 'recommend_next_action', 'explain_statuses', 'apply_search'],
+    'allowedActions' => ['normal_chat', 'summarize_page', 'analyze_page', 'apply_filters', 'reset_filter_action', 'recommend_next_action', 'explain_statuses', 'apply_search'],
     'formTarget' => 'filter_form',
     'visibleEntityType' => 'candidature',
 ];

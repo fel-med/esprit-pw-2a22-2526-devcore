@@ -458,6 +458,7 @@ if (!empty($averageBudgetCards)) {
                 </div>
             <?php endif; ?>
 
+            <div data-brand-index-workspace>
             <section class="stats-grid brand-stats-grid">
                 <article class="stat-card">
                     <span class="stat-label">Responses to review</span>
@@ -765,12 +766,14 @@ if (!empty($averageBudgetCards)) {
                     </div>
                 </section>
             <?php endif; ?>
+            </div>
         </div>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
     <script src="offre-delete-confirm.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre-delete-confirm.js')); ?>"></script>
     <script src="offre-tabs.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre-tabs.js')); ?>"></script>
+    <script src="brand_index_filters.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/brand_index_filters.js')); ?>"></script>
     <script>
         (() => {
             const banner = document.getElementById('acceptedOfferBanner');
@@ -778,7 +781,6 @@ if (!empty($averageBudgetCards)) {
             const text = document.getElementById('acceptedBannerText');
             const list = document.getElementById('acceptedBannerList');
             const stack = document.getElementById('liveNotificationStack');
-            const acceptedGrid = document.getElementById('brandAcceptedGrid');
 
             if (!banner || !stack || !window.fetch) {
                 return;
@@ -858,6 +860,7 @@ if (!empty($averageBudgetCards)) {
             }
 
             function elevateAcceptedCard(offer) {
+                const acceptedGrid = document.getElementById('brandAcceptedGrid');
                 if (!acceptedGrid) {
                     return;
                 }
@@ -953,6 +956,9 @@ if (!empty($averageBudgetCards)) {
             }
 
             updateSectionCounts();
+            window.addEventListener('brandIndexWorkspaceUpdated', () => {
+                updateSectionCounts();
+            });
             window.setInterval(pollAcceptedOffers, 20000);
         })();
     </script>
@@ -961,7 +967,7 @@ $cre8PilotContext = [
     'page' => 'brand_offer_workspace',
     'mode' => 'list',
     'role' => 'marque',
-    'allowedActions' => ['normal_chat', 'summarize_page', 'analyze_page', 'apply_filters', 'recommend_next_action', 'find_urgent_offers', 'explain_statuses', 'draft_invite_message', 'apply_search', 'sort_results'],
+    'allowedActions' => ['normal_chat', 'summarize_page', 'analyze_page', 'apply_filters', 'reset_filter_action', 'recommend_next_action', 'find_urgent_offers', 'explain_statuses', 'draft_invite_message', 'apply_search', 'sort_results'],
     'formTarget' => 'filter_form',
     'visibleEntityType' => 'offre',
 ];
