@@ -1,12 +1,12 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['id'])) {
+if (!isset($_SESSION['user'])) {
     echo "Utilisateur non connecté";
     exit();
 }
 
-$idUtilisateur = $_SESSION['id'];
+$idUtilisateur = $_SESSION['user'];
 ?>
 <html lang="en"><head>
         <meta charset="utf-8">

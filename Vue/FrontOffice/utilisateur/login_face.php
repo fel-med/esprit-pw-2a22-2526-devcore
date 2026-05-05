@@ -16,7 +16,7 @@ $inputFace = $data['face'];
 
 $db = config::getConnexion();
 
-$sql = "SELECT id, role, face_descriptor FROM utilisateur";
+$sql = "SELECT id, role, statut, face_descriptor FROM utilisateur";
 $users = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
 function distance($a, $b) {
@@ -41,6 +41,15 @@ foreach ($users as $user) {
     $dist = distance($inputFace, $stored);
 
     if ($dist < 0.6) {
+
+        // 🔍 Vérifier le statut du compte
+        if ($user['statut'] !== 'actif') {
+            echo json_encode([
+                "success" => false,
+                "message" => "⚠️ Votre compte est suspendu. Contactez l'administrateur."
+            ]);
+            exit();
+        }
 
         $_SESSION['user'] = $user['id'];
         $_SESSION['role'] = $user['role'];

@@ -17,5 +17,5 @@ if (isset($_POST['contenu']) && isset($_POST['idReclamation'])) {
     $repC = new ReponseC();
     $repC->ajouterReponse($rep);
 
-    header("Location: reclamations.php");
+    header("Location: reclamations.php?success=reponse_envoyee");
 }

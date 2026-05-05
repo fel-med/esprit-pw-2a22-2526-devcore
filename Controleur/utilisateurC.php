@@ -275,8 +275,8 @@ public function resetPassword($password, $token) {
         $createur = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE role='createur'")->fetch()['count'];
         $marque = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE role='marque'")->fetch()['count'];
         
-        // Par statut
-        $actif = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE statut='actif'")->fetch()['count'];
+        // Par statut - Inclure les NULL (traiter comme 'actif' par défaut)
+        $actif = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE statut='actif' OR statut IS NULL")->fetch()['count'];
         $inactif = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE statut='inactif'")->fetch()['count'];
         
         return [
@@ -288,7 +288,121 @@ public function resetPassword($password, $token) {
             'inactif' => $inactif
         ];
     }
+    public function sendReclamationResponseNotification($email, $nom, $description, $reponse) {
+        $mail = new PHPMailer(true);
 
+        try {
+            $mail->CharSet = 'UTF-8';
+            $mail->Encoding = 'base64';
+            $mail->isSMTP();
+            $mail->Host = 'smtp.gmail.com';
+            $mail->SMTPAuth = true;
+            $mail->Username = 'neylamhamddy@gmail.com';
+            $mail->Password = 'aebg mpbl zomq idjn';
+            $mail->SMTPSecure = 'tls';
+            $mail->Port = 587;
+
+            $mail->setFrom('neylamhamddy@gmail.com', 'Crea8Connect');
+            $mail->addAddress($email);
+
+            $mail->isHTML(true);
+            $mail->Subject = 'Réponse à votre réclamation - Crea8Connect';
+
+            $mail->Body = '
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+    body {
+        margin:0;
+        padding:0;
+        background:#f4f6f9;
+        font-family: Arial, sans-serif;
+    }
+    .container {
+        max-width:600px;
+        margin:40px auto;
+        background:#ffffff;
+        border-radius:12px;
+        overflow:hidden;
+        box-shadow:0 5px 15px rgba(0,0,0,0.1);
+    }
+    .header {
+        background:linear-gradient(135deg, #9B5DE0, #B771E5);
+        color:white;
+        text-align:center;
+        padding:30px 20px;
+    }
+    .content {
+        padding:30px 20px;
+        line-height:1.6;
+        color:#333;
+    }
+    .reclamation {
+        background:#f8f9fa;
+        border-left:4px solid #9B5DE0;
+        padding:15px;
+        margin:20px 0;
+        border-radius:4px;
+    }
+    .response {
+        background:#e8f4f8;
+        border-left:4px solid #28a745;
+        padding:15px;
+        margin:20px 0;
+        border-radius:4px;
+    }
+    .footer {
+        background:#f8f9fa;
+        text-align:center;
+        padding:20px;
+        color:#666;
+        font-size:14px;
+    }
+</style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔔 Réponse à votre réclamation</h1>
+        </div>
+        <div class="content">
+            <p>Bonjour <strong>' . htmlspecialchars($nom) . '</strong>,</p>
+
+            <p>Votre réclamation a reçu une réponse de notre équipe :</p>
+
+            <div class="reclamation">
+                <h4>📝 Votre réclamation :</h4>
+                <p>' . nl2br(htmlspecialchars($description)) . '</p>
+            </div>
+
+            <div class="response">
+                <h4>💬 Réponse de l\'équipe :</h4>
+                <p>' . nl2br(htmlspecialchars($reponse)) . '</p>
+            </div>
+
+            <p>Si vous avez d\'autres questions, n\'hésitez pas à nous contacter.</p>
+
+            <p>Cordialement,<br>
+            <strong>L\'équipe Crea8Connect</strong></p>
+        </div>
+        <div class="footer">
+            <p>© 2024 Crea8Connect - Tous droits réservés</p>
+        </div>
+    </div>
+</body>
+</html>';
+
+            $mail->send();
+            return true;
+
+        } catch (Exception $e) {
+            // Log l'erreur pour le debugging
+            error_log("Erreur envoi email réclamation: " . $mail->ErrorInfo);
+            return false;
+        }
+    }
     public function supprimerUser($id) {
         $db = config::getConnexion();
         $db->prepare("DELETE FROM utilisateur WHERE id=?")->execute([$id]);

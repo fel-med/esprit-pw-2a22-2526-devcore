@@ -203,6 +203,24 @@ foreach ($liste as $rec) {
 </head>
 
 <body>
+  <!-- Notification de succès -->
+  <?php if (isset($_GET['success']) && $_GET['success'] === 'reponse_envoyee'): ?>
+  <div class="alert alert-success alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; right: 20px; width: 350px; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+    <strong>✅ Succès!</strong> Votre réponse a été envoyée avec succès et l'utilisateur a reçu une notification par email.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  <script>
+    // Auto-dismiss après 5 secondes
+    setTimeout(() => {
+      const alert = document.querySelector('.alert');
+      if (alert) {
+        const bsAlert = new bootstrap.Alert(alert);
+        bsAlert.close();
+      }
+    }, 5000);
+  </script>
+  <?php endif; ?>
+
   <div class="container-scroller">
     <!-- partial:partials/_sidebar.html -->
     <nav class="sidebar sidebar-offcanvas" id="sidebar">

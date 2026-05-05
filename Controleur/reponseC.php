@@ -2,13 +2,14 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../Modele/reclamation.php';
 require_once __DIR__ . '/../Modele/reponse.php';
+require_once __DIR__ . '/../Controleur/utilisateurC.php';
 
 class ReponseC {
 
     // ✔️ Ajouter une réponse (admin)
     public function ajouterReponse($reponse) {
-        $sql = "INSERT INTO reponse 
-                (idReclamation, idAdmin, contenu) 
+        $sql = "INSERT INTO reponse
+                (idReclamation, idAdmin, contenu)
                 VALUES (:idReclamation, :idAdmin, :contenu)";
         $db = config::getConnexion();
 
@@ -25,8 +26,36 @@ class ReponseC {
             $req = $db->prepare($sqlUpdate);
             $req->execute(['id' => $reponse->getIdReclamation()]);
 
+            // 🔔 Envoyer une notification à l'utilisateur via email
+            $sqlUser = "SELECT u.email, u.nom, r.description FROM reclamation r JOIN utilisateur u ON r.idUtilisateur = u.id WHERE r.id = :id";
+            $stmt = $db->prepare($sqlUser);
+            $stmt->execute(['id' => $reponse->getIdReclamation()]);
+            $info = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            $emailSent = false;
+            if ($info) {
+                $userC = new UtilisateurC();
+                $emailSent = $userC->sendReclamationResponseNotification(
+                    $info['email'],
+                    $info['nom'],
+                    $info['description'],
+                    $reponse->getContenu()
+                );
+            }
+
+            // Retourner le statut de l'envoi d'email
+            return [
+                'success' => true,
+                'email_sent' => $emailSent,
+                'message' => $emailSent ? 'Réponse ajoutée et email envoyé' : 'Réponse ajoutée mais email non envoyé'
+            ];
+
         } catch (Exception $e) {
-            die('Erreur ajout réponse: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'email_sent' => false,
+                'message' => 'Erreur ajout réponse: ' . $e->getMessage()
+            ];
         }
     }
 

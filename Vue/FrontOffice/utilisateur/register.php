@@ -27,33 +27,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['nom'])) {
             $error = "Vérification humaine échouée ❌";
         }
 
-        elseif (!empty($_POST['nom']) &&
-            filter_var($_POST['email'], FILTER_VALIDATE_EMAIL) &&
-            strlen($_POST['password']) >= 6) {
+       elseif (!empty($_POST['nom']) &&
+    filter_var($_POST['email'], FILTER_VALIDATE_EMAIL) &&
+    strlen($_POST['password']) >= 6) {
 
-            $faceDescriptor = $_POST['faceDescriptor'];
+    $faceDescriptor = $_POST['faceDescriptor'];
+    $decoded = json_decode($faceDescriptor, true);
 
-            $user = new Utilisateur(
-                null,
-                $_POST['nom'],
-                $_POST['email'],
-                password_hash($_POST['password'], PASSWORD_DEFAULT),
-                $_POST['role'],
-                "actif",
-                0,
-                null,
-                $faceDescriptor
-            );
+    // 🔒 validation critique
+    if (!is_array($decoded) || count($decoded) !== 128) {
+        $error = "Erreur reconnaissance visage ❌";
+    } else {
 
-            $userC = new UtilisateurC();
-            $userC->ajouterUser($user);
+        $faceDescriptor = json_encode($decoded); // propre
 
-            header("Location: login.php");
-            exit();
-        } else {
-            $error = "Veuillez remplir correctement le formulaire ❌";
-        }
+        $user = new Utilisateur(
+            null,
+            $_POST['nom'],
+            $_POST['email'],
+            password_hash($_POST['password'], PASSWORD_DEFAULT),
+            $_POST['role'],
+            "actif",
+            0,
+            null,
+            $faceDescriptor
+        );
+
+        $userC = new UtilisateurC();
+        $userC->ajouterUser($user);
+
+        header("Location: login.php");
+        exit();
     }
+   }
+   }
 }
 ?>
 

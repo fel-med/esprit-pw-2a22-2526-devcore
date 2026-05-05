@@ -535,6 +535,31 @@ $stats = $userC->getStatistiquesUtilisateurs();
   </div>
 
 </div>
+
+<!-- ===================== STATUS STATS ===================== -->
+<div class="row mb-4 align-items-stretch">
+
+  <!-- Actifs -->
+  <div class="col-md-6 mb-3 d-flex">
+    <div class="card shadow-sm text-center p-4 h-100 w-100" style="background: linear-gradient(135deg, #9B5DE0 0%, #B771E5 100%); color: white; border-radius: 10px;">
+      <i class="mdi mdi-account-check" style="font-size: 2.5rem; margin-bottom: 10px;"></i>
+      <h6 class="mb-2">Comptes Actifs</h6>
+      <h3 class="mb-0"><?php echo $stats['actif']; ?></h3>
+      <small class="mt-2 opacity-75">✅ Utilisateurs actifs</small>
+    </div>
+  </div>
+
+  <!-- Suspendus -->
+  <div class="col-md-6 mb-3 d-flex">
+    <div class="card shadow-sm text-center p-4 h-100 w-100" style="background: linear-gradient(135deg, #FFC107 0%, #FFB300 100%); color: #333; border-radius: 10px;">
+      <i class="mdi mdi-account-lock" style="font-size: 2.5rem; margin-bottom: 10px;"></i>
+      <h6 class="mb-2">Comptes Suspendus</h6>
+      <h3 class="mb-0"><?php echo $stats['inactif']; ?></h3>
+      <small class="mt-2 opacity-75">🔒 Utilisateurs suspendus</small>
+    </div>
+  </div>
+
+</div>
           <!-- ===================== GRAPHES AREA CHARTS ===================== -->
           <div class="row mb-4">
 
@@ -636,20 +661,39 @@ $stats = $userC->getStatistiquesUtilisateurs();
                                 </select>
                               </td>
 
-                              <td>
-                                <span class="badge"
-                                  style="background-color: <?= $u['statut'] == 'actif' ? '#9B5DE0' : '#D78FEE' ?>; color: white;">
-                                  <?= ucfirst($u['statut']) ?>
-                                </span>
-                              </td>
+                             <td>
+<?php
+$statut = strtolower(trim($u['statut'] ?? ''));
+
+if ($statut == '') {
+    $statut = 'inactif';
+}
+
+$color = ($statut == 'actif') ? '#9B5DE0' :
+         (($statut == 'suspendu') ? '#dc3545' :
+         (($statut == 'en_attente') ? '#ffc107' : '#6c757d'));
+?>
+
+<span class="badge" style="background-color: <?= $color ?>; color:white;">
+    <?= ucfirst(str_replace('_', ' ', $statut)) ?>
+</span>
+</td>
 
                               <td>
-                                <div class="d-flex gap-2">
+                                <div class="d-flex gap-2 flex-wrap">
                                   <input type="hidden" name="id" value="<?= $u['id'] ?>">
 
                                   <button type="submit" class="btn btn-sm"
                                     style="background-color: #9B5DE0; color: white; width: 80px;">
                                     Modifier
+                                  </button>
+
+                                  <button type="button" class="btn"
+                                    style="background-color: <?= ($u['statut'] ?? 'actif') == 'actif' ? '#E11D74' : '#28a745' ?>; color: white; padding: 10px 18px; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; font-size: 0.95rem; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"
+                                    onmouseover="this.style.opacity='0.85'; this.style.transform='translateY(-2px)';"
+                                    onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)';"
+                                    onclick="toggleUserStatus(<?= $u['id'] ?>, '<?= ($u['statut'] ?? 'actif') ?>');">
+                                    <?= ($u['statut'] ?? 'actif') == 'actif' ? '🔒 Suspendre' : '✅ Activer' ?>
                                   </button>
 
                                   <button type="button"
@@ -952,6 +996,28 @@ $stats = $userC->getStatistiquesUtilisateurs();
         if (icon) icon.className = "mdi mdi-white-balance-sunny";
       }
     });
+
+    // Fonction pour toggle le statut utilisateur
+    function toggleUserStatus(userId, currentStatus) {
+      const newStatus = currentStatus === 'actif' ? 'inactif' : 'actif';
+      const confirmMsg = currentStatus === 'actif' 
+        ? 'Êtes-vous sûr de vouloir suspendre cet utilisateur ?' 
+        : 'Êtes-vous sûr de vouloir activer cet utilisateur ?';
+      
+      if (confirm(confirmMsg)) {
+        fetch(`toggleStatus.php?id=${userId}&newStatus=${newStatus}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              alert('✅ Statut mis à jour avec succès');
+              location.reload();
+            } else {
+              alert('❌ Erreur: ' + (data.message || 'Impossible de mettre à jour le statut'));
+            }
+          })
+          .catch(err => alert('❌ Erreur réseau: ' + err));
+      }
+    }
   </script>
 </body>
 

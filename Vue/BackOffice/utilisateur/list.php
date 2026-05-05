@@ -4,7 +4,7 @@ require_once '../../../Controleur/utilisateurC.php';
 require_once '../../../Controleur/reclamationC.php';
 
 if (!isset($_SESSION['user']) || $_SESSION['role'] != 'admin') {
-    header("Location: ../FrontOffice/auth/login.php");
+    header("Location: ../../FrontOffice/utilisateur/login.php");
     exit;
 }
 
@@ -21,7 +21,7 @@ $totalUsers = is_array($usersResult) && isset($usersResult['total']) ? intval($u
 $totalPages = is_array($usersResult) && isset($usersResult['totalPages']) ? max(1, intval($usersResult['totalPages'])) : 1;
 $currentPage = is_array($usersResult) && isset($usersResult['page']) ? max(1, intval($usersResult['page'])) : 1;
 
-$stats = $reclamationC->statistiques();
+$stats = $userC->getStatistiquesUtilisateurs();
 ?>
 
 <!DOCTYPE html>
@@ -147,9 +147,24 @@ $stats = $reclamationC->statistiques();
             font-weight: bold;
         }
 
-        .btn-add:hover {
-            background: linear-gradient(135deg, #99D98E 0%, #84D084 100%);
-            color: #1a3d0a;
+        .btn-warning {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+            color: #000;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            color: white;
         }
 
         .stats-row {
@@ -251,23 +266,40 @@ $stats = $reclamationC->statistiques();
         <p class="mb-0 text-muted">Gérez tous les comptes utilisateurs de votre plateforme</p>
     </div>
 
+    <!-- Messages -->
+    <?php if (isset($_SESSION['message'])): ?>
+        <div class="alert alert-<?= $_SESSION['message_type'] == 'success' ? 'success' : 'danger' ?> alert-dismissible fade show" role="alert">
+            <?= htmlspecialchars($_SESSION['message']) ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <?php unset($_SESSION['message'], $_SESSION['message_type']); ?>
+    <?php endif; ?>
+
     <!-- Statistiques -->
     <div class="stats-row">
         <div class="stat-card" style="border-left: 4px solid #667eea;">
             <h6>Total Utilisateurs</h6>
-            <h3><?= $totalUsers ?></h3>
+            <h3><?= $stats['total'] ?></h3>
         </div>
         <div class="stat-card" style="border-left: 4px solid #9B5DE0;">
             <h6>Administrateurs</h6>
-            <h3><?= count(array_filter($users, fn($u) => $u['role'] == 'admin')) ?></h3>
+            <h3><?= $stats['admin'] ?></h3>
         </div>
         <div class="stat-card" style="border-left: 4px solid #E11D74;">
-            <h6>Clients</h6>
-            <h3><?= count(array_filter($users, fn($u) => $u['role'] == 'client')) ?></h3>
+            <h6>Créateurs</h6>
+            <h3><?= $stats['createur'] ?></h3>
         </div>
         <div class="stat-card" style="border-left: 4px solid #AEEA94;">
-            <h6>Réclamations Traitées</h6>
-            <h3><?= $stats['traitee'] ?></h3>
+            <h6>Utilisateurs Actifs</h6>
+            <h3><?= $stats['actif'] ?></h3>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid #FFC107;">
+            <h6>En Attente</h6>
+            <h3><?= $stats['en_attente'] ?></h3>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid #DC3545;">
+            <h6>Suspendus</h6>
+            <h3><?= $stats['suspendu'] ?></h3>
         </div>
     </div>
 
@@ -301,12 +333,29 @@ $stats = $reclamationC->statistiques();
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="badge bg-<?= ($u['statut'] == 'actif') ? 'success' : 'danger' ?>">
-                                        <?= ucfirst($u['statut'] ?? 'Inconnu') ?>
+                                    <span class="badge bg-<?= 
+                                        ($u['statut'] == 'actif') ? 'success' : 
+                                        (($u['statut'] == 'en_attente') ? 'warning' : 
+                                        (($u['statut'] == 'suspendu') ? 'danger' : 'secondary')) ?>">
+                                        <?= ucfirst(str_replace('_', ' ', $u['statut'] ?? 'inconnu')) ?>
                                     </span>
                                 </td>
                                 <td>
                                     <button class="btn-custom btn-edit" onclick="editUser(<?= $u['id'] ?>)">✏️ Éditer</button>
+                                    <?php if ($u['statut'] == 'actif'): ?>
+    <button class="btn-custom btn-warning"
+        onclick="toggleStatus(<?= $u['id'] ?>, 'suspendu')"
+        style="background: #ffc107; color: #000;">
+        🚫 Suspendre
+    </button>
+
+<?php elseif ($u['statut'] == 'suspendu' || $u['statut'] == 'en_attente'): ?>
+    <button class="btn-custom btn-success"
+        onclick="toggleStatus(<?= $u['id'] ?>, 'actif')"
+        style="background: #28a745; color: white;">
+        ✅ Activer
+    </button>
+<?php endif; ?>
                                     <button class="btn-custom btn-delete" onclick="deleteUser(<?= $u['id'] ?>)">🗑️ Supprimer</button>
                                 </td>
                             </tr>
@@ -404,6 +453,31 @@ $stats = $reclamationC->statistiques();
                 input.value = id;
 
                 form.appendChild(input);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        function toggleStatus(id, action) {
+            const actionText = action === 'activate' ? 'activer' : 'suspendre';
+            const confirmMessage = `Êtes-vous sûr de vouloir ${actionText} cet utilisateur ?`;
+            if (confirm(confirmMessage)) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'toggle_status.php';
+
+                const idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = 'id';
+                idInput.value = id;
+
+                const actionInput = document.createElement('input');
+                actionInput.type = 'hidden';
+                actionInput.name = 'action';
+                actionInput.value = action;
+
+                form.appendChild(idInput);
+                form.appendChild(actionInput);
                 document.body.appendChild(form);
                 form.submit();
             }
