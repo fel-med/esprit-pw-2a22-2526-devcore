@@ -1,50 +1,61 @@
 <?php
 require_once '../../../Controleur/utilisateurC.php';
 
-$message = "";
-$faceDescriptor = $_POST['faceDescriptor'];
+$error = "";
 
-if (empty($faceDescriptor)) {
-    die("Veuillez enregistrer votre visage ❌");
-}
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['nom'])) {
 
-// stocker dans base de données
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-
-    // ✅ vérifier si captcha existe
-    if (empty($_POST['g-recaptcha-response'])) {
-        die("Veuillez valider le reCAPTCHA ❌");
+    if (empty($_POST['faceDescriptor'])) {
+        $error = "Veuillez scanner votre visage ❌";
     }
 
-    $secret = "6Le_S9ksAAAAAOEjx9cRk48RuR3fYR1RxZrSWtYk";
-    $response = $_POST['g-recaptcha-response'];
-
-    $verify = file_get_contents(
-        "https://www.google.com/recaptcha/api/siteverify?secret=$secret&response=$response"
-    );
-
-    $result = json_decode($verify);
-
-    if (!$result->success) {
-        die("Vérification humaine échouée ❌");
+    elseif (empty($_POST['g-recaptcha-response'])) {
+        $error = "Veuillez valider le reCAPTCHA ❌";
     }
 
-    // ✅ TON CODE NORMAL
-    if (!empty($_POST['nom']) &&
-        filter_var($_POST['email'], FILTER_VALIDATE_EMAIL) &&
-        strlen($_POST['password']) >= 6) {
+    else {
 
-        $user = new Utilisateur(null,$_POST['nom'],$_POST['email'],$_POST['password'],$_POST['role']);
-        $userC = new UtilisateurC();
-        $message = $userC->ajouterUser($user);
+        $secret = "6Le_S9ksAAAAAOEjx9cRk48RuR3fYR1RxZrSWtYk";
 
-        header("Location: ../utilisateur/login.php");
-    } else {
-        $message = "Erreur de validation";
+        $verify = file_get_contents(
+            "https://www.google.com/recaptcha/api/siteverify?secret=".$secret."&response=".$_POST['g-recaptcha-response']
+        );
+
+        $result = json_decode($verify);
+
+        if (!$result->success) {
+            $error = "Vérification humaine échouée ❌";
+        }
+
+        elseif (!empty($_POST['nom']) &&
+            filter_var($_POST['email'], FILTER_VALIDATE_EMAIL) &&
+            strlen($_POST['password']) >= 6) {
+
+            $faceDescriptor = $_POST['faceDescriptor'];
+
+            $user = new Utilisateur(
+                null,
+                $_POST['nom'],
+                $_POST['email'],
+                password_hash($_POST['password'], PASSWORD_DEFAULT),
+                $_POST['role'],
+                "actif",
+                0,
+                null,
+                $faceDescriptor
+            );
+
+            $userC = new UtilisateurC();
+            $userC->ajouterUser($user);
+
+            header("Location: login.php");
+            exit();
+        } else {
+            $error = "Veuillez remplir correctement le formulaire ❌";
+        }
     }
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -65,7 +76,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <!-- Core theme CSS (includes Bootstrap)-->
         <link href="css/styles.css" rel="stylesheet" />
         <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-        <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+        
     </head>
     <body class="d-flex flex-column h-100 bg-light">
         <main class="flex-shrink-0 d-flex align-items-center justify-content-center" style="min-height: 100vh;">
@@ -113,13 +124,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
    <div class="g-recaptcha" data-sitekey="6Le_S9ksAAAAALQ8QeII5XANm_kyXmRF-Sq5OBt8"></div>
 
       <br/>
-      <video id="video" width="300" autoplay></video>
-<button type="button" onclick="registerFace()">Enregistrer visage</button>
-
+    <video id="video" width="300" autoplay></video>
 <input type="hidden" name="faceDescriptor" id="faceDescriptor">
-    <button type="submit" class="btn btn-primary w-100">Register</button>
 
+<button type="button" id="scanBtn">Scanner visage</button>
+<button type="submit" id="submitBtn" disabled>Register</button>
 </form>
+<?php if (!empty($error)) { ?>
+    <div class="alert alert-danger">
+        <?php echo $error; ?>
+    </div>
+<?php } ?>
 
                         <p class="mt-3 text-muted">
                             Already have an account?
@@ -163,7 +178,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <!-- Bootstrap core JS-->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
         <!-- Core theme JS-->
-        <script src="js/scripts.js">
+    
             
         </script>
         <script>
@@ -267,20 +282,39 @@ document.getElementById("registerForm").addEventListener("submit", function (e) 
 });
 
 </script>
-<script>
-async function registerFace() {
 
+<!-- ✅ 1. charger face-api AVANT -->
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js/dist/face-api.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+
+    const submitBtn = document.getElementById("submitBtn");
+    const scanBtn = document.getElementById("scanBtn");
     const video = document.getElementById("video");
 
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    video.srcObject = stream;
+    submitBtn.disabled = true;
+    scanBtn.disabled = true;
 
-    // charger modèles
-    await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
-    await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
-    await faceapi.nets.ssdMobilenetv1.loadFromUri('/models');
+    // 🎥 caméra
+    navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => video.srcObject = stream);
 
-    setTimeout(async () => {
+    try {
+        // ✅ attendre chargement COMPLET
+        await faceapi.nets.faceRecognitionNet.loadFromUri('/crea8connect/Esprit-PW-2A22-2526-Devcore/models');
+        await faceapi.nets.faceLandmark68Net.loadFromUri('/crea8connect/Esprit-PW-2A22-2526-Devcore/models');
+        await faceapi.nets.ssdMobilenetv1.loadFromUri('/crea8connect/Esprit-PW-2A22-2526-Devcore/models');
+
+        console.log("Models loaded ✅");
+
+        scanBtn.disabled = false;
+
+    } catch (error) {
+        console.error("Erreur chargement modèles ❌", error);
+        alert("Erreur chargement modèles ❌");
+    }
+
+    scanBtn.onclick = async () => {
 
         const detection = await faceapi
             .detectSingleFace(video)
@@ -288,20 +322,20 @@ async function registerFace() {
             .withFaceDescriptor();
 
         if (!detection) {
-            alert("Aucun visage ❌");
+            alert("Visage non détecté ❌");
             return;
         }
 
-        // convertir en string
         let descriptor = Array.from(detection.descriptor);
         document.getElementById("faceDescriptor").value = JSON.stringify(descriptor);
 
-        alert("Visage enregistré ✅");
+        submitBtn.disabled = false;
 
-    }, 3000);
-}
+        alert("Visage enregistré ✅");
+    };
+});
 </script>
-<script src="https://www.google.com/recaptcha/api.js" async defer></script>
-<script src="https://cdn.faceio.net/fio.js"></script>
-    </body>
+
+<!-- ✅ reCAPTCHA OK -->
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>    </body>
 </html>

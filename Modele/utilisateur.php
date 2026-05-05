@@ -9,6 +9,8 @@ class Utilisateur {
     private $statut;
     private $tentatives_login;
     private $date_creation;
+    private $face_descriptor;
+
 
     public function __construct(
         $id = null,
@@ -16,9 +18,10 @@ class Utilisateur {
         $email = null,
         $mot_de_passe = null,
         $role = null,
-        $statut = "en_attente",
+        $statut = "actif",
         $tentatives_login = 0,
-        $date_creation = null
+        $date_creation = null,
+        $face_descriptor = null
     ) {
         $this->id = $id;
         $this->nom = $nom;
@@ -28,10 +31,16 @@ class Utilisateur {
         $this->statut = $statut;
         $this->tentatives_login = $tentatives_login;
         $this->date_creation = $date_creation;
+        $this->face_descriptor = $face_descriptor;
     }
+
+    
 
     public function getId() { return $this->id; }
     public function setId($id) { $this->id = $id; }
+public function getFaceDescriptor() {
+    return $this->face_descriptor;
+}
 
     public function getNom() { return $this->nom; }
     public function setNom($nom) { $this->nom = $nom; }

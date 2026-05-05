@@ -14,18 +14,19 @@ class UtilisateurC {
         $check->execute([$user->getEmail()]);
         if ($check->rowCount() > 0) return "Email déjà utilisé";
 
-        $sql = "INSERT INTO utilisateur (nom,email,mot_de_passe,role,statut,tentatives_login)
-                VALUES (?,?,?,?,?,?)";
+        $sql = "INSERT INTO utilisateur (nom,email,mot_de_passe,role,statut,tentatives_login,face_descriptor)
+        VALUES (?,?,?,?,?,?,?)";
 
-        $query = $db->prepare($sql);
-        $query->execute([
-            $user->getNom(),
-            $user->getEmail(),
-            password_hash($user->getMotDePasse(), PASSWORD_DEFAULT),
-            $user->getRole(),
-            "actif",
-            0
-        ]);
+$query = $db->prepare($sql);
+$query->execute([
+    $user->getNom(),
+    $user->getEmail(),
+    password_hash($user->getMotDePasse(), PASSWORD_DEFAULT),
+    $user->getRole(),
+    "actif",
+    0,
+    $user->getFaceDescriptor() // 👈 AJOUT IMPORTANT
+]);
 
         return "success";
     }
@@ -38,6 +39,7 @@ public function updateUser($id, $nom, $email, $role) {
         'nom' => $nom,
         'email' => $email,
         'role' => $role
+        
     ]);
 }
     public function afficherUsers($search = '', $role = '', $page = 1, $limit = 10) {

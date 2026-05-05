@@ -65,6 +65,8 @@ if (isset($_POST['reset_email'])) {
                            
 
                             <button name="login" class="btn btn-primary w-100 py-2">sign in </button>
+<video id="video" width="300" autoplay></video>
+<button type="button" id="scanLogin">Login avec visage</button>
                         </form>
 
 
@@ -147,8 +149,54 @@ if (isset($_POST['reset_email'])) {
         </footer>
         <!-- Bootstrap core JS-->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-        <!-- Core theme JS-->
-        <script src="js/scripts.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/face-api.js/dist/face-api.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+
+    const video = document.getElementById("video");
+    const btn = document.getElementById("scanLogin");
+
+    // caméra
+    navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => video.srcObject = stream);
+
+    // charger modèles
+    await faceapi.nets.faceRecognitionNet.loadFromUri('/crea8connect/Esprit-PW-2A22-2526-Devcore/models');
+    await faceapi.nets.faceLandmark68Net.loadFromUri('/crea8connect/Esprit-PW-2A22-2526-Devcore/models');
+    await faceapi.nets.ssdMobilenetv1.loadFromUri('/crea8connect/Esprit-PW-2A22-2526-Devcore/models');
+
+    btn.onclick = async () => {
+
+        const detection = await faceapi
+            .detectSingleFace(video)
+            .withFaceLandmarks()
+            .withFaceDescriptor();
+
+        if (!detection) {
+            alert("Visage non détecté ❌");
+            return;
+        }
+
+        let descriptor = Array.from(detection.descriptor);
+
+        // envoyer au serveur
+        fetch("login_face.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ face: descriptor })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+    window.location.href = data.redirect; // 🔥 dynamique حسب role
+} else {
+    alert("Utilisateur non reconnu ❌");
+}
+        });
+    };
+});
+</script>
         <script>
 const form = document.getElementById("resetForm");
 const emailInput = document.getElementById("emailInput");
