@@ -29,7 +29,7 @@ $stats = $userC->getStatistiquesUtilisateurs();
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Gestion Utilisateurs - cre8connect</title>
+    <title>User Management - cre8connect</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/vendors/mdi/css/materialdesignicons.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
@@ -232,18 +232,48 @@ $stats = $userC->getStatistiquesUtilisateurs();
         }
 
         .light-mode {
-            background: #f5f5f5 !important;
-            color: #000 !important;
+            background: #f9fafb !important;
+            color: #111827 !important;
         }
 
+        .light-mode body,
+        .light-mode .container,
         .light-mode .table-container,
         .light-mode .header,
-        .light-mode .stat-card {
-            background-color: #f8f9fa !important;
+        .light-mode .stat-card,
+        .light-mode .card,
+        .light-mode .card-body,
+        .light-mode .table,
+        .light-mode .table-responsive,
+        .light-mode .dropdown-menu,
+        .light-mode .navbar-custom,
+        .light-mode .form-control,
+        .light-mode .form-select,
+        .light-mode .modal-content {
+            background-color: #ffffff !important;
+            color: #111827 !important;
+            border-color: #e2e8f0 !important;
+        }
+
+        .light-mode .sidebar,
+        .light-mode .navbar-custom {
+            background-color: #ffffff !important;
+        }
+
+        .light-mode .table thead {
+            background-color: #e2e8f0 !important;
+            color: #111827 !important;
         }
 
         .light-mode .table tbody tr:hover {
-            background-color: #e9ecef !important;
+            background-color: #f8fafc !important;
+        }
+
+        .light-mode .navbar-custom a,
+        .light-mode .nav-link,
+        .light-mode .profile-name h5,
+        .light-mode .profile-name span {
+            color: #111827 !important;
         }
     </style>
 </head>
@@ -251,19 +281,19 @@ $stats = $userC->getStatistiquesUtilisateurs();
 
     <!-- Navigation -->
     <div class="navbar-custom">
-        <h4 class="mb-0">👥 Gestion Utilisateurs</h4>
+        <h4 class="mb-0">👥 User Management</h4>
         <div>
             <a href="index.php">📊 Dashboard</a>
-            <a href="reclamations.php">📋 Réclamations</a>
-            <a href="#" onclick="toggleDarkMode(); return false;">🌙 Mode Sombre</a>
-            <a href="logout.php">🚪 Déconnexion</a>
+            <a href="reclamations.php">📋 Complaints</a>
+            <a href="#" onclick="toggleDarkMode(); return false;">🌙 Dark Mode</a>
+            <a href="logout.php">🚪 Logout</a>
         </div>
     </div>
 
     <!-- Header -->
     <div class="header">
-        <h2>👋 Bienvenue sur la gestion des utilisateurs</h2>
-        <p class="mb-0 text-muted">Gérez tous les comptes utilisateurs de votre plateforme</p>
+        <h2>👋 Welcome to user management</h2>
+        <p class="mb-0 text-muted">Manage all user accounts on your platform</p>
     </div>
 
     <!-- Messages -->
@@ -275,30 +305,30 @@ $stats = $userC->getStatistiquesUtilisateurs();
         <?php unset($_SESSION['message'], $_SESSION['message_type']); ?>
     <?php endif; ?>
 
-    <!-- Statistiques -->
+    <!-- Statistics -->
     <div class="stats-row">
         <div class="stat-card" style="border-left: 4px solid #667eea;">
-            <h6>Total Utilisateurs</h6>
+            <h6>Total Users</h6>
             <h3><?= $stats['total'] ?></h3>
         </div>
         <div class="stat-card" style="border-left: 4px solid #9B5DE0;">
-            <h6>Administrateurs</h6>
+            <h6>Administrators</h6>
             <h3><?= $stats['admin'] ?></h3>
         </div>
         <div class="stat-card" style="border-left: 4px solid #E11D74;">
-            <h6>Créateurs</h6>
+            <h6>Creators</h6>
             <h3><?= $stats['createur'] ?></h3>
         </div>
         <div class="stat-card" style="border-left: 4px solid #AEEA94;">
-            <h6>Utilisateurs Actifs</h6>
+            <h6>Active Users</h6>
             <h3><?= $stats['actif'] ?></h3>
         </div>
         <div class="stat-card" style="border-left: 4px solid #FFC107;">
-            <h6>En Attente</h6>
+            <h6>Pending</h6>
             <h3><?= $stats['en_attente'] ?></h3>
         </div>
         <div class="stat-card" style="border-left: 4px solid #DC3545;">
-            <h6>Suspendus</h6>
+            <h6>Suspended</h6>
             <h3><?= $stats['suspendu'] ?></h3>
         </div>
     </div>
@@ -306,17 +336,17 @@ $stats = $userC->getStatistiquesUtilisateurs();
     <!-- Table -->
     <div class="table-container">
         <div style="padding: 20px; border-bottom: 1px solid #e9ecef;">
-            <button class="btn btn-add btn-custom" onclick="addUser()">➕ Ajouter Utilisateur</button>
+            <button class="btn btn-add btn-custom" onclick="addUser()">➕ Add User</button>
         </div>
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Nom</th>
+                        <th>Name</th>
                         <th>Email</th>
-                        <th>Rôle</th>
-                        <th>Statut</th>
+                        <th>Role</th>
+                        <th>Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -329,7 +359,7 @@ $stats = $userC->getStatistiquesUtilisateurs();
                                 <td><?= htmlspecialchars($u['email']) ?></td>
                                 <td>
                                     <span class="badge <?= ($u['role'] == 'admin') ? 'badge-admin' : 'badge-client' ?>">
-                                        <?= ucfirst($u['role']) ?>
+                                        <?= ($u['role'] == 'admin') ? 'Admin' : (($u['role'] == 'createur') ? 'Creator' : 'Brand') ?>
                                     </span>
                                 </td>
                                 <td>
@@ -337,33 +367,33 @@ $stats = $userC->getStatistiquesUtilisateurs();
                                         ($u['statut'] == 'actif') ? 'success' : 
                                         (($u['statut'] == 'en_attente') ? 'warning' : 
                                         (($u['statut'] == 'suspendu') ? 'danger' : 'secondary')) ?>">
-                                        <?= ucfirst(str_replace('_', ' ', $u['statut'] ?? 'inconnu')) ?>
+                                        <?= ($u['statut'] == 'actif') ? 'Active' : (($u['statut'] == 'en_attente') ? 'Pending' : (($u['statut'] == 'suspendu') ? 'Suspended' : 'Unknown')) ?>
                                     </span>
                                 </td>
                                 <td>
-                                    <button class="btn-custom btn-edit" onclick="editUser(<?= $u['id'] ?>)">✏️ Éditer</button>
+                                    <button class="btn-custom btn-edit" onclick="editUser(<?= $u['id'] ?>)">✏️ Edit</button>
                                     <?php if ($u['statut'] == 'actif'): ?>
     <button class="btn-custom btn-warning"
         onclick="toggleStatus(<?= $u['id'] ?>, 'suspendu')"
         style="background: #ffc107; color: #000;">
-        🚫 Suspendre
+        🚫 Suspend
     </button>
 
 <?php elseif ($u['statut'] == 'suspendu' || $u['statut'] == 'en_attente'): ?>
     <button class="btn-custom btn-success"
         onclick="toggleStatus(<?= $u['id'] ?>, 'actif')"
         style="background: #28a745; color: white;">
-        ✅ Activer
+        ✅ Activate
     </button>
 <?php endif; ?>
-                                    <button class="btn-custom btn-delete" onclick="deleteUser(<?= $u['id'] ?>)">🗑️ Supprimer</button>
+                                    <button class="btn-custom btn-delete" onclick="deleteUser(<?= $u['id'] ?>)">🗑️ Delete</button>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
                             <td colspan="6" class="text-center py-4">
-                                <p class="text-muted">Aucun utilisateur trouvé</p>
+                                <p class="text-muted">No users found</p>
                             </td>
                         </tr>
                     <?php endif; ?>
@@ -374,11 +404,11 @@ $stats = $userC->getStatistiquesUtilisateurs();
         <!-- Pagination -->
         <?php if ($totalPages > 1): ?>
         <div class="d-flex justify-content-center mt-4">
-            <nav aria-label="Pagination utilisateurs">
+            <nav aria-label="Users pagination">
                 <ul class="pagination">
                     <!-- Previous button -->
                     <li class="page-item <?= $currentPage <= 1 ? 'disabled' : '' ?>">
-                        <a class="page-link" href="?page=<?= $currentPage - 1 ?>" aria-label="Précédent">
+                        <a class="page-link" href="?page=<?= $currentPage - 1 ?>" aria-label="Previous">
                             <span aria-hidden="true">&laquo;</span>
                         </a>
                     </li>
@@ -418,7 +448,7 @@ $stats = $userC->getStatistiquesUtilisateurs();
 
                     <!-- Next button -->
                     <li class="page-item <?= $currentPage >= $totalPages ? 'disabled' : '' ?>">
-                        <a class="page-link" href="?page=<?= $currentPage + 1 ?>" aria-label="Suivant">
+                        <a class="page-link" href="?page=<?= $currentPage + 1 ?>" aria-label="Next">
                             <span aria-hidden="true">&raquo;</span>
                         </a>
                     </li>
@@ -426,7 +456,7 @@ $stats = $userC->getStatistiquesUtilisateurs();
             </nav>
         </div>
         <div class="text-center mt-2 text-muted">
-            Page <?= $currentPage ?> sur <?= $totalPages ?> (<?= $totalUsers ?> utilisateurs au total)
+            Page <?= $currentPage ?> of <?= $totalPages ?> (<?= $totalUsers ?> total users)
         </div>
         <?php endif; ?>
     </div>
@@ -434,15 +464,15 @@ $stats = $userC->getStatistiquesUtilisateurs();
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function addUser() {
-            alert('Fonctionnalité d\'ajout utilisateur à développer');
+            alert('Add user functionality is under development');
         }
 
         function editUser(id) {
-            alert('Fonctionnalité d\'édition utilisateur à développer pour l\'utilisateur ID: ' + id);
+            alert('Edit user functionality is under development for user ID: ' + id);
         }
 
         function deleteUser(id) {
-            if (confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
+            if (confirm('Are you sure you want to delete this user?')) {
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.action = 'delete.php';
@@ -459,8 +489,8 @@ $stats = $userC->getStatistiquesUtilisateurs();
         }
 
         function toggleStatus(id, action) {
-            const actionText = action === 'activate' ? 'activer' : 'suspendre';
-            const confirmMessage = `Êtes-vous sûr de vouloir ${actionText} cet utilisateur ?`;
+            const actionText = action === 'actif' ? 'activate' : 'suspend';
+            const confirmMessage = `Are you sure you want to ${actionText} this user?`;
             if (confirm(confirmMessage)) {
                 const form = document.createElement('form');
                 form.method = 'POST';
@@ -483,13 +513,13 @@ $stats = $userC->getStatistiquesUtilisateurs();
             }
         }
 
-        // Mode sombre
+        // Dark mode
         function toggleDarkMode() {
             document.body.classList.toggle("light-mode");
             localStorage.setItem("theme", document.body.classList.contains("light-mode") ? "light" : "dark");
         }
 
-        // Appliquer le thème au chargement
+        // Apply the theme on load
         window.addEventListener('DOMContentLoaded', function() {
             if (localStorage.getItem("theme") === "light") {
                 document.body.classList.add("light-mode");

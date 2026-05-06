@@ -245,7 +245,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 window.location.href = data.redirect;
             } else {
-                alert("Utilisateur non reconnu ❌");
+                const message = data.message || "Utilisateur non reconnu ❌";
+                alert(`${message} \nDistance: ${Number(data.distance).toFixed(4)}`);
             }
         });
     };

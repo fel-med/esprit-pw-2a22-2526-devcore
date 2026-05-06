@@ -2,219 +2,553 @@
 session_start();
 
 if (!isset($_SESSION['user'])) {
+
     echo "Utilisateur non connecté";
     exit();
 }
 
-$idUtilisateur = $_SESSION['user'];
+$userName = $_SESSION['nom'] ?? 'Unknown User';
+
 ?>
-<html lang="en"><head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <meta name="description" content="">
-        <meta name="author" content="">
-        <title>Modern Business - Start Bootstrap Template</title>
-        <!-- Favicon-->
-        <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
-        <!-- Custom Google font-->
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@100;200;300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
-        <!-- Bootstrap icons-->
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
-        <!-- Core theme CSS (includes Bootstrap)-->
-        <link href="css/styles.css" rel="stylesheet">
-        <style>
-            /* Mode Jour/Nuit - CSS Complet */
-            body.light-mode {
-                background-color: #1a1a1a !important;
-                color: #ffffff !important;
+
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Creator Page</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=Fraunces:wght@700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
+
+        :root{
+
+            --primary:#5b4fff;
+            --primary-hover:#4438e0;
+            --primary-light:#ece9ff;
+
+            --bg:#f6f6fc;
+            --white:#ffffff;
+
+            --text:#0f0e1a;
+            --text-sub:#6b6f80;
+
+            --border:#ebebf2;
+
+            --danger:#f43f5e;
+        }
+
+        body{
+            font-family:'DM Sans',sans-serif;
+            background:var(--bg);
+            color:var(--text);
+            min-height:100vh;
+        }
+
+        /* =========================
+           NAVBAR
+        ========================= */
+
+        nav{
+            height:75px;
+            background:white;
+
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+
+            padding:0 50px;
+
+            border-bottom:1px solid var(--border);
+
+            position:sticky;
+            top:0;
+
+            z-index:999;
+        }
+
+        .nav-logo{
+            text-decoration:none;
+        }
+
+        .nav-logo-text{
+            font-size:28px;
+            font-weight:800;
+            font-family:'Fraunces',serif;
+            color:var(--primary);
+        }
+
+        .nav-links{
+            list-style:none;
+
+            display:flex;
+            align-items:center;
+            gap:10px;
+        }
+
+        .nav-links a{
+            text-decoration:none;
+
+            color:var(--text-sub);
+
+            padding:10px 16px;
+
+            border-radius:12px;
+
+            font-weight:700;
+
+            transition:0.3s;
+        }
+
+        .nav-links a:hover{
+            background:var(--primary-light);
+            color:var(--primary);
+        }
+
+        .nav-links .active{
+            background:var(--primary-light);
+            color:var(--primary);
+        }
+
+        .nav-right{
+            display:flex;
+            align-items:center;
+            gap:15px;
+        }
+
+        .nav-badge{
+            background:var(--primary);
+            color:white;
+
+            padding:8px 14px;
+
+            border-radius:30px;
+
+            font-size:13px;
+            font-weight:700;
+        }
+
+        .nav-avatar{
+
+            width:42px;
+            height:42px;
+
+            border-radius:50%;
+
+            background:var(--primary-light);
+
+            display:flex;
+            align-items:center;
+            justify-content:center;
+
+            color:var(--primary);
+
+            font-weight:800;
+            font-size:16px;
+        }
+
+        /* =========================
+           PAGE
+        ========================= */
+
+        .page-wrapper{
+            max-width:1200px;
+            margin:auto;
+
+            padding:70px 25px;
+        }
+
+        .page-header{
+
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+
+            gap:20px;
+
+            flex-wrap:wrap;
+        }
+
+        .page-header-left h1{
+
+            font-size:65px;
+
+            font-family:'Fraunces',serif;
+
+            margin-bottom:15px;
+        }
+
+        .page-header-left p{
+
+            font-size:22px;
+            color:var(--text-sub);
+        }
+
+        .page-header-actions{
+            display:flex;
+            gap:15px;
+        }
+
+        .btn-export{
+
+            text-decoration:none;
+
+            background:white;
+
+            border:1px solid var(--border);
+
+            padding:18px 35px;
+
+            border-radius:18px;
+
+            color:var(--text);
+
+            font-weight:700;
+
+            transition:0.3s;
+        }
+
+        .btn-export:hover{
+
+            background:var(--primary-light);
+            color:var(--primary);
+        }
+
+        .btn-add-product{
+
+            text-decoration:none;
+
+            background:var(--primary);
+
+            color:white;
+
+            padding:18px 35px;
+
+            border-radius:18px;
+
+            font-weight:700;
+
+            transition:0.3s;
+        }
+
+        .btn-add-product:hover{
+            background:var(--primary-hover);
+        }
+
+        /* =========================
+           HERO
+        ========================= */
+
+        .hero-section{
+
+            margin-top:70px;
+
+            background:linear-gradient(135deg,#5b4fff,#7c3aed);
+
+            border-radius:28px;
+
+            padding:100px 40px;
+
+            text-align:center;
+
+            color:white;
+        }
+
+        .hero-section h2{
+
+            font-size:50px;
+
+            font-family:'Fraunces',serif;
+
+            margin-bottom:20px;
+        }
+
+        .hero-section p{
+
+            font-size:18px;
+
+            opacity:0.9;
+        }
+
+        /* =========================
+           FOOTER
+        ========================= */
+
+        footer{
+
+            margin-top:80px;
+
+            background:white;
+
+            border-top:1px solid var(--border);
+
+            padding:35px;
+
+            text-align:center;
+        }
+
+        footer p{
+
+            color:var(--text-sub);
+
+            font-size:14px;
+        }
+
+        /* =========================
+           DARK MODE
+        ========================= */
+
+        .light-mode{
+            background:#121212 !important;
+            color:white !important;
+        }
+
+        .light-mode nav{
+            background:#1a1a1a;
+            border-color:#333;
+        }
+
+        .light-mode .nav-links a{
+            color:#ddd;
+        }
+
+        .light-mode .btn-export{
+            background:#1f1f1f;
+            border-color:#333;
+            color:white;
+        }
+
+        .light-mode footer{
+            background:#1a1a1a;
+            border-color:#333;
+        }
+
+        .light-mode .page-header-left p{
+            color:#cccccc;
+        }
+
+        /* =========================
+           RESPONSIVE
+        ========================= */
+
+        @media(max-width:768px){
+
+            nav{
+                padding:20px;
+                height:auto;
+                flex-direction:column;
+                gap:15px;
             }
 
-            .light-mode * {
-                background-color: #1a1a1a !important;
-                color: #ffffff !important;
+            .page-header{
+                flex-direction:column;
+                align-items:flex-start;
             }
 
-            .light-mode .navbar {
-                background-color: #0d0d0d !important;
-                border-bottom: 1px solid #333 !important;
+            .page-header-left h1{
+                font-size:45px;
             }
 
-            .light-mode .navbar-light .navbar-nav .nav-link {
-                color: #ffffff !important;
+            .hero-section h2{
+                font-size:35px;
             }
 
-            .light-mode .card {
-                background-color: #2d2d2d !important;
-                border-color: #444 !important;
-                color: #ffffff !important;
+            .page-header-actions{
+                width:100%;
+                flex-direction:column;
             }
 
-            .light-mode .card-body {
-                background-color: #2d2d2d !important;
-                color: #ffffff !important;
+            .btn-export,
+            .btn-add-product{
+                width:100%;
+                text-align:center;
             }
+        }
 
-            .light-mode .form-control,
-            .light-mode .form-select {
-                background-color: #3d3d3d !important;
-                color: #ffffff !important;
-                border-color: #555 !important;
-            }
+    </style>
 
-            .light-mode .form-control:focus,
-            .light-mode .form-select:focus {
-                background-color: #3d3d3d !important;
-                color: #ffffff !important;
-                border-color: #9B5DE0 !important;
-                box-shadow: 0 0 0 0.2rem rgba(155, 93, 224, 0.25) !important;
-            }
+</head>
 
-            .light-mode .modal-content {
-                background-color: #2d2d2d !important;
-                color: #ffffff !important;
-            }
+<body>
 
-            .light-mode .modal-header {
-                background-color: #1a1a1a !important;
-                border-bottom-color: #444 !important;
-            }
+<!-- =========================
+     NAVBAR
+========================= -->
 
-            .light-mode .modal-title {
-                color: #ffffff !important;
-            }
+<nav>
 
-            .light-mode .alert {
-                background-color: #2d2d2d !important;
-                color: #ffffff !important;
-                border-color: #444 !important;
-            }
-
-            .light-mode footer {
-                background-color: #0d0d0d !important;
-                color: #ffffff !important;
-                border-top: 1px solid #333 !important;
-            }
-
-            .light-mode .text-muted {
-                color: #aaaaaa !important;
-            }
-
-            .light-mode .text-gradient {
-                color: #D78FEE !important;
-            }
-
-            .light-mode .bg-light {
-                background-color: #1a1a1a !important;
-            }
-
-            .light-mode .bg-white {
-                background-color: #0d0d0d !important;
-            }
-
-            /* Transitions lisses */
-            * {
-                transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-            }
-        </style>
-    </head>
-    <body class="d-flex flex-column h-100 bg-light">
-        <main class="flex-shrink-0">
-            <!-- Navigation-->
-            <nav class="navbar navbar-expand-lg navbar-light bg-white py-3">
-                <div class="container px-5">
-                    <a class="navbar-brand" href="index.html"><span class="fw-bolder text-primary">Cre8connect</span></a>
-                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
-                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                        <ul class="navbar-nav ms-auto mb-2 mb-lg-0 small fw-bolder">
-                            <?php if (isset($_SESSION['nom'])): ?>
-    <span class="nav-link">👤 <?php echo $_SESSION['nom']; ?></span>
-<?php endif; ?>
-                            <li class="nav-item"><a class="nav-link" href="creator.php">Home</a></li>
-                            <li class="nav-item"><a class="nav-link" href="reclamation.php">Reclamation</a></li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#" onclick="toggleDarkMode(); return false;" title="Mode jour/nuit">
-                                    <i class="bi bi-moon-stars" id="themeIcon"></i>
-                                </a>
-                            </li>
-                           <li class="nav-item">
-    <a class="nav-link text-danger" href="logout.php">
-        <i class="bi bi-box-arrow-right"></i> Logout
+    <a class="nav-logo" href="creator.php">
+        <div class="nav-logo-text">
+            Cre8connect
+        </div>
     </a>
-</li>
-                        </ul>
-                    </div>
-                </div>
-            </nav>
-            <!-- Projects Section-->
-            <section class="py-5">
-                <div class="container px-5 mb-5">
-                    <div class="text-center mb-5">
-                        <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">creator</span></h1>
-                        <div class="text-center mt-3">
-    <p class="text-muted">
-        hello  : <strong><?php echo $_SESSION['nom'] ?? 'Utilisateur'; ?></strong>
-    </p>
+
+    <ul class="nav-links">
+
+        <li>
+            <a href="creator.php" class="active">
+                Home
+            </a>
+        </li>
+
+        <li>
+            <a href="reclamation.php">
+                Reclamation
+            </a>
+        </li>
+
+        <li>
+            <a href="#" onclick="toggleDarkMode(); return false;">
+                <i class="bi bi-moon-stars" id="themeIcon"></i>
+            </a>
+        </li>
+
+        <li>
+            <a href="logout.php" style="color:#f43f5e;">
+                <i class="bi bi-box-arrow-right"></i>
+                Logout
+            </a>
+        </li>
+
+    </ul>
+
+    <div class="nav-right">
+
+       <div class="nav-badge">
+    👤 <?php echo htmlspecialchars($userName); ?>
 </div>
-                    </div>
-                    
-                </div>
-            </section>
-            <!-- Call to action section-->
-            <section class="py-5 bg-gradient-primary-to-secondary text-white">
-                <div class="container px-5 my-5">
-                    <div class="text-center">
-                        <h2 class="display-4 fw-bolder mb-4">Let's build something together</h2>
-                        
-                    </div>
-                </div>
-            </section>
-        </main>
-        <!-- Footer-->
-        <footer class="bg-white py-4 mt-auto">
-            <div class="container px-5">
-                <div class="row align-items-center justify-content-between flex-column flex-sm-row">
-                    <div class="col-auto"><div class="small m-0">Copyright © Your Website 2023</div></div>
-                    <div class="col-auto">
-                        <a class="small" href="#!">Privacy</a>
-                        <span class="mx-1">·</span>
-                        <a class="small" href="#!">Terms</a>
-                        <span class="mx-1">·</span>
-                        <a class="small" href="#!">Contact</a>
-                    </div>
-                </div>
-            </div>
-        </footer>
-        <!-- Bootstrap core JS-->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-        <!-- Core theme JS-->
-        <script src="js/scripts.js"></script>
 
-        <!-- Mode Jour/Nuit JavaScript -->
-        <script>
-            function toggleDarkMode() {
-                document.body.classList.toggle('light-mode');
-                
-                let icon = document.getElementById('themeIcon');
-                if (document.body.classList.contains('light-mode')) {
-                    localStorage.setItem('theme', 'light');
-                    if (icon) icon.className = 'bi bi-brightness-high';
-                } else {
-                    localStorage.setItem('theme', 'dark');
-                    if (icon) icon.className = 'bi bi-moon-stars';
-                }
+<div class="nav-avatar">
+    <?php echo strtoupper(substr($userName,0,1)); ?>
+</div>
+
+    </div>
+
+</nav>
+
+<!-- =========================
+     MAIN PAGE
+========================= -->
+
+<div class="page-wrapper">
+
+    <div class="page-header">
+
+        <div class="page-header-left">
+
+            <h1>Creator Page</h1>
+
+            <p>
+                Hello :
+                <strong>
+                   <?php echo htmlspecialchars($userName); ?>
+                </strong>
+            </p>
+
+        </div>
+
+        <div class="page-header-actions">
+
+            <a href="reclamation.php" class="btn-export">
+                Reclamation
+            </a>
+
+            <a href="#" class="btn-add-product">
+                Creator Space
+            </a>
+
+        </div>
+
+    </div>
+
+    <!-- HERO SECTION -->
+
+    <section class="hero-section">
+
+        <h2>
+            Welcome Creator
+        </h2>
+
+        <p>
+            Modern creator page with premium UI design.
+        </p>
+
+    </section>
+
+</div>
+
+<!-- =========================
+     FOOTER
+========================= -->
+
+<footer>
+
+    <p>
+        Copyright © Cre8connect 2026
+    </p>
+
+</footer>
+
+<!-- =========================
+     JS
+========================= -->
+
+<script>
+
+    function toggleDarkMode() {
+
+        document.body.classList.toggle('light-mode');
+
+        let icon = document.getElementById('themeIcon');
+
+        if (document.body.classList.contains('light-mode')) {
+
+            localStorage.setItem('theme', 'light');
+
+            if (icon) {
+                icon.className = 'bi bi-brightness-high';
             }
-            
-            // Appliquer le thème au chargement
-            window.addEventListener('DOMContentLoaded', function() {
-                let icon = document.getElementById('themeIcon');
-                if (localStorage.getItem('theme') === 'light') {
-                    document.body.classList.add('light-mode');
-                    if (icon) icon.className = 'bi bi-brightness-high';
-                }
-            });
-        </script>
-    
 
-</body></html>
+        } else {
+
+            localStorage.setItem('theme', 'dark');
+
+            if (icon) {
+                icon.className = 'bi bi-moon-stars';
+            }
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', function () {
+
+        let icon = document.getElementById('themeIcon');
+
+        if (localStorage.getItem('theme') === 'light') {
+
+            document.body.classList.add('light-mode');
+
+            if (icon) {
+                icon.className = 'bi bi-brightness-high';
+            }
+        }
+    });
+
+</script>
+
+</body>
+</html>

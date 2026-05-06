@@ -25,7 +25,7 @@ $priorityTimeline = $reclamationC->getReclamationPriorityTimeline(14);
 $statusTimeline = $reclamationC->getReclamationStatusTimeline(14);
 $priorityTimeline = $reclamationC->getReclamationPriorityTimeline(14);
 
-// Calculer les statistiques de priorité
+// Calculate priority statistics
 $haute = 0;
 $moyenne = 0;
 $basse = 0;
@@ -109,45 +109,54 @@ foreach ($liste as $rec) {
   </style>
   <style>
     body.light-mode {
+      background-color: #f9fafb !important;
+      color: #111827 !important;
+    }
+
+    body.light-mode .container-scroller,
+    body.light-mode .page-body-wrapper,
+    body.light-mode .main-panel,
+    body.light-mode .content-wrapper,
+    body.light-mode .footer,
+    body.light-mode .navbar,
+    body.light-mode .sidebar,
+    body.light-mode .navbar-custom {
       background-color: #ffffff !important;
-      color: #000 !important;
+      color: #111827 !important;
+      border-color: #e2e8f0 !important;
     }
 
-    .light-mode .card {
-      background-color: #f8f9fa !important;
-      color: black !important;
-    }
-
-    .light-mode .navbar,
-    .light-mode .sidebar {
+    .light-mode .card,
+    .light-mode .card-body,
+    .light-mode .table,
+    .light-mode .table-responsive,
+    .light-mode .dropdown-menu,
+    .light-mode .modal-content,
+    .light-mode .form-control,
+    .light-mode .form-select,
+    .light-mode textarea {
       background-color: #ffffff !important;
+      color: #111827 !important;
+      border-color: #e2e8f0 !important;
     }
 
-    .light-mode .table {
-      color: black !important;
+    .light-mode .table thead {
+      background-color: #e2e8f0 !important;
+      color: #111827 !important;
     }
 
-    .light-mode .table-dark {
-      background-color: #e9ecef !important;
-      color: black !important;
+    .light-mode .table tbody tr:hover {
+      background-color: #f8fafc !important;
     }
 
-    .light-mode input.form-control,
-    .light-mode select.form-select,
-    .light-mode textarea.form-control {
-      background-color: #ffffff !important;
-      color: black !important;
-      border-color: #dee2e6 !important;
-    }
-
-    .light-mode .modal-content {
-      background-color: #f8f9fa !important;
-      color: black !important;
-    }
-
-    .light-mode .modal-header {
-      background-color: #e9ecef !important;
-      border-color: #dee2e6 !important;
+    .light-mode .navbar-custom a,
+    .light-mode .nav-link,
+    .light-mode .profile-name h5,
+    .light-mode .profile-name span,
+    .light-mode .badge,
+    .light-mode .card-title,
+    .light-mode .card-description {
+      color: #111827 !important;
     }
 
     body {
@@ -188,6 +197,39 @@ foreach ($liste as $rec) {
       border-color: #adb5bd;
     }
 
+    .table-action-btn {
+      min-width: 100px;
+      max-width: 130px;
+      height: 38px;
+      border-radius: 16px !important;
+      padding: 8px 14px !important;
+      font-weight: 600;
+      font-size: 0.92rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      transition: transform 0.2s ease, opacity 0.2s ease;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .table-action-btn:hover {
+      transform: translateY(-1px);
+      opacity: 0.95;
+    }
+
+    .table-action-select {
+      min-width: 110px;
+      max-width: 130px;
+      border-radius: 16px;
+      background-color: #FDCFFA;
+      border-color: #D78FEE;
+      font-size: 0.88rem;
+      height: 38px;
+      padding: 0 12px;
+    }
+
     .pagination .page-item.active .page-link {
       background-color: #9B5DE0;
       border-color: #9B5DE0;
@@ -203,10 +245,10 @@ foreach ($liste as $rec) {
 </head>
 
 <body>
-  <!-- Notification de succès -->
+  <!-- Success notification -->
   <?php if (isset($_GET['success']) && $_GET['success'] === 'reponse_envoyee'): ?>
   <div class="alert alert-success alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; right: 20px; width: 350px; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-    <strong>✅ Succès!</strong> Votre réponse a été envoyée avec succès et l'utilisateur a reçu une notification par email.
+    <strong>✅ Success!</strong> Your reply has been sent successfully and the user has been notified by email.
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   </div>
   <script>
@@ -546,43 +588,43 @@ foreach ($liste as $rec) {
           <div class="row">
 
           </div>
-          <!-- ===================== STATISTIQUES AVANCÉES ===================== -->
+          <!-- ===================== ADVANCED STATISTICS ===================== -->
           <div class="row mb-4">
 
             <!-- KPI Cards -->
             <div class="col-md-3 mb-3">
               <div class="card shadow-sm text-center p-4" style="background: linear-gradient(135deg, #9B5DE0 0%, #B771E5 100%); color: white; border-radius: 10px;">
                 <i class="mdi mdi-file-document-outline" style="font-size: 2rem; margin-bottom: 10px;"></i>
-                <h6 class="mb-2">Total Réclamations</h6>
+                <h6 class="mb-2">Total Complaints</h6>
                 <h3 class="mb-0"><?php echo $stats['total']; ?></h3>
-                <small class="mt-2 opacity-75">Toutes les réclamations</small>
+                <small class="mt-2 opacity-75">All complaints</small>
               </div>
             </div>
 
             <div class="col-md-3 mb-3">
               <div class="card shadow-sm text-center p-4" style="background: linear-gradient(135deg, #D78FEE 0%, #C96FE8 100%); color: white; border-radius: 10px;">
                 <i class="mdi mdi-clock-outline" style="font-size: 2rem; margin-bottom: 10px;"></i>
-                <h6 class="mb-2">En Attente</h6>
+                <h6 class="mb-2">Pending</h6>
                 <h3 class="mb-0"><?php echo $stats['en_attente']; ?></h3>
-                <small class="mt-2 opacity-75">À traiter</small>
+                <small class="mt-2 opacity-75">To be processed</small>
               </div>
             </div>
 
             <div class="col-md-3 mb-3">
               <div class="card shadow-sm text-center p-4" style="background: linear-gradient(135deg, #AEEA94 0%, #99D98E 100%); color: #2d5016; border-radius: 10px;">
                 <i class="mdi mdi-check-circle-outline" style="font-size: 2rem; margin-bottom: 10px;"></i>
-                <h6 class="mb-2">Traitées</h6>
+                <h6 class="mb-2">Processed</h6>
                 <h3 class="mb-0"><?php echo $stats['traitee']; ?></h3>
-                <small class="mt-2 opacity-75">Résolvées</small>
+                <small class="mt-2 opacity-75">Resolved</small>
               </div>
             </div>
 
             <div class="col-md-3 mb-3">
               <div class="card shadow-sm text-center p-4" style="background: linear-gradient(135deg, #E11D74 0%, #D01565 100%); color: white; border-radius: 10px;">
                 <i class="mdi mdi-alert-circle-outline" style="font-size: 2rem; margin-bottom: 10px;"></i>
-                <h6 class="mb-2">Priorité Haute</h6>
+                <h6 class="mb-2">High Priority</h6>
                 <h3 class="mb-0"><?php echo $stats['haute']; ?></h3>
-                <small class="mt-2 opacity-75">Urgentes</small>
+                <small class="mt-2 opacity-75">Urgent</small>
               </div>
             </div>
 
@@ -591,11 +633,11 @@ foreach ($liste as $rec) {
           <!-- ===================== GRAPHES AREA CHARTS ===================== -->
           <div class="row mb-4">
 
-            <!-- Area Chart - Réclamations par Statut -->
+            <!-- Area Chart - Complaints by Status -->
             <div class="col-lg-12 mb-3">
               <div class="card shadow-sm">
                 <div class="card-body">
-                  <h5 class="card-title mb-4">📊 Évolution des Réclamations par Statut (Timeline)</h5>
+                  <h5 class="card-title mb-4">📊 Complaint Status Trend (Timeline)</h5>
                   <div style="height: 350px;">
                     <canvas id="chartAreaStatut"></canvas>
                   </div>
@@ -612,7 +654,7 @@ foreach ($liste as $rec) {
             <div class="col-lg-12 mb-3">
               <div class="card shadow-sm">
                 <div class="card-body">
-                  <h5 class="card-title mb-4">⚡ Distribution des Priorités (Timeline)</h5>
+                  <h5 class="card-title mb-4">⚡ Priority Distribution (Timeline)</h5>
                   <div style="height: 350px;">
                     <canvas id="chartAreaPriorite"></canvas>
                   </div>
@@ -628,25 +670,25 @@ foreach ($liste as $rec) {
               <div class="card shadow-sm">
                 <div class="card-body">
 
-                  <h5 class="mb-3">Gestion des réclamations</h5>
+                  <h5 class="mb-3">Complaint Management</h5>
 
-                  <!-- Recherche et Tri -->
+                  <!-- Search and Filter -->
                   <div class="row mb-3">
                     <div class="col-md-6">
                       <form method="GET" action="reclamations.php" class="d-flex gap-2">
-                        <input type="text" name="search" class="form-control" placeholder="Rechercher par utilisateur ou description..." value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+                        <input type="text" name="search" class="form-control" placeholder="Search by user or description..." value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
                         <input type="hidden" name="priorite" value="<?php echo isset($_GET['priorite']) ? htmlspecialchars($_GET['priorite']) : ''; ?>">
-                        <button type="submit" class="btn btn-sm" style="background-color: #9B5DE0; color: white; width: 80px;">Rechercher</button>
+                        <button type="submit" class="btn btn-sm" style="background-color: #9B5DE0; color: white; width: 90px;">Search</button>
                       </form>
                     </div>
                     <div class="col-md-6">
                       <form method="GET" action="reclamations.php" class="d-flex gap-2">
                         <input type="hidden" name="search" value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
                         <select name="priorite" class="form-select form-select-sm" onchange="this.form.submit()" style="background-color: #FDCFFA; border-color: #D78FEE;">
-                          <option value="">Trier par priorité</option>
-                          <option value="haute" <?php echo isset($_GET['priorite']) && $_GET['priorite'] == 'haute' ? 'selected' : ''; ?>>Haute</option>
-                          <option value="moyenne" <?php echo isset($_GET['priorite']) && $_GET['priorite'] == 'moyenne' ? 'selected' : ''; ?>>Moyenne</option>
-                          <option value="basse" <?php echo isset($_GET['priorite']) && $_GET['priorite'] == 'basse' ? 'selected' : ''; ?>>Basse</option>
+                          <option value="">Filter by priority</option>
+                          <option value="haute" <?php echo isset($_GET['priorite']) && $_GET['priorite'] == 'haute' ? 'selected' : ''; ?>>High</option>
+                          <option value="moyenne" <?php echo isset($_GET['priorite']) && $_GET['priorite'] == 'moyenne' ? 'selected' : ''; ?>>Medium</option>
+                          <option value="basse" <?php echo isset($_GET['priorite']) && $_GET['priorite'] == 'basse' ? 'selected' : ''; ?>>Low</option>
                         </select>
                       </form>
                     </div>
@@ -657,12 +699,12 @@ foreach ($liste as $rec) {
                       <thead class="table-dark">
                         <tr>
                           <th>ID</th>
-                          <th>Utilisateur</th>
+                          <th>User</th>
                           <th>Description</th>
                           <th>Date</th>
-                          <th>Priorité</th>
-                          <th>Statut</th>
-                          <th>Réponse</th>
+                          <th>Priority</th>
+                          <th>Status</th>
+                          <th>Response</th>
                           <th>Actions</th>
                         </tr>
                       </thead>
@@ -674,49 +716,49 @@ foreach ($liste as $rec) {
                             <td><?php echo $rec['nom']; ?></td>
                             <td><?php echo $rec['description']; ?></td>
                             <td><?php echo $rec['date_creation']; ?></td>
-                            <td><?php echo $rec['priorite']; ?></td>
+                            <td><?php echo ($rec['priorite'] == 'haute' ? 'High' : ($rec['priorite'] == 'moyenne' ? 'Medium' : 'Low')); ?></td>
 
                             <td>
                               <span class="badge bg-<?php echo ($rec['statut'] == 'traitee') ? 'success' : 'warning'; ?>">
-                                <?php echo $rec['statut']; ?>
+                                <?php echo ($rec['statut'] == 'traitee') ? 'Processed' : 'Pending'; ?>
                               </span>
                             </td>
 
                             <td>
                               <?php if ($rec['reponse']): ?>
-                                <button type="button" class="btn btn-sm" style="background-color: #9B5DE0; color: white; width: 80px;"
+                                <button type="button" class="btn table-action-btn text-white" style="background-color: #9B5DE0;"
                                         data-bs-toggle="modal"
                                         data-bs-target="#replyViewModal<?php echo $rec['id']; ?>">
-                                  Voir
+                                  View
                                 </button>
                               <?php else: ?>
-                                <span class="badge bg-secondary">Aucune</span>
+                                <span class="badge bg-secondary">None</span>
                               <?php endif; ?>
                             </td>
 
                             <td>
                               <div class="d-flex gap-2" style="flex-wrap: wrap;">
-                                <!-- Répondre -->
-                                <button type="button" class="btn btn-sm" style="background-color: #9B5DE0; color: white; width: 80px;"
+                                <!-- Reply -->
+                                <button type="button" class="btn table-action-btn text-white" style="background-color: #9B5DE0;"
                                         data-bs-toggle="modal"
                                         data-bs-target="#modal<?php echo $rec['id']; ?>">
-                                  Répondre
+                                  Reply
                                 </button>
 
-                                <!-- Supprimer -->
-                                <button type="button" class="btn btn-sm" style="background-color: #D78FEE; color: white; width: 80px;"
+                                <!-- Delete -->
+                                <button type="button" class="btn table-action-btn text-white" style="background-color: #D78FEE;"
                                   onclick="deleteReclamation(<?php echo $rec['id']; ?>)">
                                   🗑
                                 </button>
 
-                                <!-- Modifier -->
-                                <select class="form-select form-select-sm" style="width: 80px; background-color: #FDCFFA; border-color: #D78FEE; font-size: 0.875rem;"
+                                <!-- Edit -->
+                                <select class="form-select form-select-sm table-action-select"
                                   onchange="updateStatus(<?php echo $rec['id']; ?>, this.value)">
-                                  <option value="">Statut</option>
+                                  <option value="">Status</option>
                                   <option value="en_attente" <?php if ($rec['statut'] == 'en_attente')
-                                    echo 'selected'; ?>>En attente</option>
+                                    echo 'selected'; ?>>Pending</option>
                                   <option value="traitee" <?php if ($rec['statut'] == 'traitee')
-                                    echo 'selected'; ?>>Traitée</option>
+                                    echo 'selected'; ?>>Processed</option>
                                 </select>
                               </div>
                             </td>
@@ -728,7 +770,7 @@ foreach ($liste as $rec) {
                   <form method="POST" action="ajouterReponse.php" id="formReply<?php echo $rec['id']; ?>" onsubmit="return validateReply(this)">
 
                     <div class="modal-header">
-                      <h5 class="modal-title">Répondre</h5>
+                      <h5 class="modal-title">Reply</h5>
                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
 
@@ -736,13 +778,13 @@ foreach ($liste as $rec) {
                       <input type="hidden" name="idReclamation" value="<?php echo $rec['id']; ?>">
 
                       <textarea name="contenu" class="form-control" id="replyContent<?php echo $rec['id']; ?>"
-                                placeholder="Votre réponse..."></textarea>
-                      <small class="text-danger d-none" id="replyError<?php echo $rec['id']; ?>">Veuillez entrer une réponse.</small>
+                                placeholder="Your reply..."></textarea>
+                      <small class="text-danger d-none" id="replyError<?php echo $rec['id']; ?>">Please enter a reply.</small>
                     </div>
 
                     <div class="modal-footer d-flex justify-content-between">
-                      <button type="button" class="btn btn-secondary" style="width: 80px;" data-bs-dismiss="modal">Annuler</button>
-                      <button type="submit" class="btn btn-success" style="width: 80px;">Envoyer</button>
+                      <button type="button" class="btn table-action-btn btn-secondary" style="width: 100px;" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn table-action-btn btn-success" style="width: 100px;">Send</button>
                     </div>
 
                   </form>
@@ -751,13 +793,13 @@ foreach ($liste as $rec) {
               </div>
             </div>
 
-            <!-- Modal pour voir la réponse complète -->
+            <!-- Modal to view full response -->
             <div class="modal fade" id="replyViewModal<?php echo $rec['id']; ?>" tabindex="-1">
               <div class="modal-dialog">
                 <div class="modal-content">
 
                   <div class="modal-header">
-                    <h5 class="modal-title">Réponse</h5>
+                    <h5 class="modal-title">Response</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                   </div>
 
@@ -769,28 +811,26 @@ foreach ($liste as $rec) {
                   </div>
 
                   <div class="modal-footer d-flex justify-content-between gap-2">
-                    <!-- Modifier la réponse -->
-                    <button type="button" class="btn btn-sm" style="background-color: #9B5DE0; color: white; width: 80px;"
+                    <!-- Edit response -->
+                    <button type="button" class="btn table-action-btn text-white" style="background-color: #9B5DE0;"
                             data-bs-dismiss="modal"
                             data-bs-toggle="modal"
                             data-bs-target="#editReplyModal<?php echo $rec['id']; ?>">
-                      Modifier
+                      Edit
                     </button>
 
-                    <!-- Supprimer la réponse -->
-                    <button type="button" class="btn btn-sm" style="background-color: #D78FEE; color: white; width: 80px;"
+                    <!-- Delete response -->
+                    <button type="button" class="btn table-action-btn text-white" style="background-color: #D78FEE;"
                             onclick="deleteReply(<?php echo $rec['id']; ?>)">
-                      Supprimer
+                      Delete
                     </button>
 
-                    <button type="button" class="btn btn-secondary" style="width: 80px;" data-bs-dismiss="modal">Fermer</button>
-                  </div>
-
+                    <button type="button" class="btn table-action-btn btn-secondary" style="width: 100px;" data-bs-dismiss="modal">Close</button>
                 </div>
               </div>
             </div>
 
-            <!-- Modal pour modifier la réponse -->
+            <!-- Modal to edit response -->
             <div class="modal fade" id="editReplyModal<?php echo $rec['id']; ?>" tabindex="-1">
               <div class="modal-dialog">
                 <div class="modal-content">
@@ -798,19 +838,19 @@ foreach ($liste as $rec) {
                   <form method="POST" action="modifierReponse.php" id="formEditReply<?php echo $rec['id']; ?>" onsubmit="return validateEditReply(this)">
 
                     <div class="modal-header">
-                      <h5 class="modal-title">Modifier la réponse</h5>
+                      <h5 class="modal-title">Edit response</h5>
                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
 
                     <div class="modal-body">
                       <input type="hidden" name="idReclamation" value="<?php echo $rec['id']; ?>">
-                      <textarea name="contenu" class="form-control" id="editReplyContent<?php echo $rec['id']; ?>" placeholder="Modifier la réponse..."><?php echo htmlspecialchars($rec['reponse'] ?? ''); ?></textarea>
-                      <small class="text-danger d-none" id="editReplyError<?php echo $rec['id']; ?>">Veuillez entrer une réponse valide.</small>
+                      <textarea name="contenu" class="form-control" id="editReplyContent<?php echo $rec['id']; ?>" placeholder="Edit your response..."><?php echo htmlspecialchars($rec['reponse'] ?? ''); ?></textarea>
+                      <small class="text-danger d-none" id="editReplyError<?php echo $rec['id']; ?>">Please enter a valid response.</small>
                     </div>
 
                     <div class="modal-footer d-flex justify-content-between">
-                      <button type="button" class="btn btn-secondary" style="width: 80px;" data-bs-dismiss="modal">Annuler</button>
-                      <button type="submit" class="btn btn-success" style="width: 80px;">Mettre à jour</button>
+                      <button type="button" class="btn btn-secondary" style="width: 80px;" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-success" style="width: 80px;">Update</button>
                     </div>
 
                   </form>
@@ -826,11 +866,11 @@ foreach ($liste as $rec) {
                   <!-- Pagination -->
                   <?php if ($totalPages > 1): ?>
                   <div class="d-flex justify-content-center mt-4">
-                      <nav aria-label="Pagination réclamations">
+                      <nav aria-label="Complaints pagination">
                           <ul class="pagination">
                               <!-- Previous button -->
                               <li class="page-item <?= $currentPage <= 1 ? 'disabled' : '' ?>">
-                                  <a class="page-link" href="?page=<?= $currentPage - 1 ?>&search=<?= urlencode($search) ?>&priorite=<?= urlencode($priorite) ?>" aria-label="Précédent">
+                                  <a class="page-link" href="?page=<?= $currentPage - 1 ?>&search=<?= urlencode($search) ?>&priorite=<?= urlencode($priorite) ?>" aria-label="Previous">
                                       <span aria-hidden="true">&laquo;</span>
                                   </a>
                               </li>
@@ -870,7 +910,7 @@ foreach ($liste as $rec) {
 
                               <!-- Next button -->
                               <li class="page-item <?= $currentPage >= $totalPages ? 'disabled' : '' ?>">
-                                  <a class="page-link" href="?page=<?= $currentPage + 1 ?>&search=<?= urlencode($search) ?>&priorite=<?= urlencode($priorite) ?>" aria-label="Suivant">
+                                  <a class="page-link" href="?page=<?= $currentPage + 1 ?>&search=<?= urlencode($search) ?>&priorite=<?= urlencode($priorite) ?>" aria-label="Next">
                                       <span aria-hidden="true">&raquo;</span>
                                   </a>
                               </li>
@@ -878,7 +918,7 @@ foreach ($liste as $rec) {
                       </nav>
                   </div>
                   <div class="text-center mt-2 text-muted">
-                      Page <?= $currentPage ?> sur <?= $totalPages ?> (<?= $totalReclamations ?> réclamations au total)
+                      Page <?= $currentPage ?> of <?= $totalPages ?> (<?= $totalReclamations ?> total complaints)
                   </div>
                   <?php endif; ?>
 
@@ -960,7 +1000,7 @@ foreach ($liste as $rec) {
           labels: dateLabels,
           datasets: [
             {
-              label: 'En Attente',
+              label: 'Pending',
               data: statusEnAttente,
               borderColor: colors.statutEnAttente,
               backgroundColor: colors.statutEnAttente + '33',
@@ -973,7 +1013,7 @@ foreach ($liste as $rec) {
               borderWidth: 3
             },
             {
-              label: 'Traitées',
+              label: 'Processed',
               data: statusTraitee,
               borderColor: colors.statutTraitee,
               backgroundColor: colors.statutTraitee + '33',
@@ -996,7 +1036,7 @@ foreach ($liste as $rec) {
               callbacks: {
                 label: function(context) {
                   const value = context.parsed.y;
-                  return value + ' réclamations';
+                  return value + ' complaints';
                 }
               }
             }
@@ -1024,7 +1064,7 @@ foreach ($liste as $rec) {
           labels: dateLabels,
           datasets: [
             {
-              label: 'Haute',
+              label: 'High',
               data: priorityHaute,
               borderColor: colors.prioriteHaute,
               backgroundColor: colors.prioriteHaute + '33',
@@ -1037,7 +1077,7 @@ foreach ($liste as $rec) {
               borderWidth: 3
             },
             {
-              label: 'Moyenne',
+              label: 'Medium',
               data: priorityMoyenne,
               borderColor: colors.prioriteMoyenne,
               backgroundColor: colors.prioriteMoyenne + '33',
@@ -1050,7 +1090,7 @@ foreach ($liste as $rec) {
               borderWidth: 3
             },
             {
-              label: 'Basse',
+              label: 'Low',
               data: priorityBasse,
               borderColor: colors.prioriteBasse,
               backgroundColor: colors.prioriteBasse + '33',
@@ -1073,7 +1113,7 @@ foreach ($liste as $rec) {
               callbacks: {
                 label: function(context) {
                   const value = context.parsed.y;
-                  return value + ' réclamations';
+                  return value + ' complaints';
                 }
               }
             }
@@ -1106,9 +1146,9 @@ foreach ($liste as $rec) {
         Chart.defaults.color = textColor;
       }
 
-      // Fonction pour supprimer une réclamation
+      // Function to delete a complaint
       function deleteReclamation(id) {
-        if (confirm('Êtes-vous sûr de vouloir supprimer cette réclamation ?')) {
+        if (confirm('Are you sure you want to delete this complaint?')) {
           const form = document.createElement('form');
           form.method = 'POST';
           form.action = 'supprimerReclamation.php';
@@ -1148,9 +1188,9 @@ foreach ($liste as $rec) {
         form.submit();
       }
 
-      // Fonction pour supprimer une réponse
+      // Function to delete a reply
       function deleteReply(id) {
-        if (confirm('Êtes-vous sûr de vouloir supprimer cette réponse ?')) {
+        if (confirm('Are you sure you want to delete this response?')) {
           const form = document.createElement('form');
           form.method = 'POST';
           form.action = 'supprimerReponse.php';
@@ -1168,7 +1208,8 @@ foreach ($liste as $rec) {
 
       // ===== VALIDATION JAVASCRIPT =====
       
-      // Validation pour ajouter une réponse
+      // ===== VALIDATION JAVASCRIPT =====
+      // Validation for adding a reply
       function validateReply(form) {
         const idReclamation = form.querySelector('input[name="idReclamation"]').value;
         const textarea = form.querySelector('textarea[name="contenu"]');
@@ -1176,44 +1217,45 @@ foreach ($liste as $rec) {
         
         const content = textarea.value.trim();
         
-        // Vérification du contenu
+        // Validate content
         if (content === '') {
+          errorEl.textContent = 'The response cannot be empty.';
           errorEl.classList.remove('d-none');
           textarea.classList.add('border-danger');
           return false;
         }
         
-        // Vérification de la longueur minimale (5 caractères)
+        // Validate minimum length (5 characters)
         if (content.length < 5) {
-          errorEl.textContent = 'La réponse doit contenir au moins 5 caractères.';
+          errorEl.textContent = 'The response must contain at least 5 characters.';
           errorEl.classList.remove('d-none');
           textarea.classList.add('border-danger');
           return false;
         }
         
-        // Vérification de la longueur maximale (1000 caractères)
+        // Validate maximum length (1000 characters)
         if (content.length > 1000) {
-          errorEl.textContent = 'La réponse ne doit pas dépasser 1000 caractères.';
+          errorEl.textContent = 'The response must not exceed 1000 characters.';
           errorEl.classList.remove('d-none');
           textarea.classList.add('border-danger');
           return false;
         }
         
-        // Vérification que ce n'est pas que des espaces
+        // Validate non-whitespace content
         if (!/\S/.test(content)) {
-          errorEl.textContent = 'La réponse ne peut pas contenir uniquement des espaces.';
+          errorEl.textContent = 'The response cannot contain only spaces.';
           errorEl.classList.remove('d-none');
           textarea.classList.add('border-danger');
           return false;
         }
         
-        // Succès
+        // Success
         errorEl.classList.add('d-none');
         textarea.classList.remove('border-danger');
         return true;
       }
       
-      // Validation pour modifier une réponse
+      // Validation for editing a reply
       function validateEditReply(form) {
         const idReclamation = form.querySelector('input[name="idReclamation"]').value;
         const textarea = form.querySelector('textarea[name="contenu"]');
@@ -1221,38 +1263,39 @@ foreach ($liste as $rec) {
         
         const content = textarea.value.trim();
         
-        // Vérification du contenu
+        // Validate content
         if (content === '') {
+          errorEl.textContent = 'The response cannot be empty.';
           errorEl.classList.remove('d-none');
           textarea.classList.add('border-danger');
           return false;
         }
         
-        // Vérification de la longueur minimale (5 caractères)
+        // Validate minimum length (5 characters)
         if (content.length < 5) {
-          errorEl.textContent = 'La réponse doit contenir au moins 5 caractères.';
+          errorEl.textContent = 'The response must contain at least 5 characters.';
           errorEl.classList.remove('d-none');
           textarea.classList.add('border-danger');
           return false;
         }
         
-        // Vérification de la longueur maximale (1000 caractères)
+        // Validate maximum length (1000 characters)
         if (content.length > 1000) {
-          errorEl.textContent = 'La réponse ne doit pas dépasser 1000 caractères.';
+          errorEl.textContent = 'The response must not exceed 1000 characters.';
           errorEl.classList.remove('d-none');
           textarea.classList.add('border-danger');
           return false;
         }
         
-        // Vérification que ce n'est pas que des espaces
+        // Validate non-whitespace content
         if (!/\S/.test(content)) {
-          errorEl.textContent = 'La réponse ne peut pas contenir uniquement des espaces.';
+          errorEl.textContent = 'The response cannot contain only spaces.';
           errorEl.classList.remove('d-none');
           textarea.classList.add('border-danger');
           return false;
         }
         
-        // Succès
+        // Success
         errorEl.classList.add('d-none');
         textarea.classList.remove('border-danger');
         return true;
@@ -1273,7 +1316,7 @@ foreach ($liste as $rec) {
     </script>
     <div class="jvectormap-tip" style="display: none; left: 605.948px; top: 2089px;">United States</div>
     <script>
-      // Mode sombre/clair
+      // Dark/light mode
       function toggleDarkMode() {
         document.body.classList.toggle("light-mode");
 

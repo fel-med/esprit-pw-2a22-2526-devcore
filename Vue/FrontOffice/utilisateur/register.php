@@ -82,6 +82,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['nom'])) {
         <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet" />
         <!-- Core theme CSS (includes Bootstrap)-->
         <link href="css/styles.css" rel="stylesheet" />
+        <style>
+            .btn-gradient {
+                background: linear-gradient(45deg, #4e54c8, #8f94fb);
+                border: none;
+                color: white;
+                font-weight: 600;
+                transition: 0.3s ease;
+            }
+
+            .btn-gradient:hover {
+                opacity: 0.92;
+                transform: translateY(-2px);
+            }
+
+            .btn-outline-gradient {
+                color: #4e54c8;
+                border: 1px solid #4e54c8;
+                background: transparent;
+                font-weight: 600;
+                transition: 0.3s ease;
+            }
+
+            .btn-outline-gradient:hover {
+                background: rgba(78, 84, 200, 0.08);
+                color: #3d45b5;
+            }
+        </style>
         <script src="https://www.google.com/recaptcha/api.js" async defer></script>
         
     </head>
@@ -131,11 +158,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['nom'])) {
    <div class="g-recaptcha" data-sitekey="6Le_S9ksAAAAALQ8QeII5XANm_kyXmRF-Sq5OBt8"></div>
 
       <br/>
-    <video id="video" width="300" autoplay></video>
+    <video id="video" width="300" autoplay style="display:none; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.12);"></video>
 <input type="hidden" name="faceDescriptor" id="faceDescriptor">
 
-<button type="button" id="scanBtn">Scanner visage</button>
-<button type="submit" id="submitBtn" disabled>Register</button>
+<button type="button" id="scanBtn" class="btn btn-gradient w-100 py-2 mb-3">
+    Scanner visage
+</button>
+<button type="submit" id="submitBtn" class="btn btn-outline-gradient w-100 py-2" disabled>
+    Register
+</button>
 </form>
 <?php if (!empty($error)) { ?>
     <div class="alert alert-danger">
@@ -301,10 +332,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     submitBtn.disabled = true;
     scanBtn.disabled = true;
+    video.style.display = 'none';
 
-    // 🎥 caméra
-    navigator.mediaDevices.getUserMedia({ video: true })
-    .then(stream => video.srcObject = stream);
+    async function startCamera() {
+        if (!video.srcObject) {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+            video.style.display = 'block';
+            await video.play();
+        }
+    }
 
     try {
         // ✅ attendre chargement COMPLET
@@ -322,23 +359,28 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     scanBtn.onclick = async () => {
+        try {
+            await startCamera();
 
-        const detection = await faceapi
-            .detectSingleFace(video)
-            .withFaceLandmarks()
-            .withFaceDescriptor();
+            const detection = await faceapi
+                .detectSingleFace(video)
+                .withFaceLandmarks()
+                .withFaceDescriptor();
 
-        if (!detection) {
-            alert("Visage non détecté ❌");
-            return;
+            if (!detection) {
+                alert("Visage non détecté ❌");
+                return;
+            }
+
+            let descriptor = Array.from(detection.descriptor);
+            document.getElementById("faceDescriptor").value = JSON.stringify(descriptor);
+
+            submitBtn.disabled = false;
+            alert("Visage enregistré ✅");
+        } catch (err) {
+            console.error(err);
+            alert("Impossible d'accéder à la caméra. Vérifiez les autorisations ou réessayez.");
         }
-
-        let descriptor = Array.from(detection.descriptor);
-        document.getElementById("faceDescriptor").value = JSON.stringify(descriptor);
-
-        submitBtn.disabled = false;
-
-        alert("Visage enregistré ✅");
     };
 });
 </script>

@@ -15,7 +15,7 @@ $users = $userC->afficherUsers();
 $stats = $reclamationC->statistiques();
 $reclamations = $reclamationC->afficherReclamationsAdmin();
 
-// Calcul des statistiques utilisateurs
+// Calculate user statistics
 $totalUsers = count($users);
 $admins = count(array_filter($users, fn($u) => $u['role'] == 'admin'));
 $clients = count(array_filter($users, fn($u) => $u['role'] == 'client'));
@@ -90,16 +90,40 @@ $clients = count(array_filter($users, fn($u) => $u['role'] == 'client'));
         }
 
         .light-mode {
-            background: #f5f5f5 !important;
-            color: #000 !important;
+            background: #f9fafb !important;
+            color: #111827 !important;
         }
 
-        .light-mode .kpi-card {
-            background-color: #f8f9fa !important;
+        .light-mode .kpi-card,
+        .light-mode .card,
+        .light-mode .card-body,
+        .light-mode .navbar-custom,
+        .light-mode .table,
+        .light-mode .table-responsive,
+        .light-mode .dropdown-menu,
+        .light-mode .form-control,
+        .light-mode .form-select,
+        .light-mode .modal-content {
+            background-color: #ffffff !important;
+            color: #111827 !important;
+            border-color: #e2e8f0 !important;
         }
 
-        .light-mode .card {
-            background-color: #f8f9fa !important;
+        .light-mode .navbar-custom a,
+        .light-mode .nav-link,
+        .light-mode .page-title,
+        .light-mode .card-title,
+        .light-mode .card-description {
+            color: #111827 !important;
+        }
+
+        .light-mode .table thead {
+            background-color: #e2e8f0 !important;
+            color: #111827 !important;
+        }
+
+        .light-mode .table tbody tr:hover {
+            background-color: #f8fafc !important;
         }
 
         .navbar-custom {
@@ -129,30 +153,27 @@ $clients = count(array_filter($users, fn($u) => $u['role'] == 'client'));
     <div class="navbar-custom d-flex justify-content-between align-items-center">
         <h4 class="mb-0">🎛️ Admin Dashboard</h4>
         <div>
-            <a href="list.php">👥 Utilisateurs</a>
-            <a href="reclamations.php">📋 Réclamations</a>
-            <a href="#" onclick="toggleDarkMode(); return false;">🌙 Mode Sombre</a>
-            <a href="logout.php">🚪 Déconnexion</a>
-        </div>
-    </div>
-
+            <a href="list.php">👥 Users</a>
+            <a href="reclamations.php">📋 Complaints</a>
+            <a href="#" onclick="toggleDarkMode(); return false;">🌙 Dark Mode</a>
+            <a href="logout.php">🚪 Logout</a>
     <!-- Header -->
     <div class="dashboard-header">
-        <h1 class="mb-2">👋 Bienvenue, <?= htmlspecialchars($_SESSION['user']['nom'] ?? 'Administrateur') ?></h1>
-        <p class="mb-0">Vue d'ensemble de votre plateforme cre8connect</p>
+        <h1 class="mb-2">👋 Welcome, <?= htmlspecialchars($_SESSION['user']['nom'] ?? 'Administrator') ?></h1>
+        <p class="mb-0">Overview of your cre8connect platform</p>
     </div>
 
-    <!-- KPI Cards - Utilisateurs -->
-    <h4 class="text-white mb-4">📊 Statistiques Utilisateurs</h4>
+    <!-- KPI Cards - Users -->
+    <h4 class="text-white mb-4">📊 User Statistics</h4>
     <div class="row mb-4">
 
         <div class="col-md-4">
             <div class="card kpi-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                 <div class="card-body">
                     <i class="mdi mdi-account-multiple"></i>
-                    <h6>Total Utilisateurs</h6>
+                    <h6>Total Users</h6>
                     <h3><?= $totalUsers ?></h3>
-                    <small class="opacity-75">Tous les comptes actifs</small>
+                    <small class="opacity-75">All active accounts</small>
                 </div>
             </div>
         </div>
@@ -161,9 +182,9 @@ $clients = count(array_filter($users, fn($u) => $u['role'] == 'client'));
             <div class="card kpi-card" style="background: linear-gradient(135deg, #9B5DE0 0%, #B771E5 100%); color: white;">
                 <div class="card-body">
                     <i class="mdi mdi-shield-admin"></i>
-                    <h6>Administrateurs</h6>
+                    <h6>Administrators</h6>
                     <h3><?= $admins ?></h3>
-                    <small class="opacity-75">Comptes admin</small>
+                    <small class="opacity-75">Admin accounts</small>
                 </div>
             </div>
         </div>
@@ -172,17 +193,17 @@ $clients = count(array_filter($users, fn($u) => $u['role'] == 'client'));
             <div class="card kpi-card" style="background: linear-gradient(135deg, #E11D74 0%, #D01565 100%); color: white;">
                 <div class="card-body">
                     <i class="mdi mdi-account"></i>
-                    <h6>Clients</h6>
+                    <h6>Users</h6>
                     <h3><?= $clients ?></h3>
-                    <small class="opacity-75">Comptes utilisateur</small>
+                    <small class="opacity-75">User accounts</small>
                 </div>
             </div>
         </div>
 
     </div>
 
-    <!-- KPI Cards - Réclamations -->
-    <h4 class="text-white mb-4">📞 Statistiques Réclamations</h4>
+    <!-- KPI Cards - Complaints -->
+    <h4 class="text-white mb-4">📞 Complaint Statistics</h4>
     <div class="row mb-4">
 
         <div class="col-md-3">
@@ -199,7 +220,7 @@ $clients = count(array_filter($users, fn($u) => $u['role'] == 'client'));
             <div class="card kpi-card" style="background: linear-gradient(135deg, #D78FEE 0%, #C96FE8 100%); color: white;">
                 <div class="card-body">
                     <i class="mdi mdi-clock"></i>
-                    <h6>En Attente</h6>
+                    <h6>Pending</h6>
                     <h3><?= $stats['en_attente'] ?></h3>
                 </div>
             </div>
@@ -209,7 +230,7 @@ $clients = count(array_filter($users, fn($u) => $u['role'] == 'client'));
             <div class="card kpi-card" style="background: linear-gradient(135deg, #AEEA94 0%, #99D98E 100%); color: #2d5016;">
                 <div class="card-body">
                     <i class="mdi mdi-check-circle"></i>
-                    <h6>Traitées</h6>
+                    <h6>Processed</h6>
                     <h3><?= $stats['traitee'] ?></h3>
                 </div>
             </div>
@@ -230,11 +251,11 @@ $clients = count(array_filter($users, fn($u) => $u['role'] == 'client'));
     <!-- Graphes -->
     <div class="row mb-4">
 
-        <!-- Pie Chart - Distribution Utilisateurs -->
+        <!-- Pie Chart - User Distribution -->
         <div class="col-lg-6 mb-4">
             <div class="card" style="border: none; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.1);">
                 <div class="card-body">
-                    <h5 class="card-title mb-4">📊 Distribution des Utilisateurs</h5>
+                    <h5 class="card-title mb-4">📊 User Distribution</h5>
                     <div class="chart-container">
                         <canvas id="chartUsers"></canvas>
                     </div>
@@ -242,11 +263,11 @@ $clients = count(array_filter($users, fn($u) => $u['role'] == 'client'));
             </div>
         </div>
 
-        <!-- Pie Chart - Réclamations -->
+        <!-- Pie Chart - Complaints -->
         <div class="col-lg-6 mb-4">
             <div class="card" style="border: none; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.1);">
                 <div class="card-body">
-                    <h5 class="card-title mb-4">📋 Distribution des Réclamations</h5>
+                    <h5 class="card-title mb-4">📋 Complaints Distribution</h5>
                     <div class="chart-container">
                         <canvas id="chartReclamations"></canvas>
                     </div>
@@ -258,12 +279,12 @@ $clients = count(array_filter($users, fn($u) => $u['role'] == 'client'));
 
     <!-- Footer -->
     <div style="text-align: center; color: white; padding: 20px;">
-        <p>&copy; 2026 cre8connect - Tous droits réservés</p>
+        <p>&copy; 2026 cre8connect - All rights reserved</p>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Palette de couleurs cohérente
+        // Consistent color palette
         const colors = {
             total: '#9B5DE0',
             enAttente: '#D78FEE',
@@ -273,12 +294,12 @@ $clients = count(array_filter($users, fn($u) => $u['role'] == 'client'));
             client: '#E11D74'
         };
 
-        // ===== CHART 1: PIE CHART - Utilisateurs =====
+        // ===== CHART 1: PIE CHART - Users =====
         const ctxUsers = document.getElementById('chartUsers');
         new Chart(ctxUsers, {
             type: 'pie',
             data: {
-                labels: ['Administrateurs', 'Clients'],
+                labels: ['Administrators', 'Users'],
                 datasets: [{
                     data: [<?= $admins ?>, <?= $clients ?>],
                     backgroundColor: [colors.admin, colors.client],
@@ -301,12 +322,12 @@ $clients = count(array_filter($users, fn($u) => $u['role'] == 'client'));
             }
         });
 
-        // ===== CHART 2: DOUGHNUT CHART - Réclamations =====
+        // ===== CHART 2: DOUGHNUT CHART - Complaints =====
         const ctxReclamations = document.getElementById('chartReclamations');
         new Chart(ctxReclamations, {
             type: 'doughnut',
             data: {
-                labels: ['En Attente', 'Traitées'],
+                labels: ['Pending', 'Processed'],
                 datasets: [{
                     data: [<?= $stats['en_attente'] ?>, <?= $stats['traitee'] ?>],
                     backgroundColor: [colors.enAttente, colors.traitee],
@@ -329,7 +350,7 @@ $clients = count(array_filter($users, fn($u) => $u['role'] == 'client'));
             }
         });
 
-        // Mode sombre
+        // Dark mode
         function toggleDarkMode() {
             document.body.classList.toggle("light-mode");
             localStorage.setItem("theme", document.body.classList.contains("light-mode") ? "light" : "dark");

@@ -21,7 +21,7 @@ $query = $db->prepare($sql);
 $query->execute([
     $user->getNom(),
     $user->getEmail(),
-    password_hash($user->getMotDePasse(), PASSWORD_DEFAULT),
+    $user->getMotDePasse(),
     $user->getRole(),
     "actif",
     0,
@@ -278,6 +278,8 @@ public function resetPassword($password, $token) {
         // Par statut - Inclure les NULL (traiter comme 'actif' par défaut)
         $actif = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE statut='actif' OR statut IS NULL")->fetch()['count'];
         $inactif = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE statut='inactif'")->fetch()['count'];
+        $suspendu = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE statut='suspendu'")->fetch()['count'];
+        $en_attente = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE statut='en_attente'")->fetch()['count'];
         
         return [
             'total' => $total,
@@ -285,7 +287,9 @@ public function resetPassword($password, $token) {
             'createur' => $createur,
             'marque' => $marque,
             'actif' => $actif,
-            'inactif' => $inactif
+            'inactif' => $inactif,
+            'suspendu' => $suspendu,
+            'en_attente' => $en_attente
         ];
     }
     public function sendReclamationResponseNotification($email, $nom, $description, $reponse) {
@@ -408,33 +412,66 @@ public function resetPassword($password, $token) {
         $db->prepare("DELETE FROM utilisateur WHERE id=?")->execute([$id]);
     }
 
-    public function login($email, $password) {
+public function login($email, $password) {
+
     $db = config::getConnexion();
 
-    $query = $db->prepare("SELECT * FROM utilisateur WHERE email=?");
+    $email = trim($email);
+    $password = trim($password);
+
+    $query = $db->prepare("
+        SELECT * 
+        FROM utilisateur 
+        WHERE email=?
+    ");
+
     $query->execute([$email]);
+
     $user = $query->fetch();
 
-    if (!$user) return "Utilisateur introuvable";
+    if (!$user) {
+        return "Utilisateur introuvable";
+    }
 
-    if (!password_verify($password, $user['mot_de_passe'])) return "Mot de passe incorrect";
+    // TEST PASSWORD
+    if (!password_verify($password, $user['mot_de_passe'])) {
 
-    if ($user['statut'] != 'actif') return "Compte non actif";
+        return "Mot de passe incorrect";
+    }
 
-    session_start();
+    if ($user['statut'] != 'actif') {
 
-    $_SESSION['user'] = $user;
+        return "Compte non actif";
+    }
+
+    // SESSION
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    $_SESSION['connected'] = true;
+    $_SESSION['id'] = $user['id'];
+    $_SESSION['nom'] = $user['nom'];
     $_SESSION['role'] = $user['role'];
-    $_SESSION['id'] = $user['id']; 
+    $_SESSION['user'] = $user;
 
-    if ($user['role'] == 'admin')
-        header("Location:http://127.0.0.1/crea8connect/Esprit-PW-2A22-2526-Devcore/Vue/BackOffice/utilisateur/index.php");
-    else if ($user['role'] == 'createur')
+    session_write_close();
+
+    // REDIRECTION
+    if ($user['role'] == 'admin') {
+
+        header("Location: http://127.0.0.1/crea8connect/Esprit-PW-2A22-2526-Devcore/Vue/BackOffice/utilisateur/index.php");
+
+    } elseif ($user['role'] == 'createur') {
+
         header("Location: ../utilisateur/creator.php");
-    else 
-        header("Location: ../utilisateur/brand.php");
 
-    exit;
+    } else {
+
+        header("Location: ../utilisateur/brand.php");
+    }
+
+    exit();
 }
 }
 ?>

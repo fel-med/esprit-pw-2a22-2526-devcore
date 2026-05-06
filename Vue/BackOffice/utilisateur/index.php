@@ -91,56 +91,202 @@ $stats = $userC->getStatistiquesUtilisateurs();
   </style>
   <style>
     body.light-mode {
+      background-color: #f8fafc !important;
+      color: #111827 !important;
+    }
+
+    body.light-mode .container-scroller,
+    body.light-mode .page-body-wrapper,
+    body.light-mode .main-panel,
+    body.light-mode .content-wrapper,
+    body.light-mode .footer,
+    body.light-mode .navbar,
+    body.light-mode .sidebar,
+    body.light-mode .navbar-brand-wrapper,
+    body.light-mode .navbar-menu-wrapper,
+    body.light-mode .navbar-custom {
       background-color: #ffffff !important;
-      color: #000 !important;
+      color: #111827 !important;
+      border-color: #e2e8f0 !important;
     }
 
-    .light-mode .card {
-      background-color: #f8f9fa !important;
-      color: black !important;
-      border-color: #dee2e6 !important;
+    body.light-mode .sidebar .nav-link,
+    body.light-mode .sidebar .profile-name h5,
+    body.light-mode .sidebar .profile-name span,
+    body.light-mode .nav-link,
+    body.light-mode .navbar a,
+    body.light-mode .page-title,
+    body.light-mode .card-title,
+    body.light-mode .card-description,
+    body.light-mode .table th,
+    body.light-mode .table td,
+    body.light-mode .badge,
+    body.light-mode .form-control,
+    body.light-mode .form-select,
+    body.light-mode .dropdown-item,
+    body.light-mode .modal-title,
+    body.light-mode .modal-body,
+    body.light-mode .modal-footer {
+      color: #111827 !important;
     }
 
-    .light-mode .navbar,
-    .light-mode .sidebar {
+    body.light-mode .sidebar .nav-link:hover,
+    body.light-mode .sidebar .nav-link.active {
+      background-color: #f1f5f9 !important;
+      color: #111827 !important;
+    }
+
+    body.light-mode .card,
+    body.light-mode .card-body,
+    body.light-mode .table,
+    body.light-mode .table-responsive,
+    body.light-mode .dropdown-menu,
+    body.light-mode .modal-content,
+    body.light-mode .form-control,
+    body.light-mode .form-select,
+    body.light-mode textarea {
       background-color: #ffffff !important;
-      border-color: #dee2e6 !important;
+      color: #111827 !important;
+      border-color: #d1d5db !important;
+      box-shadow: 0 8px 25px rgba(15, 23, 42, 0.06) !important;
     }
 
-    .light-mode .table {
-      color: black !important;
-    }
-
-    .light-mode .table-dark {
-      background-color: #e9ecef !important;
-      color: black !important;
-    }
-
-    .light-mode .table thead {
-      background-color: #dee2e6 !important;
-      color: black !important;
-    }
-
-    .light-mode input.form-control,
-    .light-mode select.form-select,
-    .light-mode textarea.form-control {
+    body.light-mode .btn:not(.btn-primary):not(.btn-secondary):not(.btn-success):not(.btn-danger):not(.btn-warning):not(.btn-info):not(.btn-light):not(.btn-dark):not(.btn-outline-primary):not(.btn-outline-secondary):not(.btn-outline-success):not(.btn-outline-danger):not(.btn-outline-warning):not(.btn-outline-info):not(.btn-outline-light):not(.btn-outline-dark):not(.btn-gradient):not(.btn-outline-gradient) {
       background-color: #ffffff !important;
-      color: black !important;
-      border-color: #dee2e6 !important;
+      color: #111827 !important;
+      border-color: #d1d5db !important;
+      box-shadow: 0 8px 25px rgba(15, 23, 42, 0.06) !important;
     }
 
-    .light-mode .btn {
-      border-color: #dee2e6 !important;
+    body.light-mode .table thead {
+      background-color: #e2e8f0 !important;
+      color: #111827 !important;
     }
 
-    .light-mode .modal-content {
-      background-color: #f8f9fa !important;
-      color: black !important;
+    body.light-mode .table tbody tr:hover {
+      background-color: #f8fafc !important;
     }
 
-    .light-mode .modal-header {
-      background-color: #e9ecef !important;
-      border-color: #dee2e6 !important;
+    body.light-mode input.form-control,
+    body.light-mode select.form-select,
+    body.light-mode textarea.form-control {
+      background-color: #ffffff !important;
+      color: #111827 !important;
+      border-color: #d1d5db !important;
+    }
+
+    body.light-mode .modal-content {
+      background-color: #ffffff !important;
+      color: #111827 !important;
+      border-color: #d1d5db !important;
+    }
+
+    body.light-mode .modal-header {
+      background-color: #f1f5f9 !important;
+      border-color: #d1d5db !important;
+    }
+
+    body:not(.light-mode) {
+      background-color: #0f131d !important;
+      color: #e7ebff !important;
+    }
+
+    body:not(.light-mode) .container-scroller,
+    body:not(.light-mode) .page-body-wrapper,
+    body:not(.light-mode) .main-panel,
+    body:not(.light-mode) .content-wrapper,
+    body:not(.light-mode) .footer {
+      background-color: #101520 !important;
+      color: #e7ebff !important;
+    }
+
+    body:not(.light-mode) .sidebar {
+      background: #0b0f19 !important;
+      border-right: 1px solid rgba(255,255,255,0.08);
+    }
+
+    body:not(.light-mode) .sidebar .nav-link,
+    body:not(.light-mode) .sidebar .profile-name h5,
+    body:not(.light-mode) .sidebar .profile-name span,
+    body:not(.light-mode) .sidebar .profile-desc .count {
+      color: #dfe3f2 !important;
+    }
+
+    body:not(.light-mode) .sidebar .nav-link:hover,
+    body:not(.light-mode) .sidebar .nav-link.active {
+      background: rgba(255,255,255,0.08) !important;
+      color: #fff !important;
+    }
+
+    body:not(.light-mode) .navbar,
+    body:not(.light-mode) .navbar .navbar-menu-wrapper,
+    body:not(.light-mode) .navbar .navbar-brand-wrapper {
+      background: rgba(10,13,23,0.96) !important;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    body:not(.light-mode) .card,
+    body:not(.light-mode) .card-body,
+    body:not(.light-mode) .table,
+    body:not(.light-mode) .dropdown-menu,
+    body:not(.light-mode) .modal-content,
+    body:not(.light-mode) .form-control,
+    body:not(.light-mode) .form-select,
+    body:not(.light-mode) .btn-outline-primary {
+      background-color: rgba(18,24,41,0.96) !important;
+      color: #e7ebff !important;
+      border-color: rgba(255,255,255,0.08) !important;
+    }
+
+    body:not(.light-mode) .card {
+      box-shadow: 0 18px 45px rgba(0,0,0,0.18);
+    }
+
+    body:not(.light-mode) .card-title,
+    body:not(.light-mode) .card-description,
+    body:not(.light-mode) .table thead th,
+    body:not(.light-mode) .table td,
+    body:not(.light-mode) .table th,
+    body:not(.light-mode) .badge,
+    body:not(.light-mode) .nav-link,
+    body:not(.light-mode) .btn,
+    body:not(.light-mode) .form-control,
+    body:not(.light-mode) .form-select {
+      color: #eef3ff !important;
+    }
+
+    body:not(.light-mode) .table thead {
+      background-color: rgba(255,255,255,0.05) !important;
+    }
+
+    body:not(.light-mode) .page-header .page-title {
+      color: #f3f7ff !important;
+    }
+
+    .table-action-btn {
+      min-width: 100px;
+      max-width: 130px;
+      height: 38px;
+      border-radius: 16px !important;
+      padding: 8px 14px !important;
+      font-weight: 600;
+      font-size: 0.92rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      transition: transform 0.2s ease, opacity 0.2s ease;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .table-action-btn:hover {
+      transform: translateY(-1px);
+      opacity: 0.95;
+    }
+
+    .table-action-btn.btn-sm {
+      padding: 8px 14px !important;
     }
 
     /* Transition smooth pour le mode jour/nuit */
@@ -491,16 +637,16 @@ $stats = $userC->getStatistiquesUtilisateurs();
 
           </div>
 
-          <!-- ===================== STATISTIQUES AVANCÉES ===================== -->
+          <!-- ===================== ADVANCED STATISTICS ===================== -->
         <div class="row mb-4 align-items-stretch">
 
-  <!-- Total Utilisateurs -->
+  <!-- Total Users -->
   <div class="col-md-3 mb-3 d-flex">
     <div class="card shadow-sm text-center p-4 h-100 w-100" style="background: linear-gradient(135deg, #9B5DE0 0%, #B771E5 100%); color: white; border-radius: 10px;">
       <i class="mdi mdi-account-multiple" style="font-size: 2rem; margin-bottom: 10px;"></i>
-      <h6 class="mb-2">Total Utilisateurs</h6>
+      <h6 class="mb-2">Total Users</h6>
       <h3 class="mb-0"><?php echo $stats['total']; ?></h3>
-      <small class="mt-2 opacity-75">Tous les comptes</small>
+      <small class="mt-2 opacity-75">All accounts</small>
     </div>
   </div>
 
@@ -508,9 +654,9 @@ $stats = $userC->getStatistiquesUtilisateurs();
   <div class="col-md-3 mb-3 d-flex">
     <div class="card shadow-sm text-center p-4 h-100 w-100" style="background: linear-gradient(135deg, #D78FEE 0%, #C96FE8 100%); color: white; border-radius: 10px;">
       <i class="mdi mdi-shield-admin" style="font-size: 2rem; margin-bottom: 10px;"></i>
-      <h6 class="mb-2">Administrateurs</h6>
+      <h6 class="mb-2">Administrators</h6>
       <h3 class="mb-0"><?php echo $stats['admin']; ?></h3>
-      <small class="mt-2 opacity-75">Comptes admin</small>
+      <small class="mt-2 opacity-75">Admin accounts</small>
     </div>
   </div>
 
@@ -518,9 +664,9 @@ $stats = $userC->getStatistiquesUtilisateurs();
   <div class="col-md-3 mb-3 d-flex">
     <div class="card shadow-sm text-center p-4 h-100 w-100" style="background: linear-gradient(135deg, #AEEA94 0%, #99D98E 100%); color: #2d5016; border-radius: 10px;">
       <i class="mdi mdi-account-convert" style="font-size: 2rem; margin-bottom: 10px;"></i>
-      <h6 class="mb-2">Créateurs</h6>
+      <h6 class="mb-2">Creators</h6>
       <h3 class="mb-0"><?php echo $stats['createur']; ?></h3>
-      <small class="mt-2 opacity-75">Comptes créateur</small>
+      <small class="mt-2 opacity-75">Creator accounts</small>
     </div>
   </div>
 
@@ -528,9 +674,9 @@ $stats = $userC->getStatistiquesUtilisateurs();
   <div class="col-md-3 mb-3 d-flex">
     <div class="card shadow-sm text-center p-4 h-100 w-100" style="background: linear-gradient(135deg, #E11D74 0%, #D01565 100%); color: white; border-radius: 10px;">
       <i class="mdi mdi-store" style="font-size: 2rem; margin-bottom: 10px;"></i>
-      <h6 class="mb-2">Marques</h6>
+      <h6 class="mb-2">Brands</h6>
       <h3 class="mb-0"><?php echo $stats['marque']; ?></h3>
-      <small class="mt-2 opacity-75">Comptes marque</small>
+      <small class="mt-2 opacity-75">Brand accounts</small>
     </div>
   </div>
 
@@ -539,35 +685,35 @@ $stats = $userC->getStatistiquesUtilisateurs();
 <!-- ===================== STATUS STATS ===================== -->
 <div class="row mb-4 align-items-stretch">
 
-  <!-- Actifs -->
+  <!-- Active Users -->
   <div class="col-md-6 mb-3 d-flex">
     <div class="card shadow-sm text-center p-4 h-100 w-100" style="background: linear-gradient(135deg, #9B5DE0 0%, #B771E5 100%); color: white; border-radius: 10px;">
       <i class="mdi mdi-account-check" style="font-size: 2.5rem; margin-bottom: 10px;"></i>
-      <h6 class="mb-2">Comptes Actifs</h6>
+      <h6 class="mb-2">Active Accounts</h6>
       <h3 class="mb-0"><?php echo $stats['actif']; ?></h3>
-      <small class="mt-2 opacity-75">✅ Utilisateurs actifs</small>
+      <small class="mt-2 opacity-75">✅ Active users</small>
     </div>
   </div>
 
-  <!-- Suspendus -->
+  <!-- Suspended -->
   <div class="col-md-6 mb-3 d-flex">
     <div class="card shadow-sm text-center p-4 h-100 w-100" style="background: linear-gradient(135deg, #FFC107 0%, #FFB300 100%); color: #333; border-radius: 10px;">
       <i class="mdi mdi-account-lock" style="font-size: 2.5rem; margin-bottom: 10px;"></i>
-      <h6 class="mb-2">Comptes Suspendus</h6>
-      <h3 class="mb-0"><?php echo $stats['inactif']; ?></h3>
-      <small class="mt-2 opacity-75">🔒 Utilisateurs suspendus</small>
+      <h6 class="mb-2">Suspended Accounts</h6>
+      <h3 class="mb-0"><?php echo $stats['suspendu']; ?></h3>
+      <small class="mt-2 opacity-75">🔒 Suspended users</small>
     </div>
   </div>
 
 </div>
-          <!-- ===================== GRAPHES AREA CHARTS ===================== -->
+          <!-- ===================== AREA CHARTS ===================== -->
           <div class="row mb-4">
 
-            <!-- Area Chart - Distribution des Rôles -->
+            <!-- Area Chart - Role Distribution -->
             <div class="col-lg-12 mb-3">
               <div class="card shadow-sm">
                 <div class="card-body">
-                  <h5 class="card-title mb-4">📊 Évolution des Utilisateurs par Rôle (Timeline)</h5>
+                  <h5 class="card-title mb-4">📊 User Role Trends (Timeline)</h5>
                   <div style="height: 350px;">
                     <canvas id="chartAreaRole"></canvas>
                   </div>
@@ -577,14 +723,14 @@ $stats = $userC->getStatistiquesUtilisateurs();
 
           </div>
 
-          <!-- ===================== GRAPHE SUPPLÉMENTAIRE ===================== -->
+          <!-- ===================== ADDITIONAL CHART ===================== -->
           <div class="row mb-4">
 
-            <!-- Area Chart - Statut des Utilisateurs -->
+            <!-- Area Chart - User Status -->
             <div class="col-lg-12 mb-3">
               <div class="card shadow-sm">
                 <div class="card-body">
-                  <h5 class="card-title mb-4">👥 Statut des Utilisateurs (Timeline)</h5>
+                  <h5 class="card-title mb-4">👥 User Status Trends (Timeline)</h5>
                   <div style="height: 350px;">
                     <canvas id="chartAreaStatus"></canvas>
                   </div>
@@ -597,27 +743,27 @@ $stats = $userC->getStatistiquesUtilisateurs();
             <div class="col-12 grid-margin">
               <div class="card">
                 <div class="card-body">
-                  <h4 class="card-title">Gestion des Utilisateurs</h4>
+                  <h4 class="card-title">User Management</h4>
 
-                  <!-- Recherche et Tri -->
+                  <!-- Search and Filter -->
                   <div class="row mb-3">
                     <div class="col-md-6">
                       <form method="GET" action="index.php" class="d-flex gap-2">
                         <input type="text" name="search" class="form-control"
-                          placeholder="Rechercher par nom ou email..."
+                          placeholder="Search by name or email..."
                           value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
                         <button type="submit" class="btn btn-sm"
-                          style="background-color: #9B5DE0; color: white; width: 80px;">Rechercher</button>
+                          style="background-color: #9B5DE0; color: white; width: 90px;">Search</button>
                       </form>
                     </div>
                     <div class="col-md-6">
                       <form method="GET" action="index.php" class="d-flex gap-2">
                         <select name="role" class="form-select form-select-sm" onchange="this.form.submit()"
                           style="background-color: #FDCFFA; border-color: #D78FEE;">
-                          <option value="">Trier par rôle</option>
+                          <option value="">Filter by role</option>
                           <option value="admin" <?php echo isset($_GET['role']) && $_GET['role'] == 'admin' ? 'selected' : ''; ?>>Admin</option>
-                          <option value="createur" <?php echo isset($_GET['role']) && $_GET['role'] == 'createur' ? 'selected' : ''; ?>>Créateur</option>
-                          <option value="marque" <?php echo isset($_GET['role']) && $_GET['role'] == 'marque' ? 'selected' : ''; ?>>Marque</option>
+                          <option value="createur" <?php echo isset($_GET['role']) && $_GET['role'] == 'createur' ? 'selected' : ''; ?>>Creator</option>
+                          <option value="marque" <?php echo isset($_GET['role']) && $_GET['role'] == 'marque' ? 'selected' : ''; ?>>Brand</option>
                         </select>
                       </form>
                     </div>
@@ -628,10 +774,10 @@ $stats = $userC->getStatistiquesUtilisateurs();
                       <thead class="table-dark">
                         <tr>
                           <th>ID</th>
-                          <th>Nom</th>
+                          <th>Name</th>
                           <th>Email</th>
-                          <th>Rôle</th>
-                          <th>Statut</th>
+                          <th>Role</th>
+                          <th>Status</th>
                           <th>Actions</th>
                         </tr>
                       </thead>
@@ -656,8 +802,8 @@ $stats = $userC->getStatistiquesUtilisateurs();
                                 <select name="role" class="form-select form-select-sm"
                                   style="background-color: #FDCFFA; border-color: #D78FEE;">
                                   <option value="admin" <?= $u['role'] == 'admin' ? 'selected' : '' ?>>Admin</option>
-                                  <option value="createur" <?= $u['role'] == 'createur' ? 'selected' : '' ?>>Créateur</option>
-                                  <option value="marque" <?= $u['role'] == 'marque' ? 'selected' : '' ?>>Marque</option>
+                                  <option value="createur" <?= $u['role'] == 'createur' ? 'selected' : '' ?>>Creator</option>
+                                  <option value="marque" <?= $u['role'] == 'marque' ? 'selected' : '' ?>>Brand</option>
                                 </select>
                               </td>
 
@@ -669,13 +815,22 @@ if ($statut == '') {
     $statut = 'inactif';
 }
 
+$statusLabels = [
+    'actif' => 'Active',
+    'suspendu' => 'Suspended',
+    'en_attente' => 'Pending',
+    'inactif' => 'Inactive'
+];
+
 $color = ($statut == 'actif') ? '#9B5DE0' :
          (($statut == 'suspendu') ? '#dc3545' :
          (($statut == 'en_attente') ? '#ffc107' : '#6c757d'));
+
+$displayStatus = $statusLabels[$statut] ?? ucfirst(str_replace('_', ' ', $statut));
 ?>
 
 <span class="badge" style="background-color: <?= $color ?>; color:white;">
-    <?= ucfirst(str_replace('_', ' ', $statut)) ?>
+    <?= $displayStatus ?>
 </span>
 </td>
 
@@ -683,23 +838,21 @@ $color = ($statut == 'actif') ? '#9B5DE0' :
                                 <div class="d-flex gap-2 flex-wrap">
                                   <input type="hidden" name="id" value="<?= $u['id'] ?>">
 
-                                  <button type="submit" class="btn btn-sm"
-                                    style="background-color: #9B5DE0; color: white; width: 80px;">
-                                    Modifier
+                                  <button type="submit" class="btn table-action-btn text-white"
+                                    style="background-color: #9B5DE0;">
+                                    Edit
                                   </button>
 
-                                  <button type="button" class="btn"
-                                    style="background-color: <?= ($u['statut'] ?? 'actif') == 'actif' ? '#E11D74' : '#28a745' ?>; color: white; padding: 10px 18px; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; font-size: 0.95rem; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"
-                                    onmouseover="this.style.opacity='0.85'; this.style.transform='translateY(-2px)';"
-                                    onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)';"
+                                  <button type="button" class="btn table-action-btn text-white"
+                                    style="background-color: <?= ($u['statut'] ?? 'actif') == 'actif' ? '#E11D74' : '#28a745' ?>; border: none;"
                                     onclick="toggleUserStatus(<?= $u['id'] ?>, '<?= ($u['statut'] ?? 'actif') ?>');">
-                                    <?= ($u['statut'] ?? 'actif') == 'actif' ? '🔒 Suspendre' : '✅ Activer' ?>
+                                    <?= ($u['statut'] ?? 'actif') == 'actif' ? '🔒 Suspend' : '✅ Activate' ?>
                                   </button>
 
-                                  <button type="button"
-                                    onclick="if(confirm('Êtes-vous sûr ?')) window.location.href='delete.php?id=<?= $u['id'] ?>';"
-                                    class="btn btn-sm" style="background-color: #D78FEE; color: white; width: 80px;">
-                                    Supprimer
+                                  <button type="button" class="btn table-action-btn text-white"
+                                    onclick="if(confirm('Are you sure?')) window.location.href='delete.php?id=<?= $u['id'] ?>';"
+                                    style="background-color: #D78FEE;">
+                                    Delete
                                   </button>
                                 </div>
                               </td>
@@ -714,10 +867,10 @@ $color = ($statut == 'actif') ? '#9B5DE0' :
 
                   <?php if ($totalPages > 1): ?>
                   <div class="d-flex justify-content-center mt-3">
-                    <nav aria-label="Pagination utilisateurs">
+                    <nav aria-label="Users pagination">
                       <ul class="pagination">
                         <li class="page-item <?= $currentPage <= 1 ? 'disabled' : '' ?>">
-                          <a class="page-link" href="?search=<?= urlencode($search) ?>&role=<?= urlencode($role) ?>&page=<?= $currentPage - 1 ?>" aria-label="Précédent">&laquo;</a>
+                          <a class="page-link" href="?search=<?= urlencode($search) ?>&role=<?= urlencode($role) ?>&page=<?= $currentPage - 1 ?>" aria-label="Previous">&laquo;</a>
                         </li>
                         <?php
                         $startPage = max(1, $currentPage - 2);
@@ -740,12 +893,12 @@ $color = ($statut == 'actif') ? '#9B5DE0' :
                           <li class="page-item"><a class="page-link" href="?search=<?= urlencode($search) ?>&role=<?= urlencode($role) ?>&page=<?= $totalPages ?>"><?= $totalPages ?></a></li>
                         <?php endif; ?>
                         <li class="page-item <?= $currentPage >= $totalPages ? 'disabled' : '' ?>">
-                          <a class="page-link" href="?search=<?= urlencode($search) ?>&role=<?= urlencode($role) ?>&page=<?= $currentPage + 1 ?>" aria-label="Suivant">&raquo;</a>
+                          <a class="page-link" href="?search=<?= urlencode($search) ?>&role=<?= urlencode($role) ?>&page=<?= $currentPage + 1 ?>" aria-label="Next">&raquo;</a>
                         </li>
                       </ul>
                     </nav>
                   </div>
-                  <div class="text-center text-muted">Page <?= $currentPage ?> sur <?= $totalPages ?> (<?= $totalUsers ?> utilisateurs)</div>
+                  <div class="text-center text-muted">Page <?= $currentPage ?> of <?= $totalPages ?> (<?= $totalUsers ?> users)</div>
                   <?php endif; ?>
                 </div>
               </div>
@@ -803,13 +956,14 @@ $color = ($statut == 'actif') ? '#9B5DE0' :
   <div class="jvectormap-tip" style="display: none; left: 605.948px; top: 2089px;">United States</div>
 
   <script>
-    // Palette de couleurs cohérente
+    // Consistent color palette
     const colors = {
       admin: '#9B5DE0',
       createur: '#AEEA94',
       marque: '#E11D74',
       actif: '#9B5DE0',
-      inactif: '#D78FEE'
+      inactif: '#D78FEE',
+      suspendu: '#FFC107'
     };
 
     const userStats = {
@@ -817,11 +971,12 @@ $color = ($statut == 'actif') ? '#9B5DE0' :
       createur: <?= intval($stats['createur']) ?>,
       marque: <?= intval($stats['marque']) ?>,
       actif: <?= intval($stats['actif']) ?>,
-      inactif: <?= intval($stats['inactif']) ?>
+      inactif: <?= intval($stats['inactif']) ?>,
+      suspendu: <?= intval($stats['suspendu'] ?? 0) ?>
     };
 
-    const roleLabels = ['Administrateurs', 'Créateurs', 'Marques'];
-    const statusLabels = ['Actifs', 'Inactifs'];
+    const roleLabels = ['Administrators', 'Creators', 'Brands'];
+    const statusLabels = ['Active', 'Suspended'];
 
     const ctxAreaRole = document.getElementById('chartAreaRole');
     new Chart(ctxAreaRole, {
@@ -830,7 +985,7 @@ $color = ($statut == 'actif') ? '#9B5DE0' :
         labels: roleLabels,
         datasets: [
           {
-            label: 'Administrateurs',
+            label: 'Administrators',
             data: [userStats.admin, 0, 0],
             borderColor: colors.admin,
             backgroundColor: colors.admin + '33',
@@ -843,7 +998,7 @@ $color = ($statut == 'actif') ? '#9B5DE0' :
             borderWidth: 3
           },
           {
-            label: 'Créateurs',
+            label: 'Creators',
             data: [0, userStats.createur, 0],
             borderColor: colors.createur,
             backgroundColor: colors.createur + '33',
@@ -856,7 +1011,7 @@ $color = ($statut == 'actif') ? '#9B5DE0' :
             borderWidth: 3
           },
           {
-            label: 'Marques',
+            label: 'Brands',
             data: [0, 0, userStats.marque],
             borderColor: colors.marque,
             backgroundColor: colors.marque + '33',
@@ -881,7 +1036,7 @@ $color = ($statut == 'actif') ? '#9B5DE0' :
                 const value = context.parsed.y;
                 const total = userStats.admin + userStats.createur + userStats.marque;
                 const percent = total ? Math.round(value / total * 100) : 0;
-                return value + ' utilisateurs (' + percent + '%)';
+                return value + ' users (' + percent + '%)';
               }
             }
           }
@@ -906,7 +1061,7 @@ $color = ($statut == 'actif') ? '#9B5DE0' :
         labels: statusLabels,
         datasets: [
           {
-            label: 'Actifs',
+            label: 'Active',
             data: [userStats.actif, 0],
             borderColor: colors.actif,
             backgroundColor: colors.actif + '33',
@@ -919,14 +1074,14 @@ $color = ($statut == 'actif') ? '#9B5DE0' :
             borderWidth: 3
           },
           {
-            label: 'Inactifs',
-            data: [0, userStats.inactif],
-            borderColor: colors.inactif,
-            backgroundColor: colors.inactif + '33',
+            label: 'Suspended',
+            data: [0, userStats.suspendu],
+            borderColor: colors.suspendu,
+            backgroundColor: colors.suspendu + '33',
             fill: true,
             tension: 0.4,
             pointRadius: 6,
-            pointBackgroundColor: colors.inactif,
+            pointBackgroundColor: colors.suspendu,
             pointBorderColor: '#fff',
             pointBorderWidth: 2,
             borderWidth: 3
@@ -944,7 +1099,7 @@ $color = ($statut == 'actif') ? '#9B5DE0' :
                 const value = context.parsed.y;
                 const total = userStats.actif + userStats.inactif;
                 const percent = total ? Math.round(value / total * 100) : 0;
-                return value + ' utilisateurs (' + percent + '%)';
+                return value + ' users (' + percent + '%)';
               }
             }
           }
@@ -997,25 +1152,25 @@ $color = ($statut == 'actif') ? '#9B5DE0' :
       }
     });
 
-    // Fonction pour toggle le statut utilisateur
+    // Function to toggle user status
     function toggleUserStatus(userId, currentStatus) {
-      const newStatus = currentStatus === 'actif' ? 'inactif' : 'actif';
+      const newStatus = currentStatus === 'actif' ? 'suspendu' : 'actif';
       const confirmMsg = currentStatus === 'actif' 
-        ? 'Êtes-vous sûr de vouloir suspendre cet utilisateur ?' 
-        : 'Êtes-vous sûr de vouloir activer cet utilisateur ?';
+        ? 'Are you sure you want to suspend this user?' 
+        : 'Are you sure you want to activate this user?';
       
       if (confirm(confirmMsg)) {
         fetch(`toggleStatus.php?id=${userId}&newStatus=${newStatus}`)
           .then(res => res.json())
           .then(data => {
             if (data.success) {
-              alert('✅ Statut mis à jour avec succès');
+              alert('✅ Status updated successfully');
               location.reload();
             } else {
-              alert('❌ Erreur: ' + (data.message || 'Impossible de mettre à jour le statut'));
+              alert('❌ Error: ' + (data.message || 'Unable to update status'));
             }
           })
-          .catch(err => alert('❌ Erreur réseau: ' + err));
+          .catch(err => alert('❌ Network error: ' + err));
       }
     }
   </script>

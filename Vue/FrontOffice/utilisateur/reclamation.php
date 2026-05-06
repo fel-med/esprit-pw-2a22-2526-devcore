@@ -200,7 +200,28 @@ $liste = $reclamationC->afficherReclamationsAvecReponsesUser($_SESSION['id']);
                         class="navbar-toggler-icon"></span></button>
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul class="navbar-nav ms-auto mb-2 mb-lg-0 small fw-bolder">
-                        <li class="nav-item"><a class="nav-link" href="creator.php">Home</a></li>
+                    <?php
+
+$homePage = "creator.php";
+
+if (isset($_SESSION['role'])) {
+
+    if ($_SESSION['role'] == 'brand') {
+
+        $homePage = "brand.php";
+
+    } elseif ($_SESSION['role'] == 'createur') {
+
+        $homePage = "creator.php";
+    }
+}
+?>
+
+<li class="nav-item">
+    <a class="nav-link" href="<?php echo $homePage; ?>">
+        Home
+    </a>
+</li>
                         <li class="nav-item"><a class="nav-link" href="reclamation.php">Reclamation</a></li>
                         <li class="nav-item">
                             <a class="nav-link" href="#" onclick="toggleDarkMode(); return false;" title="Mode jour/nuit">
