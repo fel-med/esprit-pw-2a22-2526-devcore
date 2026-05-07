@@ -19,6 +19,7 @@ $avgViews = $totalPosts > 0 ? round($totalViews / $totalPosts) : 0;
 
 /* ── JSON for JS ── */
 $postsJson = json_encode(array_map(fn($p) => [
+    'id'       => $p['id'],
     'subject'  => $p['subject'],
     'creator'  => $p['creatorName'] ?? ('Creator #' . $p['idCreateur']),
     'views'    => (int)$p['numberOfView'],
@@ -26,6 +27,10 @@ $postsJson = json_encode(array_map(fn($p) => [
     'dislikes' => (int)$p['numberOfDislike'],
     'hasImage' => !empty($p['imageContent']),
     'hasVideo' => !empty($p['VideoContent']),
+    'image'    => $p['imageContent'] ?? '',
+    'video'    => $p['VideoContent'] ?? '',
+    'text'     => $p['textContent'] ?? '',
+    'date'     => $p['creationDate'] ?? '',
 ], $posts), JSON_UNESCAPED_UNICODE);
 
 require_once '../partials/header.php';
@@ -56,6 +61,75 @@ require_once '../partials/header.php';
 .chart-legend span { display: flex; align-items: center; gap: 6px; }
 .chart-legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; flex-shrink: 0; }
 
+/* ── Pagination ── */
+#paginationControls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(233,30,140,.12);
+}
+#paginationControls .pag-info {
+    font-size: 13px;
+    opacity: .55;
+}
+.pag-buttons {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.pag-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 8px;
+    border-radius: 8px;
+    border: 1.5px solid rgba(233,30,140,.22);
+    background: transparent;
+    color: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, color .15s;
+}
+.pag-btn:hover:not(:disabled) {
+    background: rgba(233,30,140,.12);
+    border-color: rgba(233,30,140,.45);
+}
+.pag-btn.active {
+    background: #e91e8c;
+    border-color: #e91e8c;
+    color: #fff;
+}
+.pag-btn:disabled {
+    opacity: .3;
+    cursor: default;
+}
+.pag-select {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+.pag-select select {
+    background: transparent;
+    border: 1.5px solid rgba(233,30,140,.22);
+    border-radius: 7px;
+    color: inherit;
+    padding: 4px 8px;
+    font-size: 13px;
+    cursor: pointer;
+    outline: none;
+}
+.pag-select select:focus {
+    border-color: #e91e8c;
+}
+
 body.light-mode { background-color: #f9f0ff !important; color: #2d0045 !important; }
 body.light-mode .card { background-color: #ffffff !important; border-color: rgba(233,30,140,.12) !important; color: #2d0045 !important; }
 body.light-mode .chart-sub   { color: #9c27b0; }
@@ -69,6 +143,9 @@ body.light-mode .table-dark td, body.light-mode .table-dark th { border-color: r
 body.light-mode .theme-toggle-btn { border-color: rgba(233,30,140,.22); color: #9c27b0; }
 body.light-mode .post-creator-badge { color: #7c3aed; }
 body.light-mode .admin-delete-btn { background: #fff0f8; }
+body.light-mode .pag-btn { color: #2d0045; }
+body.light-mode .pag-select select { color: #2d0045; background: #fff; }
+body.light-mode #paginationControls { border-top-color: rgba(233,30,140,.15); }
 </style>
 
 <!-- ══ Header ════════════════════════════════════════════════════ -->
@@ -439,7 +516,7 @@ function toggleTheme() {
                     </div>
                 <?php else : ?>
                     <div class="table-responsive">
-                        <table class="table table-dark admin-table">
+                        <table class="table table-dark admin-table" id="postsTable">
                             <thead>
                                 <tr>
                                     <th>Media</th>
@@ -453,7 +530,7 @@ function toggleTheme() {
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="postsTableBody">
                             <?php foreach ($posts as $post) : ?>
                                 <tr>
                                     <td>
@@ -493,10 +570,119 @@ function toggleTheme() {
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- ══ Pagination controls ══ -->
+                    <div id="paginationControls">
+                        <span class="pag-info" id="pagInfo"></span>
+
+                        <div class="d-flex align-items-center gap-3 flex-wrap">
+                            <div class="pag-select">
+                                <label for="pagPerPage">Rows per page:</label>
+                                <select id="pagPerPage">
+                                    <option value="5">5</option>
+                                    <option value="10" selected>10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                </select>
+                            </div>
+
+                            <div class="pag-buttons" id="pagButtons"></div>
+                        </div>
+                    </div>
+
                 <?php endif; ?>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+(function () {
+    const tbody   = document.getElementById('postsTableBody');
+    if (!tbody) return;
+
+    const allRows = Array.from(tbody.querySelectorAll('tr'));
+    const info    = document.getElementById('pagInfo');
+    const buttons = document.getElementById('pagButtons');
+    const perSel  = document.getElementById('pagPerPage');
+
+    let currentPage = 1;
+    let perPage     = parseInt(perSel.value, 10);
+
+    function totalPages() {
+        return Math.max(1, Math.ceil(allRows.length / perPage));
+    }
+
+    function render() {
+        const total  = totalPages();
+        const start  = (currentPage - 1) * perPage;
+        const end    = Math.min(start + perPage, allRows.length);
+
+        /* Show/hide rows */
+        allRows.forEach((row, i) => {
+            row.style.display = (i >= start && i < end) ? '' : 'none';
+        });
+
+        /* Info text */
+        info.textContent = `Showing ${allRows.length === 0 ? 0 : start + 1}–${end} of ${allRows.length} posts`;
+
+        /* Build page buttons */
+        buttons.innerHTML = '';
+
+        /* Prev */
+        const prev = makeBtn('‹', currentPage === 1, () => { currentPage--; render(); });
+        buttons.appendChild(prev);
+
+        /* Page numbers — show at most 7 buttons with ellipsis */
+        const pages = pageRange(currentPage, total);
+        pages.forEach(p => {
+            if (p === '…') {
+                const el = document.createElement('span');
+                el.textContent = '…';
+                el.style.cssText = 'padding:0 4px;opacity:.4;font-size:13px;';
+                buttons.appendChild(el);
+            } else {
+                const btn = makeBtn(p, false, () => { currentPage = p; render(); });
+                if (p === currentPage) btn.classList.add('active');
+                buttons.appendChild(btn);
+            }
+        });
+
+        /* Next */
+        const next = makeBtn('›', currentPage === total, () => { currentPage++; render(); });
+        buttons.appendChild(next);
+    }
+
+    function makeBtn(label, disabled, onClick) {
+        const btn = document.createElement('button');
+        btn.className   = 'pag-btn';
+        btn.textContent = label;
+        btn.disabled    = disabled;
+        btn.addEventListener('click', onClick);
+        return btn;
+    }
+
+    /* Produces array like [1, 2, '…', 8, 9, 10] */
+    function pageRange(current, total) {
+        if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+        const pages = new Set([1, total, current, current - 1, current + 1]);
+        const sorted = [...pages].filter(p => p >= 1 && p <= total).sort((a, b) => a - b);
+        const result = [];
+        sorted.forEach((p, i) => {
+            if (i > 0 && p - sorted[i - 1] > 1) result.push('…');
+            result.push(p);
+        });
+        return result;
+    }
+
+    perSel.addEventListener('change', () => {
+        perPage     = parseInt(perSel.value, 10);
+        currentPage = 1;
+        render();
+    });
+
+    render();
+})();
+</script>
 
 <?php require_once '../partials/footer.php'; ?>
