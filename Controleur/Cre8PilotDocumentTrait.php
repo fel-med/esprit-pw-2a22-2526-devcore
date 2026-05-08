@@ -68,6 +68,37 @@ trait Cre8PilotDocumentTrait
         return $folder !== '' ? $folder . DIRECTORY_SEPARATOR . 'index.json' : '';
     }
 
+    private function cre8PilotLatestSessionDocumentPointerPath()
+    {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            return '';
+        }
+        $sid = (string) session_id();
+        if ($sid === '') {
+            return '';
+        }
+
+        return $this->cre8PilotDocumentsRootDir() . DIRECTORY_SEPARATOR . 'latest_session_' . substr(hash('sha256', $sid), 0, 16) . '.json';
+    }
+
+    private function saveCre8PilotLatestSessionDocumentRef($ownerKey, $docId)
+    {
+        $ref = [
+            'ownerKey' => $ownerKey,
+            'docId' => $docId,
+            'createdAt' => time(),
+        ];
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            $_SESSION['cre8pilot_latest_document_ref'] = $ref;
+        }
+        $path = $this->cre8PilotLatestSessionDocumentPointerPath();
+        if ($path === '') {
+            return;
+        }
+        $this->cre8PilotEnsureDirectory($this->cre8PilotDocumentsRootDir());
+        @file_put_contents($path, json_encode($ref, JSON_UNESCAPED_SLASHES));
+    }
+
     private function loadCre8PilotDocumentIndex($ownerKey)
     {
         $path = $this->cre8PilotDocumentIndexPath($ownerKey);
@@ -444,6 +475,51 @@ trait Cre8PilotDocumentTrait
         return null;
     }
 
+    private function getCre8PilotLatestSessionDocumentFallback($currentOwnerKey = '')
+    {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            return null;
+        }
+
+        $ref = $_SESSION['cre8pilot_latest_document_ref'] ?? null;
+        if (!is_array($ref)) {
+            $path = $this->cre8PilotLatestSessionDocumentPointerPath();
+            if ($path !== '' && is_file($path)) {
+                $raw = @file_get_contents($path);
+                $decoded = is_string($raw) ? json_decode($raw, true) : null;
+                if (is_array($decoded)) {
+                    $ref = $decoded;
+                }
+            }
+        }
+        if (!is_array($ref)) {
+            return null;
+        }
+
+        $ownerKey = $this->sanitizeCre8PilotDocumentOwnerKey((string) ($ref['ownerKey'] ?? ''));
+        $docId = preg_replace('/[^a-z0-9_\\-]/i', '', (string) ($ref['docId'] ?? ''));
+        if ($ownerKey === '' || $docId === '') {
+            return null;
+        }
+
+        $createdAt = (int) ($ref['createdAt'] ?? 0);
+        if ($createdAt > 0 && time() - $createdAt > 7 * 86400) {
+            unset($_SESSION['cre8pilot_latest_document_ref']);
+            return null;
+        }
+
+        $doc = $this->loadCre8PilotDocumentById($ownerKey, $docId);
+        if (!is_array($doc)) {
+            return null;
+        }
+
+        if ((string) $currentOwnerKey !== '' && (string) $currentOwnerKey !== $ownerKey) {
+            $doc['documentResolutionNote'] = 'same_session_latest_document_fallback';
+        }
+
+        return $doc;
+    }
+
     private function findCre8PilotDocumentByReference($normalizedMessage, $ownerKey)
     {
         $index = $this->loadCre8PilotDocumentIndex($ownerKey);
@@ -453,6 +529,12 @@ trait Cre8PilotDocumentTrait
             $doc = $this->loadCre8PilotDocumentById($ownerKey, $id);
             if ($doc !== null) {
                 $candidates[] = $doc;
+            }
+        }
+        if (empty($candidates)) {
+            $sessionLatest = $this->getCre8PilotLatestSessionDocumentFallback($ownerKey);
+            if (is_array($sessionLatest)) {
+                $candidates[] = $sessionLatest;
             }
         }
         if (empty($candidates)) {
@@ -473,6 +555,7 @@ trait Cre8PilotDocumentTrait
             'summarize my cv',
             'my uploaded cv',
             'uploaded cv',
+            'uploaded document only if it belongs to me',
             'in my cv',
             'in my uploaded cv',
             'mention in my cv',
@@ -493,7 +576,11 @@ trait Cre8PilotDocumentTrait
             'file i uploaded',
             'uploaded file',
             'the uploaded file',
+            'uploaded portfolio brief',
             'from the uploaded file',
+            'skills section',
+            'skills section from the uploaded file',
+            'compare the uploaded portfolio',
             'summarize uploaded file',
             'summarize the last file',
             'summarize my document',
@@ -506,6 +593,7 @@ trait Cre8PilotDocumentTrait
             'last uploaded document',
             'uploaded document',
             'the uploaded document',
+            'use uploaded document',
             'from my file',
             'use my file',
             'from the pdf',
@@ -592,6 +680,7 @@ trait Cre8PilotDocumentTrait
             'based on the uploaded pdf',
             'use the uploaded file',
             'use the last file',
+            'last file',
             'latest file',
             'based on this document',
             'based on the document',
@@ -619,6 +708,7 @@ trait Cre8PilotDocumentTrait
             'use the uploaded portfolio',
             'uploaded portfolio brief',
             'the uploaded portfolio brief',
+            'use the uploaded portfolio brief',
             'portfolio brief',
             'use the portfolio brief',
             'uploaded document',
@@ -635,6 +725,11 @@ trait Cre8PilotDocumentTrait
             'use the last document',
             'summarize the uploaded',
             'skills section from the uploaded',
+            'skills section from the uploaded file',
+            'skills section',
+            'compare the uploaded portfolio',
+            'compare uploaded portfolio',
+            'uploaded document only if it belongs to me',
             'my cv',
             'my uploaded cv',
             'uploaded cv',
@@ -891,6 +986,10 @@ trait Cre8PilotDocumentTrait
             'does my document mention', 'does the document mention',
             'does my file mention', 'does the file mention',
             'does my uploaded document mention',
+            'does the uploaded document mention',
+            'does uploaded document mention',
+            'does the uploaded file mention',
+            'does uploaded file mention',
             'is mentioned in my cv', 'is mentioned in the cv',
             'mentioned in my cv programming', 'mentioned in my cv?',
             'cv mention', 'cv contain',
@@ -907,8 +1006,35 @@ trait Cre8PilotDocumentTrait
             'use the uploaded cv to write', 'use the uploaded cv directly',
             'use the cv directly', 'cv directly', 'write me a candidature',
             'write a motivation', 'draft a motivation', 'write a cover',
+            'make this candidature more specific',
+            'make my candidature more specific',
+            'make this application more specific',
+            'make my application more specific',
         ])) {
             return 'candidature';
+        }
+
+        if ($this->messageContainsAny($n, [
+            'only if it belongs to me',
+            'belongs to me',
+            'belong to me',
+            'if it is mine',
+            'if this is mine',
+            'if the document is mine',
+        ])) {
+            return 'ownership_check';
+        }
+
+        if ($this->messageContainsAny($n, [
+            'compare the uploaded portfolio with this offer',
+            'compare uploaded portfolio with this offer',
+            'compare the uploaded document with this offer',
+            'compare the uploaded file with this offer',
+            'tell me if it fits',
+            'does it fit this offer',
+            'fit this offer',
+        ])) {
+            return 'fit_compare';
         }
 
         // 5. Robotics / embedded query.
@@ -935,6 +1061,14 @@ trait Cre8PilotDocumentTrait
             'summarize my cv', 'summarize the cv', 'summarize my document',
             'summarize my uploaded', 'summarize the uploaded',
             'summary of my cv', 'summary of the cv',
+            'use the last document',
+            'use last document',
+            'use the last file',
+            'use last file',
+            'use the uploaded document',
+            'use uploaded document',
+            'use the uploaded file',
+            'use uploaded file',
         ])) {
             return 'summary';
         }
@@ -1358,6 +1492,7 @@ trait Cre8PilotDocumentTrait
         }
 
         $this->addDocumentToIndex($ownerKey, $doc);
+        $this->saveCre8PilotLatestSessionDocumentRef($ownerKey, $docId);
         $debug['documentStored'] = true;
         $debug['documentIdsUsed'] = [$docId];
         $debug['documentLabelsUsed'] = [$doc['label']];

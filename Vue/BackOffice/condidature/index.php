@@ -200,17 +200,19 @@ $nextPageUrl = $hasNextPage ? 'index.php?' . http_build_query($paginationBase + 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Back Office - Candidature Management</title>
     <link rel="stylesheet" href="../css/backoffice.css">
+    <link rel="stylesheet" href="../css/new_style_backoffice.css">
     <link rel="stylesheet" href="../offre/offre-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../offre/offre-admin.css')); ?>">
     <link rel="stylesheet" href="condidature-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/condidature-admin.css')); ?>">
 </head>
 <body class="cre8-admin-layout">
-    <div class="cre8-admin-page">
+    <div class="container-scroller cre8-admin-page">
         <?php require_once dirname(__DIR__) . '/layout/sidebar.php'; ?>
-        <main class="cre8-admin-main">
+        <main class="page-body-wrapper cre8-admin-main">
             <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
-    <div class="admin-shell">
-        <header class="admin-header">
-            <div class="admin-header-main">
+    <div class="main-panel">
+    <div class="content-wrapper admin-shell">
+        <header class="admin-header card grid-margin">
+            <div class="admin-header-main card-body">
                 <div>
                     <h1>Candidature administration</h1>
                     <p>Inspect creator responses, follow review stages, and keep every targeted candidature visible from the same dashboard.</p>
@@ -227,7 +229,7 @@ $nextPageUrl = $hasNextPage ? 'index.php?' . http_build_query($paginationBase + 
             <div class="admin-flash error"><?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>
 
-        <section class="search-panel search-panel-simple">
+        <section class="card grid-margin search-panel search-panel-simple">
             <div class="search-panel-head">
                 <div class="search-panel-copy">
                     <span class="search-panel-title">Admin filters</span>
@@ -246,12 +248,12 @@ $nextPageUrl = $hasNextPage ? 'index.php?' . http_build_query($paginationBase + 
                 <div class="search-grid">
                     <div class="search-group">
                         <label for="keyword">Search</label>
-                        <input id="keyword" name="keyword" type="search" value="<?php echo htmlspecialchars($filters['keyword']); ?>" placeholder="Source, creator, brand, message...">
+                        <input id="keyword" name="keyword" type="search" class="form-control" value="<?php echo htmlspecialchars($filters['keyword']); ?>" placeholder="Source, creator, brand, message...">
                     </div>
 
                     <div class="search-group">
                         <label for="status">Status</label>
-                        <select id="status" name="status">
+                        <select id="status" name="status" class="form-control">
                             <option value="">All</option>
                             <option value="brouillon"<?php echo $filters['status'] === 'brouillon' ? ' selected' : ''; ?>>Draft</option>
                             <option value="envoyee"<?php echo $filters['status'] === 'envoyee' ? ' selected' : ''; ?>>Sent</option>
@@ -265,7 +267,7 @@ $nextPageUrl = $hasNextPage ? 'index.php?' . http_build_query($paginationBase + 
 
                     <div class="search-group">
                         <label for="origin">Origin</label>
-                        <select id="origin" name="origin">
+                        <select id="origin" name="origin" class="form-control">
                             <option value="">All</option>
                             <option value="par_offre"<?php echo $filters['origin'] === 'par_offre' ? ' selected' : ''; ?>>Offer invitation</option>
                             <option value="par_campagne"<?php echo $filters['origin'] === 'par_campagne' ? ' selected' : ''; ?>>Campaign application</option>
@@ -274,7 +276,7 @@ $nextPageUrl = $hasNextPage ? 'index.php?' . http_build_query($paginationBase + 
 
                     <div class="search-group">
                         <label for="typeReponse">Response type</label>
-                        <select id="typeReponse" name="typeReponse">
+                        <select id="typeReponse" name="typeReponse" class="form-control">
                             <option value="">All</option>
                             <option value="application"<?php echo $filters['typeReponse'] === 'application' ? ' selected' : ''; ?>>Application</option>
                             <option value="acceptation"<?php echo $filters['typeReponse'] === 'acceptation' ? ' selected' : ''; ?>>Acceptance</option>
@@ -285,7 +287,7 @@ $nextPageUrl = $hasNextPage ? 'index.php?' . http_build_query($paginationBase + 
 
                     <div class="search-group">
                         <label for="creatorId">Creator</label>
-                        <select id="creatorId" name="creatorId">
+                        <select id="creatorId" name="creatorId" class="form-control">
                             <option value="">All</option>
                             <?php foreach ($creatorOptions as $creator): ?>
                                 <option value="<?php echo (int) $creator['id']; ?>"<?php echo $filters['creatorId'] === (string) $creator['id'] ? ' selected' : ''; ?>>
@@ -297,7 +299,7 @@ $nextPageUrl = $hasNextPage ? 'index.php?' . http_build_query($paginationBase + 
 
                     <div class="search-group">
                         <label for="brandId">Brand</label>
-                        <select id="brandId" name="brandId">
+                        <select id="brandId" name="brandId" class="form-control">
                             <option value="">All</option>
                             <?php foreach ($brandOptions as $brand): ?>
                                 <option value="<?php echo (int) $brand['id']; ?>"<?php echo $filters['brandId'] === (string) $brand['id'] ? ' selected' : ''; ?>>
@@ -309,17 +311,17 @@ $nextPageUrl = $hasNextPage ? 'index.php?' . http_build_query($paginationBase + 
 
                     <div class="search-group">
                         <label for="dateFrom">Submitted from</label>
-                        <input id="dateFrom" name="dateFrom" type="date" value="<?php echo htmlspecialchars($filters['dateFrom']); ?>">
+                        <input id="dateFrom" name="dateFrom" type="date" class="form-control" value="<?php echo htmlspecialchars($filters['dateFrom']); ?>">
                     </div>
 
                     <div class="search-group">
                         <label for="dateTo">Submitted to</label>
-                        <input id="dateTo" name="dateTo" type="date" value="<?php echo htmlspecialchars($filters['dateTo']); ?>">
+                        <input id="dateTo" name="dateTo" type="date" class="form-control" value="<?php echo htmlspecialchars($filters['dateTo']); ?>">
                     </div>
 
                     <div class="search-group">
                         <label for="hasCv">CV file</label>
-                        <select id="hasCv" name="hasCv">
+                        <select id="hasCv" name="hasCv" class="form-control">
                             <option value="">All</option>
                             <option value="1"<?php echo $filters['hasCv'] === '1' ? ' selected' : ''; ?>>Has CV</option>
                             <option value="0"<?php echo $filters['hasCv'] === '0' ? ' selected' : ''; ?>>No CV</option>
@@ -328,7 +330,7 @@ $nextPageUrl = $hasNextPage ? 'index.php?' . http_build_query($paginationBase + 
 
                     <div class="search-group">
                         <label for="hasPortfolio">Portfolio</label>
-                        <select id="hasPortfolio" name="hasPortfolio">
+                        <select id="hasPortfolio" name="hasPortfolio" class="form-control">
                             <option value="">All</option>
                             <option value="1"<?php echo $filters['hasPortfolio'] === '1' ? ' selected' : ''; ?>>Has portfolio</option>
                             <option value="0"<?php echo $filters['hasPortfolio'] === '0' ? ' selected' : ''; ?>>No portfolio</option>
@@ -337,7 +339,7 @@ $nextPageUrl = $hasNextPage ? 'index.php?' . http_build_query($paginationBase + 
 
                     <div class="search-group">
                         <label for="sort">Sort</label>
-                        <select id="sort" name="sort">
+                        <select id="sort" name="sort" class="form-control">
                             <option value=""<?php echo $filters['sort'] === '' ? ' selected' : ''; ?>>Workflow priority</option>
                             <option value="newest"<?php echo $filters['sort'] === 'newest' ? ' selected' : ''; ?>>Newest</option>
                             <option value="oldest"<?php echo $filters['sort'] === 'oldest' ? ' selected' : ''; ?>>Oldest</option>
@@ -351,39 +353,39 @@ $nextPageUrl = $hasNextPage ? 'index.php?' . http_build_query($paginationBase + 
                 </div>
 
                 <div class="search-actions">
-                    <button type="submit">Apply filters</button>
-                    <a class="clear-link" href="index.php">Reset</a>
+                    <button type="submit" class="btn btn-primary">Apply filters</button>
+                    <a class="btn btn-secondary clear-link" href="index.php">Reset</a>
                 </div>
             </form>
         </section>
 
         <section class="admin-summary">
-            <article class="admin-card">
+            <article class="admin-card card card-body">
                 <h3>Real candidatures</h3>
                 <p><?php echo (int) ($platformMetrics['realCandidatures'] ?? 0); ?></p>
                 <small>Technical campaign placeholders excluded</small>
             </article>
-            <article class="admin-card">
+            <article class="admin-card card card-body">
                 <h3>Pending reviews</h3>
                 <p><?php echo (int) ($platformMetrics['pendingReviews'] ?? 0); ?></p>
                 <small>Sent or under review</small>
             </article>
-            <article class="admin-card">
+            <article class="admin-card card card-body">
                 <h3>Open negotiations</h3>
                 <p><?php echo (int) ($platformMetrics['openNegotiations'] ?? 0); ?></p>
                 <small>Active negotiation candidatures</small>
             </article>
-            <article class="admin-card">
+            <article class="admin-card card card-body">
                 <h3>Expired offers</h3>
                 <p><?php echo (int) ($platformMetrics['expiredOffers'] ?? 0); ?></p>
                 <small>Past deadline and not archived</small>
             </article>
-            <article class="admin-card">
+            <article class="admin-card card card-body">
                 <h3>Acceptance rate</h3>
                 <p><?php echo htmlspecialchars((string) ($platformMetrics['acceptanceRate'] ?? 0)); ?>%</p>
                 <small>Accepted over accepted + refused</small>
             </article>
-            <article class="admin-card">
+            <article class="admin-card card card-body">
                 <h3>Activity this week</h3>
                 <p><?php echo (int) ($platformMetrics['activityThisWeek'] ?? 0); ?></p>
                 <small><?php echo (int) ($platformMetrics['offersThisWeek'] ?? 0); ?> offers + <?php echo (int) ($platformMetrics['candidaturesThisWeek'] ?? 0); ?> candidatures</small>
@@ -393,13 +395,13 @@ $nextPageUrl = $hasNextPage ? 'index.php?' . http_build_query($paginationBase + 
         <?php require __DIR__ . '/statistics_charts.php'; ?>
 
         <div class="admin-layout">
-            <section class="admin-panel admin-table-panel">
+            <section class="admin-panel admin-table-panel card grid-margin">
                 <div class="admin-panel-header">
-                    <h2>Candidature list</h2>
+                    <h2 class="card-title">Candidature list</h2>
                 </div>
-                <div class="admin-panel-body">
+                <div class="admin-panel-body card-body">
                     <div class="admin-table-wrapper">
-                        <table class="admin-table admin-candidature-table">
+                        <table class="admin-table admin-candidature-table table table-hover table-striped">
                             <colgroup>
                                 <col class="cand-col-creator">
                                 <col class="cand-col-source">
@@ -471,7 +473,7 @@ $nextPageUrl = $hasNextPage ? 'index.php?' . http_build_query($paginationBase + 
                                                 <small><?php echo (int) $context['negotiation']['count']; ?> negotiation message<?php echo (int) $context['negotiation']['count'] === 1 ? '' : 's'; ?></small>
                                             <?php endif; ?>
                                         </td>
-                                        <td><span class="badge-status <?php echo htmlspecialchars($condidature->getStatutCandidature()); ?>"><?php echo htmlspecialchars($condidature->getDisplayStatusLabel()); ?></span></td>
+                                        <td><span class="badge badge-status <?php echo htmlspecialchars($condidature->getStatutCandidature()); ?>"><?php echo htmlspecialchars($condidature->getDisplayStatusLabel()); ?></span></td>
                                         <td class="date-cell"><?php echo htmlspecialchars(formatShortDate($condidature->getDateCandidature())); ?></td>
                                         <td class="money-cell"><?php echo htmlspecialchars(formatMoney($condidature->getBudgetPropose())); ?></td>
                                         <td class="date-cell"><?php echo htmlspecialchars(formatDateLabel($condidature->getDateDerniereModification())); ?></td>
@@ -479,7 +481,7 @@ $nextPageUrl = $hasNextPage ? 'index.php?' . http_build_query($paginationBase + 
                                             <div class="admin-actions-stack">
                                                 <button
                                                     type="button"
-                                                    class="inspect-link source-preview-trigger"
+                                                    class="btn btn-info btn-sm inspect-link source-preview-trigger"
                                                     data-source-preview-trigger
                                                     data-source-origin="<?php echo htmlspecialchars($source['origin']); ?>"
                                                     data-source-origin-label="<?php echo htmlspecialchars($originLabel); ?>"
@@ -494,7 +496,7 @@ $nextPageUrl = $hasNextPage ? 'index.php?' . http_build_query($paginationBase + 
                                                     data-source-end="<?php echo htmlspecialchars(formatShortDate($source['dateLimite'] ?? null)); ?>"
                                                     data-source-status="<?php echo htmlspecialchars(trim((string) ($source['status'] ?? '')) !== '' ? ucwords(str_replace('_', ' ', (string) $source['status'])) : 'Not set'); ?>"
                                                 >Source</button>
-                                                <a class="inspect-link" href="details.php?idCandidature=<?php echo (int) $condidature->getIdCandidature(); ?>">Review</a>
+                                                <a class="btn btn-info btn-sm inspect-link" href="details.php?idCandidature=<?php echo (int) $condidature->getIdCandidature(); ?>">Review</a>
                                             </div>
                                         </td>
                                     </tr>
@@ -506,20 +508,21 @@ $nextPageUrl = $hasNextPage ? 'index.php?' . http_build_query($paginationBase + 
                         <span>Page <?php echo $page; ?> · Showing up to <?php echo $perPage; ?> candidatures</span>
                         <div>
                             <?php if ($prevPageUrl !== ''): ?>
-                                <a class="clear-link" href="<?php echo htmlspecialchars($prevPageUrl); ?>">Previous</a>
+                                <a class="btn btn-secondary btn-sm clear-link" href="<?php echo htmlspecialchars($prevPageUrl); ?>">Previous</a>
                             <?php else: ?>
-                                <span class="clear-link is-disabled">Previous</span>
+                                <span class="btn btn-secondary btn-sm clear-link is-disabled">Previous</span>
                             <?php endif; ?>
                             <?php if ($nextPageUrl !== ''): ?>
-                                <a class="clear-link" href="<?php echo htmlspecialchars($nextPageUrl); ?>">Next</a>
+                                <a class="btn btn-primary btn-sm clear-link" href="<?php echo htmlspecialchars($nextPageUrl); ?>">Next</a>
                             <?php else: ?>
-                                <span class="clear-link is-disabled">Next</span>
+                                <span class="btn btn-secondary btn-sm clear-link is-disabled">Next</span>
                             <?php endif; ?>
                         </div>
                     </nav>
                 </div>
             </section>
         </div>
+    </div>
     </div>
         </main>
     </div>

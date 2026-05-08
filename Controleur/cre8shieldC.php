@@ -32,19 +32,19 @@ class Cre8ShieldC
         return $this->catches->isAvailable();
     }
 
-    public function listByRisk(string $riskLevel, int $limit = 100, int $offset = 0): array
+    public function listByRisk(string $riskLevel, int $limit = 100, int $offset = 0, string $sort = 'time_desc'): array
     {
-        return $this->catches->listByRisk($riskLevel, $limit, $offset);
+        return $this->catches->listByRisk($riskLevel, $limit, $offset, $sort);
     }
 
-    public function listReviewed(int $limit = 100, int $offset = 0): array
+    public function listReviewed(int $limit = 100, int $offset = 0, string $sort = 'time_desc'): array
     {
-        return $this->catches->listReviewed($limit, $offset);
+        return $this->catches->listReviewed($limit, $offset, $sort);
     }
 
-    public function listEscalated(int $limit = 100, int $offset = 0): array
+    public function listEscalated(int $limit = 100, int $offset = 0, string $sort = 'time_desc'): array
     {
-        return $this->catches->listByStatus('escalated', $limit, $offset);
+        return $this->catches->listByStatus('escalated', $limit, $offset, $sort);
     }
 
     public function getCatchById(int $id): ?array

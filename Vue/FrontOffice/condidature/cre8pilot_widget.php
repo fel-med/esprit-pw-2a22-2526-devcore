@@ -74,15 +74,19 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
 <?php $cre8PilotStressTestJs = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/FrontOffice/condidature/cre8pilot_full_balanced_stress_test.js'); ?>
 <?php $cre8PilotAiTourStressTestJs = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/FrontOffice/condidature/cre8pilot_ai_tour_stress_test.js'); ?>
 <?php $cre8PilotFinalMatrixStressTestJs = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/FrontOffice/condidature/cre8pilot_final_matrix_stress_test.js'); ?>
+<?php $cre8PilotOmegaValidationTestJs = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/FrontOffice/condidature/cre8pilot_omega_validation_test.js'); ?>
 <script>
 (function () {
     var STRESS_URL = '<?php echo $cre8PilotStressTestJs; ?>';
     var AI_TOUR_STRESS_URL = '<?php echo $cre8PilotAiTourStressTestJs; ?>';
     var FINAL_MATRIX_STRESS_URL = '<?php echo $cre8PilotFinalMatrixStressTestJs; ?>';
+    var OMEGA_VALIDATION_URL = '<?php echo $cre8PilotOmegaValidationTestJs; ?>';
     var aiTourCore = null;
     var aiTourLoadPromise = null;
     var finalMatrixCore = null;
     var finalMatrixLoadPromise = null;
+    var omegaCore = null;
+    var omegaLoadPromise = null;
     function ensureAiTourScriptLoaded() {
         if (aiTourCore) {
             return Promise.resolve(aiTourCore);
@@ -153,6 +157,41 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
         });
         return finalMatrixLoadPromise;
     }
+    function ensureOmegaValidationScriptLoaded() {
+        if (omegaCore) {
+            return Promise.resolve(omegaCore);
+        }
+        if (omegaLoadPromise) {
+            return omegaLoadPromise;
+        }
+        var urlOmega = OMEGA_VALIDATION_URL;
+        var wOmega = document.querySelector('[data-cre8pilot-widget]');
+        var epOmega = wOmega && wOmega.dataset && wOmega.dataset.cre8pilotEndpoint;
+        if (epOmega && /cre8pilot_endpoint\.php/i.test(epOmega)) {
+            urlOmega = epOmega.replace(/cre8pilot_endpoint\.php/i, 'cre8pilot_omega_validation_test.js');
+        }
+        if (typeof console !== 'undefined' && console.log) {
+            console.log('[Cre8Pilot] loading omega validation test:', urlOmega);
+        }
+        omegaLoadPromise = fetch(urlOmega, { credentials: 'same-origin' }).then(function (res) {
+            if (!res.ok) {
+                throw new Error('Omega validation test HTTP ' + res.status);
+            }
+            return res.text();
+        }).then(function (code) {
+            (0, eval)(code);
+            if (typeof window.runCre8PilotOmegaValidationTestImpl !== 'function') {
+                throw new Error('Omega validation suite did not register runCre8PilotOmegaValidationTestImpl.');
+            }
+            omegaCore = window.runCre8PilotOmegaValidationTestImpl;
+            omegaLoadPromise = null;
+            return omegaCore;
+        }).catch(function (err) {
+            omegaLoadPromise = null;
+            throw err;
+        });
+        return omegaLoadPromise;
+    }
     window.runCre8PilotAiTourStressTest = function runCre8PilotAiTourStressTest(options) {
         return ensureAiTourScriptLoaded().then(function (core) {
             return core(options);
@@ -180,6 +219,17 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
             return window.runCre8PilotFinalMatrixAutoSuiteImpl(options);
         }).catch(function (err) {
             console.error('[Cre8Pilot] runCre8PilotFinalMatrixAutoSuite failed:', err);
+            throw err;
+        });
+    };
+    window.runCre8PilotOmegaValidationTest = function runCre8PilotOmegaValidationTest(options) {
+        if (typeof console !== 'undefined' && console.log) {
+            console.log('[Cre8Pilot] runCre8PilotOmegaValidationTest invoked (will fetch script once, then run)');
+        }
+        return ensureOmegaValidationScriptLoaded().then(function (core) {
+            return core(options);
+        }).catch(function (err) {
+            console.error('[Cre8Pilot] runCre8PilotOmegaValidationTest failed:', err);
             throw err;
         });
     };
@@ -688,7 +738,7 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
             return 'thinking';
         }
         if (s === 'warning' || s === 'error') {
-            return 'swears';
+            return 'confused';
         }
         if (s === 'confused') {
             return 'confused';
@@ -937,6 +987,9 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
             return;
         }
 
+        const picker = document.querySelector('[data-creator-picker]');
+        const pickerHasApi = !!(picker && typeof picker.cre8pilotApplyCreatorById === 'function');
+
         const wrap = document.createElement('article');
         wrap.className = 'cre8pilot-message cre8pilot-message-assistant cre8pilot-match-card';
         wrap.setAttribute('aria-label', 'Creator match recommendations');
@@ -949,7 +1002,21 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
         head.appendChild(title);
         wrap.appendChild(head);
 
-        recs.forEach((row) => {
+        function refreshSelectButtons(selectedIdStr) {
+            wrap.querySelectorAll('[data-cre8pilot-match-select]').forEach((btn) => {
+                const matched = btn.dataset.matchCreatorId === selectedIdStr;
+                btn.classList.toggle('is-selected', matched);
+                btn.textContent = matched ? 'Selected' : 'Select';
+                btn.setAttribute('aria-pressed', matched ? 'true' : 'false');
+                btn.disabled = false;
+            });
+            wrap.querySelectorAll('[data-cre8pilot-match-row]').forEach((rowEl) => {
+                const matched = rowEl.dataset.matchCreatorId === selectedIdStr;
+                rowEl.classList.toggle('is-selected-row', matched);
+            });
+        }
+
+        recs.forEach((row, index) => {
             if (!row || typeof row !== 'object') {
                 return;
             }
@@ -958,9 +1025,15 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
             const labelRaw = String(row.label || 'weak').toLowerCase();
             const labelNice = labelRaw === 'strong' ? 'Strong' : labelRaw === 'medium' ? 'Medium' : 'Weak';
             const reasons = Array.isArray(row.reasons) ? row.reasons.slice(0, 3) : [];
+            const creatorIdStr = String(row.creatorId == null ? '' : row.creatorId).trim();
+            const hasValidId = creatorIdStr !== '' && creatorIdStr !== '0';
 
             const card = document.createElement('div');
             card.className = 'cre8pilot-match-row';
+            card.setAttribute('data-cre8pilot-match-row', '1');
+            if (hasValidId) {
+                card.dataset.matchCreatorId = creatorIdStr;
+            }
 
             const topRow = document.createElement('div');
             topRow.className = 'cre8pilot-match-row-top';
@@ -976,6 +1049,36 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
             topRow.appendChild(nm);
             topRow.appendChild(badge);
             topRow.appendChild(lb);
+
+            if (pickerHasApi && hasValidId) {
+                const selectBtn = document.createElement('button');
+                selectBtn.type = 'button';
+                selectBtn.className = 'cre8pilot-match-select-btn';
+                selectBtn.textContent = 'Select';
+                selectBtn.dataset.matchCreatorId = creatorIdStr;
+                selectBtn.setAttribute('aria-pressed', 'false');
+                selectBtn.setAttribute('data-cre8pilot-match-select', '1');
+                selectBtn.title = 'Use this creator in the offer form.';
+                selectBtn.addEventListener('click', () => {
+                    if (selectBtn.disabled) {
+                        return;
+                    }
+                    selectBtn.disabled = true;
+                    selectBtn.textContent = 'Selecting…';
+                    Promise.resolve(picker.cre8pilotApplyCreatorById(creatorIdStr, { scrollIntoView: true }))
+                        .then((ok) => {
+                            if (ok) {
+                                refreshSelectButtons(creatorIdStr);
+                            } else {
+                                selectBtn.disabled = false;
+                                selectBtn.textContent = 'Select';
+                                appendMessage(messages, 'I could not load that creator from the picker right now. Please pick another one.', 'assistant', 'blocked');
+                            }
+                        });
+                });
+                topRow.appendChild(selectBtn);
+            }
+
             card.appendChild(topRow);
 
             if (reasons.length > 0) {
@@ -988,10 +1091,37 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
                 });
                 card.appendChild(ul);
             }
+
+            if (index === 0 && pickerHasApi && hasValidId) {
+                const autoBadge = document.createElement('span');
+                autoBadge.className = 'cre8pilot-match-auto-badge';
+                autoBadge.textContent = 'Auto-selected in the form';
+                card.appendChild(autoBadge);
+            }
+
             wrap.appendChild(card);
         });
 
         messages.appendChild(wrap);
+
+        if (pickerHasApi) {
+            const topRec = recs.find((r) => {
+                if (!r) {
+                    return false;
+                }
+                const idStr = String(r.creatorId == null ? '' : r.creatorId).trim();
+                return idStr !== '' && idStr !== '0';
+            });
+            if (topRec) {
+                const topId = String(topRec.creatorId).trim();
+                Promise.resolve(picker.cre8pilotApplyCreatorById(topId, { scrollIntoView: true }))
+                    .then((ok) => {
+                        if (ok) {
+                            refreshSelectButtons(topId);
+                        }
+                    });
+            }
+        }
     }
 
     function appendCre8PilotSecurityCard(messages, security) {
@@ -999,10 +1129,71 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
             return;
         }
         const level = String(security.riskLevel || 'low').toLowerCase();
-        const score = typeof security.riskScore === 'number' ? security.riskScore : parseInt(security.riskScore, 10) || 0;
-        const categories = Array.isArray(security.riskCategories) ? security.riskCategories : [];
-        const findings = Array.isArray(security.findings) ? security.findings : [];
-        const recs = Array.isArray(security.safeRecommendations) ? security.safeRecommendations : [];
+        const hits = Array.isArray(security.hits) ? security.hits : [];
+        const hitScores = hits
+            .map((hit) => parseInt(hit && hit.risk_score, 10))
+            .filter((value) => Number.isFinite(value));
+        const scoreFromHits = hitScores.length > 0 ? Math.max.apply(null, hitScores) : 0;
+        const rawScore = typeof security.riskScore === 'number'
+            ? security.riskScore
+            : (parseInt(security.riskScore, 10) || 0);
+        const score = Math.max(rawScore, scoreFromHits);
+
+        function uniqueLines(lines, limit) {
+            const out = [];
+            (Array.isArray(lines) ? lines : []).forEach((line) => {
+                const clean = String(line || '').trim();
+                if (clean && !out.includes(clean)) {
+                    out.push(clean);
+                }
+            });
+            return out.slice(0, limit);
+        }
+
+        function flattenHitField(fieldNames) {
+            const out = [];
+            hits.forEach((hit) => {
+                if (!hit || typeof hit !== 'object') {
+                    return;
+                }
+                fieldNames.forEach((field) => {
+                    const value = hit[field];
+                    if (Array.isArray(value)) {
+                        value.forEach((line) => out.push(line));
+                    }
+                });
+            });
+            return out;
+        }
+
+        let categories = uniqueLines(security.riskCategories, 12);
+        let findings = uniqueLines(security.findings, 14);
+        let recs = uniqueLines(security.safeRecommendations, 8);
+
+        if (categories.length === 0) {
+            categories = uniqueLines(flattenHitField(['categories', 'riskCategories']), 12);
+        }
+        if (findings.length === 0) {
+            findings = uniqueLines(flattenHitField(['findings']), 14);
+        }
+        if (recs.length === 0) {
+            recs = uniqueLines(flattenHitField(['safeRecommendations', 'safe_recommendations']), 8);
+        }
+        if (findings.length === 0 && hits.length > 0) {
+            findings = uniqueLines(hits.map((hit) => {
+                const label = String((hit && (hit.source_label || hit.item_type)) || 'Visible item').trim();
+                const risk = String((hit && hit.risk_level) || level || 'medium').trim();
+                const cats = Array.isArray(hit && hit.categories) ? hit.categories.slice(0, 4).join(', ') : '';
+                return label + ': ' + risk + ' risk' + (cats ? ' (' + cats + ')' : '') + '.';
+            }), 8);
+        }
+        if (recs.length === 0 && level !== 'low') {
+            recs = [
+                'Pause before continuing and verify the request through official Cre8Connect tools.',
+                'Do not share login codes, passwords, payment proof, or private account data outside the platform.',
+                'Keep payments, contracts, and files inside trusted in-platform workflows whenever possible.',
+            ];
+        }
 
         const item = document.createElement('article');
         item.className = 'cre8pilot-message cre8pilot-message-assistant cre8pilot-security-card';
@@ -1294,7 +1485,13 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
         });
         const activeBtn = document.querySelector('.offer-tab-button.is-active[data-offer-tab]');
         const activeOfferTab = activeBtn ? (activeBtn.getAttribute('data-offer-tab') || '') : '';
-        const cards = Array.from(shell.querySelectorAll('.offer-card')).slice(0, 40);
+        const activePanel = activeOfferTab
+            ? Array.from(shell.querySelectorAll('[data-offer-tab-panel]')).find((panel) => panel.getAttribute('data-offer-tab-panel') === activeOfferTab)
+            : null;
+        const cardScope = activePanel || shell;
+        const cards = Array.from(cardScope.querySelectorAll('.offer-card'))
+            .filter(isProbablyVisible)
+            .slice(0, 40);
         const offers = cards.map((card) => ({
             id: card.getAttribute('data-offer-id') || '',
             title: card.getAttribute('data-offer-title') || '',
@@ -1308,11 +1505,13 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
             targetCreator: card.getAttribute('data-creator-name') || '',
             latestSignal: card.getAttribute('data-cre8pilot-signal') || '',
             objective: card.getAttribute('data-cre8pilot-objective') || '',
+            cardText: textOf(card, 700),
         })).filter((o) => o.title !== '');
         return {
             brandOfferList: true,
             tabCounts,
             activeOfferTab,
+            visibleOfferScope: activeOfferTab || 'all',
             offers,
             snapshotAt: Date.now(),
         };
@@ -2048,6 +2247,57 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
             return;
         }
 
+        if (type === 'clear_form') {
+            const clearTarget = String(action.target || '');
+            let clearFields = [];
+            if (Array.isArray(action.fields)) {
+                clearFields = action.fields.map((name) => String(name || '').trim()).filter(Boolean);
+            } else if (action.fields && typeof action.fields === 'object') {
+                clearFields = Object.keys(action.fields).map((name) => String(name || '').trim()).filter(Boolean);
+            }
+            if (clearFields.length === 0 && Array.isArray(action.targets)) {
+                clearFields = action.targets.map((name) => String(name || '').trim()).filter(Boolean);
+            }
+            clearFields = uniqueFields(clearFields);
+
+            if (widget) {
+                setCre8PilotAvatarState('filling', widget);
+            }
+            cre8pilotPrepareSectionForFill(action);
+            const fieldScope = action._cre8pilotFieldScope && typeof action._cre8pilotFieldScope.querySelector === 'function' ? action._cre8pilotFieldScope : null;
+            let cleared = 0;
+            clearFields.forEach((name) => {
+                if (fillField(name, '', { skipFieldHighlight: true, skipDraftClean: true, scopeRoot: fieldScope })) {
+                    cleared++;
+                }
+            });
+            if (cleared > 0 && (action.focusAfter !== false || action.highlightAfter !== false)) {
+                cre8pilotFocusChangedFields(Object.assign({}, action, { fields: clearFields.reduce((acc, name) => {
+                    acc[name] = '';
+                    return acc;
+                }, {}) }));
+            } else if (clearTarget) {
+                const form = cre8pilotFindFormForTarget(clearTarget);
+                if (form) {
+                    try { form.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+                }
+            }
+            delete action._cre8pilotFieldScope;
+            appendMessage(
+                messages,
+                cleared > 0
+                    ? 'I cleared the available fields. Nothing was saved or submitted.'
+                    : 'I could not find matching fields to clear on this page.',
+                'assistant',
+                cleared > 0 ? 'action' : 'blocked'
+            );
+            if (widget) {
+                window.setTimeout(() => setCre8PilotAvatarState('success', widget), 120);
+                window.setTimeout(() => setCre8PilotAvatarState('idle', widget), 2200);
+            }
+            return;
+        }
+
         const fillTypeAliases = {
             fill_offer_form: 'offer_form',
             fill_negotiation_form: 'negotiation_form',
@@ -2152,17 +2402,23 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
                 cre8pilotFocusChangedFields(Object.assign({}, action, { fields }));
             }
             const shouldSubmit = action.submit === true || action.autoSubmit === true;
+            const suppressSuccessMessage = action.suppressSuccessMessage === true || action.suppressResultMessage === true;
             const listNote = 'This only changes the visible list; nothing was deleted or modified.';
             if (shouldSubmit && touched > 0) {
                 window.setTimeout(() => {
                     const ok = cre8pilotSubmitFilterForm(action.target || 'filter_form');
                     if (ok) {
-                        appendMessage(messages, 'I applied the filter. ' + listNote, 'assistant', 'action');
+                        if (!suppressSuccessMessage) {
+                            appendMessage(messages, 'I applied the filter. ' + listNote, 'assistant', 'action');
+                        }
                     } else {
                         appendMessage(messages, 'I updated the filter fields on this page. If the list did not refresh, use the safe Apply / Search control yourself. ' + listNote, 'assistant', 'action');
                     }
                 }, 200);
             } else {
+                if (suppressSuccessMessage && touched > 0) {
+                    return;
+                }
                 appendMessage(
                     messages,
                     touched > 0
@@ -2248,6 +2504,7 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
             },
             creators: collectCreatorCards(),
             highlights: collectCardHighlights(),
+            visibleItems: cre8pilotCollectVisibleItems(),
         };
 
         if (brandListSnap && typeof brandListSnap === 'object') {
@@ -2553,11 +2810,15 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
                 options.onEnd();
             }
         };
-        utterance.onerror = () => {
+        utterance.onerror = (event) => {
             const w = options.cre8PilotWidget || (options.messageItem && options.messageItem.closest('[data-cre8pilot-widget]')) || cre8PilotResolveWidget(null);
+            const code = String(event && event.error ? event.error : '').toLowerCase();
+            const fallback = w && w.cre8PilotLastResponseAvatarState && w.cre8PilotLastResponseAvatarState !== 'ai_speaking'
+                ? w.cre8PilotLastResponseAvatarState
+                : 'idle';
             stopCre8PilotSpeech();
             if (w) {
-                setCre8PilotAvatarState('error', w);
+                setCre8PilotAvatarState(code === 'canceled' || code === 'interrupted' ? fallback : 'confused', w);
             }
             if (typeof options.onEnd === 'function') {
                 options.onEnd();

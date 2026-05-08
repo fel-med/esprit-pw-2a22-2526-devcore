@@ -94,12 +94,24 @@ $cre8shieldVictimEmails = [
     'fitboost@cre8connect.tn',
 ];
 
+$cre8shieldInnocentNames = [
+    'Lina Beauty',
+];
+
 $cre8shieldSuspiciousShownInDirectory = false;
 $cre8shieldVictimShownInDirectory = false;
+$cre8shieldInnocentShownInDirectory = false;
 
-/** @return 'suspicious'|'victim'|null */
-$cre8shieldLoginHighlight = static function (string $email) use ($cre8shieldSuspiciousEmails, $cre8shieldVictimEmails): ?string {
+/** @return 'suspicious'|'victim'|'innocent'|null */
+$cre8shieldLoginHighlight = static function (string $email, string $name = '') use ($cre8shieldSuspiciousEmails, $cre8shieldVictimEmails, $cre8shieldInnocentNames): ?string {
     $e = strtolower(trim($email));
+    $n = strtolower(trim($name));
+
+    foreach ($cre8shieldInnocentNames as $safeName) {
+        if ($n !== '' && $n === strtolower($safeName)) {
+            return 'innocent';
+        }
+    }
 
     foreach ($cre8shieldSuspiciousEmails as $addr) {
         if ($e === strtolower($addr)) {
@@ -154,6 +166,22 @@ $cre8shieldLoginHighlight = static function (string $email) use ($cre8shieldSusp
             color: #92400e;
             font-weight: 700;
             font-size: 12px;
+        }
+
+        .cre8shield-innocent-user {
+            border: 2px solid rgba(234, 179, 8, 0.98) !important;
+            box-shadow: 0 0 0 4px rgba(234, 179, 8, 0.22), 0 0 30px rgba(234, 179, 8, 0.62) !important;
+        }
+
+        .cre8shield-innocent-badge {
+            display: inline-flex;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(254, 240, 138, 0.38);
+            color: #854d0e;
+            font-weight: 700;
+            font-size: 12px;
+            border: 1px solid rgba(234, 179, 8, 0.68);
         }
 
         .cre8shield-demo-reference {
@@ -246,17 +274,21 @@ $cre8shieldLoginHighlight = static function (string $email) use ($cre8shieldSusp
                         <div class="login-user-grid">
                             <?php foreach ($brands as $user): ?>
                                 <?php
-                                $cre8shieldHl = $cre8shieldLoginHighlight((string) ($user['email'] ?? ''));
+                                $cre8shieldHl = $cre8shieldLoginHighlight((string) ($user['email'] ?? ''), (string) ($user['nom'] ?? ''));
                                 if ($cre8shieldHl === 'suspicious') {
                                     $cre8shieldSuspiciousShownInDirectory = true;
                                 } elseif ($cre8shieldHl === 'victim') {
                                     $cre8shieldVictimShownInDirectory = true;
+                                } elseif ($cre8shieldHl === 'innocent') {
+                                    $cre8shieldInnocentShownInDirectory = true;
                                 }
                                 $cre8shieldCardClass = '';
                                 if ($cre8shieldHl === 'suspicious') {
                                     $cre8shieldCardClass = ' cre8shield-demo-user';
                                 } elseif ($cre8shieldHl === 'victim') {
                                     $cre8shieldCardClass = ' cre8shield-victim-user';
+                                } elseif ($cre8shieldHl === 'innocent') {
+                                    $cre8shieldCardClass = ' cre8shield-innocent-user';
                                 }
                                 ?>
                                 <form method="post" action="login.php" class="login-user-form">
@@ -266,6 +298,8 @@ $cre8shieldLoginHighlight = static function (string $email) use ($cre8shieldSusp
                                             <span class="cre8shield-demo-badge">Cre8Shield suspicious test user</span>
                                         <?php elseif ($cre8shieldHl === 'victim'): ?>
                                             <span class="cre8shield-victim-badge">Cre8Shield victim test user</span>
+                                        <?php elseif ($cre8shieldHl === 'innocent'): ?>
+                                            <span class="cre8shield-innocent-badge">Innocent protected user</span>
                                         <?php endif; ?>
                                         <span class="login-user-role brand">Brand</span>
                                         <strong><?php echo htmlspecialchars($user['nom']); ?></strong>
@@ -302,17 +336,21 @@ $cre8shieldLoginHighlight = static function (string $email) use ($cre8shieldSusp
                         <div class="login-user-grid">
                             <?php foreach ($creators as $user): ?>
                                 <?php
-                                $cre8shieldHl = $cre8shieldLoginHighlight((string) ($user['email'] ?? ''));
+                                $cre8shieldHl = $cre8shieldLoginHighlight((string) ($user['email'] ?? ''), (string) ($user['nom'] ?? ''));
                                 if ($cre8shieldHl === 'suspicious') {
                                     $cre8shieldSuspiciousShownInDirectory = true;
                                 } elseif ($cre8shieldHl === 'victim') {
                                     $cre8shieldVictimShownInDirectory = true;
+                                } elseif ($cre8shieldHl === 'innocent') {
+                                    $cre8shieldInnocentShownInDirectory = true;
                                 }
                                 $cre8shieldCardClass = '';
                                 if ($cre8shieldHl === 'suspicious') {
                                     $cre8shieldCardClass = ' cre8shield-demo-user';
                                 } elseif ($cre8shieldHl === 'victim') {
                                     $cre8shieldCardClass = ' cre8shield-victim-user';
+                                } elseif ($cre8shieldHl === 'innocent') {
+                                    $cre8shieldCardClass = ' cre8shield-innocent-user';
                                 }
                                 ?>
                                 <form method="post" action="login.php" class="login-user-form">
@@ -322,6 +360,8 @@ $cre8shieldLoginHighlight = static function (string $email) use ($cre8shieldSusp
                                             <span class="cre8shield-demo-badge">Cre8Shield suspicious test user</span>
                                         <?php elseif ($cre8shieldHl === 'victim'): ?>
                                             <span class="cre8shield-victim-badge">Cre8Shield victim test user</span>
+                                        <?php elseif ($cre8shieldHl === 'innocent'): ?>
+                                            <span class="cre8shield-innocent-badge">Innocent protected user</span>
                                         <?php endif; ?>
                                         <span class="login-user-role creator">Creator</span>
                                         <strong><?php echo htmlspecialchars($user['nom']); ?></strong>
@@ -359,17 +399,21 @@ $cre8shieldLoginHighlight = static function (string $email) use ($cre8shieldSusp
                     <div class="login-admin-grid">
                         <?php foreach ($admins as $user): ?>
                             <?php
-                            $cre8shieldHl = $cre8shieldLoginHighlight((string) ($user['email'] ?? ''));
+                            $cre8shieldHl = $cre8shieldLoginHighlight((string) ($user['email'] ?? ''), (string) ($user['nom'] ?? ''));
                             if ($cre8shieldHl === 'suspicious') {
                                 $cre8shieldSuspiciousShownInDirectory = true;
                             } elseif ($cre8shieldHl === 'victim') {
                                 $cre8shieldVictimShownInDirectory = true;
+                            } elseif ($cre8shieldHl === 'innocent') {
+                                $cre8shieldInnocentShownInDirectory = true;
                             }
                             $cre8shieldCardClass = '';
                             if ($cre8shieldHl === 'suspicious') {
                                 $cre8shieldCardClass = ' cre8shield-demo-user';
                             } elseif ($cre8shieldHl === 'victim') {
                                 $cre8shieldCardClass = ' cre8shield-victim-user';
+                            } elseif ($cre8shieldHl === 'innocent') {
+                                $cre8shieldCardClass = ' cre8shield-innocent-user';
                             }
                             ?>
                             <form method="post" action="login.php" class="login-user-form">
@@ -379,6 +423,8 @@ $cre8shieldLoginHighlight = static function (string $email) use ($cre8shieldSusp
                                         <span class="cre8shield-demo-badge">Cre8Shield suspicious test user</span>
                                     <?php elseif ($cre8shieldHl === 'victim'): ?>
                                         <span class="cre8shield-victim-badge">Cre8Shield victim test user</span>
+                                    <?php elseif ($cre8shieldHl === 'innocent'): ?>
+                                        <span class="cre8shield-innocent-badge">Innocent protected user</span>
                                     <?php endif; ?>
                                     <span class="login-user-role admin"><?php echo htmlspecialchars(getWorkspaceRoleLabel($user['role'])); ?></span>
                                     <strong><?php echo htmlspecialchars($user['nom']); ?></strong>

@@ -127,7 +127,7 @@ class Cre8ShieldCatch
         }
     }
 
-    public function listByRisk(string $riskLevel, int $limit = 100, int $offset = 0): array
+    public function listByRisk(string $riskLevel, int $limit = 100, int $offset = 0, string $sort = 'time_desc'): array
     {
         $level = $this->normalizeRiskLevel($riskLevel);
         if ($level === '' || !$this->isAvailable()) {
@@ -135,14 +135,12 @@ class Cre8ShieldCatch
         }
         $limit = max(1, min(500, $limit));
         $offset = max(0, $offset);
+        $orderBy = $this->getMonitorOrderBySql($sort);
 
         try {
-            // Open + escalated catches stay on this list. Escalated rows float to
-            // the top so admins see priority items first; everything else then
-            // sorts by created_at DESC.
             $sql = "SELECT * FROM cre8shield_catches
                     WHERE risk_level = :rl AND status NOT IN ('reviewed','resolved','ignored')
-                    ORDER BY (status = 'escalated') DESC, created_at DESC, id_catch DESC
+                    ORDER BY $orderBy
                     LIMIT $limit OFFSET $offset";
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute([':rl' => $level]);
@@ -153,7 +151,7 @@ class Cre8ShieldCatch
         }
     }
 
-    public function listByStatus(string $status, int $limit = 100, int $offset = 0): array
+    public function listByStatus(string $status, int $limit = 100, int $offset = 0, string $sort = 'time_desc'): array
     {
         $status = $this->normalizeStatus($status);
         if (!$this->isAvailable()) {
@@ -161,11 +159,12 @@ class Cre8ShieldCatch
         }
         $limit = max(1, min(500, $limit));
         $offset = max(0, $offset);
+        $orderBy = $this->getMonitorOrderBySql($sort);
 
         try {
             $sql = "SELECT * FROM cre8shield_catches
                     WHERE status = :st
-                    ORDER BY COALESCE(reviewed_at, updated_at, created_at) DESC, id_catch DESC
+                    ORDER BY $orderBy
                     LIMIT $limit OFFSET $offset";
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute([':st' => $status]);
@@ -176,20 +175,21 @@ class Cre8ShieldCatch
         }
     }
 
-    public function listReviewed(int $limit = 100, int $offset = 0): array
+    public function listReviewed(int $limit = 100, int $offset = 0, string $sort = 'time_desc'): array
     {
         if (!$this->isAvailable()) {
             return [];
         }
         $limit = max(1, min(500, $limit));
         $offset = max(0, $offset);
+        $orderBy = $this->getMonitorOrderBySql($sort, true);
 
         try {
             // Reviewed/resolved/ignored only — escalated has its own tab so it does
             // not get buried in the "Reviewed" archive view.
             $sql = "SELECT * FROM cre8shield_catches
                     WHERE status IN ('reviewed','resolved','ignored')
-                    ORDER BY COALESCE(reviewed_at, updated_at, created_at) DESC, id_catch DESC
+                    ORDER BY $orderBy
                     LIMIT $limit OFFSET $offset";
             $stmt = $this->pdo->query($sql);
 
@@ -197,6 +197,21 @@ class Cre8ShieldCatch
         } catch (Throwable $e) {
             return [];
         }
+    }
+
+    private function getMonitorOrderBySql(string $sort, bool $reviewedContext = false): string
+    {
+        return match ($sort) {
+            'score_desc' => 'risk_score DESC, created_at DESC, id_catch DESC',
+            'score_asc' => 'risk_score ASC, created_at DESC, id_catch DESC',
+            'time_asc' => 'created_at ASC, id_catch ASC',
+            'updated_desc' => 'COALESCE(reviewed_at, updated_at, created_at) DESC, id_catch DESC',
+            'updated_asc' => 'COALESCE(reviewed_at, updated_at, created_at) ASC, id_catch ASC',
+            'status_priority' => $reviewedContext
+                ? 'COALESCE(reviewed_at, updated_at, created_at) DESC, id_catch DESC'
+                : "(status = 'escalated') DESC, risk_score DESC, created_at DESC, id_catch DESC",
+            default => 'created_at DESC, id_catch DESC',
+        };
     }
 
     public function getCatchById(int $id): ?array
@@ -329,16 +344,33 @@ class Cre8ShieldCatch
      */
     public function computeCatchHash(array $data): string
     {
+        $categories = (string) ($data['risk_categories'] ?? '');
+        $categoryParts = preg_split('/[,\n\r|]+/', strtolower($categories)) ?: [];
+        $categoryParts = array_values(array_unique(array_filter(array_map(static function ($cat) {
+            return preg_replace('/[^a-z0-9_\-]/', '', trim((string) $cat));
+        }, $categoryParts))));
+        sort($categoryParts);
         $parts = [
-            (string) ($data['source_type'] ?? ''),
-            (string) ($data['source_id'] ?? ''),
-            (string) ($data['page'] ?? ''),
+            $this->normalizeCatchHashPart((string) ($data['source_type'] ?? '')),
+            $this->normalizeCatchHashPart((string) ($data['source_id'] ?? '')),
+            $this->normalizeCatchHashPart((string) ($data['page'] ?? '')),
             $this->normalizeRiskLevel((string) ($data['risk_level'] ?? '')),
-            (string) ($data['sanitized_message'] ?? ''),
-            (string) ($data['risk_categories'] ?? ''),
+            $this->normalizeCatchHashPart((string) ($data['sanitized_message'] ?? '')),
+            implode(',', $categoryParts),
         ];
 
         return hash('sha256', implode('|', $parts));
+    }
+
+    private function normalizeCatchHashPart(string $value): string
+    {
+        $value = strtolower(trim($value));
+        $value = preg_replace('/\b20\d{2}-\d{2}-\d{2}(?:[ t]\d{2}:\d{2}(?::\d{2})?)?\b/', '<date>', $value);
+        $value = preg_replace('/\b\d{1,2}:\d{2}(?::\d{2})?\b/', '<time>', (string) $value);
+        $value = preg_replace('/\b(?:id|#)\s*\d+\b/', 'id<num>', (string) $value);
+        $value = preg_replace('/\s+/', ' ', (string) $value);
+
+        return trim((string) $value);
     }
 
     private function updateStatus(int $id, int $adminId, string $status): bool

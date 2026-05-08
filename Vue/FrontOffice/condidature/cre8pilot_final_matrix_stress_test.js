@@ -959,9 +959,31 @@
         var page = 'unknown';
         var mode = '';
         var p = String(pathname || '').toLowerCase();
+        if (p.indexOf('offre/brand_index') !== -1 || p.indexOf('brand_index') !== -1) {
+            page = 'brand_offer_workspace';
+            mode = 'list';
+            return {
+                page: page,
+                mode: mode,
+                role: 'marque',
+                allowedActions: ['normal_chat', 'summarize_page', 'analyze_page', 'apply_filters', 'apply_search', 'sort_results', 'recommend_next_action', 'explain_statuses', 'security_check_page'],
+                formTarget: '',
+                visibleEntityType: 'offre',
+                visibleEntityId: '',
+            };
+        }
         if (p.indexOf('brand_create') !== -1) {
-            page = 'brand_create_offer';
+            page = 'brand_offer_workspace';
             mode = 'create_offer';
+            return {
+                page: page,
+                mode: mode,
+                role: 'marque',
+                allowedActions: ['normal_chat', 'summarize_page', 'analyze_page', 'fill_offer_form', 'improve_offer_text', 'recommend_creator', 'suggest_budget', 'security_check_page'],
+                formTarget: 'offer_form',
+                visibleEntityType: 'offre',
+                visibleEntityId: '',
+            };
         } else if (p.indexOf('creator_list') !== -1) {
             page = 'creator_offer_list';
             mode = 'list';
@@ -1038,6 +1060,7 @@
             candidatureForm: {},
             decisionForm: {},
             creators: [],
+            offers: [],
         };
         try {
             var d = iframe.contentDocument;
@@ -1077,13 +1100,62 @@
                     details: textOf(card, '', 300),
                 };
             }).filter(function (c) { return c.name; });
+            snap.offers = collectOfferCardsForFinalMatrix(d);
         } catch (e2) {}
         return snap;
     }
 
+    function collectOfferCardsForFinalMatrix(doc) {
+        if (!doc) {
+            return [];
+        }
+        var nodes = Array.prototype.slice.call(doc.querySelectorAll('[data-cre8pilot-offer-card], .offer-card, .brand-offer-card, .offer-item, article, .card'), 0, 12);
+        var out = [];
+        nodes.forEach(function (node, idx) {
+            var txt = String(node.textContent || '').replace(/\s+/g, ' ').trim();
+            if (!txt || txt.length < 12 || !/(offer|budget|deadline|eur|response|published|draft|accepted|creator)/i.test(txt)) {
+                return;
+            }
+            var title = textOf(node.ownerDocument, '', 0);
+            var titleNode = node.querySelector && node.querySelector('[data-cre8pilot-offer-title], h2, h3, strong, .offer-title, .card-title');
+            title = titleNode ? String(titleNode.textContent || '').replace(/\s+/g, ' ').trim() : '';
+            if (!title) {
+                title = txt.split(/(?:EUR|Budget|Deadline|Published|Responses?|Objective)/i)[0].trim().slice(0, 90);
+            }
+            var budgetMatch = txt.match(/(?:EUR\s*)?(\d+(?:[.,]\d{1,2})?)\s*(?:EUR|€)?/i);
+            var deadlineMatch = txt.match(/\b20\d{2}-\d{2}-\d{2}\b/);
+            var responseMatch = txt.match(/\b(\d+)\s+responses?\b/i);
+            out.push({
+                id: String(idx + 1),
+                title: title || ('Visible offer ' + (idx + 1)),
+                section: /draft/i.test(txt) ? 'drafts' : (/accepted/i.test(txt) ? 'accepted' : 'published'),
+                budget: budgetMatch ? budgetMatch[1] : '',
+                deadline: deadlineMatch ? deadlineMatch[0] : '',
+                published: /published/i.test(txt) ? 'yes' : '',
+                responseCount: responseMatch ? responseMatch[1] : '0',
+                targetCreator: '',
+                latestSignal: responseMatch && Number(responseMatch[1]) > 0 ? 'response received' : (/waiting|no reply|0 response/i.test(txt) ? 'no reply yet' : ''),
+                objective: '',
+                cardText: txt.slice(0, 600),
+            });
+        });
+        var seen = {};
+        return out.filter(function (o) {
+            var key = String(o.title || '').toLowerCase();
+            if (!key || seen[key]) {
+                return false;
+            }
+            seen[key] = true;
+            return true;
+        });
+    }
+
     function buildRequestBody(prompt, ctx, visibleData, suiteState) {
         var sel = '';
-        if (suiteState && suiteState.lastUploadedDocumentId) {
+        var promptLower = String(prompt || '').toLowerCase();
+        var wantsDocument = /\b(uploaded|document|file|pdf|cv|resume|portfolio|last file|last document)\b/.test(promptLower)
+            || /portfolio brief|product brief|uploaded brief|skills section/i.test(promptLower);
+        if (suiteState && suiteState.lastUploadedDocumentId && wantsDocument) {
             var rawId = String(suiteState.lastUploadedDocumentId).replace(/^doc_pick_/, '');
             sel = 'doc_pick_' + rawId;
         }
@@ -1102,10 +1174,10 @@
             visibleEntityId: ctx.visibleEntityId != null ? String(ctx.visibleEntityId) : '',
             selectedClarificationId: sel,
         };
-        if (suiteState && suiteState.lastUploadedDocumentLabel) {
+        if (suiteState && suiteState.lastUploadedDocumentLabel && wantsDocument) {
             body.documentLabel = String(suiteState.lastUploadedDocumentLabel);
         }
-        if (suiteState && suiteState.lastUploadedDocumentId) {
+        if (suiteState && suiteState.lastUploadedDocumentId && wantsDocument) {
             body.selectedDocumentId = String(suiteState.lastUploadedDocumentId);
             body.documentIdsUsed = [String(suiteState.lastUploadedDocumentId)];
         }
@@ -1123,6 +1195,14 @@
         if (Array.isArray(extra.creators)) {
             out.creators = extra.creators;
         }
+        if (Array.isArray(extra.offers)) {
+            out.offers = extra.offers;
+        }
+        ['tabCounts', 'brandOfferList', 'activeOfferTab', 'visibleOfferScope', 'snapshotAt'].forEach(function (k) {
+            if (Object.prototype.hasOwnProperty.call(extra, k)) {
+                out[k] = extra[k];
+            }
+        });
         return out;
     }
 

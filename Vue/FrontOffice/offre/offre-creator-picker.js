@@ -508,6 +508,110 @@ function initCreatorPicker(picker) {
         clearSelectionButton.addEventListener('click', clearSelection);
     }
 
+    function findCardById(idStr) {
+        if (!idStr) {
+            return null;
+        }
+        if (grid) {
+            const inGrid = grid.querySelectorAll('.creator-option');
+            for (let i = 0; i < inGrid.length; i++) {
+                if (String(inGrid[i].dataset.creatorId) === idStr) {
+                    return inGrid[i];
+                }
+            }
+        }
+        if (modalGrid) {
+            const inModal = modalGrid.querySelectorAll('.creator-option');
+            for (let i = 0; i < inModal.length; i++) {
+                if (String(inModal[i].dataset.creatorId) === idStr) {
+                    return inModal[i];
+                }
+            }
+        }
+        return null;
+    }
+
+    function flashPickerHighlight() {
+        try {
+            picker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch (e) {
+            picker.scrollIntoView();
+        }
+        picker.classList.add('creator-picker-flash');
+        window.setTimeout(function () {
+            picker.classList.remove('creator-picker-flash');
+        }, 1800);
+    }
+
+    function applyCreatorById(creatorId, options) {
+        const opts = options || {};
+        const idStr = String(creatorId == null ? '' : creatorId).trim();
+        if (idStr === '' || idStr === '0') {
+            return Promise.resolve(false);
+        }
+
+        if (selectedCreator && String(selectedCreator.id) === idStr) {
+            if (opts.scrollIntoView) {
+                flashPickerHighlight();
+            }
+            return Promise.resolve(true);
+        }
+
+        const existing = findCardById(idStr);
+        if (existing) {
+            applySelection(readCreatorFromCard(existing));
+            if (opts.scrollIntoView) {
+                flashPickerHighlight();
+            }
+            return Promise.resolve(true);
+        }
+
+        if (!endpoint) {
+            return Promise.resolve(false);
+        }
+
+        const params = new URLSearchParams();
+        params.set('keyword', idStr);
+        params.set('limit', String(pageSize));
+        params.set('offset', '0');
+
+        return fetch(endpoint + '&' + params.toString(), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('Lookup failed.');
+                }
+                return response.json();
+            })
+            .then(function (payload) {
+                const items = Array.isArray(payload && payload.items) ? payload.items : [];
+                let match = null;
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i] && String(items[i].id) === idStr) {
+                        match = items[i];
+                        break;
+                    }
+                }
+                if (!match) {
+                    return false;
+                }
+                applySelection(normalizeCreator(match));
+                if (opts.scrollIntoView) {
+                    flashPickerHighlight();
+                }
+                return true;
+            })
+            .catch(function () {
+                return false;
+            });
+    }
+
+    picker.cre8pilotApplyCreatorById = applyCreatorById;
+    picker.cre8pilotGetSelectedCreatorId = function () {
+        return selectedCreator && selectedCreator.id ? String(selectedCreator.id) : '';
+    };
+
     syncPickerDataset();
     syncHiddenInput();
     updateSummary();

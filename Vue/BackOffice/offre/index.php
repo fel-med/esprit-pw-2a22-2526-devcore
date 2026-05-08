@@ -544,16 +544,18 @@ if (!empty($liveBudgetOffers)) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Back Office - Offer Management</title>
     <link rel="stylesheet" href="../css/backoffice.css">
+    <link rel="stylesheet" href="../css/new_style_backoffice.css">
     <link rel="stylesheet" href="offre-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre-admin.css')); ?>">
 </head>
 <body class="cre8-admin-layout">
-    <div class="cre8-admin-page">
+    <div class="container-scroller cre8-admin-page">
         <?php require_once dirname(__DIR__) . '/layout/sidebar.php'; ?>
-        <main class="cre8-admin-main">
+        <main class="page-body-wrapper cre8-admin-main">
             <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
-    <div class="admin-shell">
-        <header class="admin-header">
-            <div class="admin-header-main">
+    <div class="main-panel">
+    <div class="content-wrapper admin-shell">
+        <header class="admin-header card grid-margin">
+            <div class="admin-header-main card-body">
                 <div>
                     <h1>Offer administration</h1>
                     <p>Track targeted offers, understand creator response behavior, and keep the collaboration pipeline visible for admins.</p>
@@ -568,7 +570,7 @@ if (!empty($liveBudgetOffers)) {
             <div class="admin-flash success">Offer deleted successfully.</div>
         <?php endif; ?>
 
-        <section class="search-panel search-panel-simple">
+        <section class="card grid-margin search-panel search-panel-simple">
             <div class="search-panel-head">
                 <div class="search-panel-copy">
                     <span class="search-panel-title">Filter the offer list</span>
@@ -585,12 +587,12 @@ if (!empty($liveBudgetOffers)) {
                 <div class="search-grid">
                     <div class="search-group">
                         <label for="keyword">Keyword</label>
-                        <input id="keyword" name="keyword" type="search" value="<?php echo htmlspecialchars($searchKeyword); ?>" placeholder="Offer, brand, creator, or ID...">
+                        <input id="keyword" name="keyword" type="search" class="form-control" value="<?php echo htmlspecialchars($searchKeyword); ?>" placeholder="Offer, brand, creator, or ID...">
                     </div>
 
                     <div class="search-group">
                         <label for="statut">Status</label>
-                        <select id="statut" name="statut">
+                        <select id="statut" name="statut" class="form-control">
                             <option value="">All</option>
                             <option value="brouillon"<?php echo $searchStatut === 'brouillon' ? ' selected' : ''; ?>>Draft</option>
                             <option value="publiee"<?php echo $searchStatut === 'publiee' ? ' selected' : ''; ?>>Live now</option>
@@ -603,27 +605,27 @@ if (!empty($liveBudgetOffers)) {
 
                     <div class="search-group">
                         <label for="budgetFrom">Budget from</label>
-                        <input id="budgetFrom" name="budgetFrom" type="number" step="0.01" value="<?php echo htmlspecialchars($searchBudgetFrom); ?>" placeholder="0">
+                        <input id="budgetFrom" name="budgetFrom" type="number" step="0.01" class="form-control" value="<?php echo htmlspecialchars($searchBudgetFrom); ?>" placeholder="0">
                     </div>
 
                     <div class="search-group">
                         <label for="budgetTo">Budget to</label>
-                        <input id="budgetTo" name="budgetTo" type="number" step="0.01" value="<?php echo htmlspecialchars($searchBudgetTo); ?>" placeholder="0">
+                        <input id="budgetTo" name="budgetTo" type="number" step="0.01" class="form-control" value="<?php echo htmlspecialchars($searchBudgetTo); ?>" placeholder="0">
                     </div>
 
                     <div class="search-group">
                         <label for="dateLimite">Deadline from</label>
-                        <input id="dateLimite" name="dateLimite" type="date" value="<?php echo htmlspecialchars($searchDateLimite); ?>">
+                        <input id="dateLimite" name="dateLimite" type="date" class="form-control" value="<?php echo htmlspecialchars($searchDateLimite); ?>">
                     </div>
 
                     <div class="search-group">
                         <label for="dateLimiteTo">Deadline to</label>
-                        <input id="dateLimiteTo" name="dateLimiteTo" type="date" value="<?php echo htmlspecialchars($searchDateLimiteTo); ?>">
+                        <input id="dateLimiteTo" name="dateLimiteTo" type="date" class="form-control" value="<?php echo htmlspecialchars($searchDateLimiteTo); ?>">
                     </div>
 
                     <div class="search-group">
                         <label for="sort">Sort</label>
-                        <select id="sort" name="sort">
+                        <select id="sort" name="sort" class="form-control">
                             <option value=""<?php echo $searchSort === '' ? ' selected' : ''; ?>>Newest</option>
                             <option value="oldest"<?php echo $searchSort === 'oldest' ? ' selected' : ''; ?>>Oldest</option>
                             <option value="deadline_soon"<?php echo $searchSort === 'deadline_soon' ? ' selected' : ''; ?>>Deadline soon</option>
@@ -635,39 +637,39 @@ if (!empty($liveBudgetOffers)) {
                 </div>
 
                 <div class="search-actions">
-                    <button type="submit">Apply filters</button>
-                    <a class="clear-link" href="index.php">Reset</a>
+                    <button type="submit" class="btn btn-primary">Apply filters</button>
+                    <a class="btn btn-secondary clear-link" href="index.php">Reset</a>
                 </div>
             </form>
         </section>
 
         <section class="admin-summary">
-            <article class="admin-card">
+            <article class="admin-card card card-body">
                 <h3>Real offers</h3>
                 <p><?php echo (int) ($adminOfferMetrics['realOffers'] ?? 0); ?></p>
                 <small>Total targeted invitations</small>
             </article>
-            <article class="admin-card">
+            <article class="admin-card card card-body">
                 <h3>Real candidatures</h3>
                 <p><?php echo (int) ($platformMetrics['realCandidatures'] ?? 0); ?></p>
                 <small>Placeholders excluded</small>
             </article>
-            <article class="admin-card">
+            <article class="admin-card card card-body">
                 <h3>Pending reviews</h3>
                 <p><?php echo (int) ($platformMetrics['pendingReviews'] ?? 0); ?></p>
                 <small>Sent or under review</small>
             </article>
-            <article class="admin-card">
+            <article class="admin-card card card-body">
                 <h3>Open negotiations</h3>
                 <p><?php echo (int) ($platformMetrics['openNegotiations'] ?? 0); ?></p>
                 <small>Active negotiation candidatures</small>
             </article>
-            <article class="admin-card">
+            <article class="admin-card card card-body">
                 <h3>Expired offers</h3>
                 <p><?php echo (int) ($adminOfferMetrics['expiredOffers'] ?? 0); ?></p>
                 <small>Past deadline and not archived</small>
             </article>
-            <article class="admin-card">
+            <article class="admin-card card card-body">
                 <h3>Activity this week</h3>
                 <p><?php echo (int) ($platformMetrics['activityThisWeek'] ?? 0); ?></p>
                 <small><?php echo htmlspecialchars((string) ($platformMetrics['acceptanceRate'] ?? 0)); ?>% acceptance rate</small>
@@ -677,13 +679,13 @@ if (!empty($liveBudgetOffers)) {
         <?php require __DIR__ . '/../condidature/statistics_charts.php'; ?>
 
         <div class="admin-layout">
-            <section class="admin-panel admin-table-panel">
+            <section class="admin-panel admin-table-panel card grid-margin">
                 <div class="admin-panel-header">
-                    <h2>Offer list</h2>
+                    <h2 class="card-title">Offer list</h2>
                 </div>
-                <div class="admin-panel-body">
+                <div class="admin-panel-body card-body">
                     <div class="admin-table-wrapper">
-                        <table class="admin-table admin-offer-table">
+                        <table class="admin-table admin-offer-table table table-hover table-striped">
                             <colgroup>
                                 <col class="offer-col-main">
                                 <col class="offer-col-brand">
@@ -741,7 +743,7 @@ if (!empty($liveBudgetOffers)) {
                                         </td>
                                         <td class="money-cell"><?php echo htmlspecialchars(formatMoney($offre->getBudgetPropose())); ?></td>
                                         <td><?php echo htmlspecialchars($offre->getDateLimite()); ?></td>
-                                        <td><span class="badge-status <?php echo htmlspecialchars($displayStatus); ?>"><?php echo htmlspecialchars(translateOfferStatus($displayStatus)); ?></span></td>
+                                        <td><span class="badge badge-status <?php echo htmlspecialchars($displayStatus); ?>"><?php echo htmlspecialchars(translateOfferStatus($displayStatus)); ?></span></td>
                                         <td class="responses-cell">
                                             <button
                                                 type="button"
@@ -756,7 +758,7 @@ if (!empty($liveBudgetOffers)) {
                                         </td>
                                         <td class="admin-actions">
                                             <div class="admin-actions-stack">
-                                                <a class="inspect-link" href="<?php echo htmlspecialchars($inspectUrl); ?>">Inspect</a>
+                                                <a class="btn btn-info btn-sm inspect-link" href="<?php echo htmlspecialchars($inspectUrl); ?>">Inspect</a>
                                                 <form
                                                     method="post"
                                                     class="inline-delete-form"
@@ -765,7 +767,7 @@ if (!empty($liveBudgetOffers)) {
                                                     data-delete-creator="<?php echo htmlspecialchars($creatorName, ENT_QUOTES); ?>"
                                                 >
                                                     <input type="hidden" name="idOffreToDelete" value="<?php echo (int) $offre->getIdOffre(); ?>">
-                                                    <button type="submit" name="deleteOffre" class="delete-btn">Delete</button>
+                                                    <button type="submit" name="deleteOffre" class="btn btn-danger btn-sm delete-btn">Delete</button>
                                                 </form>
                                             </div>
                                         </td>
@@ -786,25 +788,25 @@ if (!empty($liveBudgetOffers)) {
                         <span>Page <?php echo $page; ?> · Showing up to <?php echo $perPage; ?> offers</span>
                         <div>
                             <?php if ($prevPageUrl !== ''): ?>
-                                <a class="clear-link" href="<?php echo htmlspecialchars($prevPageUrl); ?>">Previous</a>
+                                <a class="btn btn-secondary btn-sm clear-link" href="<?php echo htmlspecialchars($prevPageUrl); ?>">Previous</a>
                             <?php else: ?>
-                                <span class="clear-link is-disabled">Previous</span>
+                                <span class="btn btn-secondary btn-sm clear-link is-disabled">Previous</span>
                             <?php endif; ?>
                             <?php if ($nextPageUrl !== ''): ?>
-                                <a class="clear-link" href="<?php echo htmlspecialchars($nextPageUrl); ?>">Next</a>
+                                <a class="btn btn-primary btn-sm clear-link" href="<?php echo htmlspecialchars($nextPageUrl); ?>">Next</a>
                             <?php else: ?>
-                                <span class="clear-link is-disabled">Next</span>
+                                <span class="btn btn-secondary btn-sm clear-link is-disabled">Next</span>
                             <?php endif; ?>
                         </div>
                     </nav>
                 </div>
             </section>
 
-            <aside class="admin-panel admin-details-panel">
+            <aside class="admin-panel admin-details-panel card grid-margin">
                 <div class="admin-panel-header">
-                    <h2>Offer insights</h2>
+                    <h2 class="card-title">Offer insights</h2>
                 </div>
-                <div class="admin-panel-body admin-insights-body" id="offerInsightsBody">
+                <div class="admin-panel-body card-body admin-insights-body" id="offerInsightsBody">
                     <?php echo renderOfferInsightsHtml(
                         $selectedOffer,
                         $selectedBrand,
@@ -816,6 +818,7 @@ if (!empty($liveBudgetOffers)) {
                 </div>
             </aside>
         </div>
+    </div>
     </div>
     <dialog class="inspect-dialog" id="offerInspectDialog" aria-labelledby="offerInspectDialogTitle">
         <div class="inspect-dialog-card">

@@ -165,17 +165,19 @@ $canReview = $condidature && $condidature->getStatutCandidature() !== 'retiree';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Back Office - Candidature Review</title>
     <link rel="stylesheet" href="../css/backoffice.css">
+    <link rel="stylesheet" href="../css/new_style_backoffice.css">
     <link rel="stylesheet" href="../offre/offre-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../offre/offre-admin.css')); ?>">
     <link rel="stylesheet" href="condidature-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/condidature-admin.css')); ?>">
 </head>
 <body class="cre8-admin-layout">
-    <div class="cre8-admin-page">
+    <div class="container-scroller cre8-admin-page">
         <?php require_once dirname(__DIR__) . '/layout/sidebar.php'; ?>
-        <main class="cre8-admin-main">
+        <main class="page-body-wrapper cre8-admin-main">
             <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
-    <div class="admin-shell">
-        <header class="admin-header">
-            <div class="admin-header-main">
+    <div class="main-panel">
+    <div class="content-wrapper admin-shell">
+        <header class="admin-header card grid-margin">
+            <div class="admin-header-main card-body">
                 <div>
                     <h1>Candidature review</h1>
                     <p>Inspect the creator response, compare it to the targeted offer context, and record the current review outcome clearly.</p>
@@ -199,29 +201,29 @@ $canReview = $condidature && $condidature->getStatutCandidature() !== 'retiree';
         <?php endif; ?>
 
         <?php if ($error): ?>
-            <section class="admin-panel admin-table-panel">
-                <div class="admin-panel-body">
+            <section class="admin-panel admin-table-panel card grid-margin">
+                <div class="admin-panel-body card-body">
                     <div class="detail-empty-state">
                         <span class="detail-empty-icon">!</span>
                         <h4>Candidature unavailable</h4>
                         <p><?php echo htmlspecialchars($error); ?></p>
                         <div class="search-actions" style="margin-top: 1rem;">
-                            <a class="clear-link" href="index.php">Back to candidature list</a>
+                            <a class="btn btn-secondary clear-link" href="index.php">Back to candidature list</a>
                         </div>
                     </div>
                 </div>
             </section>
         <?php else: ?>
             <div class="candidature-admin-grid">
-                <section class="admin-panel admin-table-panel">
+                <section class="admin-panel admin-table-panel card grid-margin">
                     <div class="admin-panel-header">
-                        <h2>Review snapshot</h2>
+                        <h2 class="card-title">Review snapshot</h2>
                     </div>
-                    <div class="admin-panel-body">
+                    <div class="admin-panel-body card-body">
                         <div class="quick-overview-card">
                             <div class="quick-overview-top">
                                 <span class="quick-overview-tag"><?php echo htmlspecialchars(translateOrigin($source['origin'])); ?></span>
-                                <span class="badge-status <?php echo htmlspecialchars($condidature->getStatutCandidature()); ?>"><?php echo htmlspecialchars($condidature->getDisplayStatusLabel()); ?></span>
+                                <span class="badge badge-status <?php echo htmlspecialchars($condidature->getStatutCandidature()); ?>"><?php echo htmlspecialchars($condidature->getDisplayStatusLabel()); ?></span>
                             </div>
                             <h3><?php echo htmlspecialchars($source['title']); ?></h3>
                             <p class="quick-overview-description"><?php echo htmlspecialchars($source['description'] ?: 'No source description was attached to this candidature.'); ?></p>
@@ -363,11 +365,11 @@ $canReview = $condidature && $condidature->getStatutCandidature() !== 'retiree';
                     </div>
                 </section>
 
-                <aside class="admin-panel admin-details-panel">
+                <aside class="admin-panel admin-details-panel card grid-margin">
                     <div class="admin-panel-header">
-                        <h2>Review controls</h2>
+                        <h2 class="card-title">Review controls</h2>
                     </div>
-                    <div class="admin-panel-body">
+                    <div class="admin-panel-body card-body">
                         <section class="candidature-status-card">
                             <h3>Current workflow state</h3>
                             <p>
@@ -383,7 +385,7 @@ $canReview = $condidature && $condidature->getStatutCandidature() !== 'retiree';
                             <form method="post" class="candidature-review-form" style="margin-top: 1rem;">
                                 <div class="search-group">
                                     <label for="reviewStatus">Review status</label>
-                                    <select id="reviewStatus" name="reviewStatus">
+                                    <select id="reviewStatus" name="reviewStatus" class="form-control">
                                         <?php foreach ($controller->getDecisionStatusOptions() as $status): ?>
                                             <option value="<?php echo htmlspecialchars($status); ?>"<?php echo $form['reviewStatus'] === $status ? ' selected' : ''; ?>>
                                                 <?php echo htmlspecialchars(translateCandidatureStatus($status)); ?>
@@ -394,12 +396,12 @@ $canReview = $condidature && $condidature->getStatutCandidature() !== 'retiree';
 
                                 <div class="search-group">
                                     <label for="noteDecision">Decision note</label>
-                                    <textarea id="noteDecision" name="noteDecision" rows="8" data-cre8pilot-field="noteDecision" placeholder="Explain the current review decision, next step, or the reason behind this outcome."><?php echo htmlspecialchars($form['noteDecision']); ?></textarea>
+                                    <textarea id="noteDecision" name="noteDecision" rows="8" class="form-control" data-cre8pilot-field="noteDecision" placeholder="Explain the current review decision, next step, or the reason behind this outcome."><?php echo htmlspecialchars($form['noteDecision']); ?></textarea>
                                 </div>
 
                                 <div class="candidature-review-actions">
-                                    <button type="submit">Save review</button>
-                                    <a class="clear-link" href="index.php">Back to list</a>
+                                    <button type="submit" class="btn btn-primary">Save review</button>
+                                    <a class="btn btn-secondary clear-link" href="index.php">Back to list</a>
                                 </div>
                             </form>
                         <?php else: ?>
@@ -408,13 +410,14 @@ $canReview = $condidature && $condidature->getStatutCandidature() !== 'retiree';
                                 <p>The creator already withdrew this candidature, so the admin review can stay visible but should not move it into a new decision state.</p>
                             </section>
                             <div class="candidature-review-actions" style="margin-top: 1rem;">
-                                <a class="clear-link" href="index.php">Back to list</a>
+                                <a class="btn btn-secondary clear-link" href="index.php">Back to list</a>
                             </div>
                         <?php endif; ?>
                     </div>
                 </aside>
             </div>
         <?php endif; ?>
+    </div>
     </div>
         </main>
     </div>

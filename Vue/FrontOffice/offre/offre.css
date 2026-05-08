@@ -3248,8 +3248,9 @@ body > main.container-fluid {
 }
 
 .cre8pilot-message.is-clarification {
-  align-self: stretch;
-  max-width: 100%;
+  align-self: flex-start;
+  max-width: min(94%, 100%);
+  border-left: 3px solid rgba(108, 92, 231, 0.55);
 }
 
 .cre8pilot-message.is-blocked,
@@ -3486,6 +3487,78 @@ body > main.container-fluid {
   font-size: 0.74rem;
   line-height: 1.4;
   color: var(--muted-text);
+}
+
+.cre8pilot-match-select-btn {
+  border: 1px solid rgba(30, 48, 243, 0.45);
+  border-radius: 999px;
+  background: var(--card-bg);
+  color: var(--primary-color-strong, #1e30f3);
+  padding: 0.18rem 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+
+.cre8pilot-match-select-btn:hover:not(:disabled) {
+  background: rgba(30, 48, 243, 0.12);
+}
+
+.cre8pilot-match-select-btn:focus-visible {
+  outline: 2px solid rgba(30, 48, 243, 0.55);
+  outline-offset: 2px;
+}
+
+.cre8pilot-match-select-btn.is-selected {
+  background: linear-gradient(135deg, rgba(30, 48, 243, 0.95), rgba(108, 92, 231, 0.95));
+  color: #fff;
+  border-color: transparent;
+  cursor: default;
+}
+
+.cre8pilot-match-select-btn:disabled {
+  opacity: 0.75;
+  cursor: progress;
+}
+
+.cre8pilot-match-row.is-selected-row {
+  background: rgba(30, 48, 243, 0.05);
+  border-radius: 0.55rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  margin-left: -0.5rem;
+  margin-right: -0.5rem;
+}
+
+.cre8pilot-match-auto-badge {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #15803d;
+  background: rgba(74, 222, 128, 0.18);
+  border: 1px solid rgba(74, 222, 128, 0.45);
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+}
+
+.creator-picker.creator-picker-flash {
+  animation: cre8pilotPickerFlash 1.6s ease-out;
+}
+
+@keyframes cre8pilotPickerFlash {
+  0% {
+    box-shadow: 0 0 0 0 rgba(30, 48, 243, 0);
+  }
+  20% {
+    box-shadow: 0 0 0 6px rgba(30, 48, 243, 0.18);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(30, 48, 243, 0);
+  }
 }
 
 .cre8pilot-option-list {
@@ -4175,11 +4248,11 @@ body > main.container-fluid {
   background: linear-gradient(180deg, rgba(201, 255, 255, 0.98), rgba(56, 189, 248, 0.8));
   box-shadow: 0 0 8px rgba(56, 189, 248, 0.92), 0 0 14px rgba(129, 140, 248, 0.5);
   transform-origin: center;
-  animation: cre8pilotBlink 4.2s ease-in-out infinite;
+  animation: cre8pilotBlinkNatural 5.2s ease-in-out infinite;
 }
 
 .cre8pilot-bot-eye--right {
-  animation-delay: 0.14s;
+  animation-delay: 0s;
 }
 
 /* Mast grows upward from head; beacon sits on top (reads upright, not “hanging”) */
@@ -4485,7 +4558,7 @@ body > main.container-fluid {
 }
 
 .cre8pilot-avatar--thinking .cre8pilot-bot-eye {
-  animation: cre8pilotBlink 2.8s ease-in-out infinite, cre8pilotLookAround 1.8s ease-in-out infinite;
+  animation: cre8pilotBlinkThinking 2.7s ease-in-out infinite, cre8pilotEyeFocus 1.8s ease-in-out infinite;
 }
 
 .cre8pilot-avatar--thinking .cre8pilot-bot-arm--left {
@@ -4728,10 +4801,27 @@ body > main.container-fluid {
   93%, 96% { transform: scaleY(0.14); opacity: 0.5; }
 }
 
+@keyframes cre8pilotBlinkNatural {
+  0%, 88%, 100% { transform: scaleY(1); opacity: 1; }
+  90%, 92% { transform: scaleY(0.06); opacity: 0.45; }
+  94%, 96% { transform: scaleY(1); opacity: 1; }
+}
+
+@keyframes cre8pilotBlinkThinking {
+  0%, 78%, 100% { transform: scaleY(1); opacity: 1; }
+  82%, 86% { transform: scaleY(0.08); opacity: 0.5; }
+  90%, 92% { transform: scaleY(0.22); opacity: 0.72; }
+}
+
 @keyframes cre8pilotLookAround {
   0%, 100% { transform: translateX(0) scaleY(1); }
   30% { transform: translateX(-9%) scaleY(0.95); }
   68% { transform: translateX(9%) scaleY(0.95); }
+}
+
+@keyframes cre8pilotEyeFocus {
+  0%, 100% { filter: brightness(1) saturate(1); }
+  50% { filter: brightness(1.2) saturate(1.15); }
 }
 
 @keyframes cre8pilotEyePulse {
