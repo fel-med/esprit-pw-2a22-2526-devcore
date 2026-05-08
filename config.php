@@ -45,10 +45,45 @@ function callOpenRouter(string $prompt): ?string
 {
     $apiKey = $_ENV['GROQ_API_KEY'] ?? '';
 
+ HEAD
     // 🔴 Sécurité : ne pas appeler l'API si la clé est absente
     if (empty($apiKey)) {
         error_log('GROQ_API_KEY manquante dans .env');
         return null;
+
+  public static function getConnexion()
+
+  {
+
+    if (!isset(self::$pdo)) {
+
+      try {
+
+        self::$pdo = new PDO(
+
+          'mysql:host=localhost;dbname=cre8connect',
+
+          'root',
+
+          '',
+
+          [
+
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+
+          ]
+
+        );
+
+      } catch (Exception $e) {
+
+        die('Erreur: ' . $e->getMessage());
+
+      }
+
+ origin/main
     }
 
     $url  = 'https://api.groq.com/openai/v1/chat/completions';
