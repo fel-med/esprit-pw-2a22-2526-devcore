@@ -415,7 +415,13 @@ class CommentC
 
         switch ($searchType) {
             case 'postId':
-                return $this->getCommentsTreeByPost($keyword);
+                $tree = $this->getCommentsTreeByPost($keyword);
+                $flat = [];
+                $this->flattenTree($tree, $flat);
+                usort($flat, static function ($a, $b) {
+                    return strcmp((string)$b['id'], (string)$a['id']);
+                });
+                return $flat;
 
             case 'commentId':
                 return $this->buildTree($this->listRepliesByComment($keyword));

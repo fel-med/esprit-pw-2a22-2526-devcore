@@ -129,6 +129,17 @@ require_once '../partials/header.php';
 
 body.light-mode { background-color: #f9f0ff !important; color: #2d0045 !important; }
 body.light-mode .card { background-color: #ffffff !important; border-color: rgba(233,30,140,.12) !important; color: #2d0045 !important; }
+body.light-mode .stat-card-custom1 { background-color: #FFB800 !important; border-color: #FFB800 !important; }
+body.light-mode .stat-card-custom2 { background-color: #D81B60 !important; border-color: #D81B60 !important; }
+body.light-mode .stat-card-custom3 { background-color: #98D882 !important; border-color: #98D882 !important; }
+body.light-mode .stat-card-custom4 { background-color: #A855F7 !important; border-color: #A855F7 !important; }
+body.light-mode .stat-card-custom1 *,
+body.light-mode .stat-card-custom2 *,
+body.light-mode .stat-card-custom3 *,
+body.light-mode .stat-card-custom4 * {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
 body.light-mode .chart-sub   { color: #9c27b0; }
 body.light-mode .chart-title { color: #2d0045; }
 body.light-mode .chart-legend { color: #2d0045; }
@@ -171,7 +182,7 @@ body.light-mode #commentPaginationControls { border-top-color: rgba(233,30,140,.
 <!-- ══ Metric cards ══════════════════════════════════════════════ -->
 <div class="row">
     <div class="col-6 col-md-3 grid-margin stretch-card">
-        <div class="card stat-card-mini">
+        <div class="card stat-card-mini stat-card-custom1">
             <div class="card-body">
                 <h6>Total Comments</h6>
                 <h2><?= $totalComments ?></h2>
@@ -179,7 +190,7 @@ body.light-mode #commentPaginationControls { border-top-color: rgba(233,30,140,.
         </div>
     </div>
     <div class="col-6 col-md-3 grid-margin stretch-card">
-        <div class="card stat-card-mini">
+        <div class="card stat-card-mini stat-card-custom2">
             <div class="card-body">
                 <h6>Total Likes</h6>
                 <h2><?= number_format($totalLikes, 0, ',', ' ') ?></h2>
@@ -187,7 +198,7 @@ body.light-mode #commentPaginationControls { border-top-color: rgba(233,30,140,.
         </div>
     </div>
     <div class="col-6 col-md-3 grid-margin stretch-card">
-        <div class="card stat-card-mini">
+        <div class="card stat-card-mini stat-card-custom3">
             <div class="card-body">
                 <h6>Total Dislikes</h6>
                 <h2><?= number_format($totalDislikes, 0, ',', ' ') ?></h2>
@@ -195,7 +206,7 @@ body.light-mode #commentPaginationControls { border-top-color: rgba(233,30,140,.
         </div>
     </div>
     <div class="col-6 col-md-3 grid-margin stretch-card">
-        <div class="card stat-card-mini">
+        <div class="card stat-card-mini stat-card-custom4">
             <div class="card-body">
                 <h6>Approval Rate</h6>
                 <h2><?= $approvalPct ?>%</h2>
@@ -502,6 +513,12 @@ function toggleTheme() {
                         <a href="./index.php" class="btn btn-outline-light">Reset</a>
                     </div>
                 </form>
+
+                <?php if ($searchType === 'postId' && $keyword !== '') : ?>
+                    <div class="alert alert-info mb-4" role="alert" style="border:1px solid rgba(139,92,246,.25);background:rgba(243,240,255,.9);color:#4c1d95;">
+                        Affichage des commentaires liés au post <strong>#<?= htmlspecialchars($keyword) ?></strong>.
+                    </div>
+                <?php endif; ?>
 
                 <?php if (empty($comments)) : ?>
                     <div class="empty-state-admin">

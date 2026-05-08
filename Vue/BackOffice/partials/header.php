@@ -9,8 +9,10 @@ function isActivePage($page, $currentPage)
 {
     return $page === $currentPage ? 'active' : '';
 }
-$isCommentSection = strpos($_SERVER['PHP_SELF'] ?? '', '/Vue/BackOffice/comment/') !== false;
+$requestPath = $_SERVER['REQUEST_URI'] ?? ($_SERVER['PHP_SELF'] ?? '');
+$isCommentSection = strpos($requestPath, '/comment/') !== false || strpos($requestPath, '\\comment\\') !== false;
 $postsIndexUrl = $isCommentSection ? '../post/index.php' : './index.php';
+$commentIndexUrl = $isCommentSection ? './index.php' : '../comment/index.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -29,8 +31,12 @@ $postsIndexUrl = $isCommentSection ? '../post/index.php' : './index.php';
 
     <nav class="sidebar sidebar-offcanvas" id="sidebar">
         <div class="sidebar-brand-wrapper d-none d-lg-flex align-items-center justify-content-center fixed-top">
-            <a class="sidebar-brand brand-logo text-white text-decoration-none" href="<?= htmlspecialchars($postsIndexUrl) ?>">Admin Panel</a>
-            <a class="sidebar-brand brand-logo-mini text-white text-decoration-none" href="<?= htmlspecialchars($postsIndexUrl) ?>">AP</a>
+            <a class="sidebar-brand brand-logo text-white text-decoration-none" href="<?= htmlspecialchars($postsIndexUrl) ?>">
+                <img src="../../public/images/logoweb.png" alt="Create Connect" style="height: 44px; width: auto;">
+            </a>
+            <a class="sidebar-brand brand-logo-mini text-white text-decoration-none" href="<?= htmlspecialchars($postsIndexUrl) ?>">
+                <img src="../../public/images/logoweb.png" alt="Create Connect" style="height: 30px; width: auto;">
+            </a>
         </div>
 
         <ul class="nav">
@@ -49,6 +55,13 @@ $postsIndexUrl = $isCommentSection ? '../post/index.php' : './index.php';
                 </div>
             </li>
 
+            <li class="nav-item">
+                <button id="themeToggleBtn" class="nav-link theme-toggle-btn" title="Toggle dark/light mode">
+                    <span class="menu-icon"><i id="themeIcon" class="mdi mdi-weather-night"></i></span>
+                    <span class="menu-title" id="themeLabel">Light mode</span>
+                </button>
+            </li>
+
             <li class="nav-item nav-category"><span class="nav-link">Navigation</span></li>
 
             <li class="nav-item menu-items <?= isActivePage('posts', $currentPage); ?>">
@@ -59,7 +72,7 @@ $postsIndexUrl = $isCommentSection ? '../post/index.php' : './index.php';
             </li>
 
             <li class="nav-item menu-items <?= isActivePage('comments', $currentPage); ?>">
-                <a class="nav-link" href="<?= $isCommentSection ? './index.php' : '../comment/index.php' ?>">
+                <a class="nav-link" href="<?= htmlspecialchars($commentIndexUrl) ?>">
                     <span class="menu-icon"><i class="mdi mdi-comment-multiple-outline"></i></span>
                     <span class="menu-title">Manage Comments</span>
                 </a>
@@ -83,15 +96,12 @@ $postsIndexUrl = $isCommentSection ? '../post/index.php' : './index.php';
 
     <div class="container-fluid page-body-wrapper">
         <nav class="navbar p-0 fixed-top d-flex flex-row">
-            <div class="navbar-brand-wrapper d-flex d-lg-none align-items-center justify-content-center">
-                <a class="navbar-brand brand-logo-mini" href="<?= htmlspecialchars($postsIndexUrl) ?>">AP</a>
-            </div>
-            <div class="navbar-menu-wrapper flex-grow d-flex align-items-stretch">
+            <div class="navbar-menu-wrapper d-flex align-items-stretch">
                 <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-toggle="minimize">
                     <span class="mdi mdi-menu"></span>
                 </button>
-                <ul class="navbar-nav w-100">
-                    <li class="nav-item w-100">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
                         <div class="nav-link mt-2 mt-md-0 d-none d-lg-flex search">
                             <input type="text" class="form-control" placeholder="Admin dashboard" disabled>
                         </div>
