@@ -4,7 +4,7 @@
     const EMOJIS = ['😀','😂','🥰','😍','😢','😡','😮','🤔','😎','🥹','😭','🤣','😊','🙄','😴','😬','🤯','😏','🤩','🥳','👍','👎','👏','🙌','🤝','💪','👀','🫶','🤞','✌️','❤️','🔥','🎉','✨','💯','⭐','🌟','🎊','💔','💡'];
     const STICKERS = ['🎉','🔥','❤️','😂','👏','💯','🫶','😍','🤯','💔','🎊','✨'];
     const MAX_COMMENT_LENGTH = 200;
-    const BAD_WORDS = ['fuck','fucker','fucking','fucked','fck','shit','shitty','bullshit','bitch','bitches','asshole','ass','bastard','cunt','pussy','whore','slut','nigger','nigga','faggot','fag','retard','retarded','idiot','moron','imbecile','damn','crap','putain','pute','merde','salope','salaud','connard','connasse','con','encule','enculé','enculer','fils de pute','nique','niquer','batard','bâtard','pédé','pede','gouine','fdp','tg'];
+    const BAD_WORDS = ['testbad1','testbad2','testbad3','testbad4','testbad5','testbad6','testbad7','testbad8','testbad9','testbad10'];
 
     function normalizeLeet(text) {
         return text
