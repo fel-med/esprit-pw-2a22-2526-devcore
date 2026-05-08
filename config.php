@@ -1,6 +1,19 @@
 <?php
 
-class config
+// ── Charger .env ──────────────────────────────────────────────────────────────
+function loadEnv(string $path): void
+{
+    if (!file_exists($path)) return;
+    foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        if (str_starts_with(trim($line), '#')) continue;
+        [$key, $value] = explode('=', $line, 2);
+        $_ENV[trim($key)] = trim($value);
+    }
+}
+loadEnv(__DIR__ . '/.env');
+
+// ── Connexion DB ──────────────────────────────────────────────────────────────
+class Config
 {
     private static $pdo = null;
 
@@ -9,9 +22,11 @@ class config
         if (!isset(self::$pdo)) {
             try {
                 self::$pdo = new PDO(
-                    'mysql:host=localhost;dbname=cre8connect;charset=utf8',
-                    'root',
-                    '',
+                    'mysql:host=' . ($_ENV['DB_HOST'] ?? 'localhost')
+                    . ';dbname=' . ($_ENV['DB_NAME'] ?? 'cre8connect')
+                    . ';charset=utf8',
+                    $_ENV['DB_USER'] ?? 'root',
+                    $_ENV['DB_PASS'] ?? '',
                     [
                         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
                         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -25,14 +40,18 @@ class config
     }
 }
 
-/**
- * Appelle l'API OpenRouter et retourne le contenu texte brut.
- */
+// ── Groq API ──────────────────────────────────────────────────────────────────
 function callOpenRouter(string $prompt): ?string
 {
-    $apiKey = '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';
-    $url    = 'https://api.groq.com/openai/v1/chat/completions';
+    $apiKey = $_ENV['GROQ_API_KEY'] ?? '';
 
+    // 🔴 Sécurité : ne pas appeler l'API si la clé est absente
+    if (empty($apiKey)) {
+        error_log('GROQ_API_KEY manquante dans .env');
+        return null;
+    }
+
+    $url  = 'https://api.groq.com/openai/v1/chat/completions';
     $data = [
         'model'       => 'llama-3.3-70b-versatile',
         'messages'    => [

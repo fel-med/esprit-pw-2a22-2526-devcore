@@ -3,54 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Offers - Cre8Connect</title>
+    <title>Events - Cre8Connect</title>
     <link rel="stylesheet" href="../css/backoffice.css">
 </head>
 <body>
     <header>
-        <h1>Offers Management</h1>
-        <p>Manage job offers, applications, and collaborations</p>
+        <h1>Events & Training</h1>
+        <p>Discover upcoming events, workshops, and training sessions</p>
     </header>
 
     <main>
-        <section class="offers-section">
-            <h2>Available Offers</h2>
-            <div class="offers-grid">
-                <div class="offer-card">
-                    <h3>Sample Offer Title</h3>
-                    <p class="offer-description">This is a sample offer description. It includes details about the project, requirements, and compensation.</p>
-                    <div class="offer-details">
-                        <span class="budget">Budget: $1000 - $5000</span>
-                        <span class="deadline">Deadline: Dec 31, 2023</span>
+        <section class="events-section">
+            <h2>Upcoming Events</h2>
+            <div class="events-grid">
+                <div class="event-card">
+                    <h3>Sample Training Event</h3>
+                    <p class="event-description">This is a sample event description. Learn new skills and network with professionals.</p>
+                    <div class="event-details">
+                        <span class="date">Date: June 1, 2023</span>
+                        <span class="duration">Duration: 2 hours</span>
                     </div>
-                    <button class="btn-apply">Apply Now</button>
+                    <button class="btn-register">Register</button>
                 </div>
-                <div class="offer-card">
-                    <h3>Another Offer</h3>
-                    <p class="offer-description">Another sample offer with different requirements and objectives.</p>
-                    <div class="offer-details">
-                        <span class="budget">Budget: $2000 - $8000</span>
-                        <span class="deadline">Deadline: Nov 30, 2023</span>
+                <div class="event-card">
+                    <h3>Workshop Session</h3>
+                    <p class="event-description">Hands-on workshop covering advanced topics in creative industries.</p>
+                    <div class="event-details">
+                        <span class="date">Date: June 15, 2023</span>
+                        <span class="duration">Duration: 4 hours</span>
                     </div>
-                    <button class="btn-apply">Apply Now</button>
+                    <button class="btn-register">Register</button>
                 </div>
             </div>
         </section>
 
-        <section class="applications-section">
-            <h2>My Applications</h2>
-            <div class="applications-list">
-                <div class="application-item">
-                    <h4>Application for Sample Offer</h4>
-                    <p>Status: Pending</p>
-                    <p>Submitted: Jan 15, 2023</p>
-                    <button class="btn-view">View Details</button>
+        <section class="forum-section">
+            <h2>Discussion Forum</h2>
+            <div class="forum-posts">
+                <div class="forum-post">
+                    <h4>Discussion Topic 1</h4>
+                    <p>Sample forum post content. Users can share ideas and ask questions.</p>
+                    <div class="post-meta">
+                        <span>Posted by: User1</span>
+                        <span>Replies: 5</span>
+                    </div>
+                    <button class="btn-reply">Reply</button>
                 </div>
-                <div class="application-item">
-                    <h4>Application for Another Offer</h4>
-                    <p>Status: Accepted</p>
-                    <p>Submitted: Jan 10, 2023</p>
-                    <button class="btn-view">View Details</button>
+                <div class="forum-post">
+                    <h4>Discussion Topic 2</h4>
+                    <p>Another sample post about industry trends and opportunities.</p>
+                    <div class="post-meta">
+                        <span>Posted by: User2</span>
+                        <span>Replies: 3</span>
+                    </div>
+                    <button class="btn-reply">Reply</button>
                 </div>
             </div>
         </section>

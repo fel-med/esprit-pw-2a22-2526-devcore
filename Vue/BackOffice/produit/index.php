@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && ($_POST['action']??'')==='add') {
     if (preg_match('/<[^>]+>/',$nom)) $errors[] = "No HTML in product name.";
     if (empty($errors)) {
         $nomImage = $produitC->gererUploadImage($_FILES['image']??null);
-        $produit  = new Produit(null,htmlspecialchars($nom),trim($_POST['description']??''),
+        $produit  = new Produit(null,htmlspecialchars($nom, ENT_QUOTES, 'UTF-8'),trim($_POST['description']??''),
             trim($_POST['caracteristiques']??''),floatval($prix),1,$nomImage,
             trim($_POST['categorie']??''),0,0,0,
             !empty($_POST['dateDisponibilite'])?$_POST['dateDisponibilite']:null,
@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && ($_POST['action']??'')==='update') {
     if (empty($errors)) {
         $ancien   = $produitC->recupererProduit(intval($_POST['id']));
         $nomImage = $produitC->gererUploadImage($_FILES['image']??null,$ancien['image']??null);
-        $produit  = new Produit(null,htmlspecialchars($nom),trim($_POST['description']??''),
+        $produit  = new Produit(null,htmlspecialchars($nom, ENT_QUOTES, 'UTF-8'),trim($_POST['description']??''),
             trim($_POST['caracteristiques']??''),floatval($prix),null,$nomImage,
             trim($_POST['categorie']??''),intval($_POST['estArchive']??0),intval($_POST['estEpingle']??0),
             0,!empty($_POST['dateDisponibilite'])?$_POST['dateDisponibilite']:null,
@@ -110,6 +110,7 @@ if (isset($_GET['export_csv'])) {
 
 $categoriesDisponibles=['Beauty & Care','Fashion & Accessories','Tech & Gadgets','Food & Nutrition',
     'Sport & Fitness','Home & Decor','Travel','Wellness','Gaming','Kids'];
+if (!headers_sent()) header('Content-Type: text/html; charset=UTF-8');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -118,6 +119,7 @@ $categoriesDisponibles=['Beauty & Care','Fashion & Accessories','Tech & Gadgets'
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin — Product Management | Cre8Connect</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -132,9 +134,36 @@ $categoriesDisponibles=['Beauty & Care','Fashion & Accessories','Tech & Gadgets'
     --info:#3b82f6;--info-soft:rgba(59,130,246,0.12);
     --radius-sm:6px;--radius-md:10px;--radius-lg:14px;--sidebar-w:240px;
 }
-body{font-family:'Inter',system-ui,sans-serif;background:var(--bg-base);color:var(--text-primary);min-height:100vh;display:flex;}
+
+/* ===== ADDED FEATURE: LIGHT/DARK MODE CSS VARIABLES ===== */
+body.light-mode {
+    --bg-base:#f0f2f8;
+    --bg-surface:#ffffff;
+    --bg-card:#ffffff;
+    --bg-card-alt:#f4f6fb;
+    --bg-input:#f9fafb;
+    --border:rgba(0,0,0,0.09);
+    --border-focus:rgba(139,92,246,0.4);
+    --text-primary:#12151f;
+    --text-muted:#4b5280;
+    --text-dim:#8892b0;
+    --accent:#7c3aed;
+    --accent-soft:rgba(124,58,237,0.10);
+    --accent-hover:#6d28d9;
+    --success:#059669;
+    --success-soft:rgba(5,150,105,0.10);
+    --danger:#dc2626;
+    --danger-soft:rgba(220,38,38,0.08);
+    --warning:#d97706;
+    --warning-soft:rgba(217,119,6,0.10);
+    --info:#2563eb;
+    --info-soft:rgba(37,99,235,0.10);
+}
+/* ===== END ADDED FEATURE ===== */
+
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg-base);color:var(--text-primary);min-height:100vh;display:flex;transition:background .25s,color .25s;}
 /* SIDEBAR */
-.sidebar{width:var(--sidebar-w);background:var(--bg-surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;}
+.sidebar{width:var(--sidebar-w);background:var(--bg-surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;transition:background .25s,border-color .25s;}
 .sidebar-logo{padding:18px 20px;border-bottom:1px solid var(--border);}
 .sidebar-logo .brand{display:flex;align-items:center;gap:10px;text-decoration:none;}
 .logo-img{width:34px;height:34px;object-fit:contain;border-radius:var(--radius-sm);}
@@ -151,17 +180,11 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg-base);color:va
 .admin-avatar{width:30px;height:30px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;}
 .admin-name{font-size:12px;font-weight:500;}
 .admin-role{font-size:11px;color:var(--text-muted);}
-/* TOPBAR */
-.topbar{position:fixed;top:0;left:var(--sidebar-w);right:0;height:58px;background:var(--bg-surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;gap:16px;z-index:90;}
-.topbar-breadcrumb{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);}
-.topbar-breadcrumb .sep{opacity:.4;}
-.topbar-breadcrumb .current{color:var(--text-primary);font-weight:500;}
-.topbar-actions{margin-left:auto;display:flex;align-items:center;gap:10px;}
 .btn-add{display:flex;align-items:center;gap:7px;background:var(--accent);color:#fff;border:none;padding:7px 14px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;font-family:inherit;}
 .btn-add:hover{background:var(--accent-hover);}
 .btn-export{display:flex;align-items:center;gap:6px;background:var(--success-soft);color:var(--success);border:1px solid rgba(16,185,129,.2);padding:7px 12px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;cursor:pointer;text-decoration:none;font-family:inherit;}
 .search-wrap{position:relative;}
-.search-input{background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px 7px 34px;color:var(--text-primary);font-size:13px;width:220px;outline:none;transition:border-color .2s;font-family:inherit;}
+.search-input{background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px 7px 34px;color:var(--text-primary);font-size:13px;width:220px;outline:none;transition:border-color .2s,background .25s,color .25s;font-family:inherit;}
 .search-input:focus{border-color:var(--border-focus);}
 .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-dim);pointer-events:none;width:15px;height:15px;}
 /* MAIN */
@@ -186,7 +209,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg-base);color:va
 .alert-error{background:var(--danger-soft);color:var(--danger);border:1px solid rgba(239,68,68,.2);}
 /* KPI */
 .kpi-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;margin-bottom:24px;}
-.kpi-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;position:relative;overflow:hidden;}
+.kpi-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;position:relative;overflow:hidden;transition:background .25s,border-color .25s;}
 .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
 .kpi-accent::before{background:var(--accent);}
 .kpi-success::before{background:var(--success);}
@@ -200,7 +223,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg-base);color:va
 .kpi-sub{font-size:11px;color:var(--text-muted);margin-top:2px;}
 /* CHARTS */
 .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
-.chart-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;}
+.chart-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;transition:background .25s,border-color .25s;}
 .chart-card-title{font-size:13px;font-weight:600;color:var(--text-muted);margin-bottom:14px;}
 .chart-wrap{position:relative;height:200px;}
 /* TABS */
@@ -212,18 +235,18 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg-base);color:va
 .tab-content{display:none;}
 .tab-content.active{display:block;}
 /* FILTER BAR */
-.filter-bar{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 18px;margin-bottom:16px;display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;}
+.filter-bar{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 18px;margin-bottom:16px;display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;transition:background .25s,border-color .25s;}
 .filter-group{display:flex;flex-direction:column;gap:5px;}
 .filter-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);}
-.filter-select{background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;color:var(--text-primary);font-size:12px;outline:none;cursor:pointer;font-family:inherit;}
+.filter-select{background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;color:var(--text-primary);font-size:12px;outline:none;cursor:pointer;font-family:inherit;transition:background .25s,color .25s,border-color .25s;}
 .price-range-wrap{display:flex;align-items:center;gap:8px;}
-.price-input{background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 8px;color:var(--text-primary);font-size:12px;width:80px;outline:none;font-family:inherit;}
+.price-input{background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 8px;color:var(--text-primary);font-size:12px;width:80px;outline:none;font-family:inherit;transition:background .25s,color .25s,border-color .25s;}
 .price-input:focus{border-color:var(--border-focus);}
 .price-input.is-invalid{border-color:var(--danger);}
 .price-sep{color:var(--text-dim);font-size:12px;}
 .btn-reset-filter{background:transparent;color:var(--text-muted);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;cursor:pointer;font-family:inherit;}
 /* TABLE */
-.table-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+.table-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;transition:background .25s,border-color .25s;}
 .table-panel-header{display:flex;align-items:center;padding:14px 20px;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap;}
 .table-panel-title{font-size:14px;font-weight:600;flex:1;}
 .count-badge{font-size:11px;font-weight:600;background:var(--accent-soft);color:var(--accent);padding:2px 9px;border-radius:20px;}
@@ -264,11 +287,11 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
 .pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-top:1px solid var(--border);}
 .pagination-info{font-size:12px;color:var(--text-muted);}
 .pagination-buttons{display:flex;gap:4px;}
-.page-btn{background:var(--bg-card-alt);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 10px;font-size:12px;color:var(--text-muted);cursor:pointer;min-width:30px;text-align:center;font-family:inherit;}
+.page-btn{background:var(--bg-card-alt);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 10px;font-size:12px;color:var(--text-muted);cursor:pointer;min-width:30px;text-align:center;font-family:inherit;transition:background .2s,color .2s,border-color .2s;}
 .page-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
 .page-btn:disabled{opacity:.4;cursor:not-allowed;}
 /* FORM */
-.form-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:24px;overflow:hidden;}
+.form-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:24px;overflow:hidden;transition:background .25s,border-color .25s;}
 .form-panel-header{display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid var(--border);}
 .form-panel-title{font-size:14px;font-weight:600;}
 .form-body{padding:20px;}
@@ -276,7 +299,7 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
 .form-col-full{grid-column:1/-1;}
 .form-group{display:flex;flex-direction:column;gap:4px;}
 .form-label{font-size:12px;font-weight:500;color:var(--text-muted);}
-.form-control{background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;color:var(--text-primary);font-size:13px;font-family:inherit;transition:border-color .2s;width:100%;outline:none;}
+.form-control{background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;color:var(--text-primary);font-size:13px;font-family:inherit;transition:border-color .2s,background .25s,color .25s;width:100%;outline:none;}
 .form-control:focus{border-color:var(--border-focus);}
 .form-control.is-invalid{border-color:var(--danger) !important;}
 .form-control.is-valid{border-color:var(--success);}
@@ -348,94 +371,84 @@ textarea.note-interne-ctrl{background:transparent;border:none;outline:none;width
 @media(max-width:1300px){.kpi-strip{grid-template-columns:repeat(4,1fr);}}
 @media(max-width:1000px){.kpi-strip{grid-template-columns:repeat(3,1fr);}}
 @media(max-width:900px){.kpi-strip{grid-template-columns:repeat(2,1fr);}.form-grid{grid-template-columns:1fr;}.sidebar{display:none;}.topbar,.main{left:0;margin-left:0;}}
+
+/* ===== ADDED FEATURE: LANGUAGE SWITCHER STYLES ===== */
+.lang-switcher{display:inline-flex;gap:3px;align-items:center;}
+.lang-btn{background:var(--bg-card-alt);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 9px;font-size:11px;font-weight:600;cursor:pointer;color:var(--text-muted);font-family:inherit;transition:all .15s;}
+.lang-btn:hover{border-color:var(--accent);color:var(--accent);}
+.lang-btn.active{background:var(--accent-soft);color:var(--accent);border-color:var(--accent);}
+/* ===== END ADDED FEATURE ===== */
+
+/* ===== ADDED FEATURE: THEME TOGGLE BUTTON STYLES ===== */
+.theme-toggle-btn{display:inline-flex;align-items:center;gap:6px;background:var(--bg-card-alt);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 11px;font-size:12px;font-weight:500;cursor:pointer;color:var(--text-muted);font-family:inherit;transition:all .2s;white-space:nowrap;}
+.theme-toggle-btn:hover{border-color:var(--accent);color:var(--accent);}
+/* ===== END ADDED FEATURE ===== */
 </style>
+<?php include __DIR__ . '/../includes/layout_head.php'; ?>
 </head>
 <body>
 <div id="toastContainer"></div>
-
-<!-- SIDEBAR -->
-<aside class="sidebar">
-    <div class="sidebar-logo">
-        <a href="#" class="brand">
-            <img src="<?= $baseUrl ?>/Vue/public/images/logo.png" alt="Logo" class="logo-img">
-            <div><div class="logo-text">Cre8Connect</div><div class="logo-badge">ADMIN</div></div>
-        </a>
-    </div>
-    <nav class="sidebar-nav">
-        <div class="nav-section-label">Dashboard</div>
-        <a class="nav-item" href="#"><svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Home</a>
-        <a class="nav-item" href="#"><svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Users</a>
-        <a class="nav-item" href="#"><svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>Campaigns</a>
-        <a class="nav-item active" href="index.php"><svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 10V11"/></svg>Products</a>
-        <a class="nav-item" href="#"><svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>Posts & Comments</a>
-    </nav>
-    <div class="sidebar-footer">
-        <div class="admin-card">
-            <div class="admin-avatar">A</div>
-            <div><div class="admin-name">Administrator</div><div class="admin-role">Super Admin</div></div>
-        </div>
-    </div>
-</aside>
-
-<!-- TOPBAR -->
-<div class="topbar">
-    <div class="topbar-breadcrumb">
-        <span>Cre8Connect</span><span class="sep">/</span>
-        <span>Admin</span><span class="sep">/</span>
-        <span class="current">Products</span>
-    </div>
-    <div class="topbar-actions">
-        <div class="search-wrap">
-            <svg class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-            <input type="text" class="search-input" id="searchInput" placeholder="Search products…">
-        </div>
-        <button class="btn-export" onclick="window.print()">
-            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-            Print / PDF
-        </button>
-        <a href="?export_csv=1" class="btn-export" style="margin-left:0;">
-            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            CSV
-        </a>
-        <a href="?add=1" class="btn-add">
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-            New Product
-        </a>
-    </div>
-</div>
+<div class="container-scroller">
+<?php
+$activeMenu = 'produit';
+include __DIR__ . '/../includes/sidebar.php';
+?>
+<div class="page-body-wrapper">
+<?php include __DIR__ . '/../includes/topbar.php'; ?>
 
 <!-- CONTENT -->
-<main class="main">
 <div class="content">
 
     <div style="margin-bottom:22px;">
-        <div class="page-title">Product Management</div>
-        <div class="page-subtitle">Supervise, add, edit and analyze all platform products.</div>
+        <div class="page-title" data-i18n="pageTitle">Product Management</div>
+        <div class="page-subtitle" data-i18n="pageSubtitle">Supervise, add, edit and analyze all platform products.</div>
+        <div class="bo-content-actions">
+            <div class="lang-switcher" role="group" aria-label="Language selector">
+                <button class="lang-btn" id="langEN" onclick="setLang('en')" title="English">GB EN</button>
+                <button class="lang-btn" id="langFR" onclick="setLang('fr')" title="Francais">FR FR</button>
+            </div>
+            <div class="search-wrap">
+                <svg class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                <input type="text" class="search-input" id="searchInput" data-i18n-placeholder="searchPlaceholder" placeholder="Search products...">
+            </div>
+            <button class="btn-export" onclick="window.print()">
+                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                <span data-i18n="btnPrint">Print / PDF</span>
+            </button>
+            <a href="?export_csv=1" class="btn-export">
+                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                CSV
+            </a>
+            <a href="?add=1" class="btn-add">
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                <span data-i18n="btnNewProduct">New Product</span>
+            </a>
+        </div>
     </div>
 
     <?php if ($message): ?>
-    <div class="alert alert-<?= $messageType ?>" id="alertMsg"><?= htmlspecialchars($message) ?></div>
+    <div class="alert alert-<?= $messageType ?>" id="alertMsg"><?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?></div>
     <?php endif; ?>
 
     <!-- KPI -->
     <div class="kpi-strip">
-        <div class="kpi-card kpi-accent"><div class="kpi-label">Total Active</div><div class="kpi-value"><?= $totalProduits ?></div><div class="kpi-sub">products</div></div>
-        <div class="kpi-card kpi-info"><div class="kpi-label">Avg. Price</div><div class="kpi-value"><?= number_format($prixMoyen,2) ?></div><div class="kpi-sub"><?= DEVISE ?></div></div>
-        <div class="kpi-card kpi-success"><div class="kpi-label">Catalog Value</div><div class="kpi-value"><?= number_format($valeurCatalogue,0) ?></div><div class="kpi-sub"><?= DEVISE ?></div></div>
-        <div class="kpi-card kpi-warning"><div class="kpi-label">Highest Price</div><div class="kpi-value"><?= number_format($prixMax,2) ?></div><div class="kpi-sub"><?= DEVISE ?></div></div>
-        <div class="kpi-card kpi-purple"><div class="kpi-label">Missing Image</div><div class="kpi-value"><?= $sanImage ?></div><div class="kpi-sub">need image</div></div>
-        <div class="kpi-card kpi-warning" style="--warning:#f59e0b"><div class="kpi-label">Pinned</div><div class="kpi-value"><?= $nbEpingles ?></div><div class="kpi-sub">featured</div></div>
-        <div class="kpi-card kpi-archive"><div class="kpi-label">Archived</div><div class="kpi-value"><?= $totalArchives ?></div><div class="kpi-sub">hidden</div></div>
+        <div class="kpi-card kpi-accent"><div class="kpi-label" data-i18n="kpiTotalActive">Total Active</div><div class="kpi-value"><?= $totalProduits ?></div><div class="kpi-sub" data-i18n="kpiProductsSub">products</div></div>
+        <div class="kpi-card kpi-info"><div class="kpi-label" data-i18n="kpiAvgPrice">Avg. Price</div><div class="kpi-value"><?= number_format($prixMoyen,2) ?></div><div class="kpi-sub"><?= DEVISE ?></div></div>
+        <div class="kpi-card kpi-success"><div class="kpi-label" data-i18n="kpiCatalogValue">Catalog Value</div><div class="kpi-value"><?= number_format($valeurCatalogue,0) ?></div><div class="kpi-sub"><?= DEVISE ?></div></div>
+        <div class="kpi-card kpi-warning"><div class="kpi-label" data-i18n="kpiHighestPrice">Highest Price</div><div class="kpi-value"><?= number_format($prixMax,2) ?></div><div class="kpi-sub"><?= DEVISE ?></div></div>
+        <div class="kpi-card kpi-purple"><div class="kpi-label" data-i18n="kpiMissingImage">Missing Image</div><div class="kpi-value"><?= $sanImage ?></div><div class="kpi-sub" data-i18n="kpiNeedImage">need image</div></div>
+        <div class="kpi-card kpi-warning" style="--warning:#f59e0b"><div class="kpi-label" data-i18n="kpiPinned">Pinned</div><div class="kpi-value"><?= $nbEpingles ?></div><div class="kpi-sub" data-i18n="kpiFeatured">featured</div></div>
+        <div class="kpi-card kpi-archive"><div class="kpi-label" data-i18n="kpiArchived">Archived</div><div class="kpi-value"><?= $totalArchives ?></div><div class="kpi-sub" data-i18n="kpiHidden">hidden</div></div>
     </div>
 
     <!-- CHARTS -->
     <div class="charts-row">
         <div class="chart-card">
-            <div class="chart-card-title">📊 Products by Category (Top 5)</div>
+            <div class="chart-card-title" data-i18n="chartCatTitle">📊 Products by Category (Top 5)</div>
             <div class="chart-wrap"><canvas id="chartCategories"></canvas></div>
         </div>
         <div class="chart-card">
-            <div class="chart-card-title">💰 Price Distribution</div>
+            <div class="chart-card-title" data-i18n="chartPriceTitle">💰 Price Distribution</div>
             <div class="chart-wrap"><canvas id="chartPrices"></canvas></div>
         </div>
     </div>
@@ -444,7 +457,7 @@ textarea.note-interne-ctrl{background:transparent;border:none;outline:none;width
     <?php if (isset($_GET['add']) || $produitUpdate): ?>
     <div class="form-panel" id="formPanel">
         <div class="form-panel-header">
-            <span style="font-size:14px;font-weight:600;"><?= $produitUpdate ? '✏️ Edit Product' : '➕ Add a Product' ?></span>
+            <span style="font-size:14px;font-weight:600;" data-i18n="<?= $produitUpdate ? 'formEditTitle' : 'formAddTitle' ?>"><?= $produitUpdate ? '✏️ Edit Product' : '➕ Add a Product' ?></span>
         </div>
         <div class="form-body">
             <form method="POST" action="index.php" enctype="multipart/form-data" id="produitFormBO" novalidate>
@@ -458,55 +471,55 @@ textarea.note-interne-ctrl{background:transparent;border:none;outline:none;width
                 <div class="form-grid">
                     <!-- NAME -->
                     <div class="form-group">
-                        <label class="form-label">Product name * <span id="ctrNom" class="char-counter">0/80</span></label>
+                        <label class="form-label"><span data-i18n="labelName">Product name</span> * <span id="ctrNom" class="char-counter">0/80</span></label>
                         <input type="text" name="nom" id="fNom" class="form-control" maxlength="80"
-                               value="<?= htmlspecialchars($produitUpdate['nomProduit']??'') ?>"
+                               value="<?= htmlspecialchars($produitUpdate['nomProduit']??'', ENT_QUOTES, 'UTF-8') ?>"
                                placeholder="e.g. Premium Moisturizer">
-                        <div class="field-error-msg" id="errNom">Name required — min 2 characters, no HTML.</div>
+                        <div class="field-error-msg" id="errNom" data-i18n="errName">Name required — min 2 characters, no HTML.</div>
                     </div>
                     <!-- PRICE -->
                     <div class="form-group">
-                        <label class="form-label">Price (<?= DEVISE ?>) *</label>
+                        <label class="form-label"><span data-i18n="labelPrice">Price</span> (<?= DEVISE ?>) *</label>
                         <input type="text" name="prix" id="fPrix" class="form-control"
-                               value="<?= htmlspecialchars($produitUpdate['prix']??'') ?>" placeholder="0.00" autocomplete="off">
-                        <div class="field-error-msg" id="errPrix">Valid price required (e.g. 29.99, max 2 decimals).</div>
+                               value="<?= htmlspecialchars($produitUpdate['prix']??'', ENT_QUOTES, 'UTF-8') ?>" placeholder="0.00" autocomplete="off">
+                        <div class="field-error-msg" id="errPrix" data-i18n="errPrice">Valid price required (e.g. 29.99, max 2 decimals).</div>
                     </div>
                     <!-- CATEGORY -->
                     <div class="form-group">
-                        <label class="form-label">Category</label>
+                        <label class="form-label" data-i18n="labelCategory">Category</label>
                         <select name="categorie" class="form-control">
-                            <option value="">— Select —</option>
+                            <option value="" data-i18n="optSelectCategory">— Select —</option>
                             <?php foreach ($categoriesDisponibles as $cat): ?>
-                            <option value="<?= htmlspecialchars($cat) ?>" <?= ($produitUpdate&&($produitUpdate['categorie']??'')===$cat)?'selected':'' ?>><?= htmlspecialchars($cat) ?></option>
+                            <option value="<?= htmlspecialchars($cat, ENT_QUOTES, 'UTF-8') ?>" <?= ($produitUpdate&&($produitUpdate['categorie']??'')===$cat)?'selected':'' ?>><?= htmlspecialchars($cat, ENT_QUOTES, 'UTF-8') ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
                     <!-- DATE DISPO -->
                     <div class="form-group">
-                        <label class="form-label">Availability date <small style="color:var(--text-dim);font-weight:400">(optional — YYYY-MM-DD)</small></label>
+                        <label class="form-label"><span data-i18n="labelAvailability">Availability date</span> <small style="color:var(--text-dim);font-weight:400" data-i18n="labelOptional">(optional — YYYY-MM-DD)</small></label>
                         <input type="text" name="dateDisponibilite" id="fDate" class="form-control"
-                               value="<?= htmlspecialchars($produitUpdate['dateDisponibilite']??'') ?>" placeholder="YYYY-MM-DD">
-                        <div class="field-error-msg" id="errDate">Invalid date. Use YYYY-MM-DD (e.g. 2025-12-31).</div>
+                               value="<?= htmlspecialchars($produitUpdate['dateDisponibilite']??'', ENT_QUOTES, 'UTF-8') ?>" placeholder="YYYY-MM-DD">
+                        <div class="field-error-msg" id="errDate" data-i18n="errDate">Invalid date. Use YYYY-MM-DD (e.g. 2025-12-31).</div>
                     </div>
                     <!-- DESCRIPTION -->
                     <div class="form-group form-col-full">
-                        <label class="form-label">Description <span id="ctrDesc" class="char-counter">0/500</span></label>
-                        <textarea name="description" id="fDesc" class="form-control" maxlength="500"><?= htmlspecialchars($produitUpdate['description']??'') ?></textarea>
+                        <label class="form-label"><span data-i18n="labelDescription">Description</span> <span id="ctrDesc" class="char-counter">0/500</span></label>
+                        <textarea name="description" id="fDesc" class="form-control" maxlength="500"><?= htmlspecialchars($produitUpdate['description']??'', ENT_QUOTES, 'UTF-8') ?></textarea>
                     </div>
                     <!-- TAGS -->
                     <div class="form-group form-col-full">
-                        <label class="form-label">Characteristics / Tags <small style="color:var(--text-dim);font-weight:400">(comma-separated)</small> <span id="ctrTags" class="char-counter">0/300</span></label>
+                        <label class="form-label"><span data-i18n="labelTags">Characteristics / Tags</span> <small style="color:var(--text-dim);font-weight:400" data-i18n="labelCommaSep">(comma-separated)</small> <span id="ctrTags" class="char-counter">0/300</span></label>
                         <input type="text" name="caracteristiques" id="fTags" class="form-control" maxlength="300"
-                               value="<?= htmlspecialchars($produitUpdate['caracteristiques']??'') ?>"
+                               value="<?= htmlspecialchars($produitUpdate['caracteristiques']??'', ENT_QUOTES, 'UTF-8') ?>"
                                placeholder="Bio, Premium, Vegan, Made in France…">
-                        <div class="field-error-msg" id="errTags">Tags must not contain HTML.</div>
+                        <div class="field-error-msg" id="errTags" data-i18n="errTags">Tags must not contain HTML.</div>
                     </div>
                     <!-- NOTE INTERNE -->
                     <div class="form-group form-col-full">
-                        <label class="form-label">Internal note 🔒 Admin only</label>
+                        <label class="form-label"><span data-i18n="labelInternalNote">Internal note</span> 🔒 <span data-i18n="labelAdminOnly">Admin only</span></label>
                         <div class="note-interne-wrap">
-                            <div class="note-interne-header">🔒 Visible to admin team only</div>
-                            <textarea name="noteInterne" class="note-interne-ctrl"><?= htmlspecialchars($produitUpdate['noteInterne']??'') ?></textarea>
+                            <div class="note-interne-header" data-i18n="noteInterneBanner">🔒 Visible to admin team only</div>
+                            <textarea name="noteInterne" class="note-interne-ctrl"><?= htmlspecialchars($produitUpdate['noteInterne']??'', ENT_QUOTES, 'UTF-8') ?></textarea>
                         </div>
                     </div>
                     <!-- TOGGLES (edit only) -->
@@ -514,14 +527,14 @@ textarea.note-interne-ctrl{background:transparent;border:none;outline:none;width
                     <div class="form-group form-col-full">
                         <div class="toggle-row">
                             <div class="toggle-item">
-                                <div><div style="font-size:12px;font-weight:500;">📌 Pin</div></div>
+                                <div><div style="font-size:12px;font-weight:500;" data-i18n="togglePin">📌 Pin</div></div>
                                 <label class="toggle-switch pin">
                                     <input type="checkbox" id="boToggleEpingle" <?= !empty($produitUpdate['estEpingle'])?'checked':'' ?>>
                                     <span class="toggle-slider"></span>
                                 </label>
                             </div>
                             <div class="toggle-item">
-                                <div><div style="font-size:12px;font-weight:500;">🗄️ Archive</div></div>
+                                <div><div style="font-size:12px;font-weight:500;" data-i18n="toggleArchive">🗄️ Archive</div></div>
                                 <label class="toggle-switch archive">
                                     <input type="checkbox" id="boToggleArchive" <?= !empty($produitUpdate['estArchive'])?'checked':'' ?>>
                                     <span class="toggle-slider"></span>
@@ -532,18 +545,18 @@ textarea.note-interne-ctrl{background:transparent;border:none;outline:none;width
                     <?php endif; ?>
                     <!-- IMAGE -->
                     <div class="form-group form-col-full">
-                        <label class="form-label">Image</label>
+                        <label class="form-label" data-i18n="labelImage">Image</label>
                         <?php if ($produitUpdate && !empty($produitUpdate['image'])): ?>
                         <div style="display:flex;align-items:center;gap:10px;background:var(--accent-soft);border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:8px;">
-                            <img src="<?= $baseUrl ?>/Vue/public/produits/<?= htmlspecialchars($produitUpdate['image']) ?>" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">
-                            <span style="font-size:12px;color:var(--text-muted);">Current image — upload to replace.</span>
+                            <img src="<?= $baseUrl ?>/Vue/public/produits/<?= htmlspecialchars($produitUpdate['image'], ENT_QUOTES, 'UTF-8') ?>" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">
+                            <span style="font-size:12px;color:var(--text-muted);" data-i18n="currentImageHint">Current image — upload to replace.</span>
                         </div>
                         <?php endif; ?>
                         <div class="upload-admin">
                             <input type="file" name="image" id="fileInputBO" accept="image/jpeg,image/png,image/webp">
-                            <div class="upload-admin-text"><strong>Click to upload</strong> (JPG, PNG, WEBP — 2MB max)</div>
+                            <div class="upload-admin-text"><strong data-i18n="uploadClick">Click to upload</strong> <span data-i18n="uploadHint">(JPG, PNG, WEBP — 2MB max)</span></div>
                         </div>
-                        <div class="field-error-msg" id="errImage">File too large or invalid format (JPG, PNG, WEBP only, max 2MB).</div>
+                        <div class="field-error-msg" id="errImage" data-i18n="errImage">File too large or invalid format (JPG, PNG, WEBP only, max 2MB).</div>
                         <img id="imgPreviewBO" class="upload-preview-img" src="" alt="">
                     </div>
                 </div>
@@ -551,9 +564,9 @@ textarea.note-interne-ctrl{background:transparent;border:none;outline:none;width
                 <div class="form-actions-row">
                     <button type="submit" class="btn-primary" id="btnSubmitBO">
                         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                        <?= $produitUpdate ? 'Save changes' : 'Add product' ?>
+                        <span data-i18n="<?= $produitUpdate ? 'btnSaveChanges' : 'btnAddProduct' ?>"><?= $produitUpdate ? 'Save changes' : 'Add product' ?></span>
                     </button>
-                    <a href="index.php" class="btn-ghost">Cancel</a>
+                    <a href="index.php" class="btn-ghost" data-i18n="btnCancel">Cancel</a>
                 </div>
             </form>
         </div>
@@ -563,42 +576,42 @@ textarea.note-interne-ctrl{background:transparent;border:none;outline:none;width
     <!-- FILTER BAR -->
     <div class="filter-bar">
         <div class="filter-group">
-            <div class="filter-label">Sort by</div>
+            <div class="filter-label" data-i18n="filterSortBy">Sort by</div>
             <select class="filter-select" id="sortColSelect" onchange="applySortSelect()">
-                <option value="">Default</option>
-                <option value="nom-asc">Name A→Z</option>
-                <option value="nom-desc">Name Z→A</option>
-                <option value="prix-asc">Price ↑</option>
-                <option value="prix-desc">Price ↓</option>
+                <option value="" data-i18n="filterDefault">Default</option>
+                <option value="nom-asc" data-i18n="filterNameAZ">Name A→Z</option>
+                <option value="nom-desc" data-i18n="filterNameZA">Name Z→A</option>
+                <option value="prix-asc" data-i18n="filterPriceAsc">Price ↑</option>
+                <option value="prix-desc" data-i18n="filterPriceDesc">Price ↓</option>
             </select>
         </div>
         <div class="filter-group">
-            <div class="filter-label">Price (<?= DEVISE ?>)</div>
+            <div class="filter-label" data-i18n="filterPriceRange">Price (<?= DEVISE ?>)</div>
             <div class="price-range-wrap">
-                <input type="text" class="price-input" id="priceMin" placeholder="Min">
+                <input type="text" class="price-input" id="priceMin" data-i18n-placeholder="filterMin" placeholder="Min">
                 <span class="price-sep">–</span>
-                <input type="text" class="price-input" id="priceMax" placeholder="Max">
+                <input type="text" class="price-input" id="priceMax" data-i18n-placeholder="filterMax" placeholder="Max">
             </div>
         </div>
         <div class="filter-group">
-            <div class="filter-label">Category</div>
+            <div class="filter-label" data-i18n="filterCategory">Category</div>
             <select class="filter-select" id="catFilterSelect" onchange="filterTable()">
-                <option value="">All</option>
+                <option value="" data-i18n="filterAll">All</option>
                 <?php foreach ($categoriesDispos as $cat): ?>
-                <option value="<?= htmlspecialchars(strtolower($cat)) ?>"><?= htmlspecialchars($cat) ?></option>
+                <option value="<?= htmlspecialchars(strtolower($cat), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($cat, ENT_QUOTES, 'UTF-8') ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
-        <button class="btn-reset-filter" onclick="resetFilters()">Reset</button>
+        <button class="btn-reset-filter" onclick="resetFilters()" data-i18n="filterReset">Reset</button>
     </div>
 
     <!-- TABS -->
     <div class="tab-bar">
         <button class="tab-btn active" id="tab-actifs" onclick="switchTab('actifs',this)">
-            Active <span class="tab-pill"><?= $totalProduits ?></span>
+            <span data-i18n="tabActive">Active</span> <span class="tab-pill"><?= $totalProduits ?></span>
         </button>
         <button class="tab-btn" id="tab-archives-btn" onclick="switchTab('archives',this)">
-            Archived <span class="tab-pill archive"><?= $totalArchives ?></span>
+            <span data-i18n="tabArchived">Archived</span> <span class="tab-pill archive"><?= $totalArchives ?></span>
         </button>
     </div>
 
@@ -606,23 +619,23 @@ textarea.note-interne-ctrl{background:transparent;border:none;outline:none;width
     <div class="tab-content active" id="content-actifs">
         <div class="table-panel">
             <div class="table-panel-header">
-                <span class="table-panel-title">Product list</span>
+                <span class="table-panel-title" data-i18n="tablePanelTitle">Product list</span>
                 <span class="count-badge" id="visibleCount"><?= $totalProduits ?></span>
             </div>
             <?php if (empty($liste)): ?>
-            <div class="empty-state"><div class="empty-icon">📦</div><p>No products found.</p></div>
+            <div class="empty-state"><div class="empty-icon">📦</div><p data-i18n="noProducts">No products found.</p></div>
             <?php else: ?>
             <table id="produitsTable">
                 <thead>
                     <tr>
-                        <th class="no-sort" style="width:46px">Img</th>
-                        <th onclick="sortTable('id')" data-col="id">#ID</th>
-                        <th onclick="sortTable('nom')" data-col="nom">Name</th>
-                        <th class="no-sort">Category</th>
-                        <th class="no-sort">Description</th>
-                        <th onclick="sortTable('prix')" data-col="prix">Price</th>
-                        <th class="no-sort">Status</th>
-                        <th class="no-sort">Actions</th>
+                        <th class="no-sort" style="width:46px" data-i18n="colImg">Img</th>
+                        <th onclick="sortTable('id')" data-col="id" data-i18n="colId">#ID</th>
+                        <th onclick="sortTable('nom')" data-col="nom" data-i18n="colName">Name</th>
+                        <th class="no-sort" data-i18n="colCategory">Category</th>
+                        <th class="no-sort" data-i18n="colDescription">Description</th>
+                        <th onclick="sortTable('prix')" data-col="prix" data-i18n="colPrice">Price</th>
+                        <th class="no-sort" data-i18n="colStatus">Status</th>
+                        <th class="no-sort" data-i18n="colActions">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -632,13 +645,13 @@ textarea.note-interne-ctrl{background:transparent;border:none;outline:none;width
                     $dispoFut = $dispo && strtotime($dispo)>time();
                 ?>
                 <tr data-id="<?= $p['idProduit'] ?>"
-                    data-nom="<?= htmlspecialchars(strtolower($p['nomProduit'])) ?>"
+                    data-nom="<?= htmlspecialchars(strtolower($p['nomProduit']), ENT_QUOTES, 'UTF-8') ?>"
                     data-prix="<?= (float)$p['prix'] ?>"
-                    data-cat="<?= htmlspecialchars(strtolower($p['categorie']??'')) ?>"
+                    data-cat="<?= htmlspecialchars(strtolower($p['categorie']??''), ENT_QUOTES, 'UTF-8') ?>"
                     data-epingle="<?= (int)$isPinned ?>">
                     <td class="td-img"><div class="td-img-thumb">
                         <?php if (!empty($p['image'])): ?>
-                            <img src="<?= $baseUrl ?>/Vue/public/produits/<?= htmlspecialchars($p['image']) ?>" alt="" onclick="openPreview(<?= $p['idProduit'] ?>)">
+                            <img src="<?= $baseUrl ?>/Vue/public/produits/<?= htmlspecialchars($p['image'], ENT_QUOTES, 'UTF-8') ?>" alt="" onclick="openPreview(<?= $p['idProduit'] ?>)">
                             <div class="td-img-status ok">✓</div>
                         <?php else: ?>
                             <div class="td-img-empty">📦</div>
@@ -646,21 +659,21 @@ textarea.note-interne-ctrl{background:transparent;border:none;outline:none;width
                         <?php endif; ?>
                     </div></td>
                     <td class="td-id">#<?= $p['idProduit'] ?></td>
-                    <td class="td-name"><?= htmlspecialchars($p['nomProduit']) ?></td>
-                    <td><?php if(!empty($p['categorie'])): ?><span class="cat-badge"><?= htmlspecialchars($p['categorie']) ?></span><?php endif; ?></td>
-                    <td class="td-desc" title="<?= htmlspecialchars($p['description']??'') ?>"><?= htmlspecialchars($p['description']??'') ?></td>
+                    <td class="td-name"><?= htmlspecialchars($p['nomProduit'], ENT_QUOTES, 'UTF-8') ?></td>
+                    <td><?php if(!empty($p['categorie'])): ?><span class="cat-badge"><?= htmlspecialchars($p['categorie'], ENT_QUOTES, 'UTF-8') ?></span><?php endif; ?></td>
+                    <td class="td-desc" title="<?= htmlspecialchars($p['description']??'', ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($p['description']??'', ENT_QUOTES, 'UTF-8') ?></td>
                     <td><span class="prix-badge"><?= number_format((float)$p['prix'],2) ?> <?= DEVISE ?></span></td>
                     <td>
-                        <?php if($isPinned): ?><span class="status-badge pinned">📌 Pinned</span><?php endif; ?>
-                        <?php if($dispo): ?><span class="status-badge <?= $dispoFut?'future':'available' ?>"><?= $dispoFut?'⏳ Future':'✅ Live' ?></span><?php endif; ?>
+                        <?php if($isPinned): ?><span class="status-badge pinned" data-i18n="statusPinned">📌 Pinned</span><?php endif; ?>
+                        <?php if($dispo): ?><span class="status-badge <?= $dispoFut?'future':'available' ?>" data-i18n="<?= $dispoFut?'statusFuture':'statusLive' ?>"><?= $dispoFut?'⏳ Future':'✅ Live' ?></span><?php endif; ?>
                     </td>
                     <td>
                         <div class="action-group">
-                            <button class="btn-action btn-view" onclick="openPreview(<?= $p['idProduit'] ?>)">👁 View</button>
-                            <a href="?edit=<?= $p['idProduit'] ?>" class="btn-action btn-edit-a">✏️ Edit</a>
-                            <button class="btn-action btn-pin" onclick="ajaxToggle('epingle',<?= $p['idProduit'] ?>,'<?= $isPinned?'Unpin':'Pin' ?>')"><?= $isPinned?'📌 Unpin':'📌 Pin' ?></button>
-                            <button class="btn-action btn-archive" onclick="ajaxToggle('archive',<?= $p['idProduit'] ?>,'Archive')">🗄️</button>
-                            <button class="btn-action btn-delete" onclick="openDeleteModal(<?= $p['idProduit'] ?>,'<?= htmlspecialchars(addslashes($p['nomProduit'])) ?>')">🗑</button>
+                            <button class="btn-action btn-view" onclick="openPreview(<?= $p['idProduit'] ?>)" data-i18n="btnView">👁 View</button>
+                            <a href="?edit=<?= $p['idProduit'] ?>" class="btn-action btn-edit-a" data-i18n="btnEdit">✏️ Edit</a>
+                            <button class="btn-action btn-pin" onclick="ajaxToggle('epingle',<?= $p['idProduit'] ?>,'<?= $isPinned?'Unpin':'Pin' ?>')" data-i18n="<?= $isPinned?'btnUnpin':'btnPin' ?>"><?= $isPinned?'📌 Unpin':'📌 Pin' ?></button>
+                            <button class="btn-action btn-archive" onclick="ajaxToggle('archive',<?= $p['idProduit'] ?>,'Archive')" data-i18n="btnArchive">🗄️</button>
+                            <button class="btn-action btn-delete" onclick="openDeleteModal(<?= $p['idProduit'] ?>,'<?= htmlspecialchars(addslashes($p['nomProduit']), ENT_QUOTES, 'UTF-8') ?>')" data-i18n="btnDelete">🗑</button>
                         </div>
                     </td>
                 </tr>
@@ -679,26 +692,32 @@ textarea.note-interne-ctrl{background:transparent;border:none;outline:none;width
     <div class="tab-content" id="content-archives">
         <div class="table-panel">
             <div class="table-panel-header">
-                <span class="table-panel-title">Archived products</span>
+                <span class="table-panel-title" data-i18n="archivedTitle">Archived products</span>
                 <span class="count-badge" style="background:rgba(100,116,139,.15);color:#64748b;"><?= $totalArchives ?></span>
             </div>
             <?php if (empty($listeArchives)): ?>
-            <div class="empty-state"><div class="empty-icon">🗄️</div><p>No archived products.</p></div>
+            <div class="empty-state"><div class="empty-icon">🗄️</div><p data-i18n="noArchived">No archived products.</p></div>
             <?php else: ?>
             <table>
-                <thead><tr><th class="no-sort">Image</th><th class="no-sort">Name</th><th class="no-sort">Category</th><th class="no-sort">Price</th><th class="no-sort">Actions</th></tr></thead>
+                <thead><tr>
+                    <th class="no-sort" data-i18n="colImg">Image</th>
+                    <th class="no-sort" data-i18n="colName">Name</th>
+                    <th class="no-sort" data-i18n="colCategory">Category</th>
+                    <th class="no-sort" data-i18n="colPrice">Price</th>
+                    <th class="no-sort" data-i18n="colActions">Actions</th>
+                </tr></thead>
                 <tbody>
                 <?php foreach ($listeArchives as $a): ?>
                 <tr>
-                    <td class="td-img"><div class="td-img-thumb"><?php if(!empty($a['image'])): ?><img src="<?= $baseUrl ?>/Vue/public/produits/<?= htmlspecialchars($a['image']) ?>" alt=""><?php else: ?><div class="td-img-empty">📦</div><?php endif; ?></div></td>
-                    <td class="td-name" style="opacity:.7"><?= htmlspecialchars($a['nomProduit']) ?></td>
-                    <td><?php if(!empty($a['categorie'])): ?><span class="cat-badge" style="opacity:.7"><?= htmlspecialchars($a['categorie']) ?></span><?php endif; ?></td>
+                    <td class="td-img"><div class="td-img-thumb"><?php if(!empty($a['image'])): ?><img src="<?= $baseUrl ?>/Vue/public/produits/<?= htmlspecialchars($a['image'], ENT_QUOTES, 'UTF-8') ?>" alt=""><?php else: ?><div class="td-img-empty">📦</div><?php endif; ?></div></td>
+                    <td class="td-name" style="opacity:.7"><?= htmlspecialchars($a['nomProduit'], ENT_QUOTES, 'UTF-8') ?></td>
+                    <td><?php if(!empty($a['categorie'])): ?><span class="cat-badge" style="opacity:.7"><?= htmlspecialchars($a['categorie'], ENT_QUOTES, 'UTF-8') ?></span><?php endif; ?></td>
                     <td><span class="prix-badge" style="opacity:.7"><?= number_format((float)$a['prix'],2) ?> <?= DEVISE ?></span></td>
                     <td>
                         <div class="action-group">
-                            <button class="btn-action btn-restore" onclick="ajaxToggle('archive',<?= $a['idProduit'] ?>,'Restore')">♻️ Restore</button>
-                            <a href="?edit=<?= $a['idProduit'] ?>" class="btn-action btn-edit-a">✏️ Edit</a>
-                            <button class="btn-action btn-delete" onclick="openDeleteModal(<?= $a['idProduit'] ?>,'<?= htmlspecialchars(addslashes($a['nomProduit'])) ?>')">🗑</button>
+                            <button class="btn-action btn-restore" onclick="ajaxToggle('archive',<?= $a['idProduit'] ?>,'Restore')" data-i18n="btnRestore">♻️ Restore</button>
+                            <a href="?edit=<?= $a['idProduit'] ?>" class="btn-action btn-edit-a" data-i18n="btnEdit">✏️ Edit</a>
+                            <button class="btn-action btn-delete" onclick="openDeleteModal(<?= $a['idProduit'] ?>,'<?= htmlspecialchars(addslashes($a['nomProduit']), ENT_QUOTES, 'UTF-8') ?>')" data-i18n="btnDelete">🗑</button>
                         </div>
                     </td>
                 </tr>
@@ -708,9 +727,9 @@ textarea.note-interne-ctrl{background:transparent;border:none;outline:none;width
             <?php endif; ?>
         </div>
     </div>
-
 </div>
-</main>
+</div><!-- /page-body-wrapper -->
+</div><!-- /container-scroller -->
 
 <!-- PREVIEW MODAL -->
 <div class="preview-modal-overlay" id="previewModal">
@@ -719,13 +738,13 @@ textarea.note-interne-ctrl{background:transparent;border:none;outline:none;width
         <div class="preview-modal-body">
             <div id="previewTitle" class="preview-modal-title"></div>
             <div id="previewPrice" style="font-size:20px;font-weight:700;color:var(--success);margin-bottom:10px;"></div>
-            <div class="preview-section-label">Description</div>
+            <div class="preview-section-label" data-i18n="previewLabelDesc">Description</div>
             <div id="previewDesc" class="preview-text"></div>
-            <div class="preview-section-label">Tags</div>
+            <div class="preview-section-label" data-i18n="previewLabelTags">Tags</div>
             <div id="previewTags" class="preview-text"></div>
             <div style="display:flex;align-items:center;margin-top:18px;padding-top:14px;border-top:1px solid var(--border);">
-                <span style="font-size:12px;color:var(--text-dim)">Product ID: <span id="previewId"></span></span>
-                <button class="preview-close-btn" onclick="closePreview()">✕ Close</button>
+                <span style="font-size:12px;color:var(--text-dim)"><span data-i18n="previewProductId">Product ID:</span> <span id="previewId"></span></span>
+                <button class="preview-close-btn" onclick="closePreview()" data-i18n="btnClose">✕ Close</button>
             </div>
         </div>
     </div>
@@ -734,15 +753,16 @@ textarea.note-interne-ctrl{background:transparent;border:none;outline:none;width
 <!-- DELETE MODAL -->
 <div class="modal-overlay" id="deleteModal">
     <div class="modal-box">
-        <div class="modal-title">🗑 Confirm deletion</div>
+        <div class="modal-title" data-i18n="deleteModalTitle">🗑 Confirm deletion</div>
         <div class="modal-text" id="deleteModalText"></div>
         <div class="modal-actions">
-            <button class="btn-modal-cancel" id="btnCancelDelete">Cancel</button>
-            <a href="#" class="btn-modal-confirm" id="confirmDeleteBtn">Delete</a>
+            <button class="btn-modal-cancel" id="btnCancelDelete" data-i18n="btnCancel">Cancel</button>
+            <a href="#" class="btn-modal-confirm" id="confirmDeleteBtn" data-i18n="btnConfirmDelete">Delete</a>
         </div>
     </div>
 </div>
 
+<?php include __DIR__ . '/../includes/layout_scripts.php'; ?>
 <script>
 const BASE_URL='<?= $baseUrl ?>';
 const DEVISE_JS='<?= DEVISE ?>';
@@ -762,12 +782,19 @@ const alertEl=document.getElementById('alertMsg');
 if(alertEl) setTimeout(()=>alertEl.style.display='none',4500);
 
 /* ─── CHARTS ─────────────────────────────────────────────────────── */
-(function initCharts(){
+let productCharts = [];
+function initCharts(){
+    productCharts.forEach(chart => chart.destroy());
+    productCharts = [];
+    Chart.getChart('chartCategories')?.destroy();
+    Chart.getChart('chartPrices')?.destroy();
+    const chartTheme = window.getBackOfficeChartTheme ? window.getBackOfficeChartTheme() : { text:'#7c8ba1', grid:'rgba(255,255,255,.04)', accent:'#8b5cf6', accentSoft:'rgba(139,92,246,.6)', rose:'#ef4444', roseSoft:'rgba(239,68,68,.6)' };
     const catLabels=<?= json_encode(array_keys($top5cats)) ?>;
     const catVals  =<?= json_encode(array_values($top5cats)) ?>;
-    const baseColors=['rgba(139,92,246,.6)','rgba(16,185,129,.6)','rgba(245,158,11,.6)','rgba(59,130,246,.6)','rgba(239,68,68,.6)'];
-    const opt={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#7c8ba1',font:{size:11}}}}};
-    new Chart(document.getElementById('chartCategories'),{type:'bar',data:{labels:catLabels,datasets:[{label:'Products',data:catVals,backgroundColor:baseColors,borderColor:baseColors.map(c=>c.replace('.6','.9')),borderWidth:2,borderRadius:6}]},options:{...opt,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7c8ba1'},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:'#7c8ba1'},grid:{color:'rgba(255,255,255,.04)'}}}}});
+    const baseColors=[chartTheme.accentSoft,'rgba(16,185,129,.45)','rgba(245,158,11,.45)','rgba(59,130,246,.45)',chartTheme.roseSoft];
+    const borderColors=[chartTheme.accent,'#10b981','#f59e0b','#3b82f6',chartTheme.rose];
+    const opt={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:chartTheme.text,font:{size:11}}}}};
+    productCharts.push(new Chart(document.getElementById('chartCategories'),{type:'bar',data:{labels:catLabels,datasets:[{label:'Products',data:catVals,backgroundColor:baseColors,borderColor:borderColors,borderWidth:2,borderRadius:6}]},options:{...opt,plugins:{legend:{display:false}},scales:{x:{ticks:{color:chartTheme.text},grid:{color:chartTheme.grid}},y:{ticks:{color:chartTheme.text},grid:{color:chartTheme.grid}}}}}));
     // Price distribution (ranges)
     const ranges=['0-25','25-50','50-100','100-250','250+'];
     const rangeCounts=[0,0,0,0,0];
@@ -781,7 +808,9 @@ if(alertEl) setTimeout(()=>alertEl.style.display='none',4500);
     })(<?= (float)$p['prix'] ?>);
     <?php endforeach; ?>
     new Chart(document.getElementById('chartPrices'),{type:'doughnut',data:{labels:ranges.map(r=>r+'€'),datasets:[{data:rangeCounts,backgroundColor:baseColors,borderColor:baseColors.map(c=>c.replace('.6','.9')),borderWidth:2}]},options:{...opt,cutout:'60%'}});
-})();
+}
+initCharts();
+window.addEventListener('cre8:themechange', initCharts);
 
 /* ─── FORM VALIDATION ────────────────────────────────────────────── */
 function showFieldError(errId, msg) {
@@ -893,13 +922,9 @@ if(boToggleAr) boToggleAr.addEventListener('change',function(){document.getEleme
 const prodForm=document.getElementById('produitFormBO');
 if(prodForm) prodForm.addEventListener('submit',function(e){
     let ok=true;
-    // Name
     if(fNom){const v=fNom.value.trim();if(v.length<2||/<[^>]+>/.test(v)){setFC(fNom,false);showFieldError('errNom','Min 2 chars, no HTML.');ok=false;}}
-    // Price
     if(fPrix&&!isValidPrice(fPrix.value)){setFC(fPrix,false);showFieldError('errPrix','Valid price required.');ok=false;}
-    // Date
     if(fDate&&fDate.value&&!isValidDate(fDate.value)){setFC(fDate,false);showFieldError('errDate','Invalid date format.');ok=false;}
-    // Tags
     if(fTags&&/<[^>]+>/.test(fTags.value)){setFC(fTags,false);showFieldError('errTags','HTML not allowed in tags.');ok=false;}
     if(!ok){
         e.preventDefault();
@@ -908,7 +933,6 @@ if(prodForm) prodForm.addEventListener('submit',function(e){
     }
 });
 
-// Init counters
 if(fNom) updateCounter('fNom','ctrNom');
 if(fDesc) updateCounter('fDesc','ctrDesc');
 if(fTags) updateCounter('fTags','ctrTags');
@@ -919,7 +943,6 @@ function switchTab(name, btn) {
         document.getElementById('tab-'+t+'-btn')?.classList.toggle('active',t===name);
         document.getElementById('content-'+t)?.classList.toggle('active',t===name);
     });
-    // fix for actifs btn
     document.getElementById('tab-actifs')?.classList.toggle('active',name==='actifs');
     document.getElementById('tab-archives-btn')?.classList.toggle('active',name==='archives');
 }
@@ -972,17 +995,26 @@ function renderPage(page,q,pMin,pMax,catSel) {
     allRows.forEach(r=>r.style.display='none');
     visible.forEach((r,i)=>r.style.display=(i>=start&&i<end)?'':'none');
     document.getElementById('visibleCount').textContent=total;
-    document.getElementById('paginationInfo').textContent=total===0?'No results':`${start+1}–${end} of ${total}`;
+    // ===== ADDED FEATURE: TRANSLATION-AWARE PAGINATION INFO =====
+    const T = translations[currentLang] || translations['en'];
+    document.getElementById('paginationInfo').textContent=total===0
+        ? (T.noResults||'No results')
+        : `${start+1}–${end} ${T.of||'of'} ${total}`;
+    // ===== END ADDED FEATURE =====
     const btns=document.getElementById('paginationButtons');
     btns.innerHTML='';
     if(pages<=1) return;
     const addBtn=(lbl,p,dis,act)=>{const b=document.createElement('button');b.className='page-btn'+(act?' active':'');b.textContent=lbl;b.disabled=dis;b.onclick=()=>renderPage(p);btns.appendChild(b);};
-    addBtn('←',page-1,page===1,false);
+    // ===== ADDED FEATURE: TRANSLATION-AWARE PREV/NEXT =====
+    addBtn(T.prevPage||'←',page-1,page===1,false);
+    // ===== END ADDED FEATURE =====
     for(let i=1;i<=pages;i++){
         if(i===1||i===pages||Math.abs(i-page)<=1) addBtn(i,i,false,i===page);
         else if(Math.abs(i-page)===2){const d=document.createElement('span');d.textContent='…';d.style.cssText='padding:5px 4px;color:var(--text-dim);font-size:12px;';btns.appendChild(d);}
     }
-    addBtn('→',page+1,page===pages,false);
+    // ===== ADDED FEATURE: TRANSLATION-AWARE PREV/NEXT =====
+    addBtn(T.nextPage||'→',page+1,page===pages,false);
+    // ===== END ADDED FEATURE =====
 }
 
 let sortCol=null,sortDir='asc';
@@ -1045,7 +1077,8 @@ document.getElementById('previewModal').addEventListener('click',e=>{if(e.target
 
 /* ─── DELETE MODAL ───────────────────────────────────────────────── */
 function openDeleteModal(id,name){
-    document.getElementById('deleteModalText').textContent=`Delete "${name}"? Irreversible.`;
+    const T=translations[currentLang]||translations['en'];
+    document.getElementById('deleteModalText').textContent=`${T.deleteConfirmMsg||'Delete'} "${name}"? ${T.deleteIrreversible||'Irreversible.'}`;
     document.getElementById('confirmDeleteBtn').href='index.php?delete='+id;
     document.getElementById('deleteModal').classList.add('open');
 }
@@ -1055,8 +1088,344 @@ document.getElementById('deleteModal').addEventListener('click',e=>{if(e.target.
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDeleteModal();closePreview();}});
 
-// Init pagination
+// Init pagination on load
 document.addEventListener('DOMContentLoaded',()=>renderPage(1));
+
+
+// ═══════════════════════════════════════════════════════════════════
+// ===== ADDED FEATURE: TRANSLATION SYSTEM =====
+// ═══════════════════════════════════════════════════════════════════
+const translations = {
+    en: {
+        // Page & Nav
+        navDashboard: 'Dashboard',
+        navOverview: 'Overview',
+        navModules: 'Modules',
+        navHome: 'Home',
+        navUsers: 'Users',
+        navOffers: 'Offers',
+        navCampaigns: 'Campaigns',
+        navProducts: 'Products',
+        navContracts: 'Contracts',
+        navEvents: 'Events',
+        navPosts: 'Posts',
+        navReclamations: 'Complaints',
+        adminName: 'Administrator',
+        adminRole: 'Super Admin',
+        breadAdmin: 'Admin',
+        breadProducts: 'Products',
+        pageTitle: 'Product Management',
+        pageSubtitle: 'Supervise, add, edit and analyze all platform products.',
+        // Topbar buttons
+        btnPrint: 'Print / PDF',
+        btnNewProduct: 'New Product',
+        searchPlaceholder: 'Search products…',
+        // Theme toggle
+        themeDarkLabel: 'Dark mode',
+        themeLightLabel: 'Light mode',
+        // KPI cards
+        kpiTotalActive: 'Total Active',
+        kpiProductsSub: 'products',
+        kpiAvgPrice: 'Avg. Price',
+        kpiCatalogValue: 'Catalog Value',
+        kpiHighestPrice: 'Highest Price',
+        kpiMissingImage: 'Missing Image',
+        kpiNeedImage: 'need image',
+        kpiPinned: 'Pinned',
+        kpiFeatured: 'featured',
+        kpiArchived: 'Archived',
+        kpiHidden: 'hidden',
+        // Charts
+        chartCatTitle: '📊 Products by Category (Top 5)',
+        chartPriceTitle: '💰 Price Distribution',
+        // Form
+        formAddTitle: '➕ Add a Product',
+        formEditTitle: '✏️ Edit Product',
+        labelName: 'Product name',
+        labelPrice: 'Price',
+        labelCategory: 'Category',
+        optSelectCategory: '— Select —',
+        labelAvailability: 'Availability date',
+        labelOptional: '(optional — YYYY-MM-DD)',
+        labelDescription: 'Description',
+        labelTags: 'Characteristics / Tags',
+        labelCommaSep: '(comma-separated)',
+        labelInternalNote: 'Internal note',
+        labelAdminOnly: 'Admin only',
+        noteInterneBanner: '🔒 Visible to admin team only',
+        togglePin: '📌 Pin',
+        toggleArchive: '🗄️ Archive',
+        labelImage: 'Image',
+        currentImageHint: 'Current image — upload to replace.',
+        uploadClick: 'Click to upload',
+        uploadHint: '(JPG, PNG, WEBP — 2MB max)',
+        btnSaveChanges: 'Save changes',
+        btnAddProduct: 'Add product',
+        btnCancel: 'Cancel',
+        // Validation errors
+        errName: 'Name required — min 2 characters, no HTML.',
+        errPrice: 'Valid price required (e.g. 29.99, max 2 decimals).',
+        errDate: 'Invalid date. Use YYYY-MM-DD (e.g. 2025-12-31).',
+        errTags: 'Tags must not contain HTML.',
+        errImage: 'File too large or invalid format (JPG, PNG, WEBP only, max 2MB).',
+        // Filters
+        filterSortBy: 'Sort by',
+        filterDefault: 'Default',
+        filterNameAZ: 'Name A→Z',
+        filterNameZA: 'Name Z→A',
+        filterPriceAsc: 'Price ↑',
+        filterPriceDesc: 'Price ↓',
+        filterPriceRange: 'Price (€)',
+        filterMin: 'Min',
+        filterMax: 'Max',
+        filterCategory: 'Category',
+        filterAll: 'All',
+        filterReset: 'Reset',
+        // Tabs
+        tabActive: 'Active',
+        tabArchived: 'Archived',
+        // Table
+        tablePanelTitle: 'Product list',
+        noProducts: 'No products found.',
+        colImg: 'Img',
+        colId: '#ID',
+        colName: 'Name',
+        colCategory: 'Category',
+        colDescription: 'Description',
+        colPrice: 'Price',
+        colStatus: 'Status',
+        colActions: 'Actions',
+        statusPinned: '📌 Pinned',
+        statusFuture: '⏳ Future',
+        statusLive: '✅ Live',
+        // Buttons
+        btnView: '👁 View',
+        btnEdit: '✏️ Edit',
+        btnPin: '📌 Pin',
+        btnUnpin: '📌 Unpin',
+        btnArchive: '🗄️',
+        btnDelete: '🗑',
+        // Archived tab
+        archivedTitle: 'Archived products',
+        noArchived: 'No archived products.',
+        btnRestore: '♻️ Restore',
+        // Pagination
+        prevPage: '←',
+        nextPage: '→',
+        of: 'of',
+        noResults: 'No results',
+        // Preview modal
+        previewLabelDesc: 'Description',
+        previewLabelTags: 'Tags',
+        previewProductId: 'Product ID:',
+        btnClose: '✕ Close',
+        // Delete modal
+        deleteModalTitle: '🗑 Confirm deletion',
+        deleteConfirmMsg: 'Delete',
+        deleteIrreversible: 'This action is irreversible.',
+        btnConfirmDelete: 'Delete',
+    },
+    fr: {
+        // Page & Nav
+        navDashboard: 'Tableau de bord',
+        navOverview: 'Aperçu',
+        navModules: 'Modules',
+        navHome: 'Accueil',
+        navUsers: 'Utilisateurs',
+        navOffers: 'Offres',
+        navCampaigns: 'Campagnes',
+        navProducts: 'Produits',
+        navContracts: 'Contrats',
+        navEvents: 'Événements',
+        navPosts: 'Posts',
+        navReclamations: 'Réclamations',
+        adminName: 'Administrateur',
+        adminRole: 'Super Admin',
+        breadAdmin: 'Admin',
+        breadProducts: 'Produits',
+        pageTitle: 'Gestion des Produits',
+        pageSubtitle: 'Supervisez, ajoutez, modifiez et analysez tous les produits de la plateforme.',
+        // Topbar buttons
+        btnPrint: 'Imprimer / PDF',
+        btnNewProduct: 'Nouveau Produit',
+        searchPlaceholder: 'Rechercher des produits…',
+        // Theme toggle
+        themeDarkLabel: 'Mode sombre',
+        themeLightLabel: 'Mode clair',
+        // KPI cards
+        kpiTotalActive: 'Total actifs',
+        kpiProductsSub: 'produits',
+        kpiAvgPrice: 'Prix moyen',
+        kpiCatalogValue: 'Valeur catalogue',
+        kpiHighestPrice: 'Prix le plus élevé',
+        kpiMissingImage: 'Sans image',
+        kpiNeedImage: 'à corriger',
+        kpiPinned: 'Épinglés',
+        kpiFeatured: 'mis en avant',
+        kpiArchived: 'Archivés',
+        kpiHidden: 'masqués',
+        // Charts
+        chartCatTitle: '📊 Produits par catégorie (Top 5)',
+        chartPriceTitle: '💰 Répartition des prix',
+        // Form
+        formAddTitle: '➕ Ajouter un produit',
+        formEditTitle: '✏️ Modifier le produit',
+        labelName: 'Nom du produit',
+        labelPrice: 'Prix',
+        labelCategory: 'Catégorie',
+        optSelectCategory: '— Sélectionner —',
+        labelAvailability: 'Date de disponibilité',
+        labelOptional: '(optionnel — AAAA-MM-JJ)',
+        labelDescription: 'Description',
+        labelTags: 'Caractéristiques / Tags',
+        labelCommaSep: '(séparés par des virgules)',
+        labelInternalNote: 'Note interne',
+        labelAdminOnly: 'Admin seulement',
+        noteInterneBanner: '🔒 Visible uniquement par l\'équipe admin',
+        togglePin: '📌 Épingler',
+        toggleArchive: '🗄️ Archiver',
+        labelImage: 'Image',
+        currentImageHint: 'Image actuelle — téléchargez pour remplacer.',
+        uploadClick: 'Cliquez pour télécharger',
+        uploadHint: '(JPG, PNG, WEBP — 2 Mo max)',
+        btnSaveChanges: 'Enregistrer',
+        btnAddProduct: 'Ajouter le produit',
+        btnCancel: 'Annuler',
+        // Validation errors
+        errName: 'Nom requis — min 2 caractères, pas de HTML.',
+        errPrice: 'Prix valide requis (ex. 29.99, max 2 décimales).',
+        errDate: 'Date invalide. Utilisez AAAA-MM-JJ (ex. 2025-12-31).',
+        errTags: 'Les tags ne doivent pas contenir de HTML.',
+        errImage: 'Fichier trop grand ou format invalide (JPG, PNG, WEBP uniquement, max 2 Mo).',
+        // Filters
+        filterSortBy: 'Trier par',
+        filterDefault: 'Par défaut',
+        filterNameAZ: 'Nom A→Z',
+        filterNameZA: 'Nom Z→A',
+        filterPriceAsc: 'Prix ↑',
+        filterPriceDesc: 'Prix ↓',
+        filterPriceRange: 'Prix (€)',
+        filterMin: 'Min',
+        filterMax: 'Max',
+        filterCategory: 'Catégorie',
+        filterAll: 'Toutes',
+        filterReset: 'Réinitialiser',
+        // Tabs
+        tabActive: 'Actifs',
+        tabArchived: 'Archivés',
+        // Table
+        tablePanelTitle: 'Liste des produits',
+        noProducts: 'Aucun produit trouvé.',
+        colImg: 'Img',
+        colId: '#ID',
+        colName: 'Nom',
+        colCategory: 'Catégorie',
+        colDescription: 'Description',
+        colPrice: 'Prix',
+        colStatus: 'Statut',
+        colActions: 'Actions',
+        statusPinned: '📌 Épinglé',
+        statusFuture: '⏳ À venir',
+        statusLive: '✅ En ligne',
+        // Buttons
+        btnView: '👁 Voir',
+        btnEdit: '✏️ Modifier',
+        btnPin: '📌 Épingler',
+        btnUnpin: '📌 Désépingler',
+        btnArchive: '🗄️',
+        btnDelete: '🗑',
+        // Archived tab
+        archivedTitle: 'Produits archivés',
+        noArchived: 'Aucun produit archivé.',
+        btnRestore: '♻️ Restaurer',
+        // Pagination
+        prevPage: '←',
+        nextPage: '→',
+        of: 'sur',
+        noResults: 'Aucun résultat',
+        // Preview modal
+        previewLabelDesc: 'Description',
+        previewLabelTags: 'Tags',
+        previewProductId: 'ID Produit :',
+        btnClose: '✕ Fermer',
+        // Delete modal
+        deleteModalTitle: '🗑 Confirmer la suppression',
+        deleteConfirmMsg: 'Supprimer',
+        deleteIrreversible: 'Cette action est irréversible.',
+        btnConfirmDelete: 'Supprimer',
+    }
+};
+
+let currentLang = localStorage.getItem('cre8_lang_produit') || 'en';
+
+function setLang(lang) {
+    currentLang = lang;
+    localStorage.setItem('cre8_lang_produit', lang);
+    applyTranslations();
+    document.getElementById('langEN').classList.toggle('active', lang === 'en');
+    document.getElementById('langFR').classList.toggle('active', lang === 'fr');
+    // Refresh pagination text
+    renderPage(currentPage);
+}
+
+function applyTranslations() {
+    const T = translations[currentLang] || translations['en'];
+
+    // Text content elements
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (T[key] !== undefined) el.textContent = T[key];
+    });
+
+    // Placeholder attributes
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (T[key] !== undefined) el.setAttribute('placeholder', T[key]);
+    });
+
+    // Theme label (must stay in sync with current theme)
+    syncThemeLabel();
+}
+// ===== END ADDED FEATURE: TRANSLATION SYSTEM =====
+
+
+// ═══════════════════════════════════════════════════════════════════
+// ===== ADDED FEATURE: LIGHT/DARK MODE TOGGLE =====
+// ===== BackOffice default = DARK. Light only if user chose it. =====
+// ═══════════════════════════════════════════════════════════════════
+function syncThemeLabel() {
+    const T = translations[currentLang] || translations['en'];
+    const isLight = document.body.classList.contains('light-mode');
+    const icon  = document.getElementById('themeIcon');
+    const label = document.getElementById('themeLabel');
+    if (icon)  icon.textContent  = isLight ? '🌙' : '☀️';
+    if (label) label.textContent = isLight ? (T.themeDarkLabel || 'Dark mode') : (T.themeLightLabel || 'Light mode');
+}
+
+function toggleTheme() {
+    window.toggleBackOfficeTheme ? window.toggleBackOfficeTheme() : document.body.classList.toggle('light-mode');
+    syncThemeLabel();
+    initCharts();
+}
+
+function initTheme() {
+    if (window.applyBackOfficeTheme) window.applyBackOfficeTheme();
+    syncThemeLabel();
+}
+// ===== END ADDED FEATURE: LIGHT/DARK MODE TOGGLE =====
+
+
+// ═══════════════════════════════════════════════════════════════════
+// INIT — boot all added features after DOM is ready
+// ═══════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+    // Init theme (dark default for BackOffice)
+    initTheme();
+    // Init language
+    applyTranslations();
+    document.getElementById('langEN').classList.toggle('active', currentLang === 'en');
+    document.getElementById('langFR').classList.toggle('active', currentLang === 'fr');
+});
 </script>
 </body>
 </html>
