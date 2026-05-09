@@ -1,0 +1,832 @@
+(function () {
+    'use strict';
+
+    const EMOJIS = ['😀','😂','🥰','😍','😢','😡','😮','🤔','😎','🥹','😭','🤣','😊','🙄','😴','😬','🤯','😏','🤩','🥳','👍','👎','👏','🙌','🤝','💪','👀','🫶','🤞','✌️','❤️','🔥','🎉','✨','💯','⭐','🌟','🎊','💔','💡'];
+    const STICKERS = ['🎉','🔥','❤️','😂','👏','💯','🫶','😍','🤯','💔','🎊','✨'];
+    const MAX_COMMENT_LENGTH = 200;
+    const BAD_WORDS = ['testbad1','testbad2','testbad3','testbad4','testbad5','testbad6','testbad7','testbad8','testbad9','testbad10'];
+
+    function normalizeLeet(text) {
+        return text
+            .toLowerCase()
+            .replace(/@/g,'a')
+            .replace(/4/g,'a')
+            .replace(/3/g,'e')
+            .replace(/1/g,'i')
+            .replace(/!/g,'i')
+            .replace(/0/g,'o')
+            .replace(/\$/g,'s')
+            .replace(/5/g,'s')
+            .replace(/7/g,'t')
+            .replace(/\+/g,'t')
+            .replace(/8/g,'b')
+            .replace(/\|/g,'l')
+            .replace(/[.*_\-]/g,'')
+            .replace(/\s+/g,' ')
+            .trim();
+    }
+
+    function findBadWord(text) {
+        const normalized = normalizeLeet(text);
+        for (const word of BAD_WORDS) {
+            const normalizedWord = normalizeLeet(word);
+            if (normalizedWord.includes(' ')) {
+                if (normalized.includes(normalizedWord)) return word;
+                continue;
+            }
+            try {
+                const regex = new RegExp('\\b' + normalizedWord + '\\b', 'i');
+                if (regex.test(normalized)) return word;
+            } catch (_) {
+                if (normalized.includes(normalizedWord)) return word;
+            }
+        }
+        return null;
+    }
+
+    function getOrCreateCounter(textarea) {
+        const area = textarea.closest('.comment-input-area');
+        if (!area) return null;
+        let counter = area.querySelector('.js-char-counter');
+        if (!counter) {
+            counter = document.createElement('div');
+            counter.className = 'js-char-counter comment-char-counter';
+            textarea.insertAdjacentElement('afterend', counter);
+        }
+        return counter;
+    }
+
+    function getOrCreateError(textarea) {
+        const area = textarea.closest('.comment-input-area');
+        if (!area) return null;
+        let err = area.querySelector('.js-comment-error');
+        if (!err) {
+            err = document.createElement('div');
+            err.className = 'js-comment-error comment-validation-error';
+            err.setAttribute('role', 'alert');
+            err.setAttribute('aria-live', 'polite');
+            err.style.display = 'none';
+            const toolbar = area.querySelector('.comment-form-toolbar');
+            if (toolbar) toolbar.insertAdjacentElement('afterend', err);
+            else textarea.insertAdjacentElement('afterend', err);
+        }
+        return err;
+    }
+
+    function updateCounter(textarea) {
+        const counter = getOrCreateCounter(textarea);
+        if (!counter) return;
+        const len = textarea.value.length;
+        const remaining = MAX_COMMENT_LENGTH - len;
+        counter.textContent = `${len} / ${MAX_COMMENT_LENGTH}`;
+        counter.classList.remove('is-warning','is-danger');
+        if (remaining <= 0) counter.classList.add('is-danger');
+        else if (remaining <= 30) counter.classList.add('is-warning');
+    }
+
+    function showError(el, msg) {
+        if (!el) return;
+        el.textContent = msg;
+        el.style.display = 'flex';
+    }
+
+    function hideError(el) {
+        if (!el) return;
+        el.textContent = '';
+        el.style.display = 'none';
+    }
+
+    function validateTextarea(textarea) {
+        const err = getOrCreateError(textarea);
+        const raw = textarea.value;
+        const text = raw.trim();
+
+        if (text === '') {
+            hideError(err);
+            textarea.classList.remove('is-invalid','is-valid');
+            return true;
+        }
+
+        if (raw.length > MAX_COMMENT_LENGTH) {
+            showError(err, `⚠ Comment too long — maximum ${MAX_COMMENT_LENGTH} characters (${raw.length} entered).`);
+            textarea.classList.add('is-invalid');
+            textarea.classList.remove('is-valid');
+            return false;
+        }
+
+        const matched = findBadWord(text);
+        if (matched !== null) {
+            showError(err, '🚫 Your comment contains inappropriate language. Please keep it respectful.');
+            textarea.classList.add('is-invalid');
+            textarea.classList.remove('is-valid');
+            return false;
+        }
+
+        hideError(err);
+        textarea.classList.remove('is-invalid');
+        textarea.classList.add('is-valid');
+        return true;
+    }
+
+    function bindValidation(textarea) {
+        if (textarea.dataset.validationBound === '1') return;
+        textarea.dataset.validationBound = '1';
+        updateCounter(textarea);
+        textarea.addEventListener('input', () => {
+            updateCounter(textarea);
+            if (textarea.dataset.submitted === '1') validateTextarea(textarea);
+        });
+    }
+
+    function bindValidationInRoot(root) {
+        root.querySelectorAll('.comment-textarea').forEach(bindValidation);
+    }
+
+    document.addEventListener('DOMContentLoaded', initCommentUi);
+
+    function initCommentUi() {
+        buildStickerBars();
+        buildEmojiPickers();
+        initAutoResize();
+        initImagePreviews();
+        initCommentReactions();
+        initReplyAndEditToggles();
+        initCommentModalButtons();
+        initAjaxCommentForms();
+        initDeleteCommentButtons();
+        initVoiceTranscription();
+        bindValidationInRoot(document);
+    }
+
+    function buildStickerBars(root = document) {
+        root.querySelectorAll('.sticker-bar').forEach(bar => {
+            if (bar.dataset.built === '1') return;
+            bar.dataset.built = '1';
+            const hiddenInput = bar.closest('form')?.querySelector('.js-sticker-input');
+            const preSelected = bar.dataset.selected || hiddenInput?.value || '';
+            STICKERS.forEach(sticker => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'sticker-btn' + (preSelected === sticker ? ' is-selected' : '');
+                btn.textContent = sticker;
+                btn.addEventListener('click', () => {
+                    const selected = btn.classList.contains('is-selected');
+                    bar.querySelectorAll('.sticker-btn').forEach(b => b.classList.remove('is-selected'));
+                    if (!selected) {
+                        btn.classList.add('is-selected');
+                        if (hiddenInput) hiddenInput.value = sticker;
+                    } else if (hiddenInput) {
+                        hiddenInput.value = '';
+                    }
+                });
+                bar.appendChild(btn);
+            });
+        });
+    }
+
+    function buildEmojiPickers(root = document) {
+        root.querySelectorAll('.emoji-picker-panel').forEach(panel => {
+            if (panel.dataset.built === '1') return;
+            panel.dataset.built = '1';
+            const textarea = panel.closest('.comment-input-area')?.querySelector('.comment-textarea');
+            EMOJIS.forEach(em => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'emoji-btn';
+                btn.textContent = em;
+                btn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    if (textarea) insertAtCursor(textarea, em);
+                    panel.classList.remove('is-open');
+                });
+                panel.appendChild(btn);
+            });
+        });
+
+        root.querySelectorAll('.btn-emoji-toggle').forEach(btn => {
+            if (btn.dataset.bound === '1') return;
+            btn.dataset.bound = '1';
+            btn.addEventListener('click', e => {
+                e.stopPropagation();
+                const area = btn.closest('.comment-input-area');
+                const panel = area?.querySelector('.emoji-picker-panel');
+                if (panel) panel.classList.toggle('is-open');
+            });
+        });
+
+        document.addEventListener(
+            'click',
+            () => document.querySelectorAll('.emoji-picker-panel.is-open').forEach(p => p.classList.remove('is-open')),
+            { once: true }
+        );
+    }
+
+    function insertAtCursor(el, text) {
+        const start = el.selectionStart ?? el.value.length;
+        const end = el.selectionEnd ?? el.value.length;
+        el.value = el.value.slice(0, start) + text + el.value.slice(end);
+        el.selectionStart = el.selectionEnd = start + text.length;
+        el.focus();
+        el.dispatchEvent(new Event('input'));
+    }
+
+    function initAutoResize(root = document) {
+        root.querySelectorAll('.comment-textarea').forEach(ta => {
+            if (ta.dataset.bound === '1') return;
+            ta.dataset.bound = '1';
+            ta.addEventListener('input', autoResize);
+            autoResize.call(ta);
+        });
+    }
+
+    function autoResize() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 140) + 'px';
+    }
+
+    function initImagePreviews() {
+        document.addEventListener('change', e => {
+            const input = e.target.closest('.js-image-input');
+            if (!input || !input.files?.[0]) return;
+            const wrap = input.closest('.comment-input-area')?.querySelector('.img-preview-wrap');
+            const preview = wrap?.querySelector('.js-img-preview');
+            if (!wrap || !preview) return;
+            const reader = new FileReader();
+            reader.onload = ev => {
+                preview.src = ev.target.result;
+                wrap.style.display = '';
+            };
+            reader.readAsDataURL(input.files[0]);
+        });
+
+        document.addEventListener('click', e => {
+            const btn = e.target.closest('.btn-remove-preview');
+            if (!btn) return;
+            const wrap = btn.closest('.img-preview-wrap');
+            const form = btn.closest('form');
+            const input = form?.querySelector('.js-image-input');
+            if (input) input.value = '';
+            if (wrap) wrap.style.display = 'none';
+        });
+    }
+
+    function initCommentReactions() {
+        document.addEventListener('click', async e => {
+            const btn = e.target.closest('.js-comment-reaction');
+            if (!btn) return;
+            e.preventDefault();
+            const commentId = btn.dataset.commentId;
+            const action = btn.dataset.action;
+            const countEl = btn.querySelector(action === 'like' ? '.js-like-count' : '.js-dislike-count');
+
+            try {
+                const form = new URLSearchParams();
+                form.set('id', commentId);
+
+                const response = await fetch(`../comment/${action}c.php`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: form.toString()
+                });
+
+                const data = await response.json();
+                if (data.success && countEl) {
+                    countEl.textContent = data.count;
+                    btn.classList.add('is-active');
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        });
+    }
+
+    function initReplyAndEditToggles() {
+        document.addEventListener('click', e => {
+            const replyBtn = e.target.closest('.js-reply-toggle');
+            if (replyBtn) {
+                e.preventDefault();
+                const target = document.getElementById(replyBtn.dataset.target);
+                if (!target) return;
+                target.classList.toggle('is-open');
+                if (target.classList.contains('is-open')) {
+                    initCommentUiInside(target);
+                    target.querySelector('.comment-textarea')?.focus();
+                }
+                return;
+            }
+
+            const editBtn = e.target.closest('.btn-edit-comment');
+            if (editBtn) {
+                e.preventDefault();
+                toggleEditForm(editBtn.dataset.commentId, true);
+                return;
+            }
+
+            const cancelBtn = e.target.closest('.btn-cancel-edit');
+            if (cancelBtn) {
+                e.preventDefault();
+                toggleEditForm(cancelBtn.dataset.commentId, false);
+            }
+        });
+    }
+
+    function toggleEditForm(commentId, open) {
+        const bubble = document.getElementById('bubble-' + commentId);
+        const editForm = document.getElementById('edit-form-' + commentId);
+        if (!bubble || !editForm) return;
+        bubble.style.display = open ? 'none' : '';
+        editForm.classList.toggle('is-open', open);
+        if (open) {
+            initCommentUiInside(editForm);
+            editForm.querySelector('.comment-textarea')?.focus();
+        }
+    }
+
+    function initCommentModalButtons() {
+        document.addEventListener('click', e => {
+            const btn = e.target.closest('.js-open-comments-modal');
+            if (!btn) return;
+            e.preventDefault();
+            const target = btn.dataset.bsTarget || btn.dataset.target;
+            if (!target || typeof bootstrap === 'undefined') return;
+            const modalEl = document.querySelector(target);
+            if (!modalEl) return;
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        });
+    }
+
+    function initAjaxCommentForms() {
+        document.addEventListener('submit', async e => {
+            const form = e.target.closest('.js-comment-form, .js-comment-edit-form');
+            if (!form) return;
+            e.preventDefault();
+
+            const textarea = form.querySelector('.comment-textarea');
+            if (textarea) {
+                textarea.dataset.submitted = '1';
+                if (!validateTextarea(textarea)) {
+                    textarea.focus();
+                    return;
+                }
+            }
+
+            const postId = form.dataset.postId;
+            const context = form.dataset.context || 'index';
+            const submitBtn = form.querySelector('.btn-comment-submit');
+            if (submitBtn) submitBtn.disabled = true;
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: new FormData(form)
+                });
+
+                const data = await response.json();
+                if (!data.success) {
+                    alert(data.message || 'Action failed.');
+                    return;
+                }
+
+                form.reset();
+
+                const langSelect = form.querySelector('.js-voice-lang-select');
+                if (langSelect && langSelect.dataset.defaultValue) {
+                    langSelect.value = langSelect.dataset.defaultValue;
+                }
+
+                if (textarea) {
+                    textarea.dataset.submitted = '0';
+                    textarea.classList.remove('is-invalid','is-valid');
+                    updateCounter(textarea);
+                    hideError(getOrCreateError(textarea));
+                }
+
+                form.querySelectorAll('.sticker-btn').forEach(btn => btn.classList.remove('is-selected'));
+                form.querySelectorAll('.img-preview-wrap').forEach(wrap => wrap.style.display = 'none');
+                form.querySelectorAll('.comment-voice-status').forEach(el => {
+                    el.textContent = '';
+                    el.classList.remove('is-error','is-active');
+                });
+
+                const removeImage = form.querySelector('input[name="removeImage"]');
+                if (removeImage) removeImage.checked = false;
+
+                const editBlock = form.closest('.comment-edit-form');
+                if (editBlock && editBlock.id.startsWith('edit-form-')) {
+                    const commentId = editBlock.id.replace('edit-form-', '');
+                    toggleEditForm(commentId, false);
+                }
+
+                await refreshCommentsForPost(postId, context);
+            } catch (error) {
+                console.error(error);
+                alert('Unable to save your comment right now.');
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
+            }
+        });
+    }
+
+    function initDeleteCommentButtons() {
+        document.addEventListener('click', async e => {
+            const btn = e.target.closest('.js-delete-comment');
+            if (!btn) return;
+            e.preventDefault();
+            if (!confirm('Delete this comment and its replies?')) return;
+
+            try {
+                const form = new URLSearchParams();
+                form.set('id', btn.dataset.commentId || '');
+                form.set('postId', btn.dataset.postId || '');
+
+                const response = await fetch('../comment/deletec.php', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: form.toString()
+                });
+
+                const data = await response.json();
+                if (!data.success) {
+                    alert(data.message || 'Unable to delete comment.');
+                    return;
+                }
+
+                await refreshCommentsForPost(btn.dataset.postId, btn.dataset.context || 'index');
+            } catch (error) {
+                console.error(error);
+                alert('Unable to delete comment right now.');
+            }
+        });
+    }
+
+    const voiceRecognitionState = new WeakMap();
+    const mediaRecorderState = new WeakMap();
+
+    function initVoiceTranscription(root = document) {
+        root.querySelectorAll('.js-voice-transcript-btn').forEach(btn => {
+            if (btn.dataset.boundVoice === '1') return;
+            btn.dataset.boundVoice = '1';
+            btn.addEventListener('click', handleVoiceTranscriptionToggle);
+        });
+    }
+
+    function getSpeechRecognitionCtor() {
+        return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+    }
+
+    function isEdgeBrowser() {
+        return /Edg\//i.test(navigator.userAgent || '');
+    }
+
+    function shouldUseBrowserSpeech() {
+        return !!getSpeechRecognitionCtor() && !isEdgeBrowser();
+    }
+
+    function getSelectedVoiceLang(form, btn) {
+        const select = form?.querySelector('.js-voice-lang-select');
+        if (select && select.value) return select.value;
+        if (btn?.dataset.voiceLang) return btn.dataset.voiceLang;
+        return document.documentElement.lang || navigator.language || 'en-US';
+    }
+
+    function normalizeVoiceLang(value) {
+        const lang = String(value || 'en-US').toLowerCase().trim();
+        if (lang.startsWith('fr')) return 'fr-FR';
+        if (lang.startsWith('ar')) return 'ar-SA';
+        return 'en-US';
+    }
+
+    function normalizeApiLanguage(value) {
+        const normalized = normalizeVoiceLang(value);
+        if (normalized.toLowerCase().startsWith('fr')) return 'fr';
+        if (normalized.toLowerCase().startsWith('ar')) return 'ar';
+        return 'en';
+    }
+
+    function setVoiceStatus(form, message, isError = false) {
+        const status = form?.querySelector('.comment-voice-status');
+        if (!status) return;
+        status.textContent = message || '';
+        status.classList.toggle('is-error', !!isError);
+        status.classList.toggle('is-active', !isError && !!message && /listening|transcribing|recording|processing/i.test(message));
+    }
+
+    function getVoiceState(form) {
+        if (voiceRecognitionState.has(form)) return voiceRecognitionState.get(form);
+
+        const RecognitionCtor = getSpeechRecognitionCtor();
+        const state = {
+            recognition: RecognitionCtor ? new RecognitionCtor() : null,
+            listening: false,
+            manualStop: false,
+            baseText: '',
+            finalText: ''
+        };
+
+        if (state.recognition) {
+            state.recognition.continuous = true;
+            state.recognition.interimResults = true;
+            state.recognition.maxAlternatives = 3;
+        }
+
+        voiceRecognitionState.set(form, state);
+        return state;
+    }
+
+    function getMediaState(form) {
+        if (mediaRecorderState.has(form)) return mediaRecorderState.get(form);
+        const state = { stream: null, recorder: null, chunks: [], recording: false, mimeType: '' };
+        mediaRecorderState.set(form, state);
+        return state;
+    }
+
+    function resetVoiceButton(btn) {
+        btn.classList.remove('is-recording');
+        btn.innerHTML = '<i class="bi bi-mic"></i>';
+        btn.disabled = false;
+    }
+
+    function setRecordingVoiceButton(btn) {
+        btn.classList.add('is-recording');
+        btn.innerHTML = '<i class="bi bi-mic-fill"></i>';
+        btn.disabled = false;
+    }
+
+    function stopVoiceRecognition(form) {
+        const state = voiceRecognitionState.get(form);
+        if (!state || !state.recognition) return;
+        state.manualStop = true;
+        state.listening = false;
+        try { state.recognition.stop(); } catch (_) {}
+    }
+
+    async function handleVoiceTranscriptionToggle(e) {
+        e.preventDefault();
+
+        const btn = e.currentTarget;
+        const form = btn.closest('form');
+        const textarea = form?.querySelector('.comment-textarea');
+        if (!form || !textarea) return;
+
+        if (shouldUseBrowserSpeech()) {
+            handleBrowserSpeech(btn, form, textarea);
+            return;
+        }
+
+        await handleRecorderSpeech(btn, form, textarea);
+    }
+
+    function handleBrowserSpeech(btn, form, textarea) {
+        const RecognitionCtor = getSpeechRecognitionCtor();
+        if (!RecognitionCtor) {
+            setVoiceStatus(form, 'Voice transcription is not supported in this browser.', true);
+            return;
+        }
+
+        const state = getVoiceState(form);
+        const recognition = state.recognition;
+        if (!recognition) {
+            setVoiceStatus(form, 'Voice transcription is unavailable.', true);
+            return;
+        }
+
+        if (state.listening) {
+            stopVoiceRecognition(form);
+            resetVoiceButton(btn);
+            setVoiceStatus(form, btn.dataset.idleLabel || 'Tap the microphone to dictate your comment');
+            return;
+        }
+
+        state.baseText = textarea.value || '';
+        state.finalText = '';
+        state.manualStop = false;
+        state.listening = true;
+        recognition.lang = normalizeVoiceLang(getSelectedVoiceLang(form, btn));
+
+        recognition.onstart = () => {
+            setRecordingVoiceButton(btn);
+            setVoiceStatus(form, btn.dataset.recordingLabel || 'Listening... speak now');
+        };
+
+        recognition.onresult = event => {
+            let interim = '';
+            let finals = state.finalText;
+
+            for (let i = event.resultIndex; i < event.results.length; i += 1) {
+                const result = event.results[i];
+                let transcript = '';
+
+                if (result.isFinal) {
+                    let bestAlternative = result[0];
+                    for (let j = 1; j < result.length; j += 1) {
+                        if ((result[j]?.confidence || 0) > (bestAlternative?.confidence || 0)) {
+                            bestAlternative = result[j];
+                        }
+                    }
+                    transcript = bestAlternative?.transcript || '';
+                    finals += transcript + ' ';
+                } else {
+                    transcript = result[0]?.transcript || '';
+                    interim += transcript;
+                }
+            }
+
+            state.finalText = finals;
+            const glue = state.baseText && !/\s$/.test(state.baseText) ? ' ' : '';
+            textarea.value = `${state.baseText}${glue}${finals}${interim}`.trim();
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+            setVoiceStatus(form, interim ? `Transcribing... ${interim}` : 'Listening...');
+        };
+
+        recognition.onerror = event => {
+            state.listening = false;
+            resetVoiceButton(btn);
+            const readable = {
+                'not-allowed': 'Microphone access was denied.',
+                'service-not-allowed': 'Speech recognition service is not allowed in this browser.',
+                'audio-capture': 'No microphone was detected.',
+                'no-speech': 'No speech was detected. Try again and speak clearly.',
+                'network': 'Network error while transcribing.',
+                'aborted': 'Voice transcription stopped.'
+            };
+            setVoiceStatus(form, readable[event.error] || 'Voice transcription failed.', event.error !== 'aborted');
+        };
+
+        recognition.onend = () => {
+            if (state.listening && !state.manualStop) {
+                try {
+                    recognition.start();
+                    return;
+                } catch (_) {}
+            }
+            state.listening = false;
+            resetVoiceButton(btn);
+            setVoiceStatus(form, btn.dataset.idleLabel || 'Tap the microphone to dictate your comment');
+        };
+
+        try {
+            recognition.start();
+        } catch (_) {
+            state.listening = false;
+            resetVoiceButton(btn);
+            setVoiceStatus(form, 'Unable to start microphone transcription.', true);
+        }
+    }
+
+    function getSupportedAudioMimeType() {
+        const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
+        for (const type of candidates) {
+            if (window.MediaRecorder && typeof MediaRecorder.isTypeSupported === 'function' && MediaRecorder.isTypeSupported(type)) {
+                return type;
+            }
+        }
+        return '';
+    }
+
+    async function handleRecorderSpeech(btn, form, textarea) {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') {
+            setVoiceStatus(form, 'Audio recording is not supported in this browser.', true);
+            return;
+        }
+
+        const state = getMediaState(form);
+
+        if (state.recording && state.recorder) {
+            btn.disabled = true;
+            setVoiceStatus(form, 'Stopping recording...');
+            try {
+                state.recorder.stop();
+            } catch (_) {
+                resetVoiceButton(btn);
+                setVoiceStatus(form, 'Unable to stop recording.', true);
+            }
+            return;
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mimeType = getSupportedAudioMimeType();
+            const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+
+            state.stream = stream;
+            state.recorder = recorder;
+            state.chunks = [];
+            state.recording = true;
+            state.mimeType = mimeType || recorder.mimeType || 'audio/webm';
+
+            setRecordingVoiceButton(btn);
+            setVoiceStatus(form, 'Recording... click the microphone again to stop and transcribe.');
+
+            recorder.ondataavailable = event => {
+                if (event.data && event.data.size > 0) state.chunks.push(event.data);
+            };
+
+            recorder.onerror = () => {
+                state.recording = false;
+                resetVoiceButton(btn);
+                setVoiceStatus(form, 'Audio recording failed.', true);
+            };
+
+            recorder.onstop = async () => {
+                state.recording = false;
+                resetVoiceButton(btn);
+
+                try {
+                    if (state.stream) state.stream.getTracks().forEach(track => track.stop());
+                } catch (_) {}
+
+                const blob = new Blob(state.chunks, { type: state.mimeType || 'audio/webm' });
+                state.chunks = [];
+
+                if (!blob.size) {
+                    setVoiceStatus(form, 'No audio was recorded.', true);
+                    return;
+                }
+
+                setVoiceStatus(form, 'Transcribing your recording...');
+                btn.disabled = true;
+
+                try {
+                    const ext = (state.mimeType || '').includes('ogg')
+                        ? 'ogg'
+                        : ((state.mimeType || '').includes('mp4') ? 'm4a' : 'webm');
+
+                    const file = new File([blob], `comment-recording.${ext}`, { type: state.mimeType || 'audio/webm' });
+                    const body = new FormData();
+                    body.append('audio', file);
+                    body.append('language', normalizeApiLanguage(getSelectedVoiceLang(form, btn)));
+
+                    const response = await fetch('../comment/transcribe.php', {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        body
+                    });
+
+                    const data = await response.json();
+                    if (!data.success) {
+                        setVoiceStatus(form, data.message || 'Unable to transcribe the recording.', true);
+                        return;
+                    }
+
+                    const base = textarea.value.trim();
+                    const glue = base && !/\s$/.test(base) ? ' ' : '';
+                    textarea.value = `${base}${glue}${(data.text || '').trim()}`.trim();
+                    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                    setVoiceStatus(form, 'Transcription added to your comment.');
+                } catch (error) {
+                    console.error(error);
+                    setVoiceStatus(form, 'Unable to transcribe the recording right now.', true);
+                } finally {
+                    btn.disabled = false;
+                }
+            };
+
+            recorder.start();
+        } catch (error) {
+            console.error(error);
+            resetVoiceButton(btn);
+            setVoiceStatus(form, 'Microphone access was denied or unavailable.', true);
+        }
+    }
+
+    async function refreshCommentsForPost(postId, fallbackContext) {
+        const scopes = document.querySelectorAll(`.js-post-comments-scope[data-post-id="${CSS.escape(postId)}"]`);
+        if (!scopes.length) return;
+
+        for (const scope of scopes) {
+            const context = scope.dataset.context || fallbackContext || 'index';
+            try {
+                const response = await fetch(`../comment/thread.php?postId=${encodeURIComponent(postId)}&context=${encodeURIComponent(context)}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+
+                const data = await response.json();
+                if (!data.success) continue;
+
+                scope.querySelectorAll('.js-comment-count').forEach(el => el.textContent = data.count);
+                const preview = scope.querySelector('.js-comments-preview');
+                const list = scope.querySelector('.js-comments-list');
+                if (preview) preview.innerHTML = data.previewHtml;
+                if (list) list.innerHTML = data.listHtml;
+                initCommentUiInside(scope);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+    }
+
+    function initCommentUiInside(root) {
+        buildStickerBars(root);
+        buildEmojiPickers(root);
+        initAutoResize(root);
+        initVoiceTranscription(root);
+        bindValidationInRoot(root);
+    }
+})();

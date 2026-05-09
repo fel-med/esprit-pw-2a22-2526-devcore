@@ -11,3 +11,9 @@ composer.phar
 ai_recommendation/.venv/
 ai_recommendation/__pycache__/
 ai_recommendation/scripts/__pycache__/
+
+
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
