@@ -986,6 +986,12 @@ post-front.css
     0 2px 0 #d4ccf5 inset; /* liseré lumineux haut */
 }
 
+.btn-dislike-post.is-active-dislike {
+  background: var(--dislike-color);
+  color: #fff;
+  border-color: var(--dislike-color);
+  box-shadow: 0 5px 14px var(--dislike-shadow);
+}
 /* ── HEADER — fond indigo avec grille ── */
 .crea-chatbot-header {
   display: flex;
@@ -1078,7 +1084,20 @@ post-front.css
   background: rgba(255,255,255,0.25);
   transform: scale(1.08) rotate(90deg);
 }
+.social-logout-btn{
+    border-radius: 999px;
+    padding: .55rem 1rem;
+    border: 1px solid rgba(255, 77, 77, 0.25);
+    background: rgba(255, 77, 77, 0.08);
+    color: #ff4d4d;
+    transition: all .25s ease;
+}
 
+.social-logout-btn:hover{
+    background: #ff4d4d;
+    color: #fff;
+    transform: translateY(-1px);
+}
 /* ── BODY ── */
 .crea-chatbot-body {
   padding: 1.1rem 1rem .6rem;

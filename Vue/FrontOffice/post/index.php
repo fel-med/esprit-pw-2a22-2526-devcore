@@ -1,13 +1,18 @@
 <?php
+require_once '../../../Controleur/session_helper.php';
+cc_start_session();
 require_once '../../../Controleur/postC.php';
 require_once '../../../Controleur/commentC.php';
 require_once '../comment/_render.php';
+
+// ── VÉRIFICATION SESSION ──────────────────────────────────────
+cc_require_login('../utilisateur/login.php');
 
 $postC = new PostC();
 $commentC = new CommentC();
 $pageTitle = 'Actuality';
 $currentPage = 'actuality';
-$currentUserId = 1;
+$currentUserId = (int)$_SESSION['id'];
 
 $search = trim($_GET['search'] ?? '');
 $sort = $_GET['sort'] ?? 'recent';

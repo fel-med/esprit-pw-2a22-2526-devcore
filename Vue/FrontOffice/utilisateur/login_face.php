@@ -62,6 +62,7 @@ if ($bestUser && $bestDist < 0.75) {
     }
 
     // 🔥 CRITIQUE
+    $_SESSION['connected'] = true;
     $_SESSION['id'] = $bestUser['id'];
     $_SESSION['role'] = $bestUser['role'];
     $_SESSION['nom'] = $bestUser['nom'];

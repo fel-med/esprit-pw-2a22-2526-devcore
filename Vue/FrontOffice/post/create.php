@@ -1,10 +1,15 @@
 <?php
+require_once '../../../Controleur/session_helper.php';
+cc_start_session();
 require_once '../../../Controleur/postC.php';
 require_once '../../../Modele/post.php';
 date_default_timezone_set('Africa/Tunis');
 
+// ── VÉRIFICATION SESSION ──────────────────────────────────────
+cc_require_login('../utilisateur/login.php');
+
 $postC = new PostC();
-$creatorId = 1;
+$creatorId = (int)$_SESSION['id'];
 $pageTitle = 'Create Post';
 $currentPage = 'portfolio';
 

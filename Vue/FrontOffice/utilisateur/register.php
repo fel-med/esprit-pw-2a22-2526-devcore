@@ -54,15 +54,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['nom'])) {
         );
 
         $userC = new UtilisateurC();
-        $userC->ajouterUser($user);
+        $result = $userC->ajouterUser($user);
 
-        header("Location: login.php");
-        exit();
+        if ($result !== 'success') {
+            $error = $result;
+        } else {
+            header("Location: login.php");
+            exit();
+        }
     }
    }
    }
 }
-?>
+?> 
 
 <!DOCTYPE html>
 <html lang="en">
@@ -343,19 +347,25 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 
+    function getModelBasePath() {
+        const currentPath = window.location.pathname.replace(/\/[^\/]*$/, '');
+        return window.location.origin + currentPath + '/../../../models';
+    }
+
     try {
         // ✅ attendre chargement COMPLET
-        await faceapi.nets.faceRecognitionNet.loadFromUri('/crea8connect/Esprit-PW-2A22-2526-Devcore/models');
-        await faceapi.nets.faceLandmark68Net.loadFromUri('/crea8connect/Esprit-PW-2A22-2526-Devcore/models');
-        await faceapi.nets.ssdMobilenetv1.loadFromUri('/crea8connect/Esprit-PW-2A22-2526-Devcore/models');
+        const modelBase = getModelBasePath();
+        await faceapi.nets.faceRecognitionNet.loadFromUri(modelBase);
+        await faceapi.nets.faceLandmark68Net.loadFromUri(modelBase);
+        await faceapi.nets.ssdMobilenetv1.loadFromUri(modelBase);
 
-        console.log("Models loaded ✅");
+        console.log("Models loaded ✅", modelBase);
 
         scanBtn.disabled = false;
 
     } catch (error) {
         console.error("Erreur chargement modèles ❌", error);
-        alert("Erreur chargement modèles ❌");
+        alert("Erreur chargement modèles ❌\nVérifiez le chemin des modèles et l’URL du projet.");
     }
 
     scanBtn.onclick = async () => {

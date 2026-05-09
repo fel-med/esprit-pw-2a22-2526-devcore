@@ -213,9 +213,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // 📦 charger modèles une seule fois
         if (!modelsLoaded) {
-            await faceapi.nets.faceRecognitionNet.loadFromUri('/crea8connect/Esprit-PW-2A22-2526-Devcore/models');
-            await faceapi.nets.faceLandmark68Net.loadFromUri('/crea8connect/Esprit-PW-2A22-2526-Devcore/models');
-            await faceapi.nets.ssdMobilenetv1.loadFromUri('/crea8connect/Esprit-PW-2A22-2526-Devcore/models');
+            const currentPath = window.location.pathname.replace(/\/[^\/]*$/, '');
+            const modelBase = window.location.origin + currentPath + '/../../../models';
+            await faceapi.nets.faceRecognitionNet.loadFromUri(modelBase);
+            await faceapi.nets.faceLandmark68Net.loadFromUri(modelBase);
+            await faceapi.nets.ssdMobilenetv1.loadFromUri(modelBase);
             modelsLoaded = true;
         }
 

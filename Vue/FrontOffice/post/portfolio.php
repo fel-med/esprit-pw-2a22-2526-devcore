@@ -1,14 +1,19 @@
 <?php
+require_once '../../../Controleur/session_helper.php';
+cc_start_session();
 require_once '../../../Controleur/postC.php';
 require_once '../../../Controleur/commentC.php';
 require_once '../comment/_render.php';
 
+// ── VÉRIFICATION SESSION ──────────────────────────────────────
+cc_require_login('../utilisateur/login.php');
+
 $postC = new PostC();
 $commentC = new CommentC();
-$creatorId = 1;
+$creatorId = (int)$_SESSION['id'];
 $pageTitle = 'My Space';
 $currentPage = 'portfolio';
-$currentUserId = 1;
+$currentUserId = (int)$_SESSION['id'];
 
 $posts = $postC->listPostsByCreator($creatorId);
 $stats = $postC->getCreatorStats($creatorId);
@@ -61,15 +66,28 @@ require_once '../partials/header.php';
                     </div>
                 </div>
 
-                <!-- New Post button — matches cover style -->
-                <a href="./create.php" class="btn-new-post">
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
-                        <line x1="12" y1="8" x2="12" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                    New Post
-                </a>
+                <!-- Action buttons -->
+                <div class="d-flex gap-2 flex-wrap">
+
+                    <a href="../utilisateur/reclamation.php" class="btn-new-post"
+                       style="background:rgba(244,63,94,0.18);border-color:rgba(244,63,94,0.4);color:#f43f5e;">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Réclamation
+                    </a>
+
+                    <a href="./create.php" class="btn-new-post">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+                            <line x1="12" y1="8" x2="12" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        New Post
+                    </a>
+
+                </div>
             </div>
         </div>
     </div>

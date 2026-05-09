@@ -725,5 +725,17 @@ class PostC
         return $result;
     }
 
+public function decrementLike(string $id): bool
+{
+    $sql = "UPDATE post SET numberOfLike = GREATEST(numberOfLike - 1, 0) WHERE id = :id";
+    $query = $this->db->prepare($sql);
+    return $query->execute(['id' => $id]);
+}
 
+public function decrementDislike(string $id): bool
+{
+    $sql = "UPDATE post SET numberOfDislike = GREATEST(numberOfDislike - 1, 0) WHERE id = :id";
+    $query = $this->db->prepare($sql);
+    return $query->execute(['id' => $id]);
+}
 }

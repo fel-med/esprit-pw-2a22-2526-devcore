@@ -1,7 +1,10 @@
 <?php
+require_once '../../../Controleur/session_helper.php';
+cc_start_session();
 require_once '../../../Controleur/postC.php';
 
 header('Content-Type: application/json; charset=UTF-8');
+cc_require_login('../utilisateur/login.php');
 
 if (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') {
     echo json_encode(['success' => false, 'message' => 'Invalid request.']);

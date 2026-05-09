@@ -1,12 +1,15 @@
 <?php
+require_once '../../../Controleur/session_helper.php';
+cc_start_session();
 require_once '../../../Controleur/commentC.php';
 require_once '../../../Modele/comment.php';
 
-$idUser = 1;
+// ── VÉRIFICATION SESSION ──────────────────────────────────────
+$idUser = cc_require_login('../utilisateur/login.php');
 
 function is_ajax_request(): bool
 {
-    return strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest';
+    return cc_is_ajax_request();
 }
 
 function comment_json_response(array $payload): void

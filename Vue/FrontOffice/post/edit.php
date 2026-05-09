@@ -1,9 +1,14 @@
 <?php
+require_once '../../../Controleur/session_helper.php';
+cc_start_session();
 require_once '../../../Controleur/postC.php';
 require_once '../../../Modele/post.php';
 
+// ── VÉRIFICATION SESSION ──────────────────────────────────────
+cc_require_login('../utilisateur/login.php');
+
 $postC = new PostC();
-$creatorId = 1;
+$creatorId = (int)$_SESSION['id']; // ✅ Depuis la session, pas hardcodé à 1
 $pageTitle = 'Edit Post';
 $currentPage = 'portfolio';
 
@@ -17,10 +22,9 @@ function handleUploadedPostFile(string $inputName, array $allowedExtensions, int
         return null;
     }
 
-    $fileName = $_FILES[$inputName]['name'];
-    $fileSize = $_FILES[$inputName]['size'];
-    $tmpName = $_FILES[$inputName]['tmp_name'];
-
+    $fileName  = $_FILES[$inputName]['name'];
+    $fileSize  = $_FILES[$inputName]['size'];
+    $tmpName   = $_FILES[$inputName]['tmp_name'];
     $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
     if (!in_array($extension, $allowedExtensions, true)) {
@@ -31,7 +35,7 @@ function handleUploadedPostFile(string $inputName, array $allowedExtensions, int
         return null;
     }
 
-    $safeName = time() . '_' . $prefix . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', basename($fileName));
+    $safeName    = time() . '_' . $prefix . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', basename($fileName));
     $destination = '../../public/uploads/' . $safeName;
 
     if (!move_uploaded_file($tmpName, $destination)) {
@@ -48,7 +52,7 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 $postId = $_GET['id'];
 
 if (!$postC->creatorOwnsPost($postId, $creatorId)) {
-    die('Access denied. This post does not belong to creator #1.');
+    die('Access denied. This post does not belong to you.');
 }
 
 $post = $postC->showPost($postId);
@@ -60,7 +64,7 @@ if (!$post) {
 $errorMessage = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $subject = trim($_POST['subject'] ?? '');
+    $subject     = trim($_POST['subject'] ?? '');
     $textContent = trim($_POST['textContent'] ?? '');
 
     $imageContent = $post['imageContent'];

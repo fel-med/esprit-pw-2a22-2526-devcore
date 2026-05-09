@@ -1,4 +1,7 @@
 <?php
+require_once '../../../Controleur/session_helper.php';
+cc_start_session();
+cc_require_admin('../../FrontOffice/utilisateur/login.php');
 require_once '../../../Controleur/commentC.php';
 
 $commentC = new CommentC();

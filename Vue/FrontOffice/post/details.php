@@ -1,11 +1,16 @@
 <?php
+require_once '../../../Controleur/session_helper.php';
+cc_start_session();
 require_once '../../../Controleur/postC.php';
 require_once '../../../Controleur/commentC.php';
 require_once '../comment/_render.php';
 
+// ── VÉRIFICATION SESSION ──────────────────────────────────────
+cc_require_login('../utilisateur/login.php');
+
 $postC    = new PostC();
 $commentC = new CommentC();
-$idUser   = 1;
+$idUser   = (int)$_SESSION['id'];
 
 if (!isset($_GET['id']) || empty($_GET['id'])) {
     die('Post ID is missing.');

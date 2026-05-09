@@ -1,4 +1,6 @@
 <?php
+require_once '../../../Controleur/session_helper.php';
+cc_start_session();
 require_once '../../../Controleur/commentC.php';
 require_once './_render.php';
 
@@ -6,7 +8,7 @@ header('Content-Type: application/json');
 
 $postId = trim($_GET['postId'] ?? '');
 $context = trim($_GET['context'] ?? 'index');
-$idUser = 1;
+$idUser = cc_require_login('../utilisateur/login.php');
 
 if ($postId === '') {
     echo json_encode(['success' => false, 'message' => 'Missing post ID']);

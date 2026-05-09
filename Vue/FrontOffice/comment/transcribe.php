@@ -1,6 +1,9 @@
 <?php
+require_once '../../../Controleur/session_helper.php';
+cc_start_session();
 require_once '../../../Controleur/commentC.php';
 header('Content-Type: application/json');
+cc_require_login('../utilisateur/login.php');
 
 function json_response(array $payload, int $status = 200): void
 {

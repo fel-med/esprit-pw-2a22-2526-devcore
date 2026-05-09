@@ -464,11 +464,12 @@ public function login($email, $password) {
 
     } elseif ($user['role'] == 'createur') {
 
-        header("Location: ../utilisateur/creator.php");
+        header("Location: ../post/portfolio.php");
 
     } else {
 
-        header("Location: ../utilisateur/brand.php");
+        // Redirection vers les posts pour les utilisateurs normaux
+        header("Location: ../post/index.php");
     }
 
     exit();

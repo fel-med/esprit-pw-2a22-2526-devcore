@@ -1,4 +1,7 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 if (!isset($pageTitle)) {
     $pageTitle = 'Admin Posts Dashboard';
 }
@@ -48,8 +51,8 @@ $commentIndexUrl = $isCommentSection ? './index.php' : '../comment/index.php';
                             <span class="count bg-success"></span>
                         </div>
                         <div class="profile-name">
-                            <h5 class="mb-0 font-weight-normal">Administrator</h5>
-                            <span>Posts moderation</span>
+                            <h5 class="mb-0 font-weight-normal"><?= htmlspecialchars($_SESSION['nom'] ?? ($_SESSION['user']['nom'] ?? 'Administrator')) ?></h5>
+                            <span><?= htmlspecialchars($_SESSION['role'] ?? 'Admin') ?> · Posts moderation</span>
                         </div>
                     </div>
                 </div>
@@ -109,6 +112,7 @@ $commentIndexUrl = $isCommentSection ? './index.php' : '../comment/index.php';
                 </ul>
                 <ul class="navbar-nav navbar-nav-right">
                     <li class="nav-item d-none d-lg-block"><span class="nav-link text-muted">Manage creators, posts, and comments</span></li>
+                    <li class="nav-item d-none d-lg-block"><a class="nav-link text-danger" href="../../FrontOffice/utilisateur/logout.php">Logout</a></li>
                 </ul>
             </div>
         </nav>

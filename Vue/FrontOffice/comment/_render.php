@@ -144,7 +144,7 @@ if (!function_exists('render_edit_comment_form')) {
 }
 
 if (!function_exists('render_comment_tree_node')) {
-    function render_comment_tree_node(array $comment, string $postId, string $context, int $currentUserId = 1, int $depth = 0): void
+    function render_comment_tree_node(array $comment, string $postId, string $context, int $currentUserId = 0, int $depth = 0): void
     {
         $commentId = (string)($comment['id'] ?? '');
         $margin = min($depth * 24, 96);

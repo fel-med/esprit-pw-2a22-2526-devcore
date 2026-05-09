@@ -31,6 +31,26 @@ $liste = $reclamationC->afficherReclamationsAvecReponsesUser($_SESSION['id']);
     <!-- Core theme CSS (includes Bootstrap)-->
     <link href="css/styles.css" rel="stylesheet">
     <style>
+        /* ── BACK TO MY SPACE ── */
+        .btn-back-space {
+            color: #6b7280 !important;
+            font-weight: 700;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            transition: color 0.18s;
+            text-decoration: none;
+        }
+        .btn-back-space i {
+            font-size: 20px;
+            line-height: 1;
+        }
+        .btn-back-space:hover {
+            color: #5b4fff !important;
+            text-decoration: none;
+        }
+
         /* Mode Jour/Nuit - CSS Complet */
         body.light-mode {
             background-color: #1a1a1a !important;
@@ -231,6 +251,11 @@ if (isset($_SESSION['role'])) {
                         <li class="nav-item">
                             <a class="nav-link text-danger" href="logout.php">
                                 <i class="bi bi-box-arrow-right"></i> Logout
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link btn-back-space" href="../post/portfolio.php">
+                                <i class="bi bi-arrow-left-short"></i> Back to My Space
                             </a>
                         </li>
                     </ul>

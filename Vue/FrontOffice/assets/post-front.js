@@ -102,38 +102,54 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     });
   }
+async function handleReactionClick(button) {
+  const postId = button.dataset.postId;
+  const action = button.dataset.action;
+  if (!postId || !action) return;
 
-  async function handleReactionClick(button) {
-    const postId = button.dataset.postId;
-    const action = button.dataset.action;
-    if (!postId || !action) return;
+  const card = button.closest(".social-post-card");
+  const likeCountEl = card?.querySelector(".js-like-count");
+  const dislikeCountEl = card?.querySelector(".js-dislike-count");
+  const likeBtn = card?.querySelector('.js-reaction-btn[data-action="like"]');
+  const dislikeBtn = card?.querySelector('.js-reaction-btn[data-action="dislike"]');
+  const allButtons = card?.querySelectorAll(".js-reaction-btn");
 
-    const card = button.closest(".social-post-card");
-    const likeCountEl = card?.querySelector(".js-like-count");
-    const dislikeCountEl = card?.querySelector(".js-dislike-count");
-    const allButtons = card?.querySelectorAll(".js-reaction-btn");
-    if (button.classList.contains("is-loading")) return;
+  if (button.classList.contains("is-loading")) return;
 
-    button.classList.add("is-loading");
-    allButtons?.forEach((btn) => btn.setAttribute("disabled", "disabled"));
-    try {
-      const response = await fetch(`./${action}.php?id=${encodeURIComponent(postId)}`, {
-        method: "GET",
-        headers: { "X-Requested-With": "XMLHttpRequest" }
-      });
-      const data = await response.json();
-      if (!data.success) throw new Error(data.message || "Reaction failed.");
-      if (likeCountEl) likeCountEl.textContent = data.likes;
-      if (dislikeCountEl) dislikeCountEl.textContent = data.dislikes;
-      button.classList.add(action === "like" ? "is-active-like" : "is-active-dislike");
-    } catch (error) {
-      console.error(error);
-      alert("Unable to update reaction right now.");
-    } finally {
-      button.classList.remove("is-loading");
-      allButtons?.forEach((btn) => btn.removeAttribute("disabled"));
+  button.classList.add("is-loading");
+  allButtons?.forEach((btn) => btn.setAttribute("disabled", "disabled"));
+
+  try {
+    const response = await fetch(`./${action}.php?id=${encodeURIComponent(postId)}`, {
+      method: "GET",
+      headers: { "X-Requested-With": "XMLHttpRequest" }
+    });
+    const data = await response.json();
+    if (!data.success) throw new Error(data.message || "Reaction failed.");
+
+    if (likeCountEl) likeCountEl.textContent = data.likes;
+    if (dislikeCountEl) dislikeCountEl.textContent = data.dislikes;
+
+    // Réinitialiser les deux boutons
+    likeBtn?.classList.remove("is-active-like");
+    dislikeBtn?.classList.remove("is-active-dislike");
+
+    // Appliquer l'état selon userVote retourné par le PHP
+    if (data.userVote === "like") {
+      likeBtn?.classList.add("is-active-like");
+    } else if (data.userVote === "dislike") {
+      dislikeBtn?.classList.add("is-active-dislike");
     }
+    // si userVote === null → les deux restent non colorés (vote annulé)
+
+  } catch (error) {
+    console.error(error);
+    alert("Unable to update reaction right now.");
+  } finally {
+    button.classList.remove("is-loading");
+    allButtons?.forEach((btn) => btn.removeAttribute("disabled"));
   }
+}
 
   function setupReactionButtons() {
     document.querySelectorAll(".js-reaction-btn").forEach((button) => {

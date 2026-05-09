@@ -1,8 +1,13 @@
 <?php
+require_once '../../../Controleur/session_helper.php';
+cc_start_session();
 require_once '../../../Controleur/postC.php';
 
+// ── VÉRIFICATION SESSION ──────────────────────────────────────
+cc_require_login('../utilisateur/login.php');
+
 $postC = new PostC();
-$creatorId = 1;
+$creatorId = (int)$_SESSION['id']; // ✅ Depuis la session, pas hardcodé à 1
 
 if (!isset($_GET['id']) || empty($_GET['id'])) {
     die('Post ID is missing.');
@@ -11,7 +16,7 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 $postId = $_GET['id'];
 
 if (!$postC->creatorOwnsPost($postId, $creatorId)) {
-    die('Access denied. This post does not belong to creator #1.');
+    die('Access denied. This post does not belong to you.');
 }
 
 $post = $postC->showPost($postId);
