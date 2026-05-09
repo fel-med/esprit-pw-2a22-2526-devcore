@@ -341,20 +341,7 @@ try {
     $error = 'The report could not be generated right now.';
 }
 
-if (($_GET['download'] ?? '') === 'pdf') {
-    $pdfLines = reportPdfBuildLines(
-        $summaryStats,
-        $chartStats,
-        $recentOffers,
-        $recentCandidatures,
-        $generatedAt,
-        $generatedBy,
-        $error
-    );
-    $pdfFilename = 'cre8connect-admin-report-' . date('Y-m-d-His') . '.pdf';
-    reportDownloadSimplePdf($pdfLines, $pdfFilename);
-    exit;
-}
+$autoPrintReport = (($_GET['download'] ?? '') === 'pdf');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -388,10 +375,12 @@ if (($_GET['download'] ?? '') === 'pdf') {
             box-shadow: 0 12px 26px rgba(15, 23, 42, 0.18);
         }
 
-        .report-toolbar div {
+        .report-toolbar div,
+        .report-toolbar-actions {
             display: flex;
             gap: 0.75rem;
             flex-wrap: wrap;
+            align-items: center;
         }
 
         .report-toolbar a,
@@ -595,14 +584,78 @@ if (($_GET['download'] ?? '') === 'pdf') {
                 page-break-inside: avoid;
                 page-break-after: auto;
             }
+
+            .report-header {
+                align-items: flex-start;
+                gap: 10mm;
+                padding-bottom: 6mm;
+            }
+
+            .report-header h1 {
+                font-size: 18pt;
+            }
+
+            .report-note,
+            .report-meta {
+                font-size: 8.5pt;
+            }
+
+            .report-section {
+                margin-top: 8mm;
+                break-inside: avoid-page;
+            }
+
+            .summary-grid {
+                gap: 3mm;
+                margin: 6mm 0;
+            }
+
+            .summary-card {
+                padding: 4mm;
+                border-radius: 2mm;
+                break-inside: avoid;
+            }
+
+            .summary-card span {
+                font-size: 6.8pt;
+            }
+
+            .summary-card strong {
+                font-size: 13pt;
+            }
+
+            .stats-grid {
+                gap: 4mm;
+            }
+
+            table {
+                table-layout: fixed;
+                width: 100%;
+                font-size: 7.2pt;
+                break-inside: auto;
+            }
+
+            th,
+            td {
+                padding: 2.4mm 2.6mm;
+                overflow-wrap: anywhere;
+                word-break: break-word;
+            }
+
+            th {
+                font-size: 6.4pt;
+            }
         }
     </style>
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
 </head>
 <body>
     <div class="report-toolbar no-print">
         <strong>Admin report preview</strong>
-        <div>
-            <a href="admin_report.php?download=pdf">Save PDF</a>
+        <div class="report-toolbar-actions">
+            <button type="button" onclick="window.print()">Save PDF</button>
             <a class="secondary" href="index.php">Back to dashboard</a>
         </div>
     </div>
@@ -721,5 +774,22 @@ if (($_GET['download'] ?? '') === 'pdf') {
             </section>
         <?php endif; ?>
     </main>
+
+    <script>
+        (function () {
+            var shouldAutoPrint = <?php echo $autoPrintReport ? 'true' : 'false'; ?>;
+
+            if (!shouldAutoPrint) {
+                return;
+            }
+
+            window.addEventListener('load', function () {
+                document.title = 'cre8connect-admin-report-<?php echo date('Y-m-d-His'); ?>';
+                window.setTimeout(function () {
+                    window.print();
+                }, 250);
+            });
+        })();
+    </script>
 </body>
 </html>

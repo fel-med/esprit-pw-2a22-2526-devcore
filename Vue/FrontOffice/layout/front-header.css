@@ -1,0 +1,439 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=Fraunces:wght@700;800&display=swap');
+@import url('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css');
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+/* Early paint: body follows html theme before late body.dark-mode sync */
+html[data-theme="dark"] body {
+    background-color: var(--bg);
+    color: var(--text);
+}
+html[data-theme="light"] body {
+    background-color: var(--bg);
+    color: var(--text);
+}
+
+:root {
+    --primary:       #5b4fff;
+    --primary-hover: #4438e0;
+    --primary-light: #ece9ff;
+    --bg:            #f6f6fc;
+    --white:         #ffffff;
+    --text:          #0f0e1a;
+    --text-sub:      #6b6f80;
+    --border:        #ebebf2;
+    --danger:        #f43f5e;
+}
+
+[data-theme="dark"] {
+    --primary:       #7c6fff;
+    --primary-hover: #9d8fff;
+    --primary-light: #1e1a3a;
+    --bg:            #13121f;
+    --white:         #1c1a2e;
+    --text:          #e8e6f5;
+    --text-sub:      #9b9db8;
+    --border:        #2a2840;
+}
+
+.front-nav {
+    height: 70px;
+    background: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 999;
+    box-shadow: 0 2px 12px rgba(15, 14, 26, 0.04);
+}
+
+.front-nav-logo {
+    text-decoration: none;
+    font-size: 24px;
+    font-weight: 800;
+    font-family: 'Fraunces', serif;
+    color: var(--primary);
+}
+
+.front-nav-logo:hover {
+    color: var(--primary-hover);
+}
+
+/* ── FRONT HEADER LOGO IMAGE SIZE ──
+   Keep the logo image consistent across all FrontOffice headers.
+   Uses explicit width + height because logoweb.png renders visually tiny at intrinsic size. */
+.front-nav-logo,
+.cre8-front-brand,
+.social-brand-logo,
+.nav-logo {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    min-width: 176px !important;
+    height: 70px !important;
+    line-height: 1 !important;
+    text-decoration: none !important;
+}
+
+.front-header-logo,
+.front-nav-logo .front-header-logo,
+.cre8-front-brand .front-header-logo,
+.social-brand-logo .front-header-logo,
+.nav-logo .front-header-logo {
+    width: 176px !important;
+    height: 48px !important;
+    max-width: none !important;
+    max-height: 48px !important;
+    display: block !important;
+    object-fit: contain !important;
+    object-position: left center !important;
+    flex: 0 0 auto !important;
+}
+
+
+.front-nav-links {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+}
+
+.front-nav-item {
+    position: relative;
+}
+
+.front-nav-links a,
+.front-nav-trigger {
+    text-decoration: none;
+    color: var(--text-sub);
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 14px;
+    transition: all 0.18s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+    line-height: 1.2;
+}
+
+.front-nav-links a:hover,
+.front-nav-links a.active,
+.front-nav-trigger:hover,
+.front-nav-trigger.active {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+.front-nav-links a.front-nav-myspace,
+.front-nav-trigger.front-nav-myspace {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+.front-nav-links a.front-nav-myspace:hover,
+.front-nav-links a.front-nav-myspace.active,
+.front-nav-trigger.front-nav-myspace:hover,
+.front-nav-trigger.front-nav-myspace.active {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+.front-nav-links a.front-nav-logout {
+    color: var(--danger);
+}
+
+.front-nav-links a.front-nav-logout:hover {
+    background: #fff1f3;
+    color: var(--danger);
+}
+
+[data-theme="dark"] .front-nav-links a.front-nav-logout:hover {
+    background: #2a1422;
+}
+
+.front-nav-caret {
+    font-size: 11px;
+    transition: transform 0.18s ease;
+}
+
+.front-nav-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    min-width: 190px;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--white);
+    box-shadow: 0 18px 42px rgba(15, 14, 26, 0.14);
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%, 8px);
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
+    z-index: 1000;
+}
+
+[data-theme="dark"] .front-nav-dropdown {
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.34);
+}
+
+.front-nav-dropdown::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -12px;
+    height: 12px;
+}
+
+.front-nav-dropdown a {
+    width: 100%;
+    justify-content: flex-start;
+    border-radius: 12px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-size: 13px;
+}
+
+.front-nav-dropdown a:hover,
+.front-nav-dropdown a:focus {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+.front-nav-dropdown-item:hover .front-nav-dropdown,
+.front-nav-dropdown-item:focus-within .front-nav-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+    pointer-events: auto;
+}
+
+.front-nav-dropdown-item:hover .front-nav-caret,
+.front-nav-dropdown-item:focus-within .front-nav-caret {
+    transform: rotate(180deg);
+}
+
+.front-nav-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.front-nav-badge {
+    background: var(--primary-light);
+    color: var(--primary);
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.front-nav-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #5b4fff, #8b5cf6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 800;
+    font-size: 15px;
+    box-shadow: 0 3px 10px rgba(91, 79, 255, 0.3);
+}
+
+.front-theme-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-sub);
+    font-size: 18px;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.18s;
+    display: flex;
+    align-items: center;
+}
+
+.front-theme-btn:hover {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+@media (max-width: 768px) {
+    .front-nav {
+        padding: 12px 16px;
+        height: auto;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .front-nav-links {
+        gap: 2px;
+        flex-wrap: wrap;
+    }
+
+    .front-nav-links a,
+    .front-nav-trigger {
+        padding: 7px 10px;
+        font-size: 12px;
+    }
+
+    .front-nav-dropdown {
+        left: 0;
+        top: calc(100% + 6px);
+        min-width: 170px;
+        transform: translate(0, 8px);
+    }
+
+    .front-nav-dropdown-item:hover .front-nav-dropdown,
+    .front-nav-dropdown-item:focus-within .front-nav-dropdown {
+        transform: translate(0, 0);
+    }
+
+    .front-nav-badge {
+        display: none;
+    }
+
+
+    .front-nav-logo,
+    .cre8-front-brand,
+    .social-brand-logo,
+    .nav-logo {
+        min-width: 142px !important;
+        height: 48px !important;
+    }
+
+    .front-header-logo,
+    .front-nav-logo .front-header-logo,
+    .cre8-front-brand .front-header-logo,
+    .social-brand-logo .front-header-logo,
+    .nav-logo .front-header-logo {
+        width: 142px !important;
+        height: 40px !important;
+        max-height: 40px !important;
+    }
+}
+
+/* Final logo visual-size correction */
+.front-nav-logo,
+.cre8-front-brand,
+.social-brand-logo,
+.nav-logo {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: 260px !important;
+  min-width: 260px !important;
+  height: 70px !important;
+  overflow: visible !important;
+}
+
+.front-header-logo,
+.front-nav-logo img,
+.cre8-front-brand img,
+.social-brand-logo img,
+.nav-logo img,
+.social-logo-img.front-header-logo {
+  width: 260px !important;
+  height: 70px !important;
+  max-width: 260px !important;
+  max-height: 70px !important;
+  object-fit: contain !important;
+  object-position: left center !important;
+  display: block !important;
+}
+
+@media (max-width: 768px) {
+  .front-nav-logo,
+  .cre8-front-brand,
+  .social-brand-logo,
+  .nav-logo {
+    width: 190px !important;
+    min-width: 190px !important;
+    height: 56px !important;
+  }
+
+  .front-header-logo,
+  .front-nav-logo img,
+  .cre8-front-brand img,
+  .social-brand-logo img,
+  .nav-logo img,
+  .social-logo-img.front-header-logo {
+    width: 190px !important;
+    height: 56px !important;
+    max-width: 190px !important;
+    max-height: 56px !important;
+  }
+}
+
+/* FRONT OFFICE LOGO — TRUE FINAL OVERRIDE */
+.front-nav-logo,
+.cre8-front-brand {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: 380px !important;
+  min-width: 380px !important;
+  max-width: 380px !important;
+  height: 86px !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+  overflow: visible !important;
+  flex: 0 0 380px !important;
+}
+
+.front-nav-logo > img.front-header-logo,
+.cre8-front-brand > img.front-header-logo,
+img.front-header-logo {
+  display: block !important;
+  width: 380px !important;
+  min-width: 380px !important;
+  max-width: 380px !important;
+  height: 86px !important;
+  min-height: 86px !important;
+  max-height: 86px !important;
+  object-fit: contain !important;
+  object-position: left center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+@media (max-width: 768px) {
+  .front-nav-logo,
+  .cre8-front-brand {
+    width: 240px !important;
+    min-width: 240px !important;
+    max-width: 240px !important;
+    height: 64px !important;
+    flex-basis: 240px !important;
+  }
+
+  .front-nav-logo > img.front-header-logo,
+  .cre8-front-brand > img.front-header-logo,
+  img.front-header-logo {
+    width: 240px !important;
+    min-width: 240px !important;
+    max-width: 240px !important;
+    height: 64px !important;
+    min-height: 64px !important;
+    max-height: 64px !important;
+  }
+}

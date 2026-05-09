@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Events - Cre8Connect</title>
     <link rel="stylesheet" href="../css/backoffice.css">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
 </head>
 <body>
     <header>

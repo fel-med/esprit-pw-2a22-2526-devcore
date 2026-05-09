@@ -1,5 +1,6 @@
 <?php
 session_start();
+$frontActive = 'collaborations';
 
 require_once __DIR__ . '/../../../Controleur/condidatureC.php';
 
@@ -412,11 +413,16 @@ if ($requestedCreatorTab !== '') {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <?php require_once __DIR__ . '/../layout/front-theme-bootstrap.php'; ?>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Candidatures - Cre8Connect</title>
     <link rel="stylesheet" href="../css/frontoffice.css">
     <link rel="stylesheet" href="../offre/offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../offre/offre.css')); ?>">
     <link rel="stylesheet" href="condidature.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/condidature.css')); ?>">
+    <link rel="stylesheet" href="../layout/front-header.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/front-header.css')); ?>">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
 </head>
 <body>
     <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
@@ -858,5 +864,6 @@ $cre8PilotContext = [
 ];
 require __DIR__ . '/cre8pilot_widget.php';
 ?>
+    <script src="../layout/front-header.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/front-header.js')); ?>"></script>
 </body>
 </html>

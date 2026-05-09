@@ -1,6 +1,8 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 
+require_once __DIR__ . '/../layout/early-theme.php';
+
 // ── TEMPORAIRE ──
 $_SESSION['role'] = 'admin';
 // ────────────────
@@ -25,15 +27,23 @@ if ($action === 'updateStatut' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $contrats = $controller->getAll();
 $stats    = $controller->getStats();
+function contratAssetVersion($path) {
+    return is_file($path) ? '?v=' . urlencode((string) filemtime($path)) : '';
+}
 if (!headers_sent()) header('Content-Type: text/html; charset=UTF-8');
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+    <?php cre8_bo_early_theme_print_head_script(); ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestion des Contrats — Admin · Cre8Connect</title>
     <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/backoffice.css<?= contratAssetVersion(__DIR__ . '/../css/backoffice.css') ?>">
+    <link rel="stylesheet" href="../layout/back-layout.css<?= contratAssetVersion(__DIR__ . '/../layout/back-layout.css') ?>">
+    <link rel="stylesheet" href="../utilisateur/assets/vendors/mdi/css/materialdesignicons.min.css<?= contratAssetVersion(__DIR__ . '/../utilisateur/assets/vendors/mdi/css/materialdesignicons.min.css') ?>">
+    <link rel="stylesheet" href="../css/new_style_backoffice.css<?= contratAssetVersion(__DIR__ . '/../css/new_style_backoffice.css') ?>">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -107,159 +117,13 @@ if (!headers_sent()) header('Content-Type: text/html; charset=UTF-8');
             transition: background 0.3s, color 0.3s;
         }
 
-        /* ===== LAYOUT ===== */
-        .container-scroller { display: flex; position: relative; min-height: 100vh; }
-
-        /* ===== SIDEBAR — matches template .sidebar styles ===== */
-        .sidebar {
-            width: var(--sidebar-w);
-            background: var(--bg-surface);
-            min-height: 100vh;
-            position: fixed;
-            top: 0; left: 0; bottom: 0;
-            z-index: 100;
-            border-right: 1px solid var(--border);
-            overflow-y: auto;
-        }
-
-        .sidebar-brand-wrapper {
-            background: var(--bg-surface);
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--border);
-        }
-        .brand-logo {
-            font-size: 1.25rem;
-            font-weight: 700;
-            background: var(--grad);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-decoration: none;
-            letter-spacing: -0.3px;
-        }
-        .brand-logo span { background: none; -webkit-text-fill-color: var(--text-primary); }
-
-        /* Template nav structure */
-        .sidebar .nav { padding: 12px 0; list-style: none; }
-        .sidebar .nav .nav-item { padding: 2px 0; }
-        .sidebar .nav .nav-item .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 10px 24px;
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-            font-weight: 400;
-            text-decoration: none;
-            transition: all 0.15s;
-            border-left: 3px solid transparent;
-        }
-        .sidebar .nav .nav-item .nav-link:hover,
-        .sidebar .nav .nav-item.active .nav-link {
-            background: var(--accent-soft);
-            color: #ffffff;
-            border-left-color: var(--accent);
-        }
-        .sidebar .nav .nav-item .nav-link .menu-icon {
-            width: 28px; height: 28px;
-            border-radius: 4px;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .sidebar .nav .nav-item .nav-link .menu-icon i { font-size: 0.875rem; }
-
-        /* Colored icons — same as template nth-child pattern */
-        .sidebar .nav .menu-items:nth-child(5n+1) .nav-link .menu-icon i { color: #a855f7; }
-        .sidebar .nav .menu-items:nth-child(5n+2) .nav-link .menu-icon i { color: #ec4899; }
-        .sidebar .nav .menu-items:nth-child(5n+3) .nav-link .menu-icon i { color: #a855f7; }
-        .sidebar .nav .menu-items:nth-child(5n+4) .nav-link .menu-icon i { color: #c084fc; }
-        .sidebar .nav .menu-items:nth-child(5n+5) .nav-link .menu-icon i { color: #ec4899; }
-
-        .nav-category {
-            font-size: 0.6875rem;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            padding: 16px 24px 8px;
-        }
-
-        /* ===== PAGE BODY ===== */
-        .page-body-wrapper {
-            width: calc(100% - var(--sidebar-w));
-            margin-left: var(--sidebar-w);
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-
-        /* ===== TOPBAR / NAVBAR ===== */
-        .navbar {
-            background: var(--bg-surface);
-            border-bottom: 1px solid var(--border);
-            border-top: 3px solid transparent;
-            background-image: linear-gradient(var(--bg-surface), var(--bg-surface)),
-                              var(--grad);
-            background-origin: border-box;
-            background-clip: padding-box, border-box;
-            padding: 0 24px;
-            height: 63px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 99;
-        }
-        .navbar-menu-wrapper { display: flex; align-items: center; gap: 16px; }
-
-        /* Count badge — template style */
-        .navbar-nav .nav-item .nav-link { color: var(--text-secondary); font-size: 0.875rem; }
-        .count-indicator { position: relative; display: inline-flex; }
-        .count-indicator .count {
-            position: absolute;
-            top: -2px; right: -4px;
-            width: 16px; height: 16px;
-            border-radius: 50%;
-            background: var(--danger);
-            color: #fff;
-            font-size: 0.6rem;
-            display: flex; align-items: center; justify-content: center;
-            border: 2px solid var(--bg-surface);
-        }
-
-        .navbar-profile {
-            display: flex; align-items: center; gap: 10px;
-            cursor: pointer; font-size: 0.875rem; color: var(--text-secondary);
-        }
-        .navbar-profile .profile-pic {
-            width: 36px; height: 36px;
-            border-radius: 50%;
-            background: var(--grad);
-            display: flex; align-items: center; justify-content: center;
-            color: #fff;
-            font-size: 0.8rem;
-            font-weight: 700;
-        }
-
-        .btn-icon {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            color: var(--text-primary);
-            padding: 6px 12px;
-            border-radius: var(--radius);
-            cursor: pointer;
-            font-size: 0.8rem;
-            transition: background 0.15s;
-        }
-        .btn-icon:hover { background: var(--bg-hover); }
-
-        /* ===== CONTENT ===== */
-        .main-panel { flex: 1; }
-        .content-wrapper {
+        /* ===== CONTRACT CONTENT WRAPPER ===== */
+        .contrat-admin {
             background: var(--bg-base);
-            padding: 1.875rem 1.75rem;
-            flex-grow: 1;
+            color: var(--text-primary);
+            width: 100%;
         }
+
 
         /* ===== GRID (template uses Bootstrap-like grid) ===== */
         .row { display: flex; flex-wrap: wrap; margin: 0 -12px; }
@@ -494,33 +358,135 @@ if (!headers_sent()) header('Content-Type: text/html; charset=UTF-8');
         .modal-header { font-size: 1rem; font-weight: 700; margin-bottom: 14px; }
         .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 
+
+
+        /* ===== LANGUAGE SWITCHER TOOLBAR ===== */
+        .translation-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 1.25rem;
+        }
+        .page-heading { display: flex; flex-direction: column; gap: 4px; }
+        .page-title { font-size: 1.35rem; font-weight: 800; color: var(--text-primary); margin: 0; }
+        .page-subtitle { font-size: .88rem; color: var(--text-secondary); margin: 0; }
+        .lang-switcher,
+        .lang-switcher.bo-lang-switch {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem;
+            border: 1px solid rgba(124, 92, 255, 0.35);
+            border-radius: 999px;
+            background: rgba(124, 92, 255, 0.08);
+        }
+        .lang-btn {
+            border: 0;
+            border-radius: 999px;
+            padding: 0.4rem 0.7rem;
+            background: transparent;
+            color: inherit;
+            font-family: inherit;
+            font-size: 0.76rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: background .16s ease, color .16s ease;
+        }
+        .lang-btn:hover { color: var(--accent); }
+        .lang-btn.active { background: #8b5cf6; color: #ffffff; }
+
         /* Responsive */
         @media (max-width: 992px) {
-            .sidebar { transform: translateX(-100%); }
-            .page-body-wrapper { margin-left: 0; width: 100%; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
-            .charts-row { grid-template-columns: 1fr; }
+            .contrat-admin .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .contrat-admin .charts-row { grid-template-columns: 1fr; }
         }
-    </style>
-    <?php include __DIR__ . '/../includes/layout_head.php'; ?>
-</head>
-<body>
-<div class="container-scroller">
-<?php
-$activeMenu = 'contrat';
-include __DIR__ . '/../includes/sidebar.php';
-?>
-<div class="page-body-wrapper">
-<?php include __DIR__ . '/../includes/topbar.php'; ?>
 
-        <!-- CONTENT -->
-        <div class="content-wrapper">
+/* =========================================================
+   CRE8 CAMPAIGN / CONTRACT SHELL FIX
+   Remove iframe-like outer frame by unifying page canvas.
+   ========================================================= */
+
+body.cre8-admin-layout,
+body.cre8-admin-layout .container-scroller,
+body.cre8-admin-layout .page-body-wrapper,
+body.cre8-admin-layout .main-panel,
+body.cre8-admin-layout .content-wrapper {
+  background: var(--bg-base) !important;
+  background-color: var(--bg-base) !important;
+}
+
+body.cre8-admin-layout .campagne-admin,
+body.cre8-admin-layout .contrat-admin {
+  background: var(--bg-base) !important;
+  background-color: var(--bg-base) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout,
+body.cre8-admin-layout.light-mode,
+body.light-mode.cre8-admin-layout {
+  --bg-base: #f6f7fb !important;
+  background: #f6f7fb !important;
+  background-color: #f6f7fb !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .container-scroller,
+html[data-theme="light"] body.cre8-admin-layout .page-body-wrapper,
+html[data-theme="light"] body.cre8-admin-layout .main-panel,
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper,
+html[data-theme="light"] body.cre8-admin-layout .campagne-admin,
+html[data-theme="light"] body.cre8-admin-layout .contrat-admin,
+body.cre8-admin-layout.light-mode .container-scroller,
+body.cre8-admin-layout.light-mode .page-body-wrapper,
+body.cre8-admin-layout.light-mode .main-panel,
+body.cre8-admin-layout.light-mode .content-wrapper,
+body.cre8-admin-layout.light-mode .campagne-admin,
+body.cre8-admin-layout.light-mode .contrat-admin,
+body.light-mode.cre8-admin-layout .container-scroller,
+body.light-mode.cre8-admin-layout .page-body-wrapper,
+body.light-mode.cre8-admin-layout .main-panel,
+body.light-mode.cre8-admin-layout .content-wrapper,
+body.light-mode.cre8-admin-layout .campagne-admin,
+body.light-mode.cre8-admin-layout .contrat-admin {
+  background: #f6f7fb !important;
+  background-color: #f6f7fb !important;
+}
+
+</style>
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
+</head>
+<body class="cre8-admin-layout"><?php cre8_bo_early_theme_print_body_script(); ?>
+
+<div class="container-scroller cre8-admin-page">
+<?php
+$backActive = 'contracts';
+require_once __DIR__ . '/../layout/sidebar.php';
+?>
+<div class="container-fluid page-body-wrapper cre8-admin-main">
+<?php require_once __DIR__ . '/../layout/header.php'; ?>
+    <div class="main-panel">
+    <div class="content-wrapper">
+        <div class="contrat-admin">
+
+            <div class="translation-toolbar" aria-label="Language controls">
+                <div class="page-heading">
+                    <h1 class="page-title" data-tr="title_main">Gestion des Contrats</h1>
+                    <p class="page-subtitle" data-tr="subtitle_main">Supervision et modération</p>
+                </div>
+                <div class="lang-switcher bo-lang-switch" role="group" aria-label="Language selector" data-lang-switch>
+                    <button type="button" class="lang-btn" id="langEN" data-lang-option="en" onclick="setLang('en')" title="English">EN</button>
+                    <button type="button" class="lang-btn" id="langFR" data-lang-option="fr" onclick="setLang('fr')" title="Français">FR</button>
+                </div>
+            </div>
 
             <!-- CHARTS -->
             <div class="charts-row">
                 <div class="card">
                     <div class="card-body">
-                        <div class="card-title" style="margin-bottom:12px">Volume par statut</div>
+                        <div class="card-title" style="margin-bottom:12px" data-tr="chart_volume">Volume par statut</div>
                         <div class="chart-container">
                             <canvas id="contractsChart"></canvas>
                         </div>
@@ -528,7 +494,7 @@ include __DIR__ . '/../includes/sidebar.php';
                 </div>
                 <div class="card">
                     <div class="card-body">
-                        <div class="card-title" style="margin-bottom:12px">Actifs vs Inactifs</div>
+                        <div class="card-title" style="margin-bottom:12px" data-tr="chart_active_split">Actifs vs Inactifs</div>
                         <div class="chart-container">
                             <canvas id="statusPieChart"></canvas>
                         </div>
@@ -572,16 +538,16 @@ include __DIR__ . '/../includes/sidebar.php';
             <div class="filters-bar">
                 <div class="filter-group">
                     <label data-tr="filter_search">Recherche</label>
-                    <input type="text" id="searchInput" class="form-control" placeholder="Titre, marque, créateur..." style="width:220px">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Titre, marque, créateur..." data-tr-placeholder="placeholder_search" style="width:220px">
                 </div>
                 <div class="filter-group">
                     <label data-tr="filter_status">Statut</label>
                     <select id="statusFilter" class="form-control">
                         <option value="all" data-tr="opt_all">Tous les statuts</option>
-                        <option value="en_attente">En attente</option>
-                        <option value="signe">Signé</option>
-                        <option value="resilie">Résilié</option>
-                        <option value="expire">Expiré</option>
+                        <option value="en_attente" data-tr="status_pending">En attente</option>
+                        <option value="signe" data-tr="status_signed">Signé</option>
+                        <option value="resilie" data-tr="status_cancelled">Résilié</option>
+                        <option value="expire" data-tr="status_expired">Expiré</option>
                     </select>
                 </div>
                 <div class="filter-group">
@@ -607,13 +573,13 @@ include __DIR__ . '/../includes/sidebar.php';
                     <?php if (empty($contrats)): ?>
                         <div class="empty-state">
                             <i class="fas fa-file-circle-xmark"></i>
-                            Aucun contrat enregistré pour le moment.
+                            <span data-tr="empty_state">Aucun contrat enregistré pour le moment.</span>
                         </div>
                     <?php else: ?>
                     <table class="table" id="contratsTable">
                         <thead>
                             <tr>
-                                <th onclick="sortTable(0)"># <i class="fas fa-sort"></i></th>
+                                <th onclick="sortTable(0)" data-tr="th_hash"># <i class="fas fa-sort"></i></th>
                                 <th onclick="sortTable(1)" data-tr="th_title">Titre <i class="fas fa-sort"></i></th>
                                 <th data-tr="th_brand">Marque</th>
                                 <th data-tr="th_creator">Créateur</th>
@@ -643,10 +609,10 @@ include __DIR__ . '/../includes/sidebar.php';
                                     <form method="POST" action="index.php?action=updateStatut">
                                         <input type="hidden" name="id" value="<?= $c['id'] ?>">
                                         <select name="statut" class="select-statut" onchange="this.form.submit()">
-                                            <option value="en_attente" <?= $c['statut'] === 'en_attente' ? 'selected' : '' ?>>⏳ En attente</option>
-                                            <option value="signe"      <?= $c['statut'] === 'signe'      ? 'selected' : '' ?>>✅ Signé</option>
-                                            <option value="resilie"    <?= $c['statut'] === 'resilie'    ? 'selected' : '' ?>>❌ Résilié</option>
-                                            <option value="expire"     <?= $c['statut'] === 'expire'     ? 'selected' : '' ?>>🕐 Expiré</option>
+                                            <option value="en_attente" <?= $c['statut'] === 'en_attente' ? 'selected' : '' ?> data-tr="status_pending_icon">⏳ En attente</option>
+                                            <option value="signe"      <?= $c['statut'] === 'signe'      ? 'selected' : '' ?> data-tr="status_signed_icon">✅ Signé</option>
+                                            <option value="resilie"    <?= $c['statut'] === 'resilie'    ? 'selected' : '' ?> data-tr="status_cancelled_icon">❌ Résilié</option>
+                                            <option value="expire"     <?= $c['statut'] === 'expire'     ? 'selected' : '' ?> data-tr="status_expired_icon">🕐 Expiré</option>
                                         </select>
                                     </form>
                                 </td>
@@ -664,7 +630,9 @@ include __DIR__ . '/../includes/sidebar.php';
                     <?php endif; ?>
                 </div>
             </div>
-        </div><!-- /content-wrapper -->
+        </div><!-- /contrat-admin -->
+    </div><!-- /content-wrapper -->
+    </div><!-- /main-panel -->
 </div><!-- /page-body-wrapper -->
 </div><!-- /container-scroller -->
 
@@ -689,8 +657,20 @@ include __DIR__ . '/../includes/sidebar.php';
     </div>
 </div>
 
-<?php include __DIR__ . '/../includes/layout_scripts.php'; ?>
+<script src="../layout/back-layout.js<?= contratAssetVersion(__DIR__ . '/../layout/back-layout.js') ?>"></script>
 <script>
+function cre8BoReadLang() {
+    return localStorage.getItem('cre8_bo_lang')
+        || localStorage.getItem('cre8_lang')
+        || localStorage.getItem('cre8_lang_contrat')
+        || localStorage.getItem('cre8_lang_campagne')
+        || localStorage.getItem('cre8_lang_produit')
+        || 'fr';
+}
+function cre8BoWriteLang(lang) {
+    localStorage.setItem('cre8_bo_lang', lang);
+}
+
 // ===== TRANSLATION =====
 const i18n = {
     fr: {
@@ -704,7 +684,12 @@ const i18n = {
         th_title:"Titre", th_brand:"Marque", th_creator:"Créateur", th_amount:"Montant",
         th_period:"Période", th_status:"Statut", th_action:"Action",
         mod_del_title:"Confirmer la suppression", mod_del_text:"Vous allez supprimer",
-        mod_del_warn:"Action irréversible.", btn_cancel:"Annuler", btn_confirm:"Supprimer"
+        mod_del_warn:"Action irréversible.", btn_cancel:"Annuler", btn_confirm:"Supprimer",
+        chart_volume:"Volume par statut", chart_active_split:"Actifs vs Inactifs", th_hash:"#",
+        empty_state:"Aucun contrat enregistré pour le moment.", placeholder_search:"Titre, marque, créateur...",
+        status_pending:"En attente", status_signed:"Signé", status_cancelled:"Résilié", status_expired:"Expiré",
+        status_pending_icon:"⏳ En attente", status_signed_icon:"✅ Signé", status_cancelled_icon:"❌ Résilié", status_expired_icon:"🕐 Expiré",
+        chart_contracts:"Contrats", chart_active_label:"Actifs", chart_inactive_label:"Inactifs"
     },
     en: {
         nav_dashboard:"Dashboard", nav_overview:"Overview", nav_modules:"Modules",
@@ -717,16 +702,46 @@ const i18n = {
         th_title:"Title", th_brand:"Brand", th_creator:"Creator", th_amount:"Amount",
         th_period:"Period", th_status:"Status", th_action:"Action",
         mod_del_title:"Confirm Deletion", mod_del_text:"You are about to delete",
-        mod_del_warn:"This action is final.", btn_cancel:"Cancel", btn_confirm:"Delete"
+        mod_del_warn:"This action is final.", btn_cancel:"Cancel", btn_confirm:"Delete",
+        chart_volume:"Volume by status", chart_active_split:"Active vs Inactive", th_hash:"#",
+        empty_state:"No contracts saved yet.", placeholder_search:"Title, brand, creator...",
+        status_pending:"Pending", status_signed:"Signed", status_cancelled:"Terminated", status_expired:"Expired",
+        status_pending_icon:"⏳ Pending", status_signed_icon:"✅ Signed", status_cancelled_icon:"❌ Terminated", status_expired_icon:"🕐 Expired",
+        chart_contracts:"Contracts", chart_active_label:"Active", chart_inactive_label:"Inactive"
     }
 };
+let currentLang = cre8BoReadLang();
+
+function translateElement(el, value) {
+    const icon = el.querySelector('i');
+    if (icon) {
+        el.innerHTML = value + ' ' + icon.outerHTML;
+    } else {
+        el.textContent = value;
+    }
+}
+
 function translatePage(lang) {
+    const T = i18n[lang] || i18n.fr;
+    document.documentElement.setAttribute('lang', lang === 'en' ? 'en' : 'fr');
     document.querySelectorAll('[data-tr]').forEach(el => {
         const key = el.getAttribute('data-tr');
-        if (i18n[lang][key]) el.innerText = i18n[lang][key];
+        if (T[key]) translateElement(el, T[key]);
     });
+    document.querySelectorAll('[data-tr-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-tr-placeholder');
+        if (T[key]) el.setAttribute('placeholder', T[key]);
+    });
+    document.getElementById('langFR')?.classList.toggle('active', lang === 'fr');
+    document.getElementById('langEN')?.classList.toggle('active', lang === 'en');
 }
-document.getElementById('langSwitcher')?.addEventListener('change', e => translatePage(e.target.value));
+
+function setLang(lang) {
+    currentLang = lang;
+    cre8BoWriteLang(lang);
+    translatePage(lang);
+    initCharts();
+}
 
 // ===== THEME =====
 const themeBtn = document.getElementById('themeToggle');
@@ -825,9 +840,9 @@ function initCharts() {
     new Chart(document.getElementById('contractsChart'), {
         type: 'bar',
         data: {
-            labels: ['En attente', 'Signés', 'Résiliés', 'Expirés'],
+            labels: [i18n[currentLang].status_pending, i18n[currentLang].status_signed, i18n[currentLang].status_cancelled, i18n[currentLang].status_expired],
             datasets: [{
-                label: 'Contrats',
+                label: i18n[currentLang].chart_contracts,
                 data: [statusCounts.en_attente, statusCounts.signe, statusCounts.resilie, statusCounts.expire],
                 backgroundColor: [chartTheme.rose, chartTheme.info, chartTheme.roseSoft, chartTheme.accent],
                 borderRadius: 5
@@ -846,7 +861,7 @@ function initCharts() {
     new Chart(document.getElementById('statusPieChart'), {
         type: 'doughnut',
         data: {
-            labels: ['Actifs', 'Inactifs'],
+            labels: [i18n[currentLang].chart_active_label, i18n[currentLang].chart_inactive_label],
             datasets: [{
                 data: [statusCounts.signe, statusCounts.resilie + statusCounts.expire + statusCounts.en_attente],
                 backgroundColor: [chartTheme.accent, chartTheme.rose],
@@ -876,6 +891,7 @@ window.addEventListener('cre8:themechange', initCharts);
 
 // ===== INIT =====
 window.onload = () => {
+    translatePage(currentLang);
     displayRows(rows);
     initCharts();
 };

@@ -1,9 +1,7 @@
 <?php
-session_start();
-
-if (!isset($_SESSION['utilisateur'])) {
-    $_SESSION['utilisateur']['id'] = 1;
-}
+require_once __DIR__ . '/../layout/session_bridge.php';
+$currentUser = cre8_front_require_user('marque');
+$frontActive = 'collaborations';
 
 require_once __DIR__ . '/../../../Controleur/offreC.php';
 
@@ -15,26 +13,14 @@ $saveMode = 'publish';
 $moduleTimezone = new DateTimeZone('Africa/Tunis');
 $todayDate = new DateTimeImmutable('now', $moduleTimezone);
 $serverErrorFocusTarget = null;
-$brandId = isset($_SESSION['utilisateur']['id']) && is_numeric($_SESSION['utilisateur']['id'])
-    ? (int) $_SESSION['utilisateur']['id']
+$brandId = isset($currentUser['id']) && is_numeric($currentUser['id'])
+    ? (int) $currentUser['id']
     : 0;
 
 if ($brandId > 0) {
     $brandLookup = $controller->getUsersByIds([$brandId], 'marque');
     if (!isset($brandLookup[$brandId])) {
         $brandId = 0;
-    }
-}
-
-if ($brandId <= 0) {
-    $brandDirectory = $controller->getLoginDirectoryUsers(['marque']);
-    $brandId = isset($brandDirectory['marque'][0]['id']) && is_numeric($brandDirectory['marque'][0]['id'])
-        ? (int) $brandDirectory['marque'][0]['id']
-        : 0;
-
-    if ($brandId > 0) {
-        $_SESSION['utilisateur']['id'] = $brandId;
-        $_SESSION['utilisateur']['role'] = 'marque';
     }
 }
 
@@ -273,10 +259,15 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <?php require_once __DIR__ . '/../layout/front-theme-bootstrap.php'; ?>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Targeted Offer - Cre8Connect</title>
     <link rel="stylesheet" href="../css/frontoffice.css">
     <link rel="stylesheet" href="offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre.css')); ?>">
+    <link rel="stylesheet" href="../layout/front-header.css">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
 </head>
 <body>
     <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
@@ -763,5 +754,6 @@ $cre8PilotContext = [
 ];
 require __DIR__ . '/../condidature/cre8pilot_widget.php';
 ?>
+    <script src="../layout/front-header.js"></script>
 </body>
 </html>

@@ -14,6 +14,9 @@
         .btn-test { margin-top: 20px; }
         code { background: #f8f9fa; padding: 2px 6px; border-radius: 3px; }
     </style>
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
 </head>
 <body>
     <div class="container" style="max-width: 700px;">

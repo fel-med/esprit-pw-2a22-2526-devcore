@@ -1765,3 +1765,98 @@ body.offre-modal-open {
   color: var(--text-color) !important;
   border: 1px solid var(--border-color-strong) !important;
 }
+
+/* ============================================================
+   Candidature dark-mode alignment with the shared Cre8Connect theme.
+   This comes after local rules so it wins safely without changing logic.
+============================================================ */
+html[data-theme="dark"] .candidature-stats-grid .stat-card,
+html[data-theme="dark"] .source-feed-card,
+html[data-theme="dark"] .candidature-card,
+html[data-theme="dark"] .candidature-card.is-draft,
+html[data-theme="dark"] .candidature-card.is-review,
+html[data-theme="dark"] .candidature-card.is-accepted,
+html[data-theme="dark"] .candidature-card.is-declined,
+html[data-theme="dark"] .candidature-card.is-outdated,
+html[data-theme="dark"] .composer-card,
+html[data-theme="dark"] .locked-state-card,
+html[data-theme="dark"] .decision-note-card,
+html[data-theme="dark"] .timeline-card,
+html[data-theme="dark"] .brand-action-card,
+html[data-theme="dark"] .brand-source-tab-button,
+html[data-theme="dark"] .brand-source-panel-heading,
+html[data-theme="dark"] .response-modal-card,
+html[data-theme="dark"] .response-modal-card[data-modal-variant="negotiate"],
+html[data-theme="dark"] .response-modal-preview,
+html[data-theme="dark"] .creator-modal-section,
+html[data-theme="dark"] .composer-mode-card,
+html[data-theme="dark"] .composer-mode-card[data-mode="accept"],
+html[data-theme="dark"] .composer-mode-card[data-mode="negotiate"],
+html[data-theme="dark"] .composer-mode-card[data-mode="decline"],
+html[data-theme="dark"] .composer-field-card,
+html[data-theme="dark"] #acceptFields,
+html[data-theme="dark"] .negotiation-entry,
+html[data-theme="dark"] .campaign-opportunity-card {
+  background:
+    radial-gradient(circle at top right, rgba(124, 111, 255, 0.10), transparent 34%),
+    var(--card-bg) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
+  box-shadow: 0 18px 42px var(--shadow-color) !important;
+}
+
+html[data-theme="dark"] .composer-field-card,
+html[data-theme="dark"] #acceptFields,
+html[data-theme="dark"] .decision-note-card,
+html[data-theme="dark"] .timeline-card,
+html[data-theme="dark"] .negotiation-entry,
+html[data-theme="dark"] .composer-state-bar {
+  background: var(--card-bg-soft) !important;
+}
+
+html[data-theme="dark"] .candidature-card-title,
+html[data-theme="dark"] .source-feed-title,
+html[data-theme="dark"] .composer-mode-card strong,
+html[data-theme="dark"] .brand-action-launch strong,
+html[data-theme="dark"] .negotiation-author-block strong,
+html[data-theme="dark"] .response-modal-preview strong,
+html[data-theme="dark"] .locked-state-card h3,
+html[data-theme="dark"] .decision-note-card strong,
+html[data-theme="dark"] .timeline-card strong,
+html[data-theme="dark"] .campaign-opportunity-card h2 {
+  color: var(--text-color) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+html[data-theme="dark"] .candidature-card-copy,
+html[data-theme="dark"] .source-feed-copy,
+html[data-theme="dark"] .composer-mode-card span,
+html[data-theme="dark"] .brand-action-launch span,
+html[data-theme="dark"] .negotiation-entry-message,
+html[data-theme="dark"] .negotiation-author-block span,
+html[data-theme="dark"] .response-modal-preview span,
+html[data-theme="dark"] .locked-state-card p,
+html[data-theme="dark"] .decision-note-card p,
+html[data-theme="dark"] .timeline-card p,
+html[data-theme="dark"] .campaign-opportunity-card p,
+html[data-theme="dark"] .composer-context-note,
+html[data-theme="dark"] .candidature-signal-copy {
+  color: var(--muted-text) !important;
+}
+
+html[data-theme="dark"] .candidature-badge,
+html[data-theme="dark"] .origin-badge,
+html[data-theme="dark"] .negotiation-role,
+html[data-theme="dark"] .campaign-opportunity-meta span {
+  background: var(--badge-bg) !important;
+  color: #ddd6fe !important;
+  border-color: var(--border-color-strong) !important;
+}
+
+html[data-theme="dark"] .response-modal-header,
+html[data-theme="dark"] .response-modal-body,
+html[data-theme="dark"] .response-modal-actions {
+  background: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+}
+

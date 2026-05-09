@@ -13,13 +13,13 @@ if (!isset($currentPage)) {
 ?>
 
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
+    <?php require_once __DIR__ . '/../layout/front-theme-bootstrap.php'; ?>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($pageTitle) ?></title>
 
-    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico" />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -31,23 +31,13 @@ if (!isset($currentPage)) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
 
     <!-- CSS -->
+    <link href="../layout/front-header.css" rel="stylesheet" />
     <link href="../assets/css/styles.css" rel="stylesheet" />
     <link href="../assets/post-front.css?v=3" rel="stylesheet" />
 
-    <!-- Apply theme before render -->
-    <script>
-    (function(){
-        var t = localStorage.getItem('cre8_theme');
-
-        if(!t){
-            t = window.matchMedia('(prefers-color-scheme: dark)').matches
-                ? 'dark'
-                : 'light';
-        }
-
-        document.documentElement.setAttribute('data-theme', t);
-    })();
-    </script>
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
 </head>
 
 <body class="d-flex flex-column min-vh-100 social-body">
@@ -61,8 +51,8 @@ if (!isset($currentPage)) {
         <!-- Logo -->
         <a class="navbar-brand social-brand-logo" href="./index.php" aria-label="Home">
             <img src="../../public/images/logoweb.png"
-                 alt="Logo"
-                 class="social-logo-img">
+                 alt="Cre8Connect"
+                 class="social-logo-img front-header-logo">
         </a>
 
         <!-- Mobile toggle -->
@@ -210,8 +200,16 @@ if (!isset($currentPage)) {
     var KEY = 'cre8_theme';
 
     function applyTheme(theme){
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem(KEY, theme);
+        var t = theme === 'dark' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        document.documentElement.classList.toggle('dark-mode', t === 'dark');
+        document.documentElement.classList.toggle('light-mode', t !== 'dark');
+        try { document.documentElement.style.colorScheme = t === 'dark' ? 'dark' : 'light'; } catch (e) {}
+        if (document.body) {
+            document.body.classList.toggle('dark-mode', t === 'dark');
+            document.body.classList.toggle('light-mode', t !== 'dark');
+        }
+        localStorage.setItem(KEY, t);
     }
 
     var btn = document.getElementById('themeToggleBtn');

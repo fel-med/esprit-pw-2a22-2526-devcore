@@ -9,10 +9,21 @@ require_once __DIR__ . '/../../../Controleur/campagneC.php';
 require_once __DIR__ . '/../../../Controleur/produitC.php';
 
 if (session_status() === PHP_SESSION_NONE) session_start();
+$frontActive = 'campaigns';
 
 $campagneC = new CampagneC();
 $produitC  = new ProduitC();
-$baseUrl   = '/projet/Esprit-PW-2A22-2526-Devcore';
+$cre8SelfPath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
+$cre8VuePos = strpos($cre8SelfPath, '/Vue/');
+$baseUrl = $cre8VuePos !== false ? substr($cre8SelfPath, 0, $cre8VuePos) : '';
+if (!function_exists('cre8_product_image_url')) {
+    function cre8_product_image_url($filename) {
+        global $baseUrl;
+        $filename = trim((string) $filename);
+        if ($filename === '') return '';
+        return $baseUrl . '/Vue/public/produits/' . rawurlencode(basename($filename));
+    }
+}
 
 // AJAX : produits d'une campagne (lecture seule)
 if (isset($_GET['ajax_produits_creator'])) {
@@ -54,6 +65,7 @@ function statutBg($s)    { return match($s) { 'active'=>'#edfaf5', 'terminee'=>'
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<?php require_once __DIR__ . '/../layout/front-theme-bootstrap.php'; ?>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Campagnes disponibles — Cre8Connect</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@700;800;900&display=swap" rel="stylesheet">
@@ -71,7 +83,8 @@ function statutBg($s)    { return match($s) { 'active'=>'#edfaf5', 'terminee'=>'
     --radius:14px;--radius-sm:8px;--nav-h:66px;
 }
 
-/* ===== ADDED FEATURE: DARK MODE ===== */
+/* ===== DARK MODE (match shared header: html[data-theme] + body sync) ===== */
+html[data-theme="dark"],
 body.dark-mode {
     --primary:#7c6fff;--primary-hover:#6357e8;--primary-light:#2a2660;
     --primary-glow:rgba(124,111,255,0.2);--primary-border:rgba(124,111,255,0.3);
@@ -83,9 +96,12 @@ body.dark-mode {
     --card-shadow:0 1px 3px rgba(0,0,0,0.3),0 4px 16px rgba(0,0,0,0.2);
     --card-shadow-hover:0 8px 32px rgba(124,111,255,0.2);
 }
+html[data-theme="dark"] .hero,
 body.dark-mode .hero {
-    background: linear-gradient(135deg,#0a091a 0%,#12103a 60%,#1e1558 100%);
+    background: linear-gradient(130deg,#0a091a 0%,#12103a 60%,#1e1558 100%);
 }
+html[data-theme="dark"] .detail-box,
+html[data-theme="dark"] .detail-modal > .detail-box,
 body.dark-mode .detail-box,
 body.dark-mode .detail-modal > .detail-box {
     background: var(--white);
@@ -94,8 +110,6 @@ body.dark-mode .detail-modal > .detail-box {
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-main);min-height:100vh;transition:background .3s,color .3s;}
-
-nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 48px;height:var(--nav-h);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(15,14,26,0.04);transition:background .3s,border-color .3s;}
 .nav-logo{font-family:'Fraunces',serif;font-size:20px;font-weight:800;color:var(--primary);text-decoration:none;}
 .nav-links{display:flex;gap:6px;list-style:none;}
 .nav-links a{text-decoration:none;color:var(--text-sub);font-size:13.5px;font-weight:600;padding:6px 14px;border-radius:8px;transition:all .18s;}
@@ -125,24 +139,50 @@ nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 48px
 /* ===== END DARK MODE TOGGLE ===== */
 
 /* ===== ADDED FEATURE: LANGUAGE SWITCHER ===== */
-.lang-switcher {
-    display: flex;
-    gap: 4px;
+.campaign-front .front-lang-switch {
+    display: inline-flex;
     align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    border-radius: 999px;
+    border: 1px solid rgba(139, 92, 246, 0.45);
+    background: rgba(139, 92, 246, 0.08);
+    flex-shrink: 0;
 }
-.lang-btn {
-    background: var(--bg);
-    border: 1.5px solid var(--border);
-    border-radius: 7px;
-    padding: 4px 10px;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
+.campaign-front .front-lang-btn {
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
     color: var(--text-sub);
-    font-family: 'DM Sans', sans-serif;
-    transition: all .18s;
+    font: inherit;
+    font-size: 0.76rem;
+    font-weight: 800;
+    padding: 0.4rem 0.7rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
 }
-.lang-btn:hover, .lang-btn.active { background: var(--primary-light); color: var(--primary); border-color: var(--primary-border); }
+.campaign-front .front-lang-btn:hover { color: var(--primary); }
+.campaign-front .front-lang-btn.is-active {
+    background: #8b5cf6;
+    color: #fff;
+}
+html[data-theme="dark"] .campaign-front .front-lang-btn:not(.is-active),
+body.dark-mode .campaign-front .front-lang-btn:not(.is-active) {
+    color: var(--text-sub);
+}
+.hero-lang-row {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+    margin-bottom: 10px;
+}
+.hero-inner-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    width: 100%;
+}
 /* ===== END LANGUAGE SWITCHER ===== */
 
 /* HERO — light lavender banner (Cre8Connect style) */
@@ -180,6 +220,15 @@ nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 48px
     align-items: center;
     justify-content: space-between;
     gap: 32px;
+}
+.hero-content.campaign-front {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+}
+.hero-content.campaign-front .hero-inner-row {
+    align-items: center;
+    margin-top: 0;
 }
 .hero-left { flex: 1; }
 .hero-tag {
@@ -224,10 +273,6 @@ nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 48px
     filter: drop-shadow(0 8px 24px rgba(91,79,255,0.2));
     user-select: none;
     flex-shrink: 0;
-}
-
-body.dark-mode .hero {
-    background: linear-gradient(130deg,#0a091a 0%,#12103a 60%,#1e1558 100%);
 }
 
 .page-wrapper{max-width:1200px;margin:0 auto;padding:36px 24px 80px;}
@@ -445,40 +490,26 @@ body.dark-mode .hero {
 }
 /* ===== END PAGINATION ===== */
 </style>
+    <!-- Shared FrontOffice header assets (after page CSS so front-header wins on shared tokens) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="../layout/front-header.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/front-header.css')); ?>">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
 </head>
 <body>
-
-<nav>
-    <a href="#" class="nav-logo">Cre8Connect</a>
-    <ul class="nav-links">
-        <li><a href="#" data-i18n="nav_offres">Offres</a></li>
-        <li><a href="#" class="active" data-i18n="nav_campagnes">Campagnes</a></li>
-        <li><a href="../produit/indexC.php" data-i18n="nav_produits">Produits</a></li>
-        <li><a href="../contrat/indexC.php" data-i18n="nav_contrats">Contrats</a></li>
-    </ul>
-    <div class="nav-right">
-        <!-- ===== ADDED FEATURE: LANGUAGE SWITCHER ===== -->
-        <div class="lang-switcher">
-            <button class="lang-btn active" onclick="setLang('fr')" id="btn-fr">FR</button>
-            <button class="lang-btn" onclick="setLang('en')" id="btn-en">EN</button>
-        </div>
-        <!-- ===== END LANGUAGE SWITCHER ===== -->
-
-        <!-- ===== ADDED FEATURE: DARK MODE TOGGLE ===== -->
-        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Changer le thème">
-            <span id="themeIcon">🌙</span>
-            <span id="themeLabel" data-i18n="theme_dark">Mode sombre</span>
-        </button>
-        <!-- ===== END DARK MODE TOGGLE ===== -->
-
-        <span class="nav-badge" data-i18n="role_creator">Créateur</span>
-        <div class="nav-avatar">C</div>
-    </div>
-</nav>
+<?php require_once __DIR__ . '/../layout/header.php'; ?>
 
 <!-- HERO -->
 <div class="hero">
-    <div class="hero-content">
+    <div class="hero-content campaign-front">
+        <div class="hero-lang-row">
+            <div class="front-lang-switch" role="group" aria-label="Language">
+                <button type="button" class="front-lang-btn" data-lang-choice="en" aria-pressed="false">EN</button>
+                <button type="button" class="front-lang-btn" data-lang-choice="fr" aria-pressed="false">FR</button>
+            </div>
+        </div>
+        <div class="hero-inner-row">
         <div class="hero-left">
             <div class="hero-tag">⚡ <span data-i18n="hero_tag">Campagnes disponibles</span></div>
             <h1 data-i18n="hero_title">Découvrez les Campagnes des Marques</h1>
@@ -508,6 +539,7 @@ body.dark-mode .hero {
             </div>
         </div>
         <div class="hero-illus">📋</div>
+        </div>
     </div>
 </div>
 
@@ -692,7 +724,7 @@ body.dark-mode .hero {
 </div>
 
 <script>
-const BASE_URL = '<?= $baseUrl ?>';
+const BASE_URL = <?= json_encode($baseUrl, JSON_UNESCAPED_SLASHES) ?>;
 
 const campagnesMap = {};
 <?php foreach ($campagnes as $c): ?>
@@ -713,26 +745,7 @@ const sLabels = {active:'✅ Active',brouillon:'📝 Brouillon',terminee:'🏁 T
 const sColors = {active:'#0ea370',brouillon:'#f59e0b',terminee:'#3b82f6',annulee:'#f43f5e'};
 const sBgs    = {active:'#edfaf5',brouillon:'#fffbeb',terminee:'#eff6ff',annulee:'#fff1f3'};
 
-// ===== ADDED FEATURE: DARK MODE =====
-(function initTheme() {
-    const saved = localStorage.getItem('cre8_theme_fo');
-    if (saved === 'dark') applyDark(true, false);
-})();
-
-function applyDark(isDark, save = true) {
-    document.body.classList.toggle('dark-mode', isDark);
-    const icon  = document.getElementById('themeIcon');
-    const label = document.getElementById('themeLabel');
-    if (icon)  icon.textContent = isDark ? '☀️' : '🌙';
-    if (label) label.setAttribute('data-i18n', isDark ? 'theme_light' : 'theme_dark');
-    if (save)  localStorage.setItem('cre8_theme_fo', isDark ? 'dark' : 'light');
-    applyTranslation(currentLang);
-}
-
-function toggleTheme() {
-    applyDark(!document.body.classList.contains('dark-mode'));
-}
-// ===== END DARK MODE =====
+// Theme: ../layout/front-header.js (cre8_theme, html data-theme). Sync script + MutationObserver below.
 
 // ===== ADDED FEATURE: TRANSLATION SYSTEM =====
 const translations = {
@@ -856,12 +869,30 @@ const translations = {
     }
 };
 
-let currentLang = localStorage.getItem('cre8_lang') || 'fr';
+function cre8FrontReadLang() {
+    try {
+        var k = localStorage.getItem('cre8_front_lang');
+        if (k === 'fr' || k === 'en') return k;
+        var legacy = localStorage.getItem('cre8_lang')
+            || localStorage.getItem('cre8_lang_produit')
+            || localStorage.getItem('cre8_lang_creator_produit')
+            || localStorage.getItem('cc_lang');
+        if (legacy === 'fr' || legacy === 'en') return legacy;
+    } catch (e) {}
+    return 'en';
+}
+function cre8FrontWriteLang(lang) {
+    var safe = lang === 'fr' ? 'fr' : 'en';
+    try { localStorage.setItem('cre8_front_lang', safe); } catch (e) {}
+}
+
+let currentLang = cre8FrontReadLang();
 
 function applyTranslation(lang) {
-    currentLang = lang;
-    localStorage.setItem('cre8_lang', lang);
-    const dict = translations[lang] || translations['fr'];
+    const safe = lang === 'fr' ? 'fr' : 'en';
+    currentLang = safe;
+    cre8FrontWriteLang(safe);
+    const dict = translations[safe] || translations['fr'];
 
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
@@ -873,12 +904,17 @@ function applyTranslation(lang) {
         if (dict[key]) el.placeholder = dict[key];
     });
 
-    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-    const activeBtn = document.getElementById('btn-' + lang);
-    if (activeBtn) activeBtn.classList.add('active');
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        const key = el.getAttribute('data-i18n-title');
+        if (dict[key]) el.setAttribute('title', dict[key]);
+    });
 
-    // Update chip labels from dict
-    const chipMap = {chip_all:'', chip_active:'active', chip_draft:'brouillon', chip_done:'terminee'};
+    document.querySelectorAll('[data-lang-choice]').forEach(btn => {
+        const on = btn.getAttribute('data-lang-choice') === safe;
+        btn.classList.toggle('is-active', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+
     document.querySelectorAll('.s-chip').forEach(btn => {
         const key = btn.getAttribute('data-i18n');
         if (key && dict[key]) btn.textContent = dict[key];
@@ -889,8 +925,15 @@ function applyTranslation(lang) {
 
 function setLang(lang) { applyTranslation(lang); }
 
-// Run on load
 applyTranslation(currentLang);
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-lang-choice]').forEach(btn => {
+        btn.addEventListener('click', function () {
+            applyTranslation(btn.getAttribute('data-lang-choice'));
+        });
+    });
+});
 // ===== END TRANSLATION SYSTEM =====
 
 // ===== ADDED FEATURE: PAGINATION =====
@@ -1051,7 +1094,7 @@ function renderDetailProducts(produits) {
     const grid = document.getElementById('detailProductsGrid');
     if (!produits?.length) { grid.innerHTML = '<div class="prod-loader">Aucun produit lié à cette campagne.</div>'; return; }
     grid.innerHTML = produits.map(p => {
-        const img = p.image ? `<img src="${BASE_URL}/Vue/public/produits/${p.image}" alt="">` : '📦';
+        const img = p.image ? `<img src="${BASE_URL}/Vue/public/produits/${encodeURIComponent(p.image)}" alt="">` : '📦';
         return `<div class="detail-prod-card"><div class="detail-prod-img">${img}</div><div class="detail-prod-body"><div class="detail-prod-name" title="${esc(p.nomProduit)}">${esc(p.nomProduit)}</div><div class="detail-prod-price">${parseFloat(p.prix).toFixed(2)} €</div></div></div>`;
     }).join('');
 }
@@ -1067,5 +1110,6 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(
 document.addEventListener('DOMContentLoaded', () => openDetail(<?= $campagneDetail['idCampagne'] ?>));
 <?php endif; ?>
 </script>
+<script src="../layout/front-header.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/front-header.js')); ?>"></script>
 </body>
 </html>

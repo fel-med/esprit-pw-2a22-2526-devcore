@@ -1,11 +1,24 @@
 <?php
 
 require_once __DIR__ . '/../../../Controleur/produitC.php';
+require_once __DIR__ . '/../layout/session_bridge.php';
+$currentBrandUser = cre8_front_require_user('marque');
+
 
 $controller = new ProduitC();
 
-$baseUrl = '/projet/Esprit-PW-2A22-2526-Devcore';
-$id_marque = $_SESSION['user_id'] ?? 1;
+$cre8SelfPath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
+$cre8VuePos = strpos($cre8SelfPath, '/Vue/');
+$baseUrl = $cre8VuePos !== false ? substr($cre8SelfPath, 0, $cre8VuePos) : '';
+if (!function_exists('cre8_product_image_url')) {
+    function cre8_product_image_url($filename) {
+        global $baseUrl;
+        $filename = trim((string) $filename);
+        if ($filename === '') return '';
+        return $baseUrl . '/Vue/public/produits/' . rawurlencode(basename($filename));
+    }
+}
+$id_marque = (int) ($currentBrandUser['id'] ?? 0);
 
 $message = '';
 $messageType = '';
@@ -137,11 +150,14 @@ $rappels = array_slice($rappels, 0, 3);
 $tagsDisponibles = ['Bio','Vegan','Gluten-free','Made in France','Premium','Natural','Certified','Recycled','Artisan','Sustainable','Paraben-free','Cruelty-free','Luxury','Sport','Tech'];
 
 $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadgets','Food & Nutrition','Sport & Fitness','Home & Decor','Travel','Wellness','Gaming','Kids'];
+
+$frontActive = 'campaigns';
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <?php require_once __DIR__ . '/../layout/front-theme-bootstrap.php'; ?>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Products – Cre8Connect</title>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -181,6 +197,7 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
         }
 
         /* ===== ADDED FEATURE: DARK MODE VARIABLES ===== */
+        html[data-theme="dark"],
         body.dark-mode {
             --primary:        #7c6fff;
             --primary-light:  #2a2660;
@@ -213,11 +230,8 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
 
         body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text-main); min-height: 100vh; transition: background .3s, color .3s; }
 
-        /* ── NAV ── */
+        /* ── NAV (legacy page chrome; shared header is ../layout/header.php) ── */
         nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 48px; height: var(--nav-h); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 200; box-shadow: 0 1px 0 var(--border), 0 2px 12px rgba(15,14,26,0.04); transition: background .3s, border-color .3s; }
-        .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-        .nav-logo img { width: 36px; height: 36px; object-fit: contain; border-radius: 9px; }
-        .nav-logo-text { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
         .nav-links { display: flex; gap: 6px; list-style: none; }
         .nav-links a { text-decoration: none; color: var(--text-sub); font-size: 13.5px; font-weight: 600; padding: 6px 14px; border-radius: 8px; transition: background .18s, color .18s; }
         .nav-links a:hover { background: var(--bg); color: var(--text-main); }
@@ -246,21 +260,46 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
         .theme-toggle:hover { border-color: var(--primary); color: var(--primary); }
         /* ===== END THEME TOGGLE ===== */
 
-        /* ===== ADDED FEATURE: LANGUAGE SWITCHER ===== */
-        .lang-switcher { display: flex; gap: 4px; align-items: center; }
-        .lang-btn {
-            background: var(--bg);
-            border: 1.5px solid var(--border);
-            border-radius: 7px;
-            padding: 4px 10px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            color: var(--text-sub);
-            font-family: 'DM Sans', sans-serif;
-            transition: all .18s;
+        /* ===== FrontOffice EN | FR switch ===== */
+        .product-front .page-header-aside {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 12px;
+            z-index: 2;
+            flex-shrink: 0;
         }
-        .lang-btn:hover, .lang-btn.active { background: var(--primary-light); color: var(--primary); border-color: var(--primary-border); }
+        .product-front .front-lang-switch {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem;
+            border-radius: 999px;
+            border: 1px solid rgba(139, 92, 246, 0.45);
+            background: rgba(139, 92, 246, 0.1);
+            flex-shrink: 0;
+        }
+        .product-front .front-lang-btn {
+            border: 0;
+            border-radius: 999px;
+            background: transparent;
+            color: var(--text-sub);
+            font: inherit;
+            font-size: 0.76rem;
+            font-weight: 800;
+            padding: 0.4rem 0.7rem;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .product-front .front-lang-btn:hover { color: var(--primary); }
+        .product-front .front-lang-btn.is-active {
+            background: #8b5cf6;
+            color: #fff;
+        }
+        html[data-theme="dark"] .product-front .front-lang-btn:not(.is-active),
+        body.dark-mode .product-front .front-lang-btn:not(.is-active) {
+            color: var(--text-sub);
+        }
         /* ===== END LANGUAGE SWITCHER ===== */
 
         /* ── PAGE WRAPPER ── */
@@ -345,6 +384,34 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
             backdrop-filter: blur(6px);
         }
         .btn-export:hover { border-color: var(--primary); color: var(--primary); background: rgba(255,255,255,0.95); }
+
+        html[data-theme="dark"] .page-header,
+        body.dark-mode .page-header {
+            background: linear-gradient(130deg, #1c1a2e 0%, #211d3d 48%, #172133 100%);
+            border-color: rgba(124,111,255,0.26);
+            box-shadow: 0 2px 24px rgba(0,0,0,0.32);
+        }
+        html[data-theme="dark"] .page-header::before,
+        body.dark-mode .page-header::before {
+            background: radial-gradient(circle, rgba(124,111,255,0.18) 0%, transparent 70%);
+        }
+        html[data-theme="dark"] .page-header-illus,
+        body.dark-mode .page-header-illus {
+            opacity: 0.72;
+            filter: drop-shadow(0 8px 24px rgba(124,111,255,0.22));
+        }
+        html[data-theme="dark"] .btn-export,
+        body.dark-mode .btn-export {
+            background: rgba(28,26,46,0.86);
+            border-color: rgba(124,111,255,0.28);
+            color: var(--text-sub);
+        }
+        html[data-theme="dark"] .btn-export:hover,
+        body.dark-mode .btn-export:hover {
+            background: rgba(42,38,96,0.92);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
 
         /* ── FLASH ── */
         .flash { padding: 13px 18px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; animation: slideDown .3s ease; }
@@ -1079,43 +1146,18 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
         @media (max-width: 1000px) { .kpi-strip { grid-template-columns: repeat(3, 1fr); } .top-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 900px) { .form-layout { grid-template-columns: 1fr; } .kpi-strip { grid-template-columns: 1fr 1fr; } .recent-grid { grid-template-columns: 1fr; } nav { padding: 0 20px; } .nav-links { display: none; } .qv-box { flex-direction: column; } .qv-img { width: 100%; height: 200px; } .top-grid { grid-template-columns: repeat(2, 1fr); } }
     </style>
+
+    <!-- Shared FrontOffice header assets -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="../layout/front-header.css">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
 </head>
 <body>
+<?php require_once __DIR__ . '/../layout/header.php'; ?>
 
-<!-- NAV -->
-<nav>
-    <a href="#" class="nav-logo">
-        <img src="<?= $baseUrl ?>/Vue/public/images/logo.png" alt="Cre8Connect">
-        <span class="nav-logo-text">Cre8Connect</span>
-    </a>
-    <ul class="nav-links">
-        <li><a href="#" data-i18n="nav_dashboard">Dashboard</a></li>
-        <li><a href="#" data-i18n="nav_offers">My Offers</a></li>
-        <li><a href="#" class="active" data-i18n="nav_products">My Products</a></li>
-        <li><a href="#" data-i18n="nav_campaigns">Campaigns</a></li>
-        <li><a href="#" data-i18n="nav_profile">My Profile</a></li>
-    </ul>
-    <div class="nav-right">
-        <!-- ===== ADDED FEATURE: LANGUAGE SWITCHER ===== -->
-        <div class="lang-switcher">
-            <button class="lang-btn active" onclick="setLang('en')" id="btn-en">EN</button>
-            <button class="lang-btn" onclick="setLang('fr')" id="btn-fr">FR</button>
-        </div>
-        <!-- ===== END LANGUAGE SWITCHER ===== -->
-
-        <!-- ===== ADDED FEATURE: DARK MODE TOGGLE ===== -->
-        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">
-            <span id="themeIcon">🌙</span>
-            <span id="themeLabel" data-i18n="theme_dark">Dark mode</span>
-        </button>
-        <!-- ===== END DARK MODE TOGGLE ===== -->
-
-        <span class="nav-badge" data-i18n="role_brand">Brand</span>
-        <div class="nav-avatar">B</div>
-    </div>
-</nav>
-
-<div class="page-wrapper">
+<div class="page-wrapper product-front">
 
     <!-- PAGE HEADER / HERO BANNER -->
     <div class="page-header">
@@ -1143,7 +1185,13 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
                 </a>
             </div>
         </div>
-        <div class="page-header-illus">🛍️</div>
+        <div class="page-header-aside">
+            <div class="front-lang-switch" role="group" aria-label="Language">
+                <button type="button" class="front-lang-btn" data-lang-choice="en" aria-pressed="false">EN</button>
+                <button type="button" class="front-lang-btn" data-lang-choice="fr" aria-pressed="false">FR</button>
+            </div>
+            <div class="page-header-illus">🛍️</div>
+        </div>
     </div>
 
     <!-- FLASH -->
@@ -1230,7 +1278,7 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
                 <div class="top-rank <?= $rankClass ?>"><?= $i + 1 ?></div>
                 <div class="top-thumb">
                     <?php if (!empty($tp['image'])): ?>
-                        <img src="<?= $baseUrl ?>/Vue/public/produits/<?= htmlspecialchars($tp['image']) ?>" alt="">
+                        <img src="<?= htmlspecialchars(cre8_product_image_url($tp['image']), ENT_QUOTES, 'UTF-8') ?>" alt="">
                     <?php else: ?>📦<?php endif; ?>
                 </div>
                 <div class="top-info">
@@ -1256,7 +1304,7 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
             <div class="recent-card">
                 <div class="recent-thumb">
                     <?php if (!empty($r['image'])): ?>
-                        <img src="<?= $baseUrl ?>/Vue/public/produits/<?= htmlspecialchars($r['image']) ?>" alt="">
+                        <img src="<?= htmlspecialchars(cre8_product_image_url($r['image']), ENT_QUOTES, 'UTF-8') ?>" alt="">
                     <?php else: ?>📦<?php endif; ?>
                 </div>
                 <div class="recent-info">
@@ -1423,7 +1471,7 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
                     <label data-i18n="label_image">Product image</label>
                     <?php if ($editProduit && !empty($editProduit['image'])): ?>
                         <div class="current-img-block">
-                            <img src="<?= $baseUrl ?>/Vue/public/produits/<?= htmlspecialchars($editProduit['image']) ?>" alt="">
+                            <img src="<?= htmlspecialchars(cre8_product_image_url($editProduit['image']), ENT_QUOTES, 'UTF-8') ?>" alt="">
                             <div>
                                 <strong data-i18n="current_image">Current image</strong>
                                 <span data-i18n="current_image_hint">Upload a new image to replace it.</span>
@@ -1702,7 +1750,7 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
                      data-prix="<?= (float)$p['prix'] ?>"
                      data-cat="<?= htmlspecialchars(strtolower($p['categorie'] ?? '')) ?>"
                      data-epingle="<?= (int)$isPinned ?>"
-                     data-img="<?= !empty($p['image']) ? $baseUrl . '/Vue/public/produits/' . htmlspecialchars($p['image']) : '' ?>"
+                     data-img="<?= !empty($p['image']) ? htmlspecialchars(cre8_product_image_url($p['image']), ENT_QUOTES, 'UTF-8') : '' ?>"
                      data-tags="<?= htmlspecialchars(implode(',', $tags)) ?>"
                      data-note="<?= htmlspecialchars($p['noteInterne'] ?? '') ?>"
                      data-dispo="<?= htmlspecialchars($dispo ?? '') ?>"
@@ -1718,7 +1766,7 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
                             </div>
                         <?php endif; ?>
                         <?php if (!empty($p['image'])): ?>
-                            <img src="<?= $baseUrl ?>/Vue/public/produits/<?= htmlspecialchars($p['image']) ?>"
+                            <img src="<?= htmlspecialchars(cre8_product_image_url($p['image']), ENT_QUOTES, 'UTF-8') ?>"
                                  alt="<?= htmlspecialchars($p['nomProduit']) ?>" loading="lazy">
                         <?php else: ?>
                             <div class="pcard-img-empty">📦</div>
@@ -1809,7 +1857,7 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
                 <div class="archived-card" data-id="<?= $a['idProduit'] ?>" data-name="<?= htmlspecialchars($a['nomProduit']) ?>">
                     <div class="archived-thumb">
                         <?php if (!empty($a['image'])): ?>
-                            <img src="<?= $baseUrl ?>/Vue/public/produits/<?= htmlspecialchars($a['image']) ?>" alt="">
+                            <img src="<?= htmlspecialchars(cre8_product_image_url($a['image']), ENT_QUOTES, 'UTF-8') ?>" alt="">
                         <?php else: ?>📦<?php endif; ?>
                     </div>
                     <div class="archived-info">
@@ -1865,7 +1913,7 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
 </div>
 
 <script>
-const BASE_URL = '<?= $baseUrl ?>';
+const BASE_URL = <?= json_encode($baseUrl, JSON_UNESCAPED_SLASHES) ?>;
 
 // ===== ADDED FEATURE: TRANSLATION SYSTEM =====
 const translations = {
@@ -2011,12 +2059,30 @@ const translations = {
     }
 };
 
-let currentLang = localStorage.getItem('cre8_lang_produit') || 'en';
+function cre8FrontReadLang() {
+    try {
+        var k = localStorage.getItem('cre8_front_lang');
+        if (k === 'fr' || k === 'en') return k;
+        var legacy = localStorage.getItem('cre8_lang_produit')
+            || localStorage.getItem('cre8_lang')
+            || localStorage.getItem('cre8_lang_creator_produit')
+            || localStorage.getItem('cc_lang');
+        if (legacy === 'fr' || legacy === 'en') return legacy;
+    } catch (e) {}
+    return 'en';
+}
+function cre8FrontWriteLang(lang) {
+    var safe = lang === 'fr' ? 'fr' : 'en';
+    try { localStorage.setItem('cre8_front_lang', safe); } catch (e) {}
+}
+
+let currentLang = cre8FrontReadLang();
 
 function applyTranslation(lang) {
-    currentLang = lang;
-    localStorage.setItem('cre8_lang_produit', lang);
-    const dict = translations[lang] || translations['en'];
+    const safe = lang === 'fr' ? 'fr' : 'en';
+    currentLang = safe;
+    cre8FrontWriteLang(safe);
+    const dict = translations[safe] || translations['en'];
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (dict[key] !== undefined) el.textContent = dict[key];
@@ -2025,10 +2091,15 @@ function applyTranslation(lang) {
         const key = el.getAttribute('data-i18n-placeholder');
         if (dict[key]) el.placeholder = dict[key];
     });
-    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-    const activeBtn = document.getElementById('btn-' + lang);
-    if (activeBtn) activeBtn.classList.add('active');
-    // sync theme label
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        const key = el.getAttribute('data-i18n-title');
+        if (dict[key]) el.setAttribute('title', dict[key]);
+    });
+    document.querySelectorAll('[data-lang-choice]').forEach(btn => {
+        const on = btn.getAttribute('data-lang-choice') === safe;
+        btn.classList.toggle('is-active', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
     const isDark = document.body.classList.contains('dark-mode');
     const themeLabel = document.getElementById('themeLabel');
     if (themeLabel) themeLabel.textContent = dict[isDark ? 'theme_light' : 'theme_dark'] || '';
@@ -2038,27 +2109,50 @@ function applyTranslation(lang) {
 function setLang(lang) { applyTranslation(lang); }
 // ===== END TRANSLATION SYSTEM =====
 
-// ===== ADDED FEATURE: DARK MODE =====
-(function initTheme() {
-    const saved = localStorage.getItem('cre8_theme_fo');
-    if (saved === 'dark') applyDark(true, false);
-})();
-
-function applyDark(isDark, save = true) {
-    document.body.classList.toggle('dark-mode', isDark);
-    const icon  = document.getElementById('themeIcon');
-    const label = document.getElementById('themeLabel');
-    if (icon)  icon.textContent = isDark ? '☀️' : '🌙';
-    const dict = translations[currentLang] || translations['en'];
-    if (label) label.textContent = dict[isDark ? 'theme_light' : 'theme_dark'] || '';
-    if (save)  localStorage.setItem('cre8_theme_fo', isDark ? 'dark' : 'light');
+// ===== DARK MODE (shared: ../layout/front-header.js, key cre8_theme) =====
+function applyDark(isDark, save) {
+    var dark = !!isDark;
+    if (typeof window.cre8ApplyFrontTheme === 'function') {
+        window.cre8ApplyFrontTheme(dark ? 'dark' : 'light', save !== false);
+    } else {
+        document.body.classList.toggle('dark-mode', dark);
+        try {
+            if (save !== false) localStorage.setItem('cre8_theme', dark ? 'dark' : 'light');
+        } catch (e) {}
+    }
+    var icon  = document.getElementById('themeIcon');
+    var label = document.getElementById('themeLabel');
+    if (icon && typeof window.cre8ApplyFrontTheme !== 'function') {
+        icon.textContent = dark ? '☀️' : '🌙';
+    }
+    var dict = translations[currentLang] || translations['en'];
+    if (label) label.textContent = dict[dark ? 'theme_light' : 'theme_dark'] || '';
 }
 
-function toggleTheme() { applyDark(!document.body.classList.contains('dark-mode')); }
+function toggleTheme() {
+    if (typeof window.cre8ApplyFrontTheme === 'function') {
+        window.toggleDarkMode();
+        var dict = translations[currentLang] || translations['en'];
+        var label = document.getElementById('themeLabel');
+        if (label) {
+            var d = document.documentElement.getAttribute('data-theme') === 'dark';
+            label.textContent = dict[d ? 'theme_light' : 'theme_dark'] || '';
+        }
+    } else {
+        applyDark(!document.body.classList.contains('dark-mode'));
+    }
+}
 // ===== END DARK MODE =====
 
-// Apply translation on load
 applyTranslation(currentLang);
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-lang-choice]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            applyTranslation(btn.getAttribute('data-lang-choice'));
+        });
+    });
+});
 
 /* ═══════════════════════════════════════════════════════════════════════════
    ORIGINAL VALIDATION FUNCTIONS (all preserved)
@@ -2855,5 +2949,7 @@ if (flash) {
 document.getElementById('formAnchor').scrollIntoView({ behavior: 'smooth', block: 'start' });
 <?php endif; ?>
 </script>
+
+<script src="../layout/front-header.js"></script>
 </body>
 </html>

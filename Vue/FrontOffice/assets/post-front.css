@@ -849,18 +849,16 @@ body.social-body {
   .btn-trending-action,
   .btn-reset-action { height: 40px; padding: 0 13px; font-size: 12.5px; }
 }
-post-front.css 
-
 /* ═══════════════════════════════════════════════════════════
    CREA CHATBOT — 3D Indigo Style
    ═══════════════════════════════════════════════════════════ */
 /* ── WRAPPER ── */
 .crea-chatbot {
   position: fixed !important;
-  left: max(16px, env(safe-area-inset-left)) !important;
-  right: auto !important;
-  bottom: max(16px, env(safe-area-inset-bottom)) !important;
-  top: auto !important;
+  left: max(16px, env(safe-area-inset-left));
+  right: auto;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  top: auto;
   z-index: 9999 !important;
   display: flex !important;
   flex-direction: column !important;
@@ -876,6 +874,7 @@ post-front.css
 /* Curseur drag sur le FAB */
 .crea-chatbot-fab {
   cursor: grab;
+  touch-action: none;
 }
 .crea-chatbot-fab:active {
   cursor: grabbing;
@@ -884,6 +883,13 @@ post-front.css
 /* Désactive la transition de position pendant le drag */
 .crea-chatbot.is-dragging {
   transition: none !important;
+}
+.crea-chatbot.is-dragging,
+.crea-chatbot.is-dragging * {
+  user-select: none;
+}
+.crea-chatbot.is-dragging .crea-chatbot-fab {
+  cursor: grabbing;
 }
 /* ── FAB ── */
 .crea-chatbot-fab {
@@ -906,7 +912,7 @@ post-front.css
   font-size: .92rem;
   font-family: 'DM Sans', sans-serif;
   letter-spacing: .01em;
-  cursor: pointer;
+  cursor: grab;
 
   /* 3D : highlight haut + ombre profonde stratifiée */
   box-shadow:
@@ -951,7 +957,7 @@ post-front.css
 .crea-chatbot-panel {
   position: absolute;
   left: 0 !important;
-  right: auto !important;
+  right: auto;
   bottom: calc(100% + 16px);
   width: min(390px, calc(100vw - 32px));
 
@@ -1288,8 +1294,8 @@ post-front.css
 /* ── RESPONSIVE ── */
 @media (max-width: 767px) {
   .crea-chatbot {
-    left: max(12px, env(safe-area-inset-left)) !important;
-    bottom: max(12px, env(safe-area-inset-bottom)) !important;
+    left: max(12px, env(safe-area-inset-left));
+    bottom: max(12px, env(safe-area-inset-bottom));
   }
   .crea-chatbot-fab { padding: .8rem 1rem; }
   .crea-chatbot-panel { width: min(calc(100vw - 20px), 390px); }

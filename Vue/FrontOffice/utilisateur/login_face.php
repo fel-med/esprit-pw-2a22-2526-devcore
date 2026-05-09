@@ -6,6 +6,42 @@ session_start();
 // ⚠️ IMPORTANT
 header('Content-Type: application/json; charset=utf-8');
 
+function cre8_login_project_base(): string
+{
+    $script = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
+
+    foreach (['/Vue/FrontOffice/', '/Vue/BackOffice/'] as $marker) {
+        $pos = strpos($script, $marker);
+        if ($pos !== false) {
+            return substr($script, 0, $pos);
+        }
+    }
+
+    return '';
+}
+
+function cre8_login_url(string $path): string
+{
+    return rtrim(cre8_login_project_base(), '/') . '/' . ltrim($path, '/');
+}
+
+function cre8_normalize_login_role($role): string
+{
+    $role = strtolower(trim((string) $role));
+    $role = str_replace(
+        ['é', 'è', 'ê', 'ë', 'à', 'â', 'î', 'ï', 'ô', 'ù', 'û', 'ç'],
+        ['e', 'e', 'e', 'e', 'a', 'a', 'i', 'i', 'o', 'u', 'u', 'c'],
+        $role
+    );
+
+    return match ($role) {
+        'brand' => 'marque',
+        'creator', 'creatrice' => 'createur',
+        'administrator', 'administrateur' => 'admin',
+        default => $role,
+    };
+}
+
 $data = json_decode(file_get_contents("php://input"), true);
 
 if (!isset($data['face']) || !is_array($data['face'])) {
@@ -17,7 +53,7 @@ $inputFace = $data['face'];
 
 $db = config::getConnexion();
 
-$sql = "SELECT id, role, statut, nom, face_descriptor FROM utilisateur WHERE face_descriptor IS NOT NULL AND face_descriptor != ''";
+$sql = "SELECT id, nom, email, role, statut, face_descriptor FROM utilisateur WHERE face_descriptor IS NOT NULL AND face_descriptor != ''";
 $users = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
 function distance($a, $b) {
@@ -61,29 +97,29 @@ if ($bestUser && $bestDist < 0.75) {
         exit();
     }
 
-    // 🔥 CRITIQUE
+    // Real login session: keep the same shape as the normal form login.
+    $normalizedRole = cre8_normalize_login_role($bestUser['role'] ?? '');
+    $bestUser['role'] = $normalizedRole;
+
     $_SESSION['connected'] = true;
-    $_SESSION['id'] = $bestUser['id'];
-    $_SESSION['role'] = $bestUser['role'];
-    $_SESSION['nom'] = $bestUser['nom'];
+    $_SESSION['id'] = (int) $bestUser['id'];
+    $_SESSION['role'] = $normalizedRole;
+    $_SESSION['nom'] = $bestUser['nom'] ?? '';
+    $_SESSION['email'] = $bestUser['email'] ?? '';
     $_SESSION['user'] = $bestUser;
 
-    // 🔥 chemin ABSOLU (important)
-    switch ($bestUser['role']) {
-        case 'admin':
-            $redirect = "/crea8connect/Esprit-PW-2A22-2526-Devcore/Vue/BackOffice/utilisateur/index.php";
-            break;
+    unset($_SESSION['utilisateur']);
+    $_SESSION['utilisateur'] = [
+        'id' => (int) $bestUser['id'],
+        'role' => $normalizedRole,
+        'nom' => $bestUser['nom'] ?? '',
+        'email' => $bestUser['email'] ?? '',
+    ];
 
-        case 'createur':
-            $redirect = "/crea8connect/Esprit-PW-2A22-2526-Devcore/Vue/FrontOffice/utilisateur/creator.php";
-            break;
-
-        case 'marque':
-            $redirect = "/crea8connect/Esprit-PW-2A22-2526-Devcore/Vue/FrontOffice/utilisateur/brand.php";
-            break;
-
-        default:
-            $redirect = "/crea8connect/Esprit-PW-2A22-2526-Devcore/Vue/FrontOffice/utilisateur/creator.php";
+    if ($normalizedRole === 'admin') {
+        $redirect = cre8_login_url('Vue/BackOffice/utilisateur/index.php');
+    } else {
+        $redirect = cre8_login_url('Vue/FrontOffice/utilisateur/creator.php');
     }
 
     echo json_encode([

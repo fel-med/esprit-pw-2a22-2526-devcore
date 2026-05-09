@@ -412,6 +412,40 @@ public function resetPassword($password, $token) {
         $db->prepare("DELETE FROM utilisateur WHERE id=?")->execute([$id]);
     }
 
+
+private function getProjectBaseUrl(): string {
+    $script = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
+
+    foreach (['/Vue/FrontOffice/', '/Vue/BackOffice/'] as $marker) {
+        $pos = strpos($script, $marker);
+        if ($pos !== false) {
+            return substr($script, 0, $pos);
+        }
+    }
+
+    return '';
+}
+
+private function appUrl(string $path): string {
+    return rtrim($this->getProjectBaseUrl(), '/') . '/' . ltrim($path, '/');
+}
+
+private function normalizeRole($role): string {
+    $role = strtolower(trim((string) $role));
+    $role = str_replace(
+        ['é', 'è', 'ê', 'ë', 'à', 'â', 'î', 'ï', 'ô', 'ù', 'û', 'ç'],
+        ['e', 'e', 'e', 'e', 'a', 'a', 'i', 'i', 'o', 'u', 'u', 'c'],
+        $role
+    );
+
+    return match ($role) {
+        'brand' => 'marque',
+        'creator', 'creatrice' => 'createur',
+        'administrator', 'administrateur' => 'admin',
+        default => $role,
+    };
+}
+
 public function login($email, $password) {
 
     $db = config::getConnexion();
@@ -452,24 +486,29 @@ public function login($email, $password) {
     $_SESSION['connected'] = true;
     $_SESSION['id'] = $user['id'];
     $_SESSION['nom'] = $user['nom'];
-    $_SESSION['role'] = $user['role'];
+    $_SESSION['email'] = $user['email'] ?? '';
+    $normalizedRole = $this->normalizeRole($user['role'] ?? '');
+    $user['role'] = $normalizedRole;
+
+    $_SESSION['role'] = $normalizedRole;
     $_SESSION['user'] = $user;
+
+    // Keep the real utilisateur login as the source of truth and clear old offre demo data.
+    unset($_SESSION['utilisateur']);
+    $_SESSION['utilisateur'] = [
+        'id' => (int) $user['id'],
+        'role' => $normalizedRole,
+        'nom' => $user['nom'] ?? '',
+        'email' => $user['email'] ?? '',
+    ];
 
     session_write_close();
 
     // REDIRECTION
-    if ($user['role'] == 'admin') {
-
-        header("Location: http://127.0.0.1/crea8connect/Esprit-PW-2A22-2526-Devcore/Vue/BackOffice/utilisateur/index.php");
-
-    } elseif ($user['role'] == 'createur') {
-
-        header("Location: ../post/portfolio.php");
-
+    if ($normalizedRole === 'admin') {
+        header('Location: ' . $this->appUrl('Vue/BackOffice/utilisateur/index.php'));
     } else {
-
-        // Redirection vers les posts pour les utilisateurs normaux
-        header("Location: ../post/index.php");
+        header('Location: ' . $this->appUrl('Vue/FrontOffice/utilisateur/creator.php'));
     }
 
     exit();

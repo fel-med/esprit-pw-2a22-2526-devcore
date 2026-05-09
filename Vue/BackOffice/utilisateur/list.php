@@ -276,6 +276,9 @@ $stats = $userC->getStatistiquesUtilisateurs();
             color: #111827 !important;
         }
     </style>
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
 </head>
 <body>
 

@@ -1,14 +1,12 @@
 <?php
-session_start();
-
-if (!isset($_SESSION['utilisateur'])) {
-    $_SESSION['utilisateur']['id'] = 1;
-}
+require_once __DIR__ . '/../layout/session_bridge.php';
+$currentUser = cre8_front_require_user('marque');
+$frontActive = 'collaborations';
 
 require_once __DIR__ . '/../../../Controleur/offreC.php';
 
 $controller = new OffreC();
-$brandId = $_SESSION['utilisateur']['id'];
+$brandId = (int) $currentUser['id'];
 $creatorPageSize = 6;
 $errors = [];
 $offer = null;
@@ -280,10 +278,15 @@ $draftButtonLabel = $isDraftOffer ? 'Keep as draft' : 'Save as draft';
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <?php require_once __DIR__ . '/../layout/front-theme-bootstrap.php'; ?>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Targeted Offer - Cre8Connect</title>
     <link rel="stylesheet" href="../css/frontoffice.css">
     <link rel="stylesheet" href="offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre.css')); ?>">
+    <link rel="stylesheet" href="../layout/front-header.css">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
 </head>
 <body>
     <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
@@ -805,5 +808,6 @@ $cre8PilotContext = [
 ];
 require __DIR__ . '/../condidature/cre8pilot_widget.php';
 ?>
+    <script src="../layout/front-header.js"></script>
 </body>
 </html>

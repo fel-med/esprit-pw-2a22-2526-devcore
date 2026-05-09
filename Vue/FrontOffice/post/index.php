@@ -43,10 +43,30 @@ if (!function_exists('collect_commenter_names')) {
 
 $creaAssistantPosts = [];
 
-require_once '../partials/header.php';
+$frontActive = 'myspace';
 ?>
-<link rel="stylesheet" href="../assets/post-front.css">
-<link rel="stylesheet" href="../assets/comment-front.css">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <?php require_once __DIR__ . '/../layout/front-theme-bootstrap.php'; ?>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= htmlspecialchars($pageTitle) ?></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;700;800&family=Fraunces:wght@700;800&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link href="../assets/css/styles.css" rel="stylesheet" />
+    <link href="../layout/front-header.css" rel="stylesheet" />
+    <link href="../assets/post-front.css?v=3" rel="stylesheet" />
+    <link rel="stylesheet" href="../assets/comment-front.css">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
+</head>
+<body class="d-flex flex-column min-vh-100 social-body">
+<main class="flex-shrink-0">
+<?php require_once __DIR__ . '/../layout/header.php'; ?>
 
 <header class="feed-hero">
     <div class="container px-4 px-lg-5">
@@ -386,5 +406,6 @@ window.creaChatbotPosts = <?= json_encode($creaAssistantPosts, JSON_UNESCAPED_UN
 </script>
 
 <script src="../assets/comment-front.js"></script>
+<script src="../layout/front-header.js"></script>
 
 <?php require_once '../partials/footer.php'; ?>

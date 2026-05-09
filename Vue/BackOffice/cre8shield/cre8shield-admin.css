@@ -1117,3 +1117,217 @@ html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-action-btn.is-
 html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-action-btn:disabled {
     opacity: 0.88;
 }
+
+/* ── Cre8Shield source / user modal — dark BackOffice theme (scoped to cre8shield-modal-*) ── */
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-overlay {
+    background: rgba(2, 6, 23, 0.72);
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-card {
+    background: #151620 !important;
+    color: #f8fafc !important;
+    border: 1px solid rgba(148, 163, 184, 0.16) !important;
+    box-shadow: 0 22px 60px rgba(0, 0, 0, 0.55);
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-head {
+    border-bottom-color: rgba(148, 163, 184, 0.16) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-eyebrow {
+    color: #c4b5fd !important;
+    background: rgba(139, 92, 246, 0.2) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-head h3 {
+    color: #f8fafc !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-close {
+    background: #1d2332 !important;
+    border-color: rgba(148, 163, 184, 0.22) !important;
+    color: #f8fafc !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-close:hover {
+    background: #252d3d !important;
+    border-color: rgba(148, 163, 184, 0.35) !important;
+    color: #ffffff !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-empty {
+    color: #94a3b8 !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-user-card,
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-source-card {
+    background: #0f172a !important;
+    border-color: rgba(148, 163, 184, 0.16) !important;
+    color: #f8fafc !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-user-name,
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-source-title {
+    color: #f8fafc !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-user-id,
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-source-id {
+    color: #cbd5e1 !important;
+    background: #1d2332 !important;
+    border-color: rgba(148, 163, 184, 0.2) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-user-email,
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-user-email span {
+    color: #94a3b8 !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-user-email a {
+    color: #8b5cf6 !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-user-email a:hover {
+    color: #a78bfa !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-source-line {
+    color: #cbd5e1 !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-source-line strong {
+    color: #f8fafc !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-grid div {
+    background: #111827 !important;
+    border-color: rgba(148, 163, 184, 0.16) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-grid dt {
+    color: #94a3b8 !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-grid dd {
+    color: #f1f5f9 !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-source-block h5 {
+    color: #94a3b8 !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-source-block p,
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-source-block pre {
+    color: #e2e8f0 !important;
+    background: #111827 !important;
+    border-color: rgba(148, 163, 184, 0.16) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-source-card .cre8shield-pre {
+    background: #111827 !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(148, 163, 184, 0.16) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-source-card .cre8shield-pre.is-raw {
+    background: rgba(124, 45, 18, 0.35) !important;
+    color: #fed7aa !important;
+    border-color: rgba(251, 146, 60, 0.35) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-role-pill {
+    background: rgba(99, 102, 241, 0.2) !important;
+    color: #c7d2fe !important;
+    border-color: rgba(129, 140, 248, 0.4) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-role-pill.role-brand {
+    background: rgba(59, 130, 246, 0.18) !important;
+    color: #93c5fd !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-role-pill.role-creator {
+    background: rgba(217, 119, 6, 0.2) !important;
+    color: #fcd34d !important;
+    border-color: rgba(251, 191, 36, 0.35) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-role-pill.role-admin {
+    background: rgba(139, 92, 246, 0.22) !important;
+    color: #ddd6fe !important;
+    border-color: rgba(167, 139, 250, 0.45) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-source-kind-pill {
+    background: rgba(99, 102, 241, 0.2) !important;
+    color: #c7d2fe !important;
+    border-color: rgba(129, 140, 248, 0.4) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-source-kind-pill.kind-offer {
+    background: rgba(30, 64, 175, 0.35) !important;
+    color: #bfdbfe !important;
+    border-color: rgba(59, 130, 246, 0.45) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-source-kind-pill.kind-candidature {
+    background: rgba(180, 83, 9, 0.28) !important;
+    color: #fde68a !important;
+    border-color: rgba(251, 191, 36, 0.35) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-source-kind-pill.kind-prompt {
+    background: rgba(148, 163, 184, 0.12) !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(148, 163, 184, 0.22) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-source-status {
+    background: rgba(99, 102, 241, 0.18) !important;
+    color: #e0e7ff !important;
+    border-color: rgba(129, 140, 248, 0.35) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-mini-user-btn {
+    background: #1d2332 !important;
+    border-color: rgba(148, 163, 184, 0.22) !important;
+    color: #f1f5f9 !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-mini-user-btn:hover {
+    background: #252d3d !important;
+    border-color: rgba(139, 92, 246, 0.45) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-mini-user-btn span {
+    color: #94a3b8 !important;
+}
+
+/* Light theme: keep modal readable if global variables shifted (reassert defaults). */
+html[data-theme="light"] body.cre8-admin-layout .cre8shield-modal-card {
+    background: #ffffff !important;
+    color: #111827 !important;
+    border: 1px solid #e5e7eb !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8shield-modal-user-card,
+html[data-theme="light"] body.cre8-admin-layout .cre8shield-modal-source-card {
+    background: #f8fafc !important;
+    border-color: #e5e7eb !important;
+    color: #111827 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8shield-modal-head h3,
+html[data-theme="light"] body.cre8-admin-layout .cre8shield-modal-user-name,
+html[data-theme="light"] body.cre8-admin-layout .cre8shield-modal-source-title {
+    color: #111827 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8shield-modal-source-line {
+    color: #334155 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8shield-modal-empty {
+    color: #64748b !important;
+}

@@ -1,6 +1,7 @@
 <?php
 session_start();
 
+require_once __DIR__ . '/../layout/early-theme.php';
 require_once __DIR__ . '/../../../Controleur/cre8shieldC.php';
 require_once __DIR__ . '/../../../Controleur/condidatureC.php';
 
@@ -823,20 +824,192 @@ $tabHref = function ($name) use ($sort) {
     return 'index.php?tab=' . urlencode((string) $name) . '&sort=' . urlencode((string) $sort);
 };
 
+$backActive = 'collaborations';
+
+if (!function_exists('renderBackOfficeCollaborationTabs')) {
+    function renderBackOfficeCollaborationTabs(string $activeTab): void
+    {
+        $tabs = [
+            'offers' => [
+                'label' => 'Offers',
+                'hint' => 'Targeted invitations',
+                'href' => '../offre/index.php',
+                'icon' => 'mdi-briefcase-check',
+            ],
+            'candidatures' => [
+                'label' => 'Candidatures',
+                'hint' => 'Creator responses',
+                'href' => '../condidature/index.php',
+                'icon' => 'mdi-account-check',
+            ],
+            'cre8shield' => [
+                'label' => 'Cre8Shield',
+                'hint' => 'Risk monitoring',
+                'href' => '../cre8shield/index.php',
+                'icon' => 'mdi-shield-check',
+            ],
+        ];
+        ?>
+        <nav class="collaboration-subnav" aria-label="Collaboration workspace tabs">
+            <ul class="collaboration-subnav__list">
+                <?php foreach ($tabs as $key => $tab): ?>
+                    <?php $isActive = $activeTab === $key; ?>
+                    <li>
+                        <a class="collaboration-subnav__link<?php echo $isActive ? ' is-active' : ''; ?>" href="<?php echo htmlspecialchars($tab['href']); ?>"<?php echo $isActive ? ' aria-current="page"' : ''; ?>>
+                            <span class="collaboration-subnav__icon" aria-hidden="true">
+                                <i class="mdi <?php echo htmlspecialchars($tab['icon']); ?>"></i>
+                            </span>
+                            <span class="collaboration-subnav__text">
+                                <span class="collaboration-subnav__title"><?php echo htmlspecialchars($tab['label']); ?></span>
+                                <span class="collaboration-subnav__hint"><?php echo htmlspecialchars($tab['hint']); ?></span>
+                            </span>
+                        </a>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        </nav>
+        <?php
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <?php cre8_bo_early_theme_print_head_script(); ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Back Office - Cre8Shield Monitor</title>
     <link rel="stylesheet" href="../css/backoffice.css">
+    <link rel="stylesheet" href="../layout/back-layout.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/back-layout.css')); ?>">
+    <link rel="stylesheet" href="../utilisateur/assets/vendors/mdi/css/materialdesignicons.min.css?v=<?php echo urlencode((string) (@filemtime(__DIR__ . '/../utilisateur/assets/vendors/mdi/css/materialdesignicons.min.css') ?: 0)); ?>">
     <link rel="stylesheet" href="../css/new_style_backoffice.css">
     <link rel="stylesheet" href="../offre/offre-admin.css?v=<?php echo urlencode((string) (@filemtime(__DIR__ . '/../offre/offre-admin.css') ?: 0)); ?>">
     <link rel="stylesheet" href="../condidature/condidature-admin.css?v=<?php echo urlencode((string) (@filemtime(__DIR__ . '/../condidature/condidature-admin.css') ?: 0)); ?>">
     <link rel="stylesheet" href="cre8shield-admin.css?v=<?php echo urlencode((string) (@filemtime(__DIR__ . '/cre8shield-admin.css') ?: 0)); ?>">
+
+    <style>
+        .collaboration-subnav {
+            margin: 0 0 1.5rem;
+            padding: 0.75rem;
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            border-radius: 18px;
+            background: rgba(17, 24, 39, 0.94);
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+        }
+
+        .collaboration-subnav__list {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.75rem;
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+
+        .collaboration-subnav__link {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            min-height: 74px;
+            padding: 0.9rem 1rem;
+            border: 1px solid rgba(148, 163, 184, 0.14);
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.04);
+            color: #cbd5e1;
+            text-decoration: none;
+            transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+        }
+
+        .collaboration-subnav__link:hover,
+        .collaboration-subnav__link:focus {
+            transform: translateY(-1px);
+            border-color: rgba(151, 92, 232, 0.45);
+            background: rgba(151, 92, 232, 0.12);
+            color: #ffffff;
+            text-decoration: none;
+            outline: none;
+        }
+
+        .collaboration-subnav__link.is-active {
+            border-color: rgba(255, 255, 255, 0.22);
+            background: linear-gradient(135deg, rgba(151, 92, 232, 0.96), rgba(210, 24, 118, 0.9));
+            color: #ffffff;
+            box-shadow: 0 14px 30px rgba(151, 92, 232, 0.24);
+        }
+
+        .collaboration-subnav__icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 42px;
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            background: rgba(15, 23, 42, 0.28);
+            color: inherit;
+            font-size: 1.35rem;
+        }
+
+        .collaboration-subnav__text {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+            line-height: 1.2;
+        }
+
+        .collaboration-subnav__title {
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+
+        .collaboration-subnav__hint {
+            color: rgba(226, 232, 240, 0.72);
+            font-size: 0.78rem;
+            font-weight: 500;
+        }
+
+        .collaboration-subnav__link.is-active .collaboration-subnav__hint {
+            color: rgba(255, 255, 255, 0.82);
+        }
+
+        body.light-mode .collaboration-subnav {
+            background: #ffffff;
+            border-color: rgba(15, 23, 42, 0.08);
+            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+        }
+
+        body.light-mode .collaboration-subnav__link {
+            background: #f8fafc;
+            border-color: rgba(15, 23, 42, 0.08);
+            color: #334155;
+        }
+
+        body.light-mode .collaboration-subnav__link:hover,
+        body.light-mode .collaboration-subnav__link:focus {
+            color: #111827;
+            background: #f1f5f9;
+        }
+
+        body.light-mode .collaboration-subnav__link.is-active {
+            color: #ffffff;
+            background: linear-gradient(135deg, #7c3aed, #d21876);
+        }
+
+        body.light-mode .collaboration-subnav__hint {
+            color: #64748b;
+        }
+
+        @media (max-width: 900px) {
+            .collaboration-subnav__list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
 </head>
-<body class="cre8-admin-layout">
+<body class="cre8-admin-layout"><?php cre8_bo_early_theme_print_body_script(); ?>
     <div class="container-scroller cre8-admin-page">
         <?php require_once dirname(__DIR__) . '/layout/sidebar.php'; ?>
         <main class="page-body-wrapper cre8-admin-main">
@@ -851,6 +1024,8 @@ $tabHref = function ($name) use ($sort) {
                         </div>
                     </div>
                 </header>
+
+        <?php renderBackOfficeCollaborationTabs('cre8shield'); ?>
 
                 <?php if ($notice !== ''): ?>
                     <div class="admin-flash <?php echo $noticeType === 'danger' ? 'error' : 'success'; ?>">
@@ -1239,6 +1414,7 @@ $tabHref = function ($name) use ($sort) {
             </div>
         </main>
     </div>
+    <script src="../layout/back-layout.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/back-layout.js')); ?>"></script>
     <script>
         (function () {
             const modal = document.querySelector('[data-cre8shield-modal]');

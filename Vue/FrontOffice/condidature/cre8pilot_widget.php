@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . '/../layout/session_bridge.php';
+cre8_front_session_user();
+
 $cre8PilotContext = isset($cre8PilotContext) && is_array($cre8PilotContext) ? $cre8PilotContext : [];
 $cre8PilotPath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
 $cre8PilotVuePos = strpos($cre8PilotPath, '/Vue/');

@@ -36,15 +36,23 @@
     }
 
     var current = location.pathname.split("/").slice(-1)[0].replace(/^\/|\/$/g, '');
-    $('.nav li a', sidebar).each(function() {
-      var $this = $(this);
-      addActiveClass($this);
-    })
 
-    $('.horizontal-menu .nav li a').each(function() {
-      var $this = $(this);
-      addActiveClass($this);
-    })
+    // Cre8Connect shared BackOffice layout sets the active menu item server-side
+    // with $backActive in layout/sidebar.php. The original Corona auto-highlight
+    // matches only the last URL segment (for example "index.php"), which makes
+    // many BackOffice links active at the same time. Keep this legacy behavior only
+    // for non-migrated pages.
+    if (!body.hasClass('cre8-admin-layout')) {
+      $('.nav li a', sidebar).each(function() {
+        var $this = $(this);
+        addActiveClass($this);
+      })
+
+      $('.horizontal-menu .nav li a').each(function() {
+        var $this = $(this);
+        addActiveClass($this);
+      })
+    }
 
     //Close other submenu in sidebar on opening any
 

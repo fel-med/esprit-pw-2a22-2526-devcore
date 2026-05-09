@@ -15,6 +15,11 @@ if (!isset($_SESSION['id'])) {
 
 $userName = $_SESSION['nom'] ?? 'Brand User';
 
+$brandPagePath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
+$brandFrontMarker = '/Vue/FrontOffice/';
+$brandFrontPos = strpos($brandPagePath, $brandFrontMarker);
+$projectBase = $brandFrontPos !== false ? substr($brandPagePath, 0, $brandFrontPos) : '';
+
 ?>
 
 <!DOCTYPE html>
@@ -23,9 +28,11 @@ $userName = $_SESSION['nom'] ?? 'Brand User';
 <head>
 
     <meta charset="UTF-8">
+    <?php require_once __DIR__ . '/../layout/front-theme-bootstrap.php'; ?>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Brand Page</title>
+
 
     <!-- GOOGLE FONTS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,6 +41,8 @@ $userName = $_SESSION['nom'] ?? 'Brand User';
 
     <!-- ICONS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="../layout/front-header.css">
 
     <style>
 
@@ -95,17 +104,8 @@ $userName = $_SESSION['nom'] ?? 'Brand User';
 
         .nav-logo{
             text-decoration:none;
-        }
-
-        .nav-logo-text{
-
-            font-size:28px;
-
-            font-weight:800;
-
-            font-family:'Fraunces',serif;
-
-            color:var(--primary);
+            display:inline-flex;
+            align-items:center;
         }
 
         .nav-links{
@@ -524,6 +524,9 @@ $userName = $_SESSION['nom'] ?? 'Brand User';
         }
 
     </style>
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
 
 </head>
 
@@ -536,11 +539,7 @@ $userName = $_SESSION['nom'] ?? 'Brand User';
 <nav>
 
     <a class="nav-logo" href="brand.php">
-
-        <div class="nav-logo-text">
-            Cre8connect
-        </div>
-
+        <img src="<?php echo htmlspecialchars($projectBase . '/Vue/public/images/logoweb.png'); ?>" alt="Cre8Connect" class="front-header-logo">
     </a>
 
     <ul class="nav-links">
@@ -558,7 +557,7 @@ $userName = $_SESSION['nom'] ?? 'Brand User';
         </li>
 
         <li>
-            <a href="#" onclick="toggleDarkMode(); return false;">
+            <a href="#" onclick="brandThemeToggle(); return false;">
                 <i class="bi bi-moon-stars" id="themeIcon"></i>
             </a>
         </li>
@@ -651,50 +650,29 @@ $userName = $_SESSION['nom'] ?? 'Brand User';
 
 </footer>
 
-<!-- =========================
-     JS DARK MODE
-========================= -->
-
+<script src="../layout/front-header.js"></script>
 <script>
-
-    function toggleDarkMode() {
-
-        document.body.classList.toggle('light-mode');
-
-        let icon = document.getElementById('themeIcon');
-
-        if (document.body.classList.contains('light-mode')) {
-
-            localStorage.setItem('theme', 'light');
-
-            if (icon) {
-                icon.className = 'bi bi-brightness-high';
-            }
-
-        } else {
-
-            localStorage.setItem('theme', 'dark');
-
-            if (icon) {
-                icon.className = 'bi bi-moon-stars';
-            }
-        }
+(function () {
+    function syncBrandDarkUiClass() {
+        var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.body.classList.toggle('light-mode', dark);
     }
-
-    window.addEventListener('DOMContentLoaded', function() {
-
-        let icon = document.getElementById('themeIcon');
-
-        if (localStorage.getItem('theme') === 'light') {
-
-            document.body.classList.add('light-mode');
-
-            if (icon) {
-                icon.className = 'bi bi-brightness-high';
-            }
+    window.brandThemeToggle = function () {
+        if (typeof window.cre8ApplyFrontTheme === 'function') {
+            window.cre8ApplyFrontTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark', true);
+        }
+        syncBrandDarkUiClass();
+    };
+    document.addEventListener('DOMContentLoaded', function () {
+        syncBrandDarkUiClass();
+        if (window.MutationObserver) {
+            new MutationObserver(syncBrandDarkUiClass).observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ['data-theme']
+            });
         }
     });
-
+})();
 </script>
 
 </body>

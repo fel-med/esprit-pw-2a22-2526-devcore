@@ -761,3 +761,273 @@ comment-front.css
   color: #fb7185;
   background: rgba(251,113,133,0.12);
 }
+
+/* =========================================================
+   CRE8 COMMENTS MODAL — DARK MODE FINAL FIX
+   Keeps light mode unchanged and fixes the post comments dialog.
+   ========================================================= */
+
+/* Modal shell: overrides the inline background:#fff on .modal-content in dark mode. */
+[data-theme="dark"] body.social-body .modal-content,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) {
+  background: #13121f !important;
+  background-color: #13121f !important;
+  color: #f4f2ff !important;
+  border: 1px solid rgba(124, 111, 255, 0.18) !important;
+  box-shadow:
+    0 0 0 1px rgba(124, 111, 255, 0.08),
+    0 24px 70px rgba(0, 0, 0, 0.55) !important;
+  overflow: hidden !important;
+}
+
+/* Header / body chrome. */
+[data-theme="dark"] body.social-body .modal-header,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .modal-header {
+  background: linear-gradient(180deg, #19172a 0%, #13121f 100%) !important;
+  border-bottom: 1px solid rgba(124, 111, 255, 0.14) !important;
+  color: #f4f2ff !important;
+  padding-bottom: 0.85rem !important;
+}
+
+[data-theme="dark"] body.social-body .modal-body,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .modal-body {
+  background:
+    radial-gradient(circle at top left, rgba(124, 111, 255, 0.08), transparent 32%),
+    linear-gradient(180deg, #13121f 0%, #0f0e1a 100%) !important;
+  color: #f4f2ff !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(124, 111, 255, 0.45) rgba(15, 14, 26, 0.88);
+}
+
+[data-theme="dark"] body.social-body .modal-body::-webkit-scrollbar,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .modal-body::-webkit-scrollbar {
+  width: 9px;
+}
+
+[data-theme="dark"] body.social-body .modal-body::-webkit-scrollbar-track,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .modal-body::-webkit-scrollbar-track {
+  background: rgba(15, 14, 26, 0.88);
+  border-radius: 999px;
+}
+
+[data-theme="dark"] body.social-body .modal-body::-webkit-scrollbar-thumb,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .modal-body::-webkit-scrollbar-thumb {
+  background: rgba(124, 111, 255, 0.45);
+  border: 2px solid rgba(15, 14, 26, 0.88);
+  border-radius: 999px;
+}
+
+[data-theme="dark"] body.social-body .modal-title,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .modal-title {
+  color: #f4f2ff !important;
+}
+
+/* The first title span is the comment icon chip from post/index.php. */
+[data-theme="dark"] body.social-body .modal-title > span:first-child,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .modal-title > span:first-child {
+  background: rgba(124, 111, 255, 0.16) !important;
+  color: #b9afff !important;
+  box-shadow: inset 0 0 0 1px rgba(124, 111, 255, 0.18) !important;
+}
+
+[data-theme="dark"] body.social-body .btn-close,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .btn-close {
+  filter: invert(1) grayscale(100%) brightness(180%) !important;
+  opacity: 0.82 !important;
+  transition: opacity 0.15s ease, transform 0.15s ease !important;
+}
+
+[data-theme="dark"] body.social-body .btn-close:hover,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .btn-close:hover {
+  opacity: 1 !important;
+  transform: scale(1.05) !important;
+}
+
+/* Comment composer area: unified dark surface, not a dark block inside a white dialog. */
+[data-theme="dark"] body.social-body .comment-form-wrap,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .comment-form-wrap {
+  background: rgba(28, 26, 46, 0.56) !important;
+  border: 1px solid rgba(124, 111, 255, 0.14) !important;
+  border-radius: 24px !important;
+  padding: 0.85rem !important;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.18) !important;
+}
+
+[data-theme="dark"] body.social-body .comment-input-area,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .comment-input-area {
+  color: #f4f2ff !important;
+}
+
+[data-theme="dark"] body.social-body .comment-textarea,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .comment-textarea {
+  background: #18162a !important;
+  border-color: rgba(124, 111, 255, 0.22) !important;
+  color: #f4f2ff !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(124, 111, 255, 0.42) #18162a;
+}
+
+[data-theme="dark"] body.social-body .comment-textarea:focus,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .comment-textarea:focus {
+  background: #1d1a31 !important;
+  border-color: #7c6fff !important;
+  box-shadow: 0 0 0 3px rgba(124, 111, 255, 0.14) !important;
+}
+
+[data-theme="dark"] body.social-body .comment-textarea::placeholder,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .comment-textarea::placeholder {
+  color: #777a99 !important;
+}
+
+[data-theme="dark"] body.social-body .comment-textarea::-webkit-scrollbar,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .comment-textarea::-webkit-scrollbar {
+  width: 8px;
+}
+
+[data-theme="dark"] body.social-body .comment-textarea::-webkit-scrollbar-track,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .comment-textarea::-webkit-scrollbar-track {
+  background: #18162a;
+  border-radius: 999px;
+}
+
+[data-theme="dark"] body.social-body .comment-textarea::-webkit-scrollbar-thumb,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .comment-textarea::-webkit-scrollbar-thumb {
+  background: rgba(124, 111, 255, 0.42);
+  border-radius: 999px;
+}
+
+/* Comment threads: softer dark cards with better readable text. */
+[data-theme="dark"] body.social-body .comments-list,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .comments-list {
+  color: #f4f2ff !important;
+}
+
+[data-theme="dark"] body.social-body .comment-bubble,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .comment-bubble {
+  background: #201d36 !important;
+  border-color: rgba(124, 111, 255, 0.16) !important;
+  color: #f4f2ff !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    0 8px 22px rgba(0, 0, 0, 0.20) !important;
+}
+
+[data-theme="dark"] body.social-body .comment-bubble:hover,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .comment-bubble:hover {
+  border-color: rgba(124, 111, 255, 0.24) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 12px 28px rgba(0, 0, 0, 0.28) !important;
+}
+
+[data-theme="dark"] body.social-body .comment-author,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .comment-author {
+  color: #f3f0ff !important;
+}
+
+[data-theme="dark"] body.social-body .comment-text,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .comment-text {
+  color: #c8c6da !important;
+}
+
+[data-theme="dark"] body.social-body .comment-avatar-sm,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .comment-avatar-sm {
+  background: linear-gradient(135deg, #322967 0%, #211d3c 100%) !important;
+  color: #c7bcff !important;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28) !important;
+}
+
+[data-theme="dark"] body.social-body .comment-replies,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .comment-replies {
+  border-left-color: rgba(124, 111, 255, 0.20) !important;
+}
+
+[data-theme="dark"] body.social-body .comment-separator,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .comment-separator {
+  border-top-color: rgba(124, 111, 255, 0.10) !important;
+}
+
+/* Toolbar / emoji / sticker details inside the modal. */
+[data-theme="dark"] body.social-body .comment-form-toolbar,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .comment-form-toolbar {
+  color: #9b9db8 !important;
+}
+
+[data-theme="dark"] body.social-body .btn-form-icon,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .btn-form-icon,
+[data-theme="dark"] body.social-body .btn-comment-reaction,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .btn-comment-reaction,
+[data-theme="dark"] body.social-body .btn-comment-action,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .btn-comment-action {
+  color: #9b9db8 !important;
+}
+
+[data-theme="dark"] body.social-body .btn-form-icon:hover,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .btn-form-icon:hover,
+[data-theme="dark"] body.social-body .btn-comment-action:hover,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .btn-comment-action:hover {
+  color: #b9afff !important;
+  background: rgba(124, 111, 255, 0.10) !important;
+}
+
+[data-theme="dark"] body.social-body .sticker-bar,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .sticker-bar {
+  background: transparent !important;
+}
+
+[data-theme="dark"] body.social-body .sticker-btn:hover,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .sticker-btn:hover,
+[data-theme="dark"] body.social-body .emoji-btn:hover,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .emoji-btn:hover {
+  background: rgba(124, 111, 255, 0.13) !important;
+}
+
+[data-theme="dark"] body.social-body .emoji-picker-panel,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .emoji-picker-panel {
+  background: #1c1a2e !important;
+  border-color: rgba(124, 111, 255, 0.18) !important;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.48) !important;
+}
+
+[data-theme="dark"] body.social-body .img-preview-wrap img,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .img-preview-wrap img,
+[data-theme="dark"] body.social-body .comment-image,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .comment-image {
+  border-color: rgba(124, 111, 255, 0.18) !important;
+}
+
+[data-theme="dark"] body.social-body .no-comments-msg,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .no-comments-msg,
+[data-theme="dark"] body.social-body .comment-char-counter,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .comment-char-counter,
+[data-theme="dark"] body.social-body .comment-voice-status,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .comment-voice-status {
+  color: #8f91aa !important;
+}
+
+[data-theme="dark"] body.social-body .comment-voice-status.is-active,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .comment-voice-status.is-active {
+  color: #b9afff !important;
+}
+
+[data-theme="dark"] body.social-body .comment-validation-error,
+[data-theme="dark"] .modal-content:has(.js-post-comments-scope) .comment-validation-error {
+  background: rgba(251, 113, 133, 0.10) !important;
+  border-color: rgba(251, 113, 133, 0.22) !important;
+  color: #fb7185 !important;
+}
+
+@media (max-width: 576px) {
+  [data-theme="dark"] body.social-body .modal-content,
+  [data-theme="dark"] .modal-content:has(.js-post-comments-scope) {
+    border-radius: 18px !important;
+  }
+
+  [data-theme="dark"] body.social-body .comment-form-wrap,
+  [data-theme="dark"] .modal-content:has(.js-post-comments-scope) .comment-form-wrap {
+    padding: 0.7rem !important;
+    border-radius: 18px !important;
+  }
+}
+

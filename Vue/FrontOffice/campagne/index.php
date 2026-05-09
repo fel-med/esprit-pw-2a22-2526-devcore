@@ -8,13 +8,26 @@
 require_once __DIR__ . '/../../../Controleur/campagneC.php';
 require_once __DIR__ . '/../../../Controleur/produitC.php';
 require_once __DIR__ . '/../../../Modele/campagne.php';
+require_once __DIR__ . '/../layout/session_bridge.php';
+$currentBrandUser = cre8_front_require_user('marque');
+
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 $campagneC = new CampagneC();
 $produitC  = new ProduitC();
-$baseUrl   = '/projet/Esprit-PW-2A22-2526-Devcore';
-$id_marque = $_SESSION['user_id'] ?? 1;
+$cre8SelfPath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
+$cre8VuePos = strpos($cre8SelfPath, '/Vue/');
+$baseUrl = $cre8VuePos !== false ? substr($cre8SelfPath, 0, $cre8VuePos) : '';
+if (!function_exists('cre8_product_image_url')) {
+    function cre8_product_image_url($filename) {
+        global $baseUrl;
+        $filename = trim((string) $filename);
+        if ($filename === '') return '';
+        return $baseUrl . '/Vue/public/produits/' . rawurlencode(basename($filename));
+    }
+}
+$id_marque = (int) ($currentBrandUser['id'] ?? 0);
 
 $message     = '';
 $messageType = '';
@@ -154,11 +167,14 @@ $nbTerminees   = count(array_filter($campagnes, fn($c) => $c['statut'] === 'term
 function statutLabel($s) { return match($s) { 'active'=>'✅ Active', 'terminee'=>'🏁 Terminée', 'annulee'=>'❌ Annulée', default=>'📝 Brouillon' }; }
 function statutColor($s) { return match($s) { 'active'=>'#0ea370', 'terminee'=>'#3b82f6', 'annulee'=>'#f43f5e', default=>'#f59e0b' }; }
 function statutBg($s)    { return match($s) { 'active'=>'#edfaf5', 'terminee'=>'#eff6ff', 'annulee'=>'#fff1f3', default=>'#fffbeb' }; }
+
+$frontActive = 'campaigns';
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<?php require_once __DIR__ . '/../layout/front-theme-bootstrap.php'; ?>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mes Campagnes — Cre8Connect</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@700;800;900&display=swap" rel="stylesheet">
@@ -176,7 +192,8 @@ function statutBg($s)    { return match($s) { 'active'=>'#edfaf5', 'terminee'=>'
     --radius:14px;--radius-sm:8px;--nav-h:66px;
 }
 
-/* ===== ADDED FEATURE: DARK MODE ===== */
+/* ===== DARK MODE (match shared header: html[data-theme] + body sync) ===== */
+html[data-theme="dark"],
 body.dark-mode {
     --primary:#7c6fff;--primary-hover:#6357e8;--primary-light:#2a2660;
     --primary-glow:rgba(124,111,255,0.2);--primary-border:rgba(124,111,255,0.3);
@@ -223,25 +240,45 @@ nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 48px
 .theme-toggle:hover { border-color: var(--primary); color: var(--primary); }
 /* ===== END DARK MODE TOGGLE ===== */
 
-/* ===== ADDED FEATURE: LANGUAGE SWITCHER ===== */
-.lang-switcher {
+/* ===== FrontOffice EN | FR switch (scoped) ===== */
+.campaign-front .page-header-right {
     display: flex;
-    gap: 4px;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+.campaign-front .front-lang-switch {
+    display: inline-flex;
     align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    border-radius: 999px;
+    border: 1px solid rgba(139, 92, 246, 0.45);
+    background: rgba(139, 92, 246, 0.08);
+    flex-shrink: 0;
 }
-.lang-btn {
-    background: var(--bg);
-    border: 1.5px solid var(--border);
-    border-radius: 7px;
-    padding: 4px 10px;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
+.campaign-front .front-lang-btn {
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
     color: var(--text-sub);
-    font-family: 'DM Sans', sans-serif;
-    transition: all .18s;
+    font: inherit;
+    font-size: 0.76rem;
+    font-weight: 800;
+    padding: 0.4rem 0.7rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
 }
-.lang-btn:hover, .lang-btn.active { background: var(--primary-light); color: var(--primary); border-color: var(--primary-border); }
+.campaign-front .front-lang-btn:hover { color: var(--primary); }
+.campaign-front .front-lang-btn.is-active {
+    background: #8b5cf6;
+    color: #fff;
+}
+html[data-theme="dark"] .campaign-front .front-lang-btn:not(.is-active),
+body.dark-mode .campaign-front .front-lang-btn:not(.is-active) {
+    color: var(--text-sub);
+}
 /* ===== END LANGUAGE SWITCHER ===== */
 
 /* PAGE */
@@ -447,38 +484,18 @@ textarea.form-input{resize:vertical;min-height:90px;}
 }
 /* ===== END PAGINATION ===== */
 </style>
+
+    <!-- Shared FrontOffice header assets -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="../layout/front-header.css">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
 </head>
 <body>
+<?php require_once __DIR__ . '/../layout/header.php'; ?>
 
-<nav>
-    <a href="#" class="nav-logo">Cre8Connect</a>
-    <ul class="nav-links">
-        <li><a href="#">Dashboard</a></li>
-        <li><a href="#" class="active" data-i18n="nav_campagnes">Campagnes</a></li>
-        <li><a href="../produit/index.php" data-i18n="nav_produits">Produits</a></li>
-        <li><a href="../contrat/index.php" data-i18n="nav_contrats">Contrats</a></li>
-    </ul>
-    <div class="nav-right">
-        <!-- ===== ADDED FEATURE: LANGUAGE SWITCHER ===== -->
-        <div class="lang-switcher">
-            <button class="lang-btn active" onclick="setLang('fr')" id="btn-fr">FR</button>
-            <button class="lang-btn" onclick="setLang('en')" id="btn-en">EN</button>
-        </div>
-        <!-- ===== END LANGUAGE SWITCHER ===== -->
-
-        <!-- ===== ADDED FEATURE: DARK MODE TOGGLE ===== -->
-        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Changer le thème">
-            <span id="themeIcon">🌙</span>
-            <span id="themeLabel" data-i18n="theme_dark">Mode sombre</span>
-        </button>
-        <!-- ===== END DARK MODE TOGGLE ===== -->
-
-        <span class="nav-badge" data-i18n="role_marque">Marque</span>
-        <div class="nav-avatar">M</div>
-    </div>
-</nav>
-
-<div class="page-wrapper">
+<div class="page-wrapper campaign-front">
 
     <!-- PAGE HEADER -->
     <div class="page-header">
@@ -486,11 +503,17 @@ textarea.form-input{resize:vertical;min-height:90px;}
             <h1>⚡ <span data-i18n="page_title">Mes Campagnes</span></h1>
             <p data-i18n="page_subtitle">Créez, gérez et analysez vos campagnes de collaboration.</p>
         </div>
-        <div class="page-header-actions">
+        <div class="page-header-right">
+            <div class="front-lang-switch" role="group" aria-label="Language">
+                <button type="button" class="front-lang-btn" data-lang-choice="en" aria-pressed="false">EN</button>
+                <button type="button" class="front-lang-btn" data-lang-choice="fr" aria-pressed="false">FR</button>
+            </div>
+            <div class="page-header-actions">
             <a href="#formAnchor" class="btn-primary">
                 <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                 <span data-i18n="btn_new_campaign">Nouvelle campagne</span>
             </a>
+            </div>
         </div>
     </div>
 
@@ -749,36 +772,33 @@ textarea.form-input{resize:vertical;min-height:90px;}
 </div>
 
 <script>
-const BASE_URL = '<?= $baseUrl ?>';
+const BASE_URL = <?= json_encode($baseUrl, JSON_UNESCAPED_SLASHES) ?>;
 
 // ── FLASH ──────────────────────────────────────────────────────────
 const flash = document.getElementById('flashMsg');
 if (flash) setTimeout(() => { flash.style.opacity='0'; flash.style.transition='opacity .4s'; setTimeout(()=>flash.remove(),400); }, 4000);
 
-// ===== ADDED FEATURE: DARK MODE =====
-(function initTheme() {
-    const saved = localStorage.getItem('cre8_theme_fo');
-    // FrontOffice default = light; only apply dark if explicitly saved
-    if (saved === 'dark') applyDark(true, false);
-})();
-
-function applyDark(isDark, save = true) {
-    document.body.classList.toggle('dark-mode', isDark);
-    const icon  = document.getElementById('themeIcon');
-    const label = document.getElementById('themeLabel');
-    if (icon)  icon.textContent  = isDark ? '☀️' : '🌙';
-    if (label) label.setAttribute('data-i18n', isDark ? 'theme_light' : 'theme_dark');
-    if (save)  localStorage.setItem('cre8_theme_fo', isDark ? 'dark' : 'light');
-    // Re-apply translation for updated i18n keys
-    applyTranslation(currentLang);
-}
-
-function toggleTheme() {
-    applyDark(!document.body.classList.contains('dark-mode'));
-}
-// ===== END DARK MODE =====
+// Theme: shared header uses ../layout/front-header.js (localStorage key cre8_theme, html data-theme).
+// Do not use cre8_theme_fo or applyDark here — they conflicted with the header and broke dark mode.
 
 // ===== ADDED FEATURE: TRANSLATION SYSTEM =====
+function cre8FrontReadLang() {
+    try {
+        var k = localStorage.getItem('cre8_front_lang');
+        if (k === 'fr' || k === 'en') return k;
+        var legacy = localStorage.getItem('cre8_lang')
+            || localStorage.getItem('cre8_lang_produit')
+            || localStorage.getItem('cre8_lang_creator_produit')
+            || localStorage.getItem('cc_lang');
+        if (legacy === 'fr' || legacy === 'en') return legacy;
+    } catch (e) {}
+    return 'en';
+}
+function cre8FrontWriteLang(lang) {
+    var safe = lang === 'fr' ? 'fr' : 'en';
+    try { localStorage.setItem('cre8_front_lang', safe); } catch (e) {}
+}
+
 const translations = {
     fr: {
         nav_campagnes: 'Campagnes',
@@ -924,38 +944,49 @@ const translations = {
     }
 };
 
-let currentLang = localStorage.getItem('cre8_lang') || 'fr';
+let currentLang = cre8FrontReadLang();
 
 function applyTranslation(lang) {
-    currentLang = lang;
-    localStorage.setItem('cre8_lang', lang);
-    const dict = translations[lang] || translations['fr'];
+    const safe = lang === 'fr' ? 'fr' : 'en';
+    currentLang = safe;
+    cre8FrontWriteLang(safe);
+    const dict = translations[safe] || translations['fr'];
 
-    // Text content
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (dict[key]) el.textContent = dict[key];
     });
 
-    // Placeholders
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         const key = el.getAttribute('data-i18n-placeholder');
         if (dict[key]) el.placeholder = dict[key];
     });
 
-    // Active lang button
-    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-    const activeBtn = document.getElementById('btn-' + lang);
-    if (activeBtn) activeBtn.classList.add('active');
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        const key = el.getAttribute('data-i18n-title');
+        if (dict[key]) el.setAttribute('title', dict[key]);
+    });
 
-    // Update pagination text if rendered
+    document.querySelectorAll('[data-lang-choice]').forEach(btn => {
+        const on = btn.getAttribute('data-lang-choice') === safe;
+        btn.classList.toggle('is-active', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+
     renderPaginationInfo();
 }
 
 function setLang(lang) { applyTranslation(lang); }
 
-// Run on load
 applyTranslation(currentLang);
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-lang-choice]').forEach(btn => {
+        btn.addEventListener('click', function () {
+            applyTranslation(btn.getAttribute('data-lang-choice'));
+        });
+    });
+});
 // ===== END TRANSLATION SYSTEM =====
 
 // ===== ADDED FEATURE: PAGINATION =====
@@ -1113,7 +1144,7 @@ function renderDrawer(id, lies, dispos) {
     html += `<div><div class="drawer-section-label">Produits liés (${lies.length})</div><div class="drawer-prod-list">`;
     if (!lies.length) html += '<div class="drawer-empty">Aucun produit lié.</div>';
     else lies.forEach(p => {
-        const img = p.image ? `<img src="${BASE_URL}/Vue/public/produits/${p.image}" alt="">` : '📦';
+        const img = p.image ? `<img src="${BASE_URL}/Vue/public/produits/${encodeURIComponent(p.image)}" alt="">` : '📦';
         html += `<div class="drawer-prod-item"><div class="drawer-prod-thumb">${img}</div><div class="drawer-prod-info"><div class="drawer-prod-name">${esc(p.nomProduit)}</div><div class="drawer-prod-meta">${p.categorie ? esc(p.categorie) : ''}</div></div><span class="drawer-prod-price">${parseFloat(p.prix).toFixed(2)} €</span><button class="btn-drawer-remove" onclick="retirerProduit(${id},${p.idProduit})">✕</button></div>`;
     });
     html += '</div></div>';
@@ -1223,5 +1254,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeDelet
 document.addEventListener('DOMContentLoaded', () => document.getElementById('formAnchor').scrollIntoView({behavior:'smooth',block:'start'}));
 <?php endif; ?>
 </script>
+
+<script src="../layout/front-header.js"></script>
 </body>
 </html>

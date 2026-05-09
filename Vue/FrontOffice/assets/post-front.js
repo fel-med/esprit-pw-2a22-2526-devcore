@@ -306,15 +306,93 @@ async function handleReactionClick(button) {
 
     if (!root || !fab || !panel || !messages || !formEl || !input || !sendBtn) return;
 
+    const STORAGE_KEY = "cre8_chatbot_button_pos_post";
+    const DRAG_THRESHOLD_PX = 6;
+    const VIEW_MARGIN_PX = 12;
+
+    function getRootRect() {
+      return root.getBoundingClientRect();
+    }
+
+    function clampPosition(left, bottom) {
+      const margin = VIEW_MARGIN_PX;
+      const maxLeft = window.innerWidth - root.offsetWidth - margin;
+      const maxBottom = window.innerHeight - root.offsetHeight - margin;
+      return {
+        left: Math.max(margin, Math.min(left, maxLeft)),
+        bottom: Math.max(margin, Math.min(bottom, maxBottom)),
+      };
+    }
+
+    function savePosition(left, bottom) {
+      const c = clampPosition(left, bottom);
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ left: c.left, bottom: c.bottom }));
+      } catch (_) {}
+    }
+
+    function applyPosition(left, bottom, save = false) {
+      const c = clampPosition(left, bottom);
+      /*
+       * Use inline priority because the chatbot CSS contains legacy
+       * left/bottom rules with !important. Without this, dragging updates
+       * root.style but the computed position stays stuck at the CSS default.
+       */
+      root.style.setProperty("left", `${c.left}px`, "important");
+      root.style.setProperty("bottom", `${c.bottom}px`, "important");
+      root.style.setProperty("right", "auto", "important");
+      root.style.setProperty("top", "auto", "important");
+      if (save) savePosition(c.left, c.bottom);
+    }
+
+    function loadSavedPosition() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        if (typeof data.left !== "number" || typeof data.bottom !== "number") return null;
+        if (!Number.isFinite(data.left) || !Number.isFinite(data.bottom)) return null;
+        return { left: data.left, bottom: data.bottom };
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function getFabPointerPosition() {
+      const rect = getRootRect();
+      return {
+        left: rect.left,
+        bottom: window.innerHeight - rect.bottom,
+      };
+    }
+
+    function reclampCurrentPosition() {
+      let left = parseFloat(root.style.left);
+      let bottom = parseFloat(root.style.bottom);
+      if (!Number.isFinite(left) || !Number.isFinite(bottom)) {
+        const p = getFabPointerPosition();
+        left = p.left;
+        bottom = p.bottom;
+      }
+      applyPosition(left, bottom, true);
+    }
+
     root.style.position = "fixed";
-    root.style.left = "24px";
-    root.style.right = "auto";
-    root.style.bottom = "24px";
     root.style.zIndex = "9999";
     root.style.display = "flex";
     root.style.flexDirection = "column";
     root.style.alignItems = "flex-start";
     fab.style.display = "inline-flex";
+
+    const savedPos = loadSavedPosition();
+    if (savedPos) {
+      applyPosition(savedPos.left, savedPos.bottom, false);
+    } else {
+      applyPosition(24, 24, false);
+    }
+
+    window.addEventListener("resize", reclampCurrentPosition);
+    window.addEventListener("orientationchange", reclampCurrentPosition);
 
     const postsData = Array.isArray(window.creaChatbotPosts) ? window.creaChatbotPosts : [];
     const postScopes = Array.from(document.querySelectorAll('.js-post-comments-scope[data-post-id]'));
@@ -442,136 +520,187 @@ async function handleReactionClick(button) {
       }
     };
 
-    fab.setAttribute('type', 'button');
-    /* ── DRAG & DROP ── */
-let isDragging = false;
-let dragStartX = 0, dragStartY = 0;
-let initialLeft = 0, initialBottom = 0;
+    fab.setAttribute("type", "button");
 
-const getPos = () => {
-  const rect = root.getBoundingClientRect();
-  return {
-    left: rect.left,
-    bottom: window.innerHeight - rect.bottom
-  };
-};
+    let suppressFabClickUntil = 0;
+    let activePointerDrag = null;
 
-const startDrag = (clientX, clientY) => {
-  isDragging = true;
-  dragStartX = clientX;
-  dragStartY = clientY;
-  const pos = getPos();
-  initialLeft = pos.left;
-  initialBottom = pos.bottom;
-  root.classList.add('is-dragging');
-  // Applique les coordonnées absolues dès le début
-  root.style.left = initialLeft + 'px';
-  root.style.bottom = initialBottom + 'px';
-  root.style.right = 'auto';
-  root.style.top = 'auto';
-};
-
-const moveDrag = (clientX, clientY) => {
-  if (!isDragging) return;
-  const dx = clientX - dragStartX;
-  const dy = clientY - dragStartY; // positif = bas → réduit le bottom
-  let newLeft = initialLeft + dx;
-  let newBottom = initialBottom - dy;
-
-  // Garder dans la fenêtre (avec 12px de marge)
-  const margin = 12;
-  const maxLeft = window.innerWidth - root.offsetWidth - margin;
-  const maxBottom = window.innerHeight - root.offsetHeight - margin;
-  newLeft = Math.max(margin, Math.min(newLeft, maxLeft));
-  newBottom = Math.max(margin, Math.min(newBottom, maxBottom));
-
-  root.style.left = newLeft + 'px';
-  root.style.bottom = newBottom + 'px';
-};
-
-const endDrag = () => {
-  if (!isDragging) return;
-  isDragging = false;
-  root.classList.remove('is-dragging');
-};
-
-// Mouse
-fab.addEventListener('mousedown', (e) => {
-  // Clic simple (pas de mouvement) → ouvre/ferme le panel
-  // On démarre le drag mais on le détecte seulement si mouvement réel
-  dragStartX = e.clientX;
-  dragStartY = e.clientY;
-  const pos = getPos();
-  initialLeft = pos.left;
-  initialBottom = pos.bottom;
-
-  const onMouseMove = (ev) => {
-    const dist = Math.hypot(ev.clientX - dragStartX, ev.clientY - dragStartY);
-    if (!isDragging && dist > 5) {
-      // Mouvement suffisant → on est en drag
-      isDragging = true;
-      root.classList.add('is-dragging');
-      root.style.left = initialLeft + 'px';
-      root.style.bottom = initialBottom + 'px';
-      root.style.right = 'auto';
-      root.style.top = 'auto';
+    function endPointerDragSession(wasDragging) {
+      root.classList.remove("is-dragging");
+      if (wasDragging) {
+        const left = parseFloat(root.style.left);
+        const bottom = parseFloat(root.style.bottom);
+        if (Number.isFinite(left) && Number.isFinite(bottom)) {
+          applyPosition(left, bottom, true);
+        }
+        suppressFabClickUntil = performance.now() + 150;
+      }
+      activePointerDrag = null;
     }
-    if (isDragging) moveDrag(ev.clientX, ev.clientY);
-  };
 
-  const onMouseUp = (ev) => {
-    const wasDragging = isDragging;
-    endDrag();
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
-    if (wasDragging) {
-      // Empêche le clic d'ouvrir le panel après un drag
-      ev.stopImmediatePropagation();
+    function onFabPointerMove(e) {
+      if (!activePointerDrag || e.pointerId !== activePointerDrag.pointerId) return;
+      const dx = e.clientX - activePointerDrag.startX;
+      const dy = e.clientY - activePointerDrag.startY;
+      const dist = Math.hypot(dx, dy);
+      if (!activePointerDrag.dragging && dist > DRAG_THRESHOLD_PX) {
+        activePointerDrag.dragging = true;
+        root.classList.add("is-dragging");
+        applyPosition(activePointerDrag.startLeft, activePointerDrag.startBottom, false);
+      }
+      if (activePointerDrag.dragging) {
+        e.preventDefault();
+        const newLeft = activePointerDrag.startLeft + (e.clientX - activePointerDrag.startX);
+        const newBottom = activePointerDrag.startBottom - (e.clientY - activePointerDrag.startY);
+        applyPosition(newLeft, newBottom, false);
+      }
     }
-  };
 
-  document.addEventListener('mousemove', onMouseMove);
-  document.addEventListener('mouseup', onMouseUp);
-});
+    function onFabPointerUp(e) {
+      if (!activePointerDrag || e.pointerId !== activePointerDrag.pointerId) return;
+      const t = activePointerDrag.moveTarget;
+      t.removeEventListener("pointermove", onFabPointerMove);
+      t.removeEventListener("pointerup", onFabPointerUp);
+      t.removeEventListener("pointercancel", onFabPointerUp);
+      try {
+        fab.releasePointerCapture(activePointerDrag.pointerId);
+      } catch (_) {}
+      const wasDragging = activePointerDrag.dragging;
+      endPointerDragSession(wasDragging);
+    }
 
-// Touch
-fab.addEventListener('touchstart', (e) => {
-  const touch = e.touches[0];
-  dragStartX = touch.clientX;
-  dragStartY = touch.clientY;
-  const pos = getPos();
-  initialLeft = pos.left;
-  initialBottom = pos.bottom;
-}, { passive: true });
+    if (typeof window.PointerEvent !== "undefined") {
+      fab.addEventListener("pointerdown", (e) => {
+        if (e.button !== 0) return;
+        const pos = getFabPointerPosition();
+        let moveTarget = fab;
+        try {
+          fab.setPointerCapture(e.pointerId);
+        } catch (_) {
+          moveTarget = document;
+        }
+        activePointerDrag = {
+          pointerId: e.pointerId,
+          startX: e.clientX,
+          startY: e.clientY,
+          startLeft: pos.left,
+          startBottom: pos.bottom,
+          dragging: false,
+          moveTarget,
+        };
+        moveTarget.addEventListener("pointermove", onFabPointerMove, { passive: false });
+        moveTarget.addEventListener("pointerup", onFabPointerUp);
+        moveTarget.addEventListener("pointercancel", onFabPointerUp);
+      });
+    } else {
+      fab.addEventListener("mousedown", (e) => {
+        if (e.button !== 0) return;
+        const pos = getFabPointerPosition();
+        let startX = e.clientX;
+        let startY = e.clientY;
+        let startLeft = pos.left;
+        let startBottom = pos.bottom;
+        let dragging = false;
 
-fab.addEventListener('touchmove', (e) => {
-  const touch = e.touches[0];
-  const dist = Math.hypot(touch.clientX - dragStartX, touch.clientY - dragStartY);
-  if (!isDragging && dist > 5) {
-    isDragging = true;
-    root.classList.add('is-dragging');
-    root.style.left = initialLeft + 'px';
-    root.style.bottom = initialBottom + 'px';
-    root.style.right = 'auto';
-    root.style.top = 'auto';
-  }
-  if (isDragging) {
-    e.preventDefault();
-    moveDrag(touch.clientX, touch.clientY);
-  }
-}, { passive: false });
+        function onMouseMove(ev) {
+          const dist = Math.hypot(ev.clientX - startX, ev.clientY - startY);
+          if (!dragging && dist > DRAG_THRESHOLD_PX) {
+            dragging = true;
+            root.classList.add("is-dragging");
+            applyPosition(startLeft, startBottom, false);
+          }
+          if (dragging) {
+            applyPosition(startLeft + (ev.clientX - startX), startBottom - (ev.clientY - startY), false);
+          }
+        }
 
-fab.addEventListener('touchend', (e) => {
-  if (isDragging) {
-    endDrag();
-    e.preventDefault(); // évite le clic fantôme
-  }
-}, { passive: false });
-/* ── FIN DRAG & DROP ── */
-    fab.addEventListener('click', (event) => {
+        function onMouseUp() {
+          document.removeEventListener("mousemove", onMouseMove);
+          document.removeEventListener("mouseup", onMouseUp);
+          root.classList.remove("is-dragging");
+          if (dragging) {
+            const left = parseFloat(root.style.left);
+            const bottom = parseFloat(root.style.bottom);
+            if (Number.isFinite(left) && Number.isFinite(bottom)) {
+              applyPosition(left, bottom, true);
+            }
+            suppressFabClickUntil = performance.now() + 150;
+          }
+        }
+
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+      });
+
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let touchStartLeft = 0;
+      let touchStartBottom = 0;
+      let touchDragging = false;
+
+      fab.addEventListener(
+        "touchstart",
+        (e) => {
+          const t = e.touches[0];
+          touchStartX = t.clientX;
+          touchStartY = t.clientY;
+          const p = getFabPointerPosition();
+          touchStartLeft = p.left;
+          touchStartBottom = p.bottom;
+          touchDragging = false;
+        },
+        { passive: true }
+      );
+
+      fab.addEventListener(
+        "touchmove",
+        (e) => {
+          const t = e.touches[0];
+          const dist = Math.hypot(t.clientX - touchStartX, t.clientY - touchStartY);
+          if (!touchDragging && dist > DRAG_THRESHOLD_PX) {
+            touchDragging = true;
+            root.classList.add("is-dragging");
+            applyPosition(touchStartLeft, touchStartBottom, false);
+          }
+          if (touchDragging) {
+            e.preventDefault();
+            applyPosition(
+              touchStartLeft + (t.clientX - touchStartX),
+              touchStartBottom - (t.clientY - touchStartY),
+              false
+            );
+          }
+        },
+        { passive: false }
+      );
+
+      fab.addEventListener(
+        "touchend",
+        () => {
+          root.classList.remove("is-dragging");
+          if (touchDragging) {
+            const left = parseFloat(root.style.left);
+            const bottom = parseFloat(root.style.bottom);
+            if (Number.isFinite(left) && Number.isFinite(bottom)) {
+              applyPosition(left, bottom, true);
+            }
+            suppressFabClickUntil = performance.now() + 150;
+            touchDragging = false;
+          }
+        },
+        { passive: true }
+      );
+    }
+
+    fab.addEventListener("click", (event) => {
+      if (performance.now() < suppressFabClickUntil) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
       event.preventDefault();
       event.stopPropagation();
-      setOpen(!panel.classList.contains('is-open'));
+      setOpen(!panel.classList.contains("is-open"));
     });
 
     closeBtn?.addEventListener('click', (event) => {

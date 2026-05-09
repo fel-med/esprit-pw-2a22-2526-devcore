@@ -24,6 +24,9 @@ $warning = '⚠️';
         h3 { margin-top: 15px; margin-bottom: 10px; }
         .code-block { background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 12px; margin: 5px 0; }
     </style>
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
 </head>
 <body>
     <div class="container">

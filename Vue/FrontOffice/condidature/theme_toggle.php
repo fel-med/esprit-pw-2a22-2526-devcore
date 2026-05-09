@@ -4,7 +4,7 @@
 </button>
 <script>
 (() => {
-    const storageKey = 'cre8connect_theme';
+    const storageKey = 'cre8_theme';
     const themeMeta = {
         light: { label: 'Light', icon: '&#9728;', action: 'Switch to dark mode' },
         dark: { label: 'Dark', icon: '&#9790;', action: 'Switch to light mode' }

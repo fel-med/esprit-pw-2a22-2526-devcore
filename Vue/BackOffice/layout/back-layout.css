@@ -1362,3 +1362,1080 @@ body.cre8-admin-layout .cre8-back-nav-icon svg {
     padding: 0.55rem 0.85rem !important;
   }
 }
+
+/* =============================================================================
+   BackOffice Corona shell (sidebar + navbar) — utilisateur admin theme
+   Extracted from Vue/BackOffice/utilisateur/index.php — do not remove above cre8-admin rules
+   ============================================================================= */
+
+body.light-mode .sidebar,
+body.light-mode .navbar,
+body.light-mode .navbar-brand-wrapper,
+body.light-mode .navbar-menu-wrapper,
+body.light-mode .navbar-custom {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border-color: #e2e8f0 !important;
+}
+
+body.light-mode .sidebar .nav-link,
+body.light-mode .sidebar .profile-name h5,
+body.light-mode .sidebar .profile-name span,
+body.light-mode .navbar .nav-link,
+body.light-mode .navbar a {
+  color: #111827 !important;
+}
+
+body.light-mode .sidebar .nav-link:hover,
+body.light-mode .sidebar .nav-link.active {
+  background-color: #f1f5f9 !important;
+  color: #111827 !important;
+}
+
+body:not(.light-mode) .sidebar {
+  background: #0b0f19 !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body:not(.light-mode) .sidebar .nav-link,
+body:not(.light-mode) .sidebar .profile-name h5,
+body:not(.light-mode) .sidebar .profile-name span,
+body:not(.light-mode) .sidebar .profile-desc .count {
+  color: #dfe3f2 !important;
+}
+
+body:not(.light-mode) .sidebar .nav-link:hover,
+body:not(.light-mode) .sidebar .nav-link.active {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #fff !important;
+}
+
+body:not(.light-mode) .navbar,
+body:not(.light-mode) .navbar .navbar-menu-wrapper,
+body:not(.light-mode) .navbar .navbar-brand-wrapper {
+  background: rgba(10, 13, 23, 0.96) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Sidebar theme toggle icon (#themeIcon lives in sidebar only) */
+.sidebar .nav-link i#themeIcon {
+  transition: all 0.3s ease;
+  font-size: 1.2rem;
+}
+
+.sidebar .nav-link:hover i#themeIcon {
+  transform: rotate(20deg);
+}
+
+/* Shell transitions when toggling light/dark */
+body {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.light-mode * {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* =========================================================
+   CRE8 FINAL SIDEBAR RESET — uses the REAL Corona sidebar
+   Root: nav#sidebar.sidebar.sidebar-offcanvas
+   Purpose: remove old Corona hover/pill conflicts and keep the
+   sidebar fixed while preserving the Cre8 reference look.
+   ========================================================= */
+:root {
+  --bo-sidebar-width: 244px;
+  --bo-header-height: 70px;
+}
+
+html, body {
+  min-height: 100%;
+}
+
+body.cre8-admin-layout #sidebar.sidebar.sidebar-offcanvas,
+body #sidebar.sidebar.sidebar-offcanvas {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: var(--bo-sidebar-width, 244px) !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  max-height: 100vh !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  z-index: 1100 !important;
+  transform: none !important;
+}
+
+body.cre8-admin-layout .container-scroller,
+body.cre8-admin-layout .container-scroller.cre8-admin-page,
+body .container-scroller.cre8-admin-page {
+  padding-left: var(--bo-sidebar-width, 244px) !important;
+  margin-left: 0 !important;
+  box-sizing: border-box !important;
+}
+
+body.cre8-admin-layout .navbar.fixed-top,
+body .navbar.fixed-top {
+  left: var(--bo-sidebar-width, 244px) !important;
+  width: calc(100% - var(--bo-sidebar-width, 244px)) !important;
+  right: 0 !important;
+  z-index: 1090 !important;
+}
+
+body.cre8-admin-layout .page-body-wrapper,
+body.cre8-admin-layout .page-body-wrapper.cre8-admin-main,
+body .page-body-wrapper.cre8-admin-main {
+  width: 100% !important;
+  min-width: 0 !important;
+  margin-left: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* logo strip */
+body #sidebar .sidebar-brand-wrapper,
+body.cre8-admin-layout #sidebar .sidebar-brand-wrapper {
+  height: var(--bo-header-height, 70px) !important;
+  min-height: var(--bo-header-height, 70px) !important;
+  background: #171b24 !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1) !important;
+}
+
+body #sidebar .cre8-sidebar-wordmark,
+body.cre8-admin-layout #sidebar .cre8-sidebar-wordmark {
+  width: 100% !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  text-decoration: none !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+}
+
+body #sidebar .cre8-sidebar-wordmark span,
+body.cre8-admin-layout #sidebar .cre8-sidebar-wordmark span {
+  display: inline-block !important;
+  color: #ffffff !important;
+  font-family: Georgia, "Times New Roman", serif !important;
+  font-size: 1.32rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  letter-spacing: -0.04em !important;
+}
+
+body #sidebar .cre8-sidebar-wordmark img,
+body.cre8-admin-layout #sidebar .cre8-sidebar-wordmark img {
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  margin: 0 -2px !important;
+  object-fit: contain !important;
+}
+
+/* menu sizing */
+body #sidebar > .nav,
+body.cre8-admin-layout #sidebar > .nav {
+  min-height: calc(100vh - var(--bo-header-height, 70px)) !important;
+  padding: 0.85rem 0 1.2rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  overflow-x: hidden !important;
+}
+
+body #sidebar .nav .nav-item.profile,
+body.cre8-admin-layout #sidebar .nav .nav-item.profile {
+  margin-bottom: 0.22rem !important;
+}
+
+body #sidebar .nav .nav-category,
+body.cre8-admin-layout #sidebar .nav .nav-category {
+  margin: 0.18rem 0 0.35rem !important;
+}
+
+body #sidebar .nav .nav-category .nav-link,
+body.cre8-admin-layout #sidebar .nav .nav-category .nav-link {
+  background: transparent !important;
+  font-size: 0.96rem !important;
+  font-weight: 900 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+body #sidebar .nav .nav-item.menu-items,
+body.cre8-admin-layout #sidebar .nav .nav-item.menu-items {
+  margin: 0.05rem 0 !important;
+}
+
+body #sidebar .nav .nav-item.menu-items > .nav-link,
+body.cre8-admin-layout #sidebar .nav .nav-item.menu-items > .nav-link {
+  min-height: 42px !important;
+  height: 42px !important;
+  padding: 0 1rem !important;
+  border-radius: 0 999px 999px 0 !important;
+  box-shadow: none !important;
+}
+
+body #sidebar .nav .nav-item.menu-items .menu-icon,
+body.cre8-admin-layout #sidebar .nav .nav-item.menu-items .menu-icon {
+  width: 34px !important;
+  min-width: 34px !important;
+  height: 34px !important;
+  line-height: 34px !important;
+  border-radius: 999px !important;
+}
+
+body #sidebar .nav .nav-item.menu-items .menu-icon i,
+body.cre8-admin-layout #sidebar .nav .nav-item.menu-items .menu-icon i {
+  font-size: 1rem !important;
+  line-height: 34px !important;
+}
+
+body #sidebar .nav .nav-item.menu-items .menu-title,
+body.cre8-admin-layout #sidebar .nav .nav-item.menu-items .menu-title {
+  font-size: 0.94rem !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+}
+
+/* dark mode */
+body:not(.light-mode) #sidebar.sidebar.sidebar-offcanvas,
+html[data-theme="dark"] body #sidebar.sidebar.sidebar-offcanvas,
+html:not([data-theme="light"]) body #sidebar.sidebar.sidebar-offcanvas {
+  background: #070c16 !important;
+  color: #eef2ff !important;
+  border-right: 1px solid rgba(148, 163, 184, 0.08) !important;
+}
+
+body:not(.light-mode) #sidebar .nav .nav-link,
+body:not(.light-mode) #sidebar .profile-name h5,
+body:not(.light-mode) #sidebar .profile-name span,
+html[data-theme="dark"] body #sidebar .nav .nav-link,
+html[data-theme="dark"] body #sidebar .profile-name h5,
+html[data-theme="dark"] body #sidebar .profile-name span {
+  color: #dfe7ff !important;
+}
+
+body:not(.light-mode) #sidebar .nav .nav-category .nav-link,
+html[data-theme="dark"] body #sidebar .nav .nav-category .nav-link {
+  color: #ffffff !important;
+}
+
+body:not(.light-mode) #sidebar .nav .nav-item.menu-items > .nav-link,
+html[data-theme="dark"] body #sidebar .nav .nav-item.menu-items > .nav-link {
+  background: transparent !important;
+  color: #dfe7ff !important;
+}
+
+body:not(.light-mode) #sidebar .nav .nav-item.menu-items.active > .nav-link,
+body:not(.light-mode) #sidebar .nav .nav-item.menu-items:not(.back-nav-disabled) > .nav-link:hover,
+html[data-theme="dark"] body #sidebar .nav .nav-item.menu-items.active > .nav-link,
+html[data-theme="dark"] body #sidebar .nav .nav-item.menu-items:not(.back-nav-disabled) > .nav-link:hover {
+  background: #0d0e14 !important;
+  color: #ffffff !important;
+}
+
+body:not(.light-mode) #sidebar .nav .nav-item.menu-items .menu-icon,
+html[data-theme="dark"] body #sidebar .nav .nav-item.menu-items .menu-icon {
+  background: #1d2332 !important;
+}
+
+/* light mode */
+body.light-mode #sidebar.sidebar.sidebar-offcanvas,
+html[data-theme="light"] body #sidebar.sidebar.sidebar-offcanvas {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border-right: 1px solid #e5e7eb !important;
+}
+
+body.light-mode #sidebar .nav .nav-category .nav-link,
+body.light-mode #sidebar .profile-name h5,
+body.light-mode #sidebar .profile-name span,
+html[data-theme="light"] body #sidebar .nav .nav-category .nav-link,
+html[data-theme="light"] body #sidebar .profile-name h5,
+html[data-theme="light"] body #sidebar .profile-name span {
+  color: #111827 !important;
+  background: transparent !important;
+}
+
+body.light-mode #sidebar .nav .nav-item.menu-items > .nav-link,
+html[data-theme="light"] body #sidebar .nav .nav-item.menu-items > .nav-link {
+  background: transparent !important;
+  color: #111827 !important;
+}
+
+body.light-mode #sidebar .nav .nav-item.menu-items:not(.active):not(.back-nav-disabled) > .nav-link:hover,
+html[data-theme="light"] body #sidebar .nav .nav-item.menu-items:not(.active):not(.back-nav-disabled) > .nav-link:hover {
+  background: #f1f5f9 !important;
+  color: #111827 !important;
+}
+
+body.light-mode #sidebar .nav .nav-item.menu-items.active > .nav-link,
+html[data-theme="light"] body #sidebar .nav .nav-item.menu-items.active > .nav-link {
+  background: #0d0e14 !important;
+  color: #ffffff !important;
+}
+
+body.light-mode #sidebar .nav .nav-item.menu-items:not(.active) .menu-icon,
+html[data-theme="light"] body #sidebar .nav .nav-item.menu-items:not(.active) .menu-icon {
+  background: #eef2f7 !important;
+}
+
+body.light-mode #sidebar .nav .nav-item.menu-items.active .menu-icon,
+html[data-theme="light"] body #sidebar .nav .nav-item.menu-items.active .menu-icon {
+  background: #1d2332 !important;
+}
+
+body.light-mode #sidebar .nav .nav-item.back-nav-disabled > .nav-link,
+body.light-mode #sidebar .nav .nav-item.back-nav-disabled > .nav-link:hover,
+html[data-theme="light"] body #sidebar .nav .nav-item.back-nav-disabled > .nav-link,
+html[data-theme="light"] body #sidebar .nav .nav-item.back-nav-disabled > .nav-link:hover,
+body:not(.light-mode) #sidebar .nav .nav-item.back-nav-disabled > .nav-link,
+body:not(.light-mode) #sidebar .nav .nav-item.back-nav-disabled > .nav-link:hover,
+html[data-theme="dark"] body #sidebar .nav .nav-item.back-nav-disabled > .nav-link,
+html[data-theme="dark"] body #sidebar .nav .nav-item.back-nav-disabled > .nav-link:hover {
+  background: transparent !important;
+  color: #94a3b8 !important;
+  opacity: 0.75 !important;
+  cursor: not-allowed !important;
+}
+
+/* header theme button remains clean */
+body.cre8-admin-layout .navbar .back-theme-toggle,
+body.cre8-admin-layout .navbar a.back-theme-toggle,
+body.cre8-admin-layout .navbar button.back-theme-toggle {
+  width: auto !important;
+  min-width: 46px !important;
+  height: 70px !important;
+  min-height: 70px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 1rem !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #b69cff !important;
+  box-shadow: none !important;
+  outline: none !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+}
+
+body.cre8-admin-layout .navbar .back-theme-toggle:hover,
+body.cre8-admin-layout .navbar a.back-theme-toggle:hover,
+body.cre8-admin-layout .navbar button.back-theme-toggle:hover {
+  background: rgba(255,255,255,0.04) !important;
+  color: #ffffff !important;
+}
+
+body.light-mode .navbar .back-theme-toggle,
+html[data-theme="light"] body .navbar .back-theme-toggle {
+  color: #7c5cff !important;
+  background: transparent !important;
+}
+
+body.light-mode .navbar .back-theme-toggle:hover,
+html[data-theme="light"] body .navbar .back-theme-toggle:hover {
+  background: rgba(124, 92, 255, 0.09) !important;
+  color: #4f46e5 !important;
+}
+
+@media (max-width: 1100px) {
+  body.cre8-admin-layout #sidebar.sidebar.sidebar-offcanvas,
+  body #sidebar.sidebar.sidebar-offcanvas {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: var(--bo-sidebar-width, 244px) !important;
+    height: 100vh !important;
+  }
+
+  body.cre8-admin-layout .container-scroller,
+  body.cre8-admin-layout .container-scroller.cre8-admin-page,
+  body .container-scroller.cre8-admin-page {
+    padding-left: var(--bo-sidebar-width, 244px) !important;
+  }
+
+  body.cre8-admin-layout .navbar.fixed-top,
+  body .navbar.fixed-top {
+    position: fixed !important;
+    left: var(--bo-sidebar-width, 244px) !important;
+    width: calc(100% - var(--bo-sidebar-width, 244px)) !important;
+  }
+}
+
+/* =========================================================
+   CRE8 HARD FIX — light sidebar black pills are on LI parents
+   This must stay at the VERY END of back-layout.css.
+   It resets BOTH li.menu-items and a.nav-link because old
+   Corona/module styles can paint the parent item, not only link.
+   ========================================================= */
+html[data-theme="light"] body #sidebar.sidebar.sidebar-offcanvas,
+body.light-mode #sidebar.sidebar.sidebar-offcanvas {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border-right: 1px solid #e5e7eb !important;
+}
+
+html[data-theme="light"] body #sidebar .sidebar-brand-wrapper,
+body.light-mode #sidebar .sidebar-brand-wrapper {
+  background: #171b24 !important;
+  color: #ffffff !important;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Reset the parent LI first. This is what fixes many black pills at rest. */
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items,
+body.light-mode #sidebar .nav > li.nav-item.menu-items,
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items.active,
+body.light-mode #sidebar .nav > li.nav-item.menu-items.active,
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items:hover,
+body.light-mode #sidebar .nav > li.nav-item.menu-items:hover,
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items:focus,
+body.light-mode #sidebar .nav > li.nav-item.menu-items:focus,
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items:focus-within,
+body.light-mode #sidebar .nav > li.nav-item.menu-items:focus-within {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Reset every link by default in light mode. */
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items > a.nav-link,
+body.light-mode #sidebar .nav > li.nav-item.menu-items > a.nav-link,
+html[data-theme="light"] body #sidebar .nav:not(.sub-menu) > li.nav-item.menu-items > a.nav-link,
+body.light-mode #sidebar .nav:not(.sub-menu) > li.nav-item.menu-items > a.nav-link {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #111827 !important;
+  border-radius: 0 999px 999px 0 !important;
+  box-shadow: none !important;
+}
+
+/* Normal hover: light gray only, never black. */
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items:not(.active):not(.back-nav-disabled):hover > a.nav-link,
+body.light-mode #sidebar .nav > li.nav-item.menu-items:not(.active):not(.back-nav-disabled):hover > a.nav-link,
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items:not(.active):not(.back-nav-disabled) > a.nav-link:hover,
+body.light-mode #sidebar .nav > li.nav-item.menu-items:not(.active):not(.back-nav-disabled) > a.nav-link:hover,
+html[data-theme="light"] body #sidebar .nav:not(.sub-menu) > li.nav-item.menu-items:not(.active):not(.back-nav-disabled):hover > a.nav-link,
+body.light-mode #sidebar .nav:not(.sub-menu) > li.nav-item.menu-items:not(.active):not(.back-nav-disabled):hover > a.nav-link {
+  background: #f1f5f9 !important;
+  background-color: #f1f5f9 !important;
+  color: #111827 !important;
+}
+
+/* Only active row gets the black pill. */
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items.active > a.nav-link,
+body.light-mode #sidebar .nav > li.nav-item.menu-items.active > a.nav-link,
+html[data-theme="light"] body #sidebar .nav:not(.sub-menu) > li.nav-item.menu-items.active > a.nav-link,
+body.light-mode #sidebar .nav:not(.sub-menu) > li.nav-item.menu-items.active > a.nav-link {
+  background: #0d0e14 !important;
+  background-color: #0d0e14 !important;
+  color: #ffffff !important;
+}
+
+/* Text inside rows follows the link color. */
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items > a.nav-link .menu-title,
+body.light-mode #sidebar .nav > li.nav-item.menu-items > a.nav-link .menu-title {
+  color: inherit !important;
+}
+
+/* Navigation/profile text in light mode. */
+html[data-theme="light"] body #sidebar .nav .nav-category .nav-link,
+body.light-mode #sidebar .nav .nav-category .nav-link,
+html[data-theme="light"] body #sidebar .profile-name h5,
+body.light-mode #sidebar .profile-name h5 {
+  color: #111827 !important;
+  background: transparent !important;
+}
+
+html[data-theme="light"] body #sidebar .profile-name span,
+body.light-mode #sidebar .profile-name span {
+  color: #64748b !important;
+  background: transparent !important;
+}
+
+/* Icon chip colors in light mode. */
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items:not(.active) .menu-icon,
+body.light-mode #sidebar .nav > li.nav-item.menu-items:not(.active) .menu-icon {
+  background: #eef2f7 !important;
+}
+
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items.active .menu-icon,
+body.light-mode #sidebar .nav > li.nav-item.menu-items.active .menu-icon {
+  background: #1d2332 !important;
+}
+
+/* Disabled Forum: no pill, no hover, gray text. */
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items.back-nav-disabled,
+body.light-mode #sidebar .nav > li.nav-item.menu-items.back-nav-disabled,
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items.back-nav-disabled:hover,
+body.light-mode #sidebar .nav > li.nav-item.menu-items.back-nav-disabled:hover,
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items.back-nav-disabled > a.nav-link,
+body.light-mode #sidebar .nav > li.nav-item.menu-items.back-nav-disabled > a.nav-link,
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items.back-nav-disabled > a.nav-link:hover,
+body.light-mode #sidebar .nav > li.nav-item.menu-items.back-nav-disabled > a.nav-link:hover {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #94a3b8 !important;
+  opacity: 0.78 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+}
+
+/* =========================================================
+   CRE8 LIGHT MODE FORM SURFACE — TRUE FINAL OVERRIDE
+   Fixes Corona/New Style dark inputs (#2A3038) that load after
+   the shared layout on Dashboard/Post/Comment and similar pages.
+   Dark mode is untouched because every rule is scoped to light mode.
+   ========================================================= */
+html[data-theme="light"] body.cre8-admin-layout,
+body.cre8-admin-layout.light-mode,
+body.light-mode.cre8-admin-layout {
+  --cre8-light-input-bg: #ffffff;
+  --cre8-light-input-text: #111827;
+  --cre8-light-input-border: #dbe3ef;
+  --cre8-light-input-placeholder: #94a3b8;
+  --cre8-light-input-focus: #7c5cff;
+}
+
+/* Shared fixed navbar search: it is outside .main-panel, so it needs its own selector. */
+html[data-theme="light"] body.cre8-admin-layout .navbar .navbar-menu-wrapper .search input.form-control,
+body.cre8-admin-layout.light-mode .navbar .navbar-menu-wrapper .search input.form-control,
+body.light-mode.cre8-admin-layout .navbar .navbar-menu-wrapper .search input.form-control {
+  background: var(--cre8-light-input-bg) !important;
+  background-color: var(--cre8-light-input-bg) !important;
+  background-image: none !important;
+  color: var(--cre8-light-input-text) !important;
+  border-color: var(--cre8-light-input-border) !important;
+  box-shadow: none !important;
+  caret-color: var(--cre8-light-input-text) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .navbar .navbar-menu-wrapper .search input.form-control::placeholder,
+body.cre8-admin-layout.light-mode .navbar .navbar-menu-wrapper .search input.form-control::placeholder,
+body.light-mode.cre8-admin-layout .navbar .navbar-menu-wrapper .search input.form-control::placeholder {
+  color: var(--cre8-light-input-placeholder) !important;
+  opacity: 1 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .navbar .navbar-menu-wrapper .search input.form-control:focus,
+body.cre8-admin-layout.light-mode .navbar .navbar-menu-wrapper .search input.form-control:focus,
+body.light-mode.cre8-admin-layout .navbar .navbar-menu-wrapper .search input.form-control:focus {
+  background: var(--cre8-light-input-bg) !important;
+  background-color: var(--cre8-light-input-bg) !important;
+  color: var(--cre8-light-input-text) !important;
+  border-color: var(--cre8-light-input-focus) !important;
+  box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.12) !important;
+  outline: 0 !important;
+}
+
+/* Text-like controls across BackOffice content. Excludes action/button/file/hidden inputs. */
+html[data-theme="light"] body.cre8-admin-layout input:not([type]),
+html[data-theme="light"] body.cre8-admin-layout input[type="text"],
+html[data-theme="light"] body.cre8-admin-layout input[type="search"],
+html[data-theme="light"] body.cre8-admin-layout input[type="email"],
+html[data-theme="light"] body.cre8-admin-layout input[type="number"],
+html[data-theme="light"] body.cre8-admin-layout input[type="tel"],
+html[data-theme="light"] body.cre8-admin-layout input[type="url"],
+html[data-theme="light"] body.cre8-admin-layout input[type="date"],
+html[data-theme="light"] body.cre8-admin-layout input[type="time"],
+html[data-theme="light"] body.cre8-admin-layout input[type="datetime-local"],
+html[data-theme="light"] body.cre8-admin-layout input[type="month"],
+html[data-theme="light"] body.cre8-admin-layout input[type="week"],
+html[data-theme="light"] body.cre8-admin-layout input[type="password"],
+html[data-theme="light"] body.cre8-admin-layout select,
+html[data-theme="light"] body.cre8-admin-layout textarea,
+html[data-theme="light"] body.cre8-admin-layout .form-control,
+html[data-theme="light"] body.cre8-admin-layout .form-select,
+html[data-theme="light"] body.cre8-admin-layout .search-input,
+html[data-theme="light"] body.cre8-admin-layout .toolbar-input,
+html[data-theme="light"] body.cre8-admin-layout .filter-input,
+html[data-theme="light"] body.cre8-admin-layout .bo-search-input,
+html[data-theme="light"] body.cre8-admin-layout .admin-search-input,
+body.cre8-admin-layout.light-mode input:not([type]),
+body.cre8-admin-layout.light-mode input[type="text"],
+body.cre8-admin-layout.light-mode input[type="search"],
+body.cre8-admin-layout.light-mode input[type="email"],
+body.cre8-admin-layout.light-mode input[type="number"],
+body.cre8-admin-layout.light-mode input[type="tel"],
+body.cre8-admin-layout.light-mode input[type="url"],
+body.cre8-admin-layout.light-mode input[type="date"],
+body.cre8-admin-layout.light-mode input[type="time"],
+body.cre8-admin-layout.light-mode input[type="datetime-local"],
+body.cre8-admin-layout.light-mode input[type="month"],
+body.cre8-admin-layout.light-mode input[type="week"],
+body.cre8-admin-layout.light-mode input[type="password"],
+body.cre8-admin-layout.light-mode select,
+body.cre8-admin-layout.light-mode textarea,
+body.cre8-admin-layout.light-mode .form-control,
+body.cre8-admin-layout.light-mode .form-select,
+body.cre8-admin-layout.light-mode .search-input,
+body.cre8-admin-layout.light-mode .toolbar-input,
+body.cre8-admin-layout.light-mode .filter-input,
+body.cre8-admin-layout.light-mode .bo-search-input,
+body.cre8-admin-layout.light-mode .admin-search-input,
+body.light-mode.cre8-admin-layout input:not([type]),
+body.light-mode.cre8-admin-layout input[type="text"],
+body.light-mode.cre8-admin-layout input[type="search"],
+body.light-mode.cre8-admin-layout input[type="email"],
+body.light-mode.cre8-admin-layout input[type="number"],
+body.light-mode.cre8-admin-layout input[type="tel"],
+body.light-mode.cre8-admin-layout input[type="url"],
+body.light-mode.cre8-admin-layout input[type="date"],
+body.light-mode.cre8-admin-layout input[type="time"],
+body.light-mode.cre8-admin-layout input[type="datetime-local"],
+body.light-mode.cre8-admin-layout input[type="month"],
+body.light-mode.cre8-admin-layout input[type="week"],
+body.light-mode.cre8-admin-layout input[type="password"],
+body.light-mode.cre8-admin-layout select,
+body.light-mode.cre8-admin-layout textarea,
+body.light-mode.cre8-admin-layout .form-control,
+body.light-mode.cre8-admin-layout .form-select,
+body.light-mode.cre8-admin-layout .search-input,
+body.light-mode.cre8-admin-layout .toolbar-input,
+body.light-mode.cre8-admin-layout .filter-input,
+body.light-mode.cre8-admin-layout .bo-search-input,
+body.light-mode.cre8-admin-layout .admin-search-input {
+  background: var(--cre8-light-input-bg) !important;
+  background-color: var(--cre8-light-input-bg) !important;
+  background-image: none !important;
+  color: var(--cre8-light-input-text) !important;
+  border-color: var(--cre8-light-input-border) !important;
+  box-shadow: none !important;
+  caret-color: var(--cre8-light-input-text) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout input::placeholder,
+html[data-theme="light"] body.cre8-admin-layout textarea::placeholder,
+html[data-theme="light"] body.cre8-admin-layout .form-control::placeholder,
+html[data-theme="light"] body.cre8-admin-layout .search-input::placeholder,
+html[data-theme="light"] body.cre8-admin-layout .toolbar-input::placeholder,
+body.cre8-admin-layout.light-mode input::placeholder,
+body.cre8-admin-layout.light-mode textarea::placeholder,
+body.cre8-admin-layout.light-mode .form-control::placeholder,
+body.cre8-admin-layout.light-mode .search-input::placeholder,
+body.cre8-admin-layout.light-mode .toolbar-input::placeholder,
+body.light-mode.cre8-admin-layout input::placeholder,
+body.light-mode.cre8-admin-layout textarea::placeholder,
+body.light-mode.cre8-admin-layout .form-control::placeholder,
+body.light-mode.cre8-admin-layout .search-input::placeholder,
+body.light-mode.cre8-admin-layout .toolbar-input::placeholder {
+  color: var(--cre8-light-input-placeholder) !important;
+  opacity: 1 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout input:not([type]):focus,
+html[data-theme="light"] body.cre8-admin-layout input[type="text"]:focus,
+html[data-theme="light"] body.cre8-admin-layout input[type="search"]:focus,
+html[data-theme="light"] body.cre8-admin-layout input[type="email"]:focus,
+html[data-theme="light"] body.cre8-admin-layout input[type="number"]:focus,
+html[data-theme="light"] body.cre8-admin-layout input[type="tel"]:focus,
+html[data-theme="light"] body.cre8-admin-layout input[type="url"]:focus,
+html[data-theme="light"] body.cre8-admin-layout input[type="date"]:focus,
+html[data-theme="light"] body.cre8-admin-layout input[type="time"]:focus,
+html[data-theme="light"] body.cre8-admin-layout input[type="datetime-local"]:focus,
+html[data-theme="light"] body.cre8-admin-layout select:focus,
+html[data-theme="light"] body.cre8-admin-layout textarea:focus,
+html[data-theme="light"] body.cre8-admin-layout .form-control:focus,
+html[data-theme="light"] body.cre8-admin-layout .form-select:focus,
+html[data-theme="light"] body.cre8-admin-layout .search-input:focus,
+html[data-theme="light"] body.cre8-admin-layout .toolbar-input:focus,
+body.cre8-admin-layout.light-mode input:not([type]):focus,
+body.cre8-admin-layout.light-mode input[type="text"]:focus,
+body.cre8-admin-layout.light-mode input[type="search"]:focus,
+body.cre8-admin-layout.light-mode input[type="email"]:focus,
+body.cre8-admin-layout.light-mode input[type="number"]:focus,
+body.cre8-admin-layout.light-mode input[type="tel"]:focus,
+body.cre8-admin-layout.light-mode input[type="url"]:focus,
+body.cre8-admin-layout.light-mode input[type="date"]:focus,
+body.cre8-admin-layout.light-mode input[type="time"]:focus,
+body.cre8-admin-layout.light-mode input[type="datetime-local"]:focus,
+body.cre8-admin-layout.light-mode select:focus,
+body.cre8-admin-layout.light-mode textarea:focus,
+body.cre8-admin-layout.light-mode .form-control:focus,
+body.cre8-admin-layout.light-mode .form-select:focus,
+body.cre8-admin-layout.light-mode .search-input:focus,
+body.cre8-admin-layout.light-mode .toolbar-input:focus,
+body.light-mode.cre8-admin-layout input:not([type]):focus,
+body.light-mode.cre8-admin-layout input[type="text"]:focus,
+body.light-mode.cre8-admin-layout input[type="search"]:focus,
+body.light-mode.cre8-admin-layout input[type="email"]:focus,
+body.light-mode.cre8-admin-layout input[type="number"]:focus,
+body.light-mode.cre8-admin-layout input[type="tel"]:focus,
+body.light-mode.cre8-admin-layout input[type="url"]:focus,
+body.light-mode.cre8-admin-layout input[type="date"]:focus,
+body.light-mode.cre8-admin-layout input[type="time"]:focus,
+body.light-mode.cre8-admin-layout input[type="datetime-local"]:focus,
+body.light-mode.cre8-admin-layout select:focus,
+body.light-mode.cre8-admin-layout textarea:focus,
+body.light-mode.cre8-admin-layout .form-control:focus,
+body.light-mode.cre8-admin-layout .form-select:focus,
+body.light-mode.cre8-admin-layout .search-input:focus,
+body.light-mode.cre8-admin-layout .toolbar-input:focus {
+  background: var(--cre8-light-input-bg) !important;
+  background-color: var(--cre8-light-input-bg) !important;
+  color: var(--cre8-light-input-text) !important;
+  border-color: var(--cre8-light-input-focus) !important;
+  box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.12) !important;
+  outline: 0 !important;
+}
+
+/* Bootstrap input groups and addon chips must not stay dark beside a white field. */
+html[data-theme="light"] body.cre8-admin-layout .input-group-text,
+body.cre8-admin-layout.light-mode .input-group-text,
+body.light-mode.cre8-admin-layout .input-group-text,
+html[data-theme="light"] body.cre8-admin-layout .search-wrap,
+body.cre8-admin-layout.light-mode .search-wrap,
+body.light-mode.cre8-admin-layout .search-wrap,
+html[data-theme="light"] body.cre8-admin-layout .search-group,
+body.cre8-admin-layout.light-mode .search-group,
+body.light-mode.cre8-admin-layout .search-group {
+  background-color: #ffffff !important;
+  color: #64748b !important;
+  border-color: #dbe3ef !important;
+}
+
+/* =========================================================
+   CRE8 FINAL LIGHT MODE MERGE FIX
+   Keeps post/comment page frame light AND keeps inputs/search light.
+   Dark mode unchanged.
+   ========================================================= */
+
+/* Light shell / page canvas */
+html[data-theme="light"] body.cre8-admin-layout,
+body.cre8-admin-layout.light-mode,
+body.light-mode.cre8-admin-layout {
+  background: #f6f7fb !important;
+  color: #111827 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .container-scroller,
+html[data-theme="light"] body.cre8-admin-layout .container-scroller.cre8-admin-page,
+html[data-theme="light"] body.cre8-admin-layout .page-body-wrapper,
+html[data-theme="light"] body.cre8-admin-layout .page-body-wrapper.cre8-admin-main,
+html[data-theme="light"] body.cre8-admin-layout .main-panel,
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper,
+body.cre8-admin-layout.light-mode .container-scroller,
+body.cre8-admin-layout.light-mode .container-scroller.cre8-admin-page,
+body.cre8-admin-layout.light-mode .page-body-wrapper,
+body.cre8-admin-layout.light-mode .page-body-wrapper.cre8-admin-main,
+body.cre8-admin-layout.light-mode .main-panel,
+body.cre8-admin-layout.light-mode .content-wrapper,
+body.light-mode.cre8-admin-layout .container-scroller,
+body.light-mode.cre8-admin-layout .container-scroller.cre8-admin-page,
+body.light-mode.cre8-admin-layout .page-body-wrapper,
+body.light-mode.cre8-admin-layout .page-body-wrapper.cre8-admin-main,
+body.light-mode.cre8-admin-layout .main-panel,
+body.light-mode.cre8-admin-layout .content-wrapper {
+  background: #f6f7fb !important;
+  background-color: #f6f7fb !important;
+  color: #111827 !important;
+}
+
+/* Posts/comments module wrappers */
+html[data-theme="light"] body.cre8-admin-layout .post-admin,
+html[data-theme="light"] body.cre8-admin-layout .comment-admin,
+body.cre8-admin-layout.light-mode .post-admin,
+body.cre8-admin-layout.light-mode .comment-admin,
+body.light-mode.cre8-admin-layout .post-admin,
+body.light-mode.cre8-admin-layout .comment-admin {
+  background: #f6f7fb !important;
+  color: #111827 !important;
+}
+
+/* Keep cards/panels white in light mode */
+html[data-theme="light"] body.cre8-admin-layout .post-admin .card,
+html[data-theme="light"] body.cre8-admin-layout .comment-admin .card,
+body.cre8-admin-layout.light-mode .post-admin .card,
+body.cre8-admin-layout.light-mode .comment-admin .card,
+body.light-mode.cre8-admin-layout .post-admin .card,
+body.light-mode.cre8-admin-layout .comment-admin .card {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border-color: #e5e7eb !important;
+}
+
+/* Header search input */
+html[data-theme="light"] body.cre8-admin-layout .navbar .navbar-menu-wrapper .search input.form-control,
+body.cre8-admin-layout.light-mode .navbar .navbar-menu-wrapper .search input.form-control,
+body.light-mode.cre8-admin-layout .navbar .navbar-menu-wrapper .search input.form-control {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid #dbe3ef !important;
+  box-shadow: none !important;
+}
+
+/* All normal text-like inputs/selects/textareas in light mode */
+html[data-theme="light"] body.cre8-admin-layout input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="file"]):not([type="color"]),
+html[data-theme="light"] body.cre8-admin-layout select,
+html[data-theme="light"] body.cre8-admin-layout textarea,
+html[data-theme="light"] body.cre8-admin-layout .form-control,
+html[data-theme="light"] body.cre8-admin-layout .form-select,
+html[data-theme="light"] body.cre8-admin-layout .search-input,
+html[data-theme="light"] body.cre8-admin-layout .toolbar-input,
+body.cre8-admin-layout.light-mode input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="file"]):not([type="color"]),
+body.cre8-admin-layout.light-mode select,
+body.cre8-admin-layout.light-mode textarea,
+body.cre8-admin-layout.light-mode .form-control,
+body.cre8-admin-layout.light-mode .form-select,
+body.cre8-admin-layout.light-mode .search-input,
+body.cre8-admin-layout.light-mode .toolbar-input,
+body.light-mode.cre8-admin-layout input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="file"]):not([type="color"]),
+body.light-mode.cre8-admin-layout select,
+body.light-mode.cre8-admin-layout textarea,
+body.light-mode.cre8-admin-layout .form-control,
+body.light-mode.cre8-admin-layout .form-select,
+body.light-mode.cre8-admin-layout .search-input,
+body.light-mode.cre8-admin-layout .toolbar-input {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border-color: #dbe3ef !important;
+  box-shadow: none !important;
+}
+
+/* Placeholders */
+html[data-theme="light"] body.cre8-admin-layout input::placeholder,
+html[data-theme="light"] body.cre8-admin-layout textarea::placeholder,
+body.cre8-admin-layout.light-mode input::placeholder,
+body.cre8-admin-layout.light-mode textarea::placeholder,
+body.light-mode.cre8-admin-layout input::placeholder,
+body.light-mode.cre8-admin-layout textarea::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+
+/* Focus state */
+html[data-theme="light"] body.cre8-admin-layout input:focus,
+html[data-theme="light"] body.cre8-admin-layout select:focus,
+html[data-theme="light"] body.cre8-admin-layout textarea:focus,
+html[data-theme="light"] body.cre8-admin-layout .form-control:focus,
+html[data-theme="light"] body.cre8-admin-layout .form-select:focus,
+body.cre8-admin-layout.light-mode input:focus,
+body.cre8-admin-layout.light-mode select:focus,
+body.cre8-admin-layout.light-mode textarea:focus,
+body.cre8-admin-layout.light-mode .form-control:focus,
+body.cre8-admin-layout.light-mode .form-select:focus,
+body.light-mode.cre8-admin-layout input:focus,
+body.light-mode.cre8-admin-layout select:focus,
+body.light-mode.cre8-admin-layout textarea:focus,
+body.light-mode.cre8-admin-layout .form-control:focus,
+body.light-mode.cre8-admin-layout .form-select:focus {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border-color: #7c5cff !important;
+  box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.12) !important;
+  outline: 0 !important;
+}
+/* =========================================================
+   CRE8 FINAL LIGHT MODE TABLE FIX
+   Fixes dark tables in BackOffice post/comment pages.
+   Dark mode unchanged.
+   ========================================================= */
+
+   html[data-theme="light"] body.cre8-admin-layout .post-admin table,
+   html[data-theme="light"] body.cre8-admin-layout .comment-admin table,
+   html[data-theme="light"] body.cre8-admin-layout .post-admin .table,
+   html[data-theme="light"] body.cre8-admin-layout .comment-admin .table,
+   body.cre8-admin-layout.light-mode .post-admin table,
+   body.cre8-admin-layout.light-mode .comment-admin table,
+   body.cre8-admin-layout.light-mode .post-admin .table,
+   body.cre8-admin-layout.light-mode .comment-admin .table,
+   body.light-mode.cre8-admin-layout .post-admin table,
+   body.light-mode.cre8-admin-layout .comment-admin table,
+   body.light-mode.cre8-admin-layout .post-admin .table,
+   body.light-mode.cre8-admin-layout .comment-admin .table {
+     background: #ffffff !important;
+     background-color: #ffffff !important;
+     color: #111827 !important;
+     border-color: #e5e7eb !important;
+   }
+   
+   html[data-theme="light"] body.cre8-admin-layout .post-admin thead,
+   html[data-theme="light"] body.cre8-admin-layout .comment-admin thead,
+   body.cre8-admin-layout.light-mode .post-admin thead,
+   body.cre8-admin-layout.light-mode .comment-admin thead,
+   body.light-mode.cre8-admin-layout .post-admin thead,
+   body.light-mode.cre8-admin-layout .comment-admin thead {
+     background: #f3f0ff !important;
+     background-color: #f3f0ff !important;
+     color: #5b4fff !important;
+   }
+   
+   html[data-theme="light"] body.cre8-admin-layout .post-admin thead th,
+   html[data-theme="light"] body.cre8-admin-layout .comment-admin thead th,
+   body.cre8-admin-layout.light-mode .post-admin thead th,
+   body.cre8-admin-layout.light-mode .comment-admin thead th,
+   body.light-mode.cre8-admin-layout .post-admin thead th,
+   body.light-mode.cre8-admin-layout .comment-admin thead th {
+     background: #f3f0ff !important;
+     background-color: #f3f0ff !important;
+     color: #5b4fff !important;
+     border-color: #e5e7eb !important;
+   }
+   
+   html[data-theme="light"] body.cre8-admin-layout .post-admin tbody,
+   html[data-theme="light"] body.cre8-admin-layout .comment-admin tbody,
+   html[data-theme="light"] body.cre8-admin-layout .post-admin tbody tr,
+   html[data-theme="light"] body.cre8-admin-layout .comment-admin tbody tr,
+   html[data-theme="light"] body.cre8-admin-layout .post-admin tbody td,
+   html[data-theme="light"] body.cre8-admin-layout .comment-admin tbody td,
+   body.cre8-admin-layout.light-mode .post-admin tbody,
+   body.cre8-admin-layout.light-mode .comment-admin tbody,
+   body.cre8-admin-layout.light-mode .post-admin tbody tr,
+   body.cre8-admin-layout.light-mode .comment-admin tbody tr,
+   body.cre8-admin-layout.light-mode .post-admin tbody td,
+   body.cre8-admin-layout.light-mode .comment-admin tbody td,
+   body.light-mode.cre8-admin-layout .post-admin tbody,
+   body.light-mode.cre8-admin-layout .comment-admin tbody,
+   body.light-mode.cre8-admin-layout .post-admin tbody tr,
+   body.light-mode.cre8-admin-layout .comment-admin tbody tr,
+   body.light-mode.cre8-admin-layout .post-admin tbody td,
+   body.light-mode.cre8-admin-layout .comment-admin tbody td {
+     background: #ffffff !important;
+     background-color: #ffffff !important;
+     color: #111827 !important;
+     border-color: #e5e7eb !important;
+   }
+   
+   html[data-theme="light"] body.cre8-admin-layout .post-admin tbody tr:hover,
+   html[data-theme="light"] body.cre8-admin-layout .comment-admin tbody tr:hover,
+   body.cre8-admin-layout.light-mode .post-admin tbody tr:hover,
+   body.cre8-admin-layout.light-mode .comment-admin tbody tr:hover,
+   body.light-mode.cre8-admin-layout .post-admin tbody tr:hover,
+   body.light-mode.cre8-admin-layout .comment-admin tbody tr:hover {
+     background: #f8fafc !important;
+     background-color: #f8fafc !important;
+   }
+   
+   html[data-theme="light"] body.cre8-admin-layout .post-admin tbody tr:hover td,
+   html[data-theme="light"] body.cre8-admin-layout .comment-admin tbody tr:hover td,
+   body.cre8-admin-layout.light-mode .post-admin tbody tr:hover td,
+   body.cre8-admin-layout.light-mode .comment-admin tbody tr:hover td,
+   body.light-mode.cre8-admin-layout .post-admin tbody tr:hover td,
+   body.light-mode.cre8-admin-layout .comment-admin tbody tr:hover td {
+     background: #f8fafc !important;
+     background-color: #f8fafc !important;
+     color: #111827 !important;
+   }
+   
+   html[data-theme="light"] body.cre8-admin-layout .post-admin .table-responsive,
+   html[data-theme="light"] body.cre8-admin-layout .comment-admin .table-responsive,
+   html[data-theme="light"] body.cre8-admin-layout .post-admin .table-card,
+   html[data-theme="light"] body.cre8-admin-layout .comment-admin .table-card,
+   body.cre8-admin-layout.light-mode .post-admin .table-responsive,
+   body.cre8-admin-layout.light-mode .comment-admin .table-responsive,
+   body.cre8-admin-layout.light-mode .post-admin .table-card,
+   body.cre8-admin-layout.light-mode .comment-admin .table-card,
+   body.light-mode.cre8-admin-layout .post-admin .table-responsive,
+   body.light-mode.cre8-admin-layout .comment-admin .table-responsive,
+   body.light-mode.cre8-admin-layout .post-admin .table-card,
+   body.light-mode.cre8-admin-layout .comment-admin .table-card {
+     background: #ffffff !important;
+     background-color: #ffffff !important;
+     border-color: #e5e7eb !important;
+   }
+   
+   /* Keep table links readable in light mode */
+   html[data-theme="light"] body.cre8-admin-layout .post-admin table a,
+   html[data-theme="light"] body.cre8-admin-layout .comment-admin table a,
+   body.cre8-admin-layout.light-mode .post-admin table a,
+   body.cre8-admin-layout.light-mode .comment-admin table a,
+   body.light-mode.cre8-admin-layout .post-admin table a,
+   body.light-mode.cre8-admin-layout .comment-admin table a {
+     color: #4f46e5 !important;
+   }
+
+  /* =========================================================
+   CRE8 POST STAT CARDS LIGHT MODE FIX — FINAL
+   Restore readable colored KPI cards in post dashboard.
+   ========================================================= */
+
+html[data-theme="light"] body.cre8-admin-layout .post-admin .card.stat-card-mini.stat-card-custom1,
+body.cre8-admin-layout.light-mode .post-admin .card.stat-card-mini.stat-card-custom1,
+body.light-mode.cre8-admin-layout .post-admin .card.stat-card-mini.stat-card-custom1 {
+  background: linear-gradient(135deg, #8b5cf6, #a855f7) !important;
+  background-color: #8b5cf6 !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .post-admin .card.stat-card-mini.stat-card-custom2,
+body.cre8-admin-layout.light-mode .post-admin .card.stat-card-mini.stat-card-custom2,
+body.light-mode.cre8-admin-layout .post-admin .card.stat-card-mini.stat-card-custom2 {
+  background: linear-gradient(135deg, #ec4899, #db2777) !important;
+  background-color: #ec4899 !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .post-admin .card.stat-card-mini.stat-card-custom3,
+body.cre8-admin-layout.light-mode .post-admin .card.stat-card-mini.stat-card-custom3,
+body.light-mode.cre8-admin-layout .post-admin .card.stat-card-mini.stat-card-custom3 {
+  background: linear-gradient(135deg, #86efac, #22c55e) !important;
+  background-color: #22c55e !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .post-admin .card.stat-card-mini.stat-card-custom4,
+body.cre8-admin-layout.light-mode .post-admin .card.stat-card-mini.stat-card-custom4,
+body.light-mode.cre8-admin-layout .post-admin .card.stat-card-mini.stat-card-custom4 {
+  background: linear-gradient(135deg, #a855f7, #8b5cf6) !important;
+  background-color: #a855f7 !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+
+/* Force all text inside these KPI cards to stay readable */
+html[data-theme="light"] body.cre8-admin-layout .post-admin .card.stat-card-mini *,
+body.cre8-admin-layout.light-mode .post-admin .card.stat-card-mini *,
+body.light-mode.cre8-admin-layout .post-admin .card.stat-card-mini * {
+  color: #ffffff !important;
+}
+
+/* Keep decorative circles soft, not white */
+html[data-theme="light"] body.cre8-admin-layout .post-admin .card.stat-card-mini::before,
+html[data-theme="light"] body.cre8-admin-layout .post-admin .card.stat-card-mini::after,
+body.cre8-admin-layout.light-mode .post-admin .card.stat-card-mini::before,
+body.cre8-admin-layout.light-mode .post-admin .card.stat-card-mini::after,
+body.light-mode.cre8-admin-layout .post-admin .card.stat-card-mini::before,
+body.light-mode.cre8-admin-layout .post-admin .card.stat-card-mini::after {
+  background: rgba(255, 255, 255, 0.16) !important;
+}
+
+/* Profile dropdown: works without Bootstrap/jQuery (shared header) */
+body.cre8-admin-layout .cre8-profile-dropdown {
+  position: relative;
+}
+
+body.cre8-admin-layout .cre8-profile-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: auto;
+  min-width: 220px;
+  z-index: 1200;
+}
+
+body.cre8-admin-layout .cre8-profile-dropdown.show .cre8-profile-menu,
+body.cre8-admin-layout .cre8-profile-menu.show {
+  display: block;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8-profile-menu,
+body.cre8-admin-layout.light-mode .cre8-profile-menu,
+body.light-mode.cre8-admin-layout .cre8-profile-menu {
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+}

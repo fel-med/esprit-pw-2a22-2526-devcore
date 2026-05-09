@@ -18,15 +18,63 @@ $currentUserId = (int)$_SESSION['id'];
 $posts = $postC->listPostsByCreator($creatorId);
 $stats = $postC->getCreatorStats($creatorId);
 
-$creatorDisplayName = 'Creator #1';
-if (!empty($posts) && !empty($posts[0]['creatorName'])) {
-    $creatorDisplayName = $posts[0]['creatorName'];
+$sessionUser = isset($_SESSION['user']) && is_array($_SESSION['user']) ? $_SESSION['user'] : [];
+$legacyUser = isset($_SESSION['utilisateur']) && is_array($_SESSION['utilisateur']) ? $_SESSION['utilisateur'] : [];
+
+$creatorDisplayName = trim((string) (
+    $_SESSION['nom']
+    ?? $sessionUser['nom']
+    ?? $legacyUser['nom']
+    ?? ''
+));
+
+if ($creatorDisplayName === '' && !empty($posts) && !empty($posts[0]['creatorName'])) {
+    $creatorDisplayName = trim((string) $posts[0]['creatorName']);
 }
 
-require_once '../partials/header.php';
+if ($creatorDisplayName === '') {
+    $creatorDisplayName = 'Creator #' . $creatorId;
+}
+
+$creatorEmail = trim((string) (
+    $_SESSION['email']
+    ?? $sessionUser['email']
+    ?? $legacyUser['email']
+    ?? (!empty($posts[0]['creatorEmail']) ? $posts[0]['creatorEmail'] : '')
+));
+
+$handleSource = $creatorEmail !== ''
+    ? preg_replace('/@.*$/', '', $creatorEmail)
+    : $creatorDisplayName;
+$creatorHandle = strtolower(trim((string) $handleSource));
+$creatorHandle = preg_replace('/[^a-z0-9_]+/', '_', $creatorHandle);
+$creatorHandle = trim((string) $creatorHandle, '_');
+$creatorHandle = $creatorHandle !== '' ? '@' . $creatorHandle : '@myspace_creator';
+
+$frontActive = 'myspace';
 ?>
-<link rel="stylesheet" href="../assets/post-front.css">
-<link rel="stylesheet" href="../assets/comment-front.css">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <?php require_once __DIR__ . '/../layout/front-theme-bootstrap.php'; ?>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= htmlspecialchars($pageTitle) ?></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;700;800&family=Fraunces:wght@700;800&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link href="../assets/css/styles.css" rel="stylesheet" />
+    <link href="../layout/front-header.css" rel="stylesheet" />
+    <link href="../assets/post-front.css?v=3" rel="stylesheet" />
+    <link rel="stylesheet" href="../assets/comment-front.css">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
+</head>
+<body class="d-flex flex-column min-vh-100 social-body">
+<main class="flex-shrink-0">
+<?php require_once __DIR__ . '/../layout/header.php'; ?>
 
 <header class="portfolio-hero">
     <div class="container px-4 px-lg-5">
@@ -44,7 +92,7 @@ require_once '../partials/header.php';
 
                     <div>
                         <div class="creator-name"><?= htmlspecialchars($creatorDisplayName) ?></div>
-                        <div class="creator-handle">@myspace_creator</div>
+                        <div class="creator-handle"><?= htmlspecialchars($creatorHandle) ?></div>
                         <div class="creator-stats">
                             <div class="creator-stat">
                                 <strong><?= (int)$stats['totalPosts'] ?></strong>
@@ -302,4 +350,5 @@ require_once '../partials/header.php';
 </section>
 
 <script src="../assets/comment-front.js"></script>
+<script src="../layout/front-header.js"></script>
 <?php require_once '../partials/footer.php'; ?>

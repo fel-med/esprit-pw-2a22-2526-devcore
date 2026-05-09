@@ -1,169 +1,97 @@
 <?php
-$cre8BackPath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
-$cre8BackVuePos = strpos($cre8BackPath, '/Vue/');
-$cre8BackBase = $cre8BackVuePos !== false ? substr($cre8BackPath, 0, $cre8BackVuePos) : '';
-$cre8BackLogo = $cre8BackBase . '/Vue/public/images/logo.png';
-$cre8BackAvatar = $cre8BackBase . '/Vue/public/images/face15.jpg';
-$cre8BackCurrentModule = 'dashboard';
-if (strpos($cre8BackPath, '/BackOffice/offre/') !== false
-    || strpos($cre8BackPath, '/BackOffice/condidature/') !== false
-    || strpos($cre8BackPath, '/BackOffice/cre8shield/') !== false
-) {
-    $cre8BackCurrentModule = 'offers';
-} elseif (strpos($cre8BackPath, '/BackOffice/campagne/') !== false) {
-    $cre8BackCurrentModule = 'campagne';
-} elseif (strpos($cre8BackPath, '/BackOffice/evenement/') !== false || strpos($cre8BackPath, '/BackOffice/event/') !== false) {
-    $cre8BackCurrentModule = 'events';
-} elseif (strpos($cre8BackPath, '/BackOffice/reclamation/') !== false || strpos($cre8BackPath, '/BackOffice/reclamations/') !== false) {
-    $cre8BackCurrentModule = 'reclamations';
-} elseif (strpos($cre8BackPath, '/BackOffice/utilisateur/') !== false) {
-    $cre8BackCurrentModule = 'dashboard';
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
 
-if (!function_exists('cre8BackIsActivePath')) {
-    function cre8BackIsActivePath(string $path, array $needles): bool
-    {
-        foreach ($needles as $needle) {
-            if ($needle !== '' && strpos($path, $needle) !== false) {
-                return true;
-            }
-        }
+$backActive = $backActive ?? 'dashboard';
 
-        return false;
-    }
-}
+$cre8SelfPath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
+$cre8Marker = '/Vue/BackOffice/';
+$cre8Pos = strpos($cre8SelfPath, $cre8Marker);
+$backBoRootWeb = ($cre8Pos !== false ? substr($cre8SelfPath, 0, $cre8Pos) : '') . '/Vue/BackOffice';
+$backBoUtilisateurWeb = $backBoRootWeb . '/utilisateur';
 
-if (!function_exists('cre8BackSidebarIcon')) {
-    function cre8BackSidebarIcon(string $name): string
-    {
-        $icons = [
-            'moon' => '<path d="M18.4 14.65A6.85 6.85 0 0 1 9.35 5.6 7.45 7.45 0 1 0 18.4 14.65Z" /><path d="M15.7 3.9 16.35 5.45 18 6l-1.65.55-.65 1.55-.65-1.55L13.4 6l1.65-.55.65-1.55Z" /><path d="m18.6 8.6.35.85.85.35-.85.35-.35.85-.35-.85-.85-.35.85-.35.35-.85Z" />',
-            'dashboard' => '<path d="M6.4 14.2a5.6 5.6 0 1 1 11.2 0" /><path d="M8.2 17.1h7.6" /><path d="m12 14.2 3.25-3.35" />',
-            'reclamations' => '<path d="M5 7.1h10.4" /><path d="M5 11.2h8.2" /><path d="M5 15.3h6.5" /><path d="m15.1 13.5 4.2 2.7-4.2 2.7v-5.4Z" />',
-            'offers' => '<path d="M5 5h4.7v4.7H5V5Zm6.65 0h4.7v4.7h-4.7V5Zm6.65 0H23v4.7h-4.7V5ZM5 11.65h4.7v4.7H5v-4.7Zm6.65 0h4.7v4.7h-4.7v-4.7Zm6.65 0H23v4.7h-4.7v-4.7ZM5 18.3h4.7V23H5v-4.7Zm6.65 0h4.7V23h-4.7v-4.7Zm6.65 0H23V23h-4.7v-4.7Z" />',
-            'campagne' => '<path d="M5.2 18.8v-5.7h3.1v5.7H5.2Zm5.4 0V6.2h3.1v12.6h-3.1Zm5.4 0v-8.6h3.1v8.6H16Z" />',
-            'events' => '<path d="M7 4.4h10a1.4 1.4 0 0 1 1.4 1.4v13.8H5.6V5.8A1.4 1.4 0 0 1 7 4.4Z" /><path d="M8.8 3.1v3.2M15.2 3.1v3.2M5.6 8.6h12.8" /><path d="M9 12.1h6M9 15h4.1" />',
-            'dots' => '<path d="M12 5.5h.01M12 12h.01M12 18.5h.01" />',
-        ];
+$backUserName = $_SESSION['nom'] ?? ($_SESSION['user']['nom'] ?? ($_SESSION['utilisateur']['nom'] ?? 'Utilisateur'));
+$backUserName = trim((string) $backUserName) !== '' ? trim((string) $backUserName) : 'Utilisateur';
 
-        return '<svg viewBox="0 0 24 24" aria-hidden="true">' . ($icons[$name] ?? $icons['dashboard']) . '</svg>';
-    }
-}
-
-$cre8BackMenuItems = [
-    [
-        'label' => 'Dashboard',
-        'icon' => 'dashboard',
-        'tone' => 'orange',
-        'href' => $cre8BackBase . '/Vue/BackOffice/utilisateur/index.php',
-        'active' => $cre8BackCurrentModule === 'dashboard',
-    ],
-    [
-        'label' => 'reclamations',
-        'icon' => 'reclamations',
-        'tone' => 'red',
-        'href' => '#',
-        'active' => $cre8BackCurrentModule === 'reclamations',
-    ],
-    [
-        'label' => 'offers',
-        'icon' => 'offers',
-        'tone' => 'blue',
-        'href' => $cre8BackBase . '/Vue/BackOffice/offre/index.php',
-        'active' => $cre8BackCurrentModule === 'offers',
-    ],
-    [
-        'label' => 'campagne',
-        'icon' => 'campagne',
-        'tone' => 'green',
-        'href' => $cre8BackBase . '/Vue/BackOffice/campagne/index.php',
-        'active' => $cre8BackCurrentModule === 'campagne',
-    ],
-    [
-        'label' => 'events',
-        'icon' => 'events',
-        'tone' => 'purple',
-        'href' => $cre8BackBase . '/Vue/BackOffice/evenement/index.php',
-        'active' => $cre8BackCurrentModule === 'events',
-    ],
+$backItems = [
+    ['key' => 'dashboard',      'label' => 'Dashboard',      'url' => $backBoRootWeb . '/dashboard/index.php',      'icon' => 'mdi-speedometer',            'iconClass' => 'text-primary'],
+    ['key' => 'users',          'label' => 'Users',          'url' => $backBoRootWeb . '/utilisateur/index.php',    'icon' => 'mdi-account-multiple',      'iconClass' => 'text-warning'],
+    ['key' => 'reclamations',   'label' => 'Reclamations',   'url' => $backBoRootWeb . '/utilisateur/reclamations.php', 'icon' => 'mdi-playlist-play',      'iconClass' => 'text-danger'],
+    ['key' => 'collaborations', 'label' => 'Collaborations', 'url' => $backBoRootWeb . '/offre/index.php',          'icon' => 'mdi-briefcase-check',       'iconClass' => 'text-info'],
+    ['key' => 'campaigns',      'label' => 'Campaigns',      'url' => $backBoRootWeb . '/campagne/index.php',       'icon' => 'mdi-chart-bar',             'iconClass' => 'text-success'],
+    ['key' => 'products',       'label' => 'Products',       'url' => $backBoRootWeb . '/produit/index.php',        'icon' => 'mdi-cube-outline',          'iconClass' => 'text-primary'],
+    ['key' => 'contracts',      'label' => 'Contracts',      'url' => $backBoRootWeb . '/contrat/index.php',        'icon' => 'mdi-file-document-outline', 'iconClass' => 'text-warning'],
+    ['key' => 'posts',          'label' => 'Posts',          'url' => $backBoRootWeb . '/post/index.php',           'icon' => 'mdi-format-list-bulleted',  'iconClass' => 'text-danger'],
+    ['key' => 'comments',       'label' => 'Comments',       'url' => $backBoRootWeb . '/comment/index.php',        'icon' => 'mdi-comment-text-outline',  'iconClass' => 'text-info'],
+    ['key' => 'events',         'label' => 'Events',         'url' => $backBoRootWeb . '/evenement/index.php',      'icon' => 'mdi-calendar-check',        'iconClass' => 'text-success'],
+    ['key' => 'forum',          'label' => 'Forum',          'url' => $backBoRootWeb . '/forum/index.php',          'icon' => 'mdi-forum-outline',         'iconClass' => 'text-primary'],
 ];
 ?>
-<aside class="cre8-admin-sidebar" aria-label="BackOffice sidebar">
-  <a class="cre8-admin-brand cre8-back-sidebar-logo" href="<?php echo htmlspecialchars($cre8BackBase . '/Vue/BackOffice/utilisateur/index.php'); ?>">
-    <span class="cre8-back-logo-word">Cre</span>
-    <img src="<?php echo htmlspecialchars($cre8BackLogo); ?>" alt="Cre8Connect logo mark">
-    <span class="cre8-back-logo-word cre8-back-logo-word-end">connect</span>
-  </a>
-
-  <div class="cre8-back-sidebar-profile">
-    <span class="cre8-back-profile-avatar">
-      <img src="<?php echo htmlspecialchars($cre8BackAvatar); ?>" alt="Utilisateur avatar">
-    </span>
-    <span class="cre8-back-profile-copy">
-      <strong>Utilisateur</strong>
-      <small>Admin</small>
-    </span>
-    <span class="cre8-back-profile-dots" aria-hidden="true"><?php echo cre8BackSidebarIcon('dots'); ?></span>
+<!-- partial:partials/_sidebar.html -->
+<nav class="sidebar sidebar-offcanvas" id="sidebar">
+  <div class="sidebar-brand-wrapper d-none d-lg-flex align-items-center justify-content-center fixed-top">
+    <a class="sidebar-brand brand-logo cre8-sidebar-wordmark" href="<?php echo htmlspecialchars($backBoRootWeb . '/dashboard/index.php'); ?>" aria-label="Cre8connect BackOffice">
+      <span>Cre</span><img src="<?php echo htmlspecialchars($backBoUtilisateurWeb . '/assets/images/logo-mini.svg'); ?>" alt="8"><span>connect</span>
+    </a>
+    <a class="sidebar-brand brand-logo-mini" href="<?php echo htmlspecialchars($backBoRootWeb . '/dashboard/index.php'); ?>">
+      <img src="<?php echo htmlspecialchars($backBoUtilisateurWeb . '/assets/images/logo-mini.svg'); ?>" alt="logo">
+    </a>
   </div>
 
-  <nav class="cre8-admin-nav cre8-back-nav" aria-label="Admin navigation">
-    <h2 class="cre8-back-nav-title">Navigation</h2>
+  <ul class="nav">
+    <li class="nav-item profile">
+      <div class="profile-desc">
+        <div class="profile-pic">
+          <div class="count-indicator">
+            <img class="img-xs rounded-circle" src="<?php echo htmlspecialchars($backBoUtilisateurWeb . '/assets/images/faces/face15.jpg'); ?>" alt="Admin avatar">
+            <span class="count bg-success"></span>
+          </div>
+          <div class="profile-name">
+            <h5 class="mb-0 font-weight-normal"><?php echo htmlspecialchars($backUserName); ?></h5>
+            <span>Admin</span>
+          </div>
+        </div>
 
-    <button type="button" class="cre8-admin-nav-item cre8-back-nav-item cre8-back-theme-toggle" data-theme-toggle data-default-theme="dark">
-      <span class="cre8-admin-nav-icon cre8-back-nav-icon" data-theme-toggle-icon aria-hidden="true"><?php echo cre8BackSidebarIcon('moon'); ?></span>
-      <span>Mode jour / nuit</span>
-    </button>
+        <a href="#" id="profile-dropdown" data-toggle="dropdown" aria-label="Profile menu"><i class="mdi mdi-dots-vertical"></i></a>
+        <div class="dropdown-menu dropdown-menu-right sidebar-dropdown preview-list" aria-labelledby="profile-dropdown">
+          <a href="#" class="dropdown-item preview-item">
+            <div class="preview-thumbnail"><div class="preview-icon bg-dark rounded-circle"><i class="mdi mdi-settings text-primary"></i></div></div>
+            <div class="preview-item-content"><p class="preview-subject ellipsis mb-1 text-small">Account settings</p></div>
+          </a>
+          <div class="dropdown-divider"></div>
+          <a href="#" class="dropdown-item preview-item">
+            <div class="preview-thumbnail"><div class="preview-icon bg-dark rounded-circle"><i class="mdi mdi-onepassword text-info"></i></div></div>
+            <div class="preview-item-content"><p class="preview-subject ellipsis mb-1 text-small">Change Password</p></div>
+          </a>
+          <div class="dropdown-divider"></div>
+          <a href="#" class="dropdown-item preview-item">
+            <div class="preview-thumbnail"><div class="preview-icon bg-dark rounded-circle"><i class="mdi mdi-calendar-today text-success"></i></div></div>
+            <div class="preview-item-content"><p class="preview-subject ellipsis mb-1 text-small">To-do list</p></div>
+          </a>
+        </div>
+      </div>
+    </li>
 
-    <?php foreach ($cre8BackMenuItems as $cre8BackItem): ?>
-      <a
-        class="cre8-admin-nav-item cre8-back-nav-item<?php echo !empty($cre8BackItem['active']) ? ' is-active' : ''; ?>"
-        href="<?php echo htmlspecialchars($cre8BackItem['href']); ?>"
-      >
-        <span class="cre8-admin-nav-icon cre8-back-nav-icon cre8-back-icon-<?php echo htmlspecialchars($cre8BackItem['tone']); ?>"><?php echo cre8BackSidebarIcon($cre8BackItem['icon']); ?></span>
-        <span><?php echo htmlspecialchars($cre8BackItem['label']); ?></span>
-      </a>
+    <li class="nav-item nav-category">
+      <span class="nav-link">Navigation</span>
+    </li>
+
+    <?php foreach ($backItems as $item): ?>
+      <?php
+        $isDisabled = !empty($item['disabled']);
+        $isActive = $backActive === $item['key'];
+        $itemClass = 'nav-item menu-items' . ($isActive ? ' active' : '') . ($isDisabled ? ' back-nav-disabled' : '');
+      ?>
+      <li class="<?php echo htmlspecialchars($itemClass); ?>">
+        <a class="nav-link" href="<?php echo htmlspecialchars($item['url']); ?>"<?php echo $isDisabled ? ' aria-disabled="true" tabindex="-1" onclick="return false;"' : ''; ?>>
+          <span class="menu-icon">
+            <i class="mdi <?php echo htmlspecialchars($item['icon'] . ' ' . $item['iconClass']); ?>"></i>
+          </span>
+          <span class="menu-title"><?php echo htmlspecialchars($item['label']); ?></span>
+        </a>
+      </li>
     <?php endforeach; ?>
-  </nav>
-</aside>
-
-<script>
-(() => {
-  const storageKey = 'cre8connect_theme';
-  const themeButtons = document.querySelectorAll('[data-theme-toggle]');
-  if (!themeButtons.length) {
-    return;
-  }
-
-  const normalizeTheme = (theme, fallback) => theme === 'dark' || theme === 'light' ? theme : fallback;
-  const moonIcon = '<?php echo addslashes(cre8BackSidebarIcon('moon')); ?>';
-  const sunIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4V2M12 22v-2M4.9 4.9 3.5 3.5M20.5 20.5l-1.4-1.4M4 12H2M22 12h-2M4.9 19.1l-1.4 1.4M20.5 3.5l-1.4 1.4" /><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z" /></svg>';
-
-  const applyTheme = (theme, fallback = 'dark') => {
-    const normalized = normalizeTheme(theme, fallback);
-    document.documentElement.setAttribute('data-theme', normalized);
-    themeButtons.forEach((button) => {
-      const icon = button.querySelector('[data-theme-toggle-icon]');
-      if (icon) {
-        icon.innerHTML = normalized === 'dark' ? moonIcon : sunIcon;
-      }
-      button.setAttribute('aria-label', normalized === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
-    });
-  };
-
-  themeButtons.forEach((button) => {
-    if (button.dataset.themeReady === '1') {
-      return;
-    }
-    button.dataset.themeReady = '1';
-    const defaultTheme = normalizeTheme(button.dataset.defaultTheme, 'dark');
-    button.addEventListener('click', () => {
-      const currentTheme = normalizeTheme(document.documentElement.getAttribute('data-theme'), defaultTheme);
-      const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      localStorage.setItem(storageKey, nextTheme);
-      applyTheme(nextTheme, defaultTheme);
-    });
-  });
-
-  applyTheme(normalizeTheme(localStorage.getItem(storageKey), 'dark'), 'dark');
-})();
-</script>
+  </ul>
+</nav>
+<!-- partial -->

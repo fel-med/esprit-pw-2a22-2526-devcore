@@ -1,23 +1,130 @@
 <?php
-session_start();
+require_once __DIR__ . '/../layout/session_bridge.php';
 
-if (!isset($_SESSION['user'])) {
-    header("Location: login.php");
-    exit();
+$currentFrontUser = cre8_front_session_user();
+
+if (empty($currentFrontUser['isLoggedIn'])) {
+    header('Location: ' . cre8_front_login_url());
+    exit;
 }
 
-$userName = $_SESSION['nom'] ?? 'Unknown User';
-$userInitial = strtoupper(substr($userName, 0, 1));
+$currentRole = cre8_front_normalize_role($currentFrontUser['role'] ?? '');
+
+if ($currentRole === 'admin') {
+    $scriptPath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
+    $frontOfficeMarker = '/Vue/FrontOffice/';
+    $frontOfficePos = strpos($scriptPath, $frontOfficeMarker);
+    $projectBase = $frontOfficePos !== false ? substr($scriptPath, 0, $frontOfficePos) : '';
+    header('Location: ' . $projectBase . '/Vue/BackOffice/utilisateur/index.php');
+    exit;
+}
+
+$userName = $currentFrontUser['nom']
+    ?? $_SESSION['nom']
+    ?? ($_SESSION['user']['nom'] ?? 'Utilisateur');
+$userName = trim((string) $userName);
+$userName = $userName !== '' ? $userName : 'Utilisateur';
+
+$userInitial = function_exists('mb_substr')
+    ? mb_substr($userName, 0, 1, 'UTF-8')
+    : substr($userName, 0, 1);
+$userInitial = strtoupper((string) $userInitial);
+$userInitial = $userInitial !== '' ? $userInitial : 'U';
+
+$userHandle = strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '_', $userName), '_'));
+$userHandle = $userHandle !== '' ? $userHandle : 'user';
+
+$isBrand = $currentRole === 'marque';
+$frontActive = 'home';
+
+$pageTitle = $isBrand ? 'Brand Home — Cre8connect' : 'Creator Home — Cre8connect';
+$roleLabel = $isBrand ? 'Brand' : 'Creator';
+$roleIcon = $isBrand ? 'bi-shop-window' : 'bi-patch-check-fill';
+
+$quickCards = $isBrand
+    ? [
+        [
+            'href' => '../campagne/index.php',
+            'iconClass' => 'icon-purple',
+            'icon' => 'bi-megaphone',
+            'title' => 'My Campaigns',
+            'subtitle' => 'Créer et gérer vos campagnes',
+        ],
+        [
+            'href' => '../produit/index.php',
+            'iconClass' => 'icon-blue',
+            'icon' => 'bi-box-seam',
+            'title' => 'Products',
+            'subtitle' => 'Organiser votre catalogue produits',
+        ],
+        [
+            'href' => '../contrat/index.php',
+            'iconClass' => 'icon-green',
+            'icon' => 'bi-file-earmark-text',
+            'title' => 'Contracts',
+            'subtitle' => 'Suivre vos accords de collaboration',
+        ],
+        [
+            'href' => '../offre/brand_index.php',
+            'iconClass' => 'icon-red',
+            'icon' => 'bi-briefcase',
+            'title' => 'Collaborations',
+            'subtitle' => 'Gérer offres et candidatures reçues',
+        ],
+    ]
+    : [
+        [
+            'href' => '../post/portfolio.php',
+            'iconClass' => 'icon-purple',
+            'icon' => 'bi-person-badge',
+            'title' => 'My Space',
+            'subtitle' => 'Gérer votre portfolio et vos publications',
+        ],
+        [
+            'href' => '../post/index.php',
+            'iconClass' => 'icon-blue',
+            'icon' => 'bi-newspaper',
+            'title' => 'Actualité',
+            'subtitle' => 'Voir les publications de la communauté',
+        ],
+        [
+            'href' => '../offre/creator_list.php',
+            'iconClass' => 'icon-green',
+            'icon' => 'bi-briefcase',
+            'title' => 'Offers',
+            'subtitle' => 'Consulter les invitations des marques',
+        ],
+        [
+            'href' => '../condidature/index.php',
+            'iconClass' => 'icon-red',
+            'icon' => 'bi-send-check',
+            'title' => 'Candidatures',
+            'subtitle' => 'Suivre vos réponses et négociations',
+        ],
+        [
+            'href' => '../campagne/indexC.php',
+            'iconClass' => 'icon-purple',
+            'icon' => 'bi-megaphone',
+            'title' => 'Campaigns',
+            'subtitle' => 'Découvrir les campagnes disponibles',
+        ],
+    ];
+
+$welcomeText = $isBrand
+    ? 'Votre espace marque vous aide à piloter vos campagnes, organiser vos produits, suivre vos contrats et gérer vos collaborations avec les créateurs depuis un seul endroit.'
+    : 'Votre espace créateur vous aide à publier votre contenu, développer votre portfolio, découvrir les campagnes disponibles, répondre aux offres et suivre vos candidatures facilement.';
 ?>
 <!DOCTYPE html>
-<html lang="fr" data-theme="light">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <?php require_once __DIR__ . '/../layout/front-theme-bootstrap.php'; ?>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Creator Page — Cre8connect</title>
+    <title><?php echo htmlspecialchars($pageTitle); ?></title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=Fraunces:wght@700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../layout/front-header.css" rel="stylesheet">
     <style>
         *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
@@ -59,95 +166,6 @@ $userInitial = strtoupper(substr($userName, 0, 1));
             flex-direction: column;
             transition: background 0.3s, color 0.3s;
         }
-
-        /* ══ NAVBAR ══ */
-        nav {
-            height: 70px;
-            background: var(--white);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 40px;
-            border-bottom: 1px solid var(--border);
-            position: sticky;
-            top: 0;
-            z-index: 999;
-            box-shadow: 0 2px 12px rgba(15,14,26,0.04);
-        }
-
-        .nav-logo {
-            text-decoration: none;
-            font-size: 24px;
-            font-weight: 800;
-            font-family: 'Fraunces', serif;
-            color: var(--primary);
-        }
-
-        .nav-links {
-            list-style: none;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: var(--text-sub);
-            padding: 8px 14px;
-            border-radius: 999px;
-            font-weight: 700;
-            font-size: 14px;
-            transition: all 0.18s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .nav-links a:hover { background: var(--primary-light); color: var(--primary); }
-        .nav-links a.active { background: var(--primary-light); color: var(--primary); }
-
-        .nav-links a.nav-myspace {
-            background: var(--primary-light);
-            color: var(--primary);
-        }
-        .nav-links a.nav-myspace:hover {
-            background: var(--primary-light);
-            color: var(--primary);
-        }
-
-        .nav-links a.nav-logout { color: var(--danger); }
-        .nav-links a.nav-logout:hover { background: #fff1f3; color: var(--danger); }
-
-        .nav-right { display: flex; align-items: center; gap: 12px; }
-
-        .nav-badge {
-            background: var(--primary-light);
-            color: var(--primary);
-            padding: 7px 14px;
-            border-radius: 999px;
-            font-size: 13px;
-            font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .nav-avatar {
-            width: 38px; height: 38px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #5b4fff, #8b5cf6);
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: 800; font-size: 15px;
-            box-shadow: 0 3px 10px rgba(91,79,255,0.3);
-        }
-
-        .theme-btn {
-            background: none; border: none; cursor: pointer;
-            color: var(--text-sub); font-size: 18px; padding: 8px;
-            border-radius: 50%; transition: all 0.18s;
-            display: flex; align-items: center;
-        }
-        .theme-btn:hover { background: var(--primary-light); color: var(--primary); }
 
         /* ══ PAGE ══ */
         .page-wrapper {
@@ -303,45 +321,21 @@ $userInitial = strtoupper(substr($userName, 0, 1));
 
         /* ══ RESPONSIVE ══ */
         @media(max-width: 768px) {
-            nav { padding: 0 16px; height: auto; flex-wrap: wrap; gap: 10px; padding: 12px 16px; }
-            .nav-links { gap: 2px; }
-            .nav-links a { padding: 7px 10px; font-size: 12px; }
             .page-wrapper { padding: 25px 16px 60px; }
             .creator-cover { padding: 1.5rem; }
             .cover-name { font-size: 1.3rem; }
             .welcome-banner { padding: 2rem 1.5rem; }
             .welcome-banner h2 { font-size: 1.6rem; }
             .quick-links { grid-template-columns: 1fr 1fr; }
-            .nav-badge { display: none; }
         }
     </style>
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
 </head>
 <body>
 
-<!-- ══ NAVBAR ══ -->
-<nav>
-    <a class="nav-logo" href="creator.php">Cre8connect</a>
-
-    <ul class="nav-links">
-        <li><a href="creator.php" class="active"><i class="bi bi-house"></i> Home</a></li>
-        <li><a href="reclamation.php"><i class="bi bi-flag"></i> Réclamation</a></li>
-        <li><a href="../post/portfolio.php" class="nav-myspace"><i class="bi bi-person-badge"></i> My Space</a></li>
-        <li>
-            <button class="theme-btn" id="themeBtn" title="Toggle dark mode">
-                <i class="bi bi-moon-stars" id="themeIcon"></i>
-            </button>
-        </li>
-        <li><a href="logout.php" class="nav-logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
-    </ul>
-
-    <div class="nav-right">
-        <div class="nav-badge">
-            <i class="bi bi-person-circle"></i>
-            <?php echo htmlspecialchars($userName); ?>
-        </div>
-        <div class="nav-avatar"><?php echo $userInitial; ?></div>
-    </div>
-</nav>
+<?php require_once __DIR__ . '/../layout/header.php'; ?>
 
 <!-- ══ CONTENT ══ -->
 <div class="page-wrapper">
@@ -351,35 +345,28 @@ $userInitial = strtoupper(substr($userName, 0, 1));
         <div class="cover-avatar"><?php echo $userInitial; ?></div>
         <div>
             <div class="cover-name"><?php echo htmlspecialchars($userName); ?></div>
-            <div class="cover-role"><i class="bi bi-patch-check-fill"></i> Creator</div>
-            <div class="cover-handle">@<?php echo strtolower(str_replace(' ', '_', $userName)); ?></div>
+            <div class="cover-role"><i class="bi <?php echo htmlspecialchars($roleIcon); ?>"></i> <?php echo htmlspecialchars($roleLabel); ?></div>
+            <div class="cover-handle">@<?php echo htmlspecialchars($userHandle); ?></div>
         </div>
     </div>
 
     <!-- Quick links -->
     <div class="quick-links">
-        <a href="../post/portfolio.php" class="quick-card">
-            <div class="quick-card-icon icon-purple"><i class="bi bi-person-badge"></i></div>
-            <div>
-                <div class="quick-card-title">My Space</div>
-                <div class="quick-card-sub">Voir et gérer vos publications</div>
-            </div>
-        </a>
-
-        <a href="../post/index.php" class="quick-card">
-            <div class="quick-card-icon icon-blue"><i class="bi bi-newspaper"></i></div>
-            <div>
-                <div class="quick-card-title">Actualité</div>
-                <div class="quick-card-sub">Explorer le feed communautaire</div>
-            </div>
-        </a>
-
+        <?php foreach ($quickCards as $card): ?>
+            <a href="<?php echo htmlspecialchars($card['href']); ?>" class="quick-card">
+                <div class="quick-card-icon <?php echo htmlspecialchars($card['iconClass']); ?>"><i class="bi <?php echo htmlspecialchars($card['icon']); ?>"></i></div>
+                <div>
+                    <div class="quick-card-title"><?php echo htmlspecialchars($card['title']); ?></div>
+                    <div class="quick-card-sub"><?php echo htmlspecialchars($card['subtitle']); ?></div>
+                </div>
+            </a>
+        <?php endforeach; ?>
     </div>
 
     <!-- Welcome banner -->
     <div class="welcome-banner">
         <h2>Welcome, <?php echo htmlspecialchars($userName); ?> 👋</h2>
-        <p>Votre espace créateur vous attend. Publiez, partagez et connectez-vous avec votre audience.</p>
+        <p><?php echo htmlspecialchars($welcomeText); ?></p>
     </div>
 
 </div>
@@ -387,25 +374,7 @@ $userInitial = strtoupper(substr($userName, 0, 1));
 <!-- ══ FOOTER ══ -->
 <footer>Copyright © Cre8connect 2026</footer>
 
-<script>
-    const btn  = document.getElementById('themeBtn');
-    const icon = document.getElementById('themeIcon');
-    const html = document.documentElement;
-
-    function applyTheme(t) {
-        html.setAttribute('data-theme', t);
-        localStorage.setItem('cre8_theme', t);
-        icon.className = t === 'dark' ? 'bi bi-brightness-high' : 'bi bi-moon-stars';
-    }
-
-    const saved = localStorage.getItem('cre8_theme') ||
-        (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    applyTheme(saved);
-
-    btn.addEventListener('click', () => {
-        applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
-    });
-</script>
+<script src="../layout/front-header.js"></script>
 
 </body>
 </html>

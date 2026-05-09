@@ -1,10 +1,7 @@
 <?php
-session_start();
-
-if (!isset($_SESSION['utilisateur'])) {
-    $_SESSION['utilisateur']['id'] = 2;
-    $_SESSION['utilisateur']['role'] = 'createur';
-}
+require_once __DIR__ . '/../layout/session_bridge.php';
+$currentUser = cre8_front_require_user('createur');
+$frontActive = 'collaborations';
 
 require_once __DIR__ . '/../../../Controleur/offreC.php';
 require_once __DIR__ . '/../../../Controleur/condidatureC.php';
@@ -12,7 +9,7 @@ require_once __DIR__ . '/../../../Controleur/condidatureC.php';
 $offreController = new OffreC();
 $candidatureController = new CondidatureC();
 $idOffre = isset($_GET['idOffre']) && is_numeric($_GET['idOffre']) ? (int) $_GET['idOffre'] : null;
-$sessionUser = $_SESSION['utilisateur'] ?? [];
+$sessionUser = $currentUser;
 $idCreateur = isset($sessionUser['id'], $sessionUser['role']) && $sessionUser['role'] === 'createur'
     ? (int) $sessionUser['id']
     : (isset($_GET['idCreateur']) && is_numeric($_GET['idCreateur']) ? (int) $_GET['idCreateur'] : null);
@@ -136,10 +133,15 @@ $declineWorkspaceUrl = $idOffre !== null ? buildResponseWorkspaceUrl($idOffre, '
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <?php require_once __DIR__ . '/../layout/front-theme-bootstrap.php'; ?>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invitation Details - Cre8Connect</title>
     <link rel="stylesheet" href="../css/frontoffice.css">
     <link rel="stylesheet" href="offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre.css')); ?>">
+    <link rel="stylesheet" href="../layout/front-header.css">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
 </head>
 <body>
     <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
@@ -313,5 +315,6 @@ $cre8PilotContext = [
 ];
 require __DIR__ . '/../condidature/cre8pilot_widget.php';
 ?>
+    <script src="../layout/front-header.js"></script>
 </body>
 </html>

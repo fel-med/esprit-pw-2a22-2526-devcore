@@ -5878,3 +5878,154 @@ html:not([data-theme="light"]) body.cre8-admin-layout .admin-summary .admin-card
     color: #cbd5e1 !important;
     opacity: 1 !important;
 }
+
+/* =========================================================
+   CRE8 OFFER/CANDIDATURE KPI CARDS — POSTS-STYLE FINAL FIX
+   Scoped to admin-summary KPI cards only.
+   Keeps tables/forms/charts/buttons untouched.
+   ========================================================= */
+.admin-shell .admin-summary .bo-kpi-card,
+body.cre8-admin-layout .admin-shell .admin-summary .bo-kpi-card {
+    position: relative !important;
+    min-height: 108px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+    overflow: hidden !important;
+    padding: 1.25rem 1.5rem !important;
+    border: 0 !important;
+    border-radius: 16px !important;
+    text-align: left !important;
+    box-shadow: 0 18px 38px rgba(15, 23, 42, 0.16) !important;
+    transform: none !important;
+}
+
+.admin-shell .admin-summary .bo-kpi-card::before,
+body.cre8-admin-layout .admin-shell .admin-summary .bo-kpi-card::before {
+    display: none !important;
+    content: none !important;
+}
+
+.admin-shell .admin-summary .bo-kpi-card::after,
+body.cre8-admin-layout .admin-shell .admin-summary .bo-kpi-card::after {
+    content: "" !important;
+    position: absolute !important;
+    right: -20px !important;
+    bottom: -20px !important;
+    width: 82px !important;
+    height: 82px !important;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, 0.14) !important;
+    pointer-events: none !important;
+}
+
+.admin-shell .admin-summary .bo-kpi-card:hover,
+body.cre8-admin-layout .admin-shell .admin-summary .bo-kpi-card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.2) !important;
+}
+
+.admin-shell .admin-summary .bo-kpi-card h3,
+body.cre8-admin-layout .admin-shell .admin-summary .bo-kpi-card h3 {
+    position: relative !important;
+    z-index: 1 !important;
+    margin: 0 0 0.55rem !important;
+    color: rgba(255, 255, 255, 0.86) !important;
+    font-size: 0.72rem !important;
+    font-weight: 800 !important;
+    line-height: 1.15 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+}
+
+.admin-shell .admin-summary .bo-kpi-card p,
+body.cre8-admin-layout .admin-shell .admin-summary .bo-kpi-card p {
+    position: relative !important;
+    z-index: 1 !important;
+    margin: 0 !important;
+    color: #ffffff !important;
+    font-size: 1.85rem !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    letter-spacing: -0.02em !important;
+    text-shadow: none !important;
+}
+
+.admin-shell .admin-summary .bo-kpi-card small,
+body.cre8-admin-layout .admin-shell .admin-summary .bo-kpi-card small {
+    position: relative !important;
+    z-index: 1 !important;
+    display: block !important;
+    margin-top: 0.68rem !important;
+    color: rgba(255, 255, 255, 0.76) !important;
+    font-size: 0.86rem !important;
+    font-weight: 600 !important;
+    line-height: 1.25 !important;
+    opacity: 1 !important;
+}
+
+.admin-shell .admin-summary .bo-kpi-card,
+.admin-shell .admin-summary .bo-kpi-card *,
+body.cre8-admin-layout .admin-shell .admin-summary .bo-kpi-card,
+body.cre8-admin-layout .admin-shell .admin-summary .bo-kpi-card * {
+    color: #ffffff !important;
+}
+
+.admin-shell .admin-summary .bo-kpi-card-1,
+body.cre8-admin-layout .admin-shell .admin-summary .bo-kpi-card-1 {
+    background: linear-gradient(135deg, #8b5cf6, #a78bfa) !important;
+    background-color: #8b5cf6 !important;
+}
+
+.admin-shell .admin-summary .bo-kpi-card-2,
+body.cre8-admin-layout .admin-shell .admin-summary .bo-kpi-card-2 {
+    background: linear-gradient(135deg, #ec4899, #db2777) !important;
+    background-color: #ec4899 !important;
+}
+
+.admin-shell .admin-summary .bo-kpi-card-3,
+body.cre8-admin-layout .admin-shell .admin-summary .bo-kpi-card-3 {
+    background: linear-gradient(135deg, #98d882, #22c55e) !important;
+    background-color: #22c55e !important;
+}
+
+.admin-shell .admin-summary .bo-kpi-card-4,
+body.cre8-admin-layout .admin-shell .admin-summary .bo-kpi-card-4 {
+    background: linear-gradient(135deg, #a855f7, #c084fc) !important;
+    background-color: #a855f7 !important;
+}
+
+.admin-shell .admin-summary .bo-kpi-card-5,
+body.cre8-admin-layout .admin-shell .admin-summary .bo-kpi-card-5 {
+    background: linear-gradient(135deg, #d946ef, #c084fc) !important;
+    background-color: #d946ef !important;
+}
+
+.admin-shell .admin-summary .bo-kpi-card-6,
+body.cre8-admin-layout .admin-shell .admin-summary .bo-kpi-card-6 {
+    background: linear-gradient(135deg, #f0abfc, #f9a8d4) !important;
+    background-color: #f0abfc !important;
+}
+
+/* Light and dark mode both keep KPI cards as strong colored indicators. */
+html[data-theme="light"] body.cre8-admin-layout .admin-shell .admin-summary .bo-kpi-card,
+body.cre8-admin-layout.light-mode .admin-shell .admin-summary .bo-kpi-card,
+body.light-mode.cre8-admin-layout .admin-shell .admin-summary .bo-kpi-card,
+html:not([data-theme="light"]) body.cre8-admin-layout .admin-shell .admin-summary .bo-kpi-card {
+    border-color: transparent !important;
+}
+
+@media (max-width: 720px) {
+    .admin-shell .admin-summary .bo-kpi-card,
+    body.cre8-admin-layout .admin-shell .admin-summary .bo-kpi-card {
+        min-height: 104px !important;
+        padding: 1.05rem 1.2rem !important;
+    }
+
+    .admin-shell .admin-summary .bo-kpi-card p,
+    body.cre8-admin-layout .admin-shell .admin-summary .bo-kpi-card p {
+        font-size: 1.65rem !important;
+    }
+}
+

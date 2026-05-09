@@ -6,12 +6,15 @@
 
 require_once __DIR__ . '/../../../Controleur/contratC.php';
 require_once __DIR__ . '/../../../Modele/contrat.php';
+require_once __DIR__ . '/../layout/session_bridge.php';
+$currentBrandUser = cre8_front_require_user('marque');
+
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 $controller = new ContratC();
 $action     = $_GET['action'] ?? 'index';
-$idMarque   = $_SESSION['user_id'] ?? 2;
+$idMarque = (int) ($currentBrandUser['id'] ?? 0);
 $contrat    = null;
 $iaResult   = null;
 $iaError    = '';
@@ -86,11 +89,14 @@ $total    = count($contrats);
 $pending  = count(array_filter($contrats, fn($c) => $c['statut'] === 'en_attente'));
 $signed   = count(array_filter($contrats, fn($c) => $c['statut'] === 'signe'));
 $totalVal = array_sum(array_column($contrats, 'montant'));
+
+$frontActive = 'campaigns';
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<?php require_once __DIR__ . '/../layout/front-theme-bootstrap.php'; ?>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mes Contrats — Cre8Connect</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
@@ -109,7 +115,8 @@ $totalVal = array_sum(array_column($contrats, 'montant'));
 }
 
 /* ===== ADDED FEATURE: LIGHT / DARK MODE CSS ===== */
-body.dark-mode {
+body.dark-mode,
+html[data-theme="dark"] body {
     --bg:#111827;--bg-white:#1f2937;--bg-soft:#374151;
     --border:#374151;--border-dark:#4b5563;
     --text-primary:#f9fafb;--text-secondary:#d1d5db;--text-muted:#9ca3af;
@@ -134,7 +141,41 @@ nav{background:var(--bg-white);border-bottom:1px solid var(--border);padding:0 4
 .avatar-circle{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;}
 
 .page-header{background:linear-gradient(135deg,var(--accent) 0%,#8b5cf6 100%);padding:40px;color:white;}
-.page-header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;}
+.page-header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+.contract-front .page-header .front-lang-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.45);
+    background: rgba(255,255,255,0.12);
+    flex-shrink: 0;
+}
+.contract-front .page-header .front-lang-btn {
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: rgba(255,255,255,0.88);
+    font: inherit;
+    font-size: 0.76rem;
+    font-weight: 800;
+    padding: 0.4rem 0.7rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.contract-front .page-header .front-lang-btn:hover { color: #fff; }
+.contract-front .page-header .front-lang-btn.is-active {
+    background: #fff;
+    color: #7c3aed;
+}
+.contract-front .page-header-actions-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
 .page-header h1{font-family:'Instrument Serif',serif;font-size:1.9rem;font-weight:400;margin-bottom:4px;}
 .page-header p{font-size:.9rem;opacity:.85;}
 
@@ -195,38 +236,36 @@ nav{background:var(--bg-white);border-bottom:1px solid var(--border);padding:0 4
 .toast{position:fixed;bottom:24px;right:24px;background:var(--success);color:#fff;padding:12px 20px;border-radius:10px;display:none;z-index:999;}
 .toast.show{display:flex;}
 </style>
+
+    <!-- Shared FrontOffice header assets -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="../layout/front-header.css">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
 </head>
 <body>
 
-<nav>
-    <div class="nav-logo">Cre8<em>Connect</em></div>
-    <div class="nav-links">
-        <a href="#" class="nav-link" data-i18n="dashboard">Dashboard</a>
-        <a href="../campagne/index.php" class="nav-link" data-i18n="campaigns">Campagnes</a>
-        <a href="../produit/index.php" class="nav-link" data-i18n="products">Produits</a>
-        <a href="index.php?action=index" class="nav-link active" data-i18n="contracts">Contrats</a>
-    </div>
-    <div class="nav-controls">
-        <select class="control-btn" id="langSwitcher" onchange="switchLanguage(this.value)">
-            <option value="fr">FR</option>
-            <option value="en">EN</option>
-        </select>
-        <button class="control-btn" id="themeToggle" onclick="toggleDarkMode()">🌙</button>
-        <div class="avatar-pill"><div class="avatar-circle">M</div> <span data-i18n="my_brand">Ma Marque</span></div>
-    </div>
-</nav>
+<?php require_once __DIR__ . '/../layout/header.php'; ?>
 
+<div class="contract-front">
 <div class="page-header">
     <div class="page-header-inner">
         <div>
             <h1 data-i18n="header_title">Mes Contrats</h1>
             <p data-i18n="header_subtitle">Gérez vos accords de collaboration et générez des contrats avec l'IA</p>
         </div>
-        <?php if (!$isEdit && !$isCreate): ?>
-        <a href="index.php?action=create" class="btn btn-sm" style="background:rgba(255,255,255,.2);border:1px solid #fff;color:#fff;" data-i18n="new_contract">
-            + Nouveau contrat
-        </a>
-        <?php endif; ?>
+        <div class="page-header-actions-row">
+            <div class="front-lang-switch" role="group" aria-label="Language">
+                <button type="button" class="front-lang-btn" data-lang-choice="en" aria-pressed="false">EN</button>
+                <button type="button" class="front-lang-btn" data-lang-choice="fr" aria-pressed="false">FR</button>
+            </div>
+            <?php if (!$isEdit && !$isCreate): ?>
+            <a href="index.php?action=create" class="btn btn-sm" style="background:rgba(255,255,255,.2);border:1px solid #fff;color:#fff;" data-i18n="new_contract">
+                + Nouveau contrat
+            </a>
+            <?php endif; ?>
+        </div>
     </div>
 </div>
 
@@ -248,7 +287,7 @@ nav{background:var(--bg-white);border-bottom:1px solid var(--border);padding:0 4
             <div class="ia-form-grid">
                 <div class="ia-fg">
                     <label data-i18n="label_campaign">Campagne *</label>
-                    <input type="text" name="ia_campagne" placeholder="Ex : Lancement Été 2025" value="<?= htmlspecialchars($_POST['ia_campagne'] ?? '') ?>">
+                    <input type="text" name="ia_campagne" data-i18n-placeholder="ph_ia_campaign" placeholder="Ex : Lancement Été 2025" value="<?= htmlspecialchars($_POST['ia_campagne'] ?? '') ?>">
                 </div>
                 <div class="ia-fg">
                     <label data-i18n="label_reward">Rémunération (€) *</label>
@@ -256,7 +295,7 @@ nav{background:var(--bg-white);border-bottom:1px solid var(--border);padding:0 4
                 </div>
                 <div class="ia-fg">
                     <label data-i18n="label_deadline">Délai de livraison *</label>
-                    <input type="text" name="ia_delai" placeholder="Ex : 30 jours" value="<?= htmlspecialchars($_POST['ia_delai'] ?? '') ?>">
+                    <input type="text" name="ia_delai" data-i18n-placeholder="ph_ia_deadline" placeholder="Ex : 30 jours" value="<?= htmlspecialchars($_POST['ia_delai'] ?? '') ?>">
                 </div>
                 <button type="submit" class="btn-ia" onclick="document.getElementById('iaLoading').classList.add('show')">
                     <span data-i18n="btn_generate">📄 Générer</span>
@@ -283,7 +322,7 @@ nav{background:var(--bg-white);border-bottom:1px solid var(--border);padding:0 4
     <div class="filter-card">
         <div class="filter-group">
             <label data-i18n="f_search">Recherche</label>
-            <input type="text" id="fSearch" class="filter-input" placeholder="Titre, créateur..." onkeyup="updateList()">
+            <input type="text" id="fSearch" class="filter-input" data-i18n-placeholder="search_placeholder" placeholder="Titre, créateur..." onkeyup="updateList()">
         </div>
         <div class="filter-group">
             <label data-i18n="f_status">Statut</label>
@@ -396,47 +435,134 @@ nav{background:var(--bg-white);border-bottom:1px solid var(--border);padding:0 4
 <?php endif; ?>
 
 </div>
+</div>
 
 <script>
 // ===== FEATURE 1: TRANSLATION SYSTEM =====
+function cre8FrontReadLang() {
+    try {
+        var k = localStorage.getItem('cre8_front_lang');
+        if (k === 'fr' || k === 'en') return k;
+        var legacy = localStorage.getItem('cc_lang')
+            || localStorage.getItem('cre8_lang')
+            || localStorage.getItem('cre8_lang_produit')
+            || localStorage.getItem('cre8_lang_creator_produit');
+        if (legacy === 'fr' || legacy === 'en') return legacy;
+    } catch (e) {}
+    return 'en';
+}
+function cre8FrontWriteLang(lang) {
+    var safe = lang === 'fr' ? 'fr' : 'en';
+    try { localStorage.setItem('cre8_front_lang', safe); } catch (e) {}
+}
+
 const langData = {
     fr: {
         dashboard: "Dashboard", campaigns: "Campagnes", products: "Produits", contracts: "Contrats",
-        header_title: "Mes Contrats", header_subtitle: "Gérez vos accords et l'IA", new_contract: "+ Nouveau contrat",
-        ia_title: "IA Génération", label_campaign: "Campagne *", label_reward: "Rémunération *", label_deadline: "Délai *",
-        btn_generate: "Générer", ia_writing: "Rédaction IA...", total: "Total", pending: "Attente", signed: "Signés",
-        total_value: "Valeur", f_search: "Recherche", f_status: "Statut", f_sort: "Trier", opt_all: "Tous",
-        opt_pending: "Attente", opt_signed: "Signé", opt_date: "Date", opt_amount: "Montant", opt_title: "Titre",
-        list_contracts: "📄 Liste des contrats", l_amount: "Montant", l_creator: "Créateur", my_brand: "Ma Marque",
-        form_create: "Nouveau Contrat", form_edit: "Modifier Contrat", btn_save: "Enregistrer", btn_cancel: "Annuler",
-        l_title: "Titre", l_start: "Début", l_end: "Fin", success_msg: "Opération réalisée avec succès."
+        header_title: "Mes Contrats",
+        header_subtitle: "Gérez vos accords de collaboration et générez des contrats avec l'IA",
+        new_contract: "+ Nouveau contrat",
+        ia_title: "Générer un contrat avec l'IA",
+        label_campaign: "Campagne *",
+        label_reward: "Rémunération (€) *",
+        label_deadline: "Délai de livraison *",
+        ph_ia_campaign: "Ex : Lancement Été 2025",
+        ph_ia_deadline: "Ex : 30 jours",
+        btn_generate: "📄 Générer",
+        ia_writing: "Rédaction IA en cours…",
+        total: "Total",
+        pending: "En attente",
+        signed: "Signés",
+        total_value: "Valeur totale",
+        f_search: "Recherche",
+        f_status: "Statut",
+        f_sort: "Trier par",
+        search_placeholder: "Titre, créateur…",
+        opt_all: "Tous",
+        opt_pending: "En attente",
+        opt_signed: "Signé",
+        opt_date: "Date",
+        opt_amount: "Montant",
+        opt_title: "Titre",
+        list_contracts: "📄 Tous mes contrats",
+        l_amount: "Montant",
+        l_creator: "Créateur",
+        my_brand: "Ma Marque",
+        form_create: "Créer un nouveau contrat",
+        form_edit: "Modifier le contrat",
+        btn_save: "Enregistrer",
+        btn_cancel: "Annuler",
+        l_title: "Titre du contrat",
+        l_start: "Date début",
+        l_end: "Date fin",
+        success_msg: "Opération réalisée avec succès."
     },
     en: {
         dashboard: "Dashboard", campaigns: "Campaigns", products: "Products", contracts: "Contracts",
-        header_title: "My Contracts", header_subtitle: "Manage agreements and AI", new_contract: "+ New Contract",
-        ia_title: "AI Generation", label_campaign: "Campaign *", label_reward: "Reward *", label_deadline: "Deadline *",
-        btn_generate: "Generate", ia_writing: "AI Writing...", total: "Total", pending: "Pending", signed: "Signed",
-        total_value: "Value", f_search: "Search", f_status: "Status", f_sort: "Sort", opt_all: "All",
-        opt_pending: "Pending", opt_signed: "Signed", opt_date: "Date", opt_amount: "Amount", opt_title: "Title",
-        list_contracts: "📄 Contract List", l_amount: "Amount", l_creator: "Creator", my_brand: "My Brand",
-        form_create: "New Contract", form_edit: "Edit Contract", btn_save: "Save", btn_cancel: "Cancel",
-        l_title: "Title", l_start: "Start", l_end: "End", success_msg: "Action successful."
+        header_title: "My Contracts",
+        header_subtitle: "Manage your collaboration agreements and generate contracts with AI",
+        new_contract: "+ New contract",
+        ia_title: "Generate a contract with AI",
+        label_campaign: "Campaign *",
+        label_reward: "Reward (€) *",
+        label_deadline: "Delivery deadline *",
+        ph_ia_campaign: "E.g. Summer Launch 2025",
+        ph_ia_deadline: "E.g. 30 days",
+        btn_generate: "📄 Generate",
+        ia_writing: "AI is writing…",
+        total: "Total",
+        pending: "Pending",
+        signed: "Signed",
+        total_value: "Total value",
+        f_search: "Search",
+        f_status: "Status",
+        f_sort: "Sort by",
+        search_placeholder: "Title, creator…",
+        opt_all: "All",
+        opt_pending: "Pending",
+        opt_signed: "Signed",
+        opt_date: "Date",
+        opt_amount: "Amount",
+        opt_title: "Title",
+        list_contracts: "📄 All my contracts",
+        l_amount: "Amount",
+        l_creator: "Creator",
+        my_brand: "My brand",
+        form_create: "Create a new contract",
+        form_edit: "Edit contract",
+        btn_save: "Save",
+        btn_cancel: "Cancel",
+        l_title: "Contract title",
+        l_start: "Start date",
+        l_end: "End date",
+        success_msg: "Operation completed successfully."
     }
 };
 
+let contractUiLang = cre8FrontReadLang();
+
 function switchLanguage(lang) {
+    const safe = lang === 'fr' ? 'fr' : 'en';
+    contractUiLang = safe;
+    cre8FrontWriteLang(safe);
+    const dict = langData[safe] || langData.en;
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        if(langData[lang][key]) el.innerText = langData[lang][key];
+        if (key && dict[key] !== undefined) el.textContent = dict[key];
     });
-    localStorage.setItem('cc_lang', lang);
-}
-
-// ===== FEATURE 2: DARK MODE =====
-function toggleDarkMode() {
-    const isDark = document.body.classList.toggle('dark-mode');
-    document.getElementById('themeToggle').innerText = isDark ? '☀️' : '🌙';
-    localStorage.setItem('cc_theme', isDark ? 'dark' : 'light');
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (key && dict[key] !== undefined) el.setAttribute('placeholder', dict[key]);
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        const key = el.getAttribute('data-i18n-title');
+        if (key && dict[key] !== undefined) el.setAttribute('title', dict[key]);
+    });
+    document.querySelectorAll('[data-lang-choice]').forEach(btn => {
+        const on = btn.getAttribute('data-lang-choice') === safe;
+        btn.classList.toggle('is-active', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
 }
 
 // ===== FEATURE 3 & 4: PAGINATION, FILTERING, SORTING =====
@@ -483,14 +609,26 @@ function renderPagination(totalPages) {
     }
 }
 
-// Init
-window.onload = () => {
-    if(localStorage.getItem('cc_theme') === 'dark') toggleDarkMode();
-    const savedLang = localStorage.getItem('cc_lang') || 'fr';
-    document.getElementById('langSwitcher').value = savedLang;
-    switchLanguage(savedLang);
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        var cct = localStorage.getItem('cc_theme');
+        if ((cct === 'dark' || cct === 'light') && !localStorage.getItem('cre8_theme')) {
+            localStorage.setItem('cre8_theme', cct);
+        }
+    } catch (e) {}
+    if (typeof window.cre8ApplyFrontTheme === 'function') {
+        window.cre8ApplyFrontTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light', false);
+    } else {
+        document.body.classList.toggle('dark-mode', document.documentElement.getAttribute('data-theme') === 'dark');
+    }
+    switchLanguage(contractUiLang);
+    document.querySelectorAll('[data-lang-choice]').forEach(btn => {
+        btn.addEventListener('click', () => switchLanguage(btn.getAttribute('data-lang-choice')));
+    });
     updateList();
-};
+});
 </script>
+
+<script src="../layout/front-header.js"></script>
 </body>
 </html>

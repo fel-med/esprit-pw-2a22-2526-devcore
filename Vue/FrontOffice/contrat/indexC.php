@@ -1,5 +1,6 @@
 ﻿<?php
 if (session_status() === PHP_SESSION_NONE) session_start();
+$frontActive = 'campaigns';
 
 // ── TEMPORAIRE : à supprimer après intégration de l'authentification ──
 $_SESSION['id']   = 4;  // Sophie Martin — créateur
@@ -25,10 +26,13 @@ $contrats = $controller->getByCreateur($idCreateur);
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <?php require_once __DIR__ . '/../layout/front-theme-bootstrap.php'; ?>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mes Contrats — Cre8Connect</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="../layout/front-header.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/front-header.css')); ?>">
     <style>
         :root {
             --bg:             #f7f8fc;
@@ -57,7 +61,8 @@ $contrats = $controller->getByCreateur($idCreateur);
         }
 
         /* ===== ADDED FEATURE: LIGHT / DARK MODE CSS ===== */
-        body.dark-mode {
+        body.dark-mode,
+        html[data-theme="dark"] body {
             --bg:             #0f172a;
             --bg-white:       #1e293b;
             --bg-soft:        #334155;
@@ -78,16 +83,6 @@ $contrats = $controller->getByCreateur($idCreateur);
             color: var(--text-primary);
             min-height: 100vh;
             transition: background 0.3s ease, color 0.3s ease;
-        }
-
-        /* ── NAV ── */
-        nav {
-            background: var(--bg-white);
-            border-bottom: 1px solid var(--border);
-            padding: 0 40px;
-            display:flex; align-items:center; justify-content:space-between;
-            height:64px; position:sticky; top:0; z-index:50;
-            box-shadow: var(--shadow-sm);
         }
         .nav-logo { font-size:1.25rem; font-weight:800; color:var(--accent); }
         .nav-logo em { color:var(--text-primary); font-style:normal; }
@@ -306,36 +301,58 @@ $contrats = $controller->getByCreateur($idCreateur);
             z-index:999;
         }
         .toast.show { display:flex; }
+
+        .hero-lang-row {
+            display: flex;
+            justify-content: flex-end;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+        .contract-front .hero .front-lang-switch {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.45);
+            background: rgba(255,255,255,0.12);
+            flex-shrink: 0;
+        }
+        .contract-front .hero .front-lang-btn {
+            border: 0;
+            border-radius: 999px;
+            background: transparent;
+            color: rgba(255,255,255,0.88);
+            font: inherit;
+            font-size: 0.76rem;
+            font-weight: 800;
+            padding: 0.4rem 0.7rem;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .contract-front .hero .front-lang-btn:hover { color: #fff; }
+        .contract-front .hero .front-lang-btn.is-active {
+            background: #fff;
+            color: #7c3aed;
+        }
     </style>
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
 </head>
 <body>
 
-<nav>
-    <div class="nav-logo">Cre8<em>Connect</em></div>
-    <div class="nav-links">
-        <a href="?module=dashboard"  class="nav-link" data-i18n="nav_dashboard">Dashboard</a>
-        <a href="?module=offre"      class="nav-link" data-i18n="nav_offers">Offres</a>
-        <a href="?module=campagne"   class="nav-link" data-i18n="nav_campaigns">Campagnes</a>
-        <a href="?module=contrat&action=index" class="nav-link active" data-i18n="nav_contracts">Contrats</a>
-        <a href="?module=post"       class="nav-link" data-i18n="nav_posts">Posts</a>
-        <a href="?module=evenement"  class="nav-link" data-i18n="nav_events">Événements</a>
-    </div>
-    
-    <div class="nav-controls">
-        <select id="langSelect" class="control-btn" onchange="switchLang(this.value)">
-            <option value="fr">FR</option>
-            <option value="en">EN</option>
-        </select>
-        <button id="themeToggle" class="control-btn" onclick="toggleTheme()">🌙</button>
-        <div class="avatar-pill">
-            <div class="avatar-circle">C</div>
-            <span data-i18n="my_profile">Mon Profil</span>
-        </div>
-    </div>
-</nav>
+<?php require_once __DIR__ . '/../layout/header.php'; ?>
 
+<div class="contract-front">
 <div class="hero">
     <div class="hero-inner">
+        <div class="hero-lang-row">
+            <div class="front-lang-switch" role="group" aria-label="Language">
+                <button type="button" class="front-lang-btn" data-lang-choice="en" aria-pressed="false">EN</button>
+                <button type="button" class="front-lang-btn" data-lang-choice="fr" aria-pressed="false">FR</button>
+            </div>
+        </div>
         <h1 data-i18n="hero_title">Mes Contrats</h1>
         <p data-i18n="hero_desc">Consultez et signez vos accords de collaboration avec les marques</p>
     </div>
@@ -354,11 +371,11 @@ $contrats = $controller->getByCreateur($idCreateur);
         <div class="advanced-filters">
             <div class="filter-group">
                 <label data-i18n="filter_search">Recherche</label>
-                <input type="text" id="searchFilter" class="filter-input" placeholder="..." onkeyup="applyAllFilters()">
+                <input type="text" id="searchFilter" class="filter-input" data-i18n-placeholder="ph_search" placeholder="..." onkeyup="applyAllFilters()">
             </div>
             <div class="filter-group">
                 <label data-i18n="filter_brand">Marque</label>
-                <input type="text" id="brandFilter" class="filter-input" placeholder="..." onkeyup="applyAllFilters()">
+                <input type="text" id="brandFilter" class="filter-input" data-i18n-placeholder="ph_brand" placeholder="..." onkeyup="applyAllFilters()">
             </div>
             <div class="filter-group">
                 <label data-i18n="filter_date">Date min</label>
@@ -481,17 +498,37 @@ $contrats = $controller->getByCreateur($idCreateur);
 
     <?php endif; ?>
 </div>
+</div>
 
 <div class="toast" id="toast"><i class="fas fa-check-circle"></i> <span data-i18n="toast_success">Action effectuée avec succès</span></div>
 
 <script>
 // ===== ADDED FEATURE: TRANSLATION SYSTEM =====
+function cre8FrontReadLang() {
+    try {
+        var k = localStorage.getItem('cre8_front_lang');
+        if (k === 'fr' || k === 'en') return k;
+        var legacy = localStorage.getItem('cc_lang')
+            || localStorage.getItem('cre8_lang')
+            || localStorage.getItem('cre8_lang_produit')
+            || localStorage.getItem('cre8_lang_creator_produit');
+        if (legacy === 'fr' || legacy === 'en') return legacy;
+    } catch (e) {}
+    return 'en';
+}
+function cre8FrontWriteLang(lang) {
+    var safe = lang === 'fr' ? 'fr' : 'en';
+    try { localStorage.setItem('cre8_front_lang', safe); } catch (e) {}
+}
+
 const translations = {
     fr: {
         nav_dashboard: "Dashboard", nav_offers: "Offres", nav_campaigns: "Campagnes", nav_contracts: "Contrats", nav_posts: "Posts", nav_events: "Événements",
         my_profile: "Mon Profil", hero_title: "Mes Contrats", hero_desc: "Consultez et signez vos accords de collaboration avec les marques",
         empty_title: "Aucun contrat pour l'instant", empty_desc: "Les marques avec lesquelles vous collaborez vous enverront des contrats ici.",
         filter_search: "Recherche", filter_brand: "Marque", filter_date: "Date min", filter_sort: "Trier par",
+        ph_search: "Rechercher par titre…",
+        ph_brand: "Filtrer par marque…",
         sort_date_desc: "Plus récent", sort_date_asc: "Plus ancien", sort_amount_desc: "Montant (Max)", sort_amount_asc: "Montant (Min)",
         status_all: "Tous", status_pending: "⏳ En attente", status_signed: "✅ Signés",
         label_remuneration: "Rémunération", label_start: "Début", label_end: "Fin", label_description: "Description",
@@ -502,6 +539,8 @@ const translations = {
         my_profile: "My Profile", hero_title: "My Contracts", hero_desc: "View and sign your collaboration agreements with brands",
         empty_title: "No contracts yet", empty_desc: "Brands you collaborate with will send contracts here.",
         filter_search: "Search", filter_brand: "Brand", filter_date: "Min Date", filter_sort: "Sort by",
+        ph_search: "Search by title…",
+        ph_brand: "Filter by brand…",
         sort_date_desc: "Most Recent", sort_date_asc: "Oldest", sort_amount_desc: "Amount (High)", sort_amount_asc: "Amount (Low)",
         status_all: "All", status_pending: "⏳ Pending", status_signed: "✅ Signed",
         label_remuneration: "Compensation", label_start: "Start", label_end: "End", label_description: "Description",
@@ -509,18 +548,37 @@ const translations = {
     }
 };
 
+let creatorContractLang = cre8FrontReadLang();
+
 function switchLang(lang) {
+    const safe = lang === 'fr' ? 'fr' : 'en';
+    creatorContractLang = safe;
+    cre8FrontWriteLang(safe);
+    const dict = translations[safe] || translations.fr;
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        el.innerText = translations[lang][key] || el.innerText;
+        if (key && dict[key] !== undefined) el.textContent = dict[key];
     });
-    localStorage.setItem('cc_lang', lang);
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (key && dict[key] !== undefined) el.setAttribute('placeholder', dict[key]);
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        const key = el.getAttribute('data-i18n-title');
+        if (key && dict[key] !== undefined) el.setAttribute('title', dict[key]);
+    });
+    document.querySelectorAll('[data-lang-choice]').forEach(btn => {
+        const on = btn.getAttribute('data-lang-choice') === safe;
+        btn.classList.toggle('is-active', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
 }
 
 // ===== ADDED FEATURE: LIGHT / DARK MODE JS =====
 function toggleTheme() {
     const isDark = document.body.classList.toggle('dark-mode');
-    document.getElementById('themeToggle').innerText = isDark ? '☀️' : '🌙';
+    const legacyThemeToggle = document.getElementById('themeToggle');
+    if (legacyThemeToggle) legacyThemeToggle.innerText = isDark ? '☀️' : '🌙';
     localStorage.setItem('cc_theme', isDark ? 'dark' : 'light');
 }
 
@@ -539,6 +597,7 @@ function setStatutFilter(statut, btn) {
 
 function applyAllFilters() {
     const list = document.getElementById('contractsList');
+    if (!list) return;
     const cards = Array.from(list.getElementsByClassName('contract-item'));
     
     const searchText = document.getElementById('searchFilter').value.toLowerCase();
@@ -581,6 +640,7 @@ function applyAllFilters() {
 
 function renderPagination(totalPages) {
     const container = document.getElementById('paginationControls');
+    if (!container) return;
     container.innerHTML = '';
     if (totalPages <= 1) return;
 
@@ -595,13 +655,22 @@ function renderPagination(totalPages) {
 
 // Initialisation
 document.addEventListener('DOMContentLoaded', () => {
-    // Theme
-    if (localStorage.getItem('cc_theme') === 'dark') toggleTheme();
-    // Lang
-    const savedLang = localStorage.getItem('cc_lang') || 'fr';
-    document.getElementById('langSelect').value = savedLang;
-    switchLang(savedLang);
-    // UI
+    try {
+        var cct = localStorage.getItem('cc_theme');
+        if ((cct === 'dark' || cct === 'light') && !localStorage.getItem('cre8_theme')) {
+            localStorage.setItem('cre8_theme', cct);
+        }
+    } catch (e) {}
+    if (typeof window.cre8ApplyFrontTheme === 'function') {
+        window.cre8ApplyFrontTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light', false);
+    } else {
+        var savedTheme = localStorage.getItem('cre8_theme') || localStorage.getItem('cc_theme');
+        document.body.classList.toggle('dark-mode', savedTheme === 'dark');
+    }
+    switchLang(creatorContractLang);
+    document.querySelectorAll('[data-lang-choice]').forEach(btn => {
+        btn.addEventListener('click', () => switchLang(btn.getAttribute('data-lang-choice')));
+    });
     applyAllFilters();
 });
 
@@ -613,5 +682,6 @@ if (params.get('success') === '1') {
     setTimeout(() => toast.classList.remove('show'), 3500);
 }
 </script>
+<script src="../layout/front-header.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/front-header.js')); ?>"></script>
 </body>
 </html>

@@ -23,7 +23,6 @@ if (isset($_POST['reset_email'])) {
         <meta name="author" content="" />
         <title>Personal - Start Bootstrap Template</title>
         <!-- Favicon-->
-        <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
         <!-- Custom Google font-->
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -63,6 +62,9 @@ if (isset($_POST['reset_email'])) {
     border-color: #4e54c8;
     box-shadow: 0 0 8px rgba(78, 84, 200, 0.3);
 } </style>
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
     </head>
     <body class="d-flex flex-column h-100 bg-light">
         <main class="flex-shrink-0 d-flex align-items-center justify-content-center" style="min-height: 100vh;">

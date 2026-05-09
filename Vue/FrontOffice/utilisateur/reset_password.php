@@ -24,6 +24,9 @@ if (isset($_POST['update'])) {
     transition: width 0.4s ease;
 }
 </style>
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
 </head>
 
 <body class="d-flex align-items-center justify-content-center bg-light" style="min-height:100vh;">

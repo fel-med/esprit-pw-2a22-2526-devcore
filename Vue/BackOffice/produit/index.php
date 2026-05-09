@@ -1,11 +1,52 @@
 <?php
+require_once __DIR__ . '/../layout/early-theme.php';
 require_once '../../../Controleur/produitC.php';
 require_once '../../../Modele/produit.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Keep the shared BackOffice header username meaningful on this page.
+// The shared header reads $_SESSION['user']['nom'], $_SESSION['utilisateur']['nom'] or $_SESSION['nom'].
+// Some login/session shapes use username/name/email instead, so normalize only when the name is missing.
+if (empty($_SESSION['user']['nom']) && empty($_SESSION['utilisateur']['nom']) && empty($_SESSION['nom'])) {
+    $candidateAdminName = $_SESSION['username']
+        ?? $_SESSION['login']
+        ?? $_SESSION['email']
+        ?? $_SESSION['user']['username']
+        ?? $_SESSION['user']['name']
+        ?? $_SESSION['user']['prenom']
+        ?? $_SESSION['utilisateur']['username']
+        ?? $_SESSION['utilisateur']['name']
+        ?? $_SESSION['utilisateur']['prenom']
+        ?? null;
+
+    if (empty($candidateAdminName) && (!empty($_SESSION['user']['prenom']) || !empty($_SESSION['user']['nom']))) {
+        $candidateAdminName = trim(($_SESSION['user']['prenom'] ?? '') . ' ' . ($_SESSION['user']['nom'] ?? ''));
+    }
+    if (empty($candidateAdminName) && (!empty($_SESSION['utilisateur']['prenom']) || !empty($_SESSION['utilisateur']['nom']))) {
+        $candidateAdminName = trim(($_SESSION['utilisateur']['prenom'] ?? '') . ' ' . ($_SESSION['utilisateur']['nom'] ?? ''));
+    }
+
+    $candidateAdminName = trim((string) $candidateAdminName);
+    $_SESSION['nom'] = $candidateAdminName !== '' ? $candidateAdminName : 'Admin';
+}
 
 $produitC = new ProduitC();
 $message = '';
 $messageType = '';
-$baseUrl = '/projet/Esprit-PW-2A22-2526-Devcore';
+$cre8SelfPath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
+$cre8VuePos = strpos($cre8SelfPath, '/Vue/');
+$baseUrl = $cre8VuePos !== false ? substr($cre8SelfPath, 0, $cre8VuePos) : '';
+if (!function_exists('cre8_product_image_url')) {
+    function cre8_product_image_url($filename) {
+        global $baseUrl;
+        $filename = trim((string) $filename);
+        if ($filename === '') return '';
+        return $baseUrl . '/Vue/public/produits/' . rawurlencode(basename($filename));
+    }
+}
 define('DEVISE', '€');
 
 // ── DELETE ───────────────────────────────────────────────────────────────────
@@ -110,15 +151,23 @@ if (isset($_GET['export_csv'])) {
 
 $categoriesDisponibles=['Beauty & Care','Fashion & Accessories','Tech & Gadgets','Food & Nutrition',
     'Sport & Fitness','Home & Decor','Travel','Wellness','Gaming','Kids'];
+function produitAssetVersion($path) {
+    return is_file($path) ? '?v=' . urlencode((string) filemtime($path)) : '';
+}
 if (!headers_sent()) header('Content-Type: text/html; charset=UTF-8');
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<?php cre8_bo_early_theme_print_head_script(); ?>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin — Product Management | Cre8Connect</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/backoffice.css<?= produitAssetVersion(__DIR__ . '/../css/backoffice.css') ?>">
+<link rel="stylesheet" href="../layout/back-layout.css<?= produitAssetVersion(__DIR__ . '/../layout/back-layout.css') ?>">
+<link rel="stylesheet" href="../utilisateur/assets/vendors/mdi/css/materialdesignicons.min.css<?= produitAssetVersion(__DIR__ . '/../utilisateur/assets/vendors/mdi/css/materialdesignicons.min.css') ?>">
+<link rel="stylesheet" href="../css/new_style_backoffice.css<?= produitAssetVersion(__DIR__ . '/../css/new_style_backoffice.css') ?>">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
@@ -161,25 +210,8 @@ body.light-mode {
 }
 /* ===== END ADDED FEATURE ===== */
 
-body{font-family:'Inter',system-ui,sans-serif;background:var(--bg-base);color:var(--text-primary);min-height:100vh;display:flex;transition:background .25s,color .25s;}
-/* SIDEBAR */
-.sidebar{width:var(--sidebar-w);background:var(--bg-surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;transition:background .25s,border-color .25s;}
-.sidebar-logo{padding:18px 20px;border-bottom:1px solid var(--border);}
-.sidebar-logo .brand{display:flex;align-items:center;gap:10px;text-decoration:none;}
-.logo-img{width:34px;height:34px;object-fit:contain;border-radius:var(--radius-sm);}
-.logo-text{font-size:15px;font-weight:700;color:var(--text-primary);}
-.logo-badge{font-size:9px;font-weight:600;color:var(--accent);background:var(--accent-soft);padding:2px 6px;border-radius:20px;margin-top:1px;}
-.sidebar-nav{flex:1;padding:12px 10px;overflow-y:auto;}
-.nav-section-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);padding:10px 10px 6px;}
-.nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);color:var(--text-muted);text-decoration:none;font-size:13px;font-weight:450;transition:background .15s,color .15s;cursor:pointer;margin-bottom:2px;}
-.nav-item:hover{background:rgba(139,92,246,.06);color:var(--text-primary);}
-.nav-item.active{background:var(--accent-soft);color:var(--accent);}
-.nav-icon{width:18px;height:18px;opacity:.8;flex-shrink:0;}
-.sidebar-footer{padding:12px;border-top:1px solid var(--border);}
-.admin-card{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);background:var(--bg-card-alt);}
-.admin-avatar{width:30px;height:30px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;}
-.admin-name{font-size:12px;font-weight:500;}
-.admin-role{font-size:11px;color:var(--text-muted);}
+body.cre8-admin-layout{font-family:'Inter',system-ui,sans-serif;background:var(--bg-base);color:var(--text-primary);transition:background .25s,color .25s;}
+.produit-admin{background:var(--bg-base);color:var(--text-primary);width:100%;padding:28px 28px 60px;}
 .btn-add{display:flex;align-items:center;gap:7px;background:var(--accent);color:#fff;border:none;padding:7px 14px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;font-family:inherit;}
 .btn-add:hover{background:var(--accent-hover);}
 .btn-export{display:flex;align-items:center;gap:6px;background:var(--success-soft);color:var(--success);border:1px solid rgba(16,185,129,.2);padding:7px 12px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;cursor:pointer;text-decoration:none;font-family:inherit;}
@@ -187,9 +219,6 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg-base);color:va
 .search-input{background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px 7px 34px;color:var(--text-primary);font-size:13px;width:220px;outline:none;transition:border-color .2s,background .25s,color .25s;font-family:inherit;}
 .search-input:focus{border-color:var(--border-focus);}
 .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-dim);pointer-events:none;width:15px;height:15px;}
-/* MAIN */
-.main{margin-left:var(--sidebar-w);padding-top:58px;flex:1;min-height:100vh;}
-.content{padding:28px 28px 60px;}
 .page-title{font-size:20px;font-weight:600;}
 .page-subtitle{font-size:13px;color:var(--text-muted);margin-top:3px;}
 /* TOAST */
@@ -364,49 +393,104 @@ textarea.note-interne-ctrl{background:transparent;border:none;outline:none;width
 /* PRINT AREA */
 @media print{
     .sidebar,.topbar,.btn-add,.btn-export,.btn-action,.filter-bar,.tab-bar,.form-panel,.pagination,#toastContainer,#deleteModal,.modal-overlay{display:none!important;}
-    .main{margin-left:0;padding-top:0;}
     .kpi-strip{grid-template-columns:repeat(4,1fr);}
 }
 
 @media(max-width:1300px){.kpi-strip{grid-template-columns:repeat(4,1fr);}}
 @media(max-width:1000px){.kpi-strip{grid-template-columns:repeat(3,1fr);}}
-@media(max-width:900px){.kpi-strip{grid-template-columns:repeat(2,1fr);}.form-grid{grid-template-columns:1fr;}.sidebar{display:none;}.topbar,.main{left:0;margin-left:0;}}
+@media(max-width:900px){.kpi-strip{grid-template-columns:repeat(2,1fr);}.form-grid{grid-template-columns:1fr;}}
 
 /* ===== ADDED FEATURE: LANGUAGE SWITCHER STYLES ===== */
-.lang-switcher{display:inline-flex;gap:3px;align-items:center;}
-.lang-btn{background:var(--bg-card-alt);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 9px;font-size:11px;font-weight:600;cursor:pointer;color:var(--text-muted);font-family:inherit;transition:all .15s;}
-.lang-btn:hover{border-color:var(--accent);color:var(--accent);}
-.lang-btn.active{background:var(--accent-soft);color:var(--accent);border-color:var(--accent);}
+.translation-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 16px;}
+.page-heading{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.lang-switcher,.lang-switcher.bo-lang-switch{display:inline-flex;align-items:center;gap:0.25rem;padding:0.25rem;border:1px solid rgba(124,92,255,.35);border-radius:999px;background:rgba(124,92,255,.08);flex:0 0 auto;}
+.lang-btn{border:0;border-radius:999px;padding:0.4rem 0.7rem;background:transparent;color:inherit;font-family:inherit;font-size:0.76rem;font-weight:800;cursor:pointer;transition:background .16s ease,color .16s ease;}
+.lang-btn:hover{color:var(--accent);}
+.lang-btn.active{background:#8b5cf6;color:#fff;}
+.page-subtitle{font-size:0.9rem;color:var(--text-muted);margin-top:4px;}
+@media(max-width:760px){.translation-toolbar{align-items:flex-start;}.lang-switcher{margin-left:auto;}}
 /* ===== END ADDED FEATURE ===== */
 
 /* ===== ADDED FEATURE: THEME TOGGLE BUTTON STYLES ===== */
 .theme-toggle-btn{display:inline-flex;align-items:center;gap:6px;background:var(--bg-card-alt);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 11px;font-size:12px;font-weight:500;cursor:pointer;color:var(--text-muted);font-family:inherit;transition:all .2s;white-space:nowrap;}
 .theme-toggle-btn:hover{border-color:var(--accent);color:var(--accent);}
 /* ===== END ADDED FEATURE ===== */
-</style>
-<?php include __DIR__ . '/../includes/layout_head.php'; ?>
-</head>
-<body>
-<div id="toastContainer"></div>
-<div class="container-scroller">
-<?php
-$activeMenu = 'produit';
-include __DIR__ . '/../includes/sidebar.php';
-?>
-<div class="page-body-wrapper">
-<?php include __DIR__ . '/../includes/topbar.php'; ?>
 
-<!-- CONTENT -->
-<div class="content">
+
+/* Product header toolbar: keep language, search and actions in one clean responsive row. */
+.bo-content-actions{
+    display:flex !important;
+    align-items:center !important;
+    gap:10px !important;
+    flex-wrap:wrap !important;
+    margin-top:16px !important;
+    max-width:100% !important;
+}
+.bo-content-actions .search-wrap{
+    flex:1 1 260px !important;
+    min-width:240px !important;
+    max-width:360px !important;
+}
+.bo-content-actions .search-input{
+    width:100% !important;
+    height:38px !important;
+}
+.bo-content-actions .btn-export,
+.bo-content-actions .btn-add{
+    flex:0 0 auto !important;
+    width:auto !important;
+    min-width:0 !important;
+    min-height:38px !important;
+    justify-content:center !important;
+    white-space:nowrap !important;
+}
+.bo-content-actions .btn-add{
+    padding-left:16px !important;
+    padding-right:16px !important;
+}
+@media(max-width:760px){
+    .bo-content-actions{
+        align-items:stretch !important;
+    }
+    .bo-content-actions .search-wrap,
+    .bo-content-actions .btn-export,
+    .bo-content-actions .btn-add{
+        flex:1 1 100% !important;
+        max-width:none !important;
+    }
+}
+
+</style>
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
+</head>
+<body class="cre8-admin-layout"><?php cre8_bo_early_theme_print_body_script(); ?>
+
+<div id="toastContainer"></div>
+<div class="container-scroller cre8-admin-page">
+<?php
+$backActive = 'products';
+require_once __DIR__ . '/../layout/sidebar.php';
+?>
+<div class="container-fluid page-body-wrapper cre8-admin-main">
+<?php require_once __DIR__ . '/../layout/header.php'; ?>
+    <div class="main-panel">
+    <div class="content-wrapper">
+        <div class="produit-admin">
 
     <div style="margin-bottom:22px;">
-        <div class="page-title" data-i18n="pageTitle">Product Management</div>
-        <div class="page-subtitle" data-i18n="pageSubtitle">Supervise, add, edit and analyze all platform products.</div>
-        <div class="bo-content-actions">
-            <div class="lang-switcher" role="group" aria-label="Language selector">
-                <button class="lang-btn" id="langEN" onclick="setLang('en')" title="English">GB EN</button>
-                <button class="lang-btn" id="langFR" onclick="setLang('fr')" title="Francais">FR FR</button>
+        <div class="translation-toolbar" aria-label="Language controls">
+            <div class="page-heading">
+                <div class="page-title" data-i18n="pageTitle">Product Management</div>
+                <div class="page-subtitle" data-i18n="pageSubtitle">Supervise, add, edit and analyze all platform products.</div>
             </div>
+            <div class="lang-switcher bo-lang-switch" role="group" aria-label="Language selector" data-lang-switch>
+                <button type="button" class="lang-btn" id="langEN" data-lang-option="en" onclick="setLang('en')" title="English">EN</button>
+                <button type="button" class="lang-btn" id="langFR" data-lang-option="fr" onclick="setLang('fr')" title="Français">FR</button>
+            </div>
+        </div>
+        <div class="bo-content-actions">
             <div class="search-wrap">
                 <svg class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
                 <input type="text" class="search-input" id="searchInput" data-i18n-placeholder="searchPlaceholder" placeholder="Search products...">
@@ -548,7 +632,7 @@ include __DIR__ . '/../includes/sidebar.php';
                         <label class="form-label" data-i18n="labelImage">Image</label>
                         <?php if ($produitUpdate && !empty($produitUpdate['image'])): ?>
                         <div style="display:flex;align-items:center;gap:10px;background:var(--accent-soft);border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:8px;">
-                            <img src="<?= $baseUrl ?>/Vue/public/produits/<?= htmlspecialchars($produitUpdate['image'], ENT_QUOTES, 'UTF-8') ?>" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">
+                            <img src="<?= htmlspecialchars(cre8_product_image_url($produitUpdate['image']), ENT_QUOTES, 'UTF-8') ?>" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">
                             <span style="font-size:12px;color:var(--text-muted);" data-i18n="currentImageHint">Current image — upload to replace.</span>
                         </div>
                         <?php endif; ?>
@@ -651,7 +735,7 @@ include __DIR__ . '/../includes/sidebar.php';
                     data-epingle="<?= (int)$isPinned ?>">
                     <td class="td-img"><div class="td-img-thumb">
                         <?php if (!empty($p['image'])): ?>
-                            <img src="<?= $baseUrl ?>/Vue/public/produits/<?= htmlspecialchars($p['image'], ENT_QUOTES, 'UTF-8') ?>" alt="" onclick="openPreview(<?= $p['idProduit'] ?>)">
+                            <img src="<?= htmlspecialchars(cre8_product_image_url($p['image']), ENT_QUOTES, 'UTF-8') ?>" alt="" onclick="openPreview(<?= $p['idProduit'] ?>)">
                             <div class="td-img-status ok">✓</div>
                         <?php else: ?>
                             <div class="td-img-empty">📦</div>
@@ -709,7 +793,7 @@ include __DIR__ . '/../includes/sidebar.php';
                 <tbody>
                 <?php foreach ($listeArchives as $a): ?>
                 <tr>
-                    <td class="td-img"><div class="td-img-thumb"><?php if(!empty($a['image'])): ?><img src="<?= $baseUrl ?>/Vue/public/produits/<?= htmlspecialchars($a['image'], ENT_QUOTES, 'UTF-8') ?>" alt=""><?php else: ?><div class="td-img-empty">📦</div><?php endif; ?></div></td>
+                    <td class="td-img"><div class="td-img-thumb"><?php if(!empty($a['image'])): ?><img src="<?= htmlspecialchars(cre8_product_image_url($a['image']), ENT_QUOTES, 'UTF-8') ?>" alt=""><?php else: ?><div class="td-img-empty">📦</div><?php endif; ?></div></td>
                     <td class="td-name" style="opacity:.7"><?= htmlspecialchars($a['nomProduit'], ENT_QUOTES, 'UTF-8') ?></td>
                     <td><?php if(!empty($a['categorie'])): ?><span class="cat-badge" style="opacity:.7"><?= htmlspecialchars($a['categorie'], ENT_QUOTES, 'UTF-8') ?></span><?php endif; ?></td>
                     <td><span class="prix-badge" style="opacity:.7"><?= number_format((float)$a['prix'],2) ?> <?= DEVISE ?></span></td>
@@ -727,7 +811,9 @@ include __DIR__ . '/../includes/sidebar.php';
             <?php endif; ?>
         </div>
     </div>
-</div>
+        </div><!-- /produit-admin -->
+    </div><!-- /content-wrapper -->
+    </div><!-- /main-panel -->
 </div><!-- /page-body-wrapper -->
 </div><!-- /container-scroller -->
 
@@ -762,9 +848,9 @@ include __DIR__ . '/../includes/sidebar.php';
     </div>
 </div>
 
-<?php include __DIR__ . '/../includes/layout_scripts.php'; ?>
+<script src="../layout/back-layout.js<?= produitAssetVersion(__DIR__ . '/../layout/back-layout.js') ?>"></script>
 <script>
-const BASE_URL='<?= $baseUrl ?>';
+const BASE_URL = <?= json_encode($baseUrl, JSON_UNESCAPED_SLASHES) ?>;
 const DEVISE_JS='<?= DEVISE ?>';
 
 /* ─── TOAST ──────────────────────────────────────────────────────── */
@@ -1059,7 +1145,7 @@ function ajaxToggle(action, id, label) {
 /* ─── PRODUCT PREVIEW ────────────────────────────────────────────── */
 const produitsMap={};
 <?php foreach ($liste as $p): ?>
-produitsMap[<?= $p['idProduit'] ?>]={id:<?= $p['idProduit'] ?>,nom:<?= json_encode($p['nomProduit']) ?>,desc:<?= json_encode($p['description']??'') ?>,tags:<?= json_encode($p['caracteristiques']??'') ?>,prix:<?= (float)$p['prix'] ?>,img:<?= json_encode(!empty($p['image'])?$baseUrl.'/Vue/public/produits/'.$p['image']:null) ?>};
+produitsMap[<?= $p['idProduit'] ?>]={id:<?= $p['idProduit'] ?>,nom:<?= json_encode($p['nomProduit']) ?>,desc:<?= json_encode($p['description']??'') ?>,tags:<?= json_encode($p['caracteristiques']??'') ?>,prix:<?= (float)$p['prix'] ?>,img:<?= json_encode(!empty($p['image']) ? cre8_product_image_url($p['image']) : null) ?>};
 <?php endforeach; ?>
 
 function openPreview(id) {
@@ -1356,11 +1442,23 @@ const translations = {
     }
 };
 
-let currentLang = localStorage.getItem('cre8_lang_produit') || 'en';
+function cre8BoReadLang() {
+    return localStorage.getItem('cre8_bo_lang')
+        || localStorage.getItem('cre8_lang')
+        || localStorage.getItem('cre8_lang_produit')
+        || localStorage.getItem('cre8_lang_campagne')
+        || localStorage.getItem('cre8_lang_contrat')
+        || 'fr';
+}
+function cre8BoWriteLang(lang) {
+    localStorage.setItem('cre8_bo_lang', lang);
+}
+
+let currentLang = cre8BoReadLang();
 
 function setLang(lang) {
     currentLang = lang;
-    localStorage.setItem('cre8_lang_produit', lang);
+    cre8BoWriteLang(lang);
     applyTranslations();
     document.getElementById('langEN').classList.toggle('active', lang === 'en');
     document.getElementById('langFR').classList.toggle('active', lang === 'fr');
@@ -1398,7 +1496,11 @@ function syncThemeLabel() {
     const isLight = document.body.classList.contains('light-mode');
     const icon  = document.getElementById('themeIcon');
     const label = document.getElementById('themeLabel');
-    if (icon)  icon.textContent  = isLight ? '🌙' : '☀️';
+
+    // The shared BackOffice header uses MDI icon classes and back-layout.js controls them.
+    // Do not inject emoji text here, otherwise the product page theme button looks different.
+    if (icon) icon.textContent = '';
+
     if (label) label.textContent = isLight ? (T.themeDarkLabel || 'Dark mode') : (T.themeLightLabel || 'Light mode');
 }
 

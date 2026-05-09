@@ -9,6 +9,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+require_once __DIR__ . '/../layout/session_bridge.php';
 require_once __DIR__ . '/../../../Controleur/condidatureC.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -38,7 +39,7 @@ if (!function_exists('cre8pilot_endpoint_emit_json')) {
 
 try {
     $controller = new CondidatureC();
-    $sessionUser = $_SESSION['utilisateur'] ?? [];
+    $sessionUser = cre8_front_session_user();
     $sessionUser = is_array($sessionUser) ? $sessionUser : [];
 
     if ((string) ($_POST['action'] ?? '') === 'document_upload' && !empty($_FILES['file']) && is_array($_FILES['file'])) {

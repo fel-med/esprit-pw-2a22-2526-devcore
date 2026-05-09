@@ -1,23 +1,12 @@
 <?php
-session_start();
+require_once __DIR__ . '/../layout/session_bridge.php';
+$currentUser = cre8_front_require_user('marque');
+$frontActive = 'collaborations';
 
 require_once __DIR__ . '/../../../Controleur/condidatureC.php';
 
 $controller = new CondidatureC();
-$sessionUser = $_SESSION['utilisateur'] ?? [];
-
-if (!isset($sessionUser['id']) || (($sessionUser['role'] ?? '') !== 'marque')) {
-    $defaultBrand = $controller->getDefaultUserByRole('marque');
-    if ($defaultBrand) {
-        $_SESSION['utilisateur'] = [
-            'id' => (int) $defaultBrand['id'],
-            'role' => 'marque',
-            'nom' => $defaultBrand['nom'],
-            'email' => $defaultBrand['email'],
-        ];
-        $sessionUser = $_SESSION['utilisateur'];
-    }
-}
+$sessionUser = $currentUser;
 
 $brandId = isset($sessionUser['id']) ? (int) $sessionUser['id'] : null;
 $idCandidature = isset($_GET['idCandidature']) && is_numeric($_GET['idCandidature']) ? (int) $_GET['idCandidature'] : null;
@@ -238,11 +227,16 @@ $brandNegotiationBaselineDelay = $brandIsLatestNegotiationSender && ($latestNego
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <?php require_once __DIR__ . '/../layout/front-theme-bootstrap.php'; ?>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brand Candidature Details - Cre8Connect</title>
     <link rel="stylesheet" href="../css/frontoffice.css">
     <link rel="stylesheet" href="../offre/offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../offre/offre.css')); ?>">
     <link rel="stylesheet" href="condidature.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/condidature.css')); ?>">
+    <link rel="stylesheet" href="../layout/front-header.css">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
 </head>
 <body>
     <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
@@ -682,5 +676,6 @@ $cre8PilotContext = [
 ];
 require __DIR__ . '/cre8pilot_widget.php';
 ?>
+    <script src="../layout/front-header.js"></script>
 </body>
 </html>

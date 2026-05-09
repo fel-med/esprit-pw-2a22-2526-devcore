@@ -146,6 +146,9 @@ $clients = count(array_filter($users, fn($u) => $u['role'] == 'client'));
             color: #764ba2;
         }
     </style>
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
 </head>
 <body>
 

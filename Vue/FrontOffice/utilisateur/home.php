@@ -11,6 +11,9 @@ if (!isset($_SESSION['user'])) {
 <html>
 <head>
     <title>Home</title>
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
 </head>
 <body>
 

@@ -9,27 +9,30 @@ require_once '../../../Controleur/reclamationC.php';
 
 $reclamationC = new ReclamationC();
 $liste = $reclamationC->afficherReclamationsAvecReponsesUser($_SESSION['id']);
+$frontActive = 'reclamation';
 ?>
 <html lang="en">
 
 <head>
     <meta charset="utf-8">
+    <?php require_once __DIR__ . '/../layout/front-theme-bootstrap.php'; ?>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="">
     <meta name="author" content="">
     <title>Modern Business - Start Bootstrap Template</title>
     <!-- Favicon-->
-    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
     <!-- Custom Google font-->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
     <link
         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@100;200;300;400;500;600;700;800;900&amp;display=swap"
         rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=Fraunces:wght@700;800&display=swap" rel="stylesheet">
     <!-- Bootstrap icons-->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     <!-- Core theme CSS (includes Bootstrap)-->
     <link href="css/styles.css" rel="stylesheet">
+    <link href="../layout/front-header.css" rel="stylesheet">
     <style>
         /* ── BACK TO MY SPACE ── */
         .btn-back-space {
@@ -51,217 +54,201 @@ $liste = $reclamationC->afficherReclamationsAvecReponsesUser($_SESSION['id']);
             text-decoration: none;
         }
 
-        /* Mode Jour/Nuit - CSS Complet */
-        body.light-mode {
-            background-color: #1a1a1a !important;
+        /*
+         * Réclamation page theme: html[data-theme="light"|"dark"] + --reclam-* tokens.
+         * (Removed legacy .light-mode rules that incorrectly forced dark colors when the
+         * body had class light-mode — that broke light mode site-wide on this page.)
+         */
+        :root {
+            --reclam-bg: #f6f7fb;
+            --reclam-card: #ffffff;
+            --reclam-card-soft: #f8fafc;
+            --reclam-text: #111827;
+            --reclam-muted: #64748b;
+            --reclam-border: #dbe2ef;
+            --reclam-input: #ffffff;
+            --reclam-input-text: #111827;
+            --reclam-input-focus-bg: #ffffff;
+        }
+
+        html[data-theme="dark"] {
+            --reclam-bg: #101116;
+            --reclam-card: #191c24;
+            --reclam-card-soft: #20212b;
+            --reclam-text: #f8fafc;
+            --reclam-muted: #a5adc2;
+            --reclam-border: rgba(148, 163, 184, 0.22);
+            --reclam-input: #2a3038;
+            --reclam-input-text: #f8fafc;
+            --reclam-input-focus-bg: #151325;
+        }
+
+        body:has(.front-reclamation-page) {
+            background-color: var(--reclam-bg) !important;
+            color: var(--reclam-text);
+        }
+
+        body:has(.front-reclamation-page).bg-light {
+            background-color: var(--reclam-bg) !important;
+        }
+
+        .front-reclamation-page {
+            background: var(--reclam-bg);
+            color: var(--reclam-text);
+        }
+
+        .front-reclamation-page section.py-5 {
+            background-color: transparent !important;
+            color: inherit;
+        }
+
+        .front-reclamation-page .container,
+        .front-reclamation-page .row,
+        .front-reclamation-page [class*="col-"] {
+            background-color: transparent !important;
+        }
+
+        .front-reclamation-page .card,
+        .front-reclamation-page .card-body {
+            background-color: var(--reclam-card) !important;
+            border-color: var(--reclam-border) !important;
+            color: var(--reclam-text) !important;
+        }
+
+        html[data-theme="dark"] .front-reclamation-page .card {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .front-reclamation-page .form-label,
+        .front-reclamation-page h1,
+        .front-reclamation-page h2,
+        .front-reclamation-page h3,
+        .front-reclamation-page h4,
+        .front-reclamation-page h5,
+        .front-reclamation-page label {
+            color: var(--reclam-text) !important;
+        }
+
+        .front-reclamation-page .text-gradient {
+            background: linear-gradient(135deg, #5b4fff 0%, #c026d3 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        html[data-theme="dark"] .front-reclamation-page .text-gradient {
+            background: linear-gradient(135deg, #8b7cff 0%, #f472b6 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .front-reclamation-page textarea,
+        .front-reclamation-page select,
+        .front-reclamation-page input.form-control,
+        .front-reclamation-page .form-select {
+            background-color: var(--reclam-input) !important;
+            color: var(--reclam-input-text) !important;
+            border-color: var(--reclam-border) !important;
+        }
+
+        .front-reclamation-page textarea::placeholder,
+        .front-reclamation-page .form-control::placeholder {
+            color: var(--reclam-muted) !important;
+        }
+
+        .front-reclamation-page .form-control:focus,
+        .front-reclamation-page .form-select:focus {
+            background-color: var(--reclam-input-focus-bg) !important;
+            color: var(--reclam-input-text) !important;
+            border-color: #7c6fff !important;
+            box-shadow: 0 0 0 0.2rem rgba(124, 111, 255, 0.22) !important;
+        }
+
+        .front-reclamation-page .text-muted {
+            color: var(--reclam-muted) !important;
+        }
+
+        .front-reclamation-page .alert {
+            background-color: var(--reclam-card-soft) !important;
+            border-color: var(--reclam-border) !important;
+            color: var(--reclam-text) !important;
+        }
+
+        html[data-theme="light"] .front-reclamation-page .alert-success {
+            background-color: #ecfdf5 !important;
+            border-color: #a7f3d0 !important;
+            color: #065f46 !important;
+        }
+
+        html[data-theme="light"] .front-reclamation-page .alert-warning {
+            background-color: #fffbeb !important;
+            border-color: #fde68a !important;
+            color: #92400e !important;
+        }
+
+        html[data-theme="dark"] .front-reclamation-page .alert-success {
+            background-color: #0d2e22 !important;
+            border-color: rgba(52, 211, 153, 0.25) !important;
+            color: #9ff0ce !important;
+        }
+
+        html[data-theme="dark"] .front-reclamation-page .alert-warning {
+            background-color: #271d08 !important;
+            border-color: rgba(251, 191, 36, 0.25) !important;
+            color: #fcd77f !important;
+        }
+
+        .front-reclamation-page .modal-content,
+        .front-reclamation-page .modal-header,
+        .front-reclamation-page .modal-body,
+        .front-reclamation-page .modal-footer {
+            background-color: var(--reclam-card) !important;
+            color: var(--reclam-text) !important;
+            border-color: var(--reclam-border) !important;
+        }
+
+        html[data-theme="dark"] .front-reclamation-page .btn-close {
+            filter: invert(1);
+        }
+
+        .front-reclamation-page .bg-gradient-primary-to-secondary {
+            background: linear-gradient(135deg, #5b4fff 0%, #7c3aed 45%, #2563eb 100%) !important;
             color: #ffffff !important;
         }
 
-        .light-mode * {
-            background-color: #1a1a1a !important;
-            color: #ffffff !important;
+        html[data-theme="dark"] .front-reclamation-page .bg-gradient-primary-to-secondary {
+            background: linear-gradient(135deg, #201c3d 0%, #111827 100%) !important;
+            color: #f8fafc !important;
         }
 
-        .light-mode .navbar {
-            background-color: #0d0d0d !important;
-            border-bottom: 1px solid #333 !important;
+        body:has(.front-reclamation-page) footer.bg-white {
+            background-color: var(--reclam-card) !important;
+            color: var(--reclam-text) !important;
+            border-top: 1px solid var(--reclam-border) !important;
         }
 
-        .light-mode .navbar-light .navbar-nav .nav-link {
-            color: #ffffff !important;
+        body:has(.front-reclamation-page) footer a {
+            color: var(--reclam-muted) !important;
         }
 
-        .light-mode .card {
-            background-color: #2d2d2d !important;
-            border-color: #444 !important;
-            color: #ffffff !important;
+        html[data-theme="dark"] body:has(.front-reclamation-page) footer a {
+            color: #c9c3ff !important;
         }
 
-        .light-mode .card-body {
-            background-color: #2d2d2d !important;
-            color: #ffffff !important;
-        }
-
-        .light-mode .form-control,
-        .light-mode .form-select {
-            background-color: #3d3d3d !important;
-            color: #ffffff !important;
-            border-color: #555 !important;
-        }
-
-        .light-mode .form-control:focus,
-        .light-mode .form-select:focus {
-            background-color: #3d3d3d !important;
-            color: #ffffff !important;
-            border-color: #9B5DE0 !important;
-            box-shadow: 0 0 0 0.2rem rgba(155, 93, 224, 0.25) !important;
-        }
-
-        .light-mode textarea.form-control {
-            background-color: #3d3d3d !important;
-            color: #ffffff !important;
-        }
-
-        .light-mode .form-label {
-            color: #ffffff !important;
-        }
-
-        .light-mode .btn-secondary {
-            background-color: #444 !important;
-            border-color: #555 !important;
-            color: #ffffff !important;
-        }
-
-        .light-mode .btn-secondary:hover {
-            background-color: #555 !important;
-            border-color: #666 !important;
-        }
-
-        .light-mode .modal-content {
-            background-color: #2d2d2d !important;
-            color: #ffffff !important;
-            border-color: #444 !important;
-        }
-
-        .light-mode .modal-header {
-            background-color: #1a1a1a !important;
-            border-color: #444 !important;
-            color: #ffffff !important;
-        }
-
-        .light-mode .modal-title {
-            color: #ffffff !important;
-        }
-
-        .light-mode .alert {
-            background-color: #2d2d2d !important;
-            border-color: #444 !important;
-            color: #ffffff !important;
-        }
-
-        .light-mode .alert-success {
-            background-color: #1e4620 !important;
-            border-color: #2d6a2f !important;
-            color: #90ee90 !important;
-        }
-
-        .light-mode .alert-warning {
-            background-color: #664d1a !important;
-            border-color: #995500 !important;
-            color: #ffcc99 !important;
-        }
-
-        .light-mode footer {
-            background-color: #0d0d0d !important;
-            color: #ffffff !important;
-            border-top: 1px solid #333 !important;
-        }
-
-        .light-mode .text-muted {
-            color: #aaaaaa !important;
-        }
-
-        .light-mode .text-gradient {
-            color: #D78FEE !important;
-        }
-
-        .light-mode .bg-light {
-            background-color: #1a1a1a !important;
-        }
-
-        .light-mode .bg-white {
-            background-color: #0d0d0d !important;
-        }
-
-        .light-mode .bg-gradient-primary-to-secondary {
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
-        }
-
-        /* Transitions lisses */
-        * {
+        .front-reclamation-page * {
             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
-
-        /* Bouton Mode Jour/Nuit */
-        .btn-theme-toggle {
-            background-color: transparent;
-            border: none;
-            color: inherit;
-            cursor: pointer;
-            font-size: 1.2rem;
-            padding: 0.5rem;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .btn-theme-toggle:hover {
-            background-color: rgba(0, 0, 0, 0.1);
-            transform: rotate(20deg);
-        }
-
-        .light-mode .btn-theme-toggle:hover {
-            background-color: rgba(0, 0, 0, 0.1);
-        }
     </style>
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
 </head>
 
 <body class="d-flex flex-column h-100 bg-light">
     <main class="flex-shrink-0">
-        <!-- Navigation-->
-        <nav class="navbar navbar-expand-lg navbar-light bg-white py-3">
-            <div class="container px-5">
-                <a class="navbar-brand" href="index.html"><span class="fw-bolder text-primary">Cre8connect</span></a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
-                    aria-expanded="false" aria-label="Toggle navigation"><span
-                        class="navbar-toggler-icon"></span></button>
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0 small fw-bolder">
-                    <?php
-
-$homePage = "creator.php";
-
-if (isset($_SESSION['role'])) {
-
-    if ($_SESSION['role'] == 'brand') {
-
-        $homePage = "brand.php";
-
-    } elseif ($_SESSION['role'] == 'createur') {
-
-        $homePage = "creator.php";
-    }
-}
-?>
-
-<li class="nav-item">
-    <a class="nav-link" href="<?php echo $homePage; ?>">
-        Home
-    </a>
-</li>
-                        <li class="nav-item"><a class="nav-link" href="reclamation.php">Reclamation</a></li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="toggleDarkMode(); return false;" title="Mode jour/nuit">
-                                <i class="bi bi-moon-stars" id="themeIcon"></i>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-danger" href="logout.php">
-                                <i class="bi bi-box-arrow-right"></i> Logout
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link btn-back-space" href="../post/portfolio.php">
-                                <i class="bi bi-arrow-left-short"></i> Back to My Space
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
+        <?php require_once __DIR__ . '/../layout/header.php'; ?>
+        <div class="front-reclamation-page">
         <!-- Projects Section-->
         <section class="py-5">
             <div class="container px-5 mb-5">
@@ -456,6 +443,7 @@ if (isset($_SESSION['role'])) {
                 </div>
             </div>
         </section>
+        </div>
     </main>
     <!-- Footer-->
     <footer class="bg-white py-4 mt-auto">
@@ -570,30 +558,8 @@ if (isset($_SESSION['role'])) {
             descriptionError.classList.add('d-none');
             this.classList.remove('border-danger');
         });
-        
-        // ===== MODE JOUR/NUIT =====
-        function toggleDarkMode() {
-            document.body.classList.toggle('light-mode');
-            
-            let icon = document.getElementById('themeIcon');
-            if (document.body.classList.contains('light-mode')) {
-                localStorage.setItem('theme', 'light');
-                if (icon) icon.className = 'bi bi-brightness-high';
-            } else {
-                localStorage.setItem('theme', 'dark');
-                if (icon) icon.className = 'bi bi-moon-stars';
-            }
-        }
-        
-        // Appliquer le thème au chargement
-        window.addEventListener('DOMContentLoaded', function() {
-            let icon = document.getElementById('themeIcon');
-            if (localStorage.getItem('theme') === 'light') {
-                document.body.classList.add('light-mode');
-                if (icon) icon.className = 'bi bi-brightness-high';
-            }
-        });
     </script>
+    <script src="../layout/front-header.js"></script>
 
 </body>
 

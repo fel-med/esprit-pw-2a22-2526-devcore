@@ -109,10 +109,10 @@ class CondidatureC
                 cu.email AS creatorEmail,
                 o.idOffre AS sourceOfferId,
                 cp.idCampagne AS sourceCampaignId,
-                COALESCE(NULLIF(o.titre, ''), NULLIF(cp.titre, '')) AS sourceTitle,
-                COALESCE(NULLIF(o.objectif, ''), NULLIF(cp.description, '')) AS sourceObjective,
+                COALESCE(NULLIF(o.titre, ''), NULLIF(cp.titreCampagne, '')) AS sourceTitle,
+                COALESCE(NULLIF(o.objectif, ''), NULLIF(cp.objectif, ''), NULLIF(cp.description, '')) AS sourceObjective,
                 COALESCE(NULLIF(o.description, ''), NULLIF(cp.description, '')) AS sourceDescription,
-                COALESCE(o.budgetPropose, 0) AS sourceBudget,
+                COALESCE(o.budgetPropose, cp.budget, 0) AS sourceBudget,
                 COALESCE(o.datePublication, cp.dateDebut) AS sourcePublicationDate,
                 COALESCE(o.dateLimite, cp.dateFin) AS sourceDeadline,
                 COALESCE(o.statutOffre, cp.statut) AS sourceStatus,
@@ -13356,8 +13356,10 @@ class CondidatureC
             SELECT
                 c.idCampagne,
                 c.idMarque,
-                c.titre,
+                c.titreCampagne AS titre,
+                c.objectif,
                 c.description,
+                c.budget,
                 c.dateDebut,
                 c.dateFin,
                 c.statut,
@@ -13382,9 +13384,9 @@ class CondidatureC
             'origin' => 'par_campagne',
             'id' => (int) ($row['idCampagne'] ?? 0),
             'title' => (string) ($row['titre'] ?? ''),
-            'objective' => (string) ($row['description'] ?? ''),
+            'objective' => (string) (($row['objectif'] ?? '') !== '' ? $row['objectif'] : ($row['description'] ?? '')),
             'description' => (string) ($row['description'] ?? ''),
-            'budgetPropose' => 0.0,
+            'budgetPropose' => isset($row['budget']) ? (float) $row['budget'] : 0.0,
             'datePublication' => $row['dateDebut'] ?? null,
             'dateLimite' => $row['dateFin'] ?? null,
             'status' => $row['statut'] ?? null,
@@ -13411,8 +13413,10 @@ class CondidatureC
             SELECT
                 cp.idCampagne,
                 cp.idMarque,
-                cp.titre,
+                cp.titreCampagne AS titre,
+                cp.objectif,
                 cp.description,
+                cp.budget,
                 cp.dateDebut,
                 cp.dateFin,
                 cp.statut,
@@ -13428,7 +13432,7 @@ class CondidatureC
         $status = trim((string) ($filters['status'] ?? ''));
 
         if ($keyword !== '') {
-            $sql .= ' AND (cp.titre LIKE :keyword OR cp.description LIKE :keyword OR m.nom LIKE :keyword)';
+            $sql .= ' AND (cp.titreCampagne LIKE :keyword OR cp.description LIKE :keyword OR m.nom LIKE :keyword)';
             $params['keyword'] = '%' . $keyword . '%';
         }
 
@@ -13459,9 +13463,9 @@ class CondidatureC
                     'origin' => 'par_campagne',
                     'id' => $sourceId,
                     'title' => (string) ($row['titre'] ?? ''),
-                    'objective' => (string) ($row['description'] ?? ''),
+                    'objective' => (string) (($row['objectif'] ?? '') !== '' ? $row['objectif'] : ($row['description'] ?? '')),
                     'description' => (string) ($row['description'] ?? ''),
-                    'budgetPropose' => 0.0,
+                    'budgetPropose' => isset($row['budget']) ? (float) $row['budget'] : 0.0,
                     'datePublication' => $row['dateDebut'] ?? null,
                     'dateLimite' => $row['dateFin'] ?? null,
                     'status' => $row['statut'] ?? null,
@@ -13553,8 +13557,10 @@ class CondidatureC
             SELECT
                 cp.idCampagne,
                 cp.idMarque,
-                cp.titre,
+                cp.titreCampagne AS titre,
+                cp.objectif,
                 cp.description,
+                cp.budget,
                 cp.dateDebut,
                 cp.dateFin,
                 cp.statut,
@@ -13571,8 +13577,10 @@ class CondidatureC
             GROUP BY
                 cp.idCampagne,
                 cp.idMarque,
-                cp.titre,
+                cp.titreCampagne,
+                cp.objectif,
                 cp.description,
+                cp.budget,
                 cp.dateDebut,
                 cp.dateFin,
                 cp.statut
@@ -13651,7 +13659,7 @@ class CondidatureC
 
         if ($keyword !== '') {
             $sql .= ' AND (
-                COALESCE(o.titre, cp.titre) LIKE :keyword
+                COALESCE(o.titre, cp.titreCampagne) LIKE :keyword
                 OR COALESCE(o.objectif, cp.description) LIKE :keyword
                 OR COALESCE(o.description, cp.description) LIKE :keyword
                 OR c.messageMotivation LIKE :keyword
@@ -13774,7 +13782,7 @@ class CondidatureC
         $hasPortfolio = trim((string) ($filters['hasPortfolio'] ?? ''));
 
         if ($keyword !== '') {
-            $sql .= ' AND (COALESCE(o.titre, cp.titre) LIKE :keyword OR COALESCE(o.description, cp.description) LIKE :keyword OR c.messageMotivation LIKE :keyword OR cu.nom LIKE :keyword OR cu.email LIKE :keyword OR COALESCE(om.nom, cm.nom) LIKE :keyword)';
+            $sql .= ' AND (COALESCE(o.titre, cp.titreCampagne) LIKE :keyword OR COALESCE(o.description, cp.description) LIKE :keyword OR c.messageMotivation LIKE :keyword OR cu.nom LIKE :keyword OR cu.email LIKE :keyword OR COALESCE(om.nom, cm.nom) LIKE :keyword)';
             $params['keyword'] = '%' . $keyword . '%';
         }
 
@@ -13865,7 +13873,7 @@ class CondidatureC
 
         if ($keyword !== '') {
             $sql .= ' AND (
-                COALESCE(o.titre, cp.titre) LIKE :keyword
+                COALESCE(o.titre, cp.titreCampagne) LIKE :keyword
                 OR COALESCE(o.objectif, cp.description) LIKE :keyword
                 OR COALESCE(o.description, cp.description) LIKE :keyword
                 OR c.messageMotivation LIKE :keyword
@@ -14234,7 +14242,7 @@ class CondidatureC
                 c.budgetPropose,
                 c.dateCandidature,
                 creator.nom AS creatorName,
-                COALESCE(NULLIF(o.titre, ''), NULLIF(cp.titre, ''), CONCAT('Source #', c.idSource)) AS sourceTitle
+                COALESCE(NULLIF(o.titre, ''), NULLIF(cp.titreCampagne, ''), CONCAT('Source #', c.idSource)) AS sourceTitle
             FROM candidature c
             LEFT JOIN utilisateur creator ON creator.id = c.idCreateur
             LEFT JOIN offre o ON c.origineCandidature = 'par_offre' AND o.idOffre = c.idSource

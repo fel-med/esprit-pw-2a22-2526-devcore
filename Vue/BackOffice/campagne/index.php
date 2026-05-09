@@ -4,6 +4,7 @@
  * Rôle : ADMIN — supervision de toutes les campagnes + analyse IA
  */
 
+require_once __DIR__ . '/../layout/early-theme.php';
 require_once __DIR__ . '/../../../Controleur/campagneC.php';
 require_once __DIR__ . '/../../../Controleur/produitC.php';
 require_once __DIR__ . '/../../../Modele/campagne.php';
@@ -12,7 +13,17 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 
 $campagneC = new CampagneC();
 $produitC  = new ProduitC();
-$baseUrl   = '/projet/Esprit-PW-2A22-2526-Devcore';
+$cre8SelfPath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
+$cre8VuePos = strpos($cre8SelfPath, '/Vue/');
+$baseUrl = $cre8VuePos !== false ? substr($cre8SelfPath, 0, $cre8VuePos) : '';
+if (!function_exists('cre8_product_image_url')) {
+    function cre8_product_image_url($filename) {
+        global $baseUrl;
+        $filename = trim((string) $filename);
+        if ($filename === '') return '';
+        return $baseUrl . '/Vue/public/produits/' . rawurlencode(basename($filename));
+    }
+}
 
 $message     = '';
 $messageType = '';
@@ -108,15 +119,23 @@ $nbTerminees    = count(array_filter($liste, fn($c) => $c['statut'] === 'termine
 
 function statutLabel($s) { return match($s) { 'active'=>'✅ Active','terminee'=>'🏁 Terminée','annulee'=>'❌ Annulée',default=>'📝 Brouillon' }; }
 function statutClass($s) { return match($s) { 'active'=>'badge-success','terminee'=>'badge-info','annulee'=>'badge-danger',default=>'badge-warning' }; }
+function campagneAssetVersion($path) {
+    return is_file($path) ? '?v=' . urlencode((string) filemtime($path)) : '';
+}
 if (!headers_sent()) header('Content-Type: text/html; charset=UTF-8');
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<?php cre8_bo_early_theme_print_head_script(); ?>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gestion Campagnes — Admin · Cre8Connect</title>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/backoffice.css<?= campagneAssetVersion(__DIR__ . '/../css/backoffice.css') ?>">
+<link rel="stylesheet" href="../layout/back-layout.css<?= campagneAssetVersion(__DIR__ . '/../layout/back-layout.css') ?>">
+<link rel="stylesheet" href="../utilisateur/assets/vendors/mdi/css/materialdesignicons.min.css<?= campagneAssetVersion(__DIR__ . '/../utilisateur/assets/vendors/mdi/css/materialdesignicons.min.css') ?>">
+<link rel="stylesheet" href="../css/new_style_backoffice.css<?= campagneAssetVersion(__DIR__ . '/../css/new_style_backoffice.css') ?>">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
@@ -178,97 +197,12 @@ body {
     transition: background .25s, color .25s;
 }
 
-/* ===== LAYOUT ===== */
-.container-scroller { display:flex; position:relative; min-height:100vh; }
-
-/* ===== SIDEBAR ===== */
-.sidebar {
-    width: var(--sidebar-w);
-    background: var(--bg-surface);
-    min-height: 100vh;
-    position: fixed;
-    top:0; left:0; bottom:0;
-    z-index:100;
-    border-right: 1px solid var(--border);
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
+/* ===== CAMPAIGN CONTENT WRAPPER ===== */
+.campagne-admin {
+    background: var(--bg-base);
+    color: var(--text);
+    width: 100%;
 }
-.sidebar-brand-wrapper {
-    padding: 20px 24px;
-    border-bottom: 1px solid var(--border);
-}
-.brand-logo {
-    font-size: 1.25rem;
-    font-weight: 700;
-    background: var(--grad);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-decoration: none;
-}
-.brand-logo span { background:none; -webkit-text-fill-color: var(--text); }
-
-.sidebar-nav { padding: 12px 0; flex:1; list-style:none; }
-.nav-category {
-    font-size: .65rem;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--muted);
-    padding: 16px 24px 6px;
-}
-.nav-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 24px;
-    color: var(--sub);
-    text-decoration: none;
-    font-size: .875rem;
-    font-weight: 600;
-    transition: all .15s;
-    border-left: 3px solid transparent;
-    margin-bottom: 2px;
-}
-.nav-item:hover, .nav-item.active {
-    background: var(--accent-soft);
-    color: #fff;
-    border-left-color: var(--accent);
-}
-.nav-item i { width:18px; text-align:center; font-size:.85rem; }
-
-/* ===== PAGE BODY ===== */
-.page-body-wrapper {
-    width: calc(100% - var(--sidebar-w));
-    margin-left: var(--sidebar-w);
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-}
-
-/* ===== TOPBAR ===== */
-.navbar {
-    background: var(--bg-surface);
-    border-bottom: 1px solid var(--border);
-    border-top: 3px solid transparent;
-    background-image: linear-gradient(var(--bg-surface), var(--bg-surface)), var(--grad);
-    background-origin: border-box;
-    background-clip: padding-box, border-box;
-    padding: 0 28px;
-    height: 63px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 99;
-}
-.navbar-title { font-size: 1rem; font-weight: 700; }
-.navbar-controls { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-
-/* ===== CONTENT ===== */
-.content-wrapper { background: var(--bg-base); padding: 28px 28px; flex-grow: 1; }
 
 /* ===== CARDS ===== */
 .card {
@@ -560,33 +494,146 @@ textarea.form-control { resize:vertical; min-height:80px; }
 .btn-modal-cancel  { background:var(--bg-surface); color:var(--sub); border:1px solid var(--border); border-radius:8px; padding:8px 16px; font-size:.85rem; cursor:pointer; font-family:inherit; }
 .btn-modal-confirm { background:var(--rose); color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:.85rem; font-weight:700; cursor:pointer; font-family:inherit; }
 
-@media (max-width:992px) {
-    .sidebar { transform:translateX(-100%); }
-    .page-body-wrapper { margin-left:0; width:100%; }
-    .kpi-grid { grid-template-columns:repeat(2,1fr); }
-    .charts-grid { grid-template-columns:1fr; }
-    .form-grid, .form-grid-3 { grid-template-columns:1fr; }
-}
-</style>
-<?php include __DIR__ . '/../includes/layout_head.php'; ?>
-</head>
-<body>
-<div class="container-scroller">
-<?php
-$activeMenu = 'campagne';
-include __DIR__ . '/../includes/sidebar.php';
-?>
-<div class="page-body-wrapper">
-<?php include __DIR__ . '/../includes/topbar.php'; ?>
 
-    <!-- CONTENT -->
+
+/* ===== LANGUAGE SWITCHER TOOLBAR ===== */
+.translation-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 0 0 18px;
+}
+.page-heading { display:flex; flex-direction:column; gap:4px; min-width:0; }
+.page-title { font-size:1.35rem; font-weight:800; color:var(--text); margin:0; }
+.lang-switcher,
+.lang-switcher.bo-lang-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    border: 1px solid rgba(124, 92, 255, 0.35);
+    border-radius: 999px;
+    background: rgba(124, 92, 255, 0.08);
+}
+.lang-btn {
+    border: 0;
+    border-radius: 999px;
+    padding: 0.4rem 0.7rem;
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+    font-size: 0.76rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background .16s ease, border-color .16s ease, color .16s ease;
+}
+.lang-btn:hover {
+    color: var(--accent);
+}
+.lang-btn.active {
+    background: #8b5cf6;
+    color: #ffffff;
+    border: 0;
+}
+.page-subtitle {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--sub);
+    font-weight: 500;
+}
+
+@media (max-width:992px) {
+    .campagne-admin .kpi-grid { grid-template-columns:repeat(2,1fr); }
+    .campagne-admin .charts-grid { grid-template-columns:1fr; }
+    .campagne-admin .form-grid, .campagne-admin .form-grid-3 { grid-template-columns:1fr; }
+}
+
+/* =========================================================
+   CRE8 CAMPAIGN / CONTRACT SHELL FIX
+   Remove iframe-like outer frame by unifying page canvas.
+   ========================================================= */
+
+body.cre8-admin-layout,
+body.cre8-admin-layout .container-scroller,
+body.cre8-admin-layout .page-body-wrapper,
+body.cre8-admin-layout .main-panel,
+body.cre8-admin-layout .content-wrapper {
+  background: var(--bg-base) !important;
+  background-color: var(--bg-base) !important;
+}
+
+body.cre8-admin-layout .campagne-admin,
+body.cre8-admin-layout .contrat-admin {
+  background: var(--bg-base) !important;
+  background-color: var(--bg-base) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout,
+body.cre8-admin-layout.light-mode,
+body.light-mode.cre8-admin-layout {
+  --bg-base: #f6f7fb !important;
+  background: #f6f7fb !important;
+  background-color: #f6f7fb !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .container-scroller,
+html[data-theme="light"] body.cre8-admin-layout .page-body-wrapper,
+html[data-theme="light"] body.cre8-admin-layout .main-panel,
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper,
+html[data-theme="light"] body.cre8-admin-layout .campagne-admin,
+html[data-theme="light"] body.cre8-admin-layout .contrat-admin,
+body.cre8-admin-layout.light-mode .container-scroller,
+body.cre8-admin-layout.light-mode .page-body-wrapper,
+body.cre8-admin-layout.light-mode .main-panel,
+body.cre8-admin-layout.light-mode .content-wrapper,
+body.cre8-admin-layout.light-mode .campagne-admin,
+body.cre8-admin-layout.light-mode .contrat-admin,
+body.light-mode.cre8-admin-layout .container-scroller,
+body.light-mode.cre8-admin-layout .page-body-wrapper,
+body.light-mode.cre8-admin-layout .main-panel,
+body.light-mode.cre8-admin-layout .content-wrapper,
+body.light-mode.cre8-admin-layout .campagne-admin,
+body.light-mode.cre8-admin-layout .contrat-admin {
+  background: #f6f7fb !important;
+  background-color: #f6f7fb !important;
+}
+
+</style>
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
+</head>
+<body class="cre8-admin-layout"><?php cre8_bo_early_theme_print_body_script(); ?>
+
+<div class="container-scroller cre8-admin-page">
+<?php
+$backActive = 'campaigns';
+require_once __DIR__ . '/../layout/sidebar.php';
+?>
+<div class="container-fluid page-body-wrapper cre8-admin-main">
+<?php require_once __DIR__ . '/../layout/header.php'; ?>
+    <div class="main-panel">
     <div class="content-wrapper">
+        <div class="campagne-admin">
 
         <?php if ($message): ?>
         <div class="alert alert-<?= $messageType ?>" id="alertMsg">
             <?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?>
         </div>
         <?php endif; ?>
+
+        <div class="translation-toolbar" aria-label="Language controls">
+            <div class="page-heading">
+                <h1 class="page-title" data-i18n="pageTitle">⚡ Gestion des Campagnes</h1>
+                <p class="page-subtitle" data-i18n="pageSubtitle">Supervision et modération des campagnes.</p>
+            </div>
+            <div class="lang-switcher bo-lang-switch" role="group" aria-label="Language selector" data-lang-switch>
+                <button type="button" class="lang-btn" id="langEN" data-lang-option="en" onclick="setLang('en')" title="English">EN</button>
+                <button type="button" class="lang-btn" id="langFR" data-lang-option="fr" onclick="setLang('fr')" title="Français">FR</button>
+            </div>
+        </div>
 
         <!-- KPI -->
         <div class="kpi-grid">
@@ -876,7 +923,9 @@ include __DIR__ . '/../includes/sidebar.php';
                 </form>
             </div>
         </div>
+        </div><!-- /campagne-admin -->
     </div><!-- /content-wrapper -->
+    </div><!-- /main-panel -->
 </div><!-- /page-body-wrapper -->
 </div><!-- /container-scroller -->
 
@@ -903,9 +952,9 @@ include __DIR__ . '/../includes/sidebar.php';
     </div>
 </div>
 
-<?php include __DIR__ . '/../includes/layout_scripts.php'; ?>
+<script src="../layout/back-layout.js<?= campagneAssetVersion(__DIR__ . '/../layout/back-layout.js') ?>"></script>
 <script>
-const BASE_URL = '<?= $baseUrl ?>';
+const BASE_URL = <?= json_encode($baseUrl, JSON_UNESCAPED_SLASHES) ?>;
 
 // Alert auto-hide
 const alertEl = document.getElementById('alertMsg');
@@ -954,7 +1003,7 @@ function renderPP(id, lies, dispos) {
     let html = `<div><div class="pp-section-label">Produits liés (${lies.length})</div><div class="pp-list">`;
     if (!lies.length) html += '<div class="pp-empty">Aucun produit lié.</div>';
     else lies.forEach(p => {
-        const img = p.image ? `<img src="${BASE_URL}/Vue/public/produits/${p.image}" alt="">` : '📦';
+        const img = p.image ? `<img src="${BASE_URL}/Vue/public/produits/${encodeURIComponent(p.image)}" alt="">` : '📦';
         html += `<div class="pp-item"><div class="pp-thumb">${img}</div><div class="pp-info"><div class="pp-name">${esc(p.nomProduit)}</div><div class="pp-price">${parseFloat(p.prix).toFixed(2)} €</div></div><button class="btn-pp-remove" onclick="retirerPP(${id},${p.idProduit})">✕</button></div>`;
     });
     html += '</div></div>';
@@ -985,15 +1034,30 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal
 document.addEventListener('DOMContentLoaded', () => document.getElementById('formAnchor').scrollIntoView({behavior:'smooth',block:'start'}));
 <?php endif; ?>
 
+// ── Shared BO language key (persists across Campaigns / Products / Contracts) ──
+function cre8BoReadLang() {
+    return localStorage.getItem('cre8_bo_lang')
+        || localStorage.getItem('cre8_lang')
+        || localStorage.getItem('cre8_lang_campagne')
+        || localStorage.getItem('cre8_lang_produit')
+        || localStorage.getItem('cre8_lang_contrat')
+        || 'fr';
+}
+function cre8BoWriteLang(lang) {
+    localStorage.setItem('cre8_bo_lang', lang);
+}
+
 // ── TRANSLATIONS ──────────────────────────────────────────────────
 const translations = {
     fr: {
-        pageTitle:'⚡ Gestion des Campagnes', exportCsv:'Export CSV', adminLabel:'Admin',
+        pageTitle:'⚡ Gestion des Campagnes',
+        pageSubtitle:'Supervision et modération des campagnes.',
+        exportCsv:'Export CSV', adminLabel:'Admin',
         kpiTotal:'Total actives', kpiActive:'Actives', kpiDraft:'Brouillons', kpiEnded:'Terminées', kpiBudget:'Budget total', kpiArchived:'Archivées',
         statsTitle:'Statistiques dynamiques', statsHide:'▲ Masquer', statsShow:'▼ Afficher',
         chartStatusTitle:'Répartition par statut', chartActiveArchiveTitle:'Actives vs Archivées', chartBudgetTitle:'Budget par statut (€)',
         iaTitle:"Analyser une campagne avec l'IA", iaSelectLabel:'Sélectionner une campagne', iaSelectPlaceholder:'— Choisir —',
-        iaAnalyzeBtn:'Analyser', iaLoading:'Analyse IA en cours…',
+        iaAnalyzeBtn:'Analyser', iaLoading:'Analyse IA en cours…', iaResultTitle:"📊 Résultat de l'analyse", iaScore:'Score qualité',
         tabActive:'Actives', tabArchived:'Archivées', filterAll:'Tous statuts', searchPlaceholder:'Rechercher…',
         panelTitle:'Toutes les campagnes', campaignCount:'campagne(s)', noCampaign:'Aucune campagne.', noArchived:'Aucune campagne archivée.',
         colTitle:'Titre', colStatus:'Statut', colDates:'Dates', colBudget:'Budget', colBrand:'Marque', colProducts:'Produits', colActions:'Actions',
@@ -1002,15 +1066,18 @@ const translations = {
         labelStart:'Date début', labelEnd:'Date fin', labelBudget:'Budget (€) *',
         modalTitle:'Confirmer la suppression', modalCancel:'Annuler', modalConfirm:'Supprimer',
         themeLabel:'Mode clair', themeLabelDark:'Mode sombre',
-        prevPage:'← Préc.', nextPage:'Suiv. →', pageOf:'Page', of:'sur',
+        prevPage:'← Préc.', nextPage:'Suiv. →', pageOf:'Page', of:'sur', chartCanceled:'Annulée', chartBudgetDataset:'Budget (€)',
+        perPageSuffix:' par page',
     },
     en: {
-        pageTitle:'⚡ Campaign Management', exportCsv:'Export CSV', adminLabel:'Admin',
-        kpiTotal:'Total active', kpiActive:'Active', kpiDraft:'Drafts', kpiEnded:'Ended', kpiBudget:'Total budget', kpiArchived:'Archived',
+        pageTitle:'⚡ Campaign Management',
+        pageSubtitle:'Supervise and moderate platform campaigns.',
+        exportCsv:'Export CSV', adminLabel:'Admin',
+        kpiTotal:'Total active', kpiActive:'Active', kpiDraft:'Drafts', kpiEnded:'Completed', kpiBudget:'Total budget', kpiArchived:'Archived',
         statsTitle:'Dynamic Statistics', statsHide:'▲ Hide', statsShow:'▼ Show',
         chartStatusTitle:'Distribution by status', chartActiveArchiveTitle:'Active vs Archived', chartBudgetTitle:'Budget by status (€)',
         iaTitle:'Analyze a campaign with AI', iaSelectLabel:'Select a campaign', iaSelectPlaceholder:'— Choose —',
-        iaAnalyzeBtn:'Analyze', iaLoading:'AI analysis in progress…',
+        iaAnalyzeBtn:'Analyze', iaLoading:'AI analysis in progress…', iaResultTitle:'📊 Analysis result', iaScore:'Quality score',
         tabActive:'Active', tabArchived:'Archived', filterAll:'All statuses', searchPlaceholder:'Search…',
         panelTitle:'All campaigns', campaignCount:'campaign(s)', noCampaign:'No campaigns.', noArchived:'No archived campaigns.',
         colTitle:'Title', colStatus:'Status', colDates:'Dates', colBudget:'Budget', colBrand:'Brand', colProducts:'Products', colActions:'Actions',
@@ -1019,19 +1086,21 @@ const translations = {
         labelStart:'Start date', labelEnd:'End date', labelBudget:'Budget (€) *',
         modalTitle:'Confirm deletion', modalCancel:'Cancel', modalConfirm:'Delete',
         themeLabel:'Light mode', themeLabelDark:'Dark mode',
-        prevPage:'← Prev', nextPage:'Next →', pageOf:'Page', of:'of',
+        prevPage:'← Prev', nextPage:'Next →', pageOf:'Page', of:'of', chartCanceled:'Canceled', chartBudgetDataset:'Budget (€)',
+        perPageSuffix:' / page',
     }
 };
-let currentLang = localStorage.getItem('cre8_lang') || 'fr';
+let currentLang = cre8BoReadLang();
 
 function setLang(lang) {
     currentLang = lang;
-    localStorage.setItem('cre8_lang', lang);
+    cre8BoWriteLang(lang);
     applyTranslations();
     document.getElementById('langFR')?.classList.toggle('active', lang === 'fr');
     document.getElementById('langEN')?.classList.toggle('active', lang === 'en');
     updateTabLabels();
     renderPagination();
+    if (typeof buildCharts === 'function') buildCharts();
 }
 function applyTranslations() {
     const T = translations[currentLang];
@@ -1042,6 +1111,10 @@ function applyTranslations() {
     if (themeLabel) themeLabel.textContent = isDark ? T.themeLabel : T.themeLabelDark;
     const statsVisible = document.getElementById('statsBody').style.display !== 'none';
     document.getElementById('statsToggleBtn').textContent = statsVisible ? T.statsHide : T.statsShow;
+    const ps = T.perPageSuffix || ' / page';
+    document.querySelectorAll('#perPageSelect option').forEach(opt => {
+        opt.textContent = opt.value + ps;
+    });
 }
 function updateTabLabels() {
     const T = translations[currentLang];
@@ -1148,6 +1221,7 @@ const campData = {
 let chartStatut = null, chartActiveArchive = null, chartBudget = null;
 
 function buildCharts() {
+    const T = translations[currentLang] || translations.fr;
     // Violet/rose palette — only 2 hues + light variants
     const violet  = '#a855f7';
     const rose    = '#ec4899';
@@ -1170,7 +1244,7 @@ function buildCharts() {
     chartStatut = new Chart(document.getElementById('chartStatut'), {
         type: 'doughnut',
         data: {
-            labels: ['Active', 'Brouillon', 'Terminée', 'Annulée'],
+            labels: [T.kpiActive, T.kpiDraft, T.kpiEnded, T.chartCanceled],
             datasets: [{
                 data: [campData.active, campData.brouillon, campData.terminee, campData.annulee],
                 backgroundColor: [violet, rose, vLight, vLighter],
@@ -1184,7 +1258,7 @@ function buildCharts() {
     chartActiveArchive = new Chart(document.getElementById('chartActiveArchive'), {
         type: 'bar',
         data: {
-            labels: ['Actives', 'Archivées'],
+            labels: [T.kpiActive, T.kpiArchived],
             datasets: [{
                 data: [campData.totalActive, campData.totalArchived],
                 backgroundColor: [vSoft, rSoft],
@@ -1206,9 +1280,9 @@ function buildCharts() {
     chartBudget = new Chart(document.getElementById('chartBudget'), {
         type: 'bar',
         data: {
-            labels: ['Active', 'Brouillon', 'Terminée', 'Annulée'],
+            labels: [T.kpiActive, T.kpiDraft, T.kpiEnded, T.chartCanceled],
             datasets: [{
-                label: 'Budget (€)',
+                label: T.chartBudgetDataset || 'Budget (€)',
                 data: [campData.budgets.active, campData.budgets.brouillon, campData.budgets.terminee, campData.budgets.annulee],
                 backgroundColor: [vSoft, rSoft, 'rgba(192,132,252,.25)', 'rgba(236,72,153,.15)'],
                 borderColor: [violet, rose, vLight, vLighter],
@@ -1219,7 +1293,7 @@ function buildCharts() {
             ...base,
             scales: {
                 x: { ticks:{color:subColor}, grid:{color:gridColor} },
-                y: { ticks:{color:subColor, callback:v=>v.toLocaleString('fr-FR')+' €'}, grid:{color:gridColor}, beginAtZero:true }
+                y: { ticks:{color:subColor, callback:v=>v.toLocaleString(currentLang === 'fr' ? 'fr-FR' : 'en-US')+' €'}, grid:{color:gridColor}, beginAtZero:true }
             },
             plugins: { ...base.plugins, legend:{display:false} }
         }

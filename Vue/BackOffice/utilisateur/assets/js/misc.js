@@ -36,15 +36,20 @@
     }
 
     var current = location.pathname.split("/").slice(-1)[0].replace(/^\/|\/$/g, '');
-    $('.nav li a', sidebar).each(function() {
-      var $this = $(this);
-      addActiveClass($this);
-    })
 
-    $('.horizontal-menu .nav li a').each(function() {
-      var $this = $(this);
-      addActiveClass($this);
-    })
+// Cre8Connect shared BackOffice layout already sets the active sidebar item in PHP.
+// Do not let the old Corona template auto-activate all */index.php links.
+if (!body.hasClass('cre8-admin-layout')) {
+  $('.nav li a', sidebar).each(function() {
+    var $this = $(this);
+    addActiveClass($this);
+  });
+
+  $('.horizontal-menu .nav li a').each(function() {
+    var $this = $(this);
+    addActiveClass($this);
+  });
+}
 
     //Close other submenu in sidebar on opening any
 
