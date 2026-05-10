@@ -1,3 +1,9 @@
+<?php
+if (!isset($stats)) {
+    $stats = ['total_forums' => 0, 'total_messages' => 0, 'forums_actifs' => 0, 'messages_signales' => 0, 'top_forums' => [], 'top_contributeurs' => []];
+}
+?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -7,335 +13,269 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #0d1117;
-            color: #e6edf3;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg-base: #0b0e1a; --bg-surface: #0f1117; --bg-elevated: #161b2e; --bg-hover: #1e2235;
+            --border: #1e2235; --text-main: #e8eaf0; --text-soft: #7b82a0; --text-muted: #3d4260;
+            --primary: #7c6eff; --success: #22c55e; --danger: #f43f5e; --purple: #a855f7; --radius: 12px; --radius-lg: 16px;
+            --kpi-1-from: #6c47ff; --kpi-1-to: #9b6dff;
+            --kpi-2-from: #e8305a; --kpi-2-to: #ff6b9d;
+            --kpi-3-from: #22c55e; --kpi-3-to: #4ade80;
+            --kpi-4-from: #7c3aed; --kpi-4-to: #a855f7;
         }
-
-        .admin-container { display: flex; min-height: 100vh; }
-        
-        .sidebar {
-            width: 260px;
-            background: #161b22;
-            border-right: 1px solid #30363d;
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
-        }
-
-        .sidebar-logo {
-            padding: 24px 20px;
-            border-bottom: 1px solid #30363d;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .logo-img {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            object-fit: cover;
-        }
-
-        .logo-text {
-            font-size: 1.2rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #58a6ff, #bc8cff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .sidebar-nav { padding: 20px 0; }
-        
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 20px;
-            color: #8b949e;
-            text-decoration: none;
-            transition: all 0.2s;
-            font-size: 0.85rem;
-        }
-
-        .nav-item:hover, .nav-item.active {
-            background: #21262d;
-            color: #58a6ff;
-        }
-
-        .main-content {
-            margin-left: 260px;
-            flex: 1;
-            padding: 24px 32px;
-        }
-
-        .page-header { margin-bottom: 28px; }
-        .page-header h1 { font-size: 1.5rem; font-weight: 700; }
-        .page-header p { color: #8b949e; font-size: 0.85rem; margin-top: 4px; }
-
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin-bottom: 32px;
-        }
-
-        .stat-card {
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 20px;
-            padding: 24px;
-            transition: all 0.2s;
-        }
-
-        .stat-card:hover {
-            border-color: #58a6ff;
-            transform: translateY(-2px);
-        }
-
-        .stat-icon { font-size: 2rem; margin-bottom: 12px; }
-        .stat-value { font-size: 2rem; font-weight: 800; color: #58a6ff; }
-        .stat-label { font-size: 0.8rem; color: #8b949e; margin-top: 8px; }
-        .stat-trend { font-size: 0.7rem; margin-top: 8px; color: #3fb950; }
-
-        /* Charts */
-        .charts-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 24px;
-            margin-bottom: 32px;
-        }
-
-        .chart-card {
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 20px;
-            padding: 24px;
-        }
-
-        .chart-title {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #e6edf3;
-        }
-
-        canvas { max-height: 300px; width: 100% !important; }
-
-        /* Tables */
-        .table-container {
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 20px;
-            overflow: hidden;
-            margin-bottom: 24px;
-        }
-
-        .table-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid #30363d;
-            font-weight: 600;
-        }
-
+        body { font-family: 'Inter', sans-serif; background: var(--bg-base); color: var(--text-main); display: flex; min-height: 100vh; }
+        .sidebar { width: 220px; background: var(--bg-surface); border-right: 1px solid var(--border); position: fixed; height: 100vh; overflow-y: auto; }
+        .sidebar-logo { padding: 18px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+        .logo-img { width: 32px; height: 32px; border-radius: 8px; object-fit: cover; }
+        .logo-text { font-size: 1rem; font-weight: 800; color: var(--text-main); }
+        .sidebar-section-label { padding: 16px 20px 6px; font-size: 0.65rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+        .sidebar-nav { padding: 8px 0 20px; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 20px; color: var(--text-soft); text-decoration: none; font-size: 0.82rem; font-weight: 500; border-left: 3px solid transparent; transition: all 0.18s; }
+        .nav-item:hover { background: var(--bg-hover); color: var(--text-main); }
+        .nav-item.active { background: rgba(124,110,255,.15); color: var(--primary); border-left-color: var(--primary); }
+        .nav-icon { width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; }
+        .main-wrap { margin-left: 220px; flex: 1; }
+        .topbar { background: var(--bg-surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+        .breadcrumb { font-size: 0.78rem; color: var(--text-soft); }
+        .breadcrumb span { color: var(--text-main); font-weight: 600; }
+        .topbar-actions { display: flex; align-items: center; gap: 10px; }
+        .topbar-icon-btn { width: 34px; height: 34px; border-radius: 8px; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-soft); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.9rem; }
+        .topbar-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #7c6eff, #a855f7); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: #fff; cursor: pointer; }
+        .topbar-hamburger { background: none; border: none; color: var(--text-soft); font-size: 1.1rem; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: all 0.18s; }
+        .topbar-hamburger:hover { background: var(--bg-hover); color: var(--text-main); }
+        .topbar-search { display: flex; align-items: center; gap: 8px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px; padding: 7px 14px; width: 340px; }
+        .topbar-search svg { color: var(--text-muted); flex-shrink: 0; }
+        .topbar-search input { background: none; border: none; outline: none; color: var(--text-main); font-size: 0.82rem; width: 100%; font-family: 'Inter', sans-serif; }
+        .topbar-search input::placeholder { color: var(--text-muted); }
+        .topbar-user { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 8px; border-radius: 8px; transition: background 0.18s; }
+        .topbar-user:hover { background: var(--bg-hover); }
+        .topbar-username { font-size: 0.82rem; font-weight: 600; color: var(--text-main); }
+        .content { padding: 24px; }
+        .page-header { margin-bottom: 24px; }
+        .page-header h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.3px; }
+        .page-header p { font-size: 0.78rem; color: var(--text-soft); margin-top: 4px; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .kpi-card { background: var(--bg-elevated); border: 1px solid var(--border); border-left: 3px solid var(--primary); border-radius: var(--radius-lg); padding: 20px; position: relative; overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; }
+        .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.3); border-color: var(--primary); }
+        .kpi-card:nth-child(1) { border-left-color: #7c6eff; }
+        .kpi-card:nth-child(2) { border-left-color: #f43f5e; }
+        .kpi-card:nth-child(3) { border-left-color: #22c55e; }
+        .kpi-card:nth-child(4) { border-left-color: #f59e0b; }
+        .kpi-value { font-size: 1.8rem; font-weight: 700; color: var(--text-main); font-family: 'Inter', monospace; line-height: 1; margin-top: 8px; }
+        .kpi-label { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-soft); margin-top: 8px; }
+        .charts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 24px; }
+        .chart-card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+        .chart-title { font-size: 0.8rem; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; color: var(--text-soft); }
+        canvas { max-height: 250px; width: 100% !important; }
+        .table-container { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 24px; }
+        .table-header { padding: 16px 20px; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 0.85rem; }
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 12px 20px; background: #21262d; color: #8b949e; font-size: 0.75rem; font-weight: 600; }
-        td { padding: 12px 20px; border-bottom: 1px solid #30363d; font-size: 0.85rem; }
-        tr:hover { background: #1a1f2e; }
+        th { text-align: left; padding: 12px 20px; background: var(--bg-base); color: var(--text-soft); font-size: 0.7rem; font-weight: 600; }
+        td { padding: 12px 20px; border-bottom: 1px solid var(--border); font-size: 0.8rem; }
+        tbody tr:hover { background: var(--bg-hover); }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; }
+        .badge-high { background: rgba(34,197,94,.15); color: var(--success); }
+        .badge-medium { background: rgba(245,158,11,.15); color: #f59e0b; }
+        .badge-low { background: rgba(244,63,94,.15); color: var(--danger); }
+        @media (max-width: 1024px) { .charts-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .sidebar { display: none; } .main-wrap { margin-left: 0; } .kpi-grid { grid-template-columns: 1fr 1fr; } }
+        /* ========= ADD THESE DYNAMIC STATS ENHANCEMENTS AT THE BOTTOM OF YOUR EXISTING CSS ========= */
+/* Keep ALL your original CSS above, then add these rules at the end */
 
-        .rank-badge {
-            display: inline-block;
-            width: 28px;
-            height: 28px;
-            background: #21262d;
-            border-radius: 10px;
-            text-align: center;
-            line-height: 28px;
-            font-size: 0.75rem;
-            font-weight: 700;
-        }
+/* KPI Cards - Dynamic Enhancements */
+.kpi-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    border-color: var(--primary);
+}
+.kpi-card::before {
+    transition: height 0.2s;
+}
+.kpi-card:hover::before {
+    height: 4px;
+}
+.kpi-value {
+    transition: all 0.2s;
+}
+.kpi-card:hover .kpi-value {
+    text-shadow: 0 0 6px rgba(88,166,255,0.5);
+}
 
-        .rank-1 { background: #fbbf24; color: #0d1117; }
-        .rank-2 { background: #94a3b8; color: #0d1117; }
-        .rank-3 { background: #cd7f32; color: #0d1117; }
+/* Stats Section - Dynamic */
+.stats-section {
+    transition: box-shadow 0.2s;
+}
+.stats-section:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
 
-        @media (max-width: 1024px) {
-            .charts-grid { grid-template-columns: 1fr; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
-        }
+/* Chart Cards - Dynamic */
+.chart-card {
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+.chart-card:hover {
+    border-color: var(--primary-dim);
+    background: var(--bg-hover);
+}
 
-        @media (max-width: 768px) {
-            .sidebar { display: none; }
-            .main-content { margin-left: 0; padding: 20px; }
-            .stats-grid { grid-template-columns: 1fr; }
-        }
+/* Progress Bars - Animated */
+.progress-fill {
+    transition: width 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+tr:hover .progress-fill {
+    filter: brightness(1.05);
+}
+
+/* Rank Badges - Dynamic */
+.rank-badge {
+    transition: all 0.1s;
+}
+.rank-1 { 
+    background: #fbbf24; 
+    color: #0d1117; 
+    box-shadow: 0 0 0 1px rgba(251,191,36,0.3); 
+}
+.top-table tr:hover .rank-badge {
+    transform: scale(1.05);
+}
+
+/* Type Badges - Dynamic */
+.type-badge {
+    transition: 0.1s;
+}
+.type-badge:hover {
+    filter: brightness(1.1);
+    transform: scale(1.02);
+}
+
+/* Table Sorting - Enhanced */
+th {
+    transition: background 0.2s, color 0.1s;
+}
+th:hover {
+    background: var(--bg-hover);
+    color: var(--primary);
+}
+.sort-icon {
+    transition: opacity 0.2s, transform 0.1s;
+}
+
+/* Buttons - Dynamic */
+.btn-reset {
+    transition: all 0.2s;
+}
+.btn-reset:hover {
+    transform: translateY(-1px);
+}
+.action-btn {
+    transition: all 0.15s;
+}
+.action-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+}
+.btn-primary-admin {
+    transition: all 0.2s;
+}
+.btn-primary-admin:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(88,166,255,0.3);
+}
+
+/* Canvas hover effect */
+canvas {
+    transition: opacity 0.2s;
+}
+canvas:hover {
+    opacity: 0.95;
+}
+
+/* Table row transition */
+tbody tr {
+    transition: background 0.1s ease;
+}
     </style>
 </head>
 <body>
 
-<div class="admin-container">
-    <aside class="sidebar">
-        <div class="sidebar-logo">
-            <img src="/ProjetWeb/Esprit-PW-2A22-2526-Devcore/Vue/public/images/logo.png" alt="Logo" class="logo-img">
-            <span class="logo-text">Cre8Connect</span>
-        </div>
-        <div class="sidebar-nav">
-            <a href="/ProjetWeb/Esprit-PW-2A22-2526-Devcore/Controleur/evenementC.php?action=admin" class="nav-item">📅 Événements</a>
-            <a href="/ProjetWeb/Esprit-PW-2A22-2526-Devcore/Controleur/forumC.php?action=admin" class="nav-item">💬 Forums</a>
-            <a href="/ProjetWeb/Esprit-PW-2A22-2526-Devcore/Controleur/forumC.php?action=signales" class="nav-item">🚩 Messages signalés</a>
-            <a href="/ProjetWeb/Esprit-PW-2A22-2526-Devcore/Controleur/forumC.php?action=statistiques" class="nav-item active">📊 Statistiques</a>
-        </div>
-    </aside>
+<aside class="sidebar">
+    <div class="sidebar-logo"><img src="<?= $BASE ?>/Vue/public/images/logo.png" class="logo-img"><span class="logo-text">Cre8Connect</span></div>
+    <div class="sidebar-section-label">Navigation</div>
+    <div class="sidebar-nav">
+        <a href="<?= $BASE ?>/Controleur/evenementC.php?action=admin" class="nav-item"><span class="nav-icon" style="background:rgba(245,158,11,0.15);color:#f59e0b;">📅</span> Événements</a>
+        <a href="<?= $BASE ?>/Controleur/forumC.php?action=admin" class="nav-item"><span class="nav-icon" style="background:rgba(124,110,255,0.15);color:#7c6eff;">💬</span> Forums</a>
+        <a href="<?= $BASE ?>/Controleur/forumC.php?action=signales" class="nav-item"><span class="nav-icon" style="background:rgba(244,63,94,0.15);color:#f43f5e;">🚩</span> Messages signalés</a>
+        <a href="#" class="nav-item active"><span class="nav-icon" style="background:rgba(34,197,94,0.15);color:#22c55e;">📊</span> Statistiques</a>
+    </div>
+</aside>
 
-    <main class="main-content">
-        <div class="page-header">
-            <div>
-                <h1>📊 Tableau de bord</h1>
-                <p>Analyse complète de l'activité de la communauté</p>
+<div class="main-wrap">
+    <header class="topbar">
+        <div class="breadcrumb">Dashboard / Communauté / <span>Statistiques</span></div>
+        <div class="topbar-actions">
+            <div class="topbar-user">
+                <div class="topbar-avatar">AD</div>
+                <span class="topbar-username">Utilisateur</span>
+                <span style="color:var(--text-soft);font-size:0.7rem;">▾</span>
             </div>
         </div>
+    </header>
 
-        <!-- KPI Cards -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon">🗂️</div>
-                <div class="stat-value"><?= $stats['total_forums'] ?></div>
-                <div class="stat-label">Total Forums</div>
-                <div class="stat-trend">↑ +<?= $stats['forums_actifs'] ?> actifs cette semaine</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">💬</div>
-                <div class="stat-value"><?= $stats['total_messages'] ?></div>
-                <div class="stat-label">Total Messages</div>
-                <div class="stat-trend">📈 Moyenne de <?= round($stats['total_messages'] / max(1, $stats['total_forums']), 1) ?> msg/forum</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">🔥</div>
-                <div class="stat-value"><?= $stats['forums_actifs'] ?></div>
-                <div class="stat-label">Forums Actifs (7j)</div>
-                <div class="stat-trend">⚡ <?= round(($stats['forums_actifs'] / max(1, $stats['total_forums'])) * 100) ?>% des forums</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">🚩</div>
-                <div class="stat-value"><?= $stats['messages_signales'] ?></div>
-                <div class="stat-label">Messages Signalés</div>
-                <div class="stat-trend"><?= $stats['messages_signales'] == 0 ? '✅ Tout est propre' : '⚠️ À modérer' ?></div>
-            </div>
+    <div class="content">
+        <div class="page-header"><h1>📊 Statistiques des Forums</h1><p>Analyse de l'activité de la communauté</p></div>
+
+        <div class="kpi-grid">
+            <div class="kpi-card"><div class="kpi-value"><?= $stats['total_forums'] ?? 0 ?></div><div class="kpi-label">Total Forums</div></div>
+            <div class="kpi-card"><div class="kpi-value"><?= $stats['total_messages'] ?? 0 ?></div><div class="kpi-label">Total Messages</div></div>
+            <div class="kpi-card"><div class="kpi-value"><?= $stats['forums_actifs'] ?? 0 ?></div><div class="kpi-label">Forums Actifs (7j)</div></div>
+            <div class="kpi-card"><div class="kpi-value"><?= $stats['messages_signales'] ?? 0 ?></div><div class="kpi-label">Messages Signalés</div></div>
         </div>
 
-        <!-- Charts -->
         <div class="charts-grid">
-            <div class="chart-card">
-                <div class="chart-title">📈 Messages par jour (7 derniers jours)</div>
-                <canvas id="messagesChart"></canvas>
-            </div>
-            <div class="chart-card">
-                <div class="chart-title">📊 Évolution des messages (6 mois)</div>
-                <canvas id="evolutionChart"></canvas>
+            <div class="chart-card"><div class="chart-title">📈 Évolution des messages (6 mois)</div><canvas id="messagesChart"></canvas></div>
+            <div class="chart-card"><div class="chart-title">🏆 Top 5 forums</div>
+                <table style="margin-top: 10px;"><thead><th>#</th><th>Forum</th><th>Messages</th><th>Activité</th></thead><tbody>
+                <?php foreach (($stats['top_forums'] ?? []) as $index => $forum): ?>
+                <tr><td><?= $index + 1 ?></td><td><strong><?= htmlspecialchars($forum['TitreForum'] ?? 'Forum') ?></strong></td><td><?= $forum['nb_messages'] ?? 0 ?></td>
+                <td><span class="badge <?= ($forum['nb_messages'] ?? 0) > 50 ? 'badge-high' : (($forum['nb_messages'] ?? 0) > 10 ? 'badge-medium' : 'badge-low') ?>"><?= ($forum['nb_messages'] ?? 0) > 50 ? '🔥 Très actif' : (($forum['nb_messages'] ?? 0) > 10 ? '💬 Actif' : '🕰️ Calme') ?></span></td></tr>
+                <?php endforeach; ?>
+                </tbody></table>
             </div>
         </div>
 
-        <!-- Top Forums -->
         <div class="table-container">
-            <div class="table-header">🏆 Top 5 des forums les plus actifs</div>
-            <table>
-                <thead>
-                    <tr><th>#</th><th>Forum</th><th>Messages</th><th>Activité</th></tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($stats['top_forums'] as $index => $forum): ?>
-                    <tr>
-                        <td><span class="rank-badge <?= $index == 0 ? 'rank-1' : ($index == 1 ? 'rank-2' : ($index == 2 ? 'rank-3' : '')) ?>"><?= $index + 1 ?></span></td>
-                        <td><strong><?= htmlspecialchars($forum['TitreForum']) ?></strong></td>
-                        <td><?= $forum['nb_messages'] ?> messages</td>
-                        <td><?= $forum['nb_messages'] > 10 ? '🔥 Très actif' : ($forum['nb_messages'] > 0 ? '💬 Actif' : '🕰️ Calme') ?></td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
+            <div class="table-header">👥 Top contributeurs</div>
+            <table><thead><th>#</th><th>Contributeur</th><th>Messages</th><th>Impact</th></thead><tbody>
+            <?php foreach (($stats['top_contributeurs'] ?? []) as $index => $user): ?>
+            <tr><td><?= $index + 1 ?></td><td><strong><?= htmlspecialchars($user['nom'] ?? 'Anonyme') ?></strong></td><td><?= $user['nb_messages'] ?? 0 ?></td>
+            <td><span class="badge <?= ($user['nb_messages'] ?? 0) > 50 ? 'badge-high' : (($user['nb_messages'] ?? 0) > 20 ? 'badge-medium' : 'badge-low') ?>"><?= ($user['nb_messages'] ?? 0) > 50 ? '🏆 Expert' : (($user['nb_messages'] ?? 0) > 20 ? '📝 Actif' : '🌱 Débutant') ?></span></td></tr>
+            <?php endforeach; ?>
+            </tbody>
             </table>
         </div>
-
-        <!-- Top Contributeurs -->
-        <div class="table-container">
-            <div class="table-header">👥 Top 5 des contributeurs</div>
-            <table>
-                <thead>
-                    <tr><th>#</th><th>Contributeur</th><th>Messages</th><th>Impact</th></tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($stats['top_contributeurs'] as $index => $user): ?>
-                    <tr>
-                        <td><span class="rank-badge <?= $index == 0 ? 'rank-1' : ($index == 1 ? 'rank-2' : ($index == 2 ? 'rank-3' : '')) ?>"><?= $index + 1 ?></span></td>
-                        <td><strong><?= htmlspecialchars($user['nom'] ?? 'Anonyme') ?></strong></td>
-                        <td><?= $user['nb_messages'] ?> messages</td>
-                        <td><?= $user['nb_messages'] > 20 ? '🏆 Expert' : ($user['nb_messages'] > 5 ? '📝 Actif' : '🌱 Débutant') ?></td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-    </main>
+    </div>
 </div>
 
 <script>
-    // Graphique messages par jour
-    const ctx1 = document.getElementById('messagesChart').getContext('2d');
-    const jours = <?= json_encode(array_column($stats['messages_par_jour'], 'jour')) ?>;
-    const totals = <?= json_encode(array_column($stats['messages_par_jour'], 'total')) ?>;
-    
-    new Chart(ctx1, {
+    new Chart(document.getElementById('messagesChart'), {
         type: 'line',
-        data: {
-            labels: jours.map(j => new Date(j).toLocaleDateString('fr-FR', {day:'numeric', month:'short'})),
-            datasets: [{
-                label: 'Messages',
-                data: totals,
-                borderColor: '#58a6ff',
-                backgroundColor: 'rgba(88, 166, 255, 0.1)',
-                tension: 0.3,
-                fill: true,
-                pointBackgroundColor: '#58a6ff'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: { legend: { labels: { color: '#e6edf3' } } },
-            scales: { y: { ticks: { color: '#8b949e' }, grid: { color: '#30363d' } }, x: { ticks: { color: '#8b949e' }, grid: { color: '#30363d' } } }
-        }
+        data: { labels: <?= json_encode($stats['months_labels'] ?? []) ?>, datasets: [{ label: 'Messages', data: <?= json_encode($stats['messages_data'] ?? []) ?>, borderColor: '#58a6ff', backgroundColor: 'rgba(88,166,255,0.1)', tension: 0.3, fill: true }] },
+        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { color: '#e6edf3' } } }, scales: { y: { ticks: { color: '#8b949e' }, grid: { color: '#30363d' } }, x: { ticks: { color: '#8b949e' }, grid: { color: '#30363d' } } } }
     });
-
-    // Graphique évolution
-    const ctx2 = document.getElementById('evolutionChart').getContext('2d');
-    const mois = <?= json_encode(array_column($stats['evolution'], 'mois')) ?>;
-    const evolution = <?= json_encode(array_column($stats['evolution'], 'total')) ?>;
-    
-    new Chart(ctx2, {
-        type: 'bar',
-        data: {
-            labels: mois,
-            datasets: [{
-                label: 'Messages',
-                data: evolution,
-                backgroundColor: '#bc8cff',
-                borderRadius: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: { legend: { labels: { color: '#e6edf3' } } },
-            scales: { y: { ticks: { color: '#8b949e' }, grid: { color: '#30363d' } }, x: { ticks: { color: '#8b949e' }, grid: { color: '#30363d' } } }
-        }
-    });
+    function initTheme() {
+        const saved = localStorage.getItem('theme');
+        if (saved === 'dark') { document.body.classList.add('dark-mode'); document.getElementById('themeToggle').textContent = '☀️'; }
+        else { document.body.classList.remove('dark-mode'); document.getElementById('themeToggle').textContent = '🌙'; }
+    }
+    function toggleTheme() {
+        if (document.body.classList.contains('dark-mode')) { document.body.classList.remove('dark-mode'); localStorage.setItem('theme', 'light'); document.getElementById('themeToggle').textContent = '🌙'; }
+        else { document.body.classList.add('dark-mode'); localStorage.setItem('theme', 'dark'); document.getElementById('themeToggle').textContent = '☀️'; }
+    }
+    document.addEventListener('DOMContentLoaded', function() { initTheme(); document.getElementById('themeToggle').addEventListener('click', toggleTheme); });
 </script>
-
 </body>
 </html>
