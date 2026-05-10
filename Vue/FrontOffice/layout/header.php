@@ -17,7 +17,24 @@ $userInitial = $userInitial !== '' ? $userInitial : 'U';
 $currentPath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
 $frontOfficeMarker = '/Vue/FrontOffice/';
 $frontOfficePos = strpos($currentPath, $frontOfficeMarker);
-$projectBase = $frontOfficePos !== false ? substr($currentPath, 0, $frontOfficePos) : '';
+
+if ($frontOfficePos !== false) {
+    // Called from a FrontOffice view file
+    $projectBase = substr($currentPath, 0, $frontOfficePos);
+} else {
+    // Called from a Controller or other path — walk up to find project root
+    // by stripping everything from /Controleur/ or /Vue/ onward
+    foreach (['/Controleur/', '/Vue/'] as $marker) {
+        $pos = strpos($currentPath, $marker);
+        if ($pos !== false) {
+            $projectBase = substr($currentPath, 0, $pos);
+            break;
+        }
+    }
+    if (!isset($projectBase)) {
+        $projectBase = rtrim(dirname(dirname($currentPath)), '/');
+    }
+}
 $frontBaseUrl = $projectBase . '/Vue/FrontOffice';
 
 $sessionRole = cre8_front_normalize_role($currentFrontUser['role'] ?? '');
@@ -43,6 +60,7 @@ $portfolioUrl = $frontBaseUrl . '/post/portfolio.php';
 $postsUrl = $frontBaseUrl . '/post/index.php';
 $createPostUrl = $frontBaseUrl . '/post/create.php';
 $eventsUrl = $frontBaseUrl . '/evenement/index.php';
+$forumUrl  = $projectBase . '/Controleur/forumC.php';
 $logoutUrl = $frontBaseUrl . '/utilisateur/logout.php';
 
 if (!isset($frontActive)) {
@@ -124,8 +142,7 @@ if (!isset($frontActive)) {
             </button>
             <div class="front-nav-dropdown" role="menu">
                 <a href="<?php echo htmlspecialchars($eventsUrl); ?>" role="menuitem">Événements</a>
-                <!-- TODO: wire Forum when a FrontOffice forum route exists. -->
-                <a href="#" role="menuitem">Forum</a>
+                <a href="<?php echo htmlspecialchars($forumUrl); ?>" role="menuitem">Forum</a>
             </div>
         </li>
 

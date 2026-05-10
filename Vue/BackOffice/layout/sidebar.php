@@ -8,8 +8,22 @@ $backActive = $backActive ?? 'dashboard';
 $cre8SelfPath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
 $cre8Marker = '/Vue/BackOffice/';
 $cre8Pos = strpos($cre8SelfPath, $cre8Marker);
-$backBoRootWeb = ($cre8Pos !== false ? substr($cre8SelfPath, 0, $cre8Pos) : '') . '/Vue/BackOffice';
+
+if ($cre8Pos !== false) {
+    // Direct view access
+    $backBoRootWeb = substr($cre8SelfPath, 0, $cre8Pos) . '/Vue/BackOffice';
+} else {
+    // Controller access — find project root via /Controleur/
+    $_ctrlPos = strpos($cre8SelfPath, '/Controleur/');
+    $backBoRootWeb = ($_ctrlPos !== false ? substr($cre8SelfPath, 0, $_ctrlPos) : '') . '/Vue/BackOffice';
+}
 $backBoUtilisateurWeb = $backBoRootWeb . '/utilisateur';
+// Controller base — extract project root the same way as above
+$_ctrlPosForUrl = strpos($cre8SelfPath, '/Controleur/');
+$_projectRootForUrl = $_ctrlPosForUrl !== false
+    ? substr($cre8SelfPath, 0, $_ctrlPosForUrl)
+    : ($cre8Pos !== false ? substr($cre8SelfPath, 0, $cre8Pos) : '');
+$backBoControleurWeb = $_projectRootForUrl . '/Controleur';
 
 $backUserName = $_SESSION['nom'] ?? ($_SESSION['user']['nom'] ?? ($_SESSION['utilisateur']['nom'] ?? 'Utilisateur'));
 $backUserName = trim((string) $backUserName) !== '' ? trim((string) $backUserName) : 'Utilisateur';
@@ -24,8 +38,8 @@ $backItems = [
     ['key' => 'contracts',      'label' => 'Contracts',      'url' => $backBoRootWeb . '/contrat/index.php',        'icon' => 'mdi-file-document-outline', 'iconClass' => 'text-warning'],
     ['key' => 'posts',          'label' => 'Posts',          'url' => $backBoRootWeb . '/post/index.php',           'icon' => 'mdi-format-list-bulleted',  'iconClass' => 'text-danger'],
     ['key' => 'comments',       'label' => 'Comments',       'url' => $backBoRootWeb . '/comment/index.php',        'icon' => 'mdi-comment-text-outline',  'iconClass' => 'text-info'],
-    ['key' => 'events',         'label' => 'Events',         'url' => $backBoRootWeb . '/evenement/index.php',      'icon' => 'mdi-calendar-check',        'iconClass' => 'text-success'],
-    ['key' => 'forum',          'label' => 'Forum',          'url' => $backBoRootWeb . '/forum/index.php',          'icon' => 'mdi-forum-outline',         'iconClass' => 'text-primary'],
+    ['key' => 'events',         'label' => 'Events',         'url' => $backBoControleurWeb . '/evenementC.php?action=admin', 'icon' => 'mdi-calendar-check',  'iconClass' => 'text-success'],
+    ['key' => 'forum',          'label' => 'Forum',          'url' => $backBoControleurWeb . '/forumC.php?action=admin',     'icon' => 'mdi-forum-outline',   'iconClass' => 'text-primary'],
 ];
 ?>
 <!-- partial:partials/_sidebar.html -->

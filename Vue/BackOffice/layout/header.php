@@ -2,7 +2,13 @@
 $cre8SelfPath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
 $cre8Marker = '/Vue/BackOffice/';
 $cre8Pos = strpos($cre8SelfPath, $cre8Marker);
-$backBoRootWeb = ($cre8Pos !== false ? substr($cre8SelfPath, 0, $cre8Pos) : '') . '/Vue/BackOffice';
+
+if ($cre8Pos !== false) {
+    $backBoRootWeb = substr($cre8SelfPath, 0, $cre8Pos) . '/Vue/BackOffice';
+} else {
+    $_ctrlPos = strpos($cre8SelfPath, '/Controleur/');
+    $backBoRootWeb = ($_ctrlPos !== false ? substr($cre8SelfPath, 0, $_ctrlPos) : '') . '/Vue/BackOffice';
+}
 $backBoUtilisateurWeb = $backBoRootWeb . '/utilisateur';
 
 $adminName = $_SESSION['user']['nom'] ?? ($_SESSION['utilisateur']['nom'] ?? ($_SESSION['nom'] ?? 'Utilisateur')); 

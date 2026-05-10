@@ -22,7 +22,7 @@ class ContratC
             SELECT c.*,
                    u1.nom AS nomMarque,
                    u2.nom AS nomCreateur,
-                   ca.titreCampagne AS titreCampagne
+                   ca.TitreCampagne AS titreCampagne
             FROM contrat c
             LEFT JOIN utilisateur u1 ON c.id_marque   = u1.id
             LEFT JOIN utilisateur u2 ON c.id_createur = u2.id
@@ -37,7 +37,7 @@ class ContratC
         $stmt = $this->pdo->prepare("
             SELECT c.*,
                    u2.nom AS nomCreateur,
-                   ca.titreCampagne AS titreCampagne
+                   ca.TitreCampagne AS titreCampagne
             FROM contrat c
             LEFT JOIN utilisateur u2 ON c.id_createur = u2.id
             LEFT JOIN campagne ca    ON c.id_campagne  = ca.idCampagne
@@ -53,7 +53,7 @@ class ContratC
         $stmt = $this->pdo->prepare("
             SELECT c.*,
                    u1.nom AS nomMarque,
-                   ca.titreCampagne AS titreCampagne
+                   ca.TitreCampagne AS titreCampagne
             FROM contrat c
             LEFT JOIN utilisateur u1 ON c.id_marque   = u1.id
             LEFT JOIN campagne ca    ON c.id_campagne  = ca.idCampagne
@@ -70,7 +70,7 @@ class ContratC
             SELECT c.*,
                    u1.nom AS nomMarque,
                    u2.nom AS nomCreateur,
-                   ca.titreCampagne AS titreCampagne
+                   ca.TitreCampagne AS titreCampagne
             FROM contrat c
             LEFT JOIN utilisateur u1 ON c.id_marque   = u1.id
             LEFT JOIN utilisateur u2 ON c.id_createur = u2.id

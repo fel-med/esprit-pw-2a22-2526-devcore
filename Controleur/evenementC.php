@@ -53,7 +53,7 @@ class EvenementControleur {
         $stmt = $this->pdo->query("SELECT * FROM evenement ORDER BY idFormation DESC");
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $evenements = array_map([$this, 'hydrate'], $rows);
-        require_once __DIR__ . '/../Vue/BackOffice/evenement/index.php';
+        require __DIR__ . '/../Vue/BackOffice/evenement/index.php';
     }
 
     public function creer(array $data, array $files = []): void {
@@ -182,52 +182,40 @@ class EvenementControleur {
             $forumsData[$row['idFormation']] = $row;
         }
 
-        require_once __DIR__ . '/../Vue/FrontOffice/evenement/index.php';
+        require __DIR__ . '/../Vue/FrontOffice/evenement/index.php';
     }
 
-    public function inscrireEvenement(int $idEvenement): void {
-        header('Content-Type: application/json');
-
-        $nom   = trim($_POST['nom']   ?? '');
-        $email = trim($_POST['email'] ?? '');
-
-        if (empty($nom) || empty($email)) {
-            echo json_encode(['success' => false, 'message' => 'Nom et email requis']);
-            exit;
+    public function inscrireEvenement($eventId, $nom, $email) {
+    try {
+        $pdo = config::getConnexion();
+        
+        // Check if already registered
+        $stmt = $pdo->prepare("SELECT * FROM inscription_evenement WHERE id_evenement = :event_id AND email_utilisateur = :email");
+        $stmt->execute([':event_id' => $eventId, ':email' => $email]);
+        
+        if ($stmt->fetch()) {
+            return ['success' => false, 'message' => 'Vous êtes déjà inscrit à cet événement'];
         }
-
-        try {
-            // Use session user ID; fall back to 0 (guest) — never hardcode 1
-            $userId = $this->currentUserId();
-
-            $check = $this->pdo->prepare("SELECT id FROM inscription_evenement WHERE id_evenement = ? AND email_utilisateur = ?");
-            $check->execute([$idEvenement, $email]);
-
-            if ($check->fetch()) {
-                echo json_encode(['success' => false, 'message' => 'Vous êtes déjà inscrit']);
-                exit;
-            }
-
-            $event = $this->getEventById($idEvenement);
-            if ($event && $event->getNbInscrits() >= $event->getCapacite()) {
-                echo json_encode(['success' => false, 'message' => 'Événement complet']);
-                exit;
-            }
-
-            $stmt = $this->pdo->prepare(
-                "INSERT INTO inscription_evenement (id_evenement, id_utilisateur, nom_utilisateur, email_utilisateur, inscrit_le)
-                 VALUES (?, ?, ?, ?, NOW())"
-            );
-            $stmt->execute([$idEvenement, $userId ?: null, $nom, $email]);
-
-            $this->pdo->prepare("UPDATE evenement SET nb_inscrits = nb_inscrits + 1 WHERE idFormation = ?")->execute([$idEvenement]);
-
-            echo json_encode(['success' => true, 'message' => 'Inscription confirmée !']);
-        } catch (Exception $e) {
-            echo json_encode(['success' => false, 'message' => 'Erreur: ' . $e->getMessage()]);
-        }
-        exit;
+        
+        // Insert inscription
+        $stmt = $pdo->prepare("INSERT INTO inscription_evenement (id_evenement, nom_utilisateur, email_utilisateur, statut, inscrit_le) 
+                               VALUES (:event_id, :nom, :email, 'en_attente', NOW())");
+        $stmt->execute([
+            ':event_id' => $eventId,
+            ':nom' => $nom,
+            ':email' => $email
+        ]);
+        
+        // Update nb_inscrits in evenement
+        $pdo->prepare("UPDATE evenement SET nb_inscrits = nb_inscrits + 1 WHERE idFormation = :id")
+           ->execute([':id' => $eventId]);
+        
+        return ['success' => true, 'message' => 'Inscription réussie !'];
+        
+    } catch (Exception $e) {
+        return ['success' => false, 'message' => 'Erreur: ' . $e->getMessage()];
     }
+}
 
     public function listerInscriptions(): void {
         $stmt = $this->pdo->query("
@@ -266,14 +254,63 @@ class EvenementControleur {
         require_once __DIR__ . '/../Vue/FrontOffice/evenement/detail.php';
     }
 
-    // ==================== SHARED ====================
+    public function getEventDetails($id) {
+    header('Content-Type: application/json');
+    
+    try {
+        $evenement = $this->getEventById($id);
+        
+        if ($evenement) {
+            echo json_encode([
+                'success' => true,
+                'id' => $evenement->getId(),
+                'titre' => $evenement->getTitre(),
+                'description' => $evenement->getDescription(),
+                'type' => $evenement->getType(),
+                'date_evenement' => $evenement->getDateEvenement(),
+                'lieu' => $evenement->getLieu(),
+                'capacite' => $evenement->getCapacite(),
+                'nb_inscrits' => $evenement->getNbInscrits(),
+                'image' => $evenement->getImage(),
+                'adresse_complete' => $evenement->getAdresseComplete()
+            ]);
+        } else {
+            echo json_encode(['error' => 'Event not found']);
+        }
+    } catch (Exception $e) {
+        echo json_encode(['error' => $e->getMessage()]);
+    }
+}
 
-    public function getEventById(int $id): ?Evenement {
-        $stmt = $this->pdo->prepare("SELECT * FROM evenement WHERE idFormation = :id");
+public function getEventById($id) {
+    try {
+        $pdo = config::getConnexion();
+        $stmt = $pdo->prepare("SELECT * FROM evenement WHERE idFormation = :id");
         $stmt->execute([':id' => $id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $row ? $this->hydrate($row) : null;
+        
+        if ($row) {
+            return new Evenement(
+                (int)($row['idFormation'] ?? 0),
+                $row['TitreFormation'] ?? '',
+                $row['description'] ?? '',
+                $row['type'] ?? '',
+                $row['statut'] ?? '',
+                $row['lieu'] ?? '',
+                $row['DateFormation'] ?? '',
+                (int)($row['capacite'] ?? 0),
+                (int)($row['nb_inscrits'] ?? 0),
+                (int)($row['Duree'] ?? 0),
+                $row['created_at'] ?? '',
+                $row['image'] ?? null,
+                $row['adresse_complete'] ?? null
+            );
+        }
+        return null;
+    } catch (Exception $e) {
+        return null;
     }
+}
 
     private function hydrate(array $row): Evenement {
         return new Evenement(
@@ -308,13 +345,20 @@ switch ($action) {
         break;
     case 'edit':
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id > 0) $ctrl->modifier($id, $_POST, $_FILES);
-        break;
+        break; 
     case 'delete':
         if ($id > 0) $ctrl->supprimer($id);
         break;
     case 'inscrire':
-        if ($id > 0) $ctrl->inscrireEvenement($id);
-        break;
+    if ($id > 0) {
+        $nom = $_POST['nom'] ?? '';
+        $email = $_POST['email'] ?? '';
+        $result = $ctrl->inscrireEvenement($id, $nom, $email);
+        header('Content-Type: application/json');
+        echo json_encode($result);
+        exit;
+    }
+    break;
     case 'inscriptions':
         $ctrl->listerInscriptions();
         break;
@@ -324,31 +368,31 @@ switch ($action) {
     case 'detail':
         if ($id > 0) $ctrl->afficherDetailEvenement($id);
         break;
-    case 'get':
-        if ($id > 0) {
-            $event = $ctrl->getEventById($id);
-            header('Content-Type: application/json');
-            if ($event) {
-                echo json_encode([
-                    'id'               => $event->getId(),
-                    'titre'            => $event->getTitre(),
-                    'description'      => $event->getDescription(),
-                    'duree'            => $event->getDuree(),
-                    'date_evenement'   => $event->getDateEvenement(),
-                    'type'             => $event->getType(),
-                    'statut'           => $event->getStatut(),
-                    'lieu'             => $event->getLieu(),
-                    'capacite'         => $event->getCapacite(),
-                    'nb_inscrits'      => $event->getNbInscrits(),
-                    'image'            => $event->getImage(),
-                    'adresse_complete' => $event->getAdresseComplete(),
-                ]);
-            } else {
-                echo json_encode(['error' => 'Event not found']);
-            }
-            exit;
+   case 'get':
+    if ($id > 0) {
+        $event = $ctrl->getEventById($id);
+        header('Content-Type: application/json');
+        if ($event) {
+            echo json_encode([
+                'id'               => $event->getId(),
+                'titre'            => $event->getTitre(),
+                'description'      => $event->getDescription(),
+                'duree'            => $event->getDuree(),
+                'date_evenement'   => $event->getDateEvenement(),
+                'type'             => $event->getType(),
+                'statut'           => $event->getStatut(),
+                'lieu'             => $event->getLieu(),
+                'capacite'         => $event->getCapacite(),
+                'nb_inscrits'      => $event->getNbInscrits(),
+                'image'            => $event->getImage(),
+                'adresse_complete' => $event->getAdresseComplete(),
+            ]);
+        } else {
+            echo json_encode(['error' => 'Event not found']);
         }
-        break;
+        exit;
+    }
+    break;
     default:
         $ctrl->listerEvenementsPublics();
         break;

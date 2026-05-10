@@ -12,9 +12,9 @@ class CampagneC
             throw new Exception("Invalid campaign: title required, budget must be >= 0");
         }
         $sql = "INSERT INTO campagne
-                    (titreCampagne, description, dateDebut, dateFin, budget, statut, idMarque, objectif, estArchive)
+                    (titre, description, dateDebut, dateFin, statut, idMarque)
                 VALUES
-                    (:titre, :description, :dateDebut, :dateFin, :budget, :statut, :idMarque, :objectif, :estArchive)";
+                    (:titre, :description, :dateDebut, :dateFin, :statut, :idMarque)";
         $db  = config::getConnexion();
         $q   = $db->prepare($sql);
         $q->execute([
@@ -37,14 +37,11 @@ class CampagneC
             throw new Exception("Invalid campaign: title required, budget must be >= 0");
         }
         $sql = "UPDATE campagne SET
-                    titreCampagne = :titre,
+                    titre = :titre,
                     description   = :description,
                     dateDebut     = :dateDebut,
                     dateFin       = :dateFin,
-                    budget        = :budget,
-                    statut        = :statut,
-                    objectif      = :objectif,
-                    estArchive    = :estArchive
+                    statut        = :statut
                 WHERE idCampagne = :id";
         $db  = config::getConnexion();
         $q   = $db->prepare($sql);
@@ -65,8 +62,8 @@ class CampagneC
     public function afficherCampagnes(?int $idMarque = null): array
     {
         $where = $idMarque
-            ? "WHERE estArchive = 0 AND idMarque = :idMarque"
-            : "WHERE estArchive = 0";
+            ? "WHERE idMarque = :idMarque"
+            : "WHERE 1=1";
         $sql = "SELECT c.*, u.nom AS nomMarque
                 FROM campagne c
                 LEFT JOIN utilisateur u ON u.id = c.idMarque
@@ -85,8 +82,8 @@ class CampagneC
     public function afficherCampagnesArchives(?int $idMarque = null): array
     {
         $where = $idMarque
-            ? "WHERE estArchive = 1 AND idMarque = :idMarque"
-            : "WHERE estArchive = 1";
+            ? "WHERE idMarque = :idMarque AND statut = 'terminee'"
+            : "WHERE c.statut = 'terminee'";
         $sql = "SELECT c.*, u.nom AS nomMarque
                 FROM campagne c
                 LEFT JOIN utilisateur u ON u.id = c.idMarque
@@ -136,7 +133,7 @@ class CampagneC
     public function toggleArchive(int $id): void
     {
         $q = config::getConnexion()->prepare(
-            "UPDATE campagne SET estArchive = NOT estArchive WHERE idCampagne = :id"
+            "UPDATE campagne SET statut = IF(statut='terminee','planifiee','terminee') WHERE idCampagne = :id"
         );
         $q->execute(['id' => $id]);
     }
@@ -183,7 +180,7 @@ class CampagneC
                 FROM campagne c
                 INNER JOIN campagne_produit cp ON cp.idCampagne = c.idCampagne
                 LEFT JOIN utilisateur u ON u.id = c.idMarque
-                WHERE cp.idProduit = :p AND c.estArchive = 0
+                WHERE cp.idProduit = :p
                 ORDER BY c.dateDebut DESC";
         $q = config::getConnexion()->prepare($sql);
         $q->execute(['p' => $idProduit]);
@@ -194,7 +191,7 @@ class CampagneC
     {
         $sql = "SELECT COUNT(*) FROM campagne_produit cp
                 INNER JOIN produit p ON p.idProduit = cp.idProduit
-                WHERE cp.idCampagne = :c AND p.estArchive = 0";
+                WHERE cp.idCampagne = :c";
         $q = config::getConnexion()->prepare($sql);
         $q->execute(['c' => $idCampagne]);
         return (int) $q->fetchColumn();
