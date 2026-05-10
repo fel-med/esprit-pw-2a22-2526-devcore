@@ -1,0 +1,1862 @@
+.candidature-stats-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.theme-toggle [data-theme-toggle-icon] {
+  width: 1rem;
+  height: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+[data-candidature-live-region].is-loading {
+  opacity: 0.68;
+  transition: opacity 0.18s ease;
+}
+
+.candidature-stats-grid .stat-card {
+  padding: 1rem 1.05rem;
+}
+
+.candidature-stats-grid .stat-label {
+  font-size: 0.74rem;
+  letter-spacing: 0.05em;
+}
+
+.candidature-stats-grid .stat-value {
+  margin-top: 0.38rem;
+  font-size: 1.55rem;
+}
+
+.candidature-stats-grid .stat-note {
+  margin-top: 0.38rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.front-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(108, 92, 231, 0.14);
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at top right, rgba(108, 92, 231, 0.08), transparent 34%),
+    linear-gradient(180deg, #ffffff, #f8faff);
+  box-shadow: 0 16px 34px rgba(20, 31, 80, 0.06);
+}
+
+.front-pagination > div {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.front-pagination span {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.34rem 0.68rem;
+  border-radius: 999px;
+  background: rgba(108, 92, 231, 0.08);
+  color: #5b21b6;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.front-pagination {
+  margin-top: 1rem;
+}
+
+.candidature-badge,
+.origin-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.42rem 0.82rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.candidature-badge.status-draft {
+  background: rgba(100, 116, 139, 0.12);
+  color: #475467;
+}
+
+.candidature-badge.status-sent {
+  background: rgba(20, 128, 74, 0.12);
+  color: #14804a;
+}
+
+.candidature-badge.status-review,
+.candidature-badge.status-negotiation {
+  background: rgba(255, 182, 41, 0.16);
+  color: var(--offre-warning);
+}
+
+.candidature-badge.status-accepted {
+  background: rgba(20, 128, 74, 0.12);
+  color: #14804a;
+}
+
+.candidature-badge.status-refused,
+.candidature-badge.status-withdrawn {
+  background: rgba(180, 35, 24, 0.1);
+  color: #b42318;
+}
+
+.candidature-badge.status-pending {
+  background: rgba(30, 48, 243, 0.08);
+  color: #1e30f3;
+}
+
+.candidature-badge.status-outdated {
+  background: rgba(100, 116, 139, 0.12);
+  color: #475467;
+}
+
+.origin-badge {
+  background: rgba(16, 24, 40, 0.05);
+  color: #344054;
+}
+
+.brand-source-tab-shell {
+  display: grid;
+  gap: 1rem;
+}
+
+.brand-source-tab-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.brand-source-tab-button {
+  min-width: 0;
+  min-height: 4.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--offre-border);
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at top right, rgba(30, 48, 243, 0.06), transparent 34%),
+    linear-gradient(180deg, #ffffff, #f8faff);
+  color: var(--offre-muted);
+  font-size: 0.98rem;
+  font-weight: 900;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 16px 38px rgba(20, 31, 80, 0.08);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease, color 0.18s ease;
+}
+
+.brand-source-tab-button:hover {
+  border-color: rgba(30, 48, 243, 0.2);
+  color: var(--offre-title);
+  transform: translateY(-1px);
+}
+
+.brand-source-tab-button.is-active {
+  border-color: rgba(108, 92, 231, 0.34);
+  color: var(--offre-title);
+  box-shadow: 0 20px 42px rgba(108, 92, 231, 0.16);
+}
+
+.brand-source-tab-button strong {
+  min-width: 2.2rem;
+  height: 2.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(16, 24, 40, 0.06);
+  color: inherit;
+  font-size: 0.9rem;
+}
+
+.brand-source-tab-button.is-active strong {
+  background: #6c5ce7;
+  color: #fff;
+}
+
+.brand-source-tab-panels,
+.brand-source-tab-panel {
+  min-width: 0;
+}
+
+.brand-source-tab-panel[hidden] {
+  display: none !important;
+}
+
+.brand-source-panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.2rem;
+  border: 1px solid var(--offre-border);
+  border-radius: 1.15rem;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 16px 34px rgba(20, 31, 80, 0.06);
+}
+
+.brand-workflow-tab-shell {
+  margin-top: 1rem;
+}
+
+.brand-workflow-tab-list {
+  box-shadow: none;
+}
+
+.source-feed-grid,
+.candidature-card-grid,
+.candidature-summary-grid,
+.decision-note-grid,
+.candidature-composer-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.source-feed-grid,
+.candidature-card-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.candidature-summary-grid,
+.decision-note-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.source-feed-card,
+.candidature-card,
+.composer-card,
+.locked-state-card {
+  background: var(--offre-surface);
+  border: 1px solid var(--offre-border);
+  border-radius: 1.35rem;
+  box-shadow: var(--offre-shadow);
+}
+
+.source-feed-card,
+.candidature-card,
+.composer-card,
+.locked-state-card {
+  padding: 1.25rem;
+}
+
+.candidature-card {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  gap: 1rem;
+}
+
+.candidature-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 6px;
+  background: linear-gradient(180deg, #1e30f3, #e21e80);
+  opacity: 0.85;
+}
+
+.candidature-card.is-draft {
+  border-color: rgba(100, 116, 139, 0.22);
+  box-shadow: 0 20px 44px rgba(100, 116, 139, 0.1);
+  background:
+    radial-gradient(circle at top right, rgba(100, 116, 139, 0.08), transparent 34%),
+    linear-gradient(180deg, #ffffff, #f8f9fc);
+}
+
+.candidature-card.is-draft::before {
+  background: linear-gradient(180deg, #64748b, #94a3b8);
+}
+
+.candidature-card.is-review {
+  border-color: rgba(245, 158, 11, 0.24);
+  box-shadow: 0 22px 50px rgba(245, 158, 11, 0.12);
+  background:
+    radial-gradient(circle at top right, rgba(250, 204, 21, 0.16), transparent 36%),
+    linear-gradient(180deg, #fffef8, #fffaf0);
+}
+
+.candidature-card.is-review::before {
+  background: linear-gradient(180deg, #f59e0b, #fbbf24);
+}
+
+.candidature-card.is-accepted {
+  border-color: rgba(20, 128, 74, 0.26);
+  box-shadow: 0 22px 52px rgba(20, 128, 74, 0.14);
+  background:
+    radial-gradient(circle at top right, rgba(20, 128, 74, 0.12), transparent 35%),
+    linear-gradient(180deg, #ffffff, #f5fff9);
+}
+
+.candidature-card.is-accepted::before {
+  background: linear-gradient(180deg, #16a34a, #4ade80);
+}
+
+.candidature-card.is-declined {
+  border-color: rgba(180, 35, 24, 0.24);
+  box-shadow: 0 20px 48px rgba(180, 35, 24, 0.14);
+  background:
+    radial-gradient(circle at top right, rgba(180, 35, 24, 0.1), transparent 35%),
+    linear-gradient(180deg, #fffdfd, #fff5f5);
+}
+
+.candidature-card.is-declined::before {
+  background: linear-gradient(180deg, #dc2626, #f87171);
+}
+
+.candidature-card.is-outdated {
+  border-color: rgba(100, 116, 139, 0.28);
+  box-shadow: 0 20px 48px rgba(100, 116, 139, 0.12);
+  background:
+    radial-gradient(circle at top right, rgba(100, 116, 139, 0.12), transparent 35%),
+    linear-gradient(180deg, #ffffff, #f8fafc);
+}
+
+.candidature-card.is-outdated::before {
+  background: linear-gradient(180deg, #475467, #94a3b8);
+}
+
+.candidature-card-top,
+.source-feed-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.candidature-card-top form,
+.source-feed-top form {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+.candidature-card-top > div:first-child,
+.source-feed-top > div:first-child {
+  min-width: 0;
+}
+
+.candidature-card-title,
+.source-feed-title {
+  margin: 0.7rem 0 0;
+  color: var(--offre-title);
+  font-size: 1.3rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.candidature-card-copy,
+.source-feed-copy {
+  margin: 0.7rem 0 0;
+  color: var(--offre-muted);
+  line-height: 1.7;
+}
+
+.candidature-empty-note {
+  margin: 0;
+  color: var(--offre-muted);
+}
+
+.candidature-inline-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.candidature-inline-meta .offer-chip {
+  margin: 0;
+}
+
+.composer-state-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.95rem 1rem;
+  border-radius: 1.1rem;
+  border: 1px solid rgba(30, 48, 243, 0.1);
+  background: rgba(30, 48, 243, 0.04);
+}
+
+.composer-state-bar p {
+  margin: 0;
+  color: var(--offre-muted);
+}
+
+.composer-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.composer-mode-card {
+  display: grid;
+  gap: 0.45rem;
+  padding: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 1.15rem;
+  background: var(--offre-surface-soft);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.composer-mode-card strong {
+  color: var(--offre-title);
+  font-size: 1rem;
+}
+
+.composer-mode-card span {
+  color: var(--offre-muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.composer-mode-card:hover,
+.composer-mode-card.is-active {
+  transform: translateY(-2px);
+  border-color: rgba(30, 48, 243, 0.22);
+  box-shadow: 0 18px 28px rgba(20, 31, 80, 0.08);
+}
+
+.composer-mode-card[data-mode="accept"].is-active {
+  border-color: rgba(20, 128, 74, 0.48);
+  background:
+    radial-gradient(circle at top right, rgba(74, 222, 128, 0.2), transparent 38%),
+    linear-gradient(180deg, #ffffff, #f0fdf4);
+  box-shadow:
+    0 18px 32px rgba(20, 128, 74, 0.16),
+    0 0 0 3px rgba(34, 197, 94, 0.14),
+    0 0 28px rgba(74, 222, 128, 0.26);
+}
+
+.composer-mode-card[data-mode="decline"].is-active {
+  border-color: rgba(180, 35, 24, 0.46);
+  background:
+    radial-gradient(circle at top right, rgba(248, 113, 113, 0.2), transparent 38%),
+    linear-gradient(180deg, #ffffff, #fff5f5);
+  box-shadow:
+    0 18px 32px rgba(180, 35, 24, 0.15),
+    0 0 0 3px rgba(248, 113, 113, 0.14),
+    0 0 28px rgba(248, 113, 113, 0.24);
+}
+
+.composer-mode-card[data-mode="negotiate"].is-active {
+  border-color: rgba(245, 158, 11, 0.5);
+  background:
+    radial-gradient(circle at top right, rgba(250, 204, 21, 0.23), transparent 38%),
+    linear-gradient(180deg, #ffffff, #fffbeb);
+  box-shadow:
+    0 18px 32px rgba(245, 158, 11, 0.17),
+    0 0 0 3px rgba(250, 204, 21, 0.16),
+    0 0 28px rgba(250, 204, 21, 0.28);
+}
+
+.composer-mode-card[data-mode="accept"].is-active strong {
+  color: #14804a;
+}
+
+.composer-mode-card[data-mode="negotiate"].is-active strong {
+  color: #b54708;
+}
+
+.composer-mode-card[data-mode="decline"].is-active strong {
+  color: #b42318;
+}
+
+.composer-context-note {
+  margin: 0;
+  color: var(--offre-muted);
+  line-height: 1.7;
+}
+
+.composer-field-card {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem 1.05rem;
+  border-radius: 1.15rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 249, 255, 0.96));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+#acceptFields {
+  display: grid;
+  gap: 0;
+  padding: 1.05rem;
+  border-radius: 1.15rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background:
+    radial-gradient(circle at top right, rgba(30, 48, 243, 0.04), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 249, 255, 0.94));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+#acceptFields[hidden] {
+  display: none !important;
+}
+
+#acceptFields .composer-field-card {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+#acceptFields .composer-field-card + .composer-field-card {
+  margin-top: 1.05rem;
+  padding-top: 1.05rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.composer-field-card-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.composer-field-card-top strong {
+  display: block;
+  color: var(--offre-title);
+}
+
+.composer-field-card-top p {
+  margin: 0.35rem 0 0;
+  color: var(--offre-muted);
+  line-height: 1.6;
+}
+
+.composer-two-column {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.composer-negotiation-panel[hidden] {
+  display: none !important;
+}
+
+.composer-decline-panel[hidden] {
+  display: none !important;
+}
+
+.inline-link {
+  color: #1e40af;
+  word-break: break-word;
+  text-decoration: none;
+}
+
+.inline-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+.response-callout-review {
+  border-color: rgba(255, 182, 41, 0.25);
+  background: linear-gradient(180deg, rgba(255, 251, 235, 0.94), rgba(255, 248, 232, 0.94));
+}
+
+.locked-state-card {
+  display: grid;
+  gap: 0.75rem;
+  background: linear-gradient(180deg, #ffffff, #f8f9ff);
+}
+
+.locked-state-card h3 {
+  margin: 0;
+  color: var(--offre-title);
+  font-size: 1.18rem;
+}
+
+.locked-state-card p {
+  margin: 0;
+  color: var(--offre-muted);
+  line-height: 1.65;
+}
+
+.decision-note-card,
+.timeline-card {
+  padding: 1rem 1.05rem;
+  border-radius: 1.15rem;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: var(--offre-surface-soft);
+}
+
+.decision-note-card strong,
+.timeline-card strong {
+  display: block;
+  margin-bottom: 0.55rem;
+  color: var(--offre-title);
+}
+
+.decision-note-card p,
+.timeline-card p {
+  margin: 0;
+  color: var(--offre-muted);
+  line-height: 1.65;
+}
+
+.negotiation-thread {
+  display: grid;
+  gap: 0.95rem;
+}
+
+.negotiation-entry {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem 1.05rem;
+  border-radius: 1.15rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: linear-gradient(180deg, #ffffff, #f9fbff);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.negotiation-entry-createur {
+  border-color: rgba(30, 48, 243, 0.16);
+  background:
+    radial-gradient(circle at top right, rgba(30, 48, 243, 0.06), transparent 34%),
+    linear-gradient(180deg, #ffffff, #f7f9ff);
+}
+
+.negotiation-entry-marque {
+  border-color: rgba(20, 128, 74, 0.2);
+  background:
+    radial-gradient(circle at top right, rgba(20, 128, 74, 0.08), transparent 34%),
+    linear-gradient(180deg, #ffffff, #f4fff8);
+}
+
+.negotiation-entry-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.negotiation-author-block {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.negotiation-author-block strong {
+  color: var(--offre-title);
+  font-size: 1rem;
+}
+
+.negotiation-author-block span {
+  color: var(--offre-muted);
+  font-size: 0.9rem;
+}
+
+.negotiation-role {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  padding: 0.36rem 0.76rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.negotiation-role-createur {
+  background: rgba(30, 48, 243, 0.08);
+  color: #1e30f3;
+}
+
+.negotiation-role-marque {
+  background: rgba(20, 128, 74, 0.1);
+  color: #14804a;
+}
+
+.negotiation-entry-message {
+  margin: 0;
+  color: var(--offre-muted);
+  line-height: 1.75;
+}
+
+.candidature-signal-copy {
+  color: var(--offre-muted);
+  line-height: 1.65;
+}
+
+.brand-action-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.brand-action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.brand-action-launch {
+  display: grid;
+  gap: 0.42rem;
+  padding: 1rem 1.05rem;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 1.15rem;
+  background: var(--offre-surface-soft);
+  appearance: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, filter 0.18s ease;
+}
+
+.brand-action-launch strong {
+  color: var(--offre-title);
+  font-size: 1rem;
+}
+
+.brand-action-launch span {
+  color: var(--offre-muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.brand-action-launch:hover {
+  transform: translateY(-2px);
+  filter: saturate(1.06);
+}
+
+.brand-action-launch-accept {
+  border-color: rgba(20, 128, 74, 0.28);
+  background:
+    radial-gradient(circle at top right, rgba(20, 128, 74, 0.16), transparent 36%),
+    linear-gradient(180deg, #ffffff, #f3fff8);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    0 18px 38px rgba(20, 128, 74, 0.12),
+    0 0 0 1px rgba(20, 128, 74, 0.04);
+}
+
+.brand-action-launch-refuse {
+  border-color: rgba(180, 35, 24, 0.26);
+  background:
+    radial-gradient(circle at top right, rgba(180, 35, 24, 0.14), transparent 36%),
+    linear-gradient(180deg, #ffffff, #fff5f5);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    0 18px 38px rgba(180, 35, 24, 0.12),
+    0 0 0 1px rgba(180, 35, 24, 0.05);
+}
+
+.brand-action-launch-negotiate {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: min(17.5rem, 100%);
+  border-color: rgba(245, 158, 11, 0.28);
+  background:
+    radial-gradient(circle at top right, rgba(250, 204, 21, 0.16), transparent 36%),
+    linear-gradient(180deg, #fffef8, #fff8eb);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    0 20px 40px rgba(245, 158, 11, 0.14),
+    0 0 0 1px rgba(245, 158, 11, 0.06);
+}
+
+.brand-action-launch-accept strong {
+  color: #14804a;
+}
+
+.brand-action-launch-refuse strong {
+  color: #b42318;
+}
+
+.brand-action-launch-negotiate strong {
+  color: #b54708;
+}
+
+.brand-action-launch-accept:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 24px 46px rgba(20, 128, 74, 0.18),
+    0 0 22px rgba(74, 222, 128, 0.2);
+}
+
+.brand-action-launch-refuse:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 24px 46px rgba(180, 35, 24, 0.18),
+    0 0 22px rgba(248, 113, 113, 0.2);
+}
+
+.brand-action-launch-negotiate:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 26px 48px rgba(245, 158, 11, 0.2),
+    0 0 24px rgba(250, 204, 21, 0.22);
+}
+
+.creator-response-action-card {
+  overflow: visible;
+}
+
+.creator-action-grid .brand-action-launch {
+  min-height: 8.2rem;
+}
+
+.creator-action-grid {
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  align-items: stretch;
+}
+
+.creator-action-grid .brand-action-launch {
+  width: 100%;
+  justify-self: stretch;
+}
+
+.creator-action-grid .brand-action-launch-negotiate {
+  grid-column: auto;
+  width: 100%;
+}
+
+.creator-response-modal-card,
+.creator-response-modal-card[data-modal-variant="negotiate"] {
+  width: min(43rem, 100%);
+  max-height: min(86vh, 44rem);
+}
+
+.creator-modal-section {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(30, 48, 243, 0.12);
+  background:
+    radial-gradient(circle at top right, rgba(30, 48, 243, 0.04), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 255, 0.96));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
+}
+
+.creator-modal-section-warning {
+  border-color: rgba(245, 158, 11, 0.18);
+  background:
+    radial-gradient(circle at top right, rgba(250, 204, 21, 0.12), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 250, 237, 0.96));
+}
+
+.creator-modal-section-danger {
+  border-color: rgba(180, 35, 24, 0.16);
+  background:
+    radial-gradient(circle at top right, rgba(248, 113, 113, 0.1), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 247, 247, 0.96));
+}
+
+.creator-modal-section-head {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.creator-modal-section-head strong {
+  color: var(--offre-title);
+  font-weight: 800;
+}
+
+.creator-modal-section-head span {
+  color: var(--offre-muted);
+  line-height: 1.55;
+  font-size: 0.94rem;
+}
+
+.upload-helper,
+.current-upload-link {
+  display: block;
+  margin-top: 0.42rem;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.upload-helper {
+  color: var(--offre-muted);
+}
+
+.current-upload-link {
+  width: fit-content;
+  color: var(--offre-accent);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.current-upload-link:hover {
+  text-decoration: underline;
+}
+
+.response-modal-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(12px);
+  z-index: 99999;
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+.response-modal-overlay.is-open {
+  display: flex;
+}
+
+.response-modal-panel[hidden] {
+  display: none !important;
+}
+
+.response-modal-panel {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.response-modal-card {
+  width: min(42rem, 100%);
+  max-height: min(88vh, 46rem);
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  border-radius: 1.5rem;
+  border: 1px solid rgba(30, 48, 243, 0.18);
+  background:
+    radial-gradient(circle at top right, rgba(226, 30, 128, 0.08), transparent 32%),
+    linear-gradient(180deg, #ffffff, #f7f9ff);
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+  animation: responseModalReveal 0.22s ease;
+}
+
+.response-modal-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: linear-gradient(180deg, #1e30f3, #e21e80);
+}
+
+.response-modal-card[data-modal-variant="accept"]::before {
+  background: linear-gradient(180deg, #16a34a, #4ade80);
+}
+
+.response-modal-card[data-modal-variant="refuse"]::before {
+  background: linear-gradient(180deg, #ef4444, #b42318);
+}
+
+.response-modal-card[data-modal-variant="negotiate"]::before {
+  background: linear-gradient(180deg, #f59e0b, #facc15);
+}
+
+.response-modal-card[data-modal-variant="negotiate"] {
+  width: min(38rem, 100%);
+  max-height: min(88vh, 43rem);
+  border-color: rgba(245, 158, 11, 0.2);
+  background:
+    radial-gradient(circle at top right, rgba(250, 204, 21, 0.14), transparent 32%),
+    linear-gradient(180deg, #ffffff, #fffaf0);
+}
+
+.response-modal-header {
+  padding: 1.35rem 1.4rem 1rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(247, 249, 255, 0.82));
+}
+
+.response-modal-kicker {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.42rem 0.78rem;
+  border-radius: 999px;
+  background: rgba(30, 48, 243, 0.08);
+  color: #1e30f3;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.response-modal-card[data-modal-variant="accept"] .response-modal-kicker {
+  background: rgba(20, 128, 74, 0.1);
+  color: #14804a;
+}
+
+.response-modal-card[data-modal-variant="refuse"] .response-modal-kicker {
+  background: rgba(180, 35, 24, 0.08);
+  color: #b42318;
+}
+
+.response-modal-card[data-modal-variant="negotiate"] .response-modal-kicker {
+  background: rgba(245, 158, 11, 0.14);
+  color: #b54708;
+}
+
+.response-modal-header h2 {
+  margin: 0.75rem 0 0;
+  color: var(--offre-title);
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.response-modal-subtitle {
+  margin: 0.7rem 0 0;
+  color: var(--offre-muted);
+  font-size: 0.98rem;
+  line-height: 1.6;
+  max-width: 34rem;
+}
+
+.response-modal-body {
+  display: grid;
+  gap: 1rem;
+  padding: 1.35rem 1.4rem 1.45rem;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  background:
+    radial-gradient(circle at bottom left, rgba(30, 48, 243, 0.04), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(247, 249, 255, 0.93));
+}
+
+html.offre-modal-open,
+body.offre-modal-open {
+  overflow: hidden;
+}
+
+.response-modal-card[data-modal-variant="negotiate"] .response-modal-body {
+  gap: 0.9rem;
+  padding: 1.15rem 1.25rem 1.35rem;
+  background:
+    radial-gradient(circle at bottom left, rgba(245, 158, 11, 0.08), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 249, 237, 0.95));
+}
+
+.response-modal-body::-webkit-scrollbar {
+  width: 0.72rem;
+}
+
+.response-modal-body::-webkit-scrollbar-track {
+  background: rgba(148, 163, 184, 0.12);
+  border-radius: 999px;
+}
+
+.response-modal-body::-webkit-scrollbar-thumb {
+  background: rgba(71, 85, 105, 0.34);
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.72);
+}
+
+.response-modal-card[data-modal-variant="accept"] .response-modal-body::-webkit-scrollbar-thumb {
+  background: rgba(20, 128, 74, 0.42);
+}
+
+.response-modal-card[data-modal-variant="refuse"] .response-modal-body::-webkit-scrollbar-thumb {
+  background: rgba(180, 35, 24, 0.42);
+}
+
+.response-modal-card[data-modal-variant="negotiate"] .response-modal-body::-webkit-scrollbar-thumb {
+  background: rgba(245, 158, 11, 0.46);
+}
+
+.response-modal-copy {
+  margin: 0;
+  color: var(--offre-muted);
+  font-size: 0.97rem;
+  line-height: 1.7;
+}
+
+.modal-validation-summary {
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(180, 35, 24, 0.2);
+  background: rgba(180, 35, 24, 0.08);
+  color: #b42318;
+}
+
+.modal-validation-summary strong {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-weight: 900;
+}
+
+.modal-validation-summary ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.modal-field-error {
+  display: block;
+  margin-top: 0.42rem;
+  color: #b42318;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.response-modal-card .form-control.is-invalid,
+.response-modal-card .form-select.is-invalid {
+  border-color: rgba(180, 35, 24, 0.56);
+  box-shadow: 0 0 0 0.18rem rgba(180, 35, 24, 0.12);
+}
+
+.response-modal-card[data-modal-variant="negotiate"] .form-control.is-invalid,
+.response-modal-card[data-modal-variant="negotiate"] .form-select.is-invalid {
+  border-color: rgba(180, 35, 24, 0.56);
+  box-shadow: 0 0 0 0.18rem rgba(180, 35, 24, 0.12);
+}
+
+.response-modal-preview {
+  display: grid;
+  gap: 0.38rem;
+  padding: 1.05rem 1.1rem;
+  border-radius: 1.15rem;
+  border: 1px solid rgba(30, 48, 243, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(248, 249, 255, 0.98));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.response-modal-card[data-modal-variant="accept"] .response-modal-preview {
+  border-color: rgba(20, 128, 74, 0.18);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(244, 255, 248, 0.98));
+}
+
+.response-modal-card[data-modal-variant="refuse"] .response-modal-preview {
+  border-color: rgba(180, 35, 24, 0.16);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 246, 246, 0.98));
+}
+
+.response-modal-card[data-modal-variant="negotiate"] .response-modal-preview {
+  border-color: rgba(245, 158, 11, 0.16);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 250, 239, 0.98));
+}
+
+.response-modal-preview-label {
+  color: var(--offre-accent);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.response-modal-card[data-modal-variant="accept"] .response-modal-preview-label {
+  color: #14804a;
+}
+
+.response-modal-card[data-modal-variant="refuse"] .response-modal-preview-label {
+  color: #b42318;
+}
+
+.response-modal-card[data-modal-variant="negotiate"] .response-modal-preview-label {
+  color: #b54708;
+}
+
+.response-modal-preview strong {
+  color: var(--offre-title);
+  font-size: 1.06rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.response-modal-preview span:last-child,
+.response-modal-preview span:not(.response-modal-preview-label) {
+  color: var(--offre-muted);
+  font-size: 0.94rem;
+  line-height: 1.6;
+}
+
+.response-modal-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.response-modal-summary {
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid transparent;
+}
+
+.response-modal-summary strong {
+  display: block;
+  margin-bottom: 0.45rem;
+}
+
+.response-modal-summary ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.response-modal-summary-danger {
+  border-color: rgba(180, 35, 24, 0.16);
+  background: rgba(180, 35, 24, 0.05);
+  color: #b42318;
+}
+
+.response-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.15rem;
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  padding-top: 0.9rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.9) 22%, rgba(247, 249, 255, 0.98) 100%);
+}
+
+.response-modal-card[data-modal-variant="accept"] .response-modal-actions {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(248, 255, 251, 0.9) 22%, rgba(244, 255, 248, 0.98) 100%);
+}
+
+.response-modal-card[data-modal-variant="refuse"] .response-modal-actions {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 249, 249, 0.9) 22%, rgba(255, 245, 245, 0.98) 100%);
+}
+
+.response-modal-card[data-modal-variant="negotiate"] .response-modal-actions {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 251, 241, 0.9) 22%, rgba(255, 249, 237, 0.98) 100%);
+}
+
+.response-modal-secondary,
+.response-modal-primary {
+  border: none;
+  border-radius: 999px;
+  padding: 0.82rem 1.2rem;
+  appearance: none;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.response-modal-secondary {
+  background: rgba(148, 163, 184, 0.14);
+  color: #344054;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.1);
+}
+
+.response-modal-primary {
+  background: linear-gradient(135deg, #1e30f3, #4355ff);
+  color: #ffffff;
+  box-shadow: 0 16px 30px rgba(30, 48, 243, 0.24);
+}
+
+.response-modal-card[data-modal-variant="accept"] .response-modal-primary {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  box-shadow: 0 16px 30px rgba(20, 128, 74, 0.24);
+}
+
+.response-modal-card[data-modal-variant="refuse"] .response-modal-primary {
+  background: linear-gradient(135deg, #ef4444, #b42318);
+  box-shadow: 0 16px 30px rgba(180, 35, 24, 0.24);
+}
+
+.response-modal-primary-negotiate {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 16px 30px rgba(245, 158, 11, 0.24);
+}
+
+.response-modal-secondary:hover,
+.response-modal-primary:hover {
+  transform: translateY(-1px);
+}
+
+.response-modal-secondary:hover {
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.response-modal-primary:hover {
+  box-shadow: 0 20px 34px rgba(30, 48, 243, 0.28);
+}
+
+.response-modal-card[data-modal-variant="accept"] .response-modal-primary:hover {
+  box-shadow: 0 20px 34px rgba(20, 128, 74, 0.3);
+}
+
+.response-modal-card[data-modal-variant="refuse"] .response-modal-primary:hover {
+  box-shadow: 0 20px 34px rgba(180, 35, 24, 0.3);
+}
+
+.response-modal-primary-negotiate:hover {
+  box-shadow: 0 22px 36px rgba(245, 158, 11, 0.3);
+}
+
+@keyframes responseModalReveal {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 1200px) {
+  .candidature-stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .brand-source-tab-list {
+    grid-template-columns: 1fr;
+  }
+
+  .brand-source-panel-heading {
+    flex-direction: column;
+  }
+
+  .source-feed-grid,
+  .candidature-card-grid,
+  .candidature-summary-grid,
+  .decision-note-grid,
+  .composer-two-column,
+  .composer-mode-grid,
+  .response-modal-field-grid,
+  .brand-action-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .brand-action-launch-negotiate {
+    grid-column: auto;
+    justify-self: stretch;
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .candidature-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .candidature-card-top,
+  .source-feed-top,
+  .composer-state-bar,
+  .negotiation-entry-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .response-modal-header,
+  .response-modal-actions {
+    padding-left: 1.1rem;
+    padding-right: 1.1rem;
+  }
+
+  .response-modal-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .response-modal-body {
+    padding: 1.1rem;
+  }
+}
+
+/* Local candidature polish aligned with the reference campaign/product pages. */
+.source-feed-card,
+.candidature-card,
+.composer-card,
+.locked-state-card,
+.decision-note-card,
+.timeline-card,
+.brand-action-card {
+  border-radius: 1rem;
+}
+
+.source-feed-card,
+.candidature-card {
+  box-shadow: 0 20px 46px rgba(20, 31, 80, 0.08);
+}
+
+.source-feed-card:hover,
+.candidature-card:hover {
+  border-color: rgba(30, 48, 243, 0.2);
+}
+
+.candidature-card-title,
+.source-feed-title {
+  letter-spacing: -0.02em;
+}
+
+.candidature-card-copy,
+.source-feed-copy,
+.composer-context-note,
+.candidature-signal-copy {
+  line-height: 1.65;
+}
+
+.candidature-card .compact-actions,
+.source-feed-card .compact-actions {
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.candidature-badge,
+.origin-badge {
+  min-height: 1.85rem;
+  padding: 0.34rem 0.74rem;
+}
+
+.composer-mode-grid {
+  align-items: stretch;
+}
+
+.composer-mode-card {
+  border-width: 1.5px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.composer-mode-card[data-mode="accept"] {
+  border-color: rgba(20, 128, 74, 0.22);
+  background:
+    radial-gradient(circle at top right, rgba(74, 222, 128, 0.12), transparent 38%),
+    linear-gradient(180deg, #ffffff, #f8fffb);
+}
+
+.composer-mode-card[data-mode="negotiate"] {
+  border-color: rgba(245, 158, 11, 0.24);
+  background:
+    radial-gradient(circle at top right, rgba(250, 204, 21, 0.14), transparent 38%),
+    linear-gradient(180deg, #ffffff, #fffdf4);
+}
+
+.composer-mode-card[data-mode="decline"] {
+  border-color: rgba(180, 35, 24, 0.22);
+  background:
+    radial-gradient(circle at top right, rgba(248, 113, 113, 0.12), transparent 38%),
+    linear-gradient(180deg, #ffffff, #fff8f8);
+}
+
+.composer-field-card,
+#acceptFields,
+.composer-negotiation-panel,
+.composer-decline-panel {
+  border-radius: 1rem;
+}
+
+.composer-field-card {
+  background:
+    radial-gradient(circle at top right, rgba(30, 48, 243, 0.035), transparent 36%),
+    linear-gradient(180deg, #ffffff, #f8faff);
+}
+
+#acceptFields .composer-field-card + .composer-field-card {
+  border-top-style: dashed;
+}
+
+.composer-two-column > div {
+  min-width: 0;
+}
+
+.composer-two-column .form-control,
+.composer-two-column .form-select {
+  width: 100%;
+  min-width: 0;
+}
+
+.negotiation-entry {
+  box-shadow: 0 14px 34px rgba(20, 31, 80, 0.07);
+}
+
+.brand-action-grid {
+  align-items: stretch;
+}
+
+.brand-action-launch {
+  border-width: 1.5px;
+}
+
+.brand-action-launch-accept,
+.brand-action-launch-refuse,
+.brand-action-launch-negotiate {
+  min-height: 10rem;
+}
+
+.brand-action-launch-accept {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.84),
+    0 20px 40px rgba(20, 128, 74, 0.13),
+    0 0 26px rgba(74, 222, 128, 0.16);
+}
+
+.brand-action-launch-refuse {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.84),
+    0 20px 40px rgba(180, 35, 24, 0.13),
+    0 0 26px rgba(248, 113, 113, 0.16);
+}
+
+.brand-action-launch-negotiate {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.84),
+    0 22px 42px rgba(245, 158, 11, 0.15),
+    0 0 28px rgba(250, 204, 21, 0.18);
+}
+
+.response-modal-card {
+  box-shadow: 0 28px 80px rgba(20, 31, 80, 0.18);
+}
+
+.response-modal-field-grid > div {
+  min-width: 0;
+}
+
+.response-modal-actions {
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+@media (max-width: 900px) {
+  .brand-action-launch-accept,
+  .brand-action-launch-refuse,
+  .brand-action-launch-negotiate {
+    min-height: auto;
+  }
+}
+
+.campaign-opportunities-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.campaign-opportunity-search-grid {
+  grid-template-columns: minmax(240px, 1.7fr) minmax(180px, 0.8fr);
+}
+
+.campaign-opportunity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.campaign-opportunity-card {
+  display: grid;
+  gap: 0.95rem;
+  min-width: 0;
+  padding: 1.15rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(124, 58, 237, 0.12);
+  background: #fff;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+}
+
+.campaign-opportunity-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.campaign-opportunity-card h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 1.18rem;
+  line-height: 1.35;
+}
+
+.campaign-opportunity-card p {
+  margin: 0;
+  color: #64748b;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.campaign-opportunity-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.campaign-opportunity-meta span {
+  display: inline-flex;
+  max-width: 100%;
+  padding: 0.36rem 0.65rem;
+  border-radius: 999px;
+  background: #f5f3ff;
+  color: #5b21b6;
+  font-size: 0.8rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.campaign-application-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.campaign-application-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+@media (max-width: 720px) {
+  .campaign-opportunities-hero {
+    flex-direction: column;
+  }
+
+  .campaign-opportunity-search-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .campaign-application-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+[data-theme="dark"] .brand-source-tab-button,
+[data-theme="dark"] .brand-source-panel-heading,
+[data-theme="dark"] .source-feed-card,
+[data-theme="dark"] .candidature-card,
+[data-theme="dark"] .candidature-card.is-draft,
+[data-theme="dark"] .candidature-card.is-review,
+[data-theme="dark"] .candidature-card.is-accepted,
+[data-theme="dark"] .candidature-card.is-declined,
+[data-theme="dark"] .candidature-card.is-outdated,
+[data-theme="dark"] .composer-card,
+[data-theme="dark"] .locked-state-card,
+[data-theme="dark"] .decision-note-card,
+[data-theme="dark"] .timeline-card,
+[data-theme="dark"] .brand-action-card,
+[data-theme="dark"] .composer-mode-card,
+[data-theme="dark"] .composer-mode-card[data-mode="accept"],
+[data-theme="dark"] .composer-mode-card[data-mode="negotiate"],
+[data-theme="dark"] .composer-mode-card[data-mode="decline"],
+[data-theme="dark"] .composer-mode-card[data-mode="accept"].is-active,
+[data-theme="dark"] .composer-mode-card[data-mode="negotiate"].is-active,
+[data-theme="dark"] .composer-mode-card[data-mode="decline"].is-active,
+[data-theme="dark"] .composer-field-card,
+[data-theme="dark"] .composer-negotiation-panel,
+[data-theme="dark"] .composer-decline-panel,
+[data-theme="dark"] .creator-modal-section,
+[data-theme="dark"] .creator-modal-section-warning,
+[data-theme="dark"] .creator-modal-section-danger,
+[data-theme="dark"] .response-callout-review,
+[data-theme="dark"] .response-modal-card,
+[data-theme="dark"] .response-modal-card[data-modal-variant="negotiate"],
+[data-theme="dark"] .response-modal-preview,
+[data-theme="dark"] .response-modal-card[data-modal-variant="accept"] .response-modal-preview,
+[data-theme="dark"] .response-modal-card[data-modal-variant="refuse"] .response-modal-preview,
+[data-theme="dark"] .response-modal-card[data-modal-variant="negotiate"] .response-modal-preview,
+[data-theme="dark"] .campaign-opportunity-card {
+  background: var(--card-bg) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
+  box-shadow: 0 18px 42px var(--shadow-color) !important;
+}
+
+[data-theme="dark"] .response-modal-header,
+[data-theme="dark"] .response-modal-body,
+[data-theme="dark"] .response-modal-card[data-modal-variant="negotiate"] .response-modal-body,
+[data-theme="dark"] .response-modal-actions,
+[data-theme="dark"] .response-modal-card[data-modal-variant="accept"] .response-modal-actions,
+[data-theme="dark"] .response-modal-card[data-modal-variant="refuse"] .response-modal-actions,
+[data-theme="dark"] .response-modal-card[data-modal-variant="negotiate"] .response-modal-actions {
+  background: var(--card-bg-soft) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .negotiation-entry,
+[data-theme="dark"] .negotiation-entry-createur,
+[data-theme="dark"] .negotiation-entry-marque {
+  background: var(--card-bg-soft) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
+  box-shadow: 0 16px 34px var(--shadow-color) !important;
+}
+
+[data-theme="dark"] .candidature-card-title,
+[data-theme="dark"] .source-feed-title,
+[data-theme="dark"] .composer-mode-card strong,
+[data-theme="dark"] .composer-field-card-top strong,
+[data-theme="dark"] .creator-modal-section-head strong,
+[data-theme="dark"] .response-modal-header h2,
+[data-theme="dark"] .response-modal-preview strong,
+[data-theme="dark"] .response-modal-summary strong,
+[data-theme="dark"] .negotiation-author-block strong,
+[data-theme="dark"] .brand-action-card h2,
+[data-theme="dark"] .brand-action-launch strong,
+[data-theme="dark"] .response-callout-review strong,
+[data-theme="dark"] .campaign-opportunity-card h2 {
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .candidature-card-copy,
+[data-theme="dark"] .source-feed-copy,
+[data-theme="dark"] .composer-mode-card span,
+[data-theme="dark"] .composer-field-card-top p,
+[data-theme="dark"] .creator-modal-section-head span,
+[data-theme="dark"] .response-modal-subtitle,
+[data-theme="dark"] .response-modal-copy,
+[data-theme="dark"] .response-modal-preview span:last-child,
+[data-theme="dark"] .response-modal-preview span:not(.response-modal-preview-label),
+[data-theme="dark"] .negotiation-author-block span,
+[data-theme="dark"] .negotiation-entry-message,
+[data-theme="dark"] .brand-action-launch span,
+[data-theme="dark"] .response-callout-review .candidature-signal-copy,
+[data-theme="dark"] .campaign-opportunity-card p {
+  color: var(--muted-text) !important;
+}
+
+[data-theme="dark"] .brand-source-tab-button strong,
+[data-theme="dark"] .candidature-badge,
+[data-theme="dark"] .origin-badge,
+[data-theme="dark"] .campaign-opportunity-meta span,
+[data-theme="dark"] .candidature-inline-meta .offer-chip,
+[data-theme="dark"] .negotiation-role,
+[data-theme="dark"] .response-modal-kicker {
+  background: var(--badge-bg) !important;
+  color: #ddd6fe !important;
+  border-color: var(--border-color-strong) !important;
+}
+
+[data-theme="dark"] .brand-action-launch,
+[data-theme="dark"] .brand-action-launch-accept,
+[data-theme="dark"] .brand-action-launch-refuse,
+[data-theme="dark"] .brand-action-launch-negotiate {
+  background: var(--card-bg-soft) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color-strong) !important;
+  box-shadow: none !important;
+}
+
+[data-theme="dark"] .response-modal-secondary {
+  background: var(--card-bg) !important;
+  color: var(--text-color) !important;
+  border: 1px solid var(--border-color-strong) !important;
+}
+
+/* ============================================================
+   Candidature dark-mode alignment with the shared Cre8Connect theme.
+   This comes after local rules so it wins safely without changing logic.
+============================================================ */
+html[data-theme="dark"] .candidature-stats-grid .stat-card,
+html[data-theme="dark"] .source-feed-card,
+html[data-theme="dark"] .candidature-card,
+html[data-theme="dark"] .candidature-card.is-draft,
+html[data-theme="dark"] .candidature-card.is-review,
+html[data-theme="dark"] .candidature-card.is-accepted,
+html[data-theme="dark"] .candidature-card.is-declined,
+html[data-theme="dark"] .candidature-card.is-outdated,
+html[data-theme="dark"] .composer-card,
+html[data-theme="dark"] .locked-state-card,
+html[data-theme="dark"] .decision-note-card,
+html[data-theme="dark"] .timeline-card,
+html[data-theme="dark"] .brand-action-card,
+html[data-theme="dark"] .brand-source-tab-button,
+html[data-theme="dark"] .brand-source-panel-heading,
+html[data-theme="dark"] .response-modal-card,
+html[data-theme="dark"] .response-modal-card[data-modal-variant="negotiate"],
+html[data-theme="dark"] .response-modal-preview,
+html[data-theme="dark"] .creator-modal-section,
+html[data-theme="dark"] .composer-mode-card,
+html[data-theme="dark"] .composer-mode-card[data-mode="accept"],
+html[data-theme="dark"] .composer-mode-card[data-mode="negotiate"],
+html[data-theme="dark"] .composer-mode-card[data-mode="decline"],
+html[data-theme="dark"] .composer-field-card,
+html[data-theme="dark"] #acceptFields,
+html[data-theme="dark"] .negotiation-entry,
+html[data-theme="dark"] .campaign-opportunity-card {
+  background:
+    radial-gradient(circle at top right, rgba(124, 111, 255, 0.10), transparent 34%),
+    var(--card-bg) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
+  box-shadow: 0 18px 42px var(--shadow-color) !important;
+}
+
+html[data-theme="dark"] .composer-field-card,
+html[data-theme="dark"] #acceptFields,
+html[data-theme="dark"] .decision-note-card,
+html[data-theme="dark"] .timeline-card,
+html[data-theme="dark"] .negotiation-entry,
+html[data-theme="dark"] .composer-state-bar {
+  background: var(--card-bg-soft) !important;
+}
+
+html[data-theme="dark"] .candidature-card-title,
+html[data-theme="dark"] .source-feed-title,
+html[data-theme="dark"] .composer-mode-card strong,
+html[data-theme="dark"] .brand-action-launch strong,
+html[data-theme="dark"] .negotiation-author-block strong,
+html[data-theme="dark"] .response-modal-preview strong,
+html[data-theme="dark"] .locked-state-card h3,
+html[data-theme="dark"] .decision-note-card strong,
+html[data-theme="dark"] .timeline-card strong,
+html[data-theme="dark"] .campaign-opportunity-card h2 {
+  color: var(--text-color) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+html[data-theme="dark"] .candidature-card-copy,
+html[data-theme="dark"] .source-feed-copy,
+html[data-theme="dark"] .composer-mode-card span,
+html[data-theme="dark"] .brand-action-launch span,
+html[data-theme="dark"] .negotiation-entry-message,
+html[data-theme="dark"] .negotiation-author-block span,
+html[data-theme="dark"] .response-modal-preview span,
+html[data-theme="dark"] .locked-state-card p,
+html[data-theme="dark"] .decision-note-card p,
+html[data-theme="dark"] .timeline-card p,
+html[data-theme="dark"] .campaign-opportunity-card p,
+html[data-theme="dark"] .composer-context-note,
+html[data-theme="dark"] .candidature-signal-copy {
+  color: var(--muted-text) !important;
+}
+
+html[data-theme="dark"] .candidature-badge,
+html[data-theme="dark"] .origin-badge,
+html[data-theme="dark"] .negotiation-role,
+html[data-theme="dark"] .campaign-opportunity-meta span {
+  background: var(--badge-bg) !important;
+  color: #ddd6fe !important;
+  border-color: var(--border-color-strong) !important;
+}
+
+html[data-theme="dark"] .response-modal-header,
+html[data-theme="dark"] .response-modal-body,
+html[data-theme="dark"] .response-modal-actions {
+  background: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+}
+

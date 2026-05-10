@@ -1,0 +1,92 @@
+/* Cre8Pilot avatar comic bubbles — loaded with cre8pilot_widget.php
+   Bubbles sit in-flow beside the avatar (.cre8pilot-header-avatar-cluster) so panel overflow does not clip them.
+   Sizes are capped below the avatar (small header ~60×70px, voice large ~200×230px). */
+
+.cre8pilot-header-avatar-cluster {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  gap: 0.28rem;
+}
+
+.cre8pilot-header-avatar-cluster .cre8pilot-avatar-bubbles {
+  position: relative;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 76px;
+  z-index: 2;
+  pointer-events: none;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+/* Panel header: bubble art smaller than the small avatar (~60×70) */
+.cre8pilot-header-avatar-cluster:has(.cre8pilot-avatar--small) .cre8pilot-avatar-bubbles {
+  max-width: 64px;
+}
+
+.cre8pilot-header-avatar-cluster:has(.cre8pilot-avatar--small) .cre8pilot-bubble img {
+  max-height: 48px;
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+/* “Done!” bubble only: modestly larger display (asset file unchanged). */
+.cre8pilot-header-avatar-cluster:has(.cre8pilot-avatar--small) .cre8pilot-bubble--success img {
+  max-height: 56px;
+}
+
+/* Voice overlay: still smaller than the large avatar */
+.cre8pilot-header-avatar-cluster:has(.cre8pilot-avatar--large) .cre8pilot-avatar-bubbles {
+  max-width: 140px;
+}
+
+.cre8pilot-header-avatar-cluster:has(.cre8pilot-avatar--large) .cre8pilot-bubble img {
+  max-height: min(120px, 32vw);
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.cre8pilot-header-avatar-cluster:has(.cre8pilot-avatar--large) .cre8pilot-bubble--success img {
+  max-height: min(136px, 34vw);
+}
+
+.cre8pilot-bubble {
+  position: relative;
+  opacity: 0;
+  transform: translateX(6px) scale(0.96);
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.cre8pilot-bubble.is-visible {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+}
+
+.cre8pilot-bubble img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  background: transparent;
+  filter: drop-shadow(0 2px 5px rgba(12, 8, 32, 0.18));
+}
+
+.cre8pilot-bubble--confused img {
+  transform: scaleX(-1);
+  transform-origin: center center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cre8pilot-bubble {
+    transition-duration: 0.12s;
+  }
+}

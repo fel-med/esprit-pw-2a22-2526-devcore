@@ -1,0 +1,2441 @@
+:root {
+  --bo-sidebar-width: 244px;
+  --bo-header-height: 70px;
+  --bo-tabs-height: 48px;
+  --bo-topbar-height: var(--bo-header-height);
+  --cre8-admin-bg: #101116;
+  --cre8-admin-panel: #181820;
+  --cre8-admin-panel-soft: #20212b;
+  --cre8-admin-line: rgba(148, 163, 184, 0.14);
+  --cre8-admin-muted: #8c93a7;
+  --cre8-admin-text: #f4f7fb;
+  --cre8-admin-purple: #7c5cff;
+}
+
+body.cre8-admin-layout {
+  min-height: 100vh;
+  background: var(--cre8-admin-bg);
+  color: var(--cre8-admin-text);
+  overflow-x: hidden;
+}
+
+.cre8-admin-page {
+  min-height: 100vh;
+  display: block;
+  padding-left: var(--bo-sidebar-width);
+}
+
+.cre8-admin-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--bo-sidebar-width);
+  height: 100vh;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(148, 163, 184, 0.12);
+  background: #080d18;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.cre8-admin-brand {
+  min-height: var(--bo-topbar-height);
+  display: flex;
+  align-items: center;
+  gap: 0.58rem;
+  padding: 0 1.85rem;
+  color: #fff;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  background: #171b24;
+}
+
+.cre8-admin-brand img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.cre8-admin-brand strong {
+  display: block;
+  font-size: 1.34rem;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+}
+
+.cre8-admin-brand small {
+  display: none;
+}
+
+.cre8-admin-nav {
+  flex: 1;
+  display: grid;
+  align-content: start;
+  gap: 1.35rem;
+  padding: 1.7rem 0.85rem;
+}
+
+.cre8-admin-nav-section h2 {
+  margin: 0 0 0.65rem;
+  padding: 0 0.65rem;
+  color: #5f667a;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  font-weight: 900;
+}
+
+.cre8-admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-height: 46px;
+  padding: 0 0.75rem;
+  border-radius: 0.66rem;
+  color: #9aa2b8;
+  text-decoration: none;
+  font-weight: 800;
+  transition: color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+
+.cre8-admin-nav-item:hover {
+  color: #fff;
+  background: rgba(124, 92, 255, 0.12);
+  transform: translateX(2px);
+}
+
+.cre8-admin-nav-item.is-active {
+  color: #8f79ff;
+  background: rgba(124, 92, 255, 0.22);
+}
+
+.cre8-admin-nav-icon {
+  width: 1.25rem;
+  color: currentColor;
+  text-align: center;
+}
+
+.cre8-admin-profile {
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0 1.25rem;
+  border-top: 1px solid var(--cre8-admin-line);
+}
+
+.cre8-admin-avatar {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #7c5cff;
+  color: #fff;
+  font-weight: 900;
+}
+
+.cre8-admin-profile strong,
+.cre8-admin-profile small {
+  display: block;
+}
+
+.cre8-admin-profile small {
+  margin-top: 0.18rem;
+  color: var(--cre8-admin-muted);
+}
+
+.cre8-admin-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding-top: var(--bo-topbar-height);
+}
+
+.cre8-admin-main:has(.cre8-admin-unified-topbar) {
+  padding-top: var(--bo-topbar-height) !important;
+}
+
+.cre8-admin-topbar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: var(--bo-sidebar-width);
+  z-index: 40;
+  min-height: 86px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 1.8rem;
+  border-bottom: 1px solid var(--cre8-admin-line);
+  background: #15161d;
+}
+
+.cre8-admin-unified-topbar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: var(--bo-sidebar-width);
+  z-index: 45;
+  min-height: var(--bo-topbar-height);
+  height: var(--bo-topbar-height);
+  display: flex;
+  align-items: center;
+  gap: 1.05rem;
+  padding: 0 1.85rem 0 2.15rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  background: #080b16;
+  color: #eef2ff;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.02);
+  overflow: hidden;
+}
+
+.cre8-admin-unified-topbar svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cre8-admin-menu-button,
+.cre8-admin-icon-button {
+  width: 36px;
+  height: 42px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 0.65rem;
+  background: transparent;
+  color: #dce5ff;
+  cursor: pointer;
+  transition: color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+
+.cre8-admin-menu-button:hover,
+.cre8-admin-icon-button:hover {
+  color: #ffffff;
+  background: rgba(124, 92, 255, 0.14);
+  transform: translateY(-1px);
+}
+
+.cre8-admin-unified-search {
+  width: min(100%, 796px);
+  max-width: 796px;
+  min-width: 220px;
+  height: 48px;
+  flex: 0 1 796px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 1.05rem;
+  border: 1px solid rgba(116, 132, 177, 0.26);
+  border-radius: 0.44rem;
+  background: #111727;
+  color: #8f9bbb;
+}
+
+.cre8-admin-search-icon {
+  flex: 0 0 auto;
+  color: #7581a0;
+}
+
+.cre8-admin-search-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.cre8-admin-unified-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #eef2ff;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.cre8-admin-unified-search input::placeholder {
+  color: #858eaa;
+  font-weight: 600;
+}
+
+.cre8-admin-topbar-tools {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.48rem;
+  min-width: max-content;
+  margin-left: auto;
+}
+
+.cre8-admin-topbar-separator {
+  width: 1px;
+  height: 38px;
+  flex: 0 0 auto;
+  background: rgba(148, 163, 184, 0.18);
+}
+
+.cre8-admin-icon-button {
+  position: relative;
+}
+
+.cre8-admin-icon-button.has-dot::after {
+  content: "";
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  border: 2px solid #080b16;
+}
+
+.cre8-admin-icon-button.has-dot-green::after {
+  background: #9be37b;
+}
+
+.cre8-admin-icon-button.has-dot-red::after {
+  background: #ff5572;
+}
+
+.cre8-admin-user-menu {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.74rem;
+  min-height: 52px;
+  padding-left: 1.05rem;
+  color: #f7f8ff;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.cre8-admin-topbar-avatar {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 3px solid rgba(220, 160, 114, 0.72);
+  overflow: hidden;
+  background: #171b24;
+  color: transparent;
+  font-weight: 950;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
+}
+
+.cre8-admin-topbar-avatar img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  object-fit: cover;
+}
+
+.cre8-admin-user-name {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.cre8-admin-user-arrow {
+  width: 16px !important;
+  height: 16px !important;
+  color: #9aa4bf;
+}
+
+[data-theme="light"] .cre8-admin-unified-topbar {
+  border-bottom-color: rgba(30, 48, 243, 0.1);
+  background: #ffffff;
+  color: #111827;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
+}
+
+[data-theme="light"] .cre8-admin-menu-button,
+[data-theme="light"] .cre8-admin-icon-button {
+  color: #1f2937;
+}
+
+[data-theme="light"] .cre8-admin-menu-button:hover,
+[data-theme="light"] .cre8-admin-icon-button:hover {
+  background: rgba(124, 92, 255, 0.1);
+  color: #4f46e5;
+}
+
+[data-theme="light"] .cre8-admin-unified-search {
+  border-color: rgba(30, 48, 243, 0.14);
+  background: #f8fafc;
+  color: #64748b;
+}
+
+[data-theme="light"] .cre8-admin-unified-search input {
+  color: #101828;
+}
+
+[data-theme="light"] .cre8-admin-unified-search input::placeholder {
+  color: #94a3b8;
+}
+
+[data-theme="light"] .cre8-admin-topbar-separator {
+  background: rgba(15, 23, 42, 0.12);
+}
+
+[data-theme="light"] .cre8-admin-icon-button.has-dot::after {
+  border-color: #ffffff;
+}
+
+[data-theme="light"] .cre8-admin-user-menu {
+  color: #111827;
+}
+
+.cre8-admin-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.62rem;
+  color: #6f768d;
+  font-weight: 800;
+}
+
+.cre8-admin-breadcrumb strong {
+  color: #f8fafc;
+}
+
+.cre8-admin-topbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+.cre8-admin-search {
+  min-width: 260px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 42px;
+  padding: 0 0.85rem;
+  border-radius: 0.55rem;
+  border: 1px solid var(--cre8-admin-line);
+  background: #1d1e28;
+  color: #667085;
+}
+
+.cre8-admin-search input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  color: #e5e7eb;
+  background: transparent;
+}
+
+.cre8-admin-search input::placeholder {
+  color: #6f768d;
+}
+
+.cre8-admin-action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 1rem;
+  border-radius: 0.55rem;
+  border: 1px solid var(--cre8-admin-line);
+  background: #1d1e28;
+  color: #d7dbea;
+  text-decoration: none;
+  font-weight: 900;
+}
+
+.cre8-admin-action-primary {
+  border-color: rgba(124, 92, 255, 0.56);
+  background: #7c5cff;
+  color: #fff;
+  box-shadow: 0 16px 32px rgba(124, 92, 255, 0.22);
+}
+
+.cre8-admin-action-exit {
+  border-color: rgba(248, 113, 113, 0.34);
+  background: rgba(127, 29, 29, 0.28);
+  color: #fecaca;
+}
+
+.cre8-admin-action-exit:hover {
+  border-color: rgba(248, 113, 113, 0.58);
+  background: rgba(153, 27, 27, 0.42);
+  color: #fff;
+}
+
+.cre8-admin-topbar-actions .theme-toggle {
+  min-height: 42px;
+  padding: 0 0.95rem;
+  box-shadow: none;
+}
+
+[data-theme="light"] .cre8-admin-search {
+  background: #ffffff;
+  color: #64748b;
+  border-color: rgba(30, 48, 243, 0.12);
+}
+
+[data-theme="light"] .cre8-admin-search input {
+  color: #101828;
+}
+
+[data-theme="light"] .cre8-admin-search input::placeholder {
+  color: #94a3b8;
+}
+
+[data-theme="light"] .cre8-admin-action {
+  background: #ffffff;
+  color: #1f2937;
+  border-color: rgba(30, 48, 243, 0.12);
+}
+
+[data-theme="light"] .cre8-admin-action-primary {
+  background: #7c5cff;
+  color: #ffffff;
+}
+
+[data-theme="light"] .cre8-admin-breadcrumb {
+  color: #64748b;
+}
+
+[data-theme="light"] .cre8-admin-breadcrumb strong {
+  color: #101828;
+}
+
+@media (max-width: 1100px) {
+  .cre8-admin-page {
+    padding-left: 0;
+  }
+
+  .cre8-admin-sidebar {
+    position: relative;
+    width: auto;
+    height: auto;
+  }
+
+  .cre8-admin-main {
+    padding-top: 0;
+  }
+
+  .cre8-admin-topbar {
+    position: relative;
+    inset: auto;
+  }
+
+  .cre8-admin-unified-topbar {
+    position: sticky;
+    inset: 0 auto auto 0;
+    width: 100%;
+    min-height: var(--bo-topbar-height);
+    height: var(--bo-topbar-height);
+    padding: 0 1rem;
+  }
+
+  .cre8-admin-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .cre8-admin-topbar,
+  .cre8-admin-topbar-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cre8-admin-topbar {
+    padding: 1rem;
+  }
+
+  .cre8-admin-search {
+    min-width: 0;
+  }
+
+  .cre8-admin-unified-topbar {
+    gap: 0.7rem;
+    min-height: auto;
+    height: auto;
+    flex-wrap: wrap;
+    padding: 0.85rem;
+    overflow: visible;
+  }
+
+  .cre8-admin-unified-search {
+    order: 3;
+    flex: 1 1 100%;
+    max-width: none;
+    height: 46px;
+  }
+
+  .cre8-admin-topbar-tools {
+    margin-left: auto;
+    gap: 0.35rem;
+  }
+
+  .cre8-admin-topbar-separator {
+    height: 28px;
+  }
+
+  .cre8-admin-user-name,
+  .cre8-admin-user-arrow {
+    display: none;
+  }
+
+  .cre8-admin-main:has(.cre8-admin-unified-topbar) {
+    padding-top: 0 !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .cre8-admin-topbar-tools {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .cre8-admin-menu-button,
+  .cre8-admin-icon-button {
+    width: 38px;
+    height: 38px;
+  }
+
+  .cre8-admin-topbar-avatar {
+    width: 38px;
+    height: 38px;
+  }
+}
+
+/* Shared BackOffice frame repair: keep one fixed sidebar, one fixed 80px topbar, and one content offset. */
+body.cre8-admin-layout {
+  overflow-x: hidden !important;
+}
+
+body.cre8-admin-layout .container-scroller.cre8-admin-page {
+  min-height: 100vh !important;
+  padding-left: var(--bo-sidebar-width) !important;
+  margin-left: 0 !important;
+  display: block !important;
+  box-sizing: border-box !important;
+}
+
+body.cre8-admin-layout .cre8-admin-sidebar {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  bottom: auto !important;
+  width: var(--bo-sidebar-width) !important;
+  height: 100vh !important;
+  z-index: 1001 !important;
+  box-sizing: border-box !important;
+}
+
+body.cre8-admin-layout .page-body-wrapper.cre8-admin-main {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 100vh !important;
+  margin-left: 0 !important;
+  padding-top: calc(var(--bo-header-height) + var(--bo-tabs-height)) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+}
+
+body.cre8-admin-layout .cre8-back-header,
+body.cre8-admin-layout .cre8-admin-unified-topbar {
+  position: fixed !important;
+  top: 0 !important;
+  left: var(--bo-sidebar-width) !important;
+  right: auto !important;
+  width: calc(100% - var(--bo-sidebar-width)) !important;
+  height: var(--bo-header-height) !important;
+  min-height: var(--bo-header-height) !important;
+  max-height: var(--bo-header-height) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  padding: 0 1.65rem 0 2rem !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  z-index: 1000 !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14) !important;
+  background: #080b16 !important;
+}
+
+body.cre8-admin-layout .cre8-admin-brand {
+  min-height: var(--bo-header-height) !important;
+  height: var(--bo-header-height) !important;
+  box-sizing: border-box !important;
+}
+
+body.cre8-admin-layout .cre8-admin-unified-search {
+  height: 46px !important;
+  max-width: 720px !important;
+  flex: 0 1 720px !important;
+  box-sizing: border-box !important;
+}
+
+body.cre8-admin-layout .cre8-admin-topbar-tools {
+  flex: 0 0 auto !important;
+  min-width: max-content !important;
+  margin-left: auto !important;
+}
+
+body.cre8-admin-layout .cre8-admin-topbar-separator {
+  height: 28px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-menu-button {
+  width: 34px !important;
+  height: 40px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-menu-button svg {
+  width: 18px !important;
+  height: 18px !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2.25 !important;
+}
+
+body.cre8-admin-layout .cre8-admin-icon-button {
+  width: 38px !important;
+  height: 42px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-icon-button svg {
+  width: 18px !important;
+  height: 18px !important;
+  fill: currentColor !important;
+  stroke: none !important;
+}
+
+body.cre8-admin-layout .cre8-admin-icon-button.has-dot::after {
+  top: 8px !important;
+  right: 7px !important;
+  width: 8px !important;
+  height: 8px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-topbar-avatar {
+  width: 44px !important;
+  height: 44px !important;
+  border-width: 2px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-user-menu {
+  gap: 0.68rem !important;
+  padding-left: 1rem !important;
+}
+
+body.cre8-admin-layout .cre8-admin-user-name {
+  font-size: 0.98rem !important;
+  font-weight: 900 !important;
+}
+
+body.cre8-admin-layout .main-panel {
+  min-height: calc(100vh - var(--bo-header-height) - var(--bo-tabs-height)) !important;
+  padding-top: 0 !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-header,
+[data-theme="light"] body.cre8-admin-layout .cre8-admin-unified-topbar,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-header,
+body.cre8-admin-layout[data-theme="light"] .cre8-admin-unified-topbar {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border-bottom-color: rgba(15, 23, 42, 0.12) !important;
+}
+
+@media (max-width: 1100px) {
+  body.cre8-admin-layout .container-scroller.cre8-admin-page {
+    padding-left: 0 !important;
+  }
+
+  body.cre8-admin-layout .cre8-admin-sidebar {
+    position: relative !important;
+    width: auto !important;
+    height: auto !important;
+  }
+
+  body.cre8-admin-layout .page-body-wrapper.cre8-admin-main {
+    padding-top: 0 !important;
+  }
+
+  body.cre8-admin-layout .cre8-back-header,
+  body.cre8-admin-layout .cre8-admin-unified-topbar {
+    position: relative !important;
+    left: auto !important;
+    width: 100% !important;
+  }
+
+  body.cre8-admin-layout .cre8-back-module-tabs {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 760px) {
+  body.cre8-admin-layout .cre8-back-header,
+  body.cre8-admin-layout .cre8-admin-unified-topbar {
+    height: auto !important;
+    max-height: none !important;
+    min-height: var(--bo-header-height) !important;
+    flex-wrap: wrap !important;
+    padding: 0.85rem !important;
+    overflow: visible !important;
+  }
+
+  body.cre8-admin-layout .cre8-admin-unified-search {
+    flex: 1 1 100% !important;
+    max-width: none !important;
+    order: 3 !important;
+  }
+}
+
+/* Reference-style BackOffice sidebar. Header positioning above is intentionally untouched. */
+body.cre8-admin-layout .cre8-admin-sidebar {
+  display: flex !important;
+  flex-direction: column !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  background: #070c16 !important;
+  color: #eef2ff !important;
+}
+
+body.cre8-admin-layout .cre8-back-sidebar-logo,
+body.cre8-admin-layout .cre8-admin-brand.cre8-back-sidebar-logo {
+  height: var(--bo-header-height) !important;
+  min-height: var(--bo-header-height) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.18rem !important;
+  padding: 0 1.55rem !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1) !important;
+  background: #171b24 !important;
+  color: #ffffff !important;
+  text-decoration: none !important;
+  box-sizing: border-box !important;
+}
+
+body.cre8-admin-layout .cre8-back-sidebar-logo img {
+  width: 28px !important;
+  height: 28px !important;
+  object-fit: contain !important;
+  flex: 0 0 auto !important;
+  margin: 0 -0.05rem !important;
+}
+
+body.cre8-admin-layout .cre8-back-sidebar-logo strong,
+body.cre8-admin-layout .cre8-back-logo-word {
+  color: #ffffff !important;
+  font-family: Georgia, "Times New Roman", serif !important;
+  font-size: 1.55rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  letter-spacing: -0.045em !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+}
+
+body.cre8-admin-layout .cre8-back-logo-word-end {
+  margin-left: -0.04rem !important;
+}
+
+body.cre8-admin-layout .cre8-back-sidebar-profile {
+  display: grid !important;
+  grid-template-columns: 48px minmax(0, 1fr) 24px !important;
+  align-items: center !important;
+  gap: 0.78rem !important;
+  padding: 1rem 1.5rem 0.92rem 1.38rem !important;
+  border-bottom: 0 !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-avatar {
+  position: relative !important;
+  width: 44px !important;
+  height: 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 999px !important;
+  border: 2px solid rgba(218, 160, 116, 0.72) !important;
+  overflow: visible !important;
+  background: #171b24 !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.26) !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  border-radius: inherit !important;
+  object-fit: cover !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-avatar::after {
+  content: "" !important;
+  position: absolute !important;
+  right: -1px !important;
+  bottom: 2px !important;
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 999px !important;
+  border: 2px solid #070c16 !important;
+  background: #97e36d !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-copy {
+  min-width: 0 !important;
+  display: block !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-copy strong,
+body.cre8-admin-layout .cre8-back-profile-copy small {
+  display: block !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-copy strong {
+  color: #ffffff !important;
+  font-size: 1.1rem !important;
+  font-weight: 900 !important;
+  line-height: 1.05 !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-copy small {
+  margin-top: 0.2rem !important;
+  color: #ffffff !important;
+  font-size: 0.9rem !important;
+  font-weight: 700 !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-dots {
+  justify-self: end !important;
+  color: #7f8aaa !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-dots svg {
+  width: 22px !important;
+  height: 22px !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 3 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+body.cre8-admin-layout .cre8-admin-nav.cre8-back-nav {
+  display: flex !important;
+  flex-direction: column !important;
+  align-content: stretch !important;
+  gap: 0.5rem !important;
+  flex: 1 1 auto !important;
+  padding: 0.65rem 0 1.3rem !important;
+}
+
+body.cre8-admin-layout .cre8-back-nav-title {
+  margin: 0 0 0.85rem !important;
+  padding: 0 1.18rem !important;
+  color: #ffffff !important;
+  font-size: 0.98rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+body.cre8-admin-layout .cre8-back-nav-item,
+body.cre8-admin-layout button.cre8-back-nav-item {
+  position: relative !important;
+  width: calc(100% - 1.5rem) !important;
+  min-height: 54px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.7rem !important;
+  margin: 0 1.5rem 0 0 !important;
+  padding: 0 1.25rem !important;
+  border: 0 !important;
+  border-radius: 0 999px 999px 0 !important;
+  background: transparent !important;
+  color: #dfe7ff !important;
+  font-family: inherit !important;
+  font-size: 1.03rem !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  text-align: left !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
+  cursor: pointer !important;
+  box-sizing: border-box !important;
+  transition: background 0.18s ease, color 0.18s ease !important;
+}
+
+body.cre8-admin-layout .cre8-back-nav-item:hover,
+body.cre8-admin-layout .cre8-back-nav-item.is-active {
+  background: #0d0e14 !important;
+  color: #ffffff !important;
+  transform: none !important;
+}
+
+body.cre8-admin-layout .cre8-back-nav-item.is-active::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 3px !important;
+  height: 100% !important;
+  border-radius: 0 !important;
+  background: #0090e7 !important;
+}
+
+body.cre8-admin-layout .cre8-back-nav-icon {
+  width: 40px !important;
+  height: 40px !important;
+  flex: 0 0 40px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 999px !important;
+  background: #1d2332 !important;
+  color: #8b5cf6 !important;
+  text-align: center !important;
+}
+
+body.cre8-admin-layout .cre8-back-nav-icon svg {
+  width: 17.5px !important;
+  height: 17.5px !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2.3 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+body.cre8-admin-layout .cre8-back-icon-orange {
+  color: #f59e0b !important;
+}
+
+body.cre8-admin-layout .cre8-back-icon-red {
+  color: #ef4444 !important;
+}
+
+body.cre8-admin-layout .cre8-back-icon-blue {
+  color: #0ea5e9 !important;
+}
+
+body.cre8-admin-layout .cre8-back-icon-green {
+  color: #22c55e !important;
+}
+
+body.cre8-admin-layout .cre8-back-icon-purple {
+  color: #a855f7 !important;
+}
+
+body.cre8-admin-layout .cre8-back-icon-blue svg,
+body.cre8-admin-layout .cre8-back-icon-green svg,
+body.cre8-admin-layout .cre8-back-icon-purple svg {
+  fill: currentColor !important;
+  stroke: none !important;
+}
+
+body.cre8-admin-layout .cre8-back-theme-toggle .cre8-back-nav-icon {
+  color: #8b5cf6 !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-admin-sidebar,
+body.cre8-admin-layout[data-theme="light"] .cre8-admin-sidebar {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border-right-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-sidebar-logo,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-sidebar-logo {
+  background: #171b24 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-profile-copy strong,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-profile-copy strong {
+  color: #111827 !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-profile-copy small,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-profile-copy small,
+[data-theme="light"] body.cre8-admin-layout .cre8-back-profile-dots,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-profile-dots {
+  color: #64748b !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-profile-avatar::after,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-profile-avatar::after {
+  border-color: #ffffff !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-nav-title,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-nav-title {
+  color: #111827 !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-nav-item,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-nav-item {
+  color: #334155 !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-nav-item:hover,
+[data-theme="light"] body.cre8-admin-layout .cre8-back-nav-item.is-active,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-nav-item:hover,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-nav-item.is-active {
+  background: #eef2ff !important;
+  color: #111827 !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-nav-icon,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-nav-icon {
+  background: #e8edf7 !important;
+}
+
+/* Compact frame pass to match the teammate BackOffice proportions. */
+body.cre8-admin-layout .cre8-back-header,
+body.cre8-admin-layout .cre8-admin-unified-topbar {
+  gap: 0.8rem !important;
+  padding: 0 1.15rem 0 1.25rem !important;
+}
+
+body.cre8-admin-layout .cre8-admin-menu-button {
+  width: 30px !important;
+  height: 36px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-menu-button svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-unified-search {
+  height: 40px !important;
+  max-width: 720px !important;
+  flex: 0 1 720px !important;
+  border-radius: 0.36rem !important;
+  padding: 0 0.9rem !important;
+}
+
+body.cre8-admin-layout .cre8-admin-unified-search input {
+  font-size: 0.95rem !important;
+}
+
+body.cre8-admin-layout .cre8-admin-icon-button {
+  width: 34px !important;
+  height: 38px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-icon-button svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-icon-button.has-dot::after {
+  top: 7px !important;
+  right: 6px !important;
+  width: 7px !important;
+  height: 7px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-topbar-tools {
+  gap: 0.42rem !important;
+}
+
+body.cre8-admin-layout .cre8-admin-topbar-separator {
+  height: 28px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-topbar-avatar {
+  width: 38px !important;
+  height: 38px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-user-menu {
+  gap: 0.55rem !important;
+  padding-left: 0.7rem !important;
+}
+
+body.cre8-admin-layout .cre8-admin-user-name {
+  font-size: 0.92rem !important;
+}
+
+body.cre8-admin-layout .cre8-admin-user-arrow {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+body.cre8-admin-layout .cre8-back-module-tabs {
+  position: fixed !important;
+  top: var(--bo-header-height) !important;
+  left: var(--bo-sidebar-width) !important;
+  right: auto !important;
+  width: calc(100% - var(--bo-sidebar-width)) !important;
+  height: var(--bo-tabs-height) !important;
+  min-height: var(--bo-tabs-height) !important;
+  z-index: 999 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.44rem !important;
+  padding: 0 1.25rem !important;
+  box-sizing: border-box !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12) !important;
+  background: #080b16 !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+}
+
+body.cre8-admin-layout .cre8-back-module-tabs::-webkit-scrollbar {
+  height: 0 !important;
+}
+
+body.cre8-admin-layout .cre8-back-module-tab {
+  flex: 0 0 auto !important;
+  min-height: 32px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 0.92rem !important;
+  border: 1px solid rgba(148, 163, 184, 0.14) !important;
+  border-radius: 0.28rem !important;
+  background: #1b202b !important;
+  color: #eef2ff !important;
+  text-decoration: none !important;
+  font-size: 0.82rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.01em !important;
+  box-shadow: none !important;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease !important;
+}
+
+body.cre8-admin-layout .cre8-back-module-tab:hover {
+  border-color: rgba(0, 144, 231, 0.5) !important;
+  background: #242b3a !important;
+  color: #ffffff !important;
+}
+
+body.cre8-admin-layout .cre8-back-module-tab.is-active {
+  border-color: rgba(0, 144, 231, 0.82) !important;
+  background: #0090e7 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-module-tabs,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-module-tabs {
+  border-bottom-color: rgba(15, 23, 42, 0.1) !important;
+  background: #ffffff !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-module-tab,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-module-tab {
+  border-color: rgba(15, 23, 42, 0.1) !important;
+  background: #eef2f7 !important;
+  color: #111827 !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-module-tab:hover,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-module-tab:hover {
+  border-color: rgba(0, 144, 231, 0.45) !important;
+  background: #e2e8f0 !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-module-tab.is-active,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-module-tab.is-active {
+  border-color: #0090e7 !important;
+  background: #0090e7 !important;
+  color: #ffffff !important;
+}
+
+body.cre8-admin-layout .cre8-back-sidebar-logo,
+body.cre8-admin-layout .cre8-admin-brand.cre8-back-sidebar-logo {
+  padding: 0 1.2rem !important;
+  gap: 0.12rem !important;
+}
+
+body.cre8-admin-layout .cre8-back-sidebar-logo img {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+body.cre8-admin-layout .cre8-back-logo-word {
+  font-size: 1.28rem !important;
+}
+
+body.cre8-admin-layout .cre8-back-sidebar-profile {
+  grid-template-columns: 40px minmax(0, 1fr) 20px !important;
+  gap: 0.55rem !important;
+  padding: 0.82rem 1.2rem 0.76rem 1.1rem !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-avatar {
+  width: 38px !important;
+  height: 38px !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-avatar::after {
+  width: 8px !important;
+  height: 8px !important;
+  right: -1px !important;
+  bottom: 1px !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-copy strong {
+  font-size: 0.98rem !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-copy small {
+  margin-top: 0.14rem !important;
+  font-size: 0.8rem !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-dots svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-nav.cre8-back-nav {
+  gap: 0.34rem !important;
+  padding: 0.6rem 0 1rem !important;
+}
+
+body.cre8-admin-layout .cre8-back-nav-title {
+  margin-bottom: 0.72rem !important;
+  padding: 0 1.05rem !important;
+  font-size: 0.9rem !important;
+}
+
+body.cre8-admin-layout .cre8-back-nav-item,
+body.cre8-admin-layout button.cre8-back-nav-item {
+  width: calc(100% - 1.05rem) !important;
+  min-height: 48px !important;
+  gap: 0.6rem !important;
+  margin-right: 1.05rem !important;
+  padding: 0 1.05rem !important;
+  font-size: 0.95rem !important;
+}
+
+body.cre8-admin-layout .cre8-back-nav-icon {
+  width: 34px !important;
+  height: 34px !important;
+  flex-basis: 34px !important;
+}
+
+body.cre8-admin-layout .cre8-back-nav-icon svg {
+  width: 15.5px !important;
+  height: 15.5px !important;
+}
+
+@media (max-width: 1100px) {
+  body.cre8-admin-layout .cre8-back-module-tabs {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: var(--bo-tabs-height) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  body.cre8-admin-layout .cre8-back-module-tabs {
+    padding: 0.55rem 0.85rem !important;
+  }
+}
+
+/* =============================================================================
+   BackOffice Corona shell (sidebar + navbar) — utilisateur admin theme
+   Extracted from Vue/BackOffice/utilisateur/index.php — do not remove above cre8-admin rules
+   ============================================================================= */
+
+body.light-mode .sidebar,
+body.light-mode .navbar,
+body.light-mode .navbar-brand-wrapper,
+body.light-mode .navbar-menu-wrapper,
+body.light-mode .navbar-custom {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border-color: #e2e8f0 !important;
+}
+
+body.light-mode .sidebar .nav-link,
+body.light-mode .sidebar .profile-name h5,
+body.light-mode .sidebar .profile-name span,
+body.light-mode .navbar .nav-link,
+body.light-mode .navbar a {
+  color: #111827 !important;
+}
+
+body.light-mode .sidebar .nav-link:hover,
+body.light-mode .sidebar .nav-link.active {
+  background-color: #f1f5f9 !important;
+  color: #111827 !important;
+}
+
+body:not(.light-mode) .sidebar {
+  background: #0b0f19 !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body:not(.light-mode) .sidebar .nav-link,
+body:not(.light-mode) .sidebar .profile-name h5,
+body:not(.light-mode) .sidebar .profile-name span,
+body:not(.light-mode) .sidebar .profile-desc .count {
+  color: #dfe3f2 !important;
+}
+
+body:not(.light-mode) .sidebar .nav-link:hover,
+body:not(.light-mode) .sidebar .nav-link.active {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #fff !important;
+}
+
+body:not(.light-mode) .navbar,
+body:not(.light-mode) .navbar .navbar-menu-wrapper,
+body:not(.light-mode) .navbar .navbar-brand-wrapper {
+  background: rgba(10, 13, 23, 0.96) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Sidebar theme toggle icon (#themeIcon lives in sidebar only) */
+.sidebar .nav-link i#themeIcon {
+  transition: all 0.3s ease;
+  font-size: 1.2rem;
+}
+
+.sidebar .nav-link:hover i#themeIcon {
+  transform: rotate(20deg);
+}
+
+/* Shell transitions when toggling light/dark */
+body {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.light-mode * {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* =========================================================
+   CRE8 FINAL SIDEBAR RESET — uses the REAL Corona sidebar
+   Root: nav#sidebar.sidebar.sidebar-offcanvas
+   Purpose: remove old Corona hover/pill conflicts and keep the
+   sidebar fixed while preserving the Cre8 reference look.
+   ========================================================= */
+:root {
+  --bo-sidebar-width: 244px;
+  --bo-header-height: 70px;
+}
+
+html, body {
+  min-height: 100%;
+}
+
+body.cre8-admin-layout #sidebar.sidebar.sidebar-offcanvas,
+body #sidebar.sidebar.sidebar-offcanvas {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: var(--bo-sidebar-width, 244px) !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  max-height: 100vh !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  z-index: 1100 !important;
+  transform: none !important;
+}
+
+body.cre8-admin-layout .container-scroller,
+body.cre8-admin-layout .container-scroller.cre8-admin-page,
+body .container-scroller.cre8-admin-page {
+  padding-left: var(--bo-sidebar-width, 244px) !important;
+  margin-left: 0 !important;
+  box-sizing: border-box !important;
+}
+
+body.cre8-admin-layout .navbar.fixed-top,
+body .navbar.fixed-top {
+  left: var(--bo-sidebar-width, 244px) !important;
+  width: calc(100% - var(--bo-sidebar-width, 244px)) !important;
+  right: 0 !important;
+  z-index: 1090 !important;
+}
+
+body.cre8-admin-layout .page-body-wrapper,
+body.cre8-admin-layout .page-body-wrapper.cre8-admin-main,
+body .page-body-wrapper.cre8-admin-main {
+  width: 100% !important;
+  min-width: 0 !important;
+  margin-left: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* logo strip */
+body #sidebar .sidebar-brand-wrapper,
+body.cre8-admin-layout #sidebar .sidebar-brand-wrapper {
+  height: var(--bo-header-height, 70px) !important;
+  min-height: var(--bo-header-height, 70px) !important;
+  background: #171b24 !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1) !important;
+}
+
+body #sidebar .cre8-sidebar-wordmark,
+body.cre8-admin-layout #sidebar .cre8-sidebar-wordmark {
+  width: 100% !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  text-decoration: none !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+}
+
+body #sidebar .cre8-sidebar-wordmark span,
+body.cre8-admin-layout #sidebar .cre8-sidebar-wordmark span {
+  display: inline-block !important;
+  color: #ffffff !important;
+  font-family: Georgia, "Times New Roman", serif !important;
+  font-size: 1.32rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  letter-spacing: -0.04em !important;
+}
+
+body #sidebar .cre8-sidebar-wordmark img,
+body.cre8-admin-layout #sidebar .cre8-sidebar-wordmark img {
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  margin: 0 -2px !important;
+  object-fit: contain !important;
+}
+
+/* menu sizing */
+body #sidebar > .nav,
+body.cre8-admin-layout #sidebar > .nav {
+  min-height: calc(100vh - var(--bo-header-height, 70px)) !important;
+  padding: 0.85rem 0 1.2rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  overflow-x: hidden !important;
+}
+
+body #sidebar .nav .nav-item.profile,
+body.cre8-admin-layout #sidebar .nav .nav-item.profile {
+  margin-bottom: 0.22rem !important;
+}
+
+body #sidebar .nav .nav-category,
+body.cre8-admin-layout #sidebar .nav .nav-category {
+  margin: 0.18rem 0 0.35rem !important;
+}
+
+body #sidebar .nav .nav-category .nav-link,
+body.cre8-admin-layout #sidebar .nav .nav-category .nav-link {
+  background: transparent !important;
+  font-size: 0.96rem !important;
+  font-weight: 900 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+body #sidebar .nav .nav-item.menu-items,
+body.cre8-admin-layout #sidebar .nav .nav-item.menu-items {
+  margin: 0.05rem 0 !important;
+}
+
+body #sidebar .nav .nav-item.menu-items > .nav-link,
+body.cre8-admin-layout #sidebar .nav .nav-item.menu-items > .nav-link {
+  min-height: 42px !important;
+  height: 42px !important;
+  padding: 0 1rem !important;
+  border-radius: 0 999px 999px 0 !important;
+  box-shadow: none !important;
+}
+
+body #sidebar .nav .nav-item.menu-items .menu-icon,
+body.cre8-admin-layout #sidebar .nav .nav-item.menu-items .menu-icon {
+  width: 34px !important;
+  min-width: 34px !important;
+  height: 34px !important;
+  line-height: 34px !important;
+  border-radius: 999px !important;
+}
+
+body #sidebar .nav .nav-item.menu-items .menu-icon i,
+body.cre8-admin-layout #sidebar .nav .nav-item.menu-items .menu-icon i {
+  font-size: 1rem !important;
+  line-height: 34px !important;
+}
+
+body #sidebar .nav .nav-item.menu-items .menu-title,
+body.cre8-admin-layout #sidebar .nav .nav-item.menu-items .menu-title {
+  font-size: 0.94rem !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+}
+
+/* dark mode */
+body:not(.light-mode) #sidebar.sidebar.sidebar-offcanvas,
+html[data-theme="dark"] body #sidebar.sidebar.sidebar-offcanvas,
+html:not([data-theme="light"]) body #sidebar.sidebar.sidebar-offcanvas {
+  background: #070c16 !important;
+  color: #eef2ff !important;
+  border-right: 1px solid rgba(148, 163, 184, 0.08) !important;
+}
+
+body:not(.light-mode) #sidebar .nav .nav-link,
+body:not(.light-mode) #sidebar .profile-name h5,
+body:not(.light-mode) #sidebar .profile-name span,
+html[data-theme="dark"] body #sidebar .nav .nav-link,
+html[data-theme="dark"] body #sidebar .profile-name h5,
+html[data-theme="dark"] body #sidebar .profile-name span {
+  color: #dfe7ff !important;
+}
+
+body:not(.light-mode) #sidebar .nav .nav-category .nav-link,
+html[data-theme="dark"] body #sidebar .nav .nav-category .nav-link {
+  color: #ffffff !important;
+}
+
+body:not(.light-mode) #sidebar .nav .nav-item.menu-items > .nav-link,
+html[data-theme="dark"] body #sidebar .nav .nav-item.menu-items > .nav-link {
+  background: transparent !important;
+  color: #dfe7ff !important;
+}
+
+body:not(.light-mode) #sidebar .nav .nav-item.menu-items.active > .nav-link,
+body:not(.light-mode) #sidebar .nav .nav-item.menu-items:not(.back-nav-disabled) > .nav-link:hover,
+html[data-theme="dark"] body #sidebar .nav .nav-item.menu-items.active > .nav-link,
+html[data-theme="dark"] body #sidebar .nav .nav-item.menu-items:not(.back-nav-disabled) > .nav-link:hover {
+  background: #0d0e14 !important;
+  color: #ffffff !important;
+}
+
+body:not(.light-mode) #sidebar .nav .nav-item.menu-items .menu-icon,
+html[data-theme="dark"] body #sidebar .nav .nav-item.menu-items .menu-icon {
+  background: #1d2332 !important;
+}
+
+/* light mode */
+body.light-mode #sidebar.sidebar.sidebar-offcanvas,
+html[data-theme="light"] body #sidebar.sidebar.sidebar-offcanvas {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border-right: 1px solid #e5e7eb !important;
+}
+
+body.light-mode #sidebar .nav .nav-category .nav-link,
+body.light-mode #sidebar .profile-name h5,
+body.light-mode #sidebar .profile-name span,
+html[data-theme="light"] body #sidebar .nav .nav-category .nav-link,
+html[data-theme="light"] body #sidebar .profile-name h5,
+html[data-theme="light"] body #sidebar .profile-name span {
+  color: #111827 !important;
+  background: transparent !important;
+}
+
+body.light-mode #sidebar .nav .nav-item.menu-items > .nav-link,
+html[data-theme="light"] body #sidebar .nav .nav-item.menu-items > .nav-link {
+  background: transparent !important;
+  color: #111827 !important;
+}
+
+body.light-mode #sidebar .nav .nav-item.menu-items:not(.active):not(.back-nav-disabled) > .nav-link:hover,
+html[data-theme="light"] body #sidebar .nav .nav-item.menu-items:not(.active):not(.back-nav-disabled) > .nav-link:hover {
+  background: #f1f5f9 !important;
+  color: #111827 !important;
+}
+
+body.light-mode #sidebar .nav .nav-item.menu-items.active > .nav-link,
+html[data-theme="light"] body #sidebar .nav .nav-item.menu-items.active > .nav-link {
+  background: #0d0e14 !important;
+  color: #ffffff !important;
+}
+
+body.light-mode #sidebar .nav .nav-item.menu-items:not(.active) .menu-icon,
+html[data-theme="light"] body #sidebar .nav .nav-item.menu-items:not(.active) .menu-icon {
+  background: #eef2f7 !important;
+}
+
+body.light-mode #sidebar .nav .nav-item.menu-items.active .menu-icon,
+html[data-theme="light"] body #sidebar .nav .nav-item.menu-items.active .menu-icon {
+  background: #1d2332 !important;
+}
+
+body.light-mode #sidebar .nav .nav-item.back-nav-disabled > .nav-link,
+body.light-mode #sidebar .nav .nav-item.back-nav-disabled > .nav-link:hover,
+html[data-theme="light"] body #sidebar .nav .nav-item.back-nav-disabled > .nav-link,
+html[data-theme="light"] body #sidebar .nav .nav-item.back-nav-disabled > .nav-link:hover,
+body:not(.light-mode) #sidebar .nav .nav-item.back-nav-disabled > .nav-link,
+body:not(.light-mode) #sidebar .nav .nav-item.back-nav-disabled > .nav-link:hover,
+html[data-theme="dark"] body #sidebar .nav .nav-item.back-nav-disabled > .nav-link,
+html[data-theme="dark"] body #sidebar .nav .nav-item.back-nav-disabled > .nav-link:hover {
+  background: transparent !important;
+  color: #94a3b8 !important;
+  opacity: 0.75 !important;
+  cursor: not-allowed !important;
+}
+
+/* header theme button remains clean */
+body.cre8-admin-layout .navbar .back-theme-toggle,
+body.cre8-admin-layout .navbar a.back-theme-toggle,
+body.cre8-admin-layout .navbar button.back-theme-toggle {
+  width: auto !important;
+  min-width: 46px !important;
+  height: 70px !important;
+  min-height: 70px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 1rem !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #b69cff !important;
+  box-shadow: none !important;
+  outline: none !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+}
+
+body.cre8-admin-layout .navbar .back-theme-toggle:hover,
+body.cre8-admin-layout .navbar a.back-theme-toggle:hover,
+body.cre8-admin-layout .navbar button.back-theme-toggle:hover {
+  background: rgba(255,255,255,0.04) !important;
+  color: #ffffff !important;
+}
+
+body.light-mode .navbar .back-theme-toggle,
+html[data-theme="light"] body .navbar .back-theme-toggle {
+  color: #7c5cff !important;
+  background: transparent !important;
+}
+
+body.light-mode .navbar .back-theme-toggle:hover,
+html[data-theme="light"] body .navbar .back-theme-toggle:hover {
+  background: rgba(124, 92, 255, 0.09) !important;
+  color: #4f46e5 !important;
+}
+
+@media (max-width: 1100px) {
+  body.cre8-admin-layout #sidebar.sidebar.sidebar-offcanvas,
+  body #sidebar.sidebar.sidebar-offcanvas {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: var(--bo-sidebar-width, 244px) !important;
+    height: 100vh !important;
+  }
+
+  body.cre8-admin-layout .container-scroller,
+  body.cre8-admin-layout .container-scroller.cre8-admin-page,
+  body .container-scroller.cre8-admin-page {
+    padding-left: var(--bo-sidebar-width, 244px) !important;
+  }
+
+  body.cre8-admin-layout .navbar.fixed-top,
+  body .navbar.fixed-top {
+    position: fixed !important;
+    left: var(--bo-sidebar-width, 244px) !important;
+    width: calc(100% - var(--bo-sidebar-width, 244px)) !important;
+  }
+}
+
+/* =========================================================
+   CRE8 HARD FIX — light sidebar black pills are on LI parents
+   This must stay at the VERY END of back-layout.css.
+   It resets BOTH li.menu-items and a.nav-link because old
+   Corona/module styles can paint the parent item, not only link.
+   ========================================================= */
+html[data-theme="light"] body #sidebar.sidebar.sidebar-offcanvas,
+body.light-mode #sidebar.sidebar.sidebar-offcanvas {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border-right: 1px solid #e5e7eb !important;
+}
+
+html[data-theme="light"] body #sidebar .sidebar-brand-wrapper,
+body.light-mode #sidebar .sidebar-brand-wrapper {
+  background: #171b24 !important;
+  color: #ffffff !important;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Reset the parent LI first. This is what fixes many black pills at rest. */
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items,
+body.light-mode #sidebar .nav > li.nav-item.menu-items,
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items.active,
+body.light-mode #sidebar .nav > li.nav-item.menu-items.active,
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items:hover,
+body.light-mode #sidebar .nav > li.nav-item.menu-items:hover,
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items:focus,
+body.light-mode #sidebar .nav > li.nav-item.menu-items:focus,
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items:focus-within,
+body.light-mode #sidebar .nav > li.nav-item.menu-items:focus-within {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Reset every link by default in light mode. */
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items > a.nav-link,
+body.light-mode #sidebar .nav > li.nav-item.menu-items > a.nav-link,
+html[data-theme="light"] body #sidebar .nav:not(.sub-menu) > li.nav-item.menu-items > a.nav-link,
+body.light-mode #sidebar .nav:not(.sub-menu) > li.nav-item.menu-items > a.nav-link {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #111827 !important;
+  border-radius: 0 999px 999px 0 !important;
+  box-shadow: none !important;
+}
+
+/* Normal hover: light gray only, never black. */
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items:not(.active):not(.back-nav-disabled):hover > a.nav-link,
+body.light-mode #sidebar .nav > li.nav-item.menu-items:not(.active):not(.back-nav-disabled):hover > a.nav-link,
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items:not(.active):not(.back-nav-disabled) > a.nav-link:hover,
+body.light-mode #sidebar .nav > li.nav-item.menu-items:not(.active):not(.back-nav-disabled) > a.nav-link:hover,
+html[data-theme="light"] body #sidebar .nav:not(.sub-menu) > li.nav-item.menu-items:not(.active):not(.back-nav-disabled):hover > a.nav-link,
+body.light-mode #sidebar .nav:not(.sub-menu) > li.nav-item.menu-items:not(.active):not(.back-nav-disabled):hover > a.nav-link {
+  background: #f1f5f9 !important;
+  background-color: #f1f5f9 !important;
+  color: #111827 !important;
+}
+
+/* Only active row gets the black pill. */
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items.active > a.nav-link,
+body.light-mode #sidebar .nav > li.nav-item.menu-items.active > a.nav-link,
+html[data-theme="light"] body #sidebar .nav:not(.sub-menu) > li.nav-item.menu-items.active > a.nav-link,
+body.light-mode #sidebar .nav:not(.sub-menu) > li.nav-item.menu-items.active > a.nav-link {
+  background: #0d0e14 !important;
+  background-color: #0d0e14 !important;
+  color: #ffffff !important;
+}
+
+/* Text inside rows follows the link color. */
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items > a.nav-link .menu-title,
+body.light-mode #sidebar .nav > li.nav-item.menu-items > a.nav-link .menu-title {
+  color: inherit !important;
+}
+
+/* Navigation/profile text in light mode. */
+html[data-theme="light"] body #sidebar .nav .nav-category .nav-link,
+body.light-mode #sidebar .nav .nav-category .nav-link,
+html[data-theme="light"] body #sidebar .profile-name h5,
+body.light-mode #sidebar .profile-name h5 {
+  color: #111827 !important;
+  background: transparent !important;
+}
+
+html[data-theme="light"] body #sidebar .profile-name span,
+body.light-mode #sidebar .profile-name span {
+  color: #64748b !important;
+  background: transparent !important;
+}
+
+/* Icon chip colors in light mode. */
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items:not(.active) .menu-icon,
+body.light-mode #sidebar .nav > li.nav-item.menu-items:not(.active) .menu-icon {
+  background: #eef2f7 !important;
+}
+
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items.active .menu-icon,
+body.light-mode #sidebar .nav > li.nav-item.menu-items.active .menu-icon {
+  background: #1d2332 !important;
+}
+
+/* Disabled Forum: no pill, no hover, gray text. */
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items.back-nav-disabled,
+body.light-mode #sidebar .nav > li.nav-item.menu-items.back-nav-disabled,
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items.back-nav-disabled:hover,
+body.light-mode #sidebar .nav > li.nav-item.menu-items.back-nav-disabled:hover,
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items.back-nav-disabled > a.nav-link,
+body.light-mode #sidebar .nav > li.nav-item.menu-items.back-nav-disabled > a.nav-link,
+html[data-theme="light"] body #sidebar .nav > li.nav-item.menu-items.back-nav-disabled > a.nav-link:hover,
+body.light-mode #sidebar .nav > li.nav-item.menu-items.back-nav-disabled > a.nav-link:hover {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #94a3b8 !important;
+  opacity: 0.78 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+}
+
+/* =========================================================
+   CRE8 LIGHT MODE FORM SURFACE — TRUE FINAL OVERRIDE
+   Fixes Corona/New Style dark inputs (#2A3038) that load after
+   the shared layout on Dashboard/Post/Comment and similar pages.
+   Dark mode is untouched because every rule is scoped to light mode.
+   ========================================================= */
+html[data-theme="light"] body.cre8-admin-layout,
+body.cre8-admin-layout.light-mode,
+body.light-mode.cre8-admin-layout {
+  --cre8-light-input-bg: #ffffff;
+  --cre8-light-input-text: #111827;
+  --cre8-light-input-border: #dbe3ef;
+  --cre8-light-input-placeholder: #94a3b8;
+  --cre8-light-input-focus: #7c5cff;
+}
+
+/* Shared fixed navbar search: it is outside .main-panel, so it needs its own selector. */
+html[data-theme="light"] body.cre8-admin-layout .navbar .navbar-menu-wrapper .search input.form-control,
+body.cre8-admin-layout.light-mode .navbar .navbar-menu-wrapper .search input.form-control,
+body.light-mode.cre8-admin-layout .navbar .navbar-menu-wrapper .search input.form-control {
+  background: var(--cre8-light-input-bg) !important;
+  background-color: var(--cre8-light-input-bg) !important;
+  background-image: none !important;
+  color: var(--cre8-light-input-text) !important;
+  border-color: var(--cre8-light-input-border) !important;
+  box-shadow: none !important;
+  caret-color: var(--cre8-light-input-text) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .navbar .navbar-menu-wrapper .search input.form-control::placeholder,
+body.cre8-admin-layout.light-mode .navbar .navbar-menu-wrapper .search input.form-control::placeholder,
+body.light-mode.cre8-admin-layout .navbar .navbar-menu-wrapper .search input.form-control::placeholder {
+  color: var(--cre8-light-input-placeholder) !important;
+  opacity: 1 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .navbar .navbar-menu-wrapper .search input.form-control:focus,
+body.cre8-admin-layout.light-mode .navbar .navbar-menu-wrapper .search input.form-control:focus,
+body.light-mode.cre8-admin-layout .navbar .navbar-menu-wrapper .search input.form-control:focus {
+  background: var(--cre8-light-input-bg) !important;
+  background-color: var(--cre8-light-input-bg) !important;
+  color: var(--cre8-light-input-text) !important;
+  border-color: var(--cre8-light-input-focus) !important;
+  box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.12) !important;
+  outline: 0 !important;
+}
+
+/* Text-like controls across BackOffice content. Excludes action/button/file/hidden inputs. */
+html[data-theme="light"] body.cre8-admin-layout input:not([type]),
+html[data-theme="light"] body.cre8-admin-layout input[type="text"],
+html[data-theme="light"] body.cre8-admin-layout input[type="search"],
+html[data-theme="light"] body.cre8-admin-layout input[type="email"],
+html[data-theme="light"] body.cre8-admin-layout input[type="number"],
+html[data-theme="light"] body.cre8-admin-layout input[type="tel"],
+html[data-theme="light"] body.cre8-admin-layout input[type="url"],
+html[data-theme="light"] body.cre8-admin-layout input[type="date"],
+html[data-theme="light"] body.cre8-admin-layout input[type="time"],
+html[data-theme="light"] body.cre8-admin-layout input[type="datetime-local"],
+html[data-theme="light"] body.cre8-admin-layout input[type="month"],
+html[data-theme="light"] body.cre8-admin-layout input[type="week"],
+html[data-theme="light"] body.cre8-admin-layout input[type="password"],
+html[data-theme="light"] body.cre8-admin-layout select,
+html[data-theme="light"] body.cre8-admin-layout textarea,
+html[data-theme="light"] body.cre8-admin-layout .form-control,
+html[data-theme="light"] body.cre8-admin-layout .form-select,
+html[data-theme="light"] body.cre8-admin-layout .search-input,
+html[data-theme="light"] body.cre8-admin-layout .toolbar-input,
+html[data-theme="light"] body.cre8-admin-layout .filter-input,
+html[data-theme="light"] body.cre8-admin-layout .bo-search-input,
+html[data-theme="light"] body.cre8-admin-layout .admin-search-input,
+body.cre8-admin-layout.light-mode input:not([type]),
+body.cre8-admin-layout.light-mode input[type="text"],
+body.cre8-admin-layout.light-mode input[type="search"],
+body.cre8-admin-layout.light-mode input[type="email"],
+body.cre8-admin-layout.light-mode input[type="number"],
+body.cre8-admin-layout.light-mode input[type="tel"],
+body.cre8-admin-layout.light-mode input[type="url"],
+body.cre8-admin-layout.light-mode input[type="date"],
+body.cre8-admin-layout.light-mode input[type="time"],
+body.cre8-admin-layout.light-mode input[type="datetime-local"],
+body.cre8-admin-layout.light-mode input[type="month"],
+body.cre8-admin-layout.light-mode input[type="week"],
+body.cre8-admin-layout.light-mode input[type="password"],
+body.cre8-admin-layout.light-mode select,
+body.cre8-admin-layout.light-mode textarea,
+body.cre8-admin-layout.light-mode .form-control,
+body.cre8-admin-layout.light-mode .form-select,
+body.cre8-admin-layout.light-mode .search-input,
+body.cre8-admin-layout.light-mode .toolbar-input,
+body.cre8-admin-layout.light-mode .filter-input,
+body.cre8-admin-layout.light-mode .bo-search-input,
+body.cre8-admin-layout.light-mode .admin-search-input,
+body.light-mode.cre8-admin-layout input:not([type]),
+body.light-mode.cre8-admin-layout input[type="text"],
+body.light-mode.cre8-admin-layout input[type="search"],
+body.light-mode.cre8-admin-layout input[type="email"],
+body.light-mode.cre8-admin-layout input[type="number"],
+body.light-mode.cre8-admin-layout input[type="tel"],
+body.light-mode.cre8-admin-layout input[type="url"],
+body.light-mode.cre8-admin-layout input[type="date"],
+body.light-mode.cre8-admin-layout input[type="time"],
+body.light-mode.cre8-admin-layout input[type="datetime-local"],
+body.light-mode.cre8-admin-layout input[type="month"],
+body.light-mode.cre8-admin-layout input[type="week"],
+body.light-mode.cre8-admin-layout input[type="password"],
+body.light-mode.cre8-admin-layout select,
+body.light-mode.cre8-admin-layout textarea,
+body.light-mode.cre8-admin-layout .form-control,
+body.light-mode.cre8-admin-layout .form-select,
+body.light-mode.cre8-admin-layout .search-input,
+body.light-mode.cre8-admin-layout .toolbar-input,
+body.light-mode.cre8-admin-layout .filter-input,
+body.light-mode.cre8-admin-layout .bo-search-input,
+body.light-mode.cre8-admin-layout .admin-search-input {
+  background: var(--cre8-light-input-bg) !important;
+  background-color: var(--cre8-light-input-bg) !important;
+  background-image: none !important;
+  color: var(--cre8-light-input-text) !important;
+  border-color: var(--cre8-light-input-border) !important;
+  box-shadow: none !important;
+  caret-color: var(--cre8-light-input-text) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout input::placeholder,
+html[data-theme="light"] body.cre8-admin-layout textarea::placeholder,
+html[data-theme="light"] body.cre8-admin-layout .form-control::placeholder,
+html[data-theme="light"] body.cre8-admin-layout .search-input::placeholder,
+html[data-theme="light"] body.cre8-admin-layout .toolbar-input::placeholder,
+body.cre8-admin-layout.light-mode input::placeholder,
+body.cre8-admin-layout.light-mode textarea::placeholder,
+body.cre8-admin-layout.light-mode .form-control::placeholder,
+body.cre8-admin-layout.light-mode .search-input::placeholder,
+body.cre8-admin-layout.light-mode .toolbar-input::placeholder,
+body.light-mode.cre8-admin-layout input::placeholder,
+body.light-mode.cre8-admin-layout textarea::placeholder,
+body.light-mode.cre8-admin-layout .form-control::placeholder,
+body.light-mode.cre8-admin-layout .search-input::placeholder,
+body.light-mode.cre8-admin-layout .toolbar-input::placeholder {
+  color: var(--cre8-light-input-placeholder) !important;
+  opacity: 1 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout input:not([type]):focus,
+html[data-theme="light"] body.cre8-admin-layout input[type="text"]:focus,
+html[data-theme="light"] body.cre8-admin-layout input[type="search"]:focus,
+html[data-theme="light"] body.cre8-admin-layout input[type="email"]:focus,
+html[data-theme="light"] body.cre8-admin-layout input[type="number"]:focus,
+html[data-theme="light"] body.cre8-admin-layout input[type="tel"]:focus,
+html[data-theme="light"] body.cre8-admin-layout input[type="url"]:focus,
+html[data-theme="light"] body.cre8-admin-layout input[type="date"]:focus,
+html[data-theme="light"] body.cre8-admin-layout input[type="time"]:focus,
+html[data-theme="light"] body.cre8-admin-layout input[type="datetime-local"]:focus,
+html[data-theme="light"] body.cre8-admin-layout select:focus,
+html[data-theme="light"] body.cre8-admin-layout textarea:focus,
+html[data-theme="light"] body.cre8-admin-layout .form-control:focus,
+html[data-theme="light"] body.cre8-admin-layout .form-select:focus,
+html[data-theme="light"] body.cre8-admin-layout .search-input:focus,
+html[data-theme="light"] body.cre8-admin-layout .toolbar-input:focus,
+body.cre8-admin-layout.light-mode input:not([type]):focus,
+body.cre8-admin-layout.light-mode input[type="text"]:focus,
+body.cre8-admin-layout.light-mode input[type="search"]:focus,
+body.cre8-admin-layout.light-mode input[type="email"]:focus,
+body.cre8-admin-layout.light-mode input[type="number"]:focus,
+body.cre8-admin-layout.light-mode input[type="tel"]:focus,
+body.cre8-admin-layout.light-mode input[type="url"]:focus,
+body.cre8-admin-layout.light-mode input[type="date"]:focus,
+body.cre8-admin-layout.light-mode input[type="time"]:focus,
+body.cre8-admin-layout.light-mode input[type="datetime-local"]:focus,
+body.cre8-admin-layout.light-mode select:focus,
+body.cre8-admin-layout.light-mode textarea:focus,
+body.cre8-admin-layout.light-mode .form-control:focus,
+body.cre8-admin-layout.light-mode .form-select:focus,
+body.cre8-admin-layout.light-mode .search-input:focus,
+body.cre8-admin-layout.light-mode .toolbar-input:focus,
+body.light-mode.cre8-admin-layout input:not([type]):focus,
+body.light-mode.cre8-admin-layout input[type="text"]:focus,
+body.light-mode.cre8-admin-layout input[type="search"]:focus,
+body.light-mode.cre8-admin-layout input[type="email"]:focus,
+body.light-mode.cre8-admin-layout input[type="number"]:focus,
+body.light-mode.cre8-admin-layout input[type="tel"]:focus,
+body.light-mode.cre8-admin-layout input[type="url"]:focus,
+body.light-mode.cre8-admin-layout input[type="date"]:focus,
+body.light-mode.cre8-admin-layout input[type="time"]:focus,
+body.light-mode.cre8-admin-layout input[type="datetime-local"]:focus,
+body.light-mode.cre8-admin-layout select:focus,
+body.light-mode.cre8-admin-layout textarea:focus,
+body.light-mode.cre8-admin-layout .form-control:focus,
+body.light-mode.cre8-admin-layout .form-select:focus,
+body.light-mode.cre8-admin-layout .search-input:focus,
+body.light-mode.cre8-admin-layout .toolbar-input:focus {
+  background: var(--cre8-light-input-bg) !important;
+  background-color: var(--cre8-light-input-bg) !important;
+  color: var(--cre8-light-input-text) !important;
+  border-color: var(--cre8-light-input-focus) !important;
+  box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.12) !important;
+  outline: 0 !important;
+}
+
+/* Bootstrap input groups and addon chips must not stay dark beside a white field. */
+html[data-theme="light"] body.cre8-admin-layout .input-group-text,
+body.cre8-admin-layout.light-mode .input-group-text,
+body.light-mode.cre8-admin-layout .input-group-text,
+html[data-theme="light"] body.cre8-admin-layout .search-wrap,
+body.cre8-admin-layout.light-mode .search-wrap,
+body.light-mode.cre8-admin-layout .search-wrap,
+html[data-theme="light"] body.cre8-admin-layout .search-group,
+body.cre8-admin-layout.light-mode .search-group,
+body.light-mode.cre8-admin-layout .search-group {
+  background-color: #ffffff !important;
+  color: #64748b !important;
+  border-color: #dbe3ef !important;
+}
+
+/* =========================================================
+   CRE8 FINAL LIGHT MODE MERGE FIX
+   Keeps post/comment page frame light AND keeps inputs/search light.
+   Dark mode unchanged.
+   ========================================================= */
+
+/* Light shell / page canvas */
+html[data-theme="light"] body.cre8-admin-layout,
+body.cre8-admin-layout.light-mode,
+body.light-mode.cre8-admin-layout {
+  background: #f6f7fb !important;
+  color: #111827 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .container-scroller,
+html[data-theme="light"] body.cre8-admin-layout .container-scroller.cre8-admin-page,
+html[data-theme="light"] body.cre8-admin-layout .page-body-wrapper,
+html[data-theme="light"] body.cre8-admin-layout .page-body-wrapper.cre8-admin-main,
+html[data-theme="light"] body.cre8-admin-layout .main-panel,
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper,
+body.cre8-admin-layout.light-mode .container-scroller,
+body.cre8-admin-layout.light-mode .container-scroller.cre8-admin-page,
+body.cre8-admin-layout.light-mode .page-body-wrapper,
+body.cre8-admin-layout.light-mode .page-body-wrapper.cre8-admin-main,
+body.cre8-admin-layout.light-mode .main-panel,
+body.cre8-admin-layout.light-mode .content-wrapper,
+body.light-mode.cre8-admin-layout .container-scroller,
+body.light-mode.cre8-admin-layout .container-scroller.cre8-admin-page,
+body.light-mode.cre8-admin-layout .page-body-wrapper,
+body.light-mode.cre8-admin-layout .page-body-wrapper.cre8-admin-main,
+body.light-mode.cre8-admin-layout .main-panel,
+body.light-mode.cre8-admin-layout .content-wrapper {
+  background: #f6f7fb !important;
+  background-color: #f6f7fb !important;
+  color: #111827 !important;
+}
+
+/* Posts/comments module wrappers */
+html[data-theme="light"] body.cre8-admin-layout .post-admin,
+html[data-theme="light"] body.cre8-admin-layout .comment-admin,
+body.cre8-admin-layout.light-mode .post-admin,
+body.cre8-admin-layout.light-mode .comment-admin,
+body.light-mode.cre8-admin-layout .post-admin,
+body.light-mode.cre8-admin-layout .comment-admin {
+  background: #f6f7fb !important;
+  color: #111827 !important;
+}
+
+/* Keep cards/panels white in light mode */
+html[data-theme="light"] body.cre8-admin-layout .post-admin .card,
+html[data-theme="light"] body.cre8-admin-layout .comment-admin .card,
+body.cre8-admin-layout.light-mode .post-admin .card,
+body.cre8-admin-layout.light-mode .comment-admin .card,
+body.light-mode.cre8-admin-layout .post-admin .card,
+body.light-mode.cre8-admin-layout .comment-admin .card {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border-color: #e5e7eb !important;
+}
+
+/* Header search input */
+html[data-theme="light"] body.cre8-admin-layout .navbar .navbar-menu-wrapper .search input.form-control,
+body.cre8-admin-layout.light-mode .navbar .navbar-menu-wrapper .search input.form-control,
+body.light-mode.cre8-admin-layout .navbar .navbar-menu-wrapper .search input.form-control {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid #dbe3ef !important;
+  box-shadow: none !important;
+}
+
+/* All normal text-like inputs/selects/textareas in light mode */
+html[data-theme="light"] body.cre8-admin-layout input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="file"]):not([type="color"]),
+html[data-theme="light"] body.cre8-admin-layout select,
+html[data-theme="light"] body.cre8-admin-layout textarea,
+html[data-theme="light"] body.cre8-admin-layout .form-control,
+html[data-theme="light"] body.cre8-admin-layout .form-select,
+html[data-theme="light"] body.cre8-admin-layout .search-input,
+html[data-theme="light"] body.cre8-admin-layout .toolbar-input,
+body.cre8-admin-layout.light-mode input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="file"]):not([type="color"]),
+body.cre8-admin-layout.light-mode select,
+body.cre8-admin-layout.light-mode textarea,
+body.cre8-admin-layout.light-mode .form-control,
+body.cre8-admin-layout.light-mode .form-select,
+body.cre8-admin-layout.light-mode .search-input,
+body.cre8-admin-layout.light-mode .toolbar-input,
+body.light-mode.cre8-admin-layout input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="file"]):not([type="color"]),
+body.light-mode.cre8-admin-layout select,
+body.light-mode.cre8-admin-layout textarea,
+body.light-mode.cre8-admin-layout .form-control,
+body.light-mode.cre8-admin-layout .form-select,
+body.light-mode.cre8-admin-layout .search-input,
+body.light-mode.cre8-admin-layout .toolbar-input {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border-color: #dbe3ef !important;
+  box-shadow: none !important;
+}
+
+/* Placeholders */
+html[data-theme="light"] body.cre8-admin-layout input::placeholder,
+html[data-theme="light"] body.cre8-admin-layout textarea::placeholder,
+body.cre8-admin-layout.light-mode input::placeholder,
+body.cre8-admin-layout.light-mode textarea::placeholder,
+body.light-mode.cre8-admin-layout input::placeholder,
+body.light-mode.cre8-admin-layout textarea::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+
+/* Focus state */
+html[data-theme="light"] body.cre8-admin-layout input:focus,
+html[data-theme="light"] body.cre8-admin-layout select:focus,
+html[data-theme="light"] body.cre8-admin-layout textarea:focus,
+html[data-theme="light"] body.cre8-admin-layout .form-control:focus,
+html[data-theme="light"] body.cre8-admin-layout .form-select:focus,
+body.cre8-admin-layout.light-mode input:focus,
+body.cre8-admin-layout.light-mode select:focus,
+body.cre8-admin-layout.light-mode textarea:focus,
+body.cre8-admin-layout.light-mode .form-control:focus,
+body.cre8-admin-layout.light-mode .form-select:focus,
+body.light-mode.cre8-admin-layout input:focus,
+body.light-mode.cre8-admin-layout select:focus,
+body.light-mode.cre8-admin-layout textarea:focus,
+body.light-mode.cre8-admin-layout .form-control:focus,
+body.light-mode.cre8-admin-layout .form-select:focus {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border-color: #7c5cff !important;
+  box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.12) !important;
+  outline: 0 !important;
+}
+/* =========================================================
+   CRE8 FINAL LIGHT MODE TABLE FIX
+   Fixes dark tables in BackOffice post/comment pages.
+   Dark mode unchanged.
+   ========================================================= */
+
+   html[data-theme="light"] body.cre8-admin-layout .post-admin table,
+   html[data-theme="light"] body.cre8-admin-layout .comment-admin table,
+   html[data-theme="light"] body.cre8-admin-layout .post-admin .table,
+   html[data-theme="light"] body.cre8-admin-layout .comment-admin .table,
+   body.cre8-admin-layout.light-mode .post-admin table,
+   body.cre8-admin-layout.light-mode .comment-admin table,
+   body.cre8-admin-layout.light-mode .post-admin .table,
+   body.cre8-admin-layout.light-mode .comment-admin .table,
+   body.light-mode.cre8-admin-layout .post-admin table,
+   body.light-mode.cre8-admin-layout .comment-admin table,
+   body.light-mode.cre8-admin-layout .post-admin .table,
+   body.light-mode.cre8-admin-layout .comment-admin .table {
+     background: #ffffff !important;
+     background-color: #ffffff !important;
+     color: #111827 !important;
+     border-color: #e5e7eb !important;
+   }
+   
+   html[data-theme="light"] body.cre8-admin-layout .post-admin thead,
+   html[data-theme="light"] body.cre8-admin-layout .comment-admin thead,
+   body.cre8-admin-layout.light-mode .post-admin thead,
+   body.cre8-admin-layout.light-mode .comment-admin thead,
+   body.light-mode.cre8-admin-layout .post-admin thead,
+   body.light-mode.cre8-admin-layout .comment-admin thead {
+     background: #f3f0ff !important;
+     background-color: #f3f0ff !important;
+     color: #5b4fff !important;
+   }
+   
+   html[data-theme="light"] body.cre8-admin-layout .post-admin thead th,
+   html[data-theme="light"] body.cre8-admin-layout .comment-admin thead th,
+   body.cre8-admin-layout.light-mode .post-admin thead th,
+   body.cre8-admin-layout.light-mode .comment-admin thead th,
+   body.light-mode.cre8-admin-layout .post-admin thead th,
+   body.light-mode.cre8-admin-layout .comment-admin thead th {
+     background: #f3f0ff !important;
+     background-color: #f3f0ff !important;
+     color: #5b4fff !important;
+     border-color: #e5e7eb !important;
+   }
+   
+   html[data-theme="light"] body.cre8-admin-layout .post-admin tbody,
+   html[data-theme="light"] body.cre8-admin-layout .comment-admin tbody,
+   html[data-theme="light"] body.cre8-admin-layout .post-admin tbody tr,
+   html[data-theme="light"] body.cre8-admin-layout .comment-admin tbody tr,
+   html[data-theme="light"] body.cre8-admin-layout .post-admin tbody td,
+   html[data-theme="light"] body.cre8-admin-layout .comment-admin tbody td,
+   body.cre8-admin-layout.light-mode .post-admin tbody,
+   body.cre8-admin-layout.light-mode .comment-admin tbody,
+   body.cre8-admin-layout.light-mode .post-admin tbody tr,
+   body.cre8-admin-layout.light-mode .comment-admin tbody tr,
+   body.cre8-admin-layout.light-mode .post-admin tbody td,
+   body.cre8-admin-layout.light-mode .comment-admin tbody td,
+   body.light-mode.cre8-admin-layout .post-admin tbody,
+   body.light-mode.cre8-admin-layout .comment-admin tbody,
+   body.light-mode.cre8-admin-layout .post-admin tbody tr,
+   body.light-mode.cre8-admin-layout .comment-admin tbody tr,
+   body.light-mode.cre8-admin-layout .post-admin tbody td,
+   body.light-mode.cre8-admin-layout .comment-admin tbody td {
+     background: #ffffff !important;
+     background-color: #ffffff !important;
+     color: #111827 !important;
+     border-color: #e5e7eb !important;
+   }
+   
+   html[data-theme="light"] body.cre8-admin-layout .post-admin tbody tr:hover,
+   html[data-theme="light"] body.cre8-admin-layout .comment-admin tbody tr:hover,
+   body.cre8-admin-layout.light-mode .post-admin tbody tr:hover,
+   body.cre8-admin-layout.light-mode .comment-admin tbody tr:hover,
+   body.light-mode.cre8-admin-layout .post-admin tbody tr:hover,
+   body.light-mode.cre8-admin-layout .comment-admin tbody tr:hover {
+     background: #f8fafc !important;
+     background-color: #f8fafc !important;
+   }
+   
+   html[data-theme="light"] body.cre8-admin-layout .post-admin tbody tr:hover td,
+   html[data-theme="light"] body.cre8-admin-layout .comment-admin tbody tr:hover td,
+   body.cre8-admin-layout.light-mode .post-admin tbody tr:hover td,
+   body.cre8-admin-layout.light-mode .comment-admin tbody tr:hover td,
+   body.light-mode.cre8-admin-layout .post-admin tbody tr:hover td,
+   body.light-mode.cre8-admin-layout .comment-admin tbody tr:hover td {
+     background: #f8fafc !important;
+     background-color: #f8fafc !important;
+     color: #111827 !important;
+   }
+   
+   html[data-theme="light"] body.cre8-admin-layout .post-admin .table-responsive,
+   html[data-theme="light"] body.cre8-admin-layout .comment-admin .table-responsive,
+   html[data-theme="light"] body.cre8-admin-layout .post-admin .table-card,
+   html[data-theme="light"] body.cre8-admin-layout .comment-admin .table-card,
+   body.cre8-admin-layout.light-mode .post-admin .table-responsive,
+   body.cre8-admin-layout.light-mode .comment-admin .table-responsive,
+   body.cre8-admin-layout.light-mode .post-admin .table-card,
+   body.cre8-admin-layout.light-mode .comment-admin .table-card,
+   body.light-mode.cre8-admin-layout .post-admin .table-responsive,
+   body.light-mode.cre8-admin-layout .comment-admin .table-responsive,
+   body.light-mode.cre8-admin-layout .post-admin .table-card,
+   body.light-mode.cre8-admin-layout .comment-admin .table-card {
+     background: #ffffff !important;
+     background-color: #ffffff !important;
+     border-color: #e5e7eb !important;
+   }
+   
+   /* Keep table links readable in light mode */
+   html[data-theme="light"] body.cre8-admin-layout .post-admin table a,
+   html[data-theme="light"] body.cre8-admin-layout .comment-admin table a,
+   body.cre8-admin-layout.light-mode .post-admin table a,
+   body.cre8-admin-layout.light-mode .comment-admin table a,
+   body.light-mode.cre8-admin-layout .post-admin table a,
+   body.light-mode.cre8-admin-layout .comment-admin table a {
+     color: #4f46e5 !important;
+   }
+
+  /* =========================================================
+   CRE8 POST STAT CARDS LIGHT MODE FIX — FINAL
+   Restore readable colored KPI cards in post dashboard.
+   ========================================================= */
+
+html[data-theme="light"] body.cre8-admin-layout .post-admin .card.stat-card-mini.stat-card-custom1,
+body.cre8-admin-layout.light-mode .post-admin .card.stat-card-mini.stat-card-custom1,
+body.light-mode.cre8-admin-layout .post-admin .card.stat-card-mini.stat-card-custom1 {
+  background: linear-gradient(135deg, #8b5cf6, #a855f7) !important;
+  background-color: #8b5cf6 !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .post-admin .card.stat-card-mini.stat-card-custom2,
+body.cre8-admin-layout.light-mode .post-admin .card.stat-card-mini.stat-card-custom2,
+body.light-mode.cre8-admin-layout .post-admin .card.stat-card-mini.stat-card-custom2 {
+  background: linear-gradient(135deg, #ec4899, #db2777) !important;
+  background-color: #ec4899 !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .post-admin .card.stat-card-mini.stat-card-custom3,
+body.cre8-admin-layout.light-mode .post-admin .card.stat-card-mini.stat-card-custom3,
+body.light-mode.cre8-admin-layout .post-admin .card.stat-card-mini.stat-card-custom3 {
+  background: linear-gradient(135deg, #86efac, #22c55e) !important;
+  background-color: #22c55e !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .post-admin .card.stat-card-mini.stat-card-custom4,
+body.cre8-admin-layout.light-mode .post-admin .card.stat-card-mini.stat-card-custom4,
+body.light-mode.cre8-admin-layout .post-admin .card.stat-card-mini.stat-card-custom4 {
+  background: linear-gradient(135deg, #a855f7, #8b5cf6) !important;
+  background-color: #a855f7 !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+
+/* Force all text inside these KPI cards to stay readable */
+html[data-theme="light"] body.cre8-admin-layout .post-admin .card.stat-card-mini *,
+body.cre8-admin-layout.light-mode .post-admin .card.stat-card-mini *,
+body.light-mode.cre8-admin-layout .post-admin .card.stat-card-mini * {
+  color: #ffffff !important;
+}
+
+/* Keep decorative circles soft, not white */
+html[data-theme="light"] body.cre8-admin-layout .post-admin .card.stat-card-mini::before,
+html[data-theme="light"] body.cre8-admin-layout .post-admin .card.stat-card-mini::after,
+body.cre8-admin-layout.light-mode .post-admin .card.stat-card-mini::before,
+body.cre8-admin-layout.light-mode .post-admin .card.stat-card-mini::after,
+body.light-mode.cre8-admin-layout .post-admin .card.stat-card-mini::before,
+body.light-mode.cre8-admin-layout .post-admin .card.stat-card-mini::after {
+  background: rgba(255, 255, 255, 0.16) !important;
+}
+
+/* Profile dropdown: works without Bootstrap/jQuery (shared header) */
+body.cre8-admin-layout .cre8-profile-dropdown {
+  position: relative;
+}
+
+body.cre8-admin-layout .cre8-profile-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: auto;
+  min-width: 220px;
+  z-index: 1200;
+}
+
+body.cre8-admin-layout .cre8-profile-dropdown.show .cre8-profile-menu,
+body.cre8-admin-layout .cre8-profile-menu.show {
+  display: block;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8-profile-menu,
+body.cre8-admin-layout.light-mode .cre8-profile-menu,
+body.light-mode.cre8-admin-layout .cre8-profile-menu {
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+}

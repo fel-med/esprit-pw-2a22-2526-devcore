@@ -1,0 +1,10 @@
+{
+    "name": "cre8connect/app",
+    "description": "Cre8Connect PHP MVC application dependencies",
+    "require": {
+        "php": ">=7.4",
+        "phpmailer/phpmailer": "^7.0",
+        "twilio/sdk": "^8.11",
+        "smalot/pdfparser": "^2.12"
+    }
+}

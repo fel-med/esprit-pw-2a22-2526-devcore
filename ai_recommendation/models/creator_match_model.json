@@ -1,0 +1,31 @@
+{
+  "modelName": "creator_offer_match_logistic_regression",
+  "version": "1.0",
+  "trainedAt": "2026-05-03T04:17:55Z",
+  "features": [
+    "category_match",
+    "budget_fit",
+    "deadline_fit",
+    "has_portfolio",
+    "creator_accept_rate",
+    "previous_collabs_scaled",
+    "rating_score",
+    "response_quality_score",
+    "text_similarity_score"
+  ],
+  "intercept": -5.893986262531008,
+  "weights": {
+    "category_match": 3.929378375643099,
+    "budget_fit": 5.533249884264499,
+    "deadline_fit": -0.43082655805090636,
+    "has_portfolio": 0.6114903074592135,
+    "creator_accept_rate": 0.7416234472354598,
+    "previous_collabs_scaled": 3.0792204961277143,
+    "rating_score": 0.9290602543457406,
+    "response_quality_score": -0.5130911139483872,
+    "text_similarity_score": 0.9871240863160481
+  },
+  "threshold": 0.5,
+  "scoreScale": "0_to_100",
+  "notes": "Initial demo model trained on generated seed data."
+}

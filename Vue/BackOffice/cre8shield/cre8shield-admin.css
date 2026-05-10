@@ -1,0 +1,1333 @@
+/* Cre8Shield Monitor — BackOffice page */
+.cre8shield-tabs {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin: 1.25rem 0 1rem;
+}
+
+.cre8shield-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 1rem;
+    border-radius: 999px;
+    background: #f1f5fb;
+    color: #1e293b;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: 1px solid #e2e8f0;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+
+.cre8shield-tab:hover {
+    background: #e2e8f0;
+}
+
+.cre8shield-tab.is-active {
+    background: linear-gradient(135deg, #7c5cff 0%, #5947e0 100%);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 6px 14px rgba(124, 92, 255, 0.18);
+}
+
+.cre8shield-tab .cre8shield-tab-count {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    padding: 0.05rem 0.55rem;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: inherit;
+    font-weight: 700;
+}
+
+.cre8shield-tab:not(.is-active) .cre8shield-tab-count {
+    background: #ffffff;
+    border: 1px solid #cbd5f5;
+}
+
+.cre8shield-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+    margin: -0.25rem 0 1rem;
+    padding: 0.8rem 0.95rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 6px 22px rgba(15, 23, 42, 0.04);
+}
+
+.cre8shield-toolbar > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.cre8shield-toolbar strong {
+    color: #0f172a;
+    font-size: 0.88rem;
+}
+
+.cre8shield-toolbar span {
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.cre8shield-sort-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+}
+
+.cre8shield-sort-form label {
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.cre8shield-sort-form select {
+    min-width: 190px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 0.5rem 0.7rem;
+    background: #f8fafc;
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.cre8shield-sort-form button {
+    border: 0;
+    border-radius: 10px;
+    padding: 0.52rem 0.85rem;
+    background: linear-gradient(135deg, #7c5cff 0%, #5947e0 100%);
+    color: #fff;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 6px 14px rgba(124, 92, 255, 0.16);
+}
+
+.cre8shield-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+}
+
+.cre8shield-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 1rem 1.1rem 1.15rem;
+    box-shadow: 0 6px 22px rgba(15, 23, 42, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.cre8shield-card.risk-high {
+    border-color: rgba(220, 38, 38, 0.45);
+    box-shadow: 0 8px 24px rgba(220, 38, 38, 0.08);
+}
+
+.cre8shield-card.risk-medium {
+    border-color: rgba(217, 119, 6, 0.4);
+}
+
+.cre8shield-card.is-escalated {
+    border-color: rgba(220, 38, 38, 0.7);
+    box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.4), 0 12px 28px rgba(220, 38, 38, 0.18);
+    background: linear-gradient(180deg, rgba(254, 226, 226, 0.45) 0%, #ffffff 22%);
+}
+
+.cre8shield-escalated-banner {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    align-self: flex-start;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    box-shadow: 0 6px 18px rgba(220, 38, 38, 0.25);
+}
+
+.cre8shield-escalated-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35);
+    animation: cre8shieldPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes cre8shieldPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.55; transform: scale(0.85); }
+}
+
+.cre8shield-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.cre8shield-card-head-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+}
+
+.cre8shield-score {
+    font-size: 0.78rem;
+    color: #475569;
+    font-weight: 600;
+}
+
+.cre8shield-score strong {
+    color: #0f172a;
+    font-size: 0.92rem;
+}
+
+.cre8shield-card-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.5rem 0.85rem;
+    margin: 0;
+    padding: 0.55rem 0.7rem;
+    background: #f8fafc;
+    border-radius: 10px;
+    border: 1px solid #eef2f7;
+}
+
+.cre8shield-card-meta-grid div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+}
+
+.cre8shield-card-meta-grid dt {
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748b;
+    font-weight: 700;
+    margin: 0;
+}
+
+.cre8shield-card-meta-grid dd {
+    margin: 0;
+    font-size: 0.84rem;
+    color: #0f172a;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.cre8shield-card-source-label {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #475569;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 8px;
+    padding: 0.4rem 0.6rem;
+    overflow-wrap: anywhere;
+}
+
+.cre8shield-card-source-label strong {
+    color: #9a3412;
+    margin-right: 0.25rem;
+}
+
+.cre8shield-card-section {
+    margin: 0;
+    border-radius: 10px;
+    padding: 0.55rem 0.75rem;
+    background: #f8fafc;
+    border: 1px solid #eef2f7;
+}
+
+.cre8shield-card-section h4 {
+    margin: 0 0 0.3rem;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #1e293b;
+    font-weight: 700;
+}
+
+.cre8shield-card-section p {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.45;
+    color: #0f172a;
+    overflow-wrap: anywhere;
+}
+
+.cre8shield-card-section.is-recommend {
+    background: rgba(16, 185, 129, 0.08);
+    border-color: rgba(16, 185, 129, 0.25);
+}
+
+.cre8shield-card-section.is-recommend h4 {
+    color: #047857;
+}
+
+.cre8shield-card-section.is-admin-note {
+    background: rgba(124, 92, 255, 0.08);
+    border-color: rgba(124, 92, 255, 0.22);
+}
+
+.cre8shield-card-section.is-admin-note h4 {
+    color: #5b3ee0;
+}
+
+.cre8shield-details {
+    margin: 0;
+    border: 1px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 0.4rem 0.7rem;
+    background: #ffffff;
+}
+
+.cre8shield-details[open] {
+    border-color: #94a3b8;
+    background: #f8fafc;
+}
+
+.cre8shield-details-summary {
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #1d4ed8;
+    list-style: none;
+    padding: 0.15rem 0;
+    user-select: none;
+}
+
+.cre8shield-details-summary::-webkit-details-marker {
+    display: none;
+}
+
+.cre8shield-details-summary::before {
+    content: '▸';
+    margin-right: 0.4rem;
+    color: #64748b;
+    transition: transform 0.15s ease;
+    display: inline-block;
+}
+
+.cre8shield-details[open] .cre8shield-details-summary::before {
+    transform: rotate(90deg);
+}
+
+.cre8shield-details-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    margin-top: 0.55rem;
+    padding-top: 0.55rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.cre8shield-details-body section h5 {
+    margin: 0 0 0.3rem;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #475569;
+    font-weight: 700;
+}
+
+.cre8shield-details-body section p {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.45;
+    color: #0f172a;
+    overflow-wrap: anywhere;
+}
+
+.cre8shield-pre {
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 0.6rem 0.7rem;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    margin: 0;
+    overflow: auto;
+    max-height: 220px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.cre8shield-pre.is-raw {
+    background: #1e293b;
+    border: 1px solid rgba(220, 38, 38, 0.4);
+}
+
+.cre8shield-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.35rem 0.85rem;
+    font-size: 0.8rem;
+    color: #475569;
+}
+
+.cre8shield-details-grid div {
+    overflow-wrap: anywhere;
+}
+
+.cre8shield-details-grid strong {
+    color: #1e293b;
+    margin-right: 0.25rem;
+}
+
+.cre8shield-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.18rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.cre8shield-pill.risk-high {
+    background: rgba(220, 38, 38, 0.12);
+    color: #b91c1c;
+}
+
+.cre8shield-pill.risk-medium {
+    background: rgba(217, 119, 6, 0.12);
+    color: #b45309;
+}
+
+.cre8shield-pill.risk-low {
+    background: rgba(16, 185, 129, 0.12);
+    color: #047857;
+}
+
+.cre8shield-pill.status-open {
+    background: rgba(59, 130, 246, 0.1);
+    color: #1d4ed8;
+}
+
+.cre8shield-pill.status-reviewed {
+    background: rgba(16, 185, 129, 0.12);
+    color: #047857;
+}
+
+.cre8shield-pill.status-ignored {
+    background: rgba(148, 163, 184, 0.18);
+    color: #475569;
+}
+
+.cre8shield-pill.status-escalated {
+    background: rgba(220, 38, 38, 0.12);
+    color: #b91c1c;
+}
+
+.cre8shield-pill.status-resolved {
+    background: rgba(124, 92, 255, 0.16);
+    color: #5b3ee0;
+}
+
+.cre8shield-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.65rem;
+    font-size: 0.82rem;
+    color: #475569;
+}
+
+.cre8shield-card-meta span strong {
+    color: #1e293b;
+}
+
+.cre8shield-card-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+}
+
+.cre8shield-cat-chip {
+    background: #eef2ff;
+    color: #3730a3;
+    border: 1px solid #c7d2fe;
+    border-radius: 999px;
+    padding: 0.05rem 0.55rem;
+    font-size: 0.74rem;
+    font-weight: 600;
+}
+
+/* Legacy single-block finding kept for backwards compatibility with older
+   templates; the new card uses .cre8shield-card-section. */
+.cre8shield-card-finding {
+    font-size: 0.86rem;
+    color: #0f172a;
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 0.55rem 0.7rem;
+    line-height: 1.4;
+    max-height: 6.4em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: pre-wrap;
+}
+
+.cre8shield-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: auto;
+}
+
+.cre8shield-card-actions form {
+    margin: 0;
+}
+
+.cre8shield-action-btn {
+    appearance: none;
+    border: 1px solid #cbd5f5;
+    background: #fff;
+    color: #1e293b;
+    border-radius: 8px;
+    padding: 0.4rem 0.7rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.cre8shield-action-btn:hover {
+    background: #eef2ff;
+    border-color: #a5b4fc;
+}
+
+.cre8shield-action-btn.is-primary {
+    background: linear-gradient(135deg, #7c5cff 0%, #5947e0 100%);
+    color: #fff;
+    border-color: transparent;
+}
+
+.cre8shield-action-btn.is-primary:hover {
+    filter: brightness(1.05);
+}
+
+.cre8shield-action-btn.is-warning {
+    background: rgba(220, 38, 38, 0.08);
+    color: #b91c1c;
+    border-color: rgba(220, 38, 38, 0.3);
+}
+
+.cre8shield-action-btn.is-muted {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.cre8shield-action-btn.is-success {
+    background: rgba(16, 185, 129, 0.1);
+    color: #047857;
+    border-color: rgba(16, 185, 129, 0.35);
+}
+
+.cre8shield-action-btn.is-success:hover {
+    background: rgba(16, 185, 129, 0.18);
+    border-color: rgba(16, 185, 129, 0.55);
+}
+
+.cre8shield-empty {
+    background: #ffffff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 14px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    color: #64748b;
+}
+
+.cre8shield-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.85rem;
+    margin-bottom: 1.1rem;
+}
+
+.cre8shield-summary article {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+}
+
+.cre8shield-summary article h3 {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #475569;
+    margin: 0 0 0.35rem;
+}
+
+.cre8shield-summary article p {
+    font-size: 1.55rem;
+    font-weight: 700;
+    margin: 0;
+    color: #0f172a;
+}
+
+.cre8shield-summary article small {
+    display: block;
+    margin-top: 0.3rem;
+    font-size: 0.76rem;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+/* Clickable Reporter / Reported chips inside the cre8shield monitor cards */
+.cre8shield-user-link {
+    appearance: none;
+    border: 1px solid #cbd5f5;
+    background: #fff;
+    color: #1e293b;
+    border-radius: 10px;
+    padding: 0.35rem 0.6rem;
+    text-align: left;
+    cursor: pointer;
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    line-height: 1.25;
+    transition: background 0.12s ease, border-color 0.12s ease, transform 0.1s ease;
+    max-width: 100%;
+}
+
+.cre8shield-user-link:hover {
+    background: #eef2ff;
+    border-color: #a5b4fc;
+}
+
+.cre8shield-user-link:focus-visible {
+    outline: 2px solid #7c5cff;
+    outline-offset: 2px;
+}
+
+.cre8shield-user-link strong {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #0f172a;
+    overflow-wrap: anywhere;
+}
+
+.cre8shield-user-link-meta {
+    font-size: 0.7rem;
+    color: #64748b;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.cre8shield-user-link.variant-reporter {
+    border-color: rgba(30, 64, 175, 0.32);
+    background: rgba(219, 234, 254, 0.45);
+}
+
+.cre8shield-user-link.variant-reported {
+    border-color: rgba(220, 38, 38, 0.32);
+    background: rgba(254, 226, 226, 0.45);
+}
+
+.cre8shield-user-link.is-empty {
+    cursor: default;
+    color: #64748b;
+    background: #f8fafc;
+    border-style: dashed;
+    padding: 0.25rem 0.55rem;
+    font-size: 0.84rem;
+    font-weight: 600;
+}
+
+.cre8shield-user-link.is-empty small {
+    color: #94a3b8;
+    font-weight: 500;
+    margin-left: 0.25rem;
+}
+
+.cre8shield-action-btn.is-source {
+    background: #eef2ff;
+    color: #3730a3;
+    border-color: #c7d2fe;
+}
+
+.cre8shield-action-btn.is-source:hover {
+    background: #e0e7ff;
+    border-color: #a5b4fc;
+}
+
+/* Cre8Shield modal — used for user profile and source snapshot views. */
+.cre8shield-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    z-index: 1080;
+}
+
+.cre8shield-modal-overlay[hidden] {
+    display: none !important;
+}
+
+html.cre8shield-modal-open,
+body.cre8shield-modal-open {
+    overflow: hidden;
+}
+
+.cre8shield-modal-card {
+    background: #ffffff;
+    border-radius: 16px;
+    width: min(640px, 100%);
+    max-height: min(86vh, 760px);
+    box-shadow: 0 22px 60px rgba(15, 23, 42, 0.32);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.cre8shield-modal-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1.05rem 1.2rem 0.55rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.cre8shield-modal-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #5b3ee0;
+    background: rgba(124, 92, 255, 0.12);
+    border-radius: 999px;
+    padding: 0.18rem 0.6rem;
+    display: inline-block;
+    margin-bottom: 0.35rem;
+}
+
+.cre8shield-modal-head h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.cre8shield-modal-close {
+    appearance: none;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #1e293b;
+    border-radius: 999px;
+    padding: 0.3rem 0.85rem;
+    font-weight: 700;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.cre8shield-modal-close:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.cre8shield-modal-body {
+    padding: 1rem 1.2rem 1.3rem;
+    overflow-y: auto;
+}
+
+.cre8shield-modal-empty {
+    color: #64748b;
+    font-style: italic;
+    margin: 0;
+}
+
+.cre8shield-modal-user-card,
+.cre8shield-modal-source-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 0.9rem 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+
+.cre8shield-modal-user-head,
+.cre8shield-modal-source-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.cre8shield-role-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.18rem 0.65rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+    background: #eef2ff;
+    color: #3730a3;
+    border: 1px solid #c7d2fe;
+}
+
+.cre8shield-role-pill.role-brand {
+    background: rgba(59, 130, 246, 0.12);
+    color: #1d4ed8;
+    border-color: rgba(59, 130, 246, 0.4);
+}
+
+.cre8shield-role-pill.role-creator {
+    background: rgba(217, 119, 6, 0.12);
+    color: #b45309;
+    border-color: rgba(217, 119, 6, 0.4);
+}
+
+.cre8shield-role-pill.role-admin {
+    background: rgba(124, 92, 255, 0.12);
+    color: #5b3ee0;
+    border-color: rgba(124, 92, 255, 0.4);
+}
+
+.cre8shield-modal-user-id,
+.cre8shield-modal-source-id {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #475569;
+    background: #f1f5f9;
+    border-radius: 999px;
+    padding: 0.18rem 0.6rem;
+    border: 1px solid #e2e8f0;
+}
+
+.cre8shield-modal-user-name,
+.cre8shield-modal-source-title {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.05rem;
+}
+
+.cre8shield-modal-user-email a {
+    color: #1e40af;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.cre8shield-modal-user-email a:hover {
+    text-decoration: underline;
+}
+
+.cre8shield-modal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.55rem 0.85rem;
+    margin: 0;
+}
+
+.cre8shield-modal-grid div {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid #e2e8f0;
+}
+
+.cre8shield-modal-grid dt {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748b;
+    font-weight: 700;
+    margin: 0 0 0.15rem;
+}
+
+.cre8shield-modal-grid dd {
+    margin: 0;
+    color: #0f172a;
+    font-weight: 600;
+    font-size: 0.86rem;
+    overflow-wrap: anywhere;
+}
+
+.cre8shield-modal-source-line {
+    margin: 0;
+    color: #1e293b;
+    font-size: 0.86rem;
+}
+
+.cre8shield-modal-source-block h5 {
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #475569;
+    margin: 0 0 0.3rem;
+    font-weight: 700;
+}
+
+.cre8shield-modal-source-block p,
+.cre8shield-modal-source-block pre {
+    margin: 0;
+    color: #0f172a;
+    font-size: 0.86rem;
+    line-height: 1.45;
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 0.55rem 0.65rem;
+    border: 1px solid #e2e8f0;
+}
+
+.cre8shield-modal-source-block pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+}
+
+/* Prompt source modal: keep prompt snapshots in neutral panel colors so they
+   match the rest of the source card (instead of dark blue legacy pre blocks). */
+.cre8shield-modal-source-card .cre8shield-pre {
+    background: #f8fafc;
+    color: #0f172a;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+}
+
+.cre8shield-modal-source-card .cre8shield-pre.is-raw {
+    background: #fff7ed;
+    color: #7c2d12;
+    border-color: #fed7aa;
+}
+
+.cre8shield-source-kind-pill {
+    display: inline-flex;
+    border-radius: 999px;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+    background: #eef2ff;
+    color: #3730a3;
+    border: 1px solid #c7d2fe;
+}
+
+.cre8shield-source-kind-pill.kind-offer {
+    background: rgba(30, 64, 175, 0.12);
+    color: #1e40af;
+    border-color: rgba(30, 64, 175, 0.35);
+}
+
+.cre8shield-source-kind-pill.kind-candidature {
+    background: rgba(217, 119, 6, 0.12);
+    color: #b45309;
+    border-color: rgba(217, 119, 6, 0.35);
+}
+
+.cre8shield-source-kind-pill.kind-prompt {
+    background: rgba(15, 23, 42, 0.08);
+    color: #1e293b;
+    border-color: rgba(15, 23, 42, 0.18);
+}
+
+.cre8shield-source-status {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.16rem 0.55rem;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #3730a3;
+    border: 1px solid #c7d2fe;
+}
+
+.cre8shield-mini-user-btn {
+    appearance: none;
+    border: 1px solid #cbd5f5;
+    background: #fff;
+    color: #1e293b;
+    border-radius: 8px;
+    padding: 0.25rem 0.55rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.3rem;
+    line-height: 1.2;
+    transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.cre8shield-mini-user-btn:hover {
+    background: #eef2ff;
+    border-color: #a5b4fc;
+}
+
+.cre8shield-mini-user-btn span {
+    color: #64748b;
+    font-weight: 500;
+    font-size: 0.74rem;
+}
+
+.cre8shield-modal-user-actions,
+.cre8shield-modal-source-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 0.3rem;
+}
+
+/* Dark-mode contrast polish for the Cre8Shield monitor. */
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-summary article {
+    background: #191c24;
+    border-color: rgba(148, 163, 184, 0.24);
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-summary article h3 {
+    color: #d8e2f1;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-summary article p {
+    color: #ffffff;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-summary article small {
+    color: #cbd5e1;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-card {
+    background: #191c24;
+    border-color: rgba(148, 163, 184, 0.24);
+    color: #e2e8f0;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-card-meta-grid,
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-card-section,
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-details {
+    background: #111827;
+    border-color: rgba(148, 163, 184, 0.22);
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-card-meta-grid dt,
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-card-section h4 {
+    color: #cbd5e1;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-card-meta-grid dd,
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-card-section p,
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-details-body section p {
+    color: #e2e8f0;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-card-section.is-recommend {
+    background: rgba(16, 185, 129, 0.16);
+    border-color: rgba(52, 211, 153, 0.42);
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-card-section.is-recommend h4 {
+    color: #34d399;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-card-section.is-recommend p {
+    color: #d1fae5;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-card-source-label {
+    background: rgba(251, 146, 60, 0.13);
+    border-color: rgba(251, 146, 60, 0.34);
+    color: #fed7aa;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-card-source-label strong {
+    color: #fdba74;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-details[open] {
+    background: #0f172a;
+    border-color: rgba(148, 163, 184, 0.3);
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-details-summary {
+    color: #bfdbfe;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-details-summary::before {
+    color: #93c5fd;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-details-body {
+    border-top-color: rgba(148, 163, 184, 0.22);
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-details-body section h5 {
+    color: #cbd5e1;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-action-btn {
+    background: #e5e7eb;
+    border-color: #cbd5e1;
+    color: #111827;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-action-btn.is-source {
+    background: #1d4ed8;
+    border-color: #60a5fa;
+    color: #ffffff;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-action-btn.is-source:hover {
+    background: #2563eb;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-action-btn.is-warning {
+    background: rgba(127, 29, 29, 0.3);
+    border-color: rgba(248, 113, 113, 0.52);
+    color: #fecaca;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-action-btn.is-success {
+    background: rgba(16, 185, 129, 0.16);
+    border-color: rgba(52, 211, 153, 0.45);
+    color: #d1fae5;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-action-btn:disabled {
+    opacity: 0.88;
+}
+
+/* ── Cre8Shield source / user modal — dark BackOffice theme (scoped to cre8shield-modal-*) ── */
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-overlay {
+    background: rgba(2, 6, 23, 0.72);
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-card {
+    background: #151620 !important;
+    color: #f8fafc !important;
+    border: 1px solid rgba(148, 163, 184, 0.16) !important;
+    box-shadow: 0 22px 60px rgba(0, 0, 0, 0.55);
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-head {
+    border-bottom-color: rgba(148, 163, 184, 0.16) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-eyebrow {
+    color: #c4b5fd !important;
+    background: rgba(139, 92, 246, 0.2) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-head h3 {
+    color: #f8fafc !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-close {
+    background: #1d2332 !important;
+    border-color: rgba(148, 163, 184, 0.22) !important;
+    color: #f8fafc !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-close:hover {
+    background: #252d3d !important;
+    border-color: rgba(148, 163, 184, 0.35) !important;
+    color: #ffffff !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-empty {
+    color: #94a3b8 !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-user-card,
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-source-card {
+    background: #0f172a !important;
+    border-color: rgba(148, 163, 184, 0.16) !important;
+    color: #f8fafc !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-user-name,
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-source-title {
+    color: #f8fafc !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-user-id,
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-source-id {
+    color: #cbd5e1 !important;
+    background: #1d2332 !important;
+    border-color: rgba(148, 163, 184, 0.2) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-user-email,
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-user-email span {
+    color: #94a3b8 !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-user-email a {
+    color: #8b5cf6 !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-user-email a:hover {
+    color: #a78bfa !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-source-line {
+    color: #cbd5e1 !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-source-line strong {
+    color: #f8fafc !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-grid div {
+    background: #111827 !important;
+    border-color: rgba(148, 163, 184, 0.16) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-grid dt {
+    color: #94a3b8 !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-grid dd {
+    color: #f1f5f9 !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-source-block h5 {
+    color: #94a3b8 !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-source-block p,
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-source-block pre {
+    color: #e2e8f0 !important;
+    background: #111827 !important;
+    border-color: rgba(148, 163, 184, 0.16) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-source-card .cre8shield-pre {
+    background: #111827 !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(148, 163, 184, 0.16) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-source-card .cre8shield-pre.is-raw {
+    background: rgba(124, 45, 18, 0.35) !important;
+    color: #fed7aa !important;
+    border-color: rgba(251, 146, 60, 0.35) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-role-pill {
+    background: rgba(99, 102, 241, 0.2) !important;
+    color: #c7d2fe !important;
+    border-color: rgba(129, 140, 248, 0.4) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-role-pill.role-brand {
+    background: rgba(59, 130, 246, 0.18) !important;
+    color: #93c5fd !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-role-pill.role-creator {
+    background: rgba(217, 119, 6, 0.2) !important;
+    color: #fcd34d !important;
+    border-color: rgba(251, 191, 36, 0.35) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-role-pill.role-admin {
+    background: rgba(139, 92, 246, 0.22) !important;
+    color: #ddd6fe !important;
+    border-color: rgba(167, 139, 250, 0.45) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-source-kind-pill {
+    background: rgba(99, 102, 241, 0.2) !important;
+    color: #c7d2fe !important;
+    border-color: rgba(129, 140, 248, 0.4) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-source-kind-pill.kind-offer {
+    background: rgba(30, 64, 175, 0.35) !important;
+    color: #bfdbfe !important;
+    border-color: rgba(59, 130, 246, 0.45) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-source-kind-pill.kind-candidature {
+    background: rgba(180, 83, 9, 0.28) !important;
+    color: #fde68a !important;
+    border-color: rgba(251, 191, 36, 0.35) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-source-kind-pill.kind-prompt {
+    background: rgba(148, 163, 184, 0.12) !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(148, 163, 184, 0.22) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-source-status {
+    background: rgba(99, 102, 241, 0.18) !important;
+    color: #e0e7ff !important;
+    border-color: rgba(129, 140, 248, 0.35) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-mini-user-btn {
+    background: #1d2332 !important;
+    border-color: rgba(148, 163, 184, 0.22) !important;
+    color: #f1f5f9 !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-mini-user-btn:hover {
+    background: #252d3d !important;
+    border-color: rgba(139, 92, 246, 0.45) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-mini-user-btn span {
+    color: #94a3b8 !important;
+}
+
+/* Light theme: keep modal readable if global variables shifted (reassert defaults). */
+html[data-theme="light"] body.cre8-admin-layout .cre8shield-modal-card {
+    background: #ffffff !important;
+    color: #111827 !important;
+    border: 1px solid #e5e7eb !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8shield-modal-user-card,
+html[data-theme="light"] body.cre8-admin-layout .cre8shield-modal-source-card {
+    background: #f8fafc !important;
+    border-color: #e5e7eb !important;
+    color: #111827 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8shield-modal-head h3,
+html[data-theme="light"] body.cre8-admin-layout .cre8shield-modal-user-name,
+html[data-theme="light"] body.cre8-admin-layout .cre8shield-modal-source-title {
+    color: #111827 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8shield-modal-source-line {
+    color: #334155 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8shield-modal-empty {
+    color: #64748b !important;
+}

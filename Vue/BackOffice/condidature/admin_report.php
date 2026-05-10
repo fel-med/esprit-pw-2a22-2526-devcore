@@ -1,0 +1,795 @@
+<?php
+session_start();
+
+require_once __DIR__ . '/../../../Controleur/condidatureC.php';
+
+$controller = new CondidatureC();
+$sessionUser = $_SESSION['utilisateur'] ?? [];
+
+if (!isset($sessionUser['id']) || (($sessionUser['role'] ?? '') !== 'admin')) {
+    $defaultAdmin = $controller->getDefaultUserByRole('admin');
+    if ($defaultAdmin) {
+        $_SESSION['utilisateur'] = [
+            'id' => (int) $defaultAdmin['id'],
+            'role' => 'admin',
+            'nom' => $defaultAdmin['nom'],
+            'email' => $defaultAdmin['email'],
+        ];
+        $sessionUser = $_SESSION['utilisateur'];
+    }
+}
+
+if (!isset($sessionUser['id']) || (($sessionUser['role'] ?? '') !== 'admin')) {
+    header('Location: ../../FrontOffice/offre/login.php');
+    exit;
+}
+
+function reportLabel($value)
+{
+    $value = trim((string) $value);
+
+    return match ($value) {
+        'brouillon' => 'Draft',
+        'envoyee' => 'Sent',
+        'en_etude' => 'In review',
+        'negociation' => 'Negotiation',
+        'acceptee' => 'Accepted',
+        'refusee' => 'Refused',
+        'retiree' => 'Withdrawn',
+        'par_offre' => 'From offers',
+        'par_campagne' => 'From campaigns',
+        'publiee' => 'Live now',
+        'pending' => 'Pending launch',
+        'cloturee' => 'Closed',
+        'expiree' => 'Expired',
+        'archivee' => 'Archived',
+        'active' => 'Active',
+        'fermee', 'closed' => 'Closed',
+        'application' => 'Application',
+        'acceptation' => 'Acceptance',
+        'refus' => 'Refusal',
+        'unknown', '' => 'Unknown',
+        default => ucwords(str_replace('_', ' ', $value)),
+    };
+}
+
+function reportMoney($value)
+{
+    return 'EUR ' . number_format((float) $value, 2, '.', ',');
+}
+
+function reportDate($value, $format = 'Y-m-d')
+{
+    if (!$value) {
+        return 'Not available';
+    }
+
+    $timestamp = strtotime((string) $value);
+
+    return $timestamp === false ? (string) $value : date($format, $timestamp);
+}
+
+function reportStatRows(array $rows)
+{
+    if (empty($rows)) {
+        return '<tr><td colspan="2" class="empty-cell">No data available.</td></tr>';
+    }
+
+    $html = '';
+    foreach ($rows as $row) {
+        $html .= '<tr>';
+        $html .= '<td>' . htmlspecialchars(reportLabel($row['label'] ?? 'unknown')) . '</td>';
+        $html .= '<td class="number-cell">' . (int) ($row['total'] ?? 0) . '</td>';
+        $html .= '</tr>';
+    }
+
+    return $html;
+}
+
+function reportPdfText($value)
+{
+    $text = html_entity_decode(strip_tags((string) $value), ENT_QUOTES, 'UTF-8');
+    $text = str_replace("\0", '', $text);
+    $text = preg_replace('/\s+/', ' ', $text);
+    $text = trim((string) $text);
+
+    if (function_exists('iconv')) {
+        $converted = @iconv('UTF-8', 'Windows-1252//TRANSLIT//IGNORE', $text);
+        if ($converted !== false) {
+            return $converted;
+        }
+    }
+
+    return preg_replace('/[^\x20-\x7E]/', '', $text);
+}
+
+function reportPdfEscape($value)
+{
+    return str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], reportPdfText($value));
+}
+
+function reportPdfShort($value, $length = 34)
+{
+    $text = reportPdfText($value);
+
+    if (strlen($text) <= $length) {
+        return $text;
+    }
+
+    return rtrim(substr($text, 0, max(0, $length - 3))) . '...';
+}
+
+function reportPdfAddLine(array &$lines, $text = '', $size = 9, $bold = false, $gap = 3, $indent = 0)
+{
+    $lines[] = [
+        'text' => reportPdfText($text),
+        'size' => $size,
+        'bold' => $bold,
+        'gap' => $gap,
+        'indent' => $indent,
+    ];
+}
+
+function reportPdfAddWrappedLine(array &$lines, $text, $size = 9, $bold = false, $gap = 3, $indent = 0, $width = 104)
+{
+    $wrapped = wordwrap(reportPdfText($text), $width, "\n", true);
+    $parts = explode("\n", $wrapped);
+
+    foreach ($parts as $index => $part) {
+        reportPdfAddLine($lines, $part, $size, $bold, $index === count($parts) - 1 ? $gap : 1, $indent);
+    }
+}
+
+function reportPdfAddStatTable(array &$lines, $title, array $rows)
+{
+    reportPdfAddLine($lines, $title, 11, true, 4);
+
+    if (empty($rows)) {
+        reportPdfAddLine($lines, 'No data available.', 9, false, 6, 1);
+        return;
+    }
+
+    foreach ($rows as $row) {
+        $label = reportPdfShort(reportLabel($row['label'] ?? 'unknown'), 52);
+        $total = (int) ($row['total'] ?? 0);
+        reportPdfAddLine($lines, sprintf('- %-54s %5d', $label, $total), 9, false, 1, 1);
+    }
+
+    reportPdfAddLine($lines, '', 4, false, 5);
+}
+
+function reportPdfBuildLines(array $summaryStats, array $chartStats, array $recentOffers, array $recentCandidatures, $generatedAt, $generatedBy, $error = null)
+{
+    $lines = [];
+
+    reportPdfAddLine($lines, 'Cre8Connect Admin Report', 18, true, 8);
+    reportPdfAddLine($lines, 'Export date: ' . $generatedAt, 10, false, 1);
+    reportPdfAddLine($lines, 'Generated by: ' . $generatedBy, 10, false, 8);
+    reportPdfAddWrappedLine($lines, 'This report gives an overview of the current offer and candidature activity on the platform.', 10, false, 10);
+
+    if ($error) {
+        reportPdfAddWrappedLine($lines, $error, 11, true, 8);
+        return $lines;
+    }
+
+    reportPdfAddLine($lines, 'Global indicators', 13, true, 5);
+    $indicators = [
+        'Real offers' => (int) ($summaryStats['totalOffers'] ?? 0),
+        'Real candidatures' => (int) ($summaryStats['totalRealCandidatures'] ?? 0),
+        'Pending reviews' => (int) ($summaryStats['pendingReviews'] ?? 0),
+        'Open negotiations' => (int) ($summaryStats['openNegotiations'] ?? 0),
+        'Expired offers' => (int) ($summaryStats['expiredOffers'] ?? 0),
+        'Acceptance rate' => (string) ($summaryStats['acceptanceRate'] ?? 0) . '%',
+        'Activity this week' => (int) ($summaryStats['activityThisWeek'] ?? 0),
+        'Weekly split' => (int) ($summaryStats['offersThisWeek'] ?? 0) . ' + ' . (int) ($summaryStats['candidaturesThisWeek'] ?? 0),
+    ];
+
+    foreach ($indicators as $label => $value) {
+        reportPdfAddLine($lines, sprintf('- %-28s %s', $label . ':', $value), 10, false, 1, 1);
+    }
+
+    reportPdfAddLine($lines, '', 4, false, 7);
+    reportPdfAddLine($lines, 'Statistics tables', 13, true, 5);
+    reportPdfAddStatTable($lines, 'Candidatures by status', $chartStats['candidatureStatus'] ?? []);
+    reportPdfAddStatTable($lines, 'Offers by status', $chartStats['offerStatus'] ?? []);
+    reportPdfAddStatTable($lines, 'Candidatures by origin', $chartStats['candidatureOrigin'] ?? []);
+
+    reportPdfAddLine($lines, 'Recent offers', 13, true, 5);
+    if (empty($recentOffers)) {
+        reportPdfAddLine($lines, 'No recent offers available.', 9, false, 6, 1);
+    } else {
+        foreach ($recentOffers as $offer) {
+            $row = sprintf(
+                '- %s | %s | %s | Deadline %s | %s | Published %s',
+                reportPdfShort($offer['titre'] ?? 'Untitled offer', 30),
+                reportPdfShort($offer['brandName'] ?? 'Unknown brand', 22),
+                reportMoney($offer['budgetPropose'] ?? 0),
+                reportDate($offer['dateLimite'] ?? null),
+                reportLabel($offer['statutOffre'] ?? 'unknown'),
+                reportDate($offer['datePublication'] ?? null)
+            );
+            reportPdfAddWrappedLine($lines, $row, 8.5, false, 2, 1, 112);
+        }
+    }
+
+    reportPdfAddLine($lines, '', 4, false, 7);
+    reportPdfAddLine($lines, 'Recent candidatures', 13, true, 5);
+    if (empty($recentCandidatures)) {
+        reportPdfAddLine($lines, 'No recent real candidatures available.', 9, false, 6, 1);
+    } else {
+        foreach ($recentCandidatures as $candidature) {
+            $creator = $candidature['creatorName'] ?? ('Creator #' . (int) ($candidature['idCreateur'] ?? 0));
+            $row = sprintf(
+                '- %s | %s | %s | %s | %s | %s | %s',
+                reportPdfShort($creator, 24),
+                reportLabel($candidature['origineCandidature'] ?? 'unknown'),
+                reportPdfShort($candidature['sourceTitle'] ?? 'Unknown source', 26),
+                reportLabel($candidature['statutCandidature'] ?? 'unknown'),
+                reportLabel($candidature['typeReponse'] ?? 'unknown'),
+                reportMoney($candidature['budgetPropose'] ?? 0),
+                reportDate($candidature['dateCandidature'] ?? null)
+            );
+            reportPdfAddWrappedLine($lines, $row, 8.5, false, 2, 1, 112);
+        }
+    }
+
+    return $lines;
+}
+
+function reportDownloadSimplePdf(array $lines, $filename)
+{
+    $pageWidth = 595;
+    $pageHeight = 842;
+    $marginX = 42;
+    $topY = 798;
+    $bottomY = 44;
+    $pages = [];
+    $current = [];
+    $y = $topY;
+
+    foreach ($lines as $line) {
+        $size = (float) ($line['size'] ?? 9);
+        $height = $size + 5 + (float) ($line['gap'] ?? 0);
+
+        if (!empty($current) && ($y - $height) < $bottomY) {
+            $pages[] = $current;
+            $current = [];
+            $y = $topY;
+        }
+
+        $line['x'] = $marginX + ((int) ($line['indent'] ?? 0) * 12);
+        $line['y'] = $y;
+        $current[] = $line;
+        $y -= $height;
+    }
+
+    if (!empty($current)) {
+        $pages[] = $current;
+    }
+
+    $objects = [];
+    $objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+    $objects[3] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
+    $objects[4] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
+    $kids = [];
+    $nextObject = 5;
+
+    foreach ($pages as $pageLines) {
+        $contentObject = $nextObject++;
+        $pageObject = $nextObject++;
+        $stream = '';
+
+        foreach ($pageLines as $line) {
+            $font = !empty($line['bold']) ? 'F2' : 'F1';
+            $size = number_format((float) ($line['size'] ?? 9), 2, '.', '');
+            $x = number_format((float) ($line['x'] ?? $marginX), 2, '.', '');
+            $lineY = number_format((float) ($line['y'] ?? $topY), 2, '.', '');
+            $stream .= 'BT /' . $font . ' ' . $size . ' Tf 1 0 0 1 ' . $x . ' ' . $lineY . ' Tm (' . reportPdfEscape($line['text'] ?? '') . ") Tj ET\n";
+        }
+
+        $objects[$contentObject] = "<< /Length " . strlen($stream) . " >>\nstream\n" . $stream . "endstream";
+        $objects[$pageObject] = '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' . $pageWidth . ' ' . $pageHeight . '] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ' . $contentObject . ' 0 R >>';
+        $kids[] = $pageObject . ' 0 R';
+    }
+
+    $objects[2] = '<< /Type /Pages /Kids [' . implode(' ', $kids) . '] /Count ' . count($kids) . ' >>';
+    ksort($objects);
+
+    $pdf = "%PDF-1.4\n";
+    $offsets = [0];
+
+    foreach ($objects as $number => $object) {
+        $offsets[$number] = strlen($pdf);
+        $pdf .= $number . " 0 obj\n" . $object . "\nendobj\n";
+    }
+
+    $xrefOffset = strlen($pdf);
+    $pdf .= "xref\n0 " . (count($objects) + 1) . "\n";
+    $pdf .= "0000000000 65535 f \n";
+
+    for ($i = 1; $i <= count($objects); $i++) {
+        $pdf .= sprintf("%010d 00000 n \n", $offsets[$i] ?? 0);
+    }
+
+    $pdf .= "trailer\n<< /Size " . (count($objects) + 1) . " /Root 1 0 R >>\nstartxref\n" . $xrefOffset . "\n%%EOF";
+
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Content-Length: ' . strlen($pdf));
+    header('Cache-Control: private, max-age=0, must-revalidate');
+    echo $pdf;
+}
+
+$error = null;
+$generatedAt = date('Y-m-d H:i');
+$generatedBy = trim((string) ($sessionUser['nom'] ?? 'Admin')) ?: 'Admin';
+$summaryStats = [];
+$chartStats = [
+    'candidatureStatus' => [],
+    'offerStatus' => [],
+    'candidatureOrigin' => [],
+];
+$recentOffers = [];
+$recentCandidatures = [];
+
+try {
+    $summaryStats = $controller->getAdminReportSummaryStats();
+    $chartStats = $controller->getAdminPieChartStats();
+    $recentOffers = $controller->getAdminRecentOffers(10);
+    $recentCandidatures = $controller->getAdminRecentCandidatures(10);
+} catch (Throwable $exception) {
+    $error = 'The report could not be generated right now.';
+}
+
+$autoPrintReport = (($_GET['download'] ?? '') === 'pdf');
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cre8Connect Admin Report</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #eef2f7;
+            color: #111827;
+            font-family: Arial, Helvetica, sans-serif;
+            line-height: 1.45;
+        }
+
+        .report-toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            background: #111827;
+            color: #ffffff;
+            box-shadow: 0 12px 26px rgba(15, 23, 42, 0.18);
+        }
+
+        .report-toolbar div,
+        .report-toolbar-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .report-toolbar a,
+        .report-toolbar button {
+            border: 0;
+            border-radius: 0.55rem;
+            background: #6366f1;
+            color: #ffffff;
+            padding: 0.68rem 0.95rem;
+            font: inherit;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .report-toolbar a.secondary {
+            background: #374151;
+        }
+
+        .report-page {
+            width: min(1120px, calc(100% - 2rem));
+            margin: 1.25rem auto 2rem;
+            padding: 2rem;
+            background: #ffffff;
+            border-radius: 0.6rem;
+            box-shadow: 0 18px 46px rgba(15, 23, 42, 0.14);
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 1.25rem;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 1.1rem;
+        }
+
+        .report-header h1 {
+            margin: 0;
+            color: #312e81;
+            font-size: 2rem;
+        }
+
+        .report-header p,
+        .report-note {
+            margin: 0.35rem 0 0;
+            color: #4b5563;
+        }
+
+        .report-meta {
+            min-width: 240px;
+            text-align: right;
+            color: #374151;
+            font-size: 0.9rem;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.85rem;
+            margin: 1.4rem 0;
+        }
+
+        .summary-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.55rem;
+            padding: 0.9rem;
+            background: #f8fafc;
+        }
+
+        .summary-card span {
+            display: block;
+            color: #64748b;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .summary-card strong {
+            display: block;
+            margin-top: 0.45rem;
+            color: #111827;
+            font-size: 1.5rem;
+        }
+
+        .report-section {
+            margin-top: 1.45rem;
+            break-inside: avoid;
+        }
+
+        .report-section h2 {
+            margin: 0 0 0.75rem;
+            color: #1f2937;
+            font-size: 1.16rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.9rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #dbe2ea;
+            background: #ffffff;
+            font-size: 0.9rem;
+        }
+
+        th,
+        td {
+            padding: 0.68rem 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: #eef2ff;
+            color: #3730a3;
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .number-cell {
+            text-align: right;
+            font-weight: 700;
+        }
+
+        .empty-cell {
+            color: #64748b;
+            text-align: center;
+        }
+
+        .error-box {
+            margin: 1.25rem 0;
+            padding: 1rem;
+            border: 1px solid #fecaca;
+            border-radius: 0.6rem;
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        @media (max-width: 900px) {
+            .summary-grid,
+            .stats-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .report-header {
+                flex-direction: column;
+            }
+
+            .report-meta {
+                text-align: left;
+            }
+        }
+
+        @media print {
+            @page {
+                size: A4;
+                margin: 14mm;
+            }
+
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            .report-page {
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                border-radius: 0;
+                box-shadow: none !important;
+            }
+
+            .summary-grid {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            table {
+                page-break-inside: auto;
+            }
+
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+
+            .report-header {
+                align-items: flex-start;
+                gap: 10mm;
+                padding-bottom: 6mm;
+            }
+
+            .report-header h1 {
+                font-size: 18pt;
+            }
+
+            .report-note,
+            .report-meta {
+                font-size: 8.5pt;
+            }
+
+            .report-section {
+                margin-top: 8mm;
+                break-inside: avoid-page;
+            }
+
+            .summary-grid {
+                gap: 3mm;
+                margin: 6mm 0;
+            }
+
+            .summary-card {
+                padding: 4mm;
+                border-radius: 2mm;
+                break-inside: avoid;
+            }
+
+            .summary-card span {
+                font-size: 6.8pt;
+            }
+
+            .summary-card strong {
+                font-size: 13pt;
+            }
+
+            .stats-grid {
+                gap: 4mm;
+            }
+
+            table {
+                table-layout: fixed;
+                width: 100%;
+                font-size: 7.2pt;
+                break-inside: auto;
+            }
+
+            th,
+            td {
+                padding: 2.4mm 2.6mm;
+                overflow-wrap: anywhere;
+                word-break: break-word;
+            }
+
+            th {
+                font-size: 6.4pt;
+            }
+        }
+    </style>
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
+</head>
+<body>
+    <div class="report-toolbar no-print">
+        <strong>Admin report preview</strong>
+        <div class="report-toolbar-actions">
+            <button type="button" onclick="window.print()">Save PDF</button>
+            <a class="secondary" href="index.php">Back to dashboard</a>
+        </div>
+    </div>
+
+    <main class="report-page">
+        <header class="report-header">
+            <div>
+                <h1>Cre8Connect Admin Report</h1>
+                <p class="report-note">This report gives an overview of the current offer and candidature activity on the platform.</p>
+            </div>
+            <div class="report-meta">
+                <div><strong>Export date:</strong> <?php echo htmlspecialchars($generatedAt); ?></div>
+                <div><strong>Generated by:</strong> <?php echo htmlspecialchars($generatedBy); ?></div>
+            </div>
+        </header>
+
+        <?php if ($error): ?>
+            <div class="error-box"><?php echo htmlspecialchars($error); ?></div>
+        <?php else: ?>
+            <section class="report-section">
+                <h2>Global indicators</h2>
+                <div class="summary-grid">
+                    <div class="summary-card"><span>Real offers</span><strong><?php echo (int) ($summaryStats['totalOffers'] ?? 0); ?></strong></div>
+                    <div class="summary-card"><span>Real candidatures</span><strong><?php echo (int) ($summaryStats['totalRealCandidatures'] ?? 0); ?></strong></div>
+                    <div class="summary-card"><span>Pending reviews</span><strong><?php echo (int) ($summaryStats['pendingReviews'] ?? 0); ?></strong></div>
+                    <div class="summary-card"><span>Open negotiations</span><strong><?php echo (int) ($summaryStats['openNegotiations'] ?? 0); ?></strong></div>
+                    <div class="summary-card"><span>Expired offers</span><strong><?php echo (int) ($summaryStats['expiredOffers'] ?? 0); ?></strong></div>
+                    <div class="summary-card"><span>Acceptance rate</span><strong><?php echo htmlspecialchars((string) ($summaryStats['acceptanceRate'] ?? 0)); ?>%</strong></div>
+                    <div class="summary-card"><span>Activity this week</span><strong><?php echo (int) ($summaryStats['activityThisWeek'] ?? 0); ?></strong></div>
+                    <div class="summary-card"><span>Weekly split</span><strong><?php echo (int) ($summaryStats['offersThisWeek'] ?? 0); ?> + <?php echo (int) ($summaryStats['candidaturesThisWeek'] ?? 0); ?></strong></div>
+                </div>
+            </section>
+
+            <section class="report-section">
+                <h2>Statistics tables</h2>
+                <div class="stats-grid">
+                    <table>
+                        <thead><tr><th>Candidature status</th><th>Count</th></tr></thead>
+                        <tbody><?php echo reportStatRows($chartStats['candidatureStatus'] ?? []); ?></tbody>
+                    </table>
+                    <table>
+                        <thead><tr><th>Offer status</th><th>Count</th></tr></thead>
+                        <tbody><?php echo reportStatRows($chartStats['offerStatus'] ?? []); ?></tbody>
+                    </table>
+                    <table>
+                        <thead><tr><th>Candidature origin</th><th>Count</th></tr></thead>
+                        <tbody><?php echo reportStatRows($chartStats['candidatureOrigin'] ?? []); ?></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="report-section">
+                <h2>Recent offers</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Brand</th>
+                            <th>Budget</th>
+                            <th>Deadline</th>
+                            <th>Status</th>
+                            <th>Publication</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($recentOffers)): ?>
+                            <tr><td colspan="6" class="empty-cell">No recent offers available.</td></tr>
+                        <?php else: ?>
+                            <?php foreach ($recentOffers as $offer): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($offer['titre'] ?? 'Untitled offer'); ?></td>
+                                    <td><?php echo htmlspecialchars($offer['brandName'] ?? 'Unknown brand'); ?></td>
+                                    <td><?php echo htmlspecialchars(reportMoney($offer['budgetPropose'] ?? 0)); ?></td>
+                                    <td><?php echo htmlspecialchars(reportDate($offer['dateLimite'] ?? null)); ?></td>
+                                    <td><?php echo htmlspecialchars(reportLabel($offer['statutOffre'] ?? 'unknown')); ?></td>
+                                    <td><?php echo htmlspecialchars(reportDate($offer['datePublication'] ?? null)); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="report-section">
+                <h2>Recent candidatures</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Creator</th>
+                            <th>Source type</th>
+                            <th>Source</th>
+                            <th>Status</th>
+                            <th>Response type</th>
+                            <th>Budget</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($recentCandidatures)): ?>
+                            <tr><td colspan="7" class="empty-cell">No recent real candidatures available.</td></tr>
+                        <?php else: ?>
+                            <?php foreach ($recentCandidatures as $candidature): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($candidature['creatorName'] ?? ('Creator #' . (int) ($candidature['idCreateur'] ?? 0))); ?></td>
+                                    <td><?php echo htmlspecialchars(reportLabel($candidature['origineCandidature'] ?? 'unknown')); ?></td>
+                                    <td><?php echo htmlspecialchars($candidature['sourceTitle'] ?? 'Unknown source'); ?></td>
+                                    <td><?php echo htmlspecialchars(reportLabel($candidature['statutCandidature'] ?? 'unknown')); ?></td>
+                                    <td><?php echo htmlspecialchars(reportLabel($candidature['typeReponse'] ?? 'unknown')); ?></td>
+                                    <td><?php echo htmlspecialchars(reportMoney($candidature['budgetPropose'] ?? 0)); ?></td>
+                                    <td><?php echo htmlspecialchars(reportDate($candidature['dateCandidature'] ?? null)); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </section>
+        <?php endif; ?>
+    </main>
+
+    <script>
+        (function () {
+            var shouldAutoPrint = <?php echo $autoPrintReport ? 'true' : 'false'; ?>;
+
+            if (!shouldAutoPrint) {
+                return;
+            }
+
+            window.addEventListener('load', function () {
+                document.title = 'cre8connect-admin-report-<?php echo date('Y-m-d-His'); ?>';
+                window.setTimeout(function () {
+                    window.print();
+                }, 250);
+            });
+        })();
+    </script>
+</body>
+</html>

@@ -423,6 +423,11 @@ body.dark-mode .hero-content h1 {
         @media (max-width: 1024px) { .page-wrapper { flex-direction: column; } .sidebar { width: 100%; display: flex; gap: 14px; overflow-x: auto; } .filter-section { min-width: 230px; margin-bottom: 0; } }
         @media (max-width: 768px) { nav { padding: 0 20px; } .nav-links { display: none; } .hero { padding: 16px; } .hero-card { padding: 22px 18px; } .hero-content h1 { font-size: 1.3rem; } .hero-img { width: 70px; height: 70px; } .page-wrapper { padding: 20px 16px; } .events-grid { grid-template-columns: 1fr; } .detail-modal-body { flex-direction: column; } .detail-image { border-radius: 20px 20px 0 0; min-height: 200px; } .stats-bar { gap: 10px; } }
     </style>
+    <title>Events - Cre8Connect</title>
+    <link rel="stylesheet" href="../css/frontoffice.css">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
+<link rel="apple-touch-icon" href="../../public/images/logo.png">
 </head>
 <body>
 

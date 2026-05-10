@@ -1,0 +1,1364 @@
+:root {
+  --bo-sidebar-width: 244px;
+  --bo-header-height: 70px;
+  --bo-tabs-height: 48px;
+  --bo-topbar-height: var(--bo-header-height);
+  --cre8-admin-bg: #101116;
+  --cre8-admin-panel: #181820;
+  --cre8-admin-panel-soft: #20212b;
+  --cre8-admin-line: rgba(148, 163, 184, 0.14);
+  --cre8-admin-muted: #8c93a7;
+  --cre8-admin-text: #f4f7fb;
+  --cre8-admin-purple: #7c5cff;
+}
+
+body.cre8-admin-layout {
+  min-height: 100vh;
+  background: var(--cre8-admin-bg);
+  color: var(--cre8-admin-text);
+  overflow-x: hidden;
+}
+
+.cre8-admin-page {
+  min-height: 100vh;
+  display: block;
+  padding-left: var(--bo-sidebar-width);
+}
+
+.cre8-admin-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--bo-sidebar-width);
+  height: 100vh;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(148, 163, 184, 0.12);
+  background: #080d18;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.cre8-admin-brand {
+  min-height: var(--bo-topbar-height);
+  display: flex;
+  align-items: center;
+  gap: 0.58rem;
+  padding: 0 1.85rem;
+  color: #fff;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  background: #171b24;
+}
+
+.cre8-admin-brand img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.cre8-admin-brand strong {
+  display: block;
+  font-size: 1.34rem;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+}
+
+.cre8-admin-brand small {
+  display: none;
+}
+
+.cre8-admin-nav {
+  flex: 1;
+  display: grid;
+  align-content: start;
+  gap: 1.35rem;
+  padding: 1.7rem 0.85rem;
+}
+
+.cre8-admin-nav-section h2 {
+  margin: 0 0 0.65rem;
+  padding: 0 0.65rem;
+  color: #5f667a;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  font-weight: 900;
+}
+
+.cre8-admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-height: 46px;
+  padding: 0 0.75rem;
+  border-radius: 0.66rem;
+  color: #9aa2b8;
+  text-decoration: none;
+  font-weight: 800;
+  transition: color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+
+.cre8-admin-nav-item:hover {
+  color: #fff;
+  background: rgba(124, 92, 255, 0.12);
+  transform: translateX(2px);
+}
+
+.cre8-admin-nav-item.is-active {
+  color: #8f79ff;
+  background: rgba(124, 92, 255, 0.22);
+}
+
+.cre8-admin-nav-icon {
+  width: 1.25rem;
+  color: currentColor;
+  text-align: center;
+}
+
+.cre8-admin-profile {
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0 1.25rem;
+  border-top: 1px solid var(--cre8-admin-line);
+}
+
+.cre8-admin-avatar {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #7c5cff;
+  color: #fff;
+  font-weight: 900;
+}
+
+.cre8-admin-profile strong,
+.cre8-admin-profile small {
+  display: block;
+}
+
+.cre8-admin-profile small {
+  margin-top: 0.18rem;
+  color: var(--cre8-admin-muted);
+}
+
+.cre8-admin-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding-top: var(--bo-topbar-height);
+}
+
+.cre8-admin-main:has(.cre8-admin-unified-topbar) {
+  padding-top: var(--bo-topbar-height) !important;
+}
+
+.cre8-admin-topbar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: var(--bo-sidebar-width);
+  z-index: 40;
+  min-height: 86px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 1.8rem;
+  border-bottom: 1px solid var(--cre8-admin-line);
+  background: #15161d;
+}
+
+.cre8-admin-unified-topbar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: var(--bo-sidebar-width);
+  z-index: 45;
+  min-height: var(--bo-topbar-height);
+  height: var(--bo-topbar-height);
+  display: flex;
+  align-items: center;
+  gap: 1.05rem;
+  padding: 0 1.85rem 0 2.15rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  background: #080b16;
+  color: #eef2ff;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.02);
+  overflow: hidden;
+}
+
+.cre8-admin-unified-topbar svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cre8-admin-menu-button,
+.cre8-admin-icon-button {
+  width: 36px;
+  height: 42px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 0.65rem;
+  background: transparent;
+  color: #dce5ff;
+  cursor: pointer;
+  transition: color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+
+.cre8-admin-menu-button:hover,
+.cre8-admin-icon-button:hover {
+  color: #ffffff;
+  background: rgba(124, 92, 255, 0.14);
+  transform: translateY(-1px);
+}
+
+.cre8-admin-unified-search {
+  width: min(100%, 796px);
+  max-width: 796px;
+  min-width: 220px;
+  height: 48px;
+  flex: 0 1 796px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 1.05rem;
+  border: 1px solid rgba(116, 132, 177, 0.26);
+  border-radius: 0.44rem;
+  background: #111727;
+  color: #8f9bbb;
+}
+
+.cre8-admin-search-icon {
+  flex: 0 0 auto;
+  color: #7581a0;
+}
+
+.cre8-admin-search-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.cre8-admin-unified-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #eef2ff;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.cre8-admin-unified-search input::placeholder {
+  color: #858eaa;
+  font-weight: 600;
+}
+
+.cre8-admin-topbar-tools {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.48rem;
+  min-width: max-content;
+  margin-left: auto;
+}
+
+.cre8-admin-topbar-separator {
+  width: 1px;
+  height: 38px;
+  flex: 0 0 auto;
+  background: rgba(148, 163, 184, 0.18);
+}
+
+.cre8-admin-icon-button {
+  position: relative;
+}
+
+.cre8-admin-icon-button.has-dot::after {
+  content: "";
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  border: 2px solid #080b16;
+}
+
+.cre8-admin-icon-button.has-dot-green::after {
+  background: #9be37b;
+}
+
+.cre8-admin-icon-button.has-dot-red::after {
+  background: #ff5572;
+}
+
+.cre8-admin-user-menu {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.74rem;
+  min-height: 52px;
+  padding-left: 1.05rem;
+  color: #f7f8ff;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.cre8-admin-topbar-avatar {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 3px solid rgba(220, 160, 114, 0.72);
+  overflow: hidden;
+  background: #171b24;
+  color: transparent;
+  font-weight: 950;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
+}
+
+.cre8-admin-topbar-avatar img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  object-fit: cover;
+}
+
+.cre8-admin-user-name {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.cre8-admin-user-arrow {
+  width: 16px !important;
+  height: 16px !important;
+  color: #9aa4bf;
+}
+
+[data-theme="light"] .cre8-admin-unified-topbar {
+  border-bottom-color: rgba(30, 48, 243, 0.1);
+  background: #ffffff;
+  color: #111827;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
+}
+
+[data-theme="light"] .cre8-admin-menu-button,
+[data-theme="light"] .cre8-admin-icon-button {
+  color: #1f2937;
+}
+
+[data-theme="light"] .cre8-admin-menu-button:hover,
+[data-theme="light"] .cre8-admin-icon-button:hover {
+  background: rgba(124, 92, 255, 0.1);
+  color: #4f46e5;
+}
+
+[data-theme="light"] .cre8-admin-unified-search {
+  border-color: rgba(30, 48, 243, 0.14);
+  background: #f8fafc;
+  color: #64748b;
+}
+
+[data-theme="light"] .cre8-admin-unified-search input {
+  color: #101828;
+}
+
+[data-theme="light"] .cre8-admin-unified-search input::placeholder {
+  color: #94a3b8;
+}
+
+[data-theme="light"] .cre8-admin-topbar-separator {
+  background: rgba(15, 23, 42, 0.12);
+}
+
+[data-theme="light"] .cre8-admin-icon-button.has-dot::after {
+  border-color: #ffffff;
+}
+
+[data-theme="light"] .cre8-admin-user-menu {
+  color: #111827;
+}
+
+.cre8-admin-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.62rem;
+  color: #6f768d;
+  font-weight: 800;
+}
+
+.cre8-admin-breadcrumb strong {
+  color: #f8fafc;
+}
+
+.cre8-admin-topbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+.cre8-admin-search {
+  min-width: 260px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 42px;
+  padding: 0 0.85rem;
+  border-radius: 0.55rem;
+  border: 1px solid var(--cre8-admin-line);
+  background: #1d1e28;
+  color: #667085;
+}
+
+.cre8-admin-search input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  color: #e5e7eb;
+  background: transparent;
+}
+
+.cre8-admin-search input::placeholder {
+  color: #6f768d;
+}
+
+.cre8-admin-action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 1rem;
+  border-radius: 0.55rem;
+  border: 1px solid var(--cre8-admin-line);
+  background: #1d1e28;
+  color: #d7dbea;
+  text-decoration: none;
+  font-weight: 900;
+}
+
+.cre8-admin-action-primary {
+  border-color: rgba(124, 92, 255, 0.56);
+  background: #7c5cff;
+  color: #fff;
+  box-shadow: 0 16px 32px rgba(124, 92, 255, 0.22);
+}
+
+.cre8-admin-action-exit {
+  border-color: rgba(248, 113, 113, 0.34);
+  background: rgba(127, 29, 29, 0.28);
+  color: #fecaca;
+}
+
+.cre8-admin-action-exit:hover {
+  border-color: rgba(248, 113, 113, 0.58);
+  background: rgba(153, 27, 27, 0.42);
+  color: #fff;
+}
+
+.cre8-admin-topbar-actions .theme-toggle {
+  min-height: 42px;
+  padding: 0 0.95rem;
+  box-shadow: none;
+}
+
+[data-theme="light"] .cre8-admin-search {
+  background: #ffffff;
+  color: #64748b;
+  border-color: rgba(30, 48, 243, 0.12);
+}
+
+[data-theme="light"] .cre8-admin-search input {
+  color: #101828;
+}
+
+[data-theme="light"] .cre8-admin-search input::placeholder {
+  color: #94a3b8;
+}
+
+[data-theme="light"] .cre8-admin-action {
+  background: #ffffff;
+  color: #1f2937;
+  border-color: rgba(30, 48, 243, 0.12);
+}
+
+[data-theme="light"] .cre8-admin-action-primary {
+  background: #7c5cff;
+  color: #ffffff;
+}
+
+[data-theme="light"] .cre8-admin-breadcrumb {
+  color: #64748b;
+}
+
+[data-theme="light"] .cre8-admin-breadcrumb strong {
+  color: #101828;
+}
+
+@media (max-width: 1100px) {
+  .cre8-admin-page {
+    padding-left: 0;
+  }
+
+  .cre8-admin-sidebar {
+    position: relative;
+    width: auto;
+    height: auto;
+  }
+
+  .cre8-admin-main {
+    padding-top: 0;
+  }
+
+  .cre8-admin-topbar {
+    position: relative;
+    inset: auto;
+  }
+
+  .cre8-admin-unified-topbar {
+    position: sticky;
+    inset: 0 auto auto 0;
+    width: 100%;
+    min-height: var(--bo-topbar-height);
+    height: var(--bo-topbar-height);
+    padding: 0 1rem;
+  }
+
+  .cre8-admin-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .cre8-admin-topbar,
+  .cre8-admin-topbar-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cre8-admin-topbar {
+    padding: 1rem;
+  }
+
+  .cre8-admin-search {
+    min-width: 0;
+  }
+
+  .cre8-admin-unified-topbar {
+    gap: 0.7rem;
+    min-height: auto;
+    height: auto;
+    flex-wrap: wrap;
+    padding: 0.85rem;
+    overflow: visible;
+  }
+
+  .cre8-admin-unified-search {
+    order: 3;
+    flex: 1 1 100%;
+    max-width: none;
+    height: 46px;
+  }
+
+  .cre8-admin-topbar-tools {
+    margin-left: auto;
+    gap: 0.35rem;
+  }
+
+  .cre8-admin-topbar-separator {
+    height: 28px;
+  }
+
+  .cre8-admin-user-name,
+  .cre8-admin-user-arrow {
+    display: none;
+  }
+
+  .cre8-admin-main:has(.cre8-admin-unified-topbar) {
+    padding-top: 0 !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .cre8-admin-topbar-tools {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .cre8-admin-menu-button,
+  .cre8-admin-icon-button {
+    width: 38px;
+    height: 38px;
+  }
+
+  .cre8-admin-topbar-avatar {
+    width: 38px;
+    height: 38px;
+  }
+}
+
+/* Shared BackOffice frame repair: keep one fixed sidebar, one fixed 80px topbar, and one content offset. */
+body.cre8-admin-layout {
+  overflow-x: hidden !important;
+}
+
+body.cre8-admin-layout .container-scroller.cre8-admin-page {
+  min-height: 100vh !important;
+  padding-left: var(--bo-sidebar-width) !important;
+  margin-left: 0 !important;
+  display: block !important;
+  box-sizing: border-box !important;
+}
+
+body.cre8-admin-layout .cre8-admin-sidebar {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  bottom: auto !important;
+  width: var(--bo-sidebar-width) !important;
+  height: 100vh !important;
+  z-index: 1001 !important;
+  box-sizing: border-box !important;
+}
+
+body.cre8-admin-layout .page-body-wrapper.cre8-admin-main {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 100vh !important;
+  margin-left: 0 !important;
+  padding-top: calc(var(--bo-header-height) + var(--bo-tabs-height)) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+}
+
+body.cre8-admin-layout .cre8-back-header,
+body.cre8-admin-layout .cre8-admin-unified-topbar {
+  position: fixed !important;
+  top: 0 !important;
+  left: var(--bo-sidebar-width) !important;
+  right: auto !important;
+  width: calc(100% - var(--bo-sidebar-width)) !important;
+  height: var(--bo-header-height) !important;
+  min-height: var(--bo-header-height) !important;
+  max-height: var(--bo-header-height) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  padding: 0 1.65rem 0 2rem !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  z-index: 1000 !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14) !important;
+  background: #080b16 !important;
+}
+
+body.cre8-admin-layout .cre8-admin-brand {
+  min-height: var(--bo-header-height) !important;
+  height: var(--bo-header-height) !important;
+  box-sizing: border-box !important;
+}
+
+body.cre8-admin-layout .cre8-admin-unified-search {
+  height: 46px !important;
+  max-width: 720px !important;
+  flex: 0 1 720px !important;
+  box-sizing: border-box !important;
+}
+
+body.cre8-admin-layout .cre8-admin-topbar-tools {
+  flex: 0 0 auto !important;
+  min-width: max-content !important;
+  margin-left: auto !important;
+}
+
+body.cre8-admin-layout .cre8-admin-topbar-separator {
+  height: 28px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-menu-button {
+  width: 34px !important;
+  height: 40px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-menu-button svg {
+  width: 18px !important;
+  height: 18px !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2.25 !important;
+}
+
+body.cre8-admin-layout .cre8-admin-icon-button {
+  width: 38px !important;
+  height: 42px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-icon-button svg {
+  width: 18px !important;
+  height: 18px !important;
+  fill: currentColor !important;
+  stroke: none !important;
+}
+
+body.cre8-admin-layout .cre8-admin-icon-button.has-dot::after {
+  top: 8px !important;
+  right: 7px !important;
+  width: 8px !important;
+  height: 8px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-topbar-avatar {
+  width: 44px !important;
+  height: 44px !important;
+  border-width: 2px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-user-menu {
+  gap: 0.68rem !important;
+  padding-left: 1rem !important;
+}
+
+body.cre8-admin-layout .cre8-admin-user-name {
+  font-size: 0.98rem !important;
+  font-weight: 900 !important;
+}
+
+body.cre8-admin-layout .main-panel {
+  min-height: calc(100vh - var(--bo-header-height) - var(--bo-tabs-height)) !important;
+  padding-top: 0 !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-header,
+[data-theme="light"] body.cre8-admin-layout .cre8-admin-unified-topbar,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-header,
+body.cre8-admin-layout[data-theme="light"] .cre8-admin-unified-topbar {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border-bottom-color: rgba(15, 23, 42, 0.12) !important;
+}
+
+@media (max-width: 1100px) {
+  body.cre8-admin-layout .container-scroller.cre8-admin-page {
+    padding-left: 0 !important;
+  }
+
+  body.cre8-admin-layout .cre8-admin-sidebar {
+    position: relative !important;
+    width: auto !important;
+    height: auto !important;
+  }
+
+  body.cre8-admin-layout .page-body-wrapper.cre8-admin-main {
+    padding-top: 0 !important;
+  }
+
+  body.cre8-admin-layout .cre8-back-header,
+  body.cre8-admin-layout .cre8-admin-unified-topbar {
+    position: relative !important;
+    left: auto !important;
+    width: 100% !important;
+  }
+
+  body.cre8-admin-layout .cre8-back-module-tabs {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 760px) {
+  body.cre8-admin-layout .cre8-back-header,
+  body.cre8-admin-layout .cre8-admin-unified-topbar {
+    height: auto !important;
+    max-height: none !important;
+    min-height: var(--bo-header-height) !important;
+    flex-wrap: wrap !important;
+    padding: 0.85rem !important;
+    overflow: visible !important;
+  }
+
+  body.cre8-admin-layout .cre8-admin-unified-search {
+    flex: 1 1 100% !important;
+    max-width: none !important;
+    order: 3 !important;
+  }
+}
+
+/* Reference-style BackOffice sidebar. Header positioning above is intentionally untouched. */
+body.cre8-admin-layout .cre8-admin-sidebar {
+  display: flex !important;
+  flex-direction: column !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  background: #070c16 !important;
+  color: #eef2ff !important;
+}
+
+body.cre8-admin-layout .cre8-back-sidebar-logo,
+body.cre8-admin-layout .cre8-admin-brand.cre8-back-sidebar-logo {
+  height: var(--bo-header-height) !important;
+  min-height: var(--bo-header-height) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.18rem !important;
+  padding: 0 1.55rem !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1) !important;
+  background: #171b24 !important;
+  color: #ffffff !important;
+  text-decoration: none !important;
+  box-sizing: border-box !important;
+}
+
+body.cre8-admin-layout .cre8-back-sidebar-logo img {
+  width: 28px !important;
+  height: 28px !important;
+  object-fit: contain !important;
+  flex: 0 0 auto !important;
+  margin: 0 -0.05rem !important;
+}
+
+body.cre8-admin-layout .cre8-back-sidebar-logo strong,
+body.cre8-admin-layout .cre8-back-logo-word {
+  color: #ffffff !important;
+  font-family: Georgia, "Times New Roman", serif !important;
+  font-size: 1.55rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  letter-spacing: -0.045em !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+}
+
+body.cre8-admin-layout .cre8-back-logo-word-end {
+  margin-left: -0.04rem !important;
+}
+
+body.cre8-admin-layout .cre8-back-sidebar-profile {
+  display: grid !important;
+  grid-template-columns: 48px minmax(0, 1fr) 24px !important;
+  align-items: center !important;
+  gap: 0.78rem !important;
+  padding: 1rem 1.5rem 0.92rem 1.38rem !important;
+  border-bottom: 0 !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-avatar {
+  position: relative !important;
+  width: 44px !important;
+  height: 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 999px !important;
+  border: 2px solid rgba(218, 160, 116, 0.72) !important;
+  overflow: visible !important;
+  background: #171b24 !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.26) !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  border-radius: inherit !important;
+  object-fit: cover !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-avatar::after {
+  content: "" !important;
+  position: absolute !important;
+  right: -1px !important;
+  bottom: 2px !important;
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 999px !important;
+  border: 2px solid #070c16 !important;
+  background: #97e36d !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-copy {
+  min-width: 0 !important;
+  display: block !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-copy strong,
+body.cre8-admin-layout .cre8-back-profile-copy small {
+  display: block !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-copy strong {
+  color: #ffffff !important;
+  font-size: 1.1rem !important;
+  font-weight: 900 !important;
+  line-height: 1.05 !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-copy small {
+  margin-top: 0.2rem !important;
+  color: #ffffff !important;
+  font-size: 0.9rem !important;
+  font-weight: 700 !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-dots {
+  justify-self: end !important;
+  color: #7f8aaa !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-dots svg {
+  width: 22px !important;
+  height: 22px !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 3 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+body.cre8-admin-layout .cre8-admin-nav.cre8-back-nav {
+  display: flex !important;
+  flex-direction: column !important;
+  align-content: stretch !important;
+  gap: 0.5rem !important;
+  flex: 1 1 auto !important;
+  padding: 0.65rem 0 1.3rem !important;
+}
+
+body.cre8-admin-layout .cre8-back-nav-title {
+  margin: 0 0 0.85rem !important;
+  padding: 0 1.18rem !important;
+  color: #ffffff !important;
+  font-size: 0.98rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+body.cre8-admin-layout .cre8-back-nav-item,
+body.cre8-admin-layout button.cre8-back-nav-item {
+  position: relative !important;
+  width: calc(100% - 1.5rem) !important;
+  min-height: 54px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.7rem !important;
+  margin: 0 1.5rem 0 0 !important;
+  padding: 0 1.25rem !important;
+  border: 0 !important;
+  border-radius: 0 999px 999px 0 !important;
+  background: transparent !important;
+  color: #dfe7ff !important;
+  font-family: inherit !important;
+  font-size: 1.03rem !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  text-align: left !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
+  cursor: pointer !important;
+  box-sizing: border-box !important;
+  transition: background 0.18s ease, color 0.18s ease !important;
+}
+
+body.cre8-admin-layout .cre8-back-nav-item:hover,
+body.cre8-admin-layout .cre8-back-nav-item.is-active {
+  background: #0d0e14 !important;
+  color: #ffffff !important;
+  transform: none !important;
+}
+
+body.cre8-admin-layout .cre8-back-nav-item.is-active::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 3px !important;
+  height: 100% !important;
+  border-radius: 0 !important;
+  background: #0090e7 !important;
+}
+
+body.cre8-admin-layout .cre8-back-nav-icon {
+  width: 40px !important;
+  height: 40px !important;
+  flex: 0 0 40px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 999px !important;
+  background: #1d2332 !important;
+  color: #8b5cf6 !important;
+  text-align: center !important;
+}
+
+body.cre8-admin-layout .cre8-back-nav-icon svg {
+  width: 17.5px !important;
+  height: 17.5px !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2.3 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+body.cre8-admin-layout .cre8-back-icon-orange {
+  color: #f59e0b !important;
+}
+
+body.cre8-admin-layout .cre8-back-icon-red {
+  color: #ef4444 !important;
+}
+
+body.cre8-admin-layout .cre8-back-icon-blue {
+  color: #0ea5e9 !important;
+}
+
+body.cre8-admin-layout .cre8-back-icon-green {
+  color: #22c55e !important;
+}
+
+body.cre8-admin-layout .cre8-back-icon-purple {
+  color: #a855f7 !important;
+}
+
+body.cre8-admin-layout .cre8-back-icon-blue svg,
+body.cre8-admin-layout .cre8-back-icon-green svg,
+body.cre8-admin-layout .cre8-back-icon-purple svg {
+  fill: currentColor !important;
+  stroke: none !important;
+}
+
+body.cre8-admin-layout .cre8-back-theme-toggle .cre8-back-nav-icon {
+  color: #8b5cf6 !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-admin-sidebar,
+body.cre8-admin-layout[data-theme="light"] .cre8-admin-sidebar {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border-right-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-sidebar-logo,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-sidebar-logo {
+  background: #171b24 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-profile-copy strong,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-profile-copy strong {
+  color: #111827 !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-profile-copy small,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-profile-copy small,
+[data-theme="light"] body.cre8-admin-layout .cre8-back-profile-dots,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-profile-dots {
+  color: #64748b !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-profile-avatar::after,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-profile-avatar::after {
+  border-color: #ffffff !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-nav-title,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-nav-title {
+  color: #111827 !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-nav-item,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-nav-item {
+  color: #334155 !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-nav-item:hover,
+[data-theme="light"] body.cre8-admin-layout .cre8-back-nav-item.is-active,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-nav-item:hover,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-nav-item.is-active {
+  background: #eef2ff !important;
+  color: #111827 !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-nav-icon,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-nav-icon {
+  background: #e8edf7 !important;
+}
+
+/* Compact frame pass to match the teammate BackOffice proportions. */
+body.cre8-admin-layout .cre8-back-header,
+body.cre8-admin-layout .cre8-admin-unified-topbar {
+  gap: 0.8rem !important;
+  padding: 0 1.15rem 0 1.25rem !important;
+}
+
+body.cre8-admin-layout .cre8-admin-menu-button {
+  width: 30px !important;
+  height: 36px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-menu-button svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-unified-search {
+  height: 40px !important;
+  max-width: 720px !important;
+  flex: 0 1 720px !important;
+  border-radius: 0.36rem !important;
+  padding: 0 0.9rem !important;
+}
+
+body.cre8-admin-layout .cre8-admin-unified-search input {
+  font-size: 0.95rem !important;
+}
+
+body.cre8-admin-layout .cre8-admin-icon-button {
+  width: 34px !important;
+  height: 38px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-icon-button svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-icon-button.has-dot::after {
+  top: 7px !important;
+  right: 6px !important;
+  width: 7px !important;
+  height: 7px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-topbar-tools {
+  gap: 0.42rem !important;
+}
+
+body.cre8-admin-layout .cre8-admin-topbar-separator {
+  height: 28px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-topbar-avatar {
+  width: 38px !important;
+  height: 38px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-user-menu {
+  gap: 0.55rem !important;
+  padding-left: 0.7rem !important;
+}
+
+body.cre8-admin-layout .cre8-admin-user-name {
+  font-size: 0.92rem !important;
+}
+
+body.cre8-admin-layout .cre8-admin-user-arrow {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+body.cre8-admin-layout .cre8-back-module-tabs {
+  position: fixed !important;
+  top: var(--bo-header-height) !important;
+  left: var(--bo-sidebar-width) !important;
+  right: auto !important;
+  width: calc(100% - var(--bo-sidebar-width)) !important;
+  height: var(--bo-tabs-height) !important;
+  min-height: var(--bo-tabs-height) !important;
+  z-index: 999 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.44rem !important;
+  padding: 0 1.25rem !important;
+  box-sizing: border-box !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12) !important;
+  background: #080b16 !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+}
+
+body.cre8-admin-layout .cre8-back-module-tabs::-webkit-scrollbar {
+  height: 0 !important;
+}
+
+body.cre8-admin-layout .cre8-back-module-tab {
+  flex: 0 0 auto !important;
+  min-height: 32px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 0.92rem !important;
+  border: 1px solid rgba(148, 163, 184, 0.14) !important;
+  border-radius: 0.28rem !important;
+  background: #1b202b !important;
+  color: #eef2ff !important;
+  text-decoration: none !important;
+  font-size: 0.82rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.01em !important;
+  box-shadow: none !important;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease !important;
+}
+
+body.cre8-admin-layout .cre8-back-module-tab:hover {
+  border-color: rgba(0, 144, 231, 0.5) !important;
+  background: #242b3a !important;
+  color: #ffffff !important;
+}
+
+body.cre8-admin-layout .cre8-back-module-tab.is-active {
+  border-color: rgba(0, 144, 231, 0.82) !important;
+  background: #0090e7 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-module-tabs,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-module-tabs {
+  border-bottom-color: rgba(15, 23, 42, 0.1) !important;
+  background: #ffffff !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-module-tab,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-module-tab {
+  border-color: rgba(15, 23, 42, 0.1) !important;
+  background: #eef2f7 !important;
+  color: #111827 !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-module-tab:hover,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-module-tab:hover {
+  border-color: rgba(0, 144, 231, 0.45) !important;
+  background: #e2e8f0 !important;
+}
+
+[data-theme="light"] body.cre8-admin-layout .cre8-back-module-tab.is-active,
+body.cre8-admin-layout[data-theme="light"] .cre8-back-module-tab.is-active {
+  border-color: #0090e7 !important;
+  background: #0090e7 !important;
+  color: #ffffff !important;
+}
+
+body.cre8-admin-layout .cre8-back-sidebar-logo,
+body.cre8-admin-layout .cre8-admin-brand.cre8-back-sidebar-logo {
+  padding: 0 1.2rem !important;
+  gap: 0.12rem !important;
+}
+
+body.cre8-admin-layout .cre8-back-sidebar-logo img {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+body.cre8-admin-layout .cre8-back-logo-word {
+  font-size: 1.28rem !important;
+}
+
+body.cre8-admin-layout .cre8-back-sidebar-profile {
+  grid-template-columns: 40px minmax(0, 1fr) 20px !important;
+  gap: 0.55rem !important;
+  padding: 0.82rem 1.2rem 0.76rem 1.1rem !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-avatar {
+  width: 38px !important;
+  height: 38px !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-avatar::after {
+  width: 8px !important;
+  height: 8px !important;
+  right: -1px !important;
+  bottom: 1px !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-copy strong {
+  font-size: 0.98rem !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-copy small {
+  margin-top: 0.14rem !important;
+  font-size: 0.8rem !important;
+}
+
+body.cre8-admin-layout .cre8-back-profile-dots svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+body.cre8-admin-layout .cre8-admin-nav.cre8-back-nav {
+  gap: 0.34rem !important;
+  padding: 0.6rem 0 1rem !important;
+}
+
+body.cre8-admin-layout .cre8-back-nav-title {
+  margin-bottom: 0.72rem !important;
+  padding: 0 1.05rem !important;
+  font-size: 0.9rem !important;
+}
+
+body.cre8-admin-layout .cre8-back-nav-item,
+body.cre8-admin-layout button.cre8-back-nav-item {
+  width: calc(100% - 1.05rem) !important;
+  min-height: 48px !important;
+  gap: 0.6rem !important;
+  margin-right: 1.05rem !important;
+  padding: 0 1.05rem !important;
+  font-size: 0.95rem !important;
+}
+
+body.cre8-admin-layout .cre8-back-nav-icon {
+  width: 34px !important;
+  height: 34px !important;
+  flex-basis: 34px !important;
+}
+
+body.cre8-admin-layout .cre8-back-nav-icon svg {
+  width: 15.5px !important;
+  height: 15.5px !important;
+}
+
+@media (max-width: 1100px) {
+  body.cre8-admin-layout .cre8-back-module-tabs {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: var(--bo-tabs-height) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  body.cre8-admin-layout .cre8-back-module-tabs {
+    padding: 0.55rem 0.85rem !important;
+  }
+}
