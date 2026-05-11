@@ -21,7 +21,24 @@ class EvenementControleur {
     // ── helpers ──────────────────────────────────────────────────────────────
 
     private function currentUserId(): int {
-        return (int)($_SESSION['user_id'] ?? $_SESSION['utilisateur']['id'] ?? 0);
+        // Keep the same session compatibility used by the FrontOffice session bridge.
+        if (isset($_SESSION['user']['id'])) {
+            return (int) $_SESSION['user']['id'];
+        }
+        if (isset($_SESSION['id'])) {
+            return (int) $_SESSION['id'];
+        }
+        if (isset($_SESSION['user_id'])) {
+            return (int) $_SESSION['user_id'];
+        }
+        if (isset($_SESSION['utilisateur']['id'])) {
+            return (int) $_SESSION['utilisateur']['id'];
+        }
+        if (isset($_SESSION['utilisateur_id'])) {
+            return (int) $_SESSION['utilisateur_id'];
+        }
+
+        return 0;
     }
 
     private function redirect(string $path): void {
@@ -186,36 +203,95 @@ class EvenementControleur {
     }
 
     public function inscrireEvenement($eventId, $nom, $email) {
-    try {
-        $pdo = config::getConnexion();
-        
-        // Check if already registered
-        $stmt = $pdo->prepare("SELECT * FROM inscription_evenement WHERE id_evenement = :event_id AND email_utilisateur = :email");
-        $stmt->execute([':event_id' => $eventId, ':email' => $email]);
-        
-        if ($stmt->fetch()) {
-            return ['success' => false, 'message' => 'Vous êtes déjà inscrit à cet événement'];
+        try {
+            $pdo     = $this->pdo;
+            $eventId = (int) $eventId;
+            $userId  = $this->currentUserId();
+            $nom     = trim((string) $nom);
+            $email   = trim((string) $email);
+
+            if ($eventId <= 0) {
+                return ['success' => false, 'message' => 'Invalid event.'];
+            }
+
+            if ($userId <= 0) {
+                return ['success' => false, 'message' => 'Please log in to register for this event.'];
+            }
+
+            if ($nom === '' || $email === '') {
+                return ['success' => false, 'message' => 'Name and email are required.'];
+            }
+
+            $pdo->beginTransaction();
+
+            // Lock the event row while checking capacity and updating nb_inscrits.
+            $eventStmt = $pdo->prepare(
+                "SELECT capacite, nb_inscrits
+                 FROM evenement
+                 WHERE idFormation = :event_id AND statut = 'actif'
+                 FOR UPDATE"
+            );
+            $eventStmt->execute([':event_id' => $eventId]);
+            $event = $eventStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$event) {
+                $pdo->rollBack();
+                return ['success' => false, 'message' => 'Event not found or not available.'];
+            }
+
+            if ((int) $event['nb_inscrits'] >= (int) $event['capacite']) {
+                $pdo->rollBack();
+                return ['success' => false, 'message' => 'This event is full.'];
+            }
+
+            // Check if this logged-in user is already registered for this event.
+            $stmt = $pdo->prepare(
+                "SELECT 1
+                 FROM inscription_evenement
+                 WHERE id_evenement = :event_id AND id_utilisateur = :user_id
+                 LIMIT 1"
+            );
+            $stmt->execute([
+                ':event_id' => $eventId,
+                ':user_id'  => $userId,
+            ]);
+
+            if ($stmt->fetchColumn()) {
+                $pdo->rollBack();
+                return ['success' => false, 'message' => 'You are already registered for this event.'];
+            }
+
+            // The live database requires id_utilisateur, so it must be saved with the inscription.
+            $stmt = $pdo->prepare(
+                "INSERT INTO inscription_evenement
+                    (id_evenement, id_utilisateur, nom_utilisateur, email_utilisateur, statut, inscrit_le)
+                 VALUES
+                    (:event_id, :user_id, :nom, :email, 'en_attente', NOW())"
+            );
+            $stmt->execute([
+                ':event_id' => $eventId,
+                ':user_id'  => $userId,
+                ':nom'      => $nom,
+                ':email'    => $email,
+            ]);
+
+            $pdo->prepare(
+                "UPDATE evenement
+                 SET nb_inscrits = nb_inscrits + 1
+                 WHERE idFormation = :event_id"
+            )->execute([':event_id' => $eventId]);
+
+            $pdo->commit();
+
+            return ['success' => true, 'message' => 'Registration successful!'];
+
+        } catch (Exception $e) {
+            if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            return ['success' => false, 'message' => 'Error: ' . $e->getMessage()];
         }
-        
-        // Insert inscription
-        $stmt = $pdo->prepare("INSERT INTO inscription_evenement (id_evenement, nom_utilisateur, email_utilisateur, statut, inscrit_le) 
-                               VALUES (:event_id, :nom, :email, 'en_attente', NOW())");
-        $stmt->execute([
-            ':event_id' => $eventId,
-            ':nom' => $nom,
-            ':email' => $email
-        ]);
-        
-        // Update nb_inscrits in evenement
-        $pdo->prepare("UPDATE evenement SET nb_inscrits = nb_inscrits + 1 WHERE idFormation = :id")
-           ->execute([':id' => $eventId]);
-        
-        return ['success' => true, 'message' => 'Inscription réussie !'];
-        
-    } catch (Exception $e) {
-        return ['success' => false, 'message' => 'Erreur: ' . $e->getMessage()];
     }
-}
 
     public function listerInscriptions(): void {
         $stmt = $this->pdo->query("

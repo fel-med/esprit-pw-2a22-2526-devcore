@@ -21,9 +21,9 @@ if ($currentRole === 'admin') {
 
 $userName = $currentFrontUser['nom']
     ?? $_SESSION['nom']
-    ?? ($_SESSION['user']['nom'] ?? 'Utilisateur');
+    ?? ($_SESSION['user']['nom'] ?? 'User');
 $userName = trim((string) $userName);
-$userName = $userName !== '' ? $userName : 'Utilisateur';
+$userName = $userName !== '' ? $userName : 'User';
 
 $userInitial = function_exists('mb_substr')
     ? mb_substr($userName, 0, 1, 'UTF-8')
@@ -48,35 +48,35 @@ $quickCards = $isBrand
             'iconClass' => 'icon-purple',
             'icon' => 'bi-megaphone',
             'title' => 'My Campaigns',
-            'subtitle' => 'Créer et gérer vos campagnes',
+            'subtitle' => 'Create and manage your campaigns',
         ],
         [
             'href' => '../produit/index.php',
             'iconClass' => 'icon-blue',
             'icon' => 'bi-box-seam',
             'title' => 'Products',
-            'subtitle' => 'Organiser votre catalogue produits',
+            'subtitle' => 'Organize your product catalog',
         ],
         [
             'href' => '../contrat/index.php',
             'iconClass' => 'icon-green',
             'icon' => 'bi-file-earmark-text',
             'title' => 'Contracts',
-            'subtitle' => 'Suivre vos accords de collaboration',
+            'subtitle' => 'Track your collaboration agreements',
         ],
         [
             'href' => '../offre/brand_index.php',
             'iconClass' => 'icon-red',
             'icon' => 'bi-briefcase',
             'title' => 'Collaborations',
-            'subtitle' => 'Gérer offres et candidatures reçues',
+            'subtitle' => 'Manage offers and received applications',
         ],
         [
             'href' => '../evenement/index.php',
             'iconClass' => 'icon-orange',
             'icon' => 'bi-calendar-event',
             'title' => 'Events',
-            'subtitle' => 'Découvrir les événements de la communauté',
+            'subtitle' => 'Discover community events',
         ],
     ]
     : [
@@ -85,51 +85,51 @@ $quickCards = $isBrand
             'iconClass' => 'icon-purple',
             'icon' => 'bi-person-badge',
             'title' => 'My Space',
-            'subtitle' => 'Gérer votre portfolio et vos publications',
+            'subtitle' => 'Manage your portfolio and publications',
         ],
         [
             'href' => '../post/index.php',
             'iconClass' => 'icon-blue',
             'icon' => 'bi-newspaper',
-            'title' => 'Actualité',
-            'subtitle' => 'Voir les publications de la communauté',
+            'title' => 'Feeds',
+            'subtitle' => 'View community posts',
         ],
         [
             'href' => '../offre/creator_list.php',
             'iconClass' => 'icon-green',
             'icon' => 'bi-briefcase',
             'title' => 'Offers',
-            'subtitle' => 'Consulter les invitations des marques',
+            'subtitle' => 'Browse brand invitations',
         ],
         [
             'href' => '../condidature/index.php',
             'iconClass' => 'icon-red',
             'icon' => 'bi-send-check',
-            'title' => 'Candidatures',
-            'subtitle' => 'Suivre vos réponses et négociations',
+            'title' => 'Applications',
+            'subtitle' => 'Track your replies and negotiations',
         ],
         [
             'href' => '../campagne/indexC.php',
             'iconClass' => 'icon-purple',
             'icon' => 'bi-megaphone',
             'title' => 'Campaigns',
-            'subtitle' => 'Découvrir les campagnes disponibles',
+            'subtitle' => 'Discover available campaigns',
         ],
         [
             'href' => '../evenement/index.php',
             'iconClass' => 'icon-orange',
             'icon' => 'bi-calendar-event',
             'title' => 'Events',
-            'subtitle' => 'Participer aux événements et ateliers',
+            'subtitle' => 'Join events and workshops',
         ],
     ];
 
 $welcomeText = $isBrand
-    ? 'Votre espace marque vous aide à piloter vos campagnes, organiser vos produits, suivre vos contrats, gérer vos collaborations et découvrir les événements depuis un seul endroit.'
-    : 'Votre espace créateur vous aide à publier votre contenu, développer votre portfolio, découvrir les campagnes et événements disponibles, répondre aux offres et suivre vos candidatures facilement.';
+    ? 'Your brand space helps you manage campaigns, organize products, track contracts, manage collaborations, and discover events from one place.'
+    : 'Your creator space helps you publish content, grow your portfolio, discover available campaigns and events, reply to offers, and track your applications easily.';
 ?>
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <?php require_once __DIR__ . '/../layout/front-theme-bootstrap.php'; ?>
