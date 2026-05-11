@@ -400,8 +400,9 @@ if (!isset($forum) || !isset($messages)) {
                 <div class="message-actions">
                     <?php if ($isOwner): ?>
                     <button class="btn-msg-action btn-msg-edit" onclick="toggleEdit(<?= $msg['idMessage'] ?>)">✏️ <span data-i18n="modify">Modifier</span></button>
-                    <?php endif; ?>
+                    <?php else: ?>
                     <button class="btn-msg-action btn-msg-report" onclick="reportMessage(<?= $msg['idMessage'] ?>)">🚩 <span data-i18n="report">Signaler</span></button>
+                    <?php endif; ?>
                 </div>
 
                 <div class="edit-area" id="edit-<?= $msg['idMessage'] ?>">
@@ -457,7 +458,9 @@ if (!isset($forum) || !isset($messages)) {
             write_message: 'Écrivez votre message ici... (max 2000 caractères)',
             publish_message: '📤 Publier le message',
             empty_message: 'Veuillez écrire un message',
-            connection_error: 'Erreur de connexion'
+            connection_error: 'Erreur de connexion',
+            modify: 'Modifier',
+            report: 'Signaler'
         },
         en: {
             back_to_forums: 'Back to forums',
@@ -468,7 +471,9 @@ if (!isset($forum) || !isset($messages)) {
             write_message: 'Write your message here... (max 2000 characters)',
             publish_message: '📤 Publish message',
             empty_message: 'Please write a message',
-            connection_error: 'Connection error'
+            connection_error: 'Connection error',
+            modify: 'Edit',
+            report: 'Report'
         }
     };
 
