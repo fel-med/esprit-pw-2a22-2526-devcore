@@ -418,36 +418,81 @@ textarea.form-control { resize:vertical; min-height:80px; }
     background: var(--bg-surface);
     border: 1.5px solid var(--accent-soft);
     border-radius: var(--radius);
-    padding:20px;
-    margin-top:16px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+    padding: 20px;
+    margin-top: 16px;
     width: 100%;
     box-sizing: border-box;
+    clear: both;
+    overflow: hidden;
 }
-.ia-result-title { font-size:.9rem; font-weight:700; color:var(--accent); margin-bottom:0; flex: 0 0 auto; }
+.ia-result-title {
+    display: block;
+    font-size: .95rem;
+    font-weight: 800;
+    color: var(--accent);
+    margin: 0 0 14px;
+    line-height: 1.4;
+}
 .ia-field {
-    margin-bottom:0;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
+    display: block;
     width: 100%;
     min-width: 0;
+    margin: 0 0 16px;
+    clear: both;
 }
-.ia-label { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:0; flex: 0 0 auto; width: 100%; }
-.ia-value { font-size:.88rem; line-height:1.6; color:var(--sub); width: 100%; word-break: break-word; }
-.ia-value.big { font-size:1.1rem; font-weight:700; color:var(--accent); }
+.ia-field:last-child { margin-bottom: 0; }
+.ia-label {
+    display: block;
+    width: 100%;
+    font-size: .72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin: 0 0 8px;
+    line-height: 1.35;
+}
+.ia-value {
+    display: block;
+    width: 100%;
+    font-size: .9rem;
+    line-height: 1.6;
+    color: var(--sub);
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+.ia-value.big {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--accent);
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+}
 .pill-list {
-    display:flex;
-    flex-wrap:wrap;
-    gap:8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
     width: 100%;
     align-items: flex-start;
     align-content: flex-start;
+    min-width: 0;
 }
-.pill { padding:5px 12px; border-radius:20px; font-size:.75rem; font-weight:700; max-width: 100%; word-break: break-word; }
+.pill {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: .78rem;
+    font-weight: 700;
+    line-height: 1.35;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
 .pill-g { background:var(--success-soft); color:var(--success); }
 .pill-r { background:var(--danger-soft);  color:var(--danger); }
 .pill-w { background:var(--warn-soft);    color:var(--warn); }

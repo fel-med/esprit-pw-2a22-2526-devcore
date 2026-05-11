@@ -6,7 +6,13 @@ require_once __DIR__ . '/../Modele/evenement.php';
 // ── Base URL helper ──────────────────────────────────────────────────────────
 // Detects the project sub-path dynamically so no URL is ever hardcoded.
 function evenementBaseUrl(): string {
-    $script = str_replace('\\', '/', $_SERVER['SCRIPT_NAME']);
+    $script = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+    if (($pos = strpos($script, '/Controleur/')) !== false) {
+        return rtrim(substr($script, 0, $pos), '/');
+    }
+    if (($pos = strpos($script, '/Vue/')) !== false) {
+        return rtrim(substr($script, 0, $pos), '/');
+    }
     return rtrim(dirname(dirname($script)), '/');
 }
 
@@ -21,24 +27,19 @@ class EvenementControleur {
     // ── helpers ──────────────────────────────────────────────────────────────
 
     private function currentUserId(): int {
-        // Keep the same session compatibility used by the FrontOffice session bridge.
-        if (isset($_SESSION['user']['id'])) {
-            return (int) $_SESSION['user']['id'];
-        }
-        if (isset($_SESSION['id'])) {
-            return (int) $_SESSION['id'];
-        }
-        if (isset($_SESSION['user_id'])) {
-            return (int) $_SESSION['user_id'];
-        }
-        if (isset($_SESSION['utilisateur']['id'])) {
-            return (int) $_SESSION['utilisateur']['id'];
-        }
-        if (isset($_SESSION['utilisateur_id'])) {
-            return (int) $_SESSION['utilisateur_id'];
-        }
-
+        if (isset($_SESSION['user']['id'])) return (int)$_SESSION['user']['id'];
+        if (isset($_SESSION['id'])) return (int)$_SESSION['id'];
+        if (isset($_SESSION['user_id'])) return (int)$_SESSION['user_id'];
+        if (isset($_SESSION['utilisateur']['id'])) return (int)$_SESSION['utilisateur']['id'];
         return 0;
+    }
+
+    private function normalizeDateForInput(string $date): string {
+        $date = trim($date);
+        if ($date === '') return '';
+        if (strpos($date, 'T') !== false) $date = explode('T', $date)[0];
+        if (strpos($date, ' ') !== false) $date = explode(' ', $date)[0];
+        return substr($date, 0, 10);
     }
 
     private function redirect(string $path): void {
@@ -122,25 +123,31 @@ class EvenementControleur {
     }
 
     public function modifier(int $id, array $data, array $files = []): void {
-        $date  = $data['date_evenement'] ?? '';
-        $today = date('Y-m-d');
-
-        if ($date < $today) {
-            $this->redirect('/Controleur/evenementC.php?action=admin&error=date');
+        $old = $this->getEventById($id);
+        if (!$old) {
+            $this->redirect('/Controleur/evenementC.php?action=admin&error=notfound');
         }
 
-        if (strpos($date, 'T') !== false) {
-            $date = explode('T', $date)[0];
+        $date = $this->normalizeDateForInput((string)($data['date_evenement'] ?? ''));
+        if ($date === '') {
+            $date = $this->normalizeDateForInput($old->getDateEvenement());
         }
 
-        $old       = $this->getEventById($id);
-        $imagePath = $old ? $old->getImage() : null;
+        $capacite = (int)($data['capacite'] ?? $old->getCapacite());
+        if ($capacite <= 0) {
+            $this->redirect('/Controleur/evenementC.php?action=admin&error=capacite');
+        }
+
+        $imagePath = $old->getImage();
 
         if (isset($files['image']) && $files['image']['error'] === UPLOAD_ERR_OK) {
             if ($imagePath && file_exists(__DIR__ . '/../' . $imagePath)) {
                 unlink(__DIR__ . '/../' . $imagePath);
             }
-            $imagePath = $this->uploadImage($files['image'], $id);
+            $uploadedPath = $this->uploadImage($files['image'], $id);
+            if ($uploadedPath) {
+                $imagePath = $uploadedPath;
+            }
         }
 
         $stmt = $this->pdo->prepare(
@@ -160,16 +167,16 @@ class EvenementControleur {
 
         $stmt->execute([
             ':id'          => $id,
-            ':titre'       => $data['titre'],
-            ':description' => $data['description'] ?? '',
-            ':duree'       => (int)($data['duree'] ?? 0),
+            ':titre'       => $data['titre'] ?? $old->getTitre(),
+            ':description' => $data['description'] ?? $old->getDescription(),
+            ':duree'       => (int)($data['duree'] ?? $old->getDuree()),
             ':date'        => $date,
-            ':type'        => $data['type'],
-            ':statut'      => $data['statut'],
-            ':lieu'        => $data['lieu'] ?? '',
-            ':capacite'    => (int)($data['capacite'] ?? 0),
+            ':type'        => $data['type'] ?? $old->getType(),
+            ':statut'      => $data['statut'] ?? $old->getStatut(),
+            ':lieu'        => $data['lieu'] ?? $old->getLieu(),
+            ':capacite'    => $capacite,
             ':image'       => $imagePath,
-            ':adresse'     => $data['adresse_complete'] ?? null,
+            ':adresse'     => $data['adresse_complete'] ?? $old->getAdresseComplete(),
         ]);
 
         $this->redirect('/Controleur/evenementC.php?action=admin&success=updated');
@@ -203,88 +210,52 @@ class EvenementControleur {
     }
 
     public function inscrireEvenement($eventId, $nom, $email) {
+        $userId = $this->currentUserId();
+        if ($userId <= 0) {
+            return ['success' => false, 'message' => 'Please log in to register for this event.'];
+        }
+
         try {
-            $pdo     = $this->pdo;
-            $eventId = (int) $eventId;
-            $userId  = $this->currentUserId();
-            $nom     = trim((string) $nom);
-            $email   = trim((string) $email);
-
-            if ($eventId <= 0) {
-                return ['success' => false, 'message' => 'Invalid event.'];
-            }
-
-            if ($userId <= 0) {
-                return ['success' => false, 'message' => 'Please log in to register for this event.'];
-            }
-
-            if ($nom === '' || $email === '') {
-                return ['success' => false, 'message' => 'Name and email are required.'];
-            }
-
+            $pdo = config::getConnexion();
             $pdo->beginTransaction();
 
-            // Lock the event row while checking capacity and updating nb_inscrits.
-            $eventStmt = $pdo->prepare(
-                "SELECT capacite, nb_inscrits
-                 FROM evenement
-                 WHERE idFormation = :event_id AND statut = 'actif'
-                 FOR UPDATE"
-            );
-            $eventStmt->execute([':event_id' => $eventId]);
-            $event = $eventStmt->fetch(PDO::FETCH_ASSOC);
+            $eventStmt = $pdo->prepare("SELECT capacite, nb_inscrits FROM evenement WHERE idFormation = :id FOR UPDATE");
+            $eventStmt->execute([':id' => $eventId]);
+            $eventRow = $eventStmt->fetch(PDO::FETCH_ASSOC);
 
-            if (!$event) {
+            if (!$eventRow) {
                 $pdo->rollBack();
-                return ['success' => false, 'message' => 'Event not found or not available.'];
+                return ['success' => false, 'message' => 'Event not found.'];
             }
 
-            if ((int) $event['nb_inscrits'] >= (int) $event['capacite']) {
+            if ((int)$eventRow['nb_inscrits'] >= (int)$eventRow['capacite']) {
                 $pdo->rollBack();
-                return ['success' => false, 'message' => 'This event is full.'];
+                return ['success' => false, 'message' => 'This event is already full.'];
             }
 
-            // Check if this logged-in user is already registered for this event.
-            $stmt = $pdo->prepare(
-                "SELECT 1
-                 FROM inscription_evenement
-                 WHERE id_evenement = :event_id AND id_utilisateur = :user_id
-                 LIMIT 1"
-            );
-            $stmt->execute([
-                ':event_id' => $eventId,
-                ':user_id'  => $userId,
-            ]);
+            $stmt = $pdo->prepare("SELECT 1 FROM inscription_evenement WHERE id_evenement = :event_id AND id_utilisateur = :user_id LIMIT 1");
+            $stmt->execute([':event_id' => $eventId, ':user_id' => $userId]);
 
             if ($stmt->fetchColumn()) {
                 $pdo->rollBack();
                 return ['success' => false, 'message' => 'You are already registered for this event.'];
             }
 
-            // The live database requires id_utilisateur, so it must be saved with the inscription.
-            $stmt = $pdo->prepare(
-                "INSERT INTO inscription_evenement
-                    (id_evenement, id_utilisateur, nom_utilisateur, email_utilisateur, statut, inscrit_le)
-                 VALUES
-                    (:event_id, :user_id, :nom, :email, 'en_attente', NOW())"
-            );
+            $stmt = $pdo->prepare("INSERT INTO inscription_evenement
+                (id_evenement, id_utilisateur, nom_utilisateur, email_utilisateur, statut, inscrit_le)
+                VALUES (:event_id, :user_id, :nom, :email, 'en_attente', NOW())");
             $stmt->execute([
                 ':event_id' => $eventId,
                 ':user_id'  => $userId,
                 ':nom'      => $nom,
-                ':email'    => $email,
+                ':email'    => $email
             ]);
 
-            $pdo->prepare(
-                "UPDATE evenement
-                 SET nb_inscrits = nb_inscrits + 1
-                 WHERE idFormation = :event_id"
-            )->execute([':event_id' => $eventId]);
+            $pdo->prepare("UPDATE evenement SET nb_inscrits = nb_inscrits + 1 WHERE idFormation = :id")
+                ->execute([':id' => $eventId]);
 
             $pdo->commit();
-
             return ['success' => true, 'message' => 'Registration successful!'];
-
         } catch (Exception $e) {
             if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {
                 $pdo->rollBack();
@@ -343,7 +314,7 @@ class EvenementControleur {
                 'titre' => $evenement->getTitre(),
                 'description' => $evenement->getDescription(),
                 'type' => $evenement->getType(),
-                'date_evenement' => $evenement->getDateEvenement(),
+                'date_evenement' => $this->normalizeDateForInput($evenement->getDateEvenement()),
                 'lieu' => $evenement->getLieu(),
                 'capacite' => $evenement->getCapacite(),
                 'nb_inscrits' => $evenement->getNbInscrits(),
@@ -454,7 +425,7 @@ switch ($action) {
                 'titre'            => $event->getTitre(),
                 'description'      => $event->getDescription(),
                 'duree'            => $event->getDuree(),
-                'date_evenement'   => $event->getDateEvenement(),
+                'date_evenement'   => substr((string)$event->getDateEvenement(), 0, 10),
                 'type'             => $event->getType(),
                 'statut'           => $event->getStatut(),
                 'lieu'             => $event->getLieu(),
