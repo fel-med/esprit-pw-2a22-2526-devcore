@@ -383,7 +383,9 @@
     }
 
     $allContexts = [];
+    $filteredContexts = [];
     $contexts = [];
+    $totalFilteredContexts = 0;
     $brandMetrics = [
         'responsesToReview' => 0,
         'negotiationsWaitingReply' => 0,
@@ -409,15 +411,15 @@
     if ($brandId) {
         try {
             $allContexts = $controller->getBrandCandidatures($brandId);
-            $pagedFilters = $filters + [
-                'limit' => $perPage + 1,
-                'offset' => $offset,
-            ];
-            $contexts = $controller->getBrandCandidatures($brandId, $pagedFilters);
-            if (count($contexts) > $perPage) {
-                $hasNextPage = true;
-                array_pop($contexts);
-            }
+            $filteredContexts = $controller->getBrandCandidatures($brandId, $filters);
+            $totalFilteredContexts = count($filteredContexts);
+
+            // Important: workflow tabs must be built from the full filtered result set,
+            // not only from page 1. Otherwise an accepted candidature can appear in the
+            // contract selector but be hidden from the Accepted/Campaign tabs here.
+            $contexts = $filteredContexts;
+            $hasNextPage = false;
+
             $summary = $controller->summarizeContexts($allContexts);
             $brandMetrics = $controller->getBrandActionMetrics($brandId);
             $brandOfferMetrics = $offreController->getBrandOfferActionMetrics($brandId);
@@ -433,8 +435,10 @@
     $activeFilterCount = count(array_filter($filters, static fn($value) => $value !== ''));
     $paginationBase = $_GET;
     unset($paginationBase['page']);
-    $prevPageUrl = $page > 1 ? 'brand_index.php?' . http_build_query($paginationBase + ['page' => $page - 1]) : '';
-    $nextPageUrl = $hasNextPage ? 'brand_index.php?' . http_build_query($paginationBase + ['page' => $page + 1]) : '';
+    // The response workspace now displays the complete filtered result set inside
+    // the origin/workflow tabs, so page links are intentionally disabled here.
+    $prevPageUrl = '';
+    $nextPageUrl = '';
     $savedCandidatureIds = $brandId ? getSavedBrandCandidatureIds($brandId) : [];
 
     $savedDisplayContextMap = [];
@@ -835,7 +839,7 @@
                     </div>
                 </section>
                 <nav class="front-pagination" aria-label="Brand candidature pages">
-                    <span>Page <?php echo $page; ?> · Showing up to <?php echo $perPage; ?> filtered candidatures</span>
+                    <span>Showing <?php echo (int) count($contexts); ?> of <?php echo (int) $totalFilteredContexts; ?> filtered candidature<?php echo (int) $totalFilteredContexts === 1 ? '' : 's'; ?></span>
                     <div>
                         <?php if ($prevPageUrl !== ''): ?>
                             <a class="btn btn-outline-secondary" href="<?php echo htmlspecialchars($prevPageUrl); ?>">Previous</a>

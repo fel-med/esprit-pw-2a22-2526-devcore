@@ -60,6 +60,7 @@ class CondidatureC
 
         return [
             'condidature' => $condidature,
+            'typeReponseDb' => trim((string) ($row['typeReponse'] ?? '')),
             'creator' => [
                 'id' => isset($row['creatorId']) ? (int) $row['creatorId'] : (int) $condidature->getIdCreateur(),
                 'nom' => (string) ($row['creatorName'] ?? ''),
