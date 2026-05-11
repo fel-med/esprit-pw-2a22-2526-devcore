@@ -82,7 +82,7 @@ class CampagneC
     public function afficherCampagnesArchives(?int $idMarque = null): array
     {
         $where = $idMarque
-            ? "WHERE idMarque = :idMarque AND statut = 'terminee'"
+            ? "WHERE c.idMarque = :idMarque AND c.statut = 'terminee'"
             : "WHERE c.statut = 'terminee'";
         $sql = "SELECT c.*, u.nom AS nomMarque
                 FROM campagne c

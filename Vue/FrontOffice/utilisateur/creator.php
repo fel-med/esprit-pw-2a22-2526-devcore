@@ -71,6 +71,13 @@ $quickCards = $isBrand
             'title' => 'Collaborations',
             'subtitle' => 'Gérer offres et candidatures reçues',
         ],
+        [
+            'href' => '../evenement/index.php',
+            'iconClass' => 'icon-orange',
+            'icon' => 'bi-calendar-event',
+            'title' => 'Events',
+            'subtitle' => 'Découvrir les événements de la communauté',
+        ],
     ]
     : [
         [
@@ -108,11 +115,18 @@ $quickCards = $isBrand
             'title' => 'Campaigns',
             'subtitle' => 'Découvrir les campagnes disponibles',
         ],
+        [
+            'href' => '../evenement/index.php',
+            'iconClass' => 'icon-orange',
+            'icon' => 'bi-calendar-event',
+            'title' => 'Events',
+            'subtitle' => 'Participer aux événements et ateliers',
+        ],
     ];
 
 $welcomeText = $isBrand
-    ? 'Votre espace marque vous aide à piloter vos campagnes, organiser vos produits, suivre vos contrats et gérer vos collaborations avec les créateurs depuis un seul endroit.'
-    : 'Votre espace créateur vous aide à publier votre contenu, développer votre portfolio, découvrir les campagnes disponibles, répondre aux offres et suivre vos candidatures facilement.';
+    ? 'Votre espace marque vous aide à piloter vos campagnes, organiser vos produits, suivre vos contrats, gérer vos collaborations et découvrir les événements depuis un seul endroit.'
+    : 'Votre espace créateur vous aide à publier votre contenu, développer votre portfolio, découvrir les campagnes et événements disponibles, répondre aux offres et suivre vos candidatures facilement.';
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -268,10 +282,12 @@ $welcomeText = $isBrand
         .icon-red    { background: #fff1f3; color: #f43f5e; }
         .icon-blue   { background: #f0f9ff; color: #0369a1; }
         .icon-green  { background: #f0fdf4; color: #15803d; }
+        .icon-orange { background: #fff7ed; color: #ea580c; }
 
-        [data-theme="dark"] .icon-red   { background: #2a1422; }
-        [data-theme="dark"] .icon-blue  { background: #0a1e2e; color: #38bdf8; }
-        [data-theme="dark"] .icon-green { background: #0a1f16; color: #34d399; }
+        [data-theme="dark"] .icon-red    { background: #2a1422; }
+        [data-theme="dark"] .icon-blue   { background: #0a1e2e; color: #38bdf8; }
+        [data-theme="dark"] .icon-green  { background: #0a1f16; color: #34d399; }
+        [data-theme="dark"] .icon-orange { background: #2a1a0a; color: #fb923c; }
 
         .quick-card-title { font-weight: 800; font-size: 15px; margin-bottom: 4px; }
         .quick-card-sub   { font-size: 13px; color: var(--text-sub); line-height: 1.4; }

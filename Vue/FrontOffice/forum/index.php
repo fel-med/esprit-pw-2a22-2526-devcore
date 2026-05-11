@@ -40,6 +40,20 @@ $totalMessages = array_sum(array_column($forums, 'nb_messages'));
     <link rel="stylesheet" href="<?= $BASE ?>/Vue/FrontOffice/layout/front-header.css">
     <link rel="icon" type="image/png" sizes="32x32" href="<?= $BASE ?>/Vue/public/images/logo.png">
     <style>
+        /* Map to front-header.css tokens (avoids undefined --text-main / --text-dim) */
+        :root {
+            --text-main: var(--text);
+            --text-dim: var(--text-sub);
+        }
+        [data-theme="dark"] {
+            --text-main: var(--text);
+            --text-dim: var(--text-sub);
+        }
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+        }
+
         /* ── HERO ── */
         .hero-section {
             display: flex;
@@ -73,7 +87,7 @@ $totalMessages = array_sum(array_column($forums, 'nb_messages'));
             padding-bottom: 16px;
             margin-bottom: 24px;
         }
-        .section-header h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+        .section-header h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; color: var(--text-main); }
         .section-header p  { font-size: 14px; color: var(--text-sub); }
 
         /* ── LAYOUT ── */
@@ -244,7 +258,7 @@ $totalMessages = array_sum(array_column($forums, 'nb_messages'));
             border: 1px solid var(--border);
         }
         .empty-state-icon { font-size: 4rem; margin-bottom: 16px; }
-        .empty-state h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+        .empty-state h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; color: var(--text-main); }
         .empty-state p { color: var(--text-sub); }
 
         /* ── RESPONSIVE ── */

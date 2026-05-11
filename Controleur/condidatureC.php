@@ -555,7 +555,7 @@ class CondidatureC
             return 'deterministic_intent';
         }
 
-        if (in_array($intent, ['fill_offer_form', 'improve_offer_text', 'prepare_negotiation_reply', 'prepare_acceptance_note', 'prepare_refusal_note'], true)) {
+        if (in_array($intent, ['fill_offer_form', 'improve_offer_text', 'prepare_negotiation_reply', 'prepare_acceptance_note', 'prepare_refusal_note', 'prepare_creator_acceptance_note', 'prepare_creator_refusal_note'], true)) {
             return 'deterministic_form_draft';
         }
 
@@ -2057,6 +2057,8 @@ class CondidatureC
             'summarize_negotiation',
             'prepare_acceptance_note',
             'prepare_refusal_note',
+            'prepare_creator_acceptance_note',
+            'prepare_creator_refusal_note',
             'analyze_candidature_quality',
             'explain_statistics',
             'detect_risky_items',
@@ -4675,6 +4677,31 @@ class CondidatureC
             return 'blocked_request';
         }
 
+        $explicitFinalAutoPhrases = [
+            'click accept',
+            'click refuse',
+            'click send',
+            'click save',
+            'submit now',
+            'send now',
+            'save now',
+            'publish now',
+            'accept it now',
+            'refuse it now',
+            'decline it now',
+            'validate now',
+            'confirm final',
+            'do it automatically',
+            'finalize without',
+            'accept all',
+            'refuse all',
+            'accept all pending',
+            'refuse all pending',
+            'delete all',
+            'submit automatically',
+            'send it automatically',
+        ];
+
         if ($this->messageContainsAny($normalized, [
             'delete everything',
             'submit now',
@@ -4741,6 +4768,13 @@ class CondidatureC
             'apply filters automatically',
             'do not mention limitations',
         ])) {
+            if ($this->messageContainsAny($normalized, $explicitFinalAutoPhrases)) {
+                return 'forbidden_auto_action';
+            }
+            if ($this->cre8PilotNormalizedHasSafeDraftingIntent($normalized)
+                && $this->messageContainsAny($normalized, ['accept', 'refuse', 'decline', 'reject', 'candidature', 'terms', 'invitation'])) {
+                return '';
+            }
             return 'forbidden_auto_action';
         }
 
@@ -4760,6 +4794,25 @@ class CondidatureC
         }
 
         return '';
+    }
+
+    private function cre8PilotNormalizedHasSafeDraftingIntent(string $normalized): bool
+    {
+        $normalized = strtolower(trim((string) $normalized));
+
+        return $this->messageContainsAny($normalized, [
+            'note',
+            'draft',
+            'write ',
+            'write a',
+            'reason',
+            'message',
+            'politely',
+            'polite',
+            'wording',
+            'prepare ',
+            'short reason',
+        ]);
     }
 
     private function cre8PilotMessageLooksLikeOfferPreparationRequest(string $normalized): bool
@@ -5237,10 +5290,17 @@ class CondidatureC
         return $intro . ' In general: draft or brouillon means not finalized; active or open means still in play; pending means someone still has to review; negotiation means terms are moving; accepted or refused are decisions; expired means time ran out.';
     }
 
-    private function cre8PilotBuildRecommendNextActionMessage(string $page, string $mode, string $role, string $messageLower): string
+    private function cre8PilotBuildRecommendNextActionMessage(string $page, string $mode, string $role, string $messageLower, array $visibleData = []): string
     {
         $role = strtolower(trim($role));
         $tail = ' I will not submit, save, accept, refuse, or delete anything automatically—you stay in control.';
+
+        if ($this->cre8PilotIsPageMode($page, $mode, 'creator_candidature_workspace', ['list']) && $role === 'createur') {
+            $listPick = $this->cre8PilotBuildCreatorCandidatureListRecommendMessage($visibleData);
+            if ($listPick !== null && $listPick !== '') {
+                return $listPick . $tail;
+            }
+        }
 
         if ($this->cre8PilotIsPageMode($page, $mode, 'brand_offer_workspace', ['list']) || $page === 'brand_offer_list') {
             return 'For your offer list, a practical order is: check offers that are close to expiring or already expired, then offers with candidatures still pending or in negotiation, then campaigns with unusually low budgets or tight deadlines, and finally offers that have few creator responses so you can adjust messaging or targeting.' . $tail;
@@ -5254,7 +5314,8 @@ class CondidatureC
             return 'As a creator on this offer view, check first: whether the deadline still works for you, whether the budget matches the requested deliverables, whether the product fits your audience, and what formats or exclusivity the brand expects. If it fits, prepare your candidature text and numbers before submitting manually.' . $tail;
         }
 
-        if ($this->cre8PilotIsPageMode($page, $mode, 'creator_candidature_workspace', ['list', 'application_form', 'negotiation_reply']) || str_contains($page, 'creator_candidature')) {
+        if ($this->cre8PilotIsPageMode($page, $mode, 'creator_candidature_workspace', ['application_form', 'negotiation_reply'])
+            || (str_contains($page, 'creator_candidature') && !$this->cre8PilotIsPageMode($page, $mode, 'creator_candidature_workspace', ['list']))) {
             return 'For your candidatures, start with items still pending or in negotiation, then responses where your text or budget might need tightening, and finally anything approaching a deadline. Update messages yourself; I only suggest drafts.' . $tail;
         }
 
@@ -5344,6 +5405,8 @@ class CondidatureC
             'summarize_candidature',
             'prepare_acceptance_note',
             'prepare_refusal_note',
+            'prepare_creator_acceptance_note',
+            'prepare_creator_refusal_note',
             'security_check',
             'security_check_page',
             'security_check_message',
@@ -5717,6 +5780,8 @@ class CondidatureC
         }
 
         if ($isNegotiationReply) {
+            $isCreatorCandidatureNegotiation = strtolower(trim((string) $role)) === 'createur'
+                && $this->cre8PilotIsPageMode($page, $mode, 'creator_candidature_workspace', ['negotiation_reply']);
             if ($this->messageContainsAny($normalized, ['summarize negotiation', 'what changed', 'summarize the negotiation'])) {
                 return 'summarize_negotiation';
             }
@@ -5782,6 +5847,17 @@ class CondidatureC
                 'i wanna accept', 'want to accept', 'prepare an acceptance', 'prepare acceptance note', 'polite acceptance',
                 'write an acceptance', 'write accept message', 'acceptance message', 'acceptance note',
             ]) && !$this->messageContainsAny($normalized, $negotiationDraftSignals)) {
+                if ($isCreatorCandidatureNegotiation) {
+                    if ($this->cre8PilotNormalizedHasSafeDraftingIntent($normalized)) {
+                        return 'prepare_creator_acceptance_note';
+                    }
+                    if ($this->messageContainsAny($normalized, ['accept it now', 'click accept', 'accept automatically', 'finalize without'])) {
+                        return 'forbidden_auto_action';
+                    }
+
+                    return 'safe_decision_note';
+                }
+
                 return 'prepare_acceptance_note';
             }
             if ($this->messageContainsAny($normalized, [
@@ -5790,6 +5866,17 @@ class CondidatureC
                 'polite refusal', 'write decline', 'write refusal', 'decline message', 'decline note', 'explain refusal',
                 'refuse politely', 'decline politely',
             ]) && !$this->messageContainsAny($normalized, $negotiationDraftSignals)) {
+                if ($isCreatorCandidatureNegotiation) {
+                    if ($this->cre8PilotNormalizedHasSafeDraftingIntent($normalized)) {
+                        return 'prepare_creator_refusal_note';
+                    }
+                    if ($this->messageContainsAny($normalized, ['refuse it now', 'click refuse', 'refuse automatically', 'decline it now'])) {
+                        return 'forbidden_auto_action';
+                    }
+
+                    return 'safe_decision_note';
+                }
+
                 return 'prepare_refusal_note';
             }
 
@@ -10060,6 +10147,173 @@ class CondidatureC
         );
     }
 
+    private function cre8PilotBuildCreatorCandidatureListVisibleSummary(array $visibleData): string
+    {
+        $items = $visibleData['visibleItems'] ?? [];
+        $cardSummaries = [];
+        if (is_array($items)) {
+            foreach ($items as $it) {
+                if (!is_array($it)) {
+                    continue;
+                }
+                if (($it['item_type'] ?? '') !== 'candidature') {
+                    continue;
+                }
+                $title = trim((string) ($it['source_label'] ?? ''));
+                $text = trim((string) ($it['visible_text'] ?? ''));
+                if ($title === '' && $text !== '') {
+                    $lines = preg_split('/\R/u', $text);
+                    $title = trim((string) ($lines[0] ?? ''));
+                }
+                $title = $this->sanitizeCre8PilotLlmScalar($title, 120);
+                if ($title !== '') {
+                    $cardSummaries[] = $title;
+                }
+            }
+        }
+        $n = count($cardSummaries);
+        if ($n === 0) {
+            $highlight = $this->cre8PilotFirstHighlight($visibleData);
+
+            return $highlight !== ''
+                ? 'Visible workspace summary: ' . $highlight . '. Review status, deadline, budget, and messages before taking action.'
+                : 'This page is related to invitations or candidatures. Review status, deadline, budget, and pending replies before deciding the next step.';
+        }
+        if ($n === 1) {
+            return 'Visible invitations: 1 invitation is shown: ' . $cardSummaries[0] . '. Review budget, deadline, response status, and messages before taking action.';
+        }
+        $joined = $n === 2
+            ? $cardSummaries[0] . ' and ' . $cardSummaries[1]
+            : implode(', ', array_slice($cardSummaries, 0, -1)) . ', and ' . $cardSummaries[$n - 1];
+
+        return 'Visible invitations: ' . $n . ' waiting invitations are shown: ' . $joined . '. Review budget, deadline, response status, and messages before taking action.';
+    }
+
+    private function cre8PilotBuildCreatorCandidatureListRecommendMessage(array $visibleData): ?string
+    {
+        $items = $visibleData['visibleItems'] ?? [];
+        $cards = [];
+        if (!is_array($items)) {
+            return null;
+        }
+        foreach ($items as $it) {
+            if (!is_array($it) || ($it['item_type'] ?? '') !== 'candidature') {
+                continue;
+            }
+            $title = trim((string) ($it['source_label'] ?? ''));
+            $text = strtolower(trim((string) ($it['visible_text'] ?? '')));
+            if ($title === '' && $text !== '') {
+                $lines = preg_split('/\R/u', $text);
+                $title = trim((string) ($lines[0] ?? ''));
+            }
+            if ($title === '') {
+                continue;
+            }
+            $title = $this->sanitizeCre8PilotLlmScalar($title, 120);
+            $budgetVal = null;
+            if (preg_match('/eur\s*([0-9]+(?:[.,][0-9]+)?)/i', $text, $m)) {
+                $budgetVal = (float) str_replace(',', '.', (string) ($m[1] ?? ''));
+            }
+            $negotiation = str_contains($text, 'negotiation') || str_contains($text, 'negotiate') || str_contains($text, 'budget reply');
+            $draft = str_contains($text, 'draft');
+            $daysUntil = null;
+            if (preg_match('/\b(20[0-9]{2}-[0-9]{2}-[0-9]{2})\b/', $text, $dm)) {
+                $ts = strtotime($dm[1]);
+                if ($ts !== false) {
+                    $daysUntil = (int) floor(($ts - time()) / 86400);
+                }
+            }
+            $score = ($negotiation ? 40.0 : 0.0) + ($draft ? 8.0 : 0.0) + min(50.0, (float) ($budgetVal ?? 0) / 15.0);
+            if ($daysUntil !== null && $daysUntil >= 0) {
+                $score += max(0.0, 25.0 - min(25.0, (float) $daysUntil));
+            } elseif ($daysUntil !== null && $daysUntil < 0) {
+                $score -= 15.0;
+            }
+            $cards[] = [
+                'title' => $title,
+                'budget' => $budgetVal,
+                'negotiation' => $negotiation,
+                'draft' => $draft,
+                'daysUntil' => $daysUntil,
+                'score' => $score,
+            ];
+        }
+        if (count($cards) === 0) {
+            return null;
+        }
+        usort($cards, static function (array $a, array $b): int {
+            return ($b['score'] <=> $a['score']) ?: strcmp($a['title'], $b['title']);
+        });
+        $top = $cards[0];
+        $second = $cards[1] ?? null;
+        $reasons = [];
+        if ($top['negotiation']) {
+            $reasons[] = 'it shows an active negotiation or budget-reply signal in the visible card text';
+        }
+        if ($top['budget'] !== null) {
+            $reasons[] = 'a budget figure is visible (about ' . $this->sanitizeCre8PilotLlmScalar((string) $top['budget'], 12) . ' EUR)';
+        }
+        if ($top['draft']) {
+            $reasons[] = 'the visible text looks like a draft or unfinished response';
+        }
+        if ($top['daysUntil'] !== null && $top['daysUntil'] >= 0) {
+            $reasons[] = 'a visible date reference is roughly ' . $top['daysUntil'] . ' day(s) away';
+        }
+        $reasonText = !empty($reasons) ? implode(', ', $reasons) : 'it ranks first using only the visible negotiation, budget, draft, and date clues on the cards';
+        $out = 'From the visible invitations, ' . $top['title'] . ' looks like the best first option because ' . $reasonText . '.';
+        if ($second !== null) {
+            $out .= ' ' . $second['title'] . ' is also worth reviewing';
+            $tailBits = [];
+            if (!$second['negotiation'] && $top['negotiation']) {
+                $tailBits[] = 'the visible snippet does not mention negotiation the same way';
+            }
+            if ($second['budget'] !== null && $top['budget'] !== null && $second['budget'] < $top['budget']) {
+                $tailBits[] = 'the visible budget signal looks lower than the first card';
+            } elseif ($second['draft']) {
+                $tailBits[] = 'the visible text still looks draft-like';
+            }
+            $out .= $tailBits !== [] ? ' — ' . implode(', ', $tailBits) . '.' : '.';
+        }
+
+        return $out;
+    }
+
+    private function cre8PilotBuildCreatorNegotiationNoteResponse(string $intent): array
+    {
+        $acceptBody = "Thank you for the update. I'm happy to move forward with these terms and I appreciate the clear collaboration details. Please review it before accepting manually.";
+        $refusalBody = 'Thank you for the proposal. I cannot move forward with these terms right now, but I appreciate the opportunity and would be happy to stay open to future collaborations.';
+        if ($intent === 'prepare_creator_acceptance_note') {
+            return $this->buildCre8PilotResponse(
+                'ok',
+                'prepare_creator_acceptance_note',
+                'I prepared this acceptance note: ' . $acceptBody,
+                [],
+                0.86,
+                'success',
+                null,
+                false
+            );
+        }
+
+        return $this->buildCre8PilotResponse(
+            'ok',
+            'prepare_creator_refusal_note',
+            'I prepared this refusal reason: ' . $refusalBody,
+            [[
+                'type' => 'fill_form',
+                'target' => 'creator_decline_form',
+                'targets' => ['motifRefus'],
+                'focusAfter' => true,
+                'highlightAfter' => true,
+                'fields' => ['motifRefus' => $refusalBody],
+            ]],
+            0.86,
+            'filling',
+            null,
+            true
+        );
+    }
+
     private function buildCre8PilotVisibleSummary($page, array $visibleData)
     {
         $page = (string) $page;
@@ -10210,8 +10464,12 @@ class CondidatureC
                 : 'This negotiation page is focused on budget, delay, and message changes. Prepare a clear counter-proposal before sending.';
         }
 
+        if ($this->cre8PilotIsPageMode($page, $mode, 'creator_candidature_workspace', ['list'])) {
+            return $this->cre8PilotBuildCreatorCandidatureListVisibleSummary($visibleData);
+        }
+
         if ($this->cre8PilotIsPageMode($page, $mode, 'brand_candidature_workspace', ['list'])
-            || $this->cre8PilotIsPageMode($page, $mode, 'creator_candidature_workspace', ['list', 'application_form'])
+            || $this->cre8PilotIsPageMode($page, $mode, 'creator_candidature_workspace', ['application_form'])
             || $this->cre8PilotIsPageMode($page, $mode, 'creator_offer_workspace', ['list', 'details'])
             || in_array($page, ['brand_candidature_list', 'creator_candidature_list', 'creator_candidature_form', 'creator_offer_list', 'creator_offer_details'], true)
         ) {
@@ -11368,6 +11626,11 @@ class CondidatureC
             return ['allowed' => false, 'reason' => 'action_not_allowed_for_page_mode'];
         }
 
+        if ($page === 'creator_candidature_workspace' && $mode === 'negotiation_reply' && $role === 'createur'
+            && $effectiveTarget === 'creator_decline_form' && $formTarget === 'negotiation_form') {
+            return ['allowed' => true, 'reason' => 'allowed_preparation_only'];
+        }
+
         if ($effectiveTarget !== $formTarget) {
             return ['allowed' => false, 'reason' => 'action_not_allowed_for_page_mode'];
         }
@@ -11399,6 +11662,8 @@ class CondidatureC
             'prepare_negotiation_reply',
             'prepare_acceptance_note',
             'prepare_refusal_note',
+            'prepare_creator_acceptance_note',
+            'prepare_creator_refusal_note',
         ];
 
         if (!in_array($intent, $preparationIntents, true)) {
@@ -11446,6 +11711,17 @@ class CondidatureC
             if (!$isNegotiation || ($formTarget !== '' && !in_array($formTarget, ['negotiation_form', 'brand_decision_form', 'decision_form', 'candidature_form'], true))) {
                 return ['allowed' => false, 'reason' => 'action_not_allowed_for_page_mode'];
             }
+        }
+
+        if (in_array($intent, ['prepare_creator_acceptance_note', 'prepare_creator_refusal_note'], true)) {
+            if ($role !== 'createur' || !$this->cre8PilotIsPageMode($page, $mode, 'creator_candidature_workspace', ['negotiation_reply'])) {
+                return ['allowed' => false, 'reason' => 'action_not_allowed_for_page_mode'];
+            }
+            if ($formTarget !== '' && $formTarget !== 'negotiation_form') {
+                return ['allowed' => false, 'reason' => 'action_not_allowed_for_page_mode'];
+            }
+
+            return ['allowed' => true, 'reason' => 'allowed_preparation_only'];
         }
 
         if (in_array($intent, ['prepare_acceptance_note', 'prepare_refusal_note'], true)) {
@@ -11847,6 +12123,13 @@ class CondidatureC
             || $this->cre8PilotIsPageMode($page, $mode, 'brand_offer_workspace', ['create_offer', 'edit_offer']);
         $isCreatorCandidatureFormPage = in_array($page, ['candidature_form', 'creator_candidature_form'], true)
             || $this->cre8PilotIsPageMode($page, $mode, 'creator_candidature_workspace', ['application_form']);
+
+        if (in_array($intent, ['prepare_creator_acceptance_note', 'prepare_creator_refusal_note'], true)
+            && strtolower(trim((string) $role)) === 'createur'
+            && $this->cre8PilotIsPageMode($page, $mode, 'creator_candidature_workspace', ['negotiation_reply'])
+        ) {
+            return $this->cre8PilotBuildCreatorNegotiationNoteResponse($intent);
+        }
 
         if ($this->messageContainsAny($messageLower, ['delete', 'remove', 'supprimer']) && $this->messageContainsAny($messageLower, ['expired', 'expiree', 'expirée', 'offer', 'offers'])) {
             return $this->buildCre8PilotResponse(
@@ -12264,7 +12547,9 @@ class CondidatureC
             );
         }
 
-        if (($isBrandReviewPage || $decisionContext !== null) && $this->messageContainsAny($messageLower, ['accept this', 'accept terms', 'accept current terms', 'refuse this', 'refuse terms', 'refuse politely', 'decline this'])) {
+        if ($page !== 'creator_candidature_workspace'
+            && ($isBrandReviewPage || $decisionContext !== null)
+            && $this->messageContainsAny($messageLower, ['accept this', 'accept terms', 'accept current terms', 'refuse this', 'refuse terms', 'refuse politely', 'decline this'])) {
             $isRefusal = $this->messageContainsAny($messageLower, ['refuse this', 'refuse terms', 'refuse politely', 'decline this']);
             return $this->buildCre8PilotResponse(
                 'ok',
@@ -12532,7 +12817,7 @@ class CondidatureC
             } elseif ($intent === 'explain_statuses') {
                 $messageText = $this->cre8PilotBuildBusinessStatusExplanation($page, $mode, $role);
             } else {
-                $messageText = $this->cre8PilotBuildRecommendNextActionMessage($page, $mode, $role, $messageLower);
+                $messageText = $this->cre8PilotBuildRecommendNextActionMessage($page, $mode, $role, $messageLower, $visibleData);
             }
 
             return $this->buildCre8PilotResponse(

@@ -413,6 +413,23 @@ $projectBase = $brandFrontPos !== false ? substr($brandPagePath, 0, $brandFrontP
             line-height:1.6;
         }
 
+        .info-card-link{
+
+            display:block;
+            text-decoration:none;
+            color:var(--text);
+        }
+
+        .info-card-link:hover{
+
+            color:var(--text);
+        }
+
+        .info-card.event-card i{
+
+            color:#ea580c;
+        }
+
         /* =========================
            FOOTER
         ========================= */
@@ -458,6 +475,16 @@ $projectBase = $brandFrontPos !== false ? substr($brandPagePath, 0, $brandFrontP
 
             background:#1f2937;
             color:white;
+        }
+
+        .light-mode .info-card-link{
+
+            color:white;
+        }
+
+        .light-mode .info-card.event-card i{
+
+            color:#fb923c;
         }
 
         .light-mode .page-header-left p,
@@ -551,6 +578,12 @@ $projectBase = $brandFrontPos !== false ? substr($brandPagePath, 0, $brandFrontP
         </li>
 
         <li>
+            <a href="../evenement/index.php">
+                Events
+            </a>
+        </li>
+
+        <li>
             <a href="reclamation.php">
                 Reclamation
             </a>
@@ -616,6 +649,10 @@ $projectBase = $brandFrontPos !== false ? substr($brandPagePath, 0, $brandFrontP
                 Brand Space
             </a>
 
+            <a href="../evenement/index.php" class="btn-brand">
+                Events
+            </a>
+
         </div>
 
     </div>
@@ -634,6 +671,17 @@ $projectBase = $brandFrontPos !== false ? substr($brandPagePath, 0, $brandFrontP
         </div>
 
     </section>
+
+    <!-- EVENTS ACCESS -->
+    <div class="cards-grid">
+
+        <a href="../evenement/index.php" class="info-card info-card-link event-card">
+            <i class="bi bi-calendar-event"></i>
+            <h3>Events</h3>
+            <p>Découvrir les formations, meetups, webinaires et ateliers disponibles pour la communauté.</p>
+        </a>
+
+    </div>
 
 
 </div>

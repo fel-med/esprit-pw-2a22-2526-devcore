@@ -212,7 +212,7 @@ body {
     margin-bottom: 20px;
     transition: background .25s, border-color .25s;
 }
-.card-body  { padding: 20px; }
+.card-body  { padding: 20px; min-width: 0; }
 .card-header {
     padding: 16px 20px;
     border-bottom: 1px solid var(--border);
@@ -420,14 +420,34 @@ textarea.form-control { resize:vertical; min-height:80px; }
     border-radius: var(--radius);
     padding:20px;
     margin-top:16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    box-sizing: border-box;
 }
-.ia-result-title { font-size:.9rem; font-weight:700; color:var(--accent); margin-bottom:14px; }
-.ia-field { margin-bottom:12px; }
-.ia-label { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:3px; }
-.ia-value { font-size:.88rem; line-height:1.6; color:var(--sub); }
+.ia-result-title { font-size:.9rem; font-weight:700; color:var(--accent); margin-bottom:0; flex: 0 0 auto; }
+.ia-field {
+    margin-bottom:0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
+}
+.ia-label { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:0; flex: 0 0 auto; width: 100%; }
+.ia-value { font-size:.88rem; line-height:1.6; color:var(--sub); width: 100%; word-break: break-word; }
 .ia-value.big { font-size:1.1rem; font-weight:700; color:var(--accent); }
-.pill-list { display:flex; flex-wrap:wrap; gap:6px; }
-.pill { padding:5px 12px; border-radius:20px; font-size:.75rem; font-weight:700; }
+.pill-list {
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    width: 100%;
+    align-items: flex-start;
+    align-content: flex-start;
+}
+.pill { padding:5px 12px; border-radius:20px; font-size:.75rem; font-weight:700; max-width: 100%; word-break: break-word; }
 .pill-g { background:var(--success-soft); color:var(--success); }
 .pill-r { background:var(--danger-soft);  color:var(--danger); }
 .pill-w { background:var(--warn-soft);    color:var(--warn); }
