@@ -3,7 +3,7 @@
         'name' => 'cre8connect/app',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'aea984a2a4635d6d7b597994c71213301536f118',
+        'reference' => '4e15ec695fa9c6f26e67965c3a851a265feba96a',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +13,7 @@
         'cre8connect/app' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'aea984a2a4635d6d7b597994c71213301536f118',
+            'reference' => '4e15ec695fa9c6f26e67965c3a851a265feba96a',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
