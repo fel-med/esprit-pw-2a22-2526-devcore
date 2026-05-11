@@ -5,9 +5,9 @@ $currentFrontUser = cre8_front_session_user();
 
 $userName = $currentFrontUser['nom']
     ?? $_SESSION['nom']
-    ?? ($_SESSION['user']['nom'] ?? ($_SESSION['utilisateur']['nom'] ?? 'User'));
+    ?? ($_SESSION['user']['nom'] ?? ($_SESSION['utilisateur']['nom'] ?? 'Utilisateur'));
 $userName = trim((string) $userName);
-$userName = $userName !== '' ? $userName : 'User';
+$userName = $userName !== '' ? $userName : 'Utilisateur';
 $userInitial = function_exists('mb_substr')
     ? mb_substr($userName, 0, 1, 'UTF-8')
     : substr($userName, 0, 1);
@@ -110,7 +110,7 @@ if (!isset($frontActive)) {
             </button>
             <div class="front-nav-dropdown" role="menu">
                 <a href="<?php echo htmlspecialchars($offersUrl); ?>" role="menuitem">Offers</a>
-                <a href="<?php echo htmlspecialchars($candidaturesUrl); ?>" role="menuitem">Applications</a>
+                <a href="<?php echo htmlspecialchars($candidaturesUrl); ?>" role="menuitem">Candidatures</a>
             </div>
         </li>
 
@@ -119,19 +119,19 @@ if (!isset($frontActive)) {
                 <i class="bi bi-megaphone"></i> Campaigns <i class="bi bi-chevron-down front-nav-caret"></i>
             </button>
             <div class="front-nav-dropdown" role="menu">
-                <a href="<?php echo htmlspecialchars($campaignsUrl); ?>" role="menuitem">Campaigns</a>
-                <a href="<?php echo htmlspecialchars($productsUrl); ?>" role="menuitem">Products</a>
-                <a href="<?php echo htmlspecialchars($contractsUrl); ?>" role="menuitem">Contracts</a>
+                <a href="<?php echo htmlspecialchars($campaignsUrl); ?>" role="menuitem">Campagnes</a>
+                <a href="<?php echo htmlspecialchars($productsUrl); ?>" role="menuitem">Produits</a>
+                <a href="<?php echo htmlspecialchars($contractsUrl); ?>" role="menuitem">Contrats</a>
             </div>
         </li>
 
         <li class="front-nav-item front-nav-dropdown-item">
             <button class="front-nav-trigger cre8-front-nav-link <?php echo $frontActive === 'myspace' ? 'active is-active' : ''; ?>" type="button" aria-haspopup="true">
-                <i class="bi bi-person-badge"></i> My Space <i class="bi bi-chevron-down front-nav-caret"></i>
+                <i class="bi bi-person-badge"></i> Posts <i class="bi bi-chevron-down front-nav-caret"></i>
             </button>
             <div class="front-nav-dropdown" role="menu">
-                <a href="<?php echo htmlspecialchars($portfolioUrl); ?>" role="menuitem">Portfolio</a>
-                <a href="<?php echo htmlspecialchars($postsUrl); ?>" role="menuitem">Posts</a>
+                <a href="<?php echo htmlspecialchars($portfolioUrl); ?>" role="menuitem">My Space</a>
+                <a href="<?php echo htmlspecialchars($postsUrl); ?>" role="menuitem">Feeds</a>
                 <a href="<?php echo htmlspecialchars($createPostUrl); ?>" role="menuitem">Create Post</a>
             </div>
         </li>
@@ -141,14 +141,14 @@ if (!isset($frontActive)) {
                 <i class="bi bi-calendar-event"></i> Events <i class="bi bi-chevron-down front-nav-caret"></i>
             </button>
             <div class="front-nav-dropdown" role="menu">
-                <a href="<?php echo htmlspecialchars($eventsUrl); ?>" role="menuitem">Events</a>
+                <a href="<?php echo htmlspecialchars($eventsUrl); ?>" role="menuitem">Événements</a>
                 <a href="<?php echo htmlspecialchars($forumUrl); ?>" role="menuitem">Forum</a>
             </div>
         </li>
 
         <li class="front-nav-item">
             <a href="<?php echo htmlspecialchars($reclamationUrl); ?>" class="cre8-front-nav-link <?php echo $frontActive === 'reclamation' ? 'active is-active' : ''; ?>">
-                <i class="bi bi-flag"></i> Complaints
+                <i class="bi bi-flag"></i> Réclamation
             </a>
         </li>
 
