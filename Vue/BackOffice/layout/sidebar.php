@@ -25,13 +25,13 @@ $_projectRootForUrl = $_ctrlPosForUrl !== false
     : ($cre8Pos !== false ? substr($cre8SelfPath, 0, $cre8Pos) : '');
 $backBoControleurWeb = $_projectRootForUrl . '/Controleur';
 
-$backUserName = $_SESSION['nom'] ?? ($_SESSION['user']['nom'] ?? ($_SESSION['utilisateur']['nom'] ?? 'Utilisateur'));
-$backUserName = trim((string) $backUserName) !== '' ? trim((string) $backUserName) : 'Utilisateur';
+$backUserName = $_SESSION['nom'] ?? ($_SESSION['user']['nom'] ?? ($_SESSION['utilisateur']['nom'] ?? 'User'));
+$backUserName = trim((string) $backUserName) !== '' ? trim((string) $backUserName) : 'User';
 
 $backItems = [
     ['key' => 'dashboard',      'label' => 'Dashboard',      'url' => $backBoRootWeb . '/dashboard/index.php',      'icon' => 'mdi-speedometer',            'iconClass' => 'text-primary'],
     ['key' => 'users',          'label' => 'Users',          'url' => $backBoRootWeb . '/utilisateur/index.php',    'icon' => 'mdi-account-multiple',      'iconClass' => 'text-warning'],
-    ['key' => 'reclamations',   'label' => 'Reclamations',   'url' => $backBoRootWeb . '/utilisateur/reclamations.php', 'icon' => 'mdi-playlist-play',      'iconClass' => 'text-danger'],
+    ['key' => 'reclamations',   'label' => 'Complaints',   'url' => $backBoRootWeb . '/utilisateur/reclamations.php', 'icon' => 'mdi-playlist-play',      'iconClass' => 'text-danger'],
     ['key' => 'collaborations', 'label' => 'Collaborations', 'url' => $backBoRootWeb . '/offre/index.php',          'icon' => 'mdi-briefcase-check',       'iconClass' => 'text-info'],
     ['key' => 'campaigns',      'label' => 'Campaigns',      'url' => $backBoRootWeb . '/campagne/index.php',       'icon' => 'mdi-chart-bar',             'iconClass' => 'text-success'],
     ['key' => 'products',       'label' => 'Products',       'url' => $backBoRootWeb . '/produit/index.php',        'icon' => 'mdi-cube-outline',          'iconClass' => 'text-primary'],

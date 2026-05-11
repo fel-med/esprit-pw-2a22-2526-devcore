@@ -2,7 +2,7 @@
 session_start();
 
 if (!isset($_SESSION['id'])) {
-    die("Utilisateur non connecté");
+    die("User not connected");
 }
 
 require_once '../../../Controleur/reclamationC.php';
@@ -19,7 +19,7 @@ $frontActive = 'reclamation';
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="">
     <meta name="author" content="">
-    <title>Modern Business - Start Bootstrap Template</title>
+    <title>Cre8Connect - Complaints</title>
     <!-- Favicon-->
     <!-- Custom Google font-->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -55,7 +55,7 @@ $frontActive = 'reclamation';
         }
 
         /*
-         * Réclamation page theme: html[data-theme="light"|"dark"] + --reclam-* tokens.
+         * Complaints page theme: html[data-theme="light"|"dark"] + --reclam-* tokens.
          * (Removed legacy .light-mode rules that incorrectly forced dark colors when the
          * body had class light-mode — that broke light mode site-wide on this page.)
          */
@@ -254,7 +254,7 @@ $frontActive = 'reclamation';
             <div class="container px-5 mb-5">
                 <div class="text-center mb-5">
                     <h1 class="display-5 fw-bolder mb-0">
-                        <span class="text-gradient d-inline">Envoyer une réclamation</span>
+                        <span class="text-gradient d-inline">Submit a complaint</span>
                     </h1>
                 </div>
 
@@ -270,24 +270,24 @@ $frontActive = 'reclamation';
                                     <div class="mb-4">
                                         <label class="form-label fw-bold">Description</label>
                                         <textarea name="description" id="descriptionInput" class="form-control" rows="4"
-                                            placeholder="Décrivez votre problème..."></textarea>
+                                            placeholder="Describe your problem..."></textarea>
                                         <small class="text-danger d-none" id="descriptionError"></small>
                                     </div>
 
-                                    <!-- Priorité -->
+                                    <!-- Priority -->
                                     <div class="mb-4">
-                                        <label class="form-label fw-bold">Priorité</label>
+                                        <label class="form-label fw-bold">Priority</label>
                                         <select name="priorite" id="prioriteInput" class="form-select">
-                                            <option value="faible">Faible</option>
-                                            <option value="normale" selected>Normale</option>
-                                            <option value="haute">Haute</option>
+                                            <option value="faible">Low</option>
+                                            <option value="normale" selected>Normal</option>
+                                            <option value="haute">High</option>
                                         </select>
                                     </div>
 
-                                    <!-- Bouton -->
+                                    <!-- Button -->
                                     <div class="d-grid">
                                         <button type="submit" class="btn btn-primary btn-lg">
-                                            Envoyer la réclamation
+                                            Submit complaint
                                         </button>
                                     </div>
 
@@ -304,17 +304,17 @@ $frontActive = 'reclamation';
             <div class="container px-5">
 
                 <div class="text-center mb-5">
-                    <h2 class="fw-bolder">Mes réclamations</h2>
+                    <h2 class="fw-bolder">My complaints</h2>
                 </div>
 
                 <?php if (isset($_GET['success'])): ?>
                     <div class="alert alert-success text-center">
-                        Réclamation envoyée avec succès !
+                        Complaint sent successfully!
                     </div>
                 <?php endif; ?>
 
                 <?php if (empty($liste)): ?>
-                    <p class="text-center text-muted">Aucune réclamation</p>
+                    <p class="text-center text-muted">No complaints yet</p>
                 <?php else: ?>
 
                     <div class="row">
@@ -336,28 +336,28 @@ $frontActive = 'reclamation';
 
                                         <?php if ($rec['reponse']): ?>
                                             <div class="alert alert-success">
-                                                <strong>Réponse admin :</strong><br>
+                                                <strong>Admin response:</strong><br>
                                                 <?php echo htmlspecialchars($rec['reponse']); ?>
                                             </div>
                                         <?php else: ?>
                                             <div class="alert alert-warning">
-                                                En attente de réponse...
+                                                Waiting for a response...
                                             </div>
                                         <?php endif; ?>
 
-                                        <!-- 🔴 BOUTON SUPPRIMER -->
+                                        <!-- 🔴 DELETE BUTTON -->
                                         <div class="text-end mt-3 d-flex justify-content-end gap-2">
 
-                                            <!-- Modifier -->
+                                            <!-- Edit -->
                                             <button class="btn btn-sm d-flex align-items-center justify-content-center"
                                                 style="background-color:#AEEA94; width:40px; height:40px; border:none;"
                                                 data-bs-toggle="modal" data-bs-target="#modalEdit<?php echo $rec['id']; ?>">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
 
-                                            <!-- Supprimer -->
+                                            <!-- Delete -->
                                             <form method="POST" action="supprimerReclamation.php"
-                                                onsubmit="return confirm('Voulez-vous vraiment supprimer cette réclamation ?');">
+                                                onsubmit="return confirm('Do you really want to delete this complaint?');">
 
                                                 <input type="hidden" name="id" value="<?php echo $rec['id']; ?>">
 
@@ -390,7 +390,7 @@ $frontActive = 'reclamation';
                         <form method="POST" action="modifierReclamation.php">
 
                             <div class="modal-header">
-                                <h5 class="modal-title">Modifier Réclamation</h5>
+                                <h5 class="modal-title">Edit complaint</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
 
@@ -405,18 +405,18 @@ $frontActive = 'reclamation';
                                         required><?php echo $rec['description']; ?></textarea>
                                 </div>
 
-                                <!-- Priorité -->
+                                <!-- Priority -->
                                 <div class="mb-3">
-                                    <label>Priorité</label>
+                                    <label>Priority</label>
                                     <select name="priorite" class="form-select">
                                         <option value="faible" <?php if ($rec['priorite'] == 'faible')
                                             echo 'selected'; ?>>
-                                            Faible</option>
+                                            Low</option>
                                         <option value="normale" <?php if ($rec['priorite'] == 'normale')
                                             echo 'selected'; ?>>
-                                            Normale</option>
+                                            Normal</option>
                                         <option value="haute" <?php if ($rec['priorite'] == 'haute')
-                                            echo 'selected'; ?>>Haute
+                                            echo 'selected'; ?>>High
                                         </option>
                                     </select>
                                 </div>
@@ -424,7 +424,7 @@ $frontActive = 'reclamation';
                             </div>
 
                             <div class="modal-footer">
-                                <button type="submit" class="btn btn-success">Enregistrer</button>
+                                <button type="submit" class="btn btn-success">Save</button>
                             </div>
 
                         </form>
@@ -467,80 +467,80 @@ $frontActive = 'reclamation';
     <!-- Core theme JS-->
     <script src="js/scripts.js"></script>
 
-    <!-- Contrôle de Saisie JavaScript -->
+    <!-- JavaScript input validation -->
     <script>
-        // ===== VALIDATION FORMULAIRE RÉCLAMATION =====
+        // ===== COMPLAINT FORM VALIDATION =====
         function validateReclamation(form) {
             const descriptionInput = document.getElementById('descriptionInput');
             const descriptionError = document.getElementById('descriptionError');
             
             const description = descriptionInput.value.trim();
             
-            // Réinitialiser les styles d'erreur
+            // Reset error styles
             descriptionInput.classList.remove('border-danger');
             descriptionError.classList.add('d-none');
             
-            // Vérification 1: Le champ ne doit pas être vide
+            // Check 1: field must not be empty
             if (description === '') {
-                descriptionError.textContent = '❌ La description est obligatoire.';
+                descriptionError.textContent = '❌ Description is required.';
                 descriptionError.classList.remove('d-none');
                 descriptionInput.classList.add('border-danger');
                 descriptionInput.focus();
                 return false;
             }
             
-            // Vérification 2: Minimum 10 caractères
+            // Check 2: minimum 10 characters
             if (description.length < 10) {
-                descriptionError.textContent = `❌ La description doit contenir au minimum 10 caractères. (${description.length}/10)`;
+                descriptionError.textContent = `❌ Description must contain at least 10 characters. (${description.length}/10)`;
                 descriptionError.classList.remove('d-none');
                 descriptionInput.classList.add('border-danger');
                 descriptionInput.focus();
                 return false;
             }
             
-            // Vérification 3: Maximum 50 caractères
+            // Check 3: maximum 50 characters
             if (description.length > 50) {
-                descriptionError.textContent = `❌ La description ne doit pas dépasser 50 caractères. (${description.length}/50)`;
+                descriptionError.textContent = `❌ Description must not exceed 50 characters. (${description.length}/50)`;
                 descriptionError.classList.remove('d-none');
                 descriptionInput.classList.add('border-danger');
                 descriptionInput.focus();
                 return false;
             }
             
-            // Vérification 4: Pas que des espaces
+            // Check 4: not only spaces
             if (!/\S/.test(description)) {
-                descriptionError.textContent = '❌ La description ne peut pas contenir uniquement des espaces.';
+                descriptionError.textContent = '❌ Description cannot contain only spaces.';
                 descriptionError.classList.remove('d-none');
                 descriptionInput.classList.add('border-danger');
                 descriptionInput.focus();
                 return false;
             }
             
-            // Succès - tout est validé
+            // Success - everything is valid
             descriptionError.classList.add('d-none');
             descriptionInput.classList.remove('border-danger');
             return true;
         }
         
-        // ===== AFFICHAGE DYNAMIQUE DU COMPTEUR =====
+        // ===== DYNAMIC COUNTER DISPLAY =====
         const descriptionInput = document.getElementById('descriptionInput');
         if (descriptionInput) {
-            // Créer un élément pour afficher le compteur
+            // Create an element to display the counter
             const counterElement = document.createElement('small');
             counterElement.id = 'charCounter';
             counterElement.className = 'text-muted d-block mt-2';
-            counterElement.textContent = '0/50 caractères';
+            counterElement.textContent = '0/50 characters';
             descriptionInput.parentNode.insertBefore(counterElement, descriptionInput.nextSibling);
             
-            // Mettre à jour le compteur au fur et à mesure
+            // Update the counter live
             descriptionInput.addEventListener('input', function() {
                 const length = this.value.length;
                 const counter = document.getElementById('charCounter');
                 
                 if (counter) {
-                    counter.textContent = `${length}/50 caractères`;
+                    counter.textContent = `${length}/50 characters`;
                     
-                    // Couleur du compteur selon la longueur
+                    // Counter color based on length
                     if (length < 10) {
                         counter.className = 'text-danger d-block mt-2 fw-bold';
                     } else if (length <= 50) {
@@ -552,7 +552,7 @@ $frontActive = 'reclamation';
             });
         }
         
-        // ===== EFFACER LES ERREURS AU FOCUS =====
+        // ===== CLEAR ERRORS ON FOCUS =====
         descriptionInput.addEventListener('focus', function() {
             const descriptionError = document.getElementById('descriptionError');
             descriptionError.classList.add('d-none');

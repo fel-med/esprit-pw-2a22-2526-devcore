@@ -21,7 +21,7 @@ if (isset($_POST['reset_email'])) {
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
         <meta name="description" content="" />
         <meta name="author" content="" />
-        <title>Personal - Start Bootstrap Template</title>
+        <title>Cre8Connect - Login</title>
         <!-- Favicon-->
         <!-- Custom Google font-->
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -80,7 +80,7 @@ if (isset($_POST['reset_email'])) {
 
             <div class="col-lg-6 p-5 d-flex flex-column justify-content-center">
 
-    <h2 class="fw-bold mb-4 text-gradient text-center">Log in Account</h2>
+    <h2 class="fw-bold mb-4 text-gradient text-center">Log in to your account</h2>
 
     <?php if (!empty($loginMessage)): ?>
         <div class="alert alert-danger alert-dismissible fade show text-center" role="alert">
@@ -103,13 +103,13 @@ if (isset($_POST['reset_email'])) {
             Sign in
         </button>
 
-        <!-- 👁 caméra -->
+        <!-- 👁 camera -->
         <div class="text-center mb-2">
             <video id="video" width="250" autoplay style="display:none;" class="rounded-3 shadow"></video>
         </div>
 
         <button type="button" class="btn btn-outline-primary w-100 py-2" id="scanLogin">
-            📸 Login avec visage
+            📸 Log in with Face
         </button>
 
     </form>
@@ -121,13 +121,13 @@ if (isset($_POST['reset_email'])) {
 
     <p class="text-center">
         <a href="#" data-bs-toggle="modal" data-bs-target="#forgotModal" class="text-decoration-none">
-            Mot de passe oublié ?
+            Forgot password?
         </a>
     </p>
 
 </div>
 
-                    <!-- IMAGE (DROITE) -->
+                    <!-- IMAGE (RIGHT) -->
                     <div class="col-lg-6 d-none d-lg-flex align-items-center justify-content-center bg-gradient-primary-to-secondary position-relative">
 
                         <img src="assets/logo.png" class="img-fluid animate-img" style="max-width: 250px;">
@@ -147,7 +147,7 @@ if (isset($_POST['reset_email'])) {
     <div class="modal-content p-4" style="border-radius: 15px;">
 
       <div class="modal-header border-0">
-        <h5 class="modal-title">🔐Mot de passe oublié</h5>
+        <h5 class="modal-title">🔐 Forgot password</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
 
@@ -157,14 +157,14 @@ if (isset($_POST['reset_email'])) {
 
           <input type="email" name="reset_email" id="emailInput"
                  class="form-control mb-2"
-                 placeholder="Entrer votre email" required>
+                 placeholder="Enter your email" required>
 
           <small id="emailError" class="text-danger d-none">
-            Email invalide
+            Invalid email
           </small>
 
           <button name="reset" class="btn btn-primary w-100 mt-2" id="resetBtn">
-            <span id="btnText">Envoyer le lien</span>
+            <span id="btnText">Send link</span>
             <span id="btnLoader" class="spinner-border spinner-border-sm d-none"></span>
           </button>
 
@@ -206,14 +206,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     btn.onclick = async () => {
 
-        // 🎥 activer caméra seulement au clic
+        // 🎥 activate camera only on click
         if (!stream) {
             stream = await navigator.mediaDevices.getUserMedia({ video: true });
             video.srcObject = stream;
             video.style.display = "block";
         }
 
-        // 📦 charger modèles une seule fois
+        // 📦 load models only once
         if (!modelsLoaded) {
             const currentPath = window.location.pathname.replace(/\/[^\/]*$/, '');
             const modelBase = window.location.origin + currentPath + '/../../../models';
@@ -229,7 +229,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             .withFaceDescriptor();
 
         if (!detection) {
-            alert("Visage non détecté ❌");
+            alert("Face not detected ❌");
             return;
         }
 
@@ -244,12 +244,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         .then(data => {
             if (data.success) {
 
-                // 🛑 fermer caméra après login
+                // 🛑 close camera after login
                 stream.getTracks().forEach(track => track.stop());
 
                 window.location.href = data.redirect;
             } else {
-                const message = data.message || "Utilisateur non reconnu ❌";
+                const message = data.message || "User not recognized ❌";
                 alert(`${message} \nDistance: ${Number(data.distance).toFixed(4)}`);
             }
         });
@@ -263,7 +263,7 @@ const emailError = document.getElementById("emailError");
 const btnText = document.getElementById("btnText");
 const btnLoader = document.getElementById("btnLoader");
 
-// 📧 validation live
+// 📧 live validation
 emailInput.addEventListener("input", function() {
     const email = emailInput.value;
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -292,7 +292,7 @@ form.addEventListener("submit", function() {
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- 🔥 Script toast -->
+<!-- 🔥 Toast script -->
 <?php if (!empty($resetMessage)) { ?>
 <script>
     var toast = new bootstrap.Toast(document.getElementById('toastMsg'));
