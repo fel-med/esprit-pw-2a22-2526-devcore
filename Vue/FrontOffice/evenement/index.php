@@ -3,8 +3,28 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-$BASE = rtrim(str_replace('\\', '/', dirname(dirname($_SERVER['SCRIPT_NAME']))), '/');
+$scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+if (($pos = strpos($scriptName, '/Vue/')) !== false) {
+    $APP_BASE = substr($scriptName, 0, $pos);
+} elseif (($pos = strpos($scriptName, '/Controleur/')) !== false) {
+    $APP_BASE = substr($scriptName, 0, $pos);
+} else {
+    $APP_BASE = rtrim(dirname(dirname($scriptName)), '/');
+}
+$APP_BASE = rtrim($APP_BASE, '/');
+$BASE = ($APP_BASE === '' ? '' : $APP_BASE) . '/Vue';
 $frontActive = 'events';
+
+if (!function_exists('event_front_url')) {
+    function event_front_url($path) {
+        global $APP_BASE;
+        $path = (string)$path;
+        if (preg_match('#^(?:https?:)?//#', $path)) {
+            return $path;
+        }
+        return ($APP_BASE === '' ? '' : rtrim($APP_BASE, '/')) . '/' . ltrim($path, '/');
+    }
+}
 
 if (!isset($evenements)) {
     require_once __DIR__ . '/../../../config.php';
@@ -54,10 +74,113 @@ if (!isset($evenements)) {
     <?php require_once __DIR__ . '/../layout/front-theme-bootstrap.php'; ?>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Événements - Cre8Connect</title>
-    <link rel="stylesheet" href="../css/frontoffice.css">
-    <link rel="stylesheet" href="../layout/front-header.css">
-    <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+    <link rel="stylesheet" href="<?= htmlspecialchars(event_front_url('Vue/FrontOffice/css/frontoffice.css')) ?>">
+    <link rel="stylesheet" href="<?= htmlspecialchars(event_front_url('Vue/FrontOffice/layout/front-header.css')) ?>">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= htmlspecialchars(event_front_url('Vue/public/images/logo.png')) ?>">
     <style>
+
+        /* =========================================================
+           Cre8Connect Event page theme repair
+           The shared FrontOffice theme defines --text / --text-sub,
+           while this page was written with --text-main / --text-dim.
+           These aliases keep the page scoped and prevent Bootstrap's
+           light body colors from leaking into dark mode.
+           ========================================================= */
+        :root {
+            --text-main: var(--text);
+            --text-dim: var(--text-sub);
+            --danger-light: #fff1f3;
+            --primary-glow: rgba(91, 79, 255, 0.24);
+            --radius-sm: 12px;
+        }
+
+        [data-theme="dark"] {
+            --text-main: var(--text);
+            --text-dim: var(--text-sub);
+            --danger-light: rgba(244, 63, 94, 0.14);
+            --primary-glow: rgba(124, 111, 255, 0.28);
+        }
+
+        html,
+        body {
+            background: var(--bg) !important;
+            color: var(--text) !important;
+            min-height: 100%;
+        }
+
+        body,
+        .event-page-main {
+            transition: background-color 0.18s ease, color 0.18s ease;
+        }
+
+        .event-page-main {
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .section-header h2,
+        .event-card-title,
+        .detail-info h2,
+        .events-sidebar label,
+        .inscription-modal-card label {
+            color: var(--text-main);
+        }
+
+        .events-sidebar .chip {
+            color: var(--text-sub);
+        }
+
+        .events-sidebar .chip:not(.active):hover {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .events-sidebar .search-box input::placeholder {
+            color: var(--text-sub);
+            opacity: 0.85;
+        }
+
+        .sort-select:focus,
+        .events-sidebar .search-box:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .sort-select option {
+            background: var(--white);
+            color: var(--text-main);
+        }
+
+        .inscription-modal-card {
+            background: var(--white) !important;
+            color: var(--text-main) !important;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 60px rgba(15,14,26,0.18);
+        }
+
+        .inscription-modal-card .form-control {
+            background: var(--bg);
+            border-color: var(--border);
+            color: var(--text-main);
+        }
+
+        .inscription-modal-card .form-control:focus {
+            background: var(--bg);
+            color: var(--text-main);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        [data-theme="dark"] .event-product-card:hover,
+        [data-theme="dark"] .detail-modal-content,
+        [data-theme="dark"] .inscription-modal-card {
+            box-shadow: 0 20px 60px rgba(0,0,0,0.34);
+        }
+
+        [data-theme="dark"] .event-badge.formation { background: rgba(124, 111, 255, 0.16); color: #b9b2ff; }
+        [data-theme="dark"] .event-badge.webinaire { background: rgba(245, 158, 11, 0.14); color: #f8c46c; }
+        [data-theme="dark"] .event-badge.meetup { background: rgba(236, 72, 153, 0.14); color: #f7a3cb; }
+        [data-theme="dark"] .event-badge.atelier { background: rgba(14, 163, 112, 0.14); color: #70dbb6; }
         /* Hero Section with Image */
         .hero-section {
             display: flex;
@@ -497,7 +620,7 @@ if (!isset($evenements)) {
 <body>
     <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
     
-    <main class="container py-5">
+    <main class="container py-5 event-page-main">
         <!-- Hero Section -->
         <div class="hero-section">
             <div class="hero-content">
@@ -565,20 +688,19 @@ if (!isset($evenements)) {
                     <?php foreach ($evenements as $event): 
     $spotsLeft = $event->getCapacite() - $event->getNbInscrits();
     $isFull = ($spotsLeft <= 0);
-    $imageUrl = $event->getImage() ? $BASE . '/' . $event->getImage() : '';
+    $eventImage = trim((string)$event->getImage());
     
     $forumLink = '';
     if (isset($forumsData[$event->getId()])) {
-        $forumId = $forumsData[$event->getId()]['idForum'];
-        $forumLink = '<a href="ProjetWeb/Esprit-PW-2A22-2526-Devcore/Controleur/forumC.php ' . $forumId . '" class="btn-event-secondary mt-2">💬 Accéder au forum</a>';
+        $forumId = (int)$forumsData[$event->getId()]['idForum'];
+        $forumHref = event_front_url('Controleur/forumC.php?idForum=' . $forumId);
+        $forumLink = '<a href="' . htmlspecialchars($forumHref) . '" class="btn-event-secondary mt-2">💬 Accéder au forum</a>';
     }
 ?>
                         <div class="event-product-card" data-type="<?= $event->getType() ?>" data-title="<?= strtolower(htmlspecialchars($event->getTitre())) ?>" data-date="<?= strtotime($event->getDateEvenement()) ?>" data-spots="<?= $spotsLeft ?>" data-lieu="<?= strpos(strtolower($event->getLieu()), 'en ligne') !== false || empty($event->getLieu()) ? 'en_ligne' : 'presentiel' ?>">
                             <div class="event-card-image">
-                                <?php if ($event->getImage()): 
-                                    $imgSrc = 'http' . (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']==='on' ? 's' : '') 
-                                            . '://' . $_SERVER['HTTP_HOST'] 
-                                            . '/' . ltrim($BASE, '/') . '/' . $event->getImage();
+                                <?php if ($eventImage !== ''): 
+                                    $imgSrc = event_front_url($eventImage);
                                 ?>
                                     <img src="<?= htmlspecialchars($imgSrc) ?>"
                                          alt="<?= htmlspecialchars($event->getTitre()) ?>"
@@ -635,7 +757,7 @@ if (!isset($evenements)) {
 
     <!-- Inscription Modal -->
     <div id="inscriptionModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(6px); z-index: 1060; align-items: center; justify-content: center;">
-        <div style="background: var(--white); border-radius: 24px; width: 460px; max-width: 90%; overflow: hidden;">
+        <div class="inscription-modal-card" style="background: var(--white); border-radius: 24px; width: 460px; max-width: 90%; overflow: hidden;">
             <div style="background: linear-gradient(135deg, #5b4fff, #7c3aed); padding: 24px; text-align: center; color: white;">
                 <h3>✨ Inscription</h3>
                 <p>Rejoignez cet événement</p>
@@ -660,10 +782,16 @@ if (!isset($evenements)) {
     <div id="toast" style="position: fixed; bottom: 28px; right: 28px; background: #0ea370; color: white; padding: 12px 24px; border-radius: 30px; display: none; z-index: 1070;"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="../layout/front-header.js"></script>
+    <script src="<?= htmlspecialchars(event_front_url('Vue/FrontOffice/layout/front-header.js')) ?>"></script>
     <script>
         let currentEventId = null;
         let currentLang = 'fr';
+        const EVENT_APP_BASE = <?= json_encode($APP_BASE, JSON_UNESCAPED_SLASHES) ?>;
+
+        function eventAppUrl(path) {
+            const base = String(EVENT_APP_BASE || '').replace(/\/$/, '');
+            return base + '/' + String(path || '').replace(/^\/+/, '');
+        }
         
         const translations = {
             fr: {
@@ -716,7 +844,7 @@ if (!isset($evenements)) {
     formData.append('nom', nom);
     formData.append('email', email);
     
-    fetch('/ProjetWeb/Esprit-PW-2A22-2526-Devcore/Controleur/evenementC.php?action=inscrire&id=' + currentEventId,  {
+    fetch(eventAppUrl('Controleur/evenementC.php?action=inscrire&id=' + encodeURIComponent(currentEventId)),  {
         method: 'POST',
         body: formData
     })
@@ -736,37 +864,67 @@ if (!isset($evenements)) {
 }
 
         function voirDetail(eventId) {
-    fetch('/ProjetWeb/Esprit-PW-2A22-2526-Devcore/Controleur/evenementC.php?action=get&id=' + eventId)
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                showToast('Event non trouvé', true);
-                return;
-            }
-            document.getElementById('detailTitre').innerHTML = data.titre;
-            document.getElementById('detailType').innerHTML = data.type;
-            document.getElementById('detailType').className = 'event-badge ' + data.type;
-            document.getElementById('detailDescription').innerHTML = data.description;
-            document.getElementById('detailDate').innerHTML = '📅 ' + new Date(data.date_evenement).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'});
-            document.getElementById('detailLieu').innerHTML = '📍 ' + (data.lieu || 'En ligne');
-            const placesRestantes = data.capacite - data.nb_inscrits;
-            document.getElementById('detailPlaces').innerHTML = placesRestantes > 0 ? '✅ ' + placesRestantes + ' places restantes' : '❌ Complet';
-            document.getElementById('detailImage').innerHTML = data.image ? '<img src="/ProjetWeb/Esprit-PW-2A22-2526-Devcore/' + data.image + '">' : '<span style="font-size:3rem;">🎯</span>';
-            
-            if (data.adresse_complete) {
-                const encodedAddress = encodeURIComponent(data.adresse_complete);
-                document.getElementById('detailMap').innerHTML = '<iframe src="https://maps.google.com/maps?q=' + encodedAddress + '&output=embed"></iframe><p style="margin-top:8px;">📍 ' + data.adresse_complete + '</p>';
-            } else {
-                document.getElementById('detailMap').innerHTML = '';
-            }
-            
-            const btn = document.getElementById('detailInscrireBtn');
-            btn.onclick = function() { ouvrirModalInscription(data.id); };
-            btn.innerHTML = placesRestantes <= 0 ? '📋 Liste d\'attente' : '✨ S\'inscrire maintenant';
-            document.getElementById('detailModal').classList.add('show');
-        })
-        .catch(() => showToast('Erreur de connexion', true));
-}
+            fetch(eventAppUrl('Controleur/evenementC.php?action=get&id=' + encodeURIComponent(eventId)))
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('HTTP ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        showToast('Event non trouvé', true);
+                        return;
+                    }
+
+                    document.getElementById('detailTitre').textContent = data.titre || '';
+                    document.getElementById('detailType').textContent = data.type || '';
+                    document.getElementById('detailType').className = 'event-badge ' + (data.type || '');
+                    document.getElementById('detailDescription').textContent = data.description || '';
+                    document.getElementById('detailDate').textContent = '📅 ' + new Date(data.date_evenement).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'});
+                    document.getElementById('detailLieu').textContent = '📍 ' + (data.lieu || 'En ligne');
+
+                    const placesRestantes = Number(data.capacite || 0) - Number(data.nb_inscrits || 0);
+                    document.getElementById('detailPlaces').textContent = placesRestantes > 0 ? '✅ ' + placesRestantes + ' places restantes' : '❌ Complet';
+
+                    const detailImage = document.getElementById('detailImage');
+                    detailImage.innerHTML = '';
+                    if (data.image) {
+                        const image = document.createElement('img');
+                        image.src = eventAppUrl(data.image);
+                        image.alt = data.titre || 'Événement';
+                        image.onerror = function () {
+                            detailImage.innerHTML = '<span style="font-size:3rem;">🎯</span>';
+                        };
+                        detailImage.appendChild(image);
+                    } else {
+                        detailImage.innerHTML = '<span style="font-size:3rem;">🎯</span>';
+                    }
+
+                    const detailMap = document.getElementById('detailMap');
+                    detailMap.innerHTML = '';
+                    if (data.adresse_complete) {
+                        const iframe = document.createElement('iframe');
+                        iframe.src = 'https://maps.google.com/maps?q=' + encodeURIComponent(data.adresse_complete) + '&output=embed';
+                        iframe.loading = 'lazy';
+                        detailMap.appendChild(iframe);
+
+                        const address = document.createElement('p');
+                        address.style.marginTop = '8px';
+                        address.textContent = '📍 ' + data.adresse_complete;
+                        detailMap.appendChild(address);
+                    }
+                    
+                    const btn = document.getElementById('detailInscrireBtn');
+                    btn.onclick = function() { ouvrirModalInscription(data.id); };
+                    btn.innerHTML = placesRestantes <= 0 ? '📋 Liste d\'attente' : '✨ S\'inscrire maintenant';
+                    document.getElementById('detailModal').classList.add('show');
+                })
+                .catch(error => {
+                    console.error('Event detail error:', error);
+                    showToast('Erreur de connexion', true);
+                });
+        }
         function fermerDetailModal() {
             document.getElementById('detailModal').classList.remove('show');
         }

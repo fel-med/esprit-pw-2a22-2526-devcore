@@ -668,7 +668,7 @@ body.dark-mode .campaign-front .front-lang-btn:not(.is-active) {
                     👁 <span data-i18n="btn_details">Voir les détails</span>
                 </button>
                 <?php if ($c['statut'] === 'active'): ?>
-                <button class="btn-apply" onclick="alert('Candidature envoyée !')">🙋 <span data-i18n="btn_apply">Postuler</span></button>
+                <button class="btn-apply" onclick="postulerCampagne(<?= (int) $c['idCampagne'] ?>)">🙋 <span data-i18n="btn_apply">Postuler</span></button>
                 <?php endif; ?>
             </div>
         </div>
@@ -717,7 +717,7 @@ body.dark-mode .campaign-front .front-lang-btn:not(.is-active) {
             </div>
         </div>
         <div class="detail-footer">
-            <button class="btn-apply-big" id="detailApplyBtn" onclick="alert('Candidature envoyée !')">🙋 <span data-i18n="btn_apply_campaign">Postuler à cette campagne</span></button>
+            <button class="btn-apply-big" id="detailApplyBtn" onclick="postulerCampagne(selectedCampaignId)">🙋 <span data-i18n="btn_apply_campaign">Postuler à cette campagne</span></button>
             <button class="btn-close-detail" onclick="closeDetail()" data-i18n="btn_close">Fermer</button>
         </div>
     </div>
@@ -744,6 +744,13 @@ campagnesMap[<?= $c['idCampagne'] ?>] = {
 const sLabels = {active:'✅ Active',brouillon:'📝 Brouillon',terminee:'🏁 Terminée',annulee:'❌ Annulée'};
 const sColors = {active:'#0ea370',brouillon:'#f59e0b',terminee:'#3b82f6',annulee:'#f43f5e'};
 const sBgs    = {active:'#edfaf5',brouillon:'#fffbeb',terminee:'#eff6ff',annulee:'#fff1f3'};
+
+let selectedCampaignId = null;
+
+function postulerCampagne(id) {
+    if (!id) return;
+    window.location.href = '../condidature/details.php?origin=par_campagne&idSource=' + encodeURIComponent(id);
+}
 
 // Theme: ../layout/front-header.js (cre8_theme, html data-theme). Sync script + MutationObserver below.
 
@@ -1069,6 +1076,7 @@ function sortCampagnes() {
 // Detail modal
 function openDetail(id) {
     const c = campagnesMap[id]; if (!c) return;
+    selectedCampaignId = id;
     const badge = document.getElementById('detailBadge');
     badge.textContent = sLabels[c.statut] || c.statut;
     badge.style.background = sBgs[c.statut] || '#f0f0f0';

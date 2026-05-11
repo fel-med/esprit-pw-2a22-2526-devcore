@@ -5,16 +5,6 @@
     box-sizing: border-box;
 }
 
-/* Early paint: body follows html theme before late body.dark-mode sync */
-html[data-theme="dark"] body {
-    background-color: var(--bg);
-    color: var(--text);
-}
-html[data-theme="light"] body {
-    background-color: var(--bg);
-    color: var(--text);
-}
-
 :root {
     --primary:       #5b4fff;
     --primary-hover: #4438e0;
@@ -63,38 +53,6 @@ html[data-theme="light"] body {
 .front-nav-logo:hover {
     color: var(--primary-hover);
 }
-
-/* ── FRONT HEADER LOGO IMAGE SIZE ──
-   Keep the logo image consistent across all FrontOffice headers.
-   Uses explicit width + height because logoweb.png renders visually tiny at intrinsic size. */
-.front-nav-logo,
-.cre8-front-brand,
-.social-brand-logo,
-.nav-logo {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    min-width: 176px !important;
-    height: 70px !important;
-    line-height: 1 !important;
-    text-decoration: none !important;
-}
-
-.front-header-logo,
-.front-nav-logo .front-header-logo,
-.cre8-front-brand .front-header-logo,
-.social-brand-logo .front-header-logo,
-.nav-logo .front-header-logo {
-    width: 176px !important;
-    height: 48px !important;
-    max-width: none !important;
-    max-height: 48px !important;
-    display: block !important;
-    object-fit: contain !important;
-    object-position: left center !important;
-    flex: 0 0 auto !important;
-}
-
 
 .front-nav-links {
     list-style: none;
@@ -311,129 +269,390 @@ html[data-theme="light"] body {
     .front-nav-badge {
         display: none;
     }
-
-
-    .front-nav-logo,
-    .cre8-front-brand,
-    .social-brand-logo,
-    .nav-logo {
-        min-width: 142px !important;
-        height: 48px !important;
-    }
-
-    .front-header-logo,
-    .front-nav-logo .front-header-logo,
-    .cre8-front-brand .front-header-logo,
-    .social-brand-logo .front-header-logo,
-    .nav-logo .front-header-logo {
-        width: 142px !important;
-        height: 40px !important;
-        max-height: 40px !important;
-    }
 }
 
-/* Final logo visual-size correction */
-.front-nav-logo,
-.cre8-front-brand,
-.social-brand-logo,
-.nav-logo {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-  width: 260px !important;
-  min-width: 260px !important;
+/* =========================================================
+   CRE8 FRONT HEADER CENTERING FIX
+   Keep the logo on the left and the profile on the right,
+   but center the navigation group relative to the full header.
+   This fixes the right shift caused by flex space-between with
+   an unequal logo width and profile width.
+   ========================================================= */
+@media (min-width: 1181px) {
+  .front-nav.cre8-front-header,
+  .front-nav {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important;
+    align-items: center !important;
+    column-gap: 1rem !important;
+    justify-content: normal !important;
+  }
+
+  .front-nav .front-nav-logo,
+  .front-nav .cre8-front-brand {
+    grid-column: 1 !important;
+    justify-self: start !important;
+  }
+
+  .front-nav .front-nav-links,
+  .front-nav .cre8-front-nav {
+    grid-column: 2 !important;
+    justify-self: center !important;
+    justify-content: center !important;
+    width: max-content !important;
+    max-width: none !important;
+    min-width: 0 !important;
+  }
+
+  .front-nav .front-nav-right,
+  .front-nav .cre8-front-user {
+    grid-column: 3 !important;
+    justify-self: end !important;
+  }
+}
+
+/* On smaller screens, avoid overlap by allowing the nav to wrap under the logo/profile row. */
+@media (max-width: 1180px) and (min-width: 769px) {
+  .front-nav.cre8-front-header,
+  .front-nav {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    height: auto !important;
+    min-height: 70px !important;
+    row-gap: 0.5rem !important;
+    padding-top: 0.45rem !important;
+    padding-bottom: 0.45rem !important;
+  }
+
+  .front-nav .front-nav-links,
+  .front-nav .cre8-front-nav {
+    order: 3 !important;
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+  }
+}
+
+/* =========================================================
+   CRE8 FRONT HEADER FINAL SAFE REPAIR
+   Fixes the previous grid attempt that allowed the logo image
+   to render at intrinsic size. Keep the header compact, keep
+   the logo left/profile right, and center the nav in the full bar.
+   ========================================================= */
+.front-nav,
+.front-nav.cre8-front-header {
   height: 70px !important;
+  min-height: 70px !important;
+  padding: 0 40px !important;
   overflow: visible !important;
 }
 
-.front-header-logo,
-.front-nav-logo img,
-.cre8-front-brand img,
-.social-brand-logo img,
-.nav-logo img,
-.social-logo-img.front-header-logo {
-  width: 260px !important;
+.front-nav .front-nav-logo,
+.front-nav .cre8-front-brand {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: 176px !important;
+  min-width: 176px !important;
+  max-width: 176px !important;
   height: 70px !important;
-  max-width: 260px !important;
+  min-height: 70px !important;
   max-height: 70px !important;
-  object-fit: contain !important;
-  object-position: left center !important;
-  display: block !important;
-}
-
-@media (max-width: 768px) {
-  .front-nav-logo,
-  .cre8-front-brand,
-  .social-brand-logo,
-  .nav-logo {
-    width: 190px !important;
-    min-width: 190px !important;
-    height: 56px !important;
-  }
-
-  .front-header-logo,
-  .front-nav-logo img,
-  .cre8-front-brand img,
-  .social-brand-logo img,
-  .nav-logo img,
-  .social-logo-img.front-header-logo {
-    width: 190px !important;
-    height: 56px !important;
-    max-width: 190px !important;
-    max-height: 56px !important;
-  }
-}
-
-/* FRONT OFFICE LOGO — TRUE FINAL OVERRIDE */
-.front-nav-logo,
-.cre8-front-brand {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-  width: 380px !important;
-  min-width: 380px !important;
-  max-width: 380px !important;
-  height: 86px !important;
+  flex: 0 0 176px !important;
   padding: 0 !important;
-  line-height: 1 !important;
-  overflow: visible !important;
-  flex: 0 0 380px !important;
+  overflow: hidden !important;
 }
 
-.front-nav-logo > img.front-header-logo,
-.cre8-front-brand > img.front-header-logo,
-img.front-header-logo {
+.front-nav .front-nav-logo > img.front-header-logo,
+.front-nav .cre8-front-brand > img.front-header-logo,
+.front-nav img.front-header-logo {
   display: block !important;
-  width: 380px !important;
-  min-width: 380px !important;
-  max-width: 380px !important;
-  height: 86px !important;
-  min-height: 86px !important;
-  max-height: 86px !important;
+  width: 176px !important;
+  min-width: 176px !important;
+  max-width: 176px !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  max-height: 48px !important;
   object-fit: contain !important;
   object-position: left center !important;
   padding: 0 !important;
   margin: 0 !important;
 }
 
-@media (max-width: 768px) {
-  .front-nav-logo,
-  .cre8-front-brand {
-    width: 240px !important;
-    min-width: 240px !important;
-    max-width: 240px !important;
-    height: 64px !important;
-    flex-basis: 240px !important;
+@media (min-width: 1181px) {
+  .front-nav,
+  .front-nav.cre8-front-header {
+    display: grid !important;
+    grid-template-columns: minmax(176px, 1fr) auto minmax(176px, 1fr) !important;
+    align-items: center !important;
+    column-gap: 1rem !important;
+    justify-content: normal !important;
   }
 
-  .front-nav-logo > img.front-header-logo,
-  .cre8-front-brand > img.front-header-logo,
-  img.front-header-logo {
-    width: 240px !important;
-    min-width: 240px !important;
-    max-width: 240px !important;
-    height: 64px !important;
-    min-height: 64px !important;
-    max-height: 64px !important;
+  .front-nav .front-nav-logo,
+  .front-nav .cre8-front-brand {
+    grid-column: 1 !important;
+    justify-self: start !important;
+  }
+
+  .front-nav .front-nav-links,
+  .front-nav .cre8-front-nav {
+    grid-column: 2 !important;
+    justify-self: center !important;
+    justify-content: center !important;
+    width: max-content !important;
+    max-width: calc(100vw - 460px) !important;
+    min-width: 0 !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .front-nav .front-nav-right,
+  .front-nav .cre8-front-user {
+    grid-column: 3 !important;
+    justify-self: end !important;
+  }
+}
+
+@media (max-width: 1180px) and (min-width: 769px) {
+  .front-nav,
+  .front-nav.cre8-front-header {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    height: auto !important;
+    min-height: 70px !important;
+    row-gap: 0.5rem !important;
+    padding-top: 0.45rem !important;
+    padding-bottom: 0.45rem !important;
+  }
+
+  .front-nav .front-nav-links,
+  .front-nav .cre8-front-nav {
+    order: 3 !important;
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .front-nav,
+  .front-nav.cre8-front-header {
+    height: auto !important;
+    min-height: 56px !important;
+    padding: 12px 16px !important;
+  }
+
+  .front-nav .front-nav-logo,
+  .front-nav .cre8-front-brand {
+    width: 142px !important;
+    min-width: 142px !important;
+    max-width: 142px !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    max-height: 48px !important;
+    flex-basis: 142px !important;
+  }
+
+  .front-nav .front-nav-logo > img.front-header-logo,
+  .front-nav .cre8-front-brand > img.front-header-logo,
+  .front-nav img.front-header-logo {
+    width: 142px !important;
+    min-width: 142px !important;
+    max-width: 142px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+  }
+}
+
+/* =========================================================
+   CRE8 FRONT HEADER LOGO SIZE TUNING
+   Keeps the previous centering/grid fix, but increases the
+   visible brand logo size without changing dropdowns/theme.
+   ========================================================= */
+.front-nav .front-nav-logo,
+.front-nav .cre8-front-brand {
+  width: 224px !important;
+  min-width: 224px !important;
+  max-width: 224px !important;
+  flex: 0 0 224px !important;
+  height: 70px !important;
+  min-height: 70px !important;
+  max-height: 70px !important;
+  overflow: visible !important;
+  font-size: 30px !important;
+}
+
+.front-nav .front-nav-logo > img,
+.front-nav .cre8-front-brand > img,
+.front-nav .front-nav-logo > img.front-header-logo,
+.front-nav .cre8-front-brand > img.front-header-logo,
+.front-nav img.front-header-logo {
+  width: 224px !important;
+  min-width: 224px !important;
+  max-width: 224px !important;
+  height: 58px !important;
+  min-height: 58px !important;
+  max-height: 58px !important;
+  object-fit: contain !important;
+  object-position: left center !important;
+}
+
+@media (min-width: 1181px) {
+  .front-nav,
+  .front-nav.cre8-front-header {
+    grid-template-columns: minmax(224px, 1fr) auto minmax(224px, 1fr) !important;
+  }
+
+  .front-nav .front-nav-links,
+  .front-nav .cre8-front-nav {
+    max-width: calc(100vw - 560px) !important;
+  }
+}
+
+@media (max-width: 1180px) and (min-width: 769px) {
+  .front-nav .front-nav-logo,
+  .front-nav .cre8-front-brand {
+    width: 198px !important;
+    min-width: 198px !important;
+    max-width: 198px !important;
+    flex-basis: 198px !important;
+  }
+
+  .front-nav .front-nav-logo > img,
+  .front-nav .cre8-front-brand > img,
+  .front-nav .front-nav-logo > img.front-header-logo,
+  .front-nav .cre8-front-brand > img.front-header-logo,
+  .front-nav img.front-header-logo {
+    width: 198px !important;
+    min-width: 198px !important;
+    max-width: 198px !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    max-height: 52px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .front-nav .front-nav-logo,
+  .front-nav .cre8-front-brand {
+    width: 166px !important;
+    min-width: 166px !important;
+    max-width: 166px !important;
+    flex-basis: 166px !important;
+    height: 50px !important;
+    min-height: 50px !important;
+    max-height: 50px !important;
+  }
+
+  .front-nav .front-nav-logo > img,
+  .front-nav .cre8-front-brand > img,
+  .front-nav .front-nav-logo > img.front-header-logo,
+  .front-nav .cre8-front-brand > img.front-header-logo,
+  .front-nav img.front-header-logo {
+    width: 166px !important;
+    min-width: 166px !important;
+    max-width: 166px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+  }
+}
+
+/* =========================================================
+   CRE8 FRONT HEADER LOGO SIZE TUNING - SLIGHTLY BIGGER
+   Small safe increase from the previous version.
+   ========================================================= */
+.front-nav .front-nav-logo,
+.front-nav .cre8-front-brand {
+  width: 250px !important;
+  min-width: 250px !important;
+  max-width: 250px !important;
+  flex: 0 0 250px !important;
+  height: 70px !important;
+  min-height: 70px !important;
+  max-height: 70px !important;
+  overflow: visible !important;
+}
+
+.front-nav .front-nav-logo > img,
+.front-nav .cre8-front-brand > img,
+.front-nav .front-nav-logo > img.front-header-logo,
+.front-nav .cre8-front-brand > img.front-header-logo,
+.front-nav img.front-header-logo {
+  width: 250px !important;
+  min-width: 250px !important;
+  max-width: 250px !important;
+  height: 64px !important;
+  min-height: 64px !important;
+  max-height: 64px !important;
+  object-fit: contain !important;
+  object-position: left center !important;
+}
+
+@media (min-width: 1181px) {
+  .front-nav,
+  .front-nav.cre8-front-header {
+    grid-template-columns: minmax(250px, 1fr) auto minmax(250px, 1fr) !important;
+  }
+
+  .front-nav .front-nav-links,
+  .front-nav .cre8-front-nav {
+    max-width: calc(100vw - 620px) !important;
+  }
+}
+
+@media (max-width: 1180px) and (min-width: 769px) {
+  .front-nav .front-nav-logo,
+  .front-nav .cre8-front-brand {
+    width: 218px !important;
+    min-width: 218px !important;
+    max-width: 218px !important;
+    flex-basis: 218px !important;
+  }
+
+  .front-nav .front-nav-logo > img,
+  .front-nav .cre8-front-brand > img,
+  .front-nav .front-nav-logo > img.front-header-logo,
+  .front-nav .cre8-front-brand > img.front-header-logo,
+  .front-nav img.front-header-logo {
+    width: 218px !important;
+    min-width: 218px !important;
+    max-width: 218px !important;
+    height: 58px !important;
+    min-height: 58px !important;
+    max-height: 58px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .front-nav .front-nav-logo,
+  .front-nav .cre8-front-brand {
+    width: 180px !important;
+    min-width: 180px !important;
+    max-width: 180px !important;
+    flex-basis: 180px !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    max-height: 52px !important;
+  }
+
+  .front-nav .front-nav-logo > img,
+  .front-nav .cre8-front-brand > img,
+  .front-nav .front-nav-logo > img.front-header-logo,
+  .front-nav .cre8-front-brand > img.front-header-logo,
+  .front-nav img.front-header-logo {
+    width: 180px !important;
+    min-width: 180px !important;
+    max-width: 180px !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    max-height: 48px !important;
   }
 }

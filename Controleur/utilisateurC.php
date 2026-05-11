@@ -506,7 +506,7 @@ public function login($email, $password) {
 
     // REDIRECTION
     if ($normalizedRole === 'admin') {
-        header('Location: ' . $this->appUrl('Vue/BackOffice/utilisateur/index.php'));
+        header('Location: ' . $this->appUrl('Vue/BackOffice/dashboard/index.php'));
     } else {
         header('Location: ' . $this->appUrl('Vue/FrontOffice/utilisateur/creator.php'));
     }

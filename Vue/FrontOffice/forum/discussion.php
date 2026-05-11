@@ -50,6 +50,7 @@ if (!isset($forum) || !isset($messages)) {
             --primary-hover: #8f82ff;
             --text-main: #e6edf3;
             --text-sub: #8b949e;
+            --text-dim: #8b949e;
             --border: #30363d;
             --bg: #0d1117;
             --white: #161b22;

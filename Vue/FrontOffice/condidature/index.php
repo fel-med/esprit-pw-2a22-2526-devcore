@@ -716,6 +716,7 @@ if ($requestedCreatorTab !== '') {
                                         ?>
                                         <article
                                             class="candidature-card<?php echo htmlspecialchars(candidatureCardToneClass($statusKey, $isOutdated)); ?>"
+                                            data-candidature-id="<?php echo (int) $condidature->getIdCandidature(); ?>"
                                             data-card-href="details.php?idCandidature=<?php echo (int) $condidature->getIdCandidature(); ?>"
                                         >
                                             <div class="candidature-card-top">

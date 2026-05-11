@@ -1434,6 +1434,17 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
     }
 
     function collectCardHighlights() {
+        const ctx = window.CRE8PILOT_CONTEXT || {};
+        if (String(ctx.page || '') === 'creator_candidature_workspace' && String(ctx.mode || '') === 'list') {
+            const candidatureCards = uniqueFields(Array.from(document.querySelectorAll('.candidature-card')))
+                .filter(isProbablyVisible)
+                .slice(0, 12)
+                .map((item) => textOf(item, 260))
+                .filter(Boolean);
+            if (candidatureCards.length > 0) {
+                return candidatureCards;
+            }
+        }
         const brandOfferShell = document.querySelector('[data-offer-tab-shell]');
         const selectors = [
             '.metric-card',
@@ -1650,6 +1661,7 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
             brand_decision_form: '[data-cre8pilot-form="brand_decision_form"], form.brand-decision-form, form#brandDecisionForm, form[name="brandDecisionForm"], [data-response-modal-panel="decision"] form',
             decision_form: '[data-cre8pilot-form="decision_form"], form.decision-form, form#decisionForm',
             refusal_form: '[data-cre8pilot-form="refusal_form"], form.refusal-form',
+            creator_decline_form: '[data-creator-response-modal-panel="decline"] form, form[data-modal-variant="refuse"]',
             filter_form: '[data-cre8pilot-form="filter_form"], form.filter-stack, form.filter-form, form.search-form, form[role="search"], form#filterForm, section.filter-card form[method="get"], form[method="get"][action*="brand_index"]',
             search_form: '[data-cre8pilot-form="search_form"], form.search-form, form[role="search"]',
             sort_form: '[data-cre8pilot-form="sort_form"], form.search-form, form.filter-form, form[role="search"], form.filter-stack',
@@ -1847,6 +1859,21 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
             return;
         }
         const fillTarget = String(action.target || '');
+        const creatorOverlay = document.querySelector('[data-creator-response-modal-overlay]');
+        if (creatorOverlay && fillTarget === 'creator_decline_form') {
+            const panel = creatorOverlay.querySelector('[data-creator-response-modal-panel="decline"]');
+            if (panel) {
+                creatorOverlay.querySelectorAll('[data-creator-response-modal-panel]').forEach((node) => node.setAttribute('hidden', 'hidden'));
+                creatorOverlay.removeAttribute('hidden');
+                creatorOverlay.style.display = 'flex';
+                creatorOverlay.classList.add('is-open');
+                panel.removeAttribute('hidden');
+                document.documentElement.classList.add('offre-modal-open');
+                document.body.classList.add('offre-modal-open');
+                action._cre8pilotFieldScope = panel;
+            }
+            return;
+        }
         const openSection = String(action.openSection || '').toLowerCase();
         const hasBrandOverlay = !!document.querySelector('[data-response-modal-overlay]');
         let ew = cre8pilotResolveExclusiveWindowFromAction(action);
@@ -2597,9 +2624,11 @@ $cre8PilotBubblesCss = htmlspecialchars(rtrim($cre8PilotBase, '/') . '/Vue/Front
                 ['Check risk', 'security_check'],
             ],
             'creator_candidature_workspace:list': [
+                ['Summarize invitations', 'summarize_page'],
+                ['Which invitation first?', 'recommend_next_action'],
+                ['Best offer for me', 'recommend_next_action'],
                 ['Summarize my candidatures', 'summarize_page'],
                 ['What should I do next?', 'recommend_next_action'],
-                ['Applications need action', 'recommend_next_action'],
                 ['Check risk', 'security_check'],
             ],
             'admin_offer_workspace:table': [

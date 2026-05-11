@@ -1386,7 +1386,7 @@ $cre8PilotContext = [
     'mode' => $negotiationOnly ? 'negotiation_reply' : 'application_form',
     'role' => (string) ($_SESSION['utilisateur']['role'] ?? ''),
     'allowedActions' => $negotiationOnly
-        ? ['normal_chat', 'prepare_negotiation_reply', 'summarize_negotiation', 'improve_negotiation_message', 'security_check']
+        ? ['normal_chat', 'prepare_negotiation_reply', 'prepare_creator_acceptance_note', 'prepare_creator_refusal_note', 'summarize_negotiation', 'improve_negotiation_message', 'security_check']
         : ['normal_chat', 'summarize_page', 'fill_candidature_form', 'improve_motivation_message', 'suggest_budget_delay', 'prepare_negotiation_reply'],
     'formTarget' => $negotiationOnly ? 'negotiation_form' : 'candidature_form',
     'visibleEntityType' => $negotiationOnly ? 'negociation' : 'candidature',
