@@ -14,6 +14,7 @@ class ForumC {
             $stmt = $this->pdo->query("
                 SELECT f.*,
                        COALESCE(e.TitreFormation, 'Événement') as nom_evenement,
+                       e.image as image_evenement,
                        COALESCE(u.nom, 'Admin') as nom_utilisateur,
                        (SELECT COUNT(*) FROM forum_messages WHERE idForum = f.idForum) as nb_messages
                 FROM forum f
@@ -70,17 +71,52 @@ class ForumC {
                 INSERT INTO forum_messages (idForum, idUtilisateur, message, dateMessage, signalement) 
                 VALUES (:forum, :user, :msg, NOW(), 0)
             ");
-            return $stmt->execute([
+            $ok = $stmt->execute([
                 ':forum' => $idForum,
-                ':user' => $idUtilisateur,
-                ':msg' => trim($message)
+                ':user'  => $idUtilisateur,
+                ':msg'   => trim($message)
             ]);
+            if (!$ok) {
+                $err = $stmt->errorInfo();
+                return 'PDO: ' . ($err[2] ?? 'unknown');
+            }
+            return true;
         } catch (Exception $e) {
             error_log("Forum add message error: " . $e->getMessage());
-            return false;
+            return $e->getMessage();
         }
     }
     
+    // Auto-create forums for today's events that don't have one yet
+    public function creerForumsAuto(): int {
+        $stmt = $this->pdo->prepare("
+            SELECT e.idFormation, e.TitreFormation, e.description
+            FROM evenement e
+            LEFT JOIN forum f ON e.idFormation = f.idFormation
+            WHERE DATE(e.DateFormation) <= CURDATE()
+              AND e.statut = 'actif'
+              AND f.idForum IS NULL
+        ");
+        $stmt->execute();
+        $events = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $created = 0;
+        foreach ($events as $event) {
+            $insert = $this->pdo->prepare("
+                INSERT INTO forum (idFormation, idUtilisateur, TitreForum, dateCreation, sujet, message, est_actif, vues)
+                VALUES (:formation, 1, :titre, NOW(), :sujet, :message, 1, 0)
+            ");
+            $insert->execute([
+                ':formation' => $event['idFormation'],
+                ':titre'     => 'Forum - ' . $event['TitreFormation'],
+                ':sujet'     => 'Bienvenue sur le forum de l\'événement : ' . $event['TitreFormation'],
+                ':message'   => $event['description'] ?? 'Discussion générale',
+            ]);
+            $created++;
+        }
+        return $created;
+    }
+
     // Report a message
     public function signalerMessage($idMessage) {
         $stmt = $this->pdo->prepare("UPDATE forum_messages SET signalement = 1 WHERE idMessage = :id");
@@ -199,7 +235,12 @@ class ForumC {
 }
 
 // ============ ROUTER ============
-session_start();
+// Only run the router when this file is accessed directly (not when required as a class)
+if (basename($_SERVER['SCRIPT_FILENAME']) === basename(__FILE__)) {
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 $controller = new ForumC();
 $BASE = rtrim(str_replace('\\', '/', dirname(dirname($_SERVER['SCRIPT_NAME']))), '/');
@@ -275,24 +316,101 @@ switch ($action) {
             exit;
         }
 
-        // Accept any session key pattern — never block on missing session
+        // Read user ID from session — match the exact keys set by utilisateurC.php
         $userId = $_SESSION['utilisateur']['id']
                ?? $_SESSION['user']['id']
+               ?? $_SESSION['id']
                ?? $_SESSION['user_id']
-               ?? 1;
+               ?? null;
+
+        if (!$userId) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Vous devez être connecté pour publier un message.',
+                'debug_session' => array_keys($_SESSION)
+            ]);
+            exit;
+        }
+
+        // If the session user ID doesn't exist in DB, try to resolve via email
+        $pdo = config::getConnexion();
+        $checkUser = $pdo->prepare("SELECT id FROM utilisateur WHERE id = :id LIMIT 1");
+        $checkUser->execute([':id' => $userId]);
+        if (!$checkUser->fetch()) {
+            // Try resolving by session email
+            $email = $_SESSION['utilisateur']['email'] ?? $_SESSION['user']['email'] ?? $_SESSION['email'] ?? null;
+            if ($email) {
+                $byEmail = $pdo->prepare("SELECT id FROM utilisateur WHERE email = :email LIMIT 1");
+                $byEmail->execute([':email' => $email]);
+                $row = $byEmail->fetch(PDO::FETCH_ASSOC);
+                if ($row) {
+                    $userId = $row['id'];
+                    // Fix the session so it doesn't happen again
+                    $_SESSION['utilisateur']['id'] = $userId;
+                    $_SESSION['id'] = $userId;
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Compte introuvable. Veuillez vous reconnecter.']);
+                    exit;
+                }
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Session expirée. Veuillez vous reconnecter.']);
+                exit;
+            }
+        }
 
         $result = $controller->ajouterMessage($idForum, (int)$userId, $message);
-        echo json_encode($result
-            ? ['success' => true,  'message' => 'Message publié !']
-            : ['success' => false, 'message' => 'Erreur lors de l\'ajout']
-        );
+
+        if ($result === true) {
+            echo json_encode(['success' => true, 'message' => 'Message publié !']);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => is_string($result) ? $result : 'Erreur lors de l\'ajout',
+                'debug_userId'  => $userId,
+                'debug_forumId' => $idForum,
+            ]);
+        }
         exit;
         
     case 'signaler':
         if ($id > 0) {
             $controller->signalerMessage($id);
-            header('Location: ' . $_SERVER['HTTP_REFERER'] ?? $BASE . '/Controleur/forumC.php');
+            // Support both AJAX (POST) and regular link (GET)
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => true]);
+            } else {
+                $referer = $_SERVER['HTTP_REFERER'] ?? ($BASE . '/Controleur/forumC.php');
+                header('Location: ' . $referer);
+            }
         }
-        break;
+        exit;
+
+    case 'modifier_message':
+        header('Content-Type: application/json');
+        if ($id <= 0) {
+            echo json_encode(['success' => false, 'message' => 'ID invalide']);
+            exit;
+        }
+        $newText = isset($_POST['message']) ? trim($_POST['message']) : '';
+        if (empty($newText)) {
+            echo json_encode(['success' => false, 'message' => 'Message vide']);
+            exit;
+        }
+        $currentUserId = $_SESSION['utilisateur']['id'] ?? $_SESSION['user']['id'] ?? $_SESSION['id'] ?? 0;
+        // Only allow the message owner to edit
+        $checkOwner = config::getConnexion()->prepare("SELECT idUtilisateur FROM forum_messages WHERE idMessage = :id");
+        $checkOwner->execute([':id' => $id]);
+        $row = $checkOwner->fetch(PDO::FETCH_ASSOC);
+        if (!$row || (int)$row['idUtilisateur'] !== (int)$currentUserId) {
+            echo json_encode(['success' => false, 'message' => 'Non autorisé']);
+            exit;
+        }
+        $update = config::getConnexion()->prepare("UPDATE forum_messages SET message = :msg WHERE idMessage = :id");
+        $ok = $update->execute([':msg' => $newText, ':id' => $id]);
+        echo json_encode(['success' => $ok]);
+        exit;
+}
+// End of router guard
 }
 ?>

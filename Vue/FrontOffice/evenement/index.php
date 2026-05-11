@@ -60,6 +60,19 @@ if (!isset($evenements)) {
         while ($row = $stmtForum->fetch(PDO::FETCH_ASSOC)) {
             $forumsData[$row['idFormation']] = $row;
         }
+
+        // Auto-create forums for events whose date has arrived
+        require_once __DIR__ . '/../../../Controleur/forumC.php';
+        $forumCtrl = new ForumC();
+        $forumCtrl->creerForumsAuto();
+
+        // Reload forumsData after potential new creations
+        $forumsData = [];
+        $stmtForum2 = $pdo->prepare("SELECT idFormation, idForum, est_actif FROM forum WHERE est_actif = 1");
+        $stmtForum2->execute();
+        while ($row = $stmtForum2->fetch(PDO::FETCH_ASSOC)) {
+            $forumsData[$row['idFormation']] = $row;
+        }
         
     } catch (Exception $e) {
         $evenements = [];
@@ -238,16 +251,46 @@ if (!isset($evenements)) {
             border-bottom: 1px solid var(--border);
             padding-bottom: 16px;
             margin-bottom: 24px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
         }
-        .section-header h2 {
+        .section-header-text h2 {
             font-size: 20px;
             font-weight: 700;
             margin-bottom: 4px;
         }
-        .section-header p {
+        .section-header-text p {
             font-size: 14px;
             color: var(--text-sub);
         }
+        /* Language toggle */
+        .front-lang-switch {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem;
+            border-radius: 999px;
+            border: 1px solid rgba(139,92,246,0.45);
+            background: rgba(139,92,246,0.08);
+            flex-shrink: 0;
+        }
+        .front-lang-btn {
+            border: 0;
+            border-radius: 999px;
+            background: transparent;
+            color: var(--text-sub);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.76rem;
+            font-weight: 800;
+            padding: 0.4rem 0.9rem;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .front-lang-btn:hover { color: var(--primary); }
+        .front-lang-btn.is-active { background: #8b5cf6; color: #fff; }
 
         .events-layout {
             display: flex;
@@ -624,16 +667,16 @@ if (!isset($evenements)) {
         <!-- Hero Section -->
         <div class="hero-section">
             <div class="hero-content">
-                <h1>Découvrez les événements de la communauté</h1>
-                <p>Formations, webinaires, meetups et ateliers pour les créateurs et les marques.</p>
+                <h1 data-i18n="discover_events">Découvrez les événements de la communauté</h1>
+                <p data-i18n="events_desc">Formations, webinaires, meetups et ateliers pour les créateurs et les marques.</p>
                 <div class="hero-stats">
                     <div class="hero-stat">
                         <span class="hero-stat-number"><?= count($evenements) ?></span>
-                        <span class="hero-stat-label">Événements disponibles</span>
+                        <span class="hero-stat-label" data-i18n="events_available">Événements disponibles</span>
                     </div>
                     <div class="hero-stat">
                         <span class="hero-stat-number"><?= array_sum(array_map(function($e) { return $e->getNbInscrits(); }, $evenements)) ?></span>
-                        <span class="hero-stat-label">Participants</span>
+                        <span class="hero-stat-label" data-i18n="participants">Participants</span>
                     </div>
                 </div>
             </div>
@@ -643,33 +686,39 @@ if (!isset($evenements)) {
         </div>
 
         <div class="section-header">
-            <h2>Tous les événements</h2>
-            <p>Découvrez les événements disponibles près de chez vous ou en ligne</p>
+            <div class="section-header-text">
+                <h2 data-i18n="all_events">Tous les événements</h2>
+                <p data-i18n="events_subtitle">Découvrez les événements disponibles près de chez vous ou en ligne</p>
+            </div>
+            <div class="front-lang-switch" role="group" aria-label="Language">
+                <button type="button" class="front-lang-btn" data-lang-choice="en" aria-pressed="false">EN</button>
+                <button type="button" class="front-lang-btn" data-lang-choice="fr" aria-pressed="false">FR</button>
+            </div>
         </div>
 
         <div class="events-layout">
             <aside class="events-sidebar">
                 <div class="filter-section">
-                    <div class="filter-title">🔍 RECHERCHE</div>
+                    <div class="filter-title">🔍 <span data-i18n="search_label">RECHERCHE</span></div>
                     <div class="search-box">
-                        <input type="text" id="searchInput" placeholder="Rechercher un événement...">
+                        <input type="text" id="searchInput" data-i18n-placeholder="search_placeholder" placeholder="Rechercher un événement...">
                     </div>
                 </div>
                 <div class="filter-section">
-                    <div class="filter-title">📂 TYPE</div>
+                    <div class="filter-title">📂 <span data-i18n="type">TYPE</span></div>
                     <div class="filter-options">
-                        <label class="filter-option"><input type="checkbox" value="formation" class="type-filter"> Formation</label>
-                        <label class="filter-option"><input type="checkbox" value="webinaire" class="type-filter"> Webinaire</label>
-                        <label class="filter-option"><input type="checkbox" value="meetup" class="type-filter"> Meetup</label>
-                        <label class="filter-option"><input type="checkbox" value="atelier" class="type-filter"> Atelier</label>
+                        <label class="filter-option"><input type="checkbox" value="formation" class="type-filter"> <span data-i18n="formation">Formation</span></label>
+                        <label class="filter-option"><input type="checkbox" value="webinaire" class="type-filter"> <span data-i18n="webinaire">Webinaire</span></label>
+                        <label class="filter-option"><input type="checkbox" value="meetup" class="type-filter"> <span data-i18n="meetup">Meetup</span></label>
+                        <label class="filter-option"><input type="checkbox" value="atelier" class="type-filter"> <span data-i18n="atelier">Atelier</span></label>
                     </div>
                 </div>
                 <div class="filter-section">
-                    <div class="filter-title">📍 LIEU</div>
+                    <div class="filter-title">📍 <span data-i18n="location">LIEU</span></div>
                     <div class="chip-group">
-                        <button class="chip active" onclick="filterChip(this, '')">Tous</button>
-                        <button class="chip" onclick="filterChip(this, 'en_ligne')">En ligne</button>
-                        <button class="chip" onclick="filterChip(this, 'presentiel')">Présentiel</button>
+                        <button class="chip active" onclick="filterChip(this, '')" data-lieu-filter="" data-i18n="all">Tous</button>
+                        <button class="chip" onclick="filterChip(this, 'en_ligne')" data-lieu-filter="en_ligne" data-i18n="online">En ligne</button>
+                        <button class="chip" onclick="filterChip(this, 'presentiel')" data-lieu-filter="presentiel" data-i18n="in_person">Présentiel</button>
                     </div>
                 </div>
             </aside>
@@ -678,9 +727,9 @@ if (!isset($evenements)) {
                 <div class="events-header-bar">
                     <div class="events-count" id="eventsCount"><?= count($evenements) ?> événements</div>
                     <select id="sortSelect" class="sort-select">
-                        <option value="date">Date (plus récent)</option>
-                        <option value="date_asc">Date (plus ancien)</option>
-                        <option value="spots">Places disponibles</option>
+                        <option value="date" data-i18n-opt="date_recent">Date (plus récent)</option>
+                        <option value="date_asc" data-i18n-opt="date_oldest">Date (plus ancien)</option>
+                        <option value="spots" data-i18n-opt="spots_available">Places disponibles</option>
                     </select>
                 </div>
 
@@ -717,11 +766,12 @@ if (!isset($evenements)) {
                                     <span>📅 <?= date('d M Y', strtotime($event->getDateEvenement())) ?></span>
                                     <span>📍 <?= htmlspecialchars($event->getLieu() ?: 'En ligne') ?></span>
                                 </div>
-                                <div class="event-spots <?= $isFull ? 'full' : 'available' ?>">
+                                <div class="event-spots <?= $isFull ? 'full' : 'available' ?>"
+                                     data-spots-left="<?= $spotsLeft ?>">
                                     <?= $isFull ? '❌ Complet' : '✅ ' . $spotsLeft . ' places restantes' ?>
                                 </div>
-                                <button onclick="ouvrirModalInscription(<?= $event->getId() ?>)" class="btn-event-primary">✨ S'inscrire</button>
-                                <button onclick="voirDetail(<?= $event->getId() ?>)" class="btn-event-secondary">👁 Voir les détails</button>
+                                <button onclick="ouvrirModalInscription(<?= $event->getId() ?>)" class="btn-event-primary">✨ <span data-i18n="register">S'inscrire</span></button>
+                                <button onclick="voirDetail(<?= $event->getId() ?>)" class="btn-event-secondary">👁 <span data-i18n="view_details">Voir les détails</span></button>
                                 <?= $forumLink ?>
                             </div>
                         </div>
@@ -759,21 +809,21 @@ if (!isset($evenements)) {
     <div id="inscriptionModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(6px); z-index: 1060; align-items: center; justify-content: center;">
         <div class="inscription-modal-card" style="background: var(--white); border-radius: 24px; width: 460px; max-width: 90%; overflow: hidden;">
             <div style="background: linear-gradient(135deg, #5b4fff, #7c3aed); padding: 24px; text-align: center; color: white;">
-                <h3>✨ Inscription</h3>
-                <p>Rejoignez cet événement</p>
+                <h3>✨ <span data-i18n="registration">Inscription</span></h3>
+                <p data-i18n="join_event">Rejoignez cet événement</p>
             </div>
             <div style="padding: 24px;">
                 <div style="margin-bottom: 16px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 700;">Nom complet</label>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 700;" data-i18n="full_name">Nom complet</label>
                     <input type="text" id="inscrireNom" class="form-control">
                 </div>
                 <div style="margin-bottom: 16px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 700;">Email</label>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 700;" data-i18n="email_address">Email</label>
                     <input type="email" id="inscrireEmail" class="form-control">
                 </div>
                 <div style="display: flex; gap: 12px;">
-                    <button onclick="fermerModalInscription()" class="btn btn-outline-secondary flex-grow-1">Annuler</button>
-                    <button onclick="confirmerInscription()" class="btn btn-primary flex-grow-1">Confirmer</button>
+                    <button onclick="fermerModalInscription()" class="btn btn-outline-secondary flex-grow-1" data-i18n="cancel">Annuler</button>
+                    <button onclick="confirmerInscription()" class="btn btn-primary flex-grow-1" data-i18n="confirm">Confirmer</button>
                 </div>
             </div>
         </div>
@@ -799,9 +849,144 @@ if (!isset($evenements)) {
                 complete: 'Complet',
                 waiting_list: "Liste d'attente",
                 register_now: "S'inscrire maintenant",
-                loading_error: 'Erreur de chargement'
+                loading_error: 'Erreur de chargement',
+                // Hero
+                discover_events: 'Découvrez les événements de la communauté',
+                events_desc: 'Formations, webinaires, meetups et ateliers pour les créateurs et les marques.',
+                events_available: 'Événements disponibles',
+                participants: 'Participants',
+                // Page text
+                all_events: 'Tous les événements',
+                events_subtitle: 'Découvrez les événements disponibles près de chez vous ou en ligne',
+                search_label: 'RECHERCHE',
+                search_placeholder: 'Rechercher un événement...',
+                type: 'TYPE',
+                location: 'LIEU',
+                all: 'Tous',
+                online: 'En ligne',
+                in_person: 'Présentiel',
+                formation: 'Formation',
+                webinaire: 'Webinaire',
+                meetup: 'Meetup',
+                atelier: 'Atelier',
+                date_recent: 'Date (plus récent)',
+                date_oldest: 'Date (plus ancien)',
+                spots_available: 'Places disponibles',
+                register: "S'inscrire",
+                view_details: 'Voir les détails',
+                access_forum: 'Accéder au forum',
+                full: 'Complet',
+                spots_left: 'places restantes',
+                // Modal
+                registration: 'Inscription',
+                join_event: 'Rejoignez cet événement',
+                full_name: 'Nom complet',
+                email_address: 'Adresse email',
+                cancel: 'Annuler',
+                confirm: 'Confirmer',
+                fill_fields: 'Veuillez remplir tous les champs',
+                invalid_email: 'Email invalide',
+                connection_error: 'Erreur de connexion au serveur',
+                registration_progress: 'Inscription en cours...',
+                events_count_suffix: 'événements'
+            },
+            en: {
+                spots_remaining: 'spots remaining',
+                complete: 'Full',
+                waiting_list: 'Waiting list',
+                register_now: 'Register now',
+                loading_error: 'Loading error',
+                // Hero
+                discover_events: 'Discover community events',
+                events_desc: 'Trainings, webinars, meetups and workshops for creators and brands.',
+                events_available: 'Events available',
+                participants: 'Participants',
+                // Page text
+                all_events: 'All events',
+                events_subtitle: 'Discover events available near you or online',
+                search_label: 'SEARCH',
+                search_placeholder: 'Search for an event...',
+                type: 'TYPE',
+                location: 'LOCATION',
+                all: 'All',
+                online: 'Online',
+                in_person: 'In person',
+                formation: 'Training',
+                webinaire: 'Webinar',
+                meetup: 'Meetup',
+                atelier: 'Workshop',
+                date_recent: 'Date (newest)',
+                date_oldest: 'Date (oldest)',
+                spots_available: 'Available spots',
+                register: 'Register',
+                view_details: 'View details',
+                access_forum: 'Access forum',
+                full: 'Full',
+                spots_left: 'spots left',
+                // Modal
+                registration: 'Registration',
+                join_event: 'Join this event',
+                full_name: 'Full name',
+                email_address: 'Email address',
+                cancel: 'Cancel',
+                confirm: 'Confirm',
+                fill_fields: 'Please fill in all fields',
+                invalid_email: 'Invalid email',
+                connection_error: 'Connection error',
+                registration_progress: 'Registering...',
+                events_count_suffix: 'events'
             }
         };
+
+        function applyTranslation(lang) {
+            const safe = (lang === 'en') ? 'en' : 'fr';
+            currentLang = safe;
+            try { localStorage.setItem('cre8_lang', safe); } catch(e) {}
+
+            const t = translations[safe];
+
+            // data-i18n elements
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t[key] !== undefined) el.textContent = t[key];
+            });
+
+            // placeholders
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (t[key] !== undefined) el.placeholder = t[key];
+            });
+
+            // sort <select> options via data-i18n-opt
+            document.querySelectorAll('[data-i18n-opt]').forEach(el => {
+                const key = el.getAttribute('data-i18n-opt');
+                if (t[key] !== undefined) el.textContent = t[key];
+            });
+
+            // spots text on each card
+            document.querySelectorAll('.event-spots[data-spots-left]').forEach(el => {
+                const spots = parseInt(el.getAttribute('data-spots-left'), 10);
+                if (spots <= 0) {
+                    el.textContent = '❌ ' + t['full'];
+                } else {
+                    el.textContent = '✅ ' + spots + ' ' + t['spots_left'];
+                }
+            });
+
+            // events count label
+            const countEl = document.getElementById('eventsCount');
+            if (countEl) {
+                const num = countEl.textContent.match(/\d+/);
+                if (num) countEl.textContent = num[0] + ' ' + t['events_count_suffix'];
+            }
+
+            // toggle button active state
+            document.querySelectorAll('[data-lang-choice]').forEach(btn => {
+                const active = btn.getAttribute('data-lang-choice') === safe;
+                btn.classList.toggle('is-active', active);
+                btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+            });
+        }
 
         function showToast(message, isError = false) {
             const toast = document.getElementById('toast');
@@ -885,7 +1070,10 @@ if (!isset($evenements)) {
                     document.getElementById('detailLieu').textContent = '📍 ' + (data.lieu || 'En ligne');
 
                     const placesRestantes = Number(data.capacite || 0) - Number(data.nb_inscrits || 0);
-                    document.getElementById('detailPlaces').textContent = placesRestantes > 0 ? '✅ ' + placesRestantes + ' places restantes' : '❌ Complet';
+                    const t = translations[currentLang];
+                    document.getElementById('detailPlaces').textContent = placesRestantes > 0
+                        ? '✅ ' + placesRestantes + ' ' + t['spots_remaining']
+                        : '❌ ' + t['complete'];
 
                     const detailImage = document.getElementById('detailImage');
                     detailImage.innerHTML = '';
@@ -917,7 +1105,9 @@ if (!isset($evenements)) {
                     
                     const btn = document.getElementById('detailInscrireBtn');
                     btn.onclick = function() { ouvrirModalInscription(data.id); };
-                    btn.innerHTML = placesRestantes <= 0 ? '📋 Liste d\'attente' : '✨ S\'inscrire maintenant';
+                    btn.innerHTML = placesRestantes <= 0
+                        ? '📋 ' + t['waiting_list']
+                        : '✨ ' + t['register_now'];
                     document.getElementById('detailModal').classList.add('show');
                 })
                 .catch(error => {
@@ -934,7 +1124,8 @@ if (!isset($evenements)) {
             const checkboxes = document.querySelectorAll('.type-filter:checked');
             const selectedTypes = Array.from(checkboxes).map(cb => cb.value);
             const activeChip = document.querySelector('.chip.active');
-            const lieuFilter = activeChip ? activeChip.textContent.toLowerCase() : '';
+            // Use data-lieu-filter attribute instead of text content so it works in both languages
+            const lieuFilter = activeChip ? (activeChip.getAttribute('data-lieu-filter') || '') : '';
             
             const cards = document.querySelectorAll('.event-product-card');
             let visibleCount = 0;
@@ -946,12 +1137,13 @@ if (!isset($evenements)) {
                 const lieu = card.getAttribute('data-lieu');
                 if (searchTerm && !title.includes(searchTerm)) show = false;
                 if (selectedTypes.length > 0 && !selectedTypes.includes(type)) show = false;
-                if (lieuFilter === 'en ligne' && lieu !== 'en_ligne') show = false;
-                if (lieuFilter === 'présentiel' && lieu !== 'presentiel') show = false;
+                if (lieuFilter === 'en_ligne' && lieu !== 'en_ligne') show = false;
+                if (lieuFilter === 'presentiel' && lieu !== 'presentiel') show = false;
                 card.style.display = show ? '' : 'none';
                 if (show) visibleCount++;
             });
-            document.getElementById('eventsCount').textContent = visibleCount + ' événements';
+            const t = translations[currentLang];
+            document.getElementById('eventsCount').textContent = visibleCount + ' ' + t['events_count_suffix'];
         }
 
         function filterChip(btn, filter) {
@@ -982,6 +1174,21 @@ if (!isset($evenements)) {
         });
         document.getElementById('detailModal').addEventListener('click', function(e) {
             if (e.target === this) fermerDetailModal();
+        });
+
+        // ── Language toggle init ──────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', function() {
+            // Restore saved language
+            let savedLang = 'fr';
+            try { savedLang = localStorage.getItem('cre8_lang') || 'fr'; } catch(e) {}
+            applyTranslation(savedLang);
+
+            // Wire toggle buttons
+            document.querySelectorAll('[data-lang-choice]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    applyTranslation(this.getAttribute('data-lang-choice'));
+                });
+            });
         });
     </script>
 </body>

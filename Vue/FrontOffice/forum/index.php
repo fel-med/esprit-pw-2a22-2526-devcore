@@ -3,7 +3,16 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-$BASE = rtrim(str_replace('\\', '/', dirname(dirname($_SERVER['SCRIPT_NAME']))), '/');
+$scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME']);
+// Strip from /Controleur/ or /Vue/ to get the project root — same logic as events page
+if (($pos = strpos($scriptPath, '/Vue/')) !== false) {
+    $BASE = substr($scriptPath, 0, $pos);
+} elseif (($pos = strpos($scriptPath, '/Controleur/')) !== false) {
+    $BASE = substr($scriptPath, 0, $pos);
+} else {
+    $BASE = rtrim(dirname(dirname($scriptPath)), '/');
+}
+$BASE = rtrim($BASE, '/');
 $frontActive = 'events';
 
 if (!isset($forums) || !is_array($forums)) {
@@ -261,6 +270,43 @@ $totalMessages = array_sum(array_column($forums, 'nb_messages'));
         .empty-state h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; color: var(--text-main); }
         .empty-state p { color: var(--text-sub); }
 
+        /* ── LANGUAGE TOGGLE ── */
+        .front-lang-switch {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem;
+            border-radius: 999px;
+            border: 1px solid rgba(139,92,246,0.45);
+            background: rgba(139,92,246,0.08);
+            flex-shrink: 0;
+        }
+        .front-lang-btn {
+            border: 0;
+            border-radius: 999px;
+            background: transparent;
+            color: var(--text-sub);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.76rem;
+            font-weight: 800;
+            padding: 0.4rem 0.9rem;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .front-lang-btn:hover { color: var(--primary); }
+        .front-lang-btn.is-active { background: #8b5cf6; color: #fff; }
+
+        /* ── SECTION HEADER flex row ── */
+        .section-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .section-header-text h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; color: var(--text-main); }
+        .section-header-text p  { font-size: 14px; color: var(--text-sub); }
+
         /* ── RESPONSIVE ── */
         @media (max-width: 1024px) {
             .forums-layout { flex-direction: column; }
@@ -282,16 +328,16 @@ $totalMessages = array_sum(array_column($forums, 'nb_messages'));
         <!-- Hero -->
         <div class="hero-section">
             <div class="hero-content">
-                <h1>💬 Forums de discussion</h1>
-                <p>Échangez avec la communauté, posez vos questions et partagez vos expériences.</p>
+                <h1>💬 <span data-i18n="forum_discussions">Forums de discussion</span></h1>
+                <p data-i18n="forum_desc">Échangez avec la communauté, posez vos questions et partagez vos expériences.</p>
                 <div class="hero-stats">
                     <div>
                         <span class="hero-stat-number"><?= count($forums) ?></span>
-                        <span class="hero-stat-label">Forums actifs</span>
+                        <span class="hero-stat-label" data-i18n="forums">Forums actifs</span>
                     </div>
                     <div>
                         <span class="hero-stat-number"><?= $totalMessages ?></span>
-                        <span class="hero-stat-label">Messages</span>
+                        <span class="hero-stat-label" data-i18n="messages">Messages</span>
                     </div>
                 </div>
             </div>
@@ -300,8 +346,14 @@ $totalMessages = array_sum(array_column($forums, 'nb_messages'));
 
         <!-- Section header -->
         <div class="section-header">
-            <h2>Tous les forums</h2>
-            <p>Participez aux discussions des événements qui vous intéressent</p>
+            <div class="section-header-text">
+                <h2 data-i18n="all_forums">Tous les forums</h2>
+                <p data-i18n="forums_subtitle">Participez aux discussions des événements qui vous intéressent</p>
+            </div>
+            <div class="front-lang-switch" role="group" aria-label="Language">
+                <button type="button" class="front-lang-btn" data-lang-choice="en" aria-pressed="false">EN</button>
+                <button type="button" class="front-lang-btn" data-lang-choice="fr" aria-pressed="false">FR</button>
+            </div>
         </div>
 
         <!-- Layout: sidebar + grid -->
@@ -310,12 +362,12 @@ $totalMessages = array_sum(array_column($forums, 'nb_messages'));
             <!-- Sidebar -->
             <aside class="forums-sidebar">
                 <div class="filter-section">
-                    <div class="filter-title">🔍 Recherche</div>
+                    <div class="filter-title">🔍 <span data-i18n="search_label">Recherche</span></div>
                     <div class="search-box">
                         <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
-                        <input type="text" id="forumSearch" placeholder="Rechercher un forum..." oninput="filterForums()">
+                        <input type="text" id="forumSearch" data-i18n-placeholder="search_forum" placeholder="Rechercher un forum..." oninput="filterForums()">
                     </div>
                 </div>
             </aside>
@@ -327,7 +379,6 @@ $totalMessages = array_sum(array_column($forums, 'nb_messages'));
                 </div>
 
                 <?php if (empty($forums)): ?>
-                    <div class="empty-state">
                         <div class="empty-state-icon">💬</div>
                         <h3>Aucun forum pour le moment</h3>
                         <p>Les forums apparaissent automatiquement le jour des événements.</p>
@@ -337,8 +388,14 @@ $totalMessages = array_sum(array_column($forums, 'nb_messages'));
                         <?php foreach ($forums as $forum): ?>
                             <div class="forum-card" data-title="<?= strtolower(htmlspecialchars($forum['TitreForum'] ?? '')) ?>">
                                 <div class="forum-card-image">
-                                    <?php if (!empty($forum['image_evenement'])): ?>
-                                        <img src="<?= $BASE ?>/<?= htmlspecialchars($forum['image_evenement']) ?>" alt="">
+                                    <?php 
+                                    $imgPath = $forum['image_evenement'] ?? '';
+                                    $fullSrc = $BASE . '/' . ltrim($imgPath, '/');
+                                    ?>
+                                    <?php if (!empty($imgPath)): ?>
+                                        <img src="<?= htmlspecialchars($fullSrc) ?>"
+                                             alt="<?= htmlspecialchars($forum['TitreForum'] ?? '') ?>"
+                                             onerror="this.style.display='none';this.parentElement.innerHTML='💬';">
                                     <?php else: ?>
                                         💬
                                     <?php endif; ?>
@@ -356,7 +413,7 @@ $totalMessages = array_sum(array_column($forums, 'nb_messages'));
                                     </div>
                                     <a href="<?= $BASE ?>/Controleur/forumC.php?action=voir&id=<?= (int)$forum['idForum'] ?>"
                                        class="btn-forum-join">
-                                        Rejoindre la discussion →
+                                        <span data-i18n="join_discussion">Rejoindre la discussion →</span>
                                     </a>
                                 </div>
                             </div>
@@ -369,6 +426,53 @@ $totalMessages = array_sum(array_column($forums, 'nb_messages'));
 
     <script src="<?= $BASE ?>/Vue/FrontOffice/layout/front-header.js"></script>
     <script>
+        // ── Translations ─────────────────────────────────────────────────────
+        const forumTranslations = {
+            fr: {
+                forum_discussions: 'Forums de discussion',
+                forum_desc: 'Échangez avec la communauté, posez vos questions et partagez vos expériences.',
+                forums: 'Forums actifs',
+                messages: 'Messages',
+                all_forums: 'Tous les forums',
+                forums_subtitle: 'Participez aux discussions des événements qui vous intéressent',
+                search_label: 'Recherche',
+                search_forum: 'Rechercher un forum...',
+                join_discussion: 'Rejoindre la discussion →'
+            },
+            en: {
+                forum_discussions: 'Discussion Forums',
+                forum_desc: 'Exchange with the community, ask questions and share your experiences.',
+                forums: 'Active forums',
+                messages: 'Messages',
+                all_forums: 'All forums',
+                forums_subtitle: 'Join discussions for events that interest you',
+                search_label: 'Search',
+                search_forum: 'Search for a forum...',
+                join_discussion: 'Join the discussion →'
+            }
+        };
+
+        function applyForumTranslation(lang) {
+            const safe = (lang === 'en') ? 'en' : 'fr';
+            try { localStorage.setItem('cre8_lang', safe); } catch(e) {}
+            const t = forumTranslations[safe];
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t[key] !== undefined) el.textContent = t[key];
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (t[key] !== undefined) el.placeholder = t[key];
+            });
+            document.querySelectorAll('[data-lang-choice]').forEach(btn => {
+                const active = btn.getAttribute('data-lang-choice') === safe;
+                btn.classList.toggle('is-active', active);
+                btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+            });
+        }
+
+        // ── Filter ────────────────────────────────────────────────────────────
         function filterForums() {
             const q = document.getElementById('forumSearch').value.toLowerCase();
             const cards = document.querySelectorAll('#forumsGrid .forum-card');
@@ -381,6 +485,20 @@ $totalMessages = array_sum(array_column($forums, 'nb_messages'));
             });
             document.getElementById('forumsCount').textContent = visible + ' forum' + (visible !== 1 ? 's' : '');
         }
+
+        // ── Init ──────────────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', function() {
+            let savedLang = 'fr';
+            try { savedLang = localStorage.getItem('cre8_lang') || 'fr'; } catch(e) {}
+            applyForumTranslation(savedLang);
+
+            document.querySelectorAll('[data-lang-choice]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    applyForumTranslation(this.getAttribute('data-lang-choice'));
+                });
+            });
+        });
     </script>
 </body>
 </html>
+

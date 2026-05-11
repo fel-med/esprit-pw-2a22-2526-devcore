@@ -17,4 +17,5 @@ ai_recommendation/scripts/__pycache__/
 .idea/
 .DS_Store
 Thumbs.db
-Vue/public/uploads/
+Vue/public/uploads/comments/
+Vue/public/uploads/condidature/
