@@ -127,11 +127,11 @@ if (!isset($frontActive)) {
 
         <li class="front-nav-item front-nav-dropdown-item">
             <button class="front-nav-trigger front-nav-myspace cre8-front-nav-link <?php echo $frontActive === 'myspace' ? 'active is-active' : ''; ?>" type="button" aria-haspopup="true">
-                <i class="bi bi-person-badge"></i> My Space <i class="bi bi-chevron-down front-nav-caret"></i>
+                <i class="bi bi-person-badge"></i> Posts <i class="bi bi-chevron-down front-nav-caret"></i>
             </button>
             <div class="front-nav-dropdown" role="menu">
-                <a href="<?php echo htmlspecialchars($portfolioUrl); ?>" role="menuitem">Portfolio</a>
-                <a href="<?php echo htmlspecialchars($postsUrl); ?>" role="menuitem">Posts</a>
+                <a href="<?php echo htmlspecialchars($portfolioUrl); ?>" role="menuitem">My Space</a>
+                <a href="<?php echo htmlspecialchars($postsUrl); ?>" role="menuitem">Feeds</a>
                 <a href="<?php echo htmlspecialchars($createPostUrl); ?>" role="menuitem">Create Post</a>
             </div>
         </li>
