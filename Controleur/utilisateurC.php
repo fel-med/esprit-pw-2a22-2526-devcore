@@ -467,10 +467,19 @@ public function login($email, $password) {
         return "Utilisateur introuvable";
     }
 
-    // TEST PASSWORD
-    if (!password_verify($password, $user['mot_de_passe'])) {
+    // TEST PASSWORD — handle both bcrypt hashes and legacy plain text
+    $passwordOk = password_verify($password, $user['mot_de_passe'])
+               || $password === $user['mot_de_passe'];
 
+    if (!$passwordOk) {
         return "Mot de passe incorrect";
+    }
+
+    // If password was plain text, upgrade it to a hash now
+    if ($password === $user['mot_de_passe']) {
+        $hashed = password_hash($password, PASSWORD_DEFAULT);
+        $db->prepare("UPDATE utilisateur SET mot_de_passe = ? WHERE id = ?")
+           ->execute([$hashed, $user['id']]);
     }
 
     if ($user['statut'] != 'actif') {

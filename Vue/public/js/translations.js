@@ -77,6 +77,10 @@ const translations = {
         'no_messages': 'Aucun message pour le moment',
         'be_first': 'Soyez le premier à participer à cette discussion !',
         'views': 'vues',
+        'all_forums': 'Tous les forums',
+        'forums_subtitle': 'Participez aux discussions des événements qui vous intéressent',
+        'search_label': 'Recherche',
+        'search_forum': 'Rechercher un forum...',
         
         // Message moderation
         'inappropriate_warning': '⚠️ Votre message contient des mots inappropriés qui seront masqués.\n\nCliquez sur OK pour continuer ou Annuler pour modifier votre message.',
@@ -165,6 +169,12 @@ const translations = {
         'no_messages': 'No messages yet',
         'be_first': 'Be the first to participate in this discussion!',
         'views': 'views',
+        'all_forums': 'All forums',
+        'forums_subtitle': 'Join discussions for events that interest you',
+        'search_label': 'Search',
+        'search_forum': 'Search for a forum...',
+        
+        // Message moderation
         
         // Message moderation
         'inappropriate_warning': '⚠️ Your message contains inappropriate words that will be masked.\n\nClick OK to continue or Cancel to edit your message.',

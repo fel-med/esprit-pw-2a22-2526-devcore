@@ -3,12 +3,15 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-$BASE = rtrim(str_replace('\\', '/', dirname(dirname($_SERVER['SCRIPT_NAME']))), '/');
-
-// DEBUG: Check if messages are being passed
-error_log("Number of messages: " . count($messages));
-error_log("Forum data: " . print_r($forum, true));
-
+$scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME']);
+if (($pos = strpos($scriptPath, '/Vue/')) !== false) {
+    $BASE = substr($scriptPath, 0, $pos);
+} elseif (($pos = strpos($scriptPath, '/Controleur/')) !== false) {
+    $BASE = substr($scriptPath, 0, $pos);
+} else {
+    $BASE = rtrim(dirname(dirname($scriptPath)), '/');
+}
+$BASE = rtrim($BASE, '/');
 if (!isset($forum) || !isset($messages)) {
     header('Location: ' . $BASE . '/Controleur/forumC.php');
     exit;
@@ -180,6 +183,69 @@ if (!isset($forum) || !isset($messages)) {
             font-size: 14px;
         }
 
+        /* ── MESSAGE ACTIONS ── */
+        .message-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+        .btn-msg-action {
+            padding: 5px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: transparent;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .btn-msg-edit   { color: var(--primary); border-color: var(--primary-border); }
+        .btn-msg-edit:hover { background: var(--primary-light); }
+        .btn-msg-report { color: var(--danger); border-color: rgba(244,63,94,0.25); }
+        .btn-msg-report:hover { background: rgba(244,63,94,0.08); }
+
+        /* ── EDIT INLINE ── */
+        .edit-area {
+            display: none;
+            margin-top: 10px;
+        }
+        .edit-area textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1.5px solid var(--primary);
+            border-radius: var(--radius-sm);
+            background: var(--bg);
+            color: var(--text-main);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 80px;
+        }
+        .edit-area-btns { display: flex; gap: 8px; margin-top: 8px; }
+        .btn-save-edit {
+            padding: 6px 18px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .btn-cancel-edit {
+            padding: 6px 18px;
+            background: transparent;
+            color: var(--text-sub);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
         .empty-messages {
             text-align: center;
             padding: 60px 24px;
@@ -250,6 +316,31 @@ if (!isset($forum) || !isset($messages)) {
         .toast-notification.error { background: var(--danger); }
         .toast-notification.show { opacity: 1; }
 
+        /* ── LANGUAGE TOGGLE ── */
+        .front-lang-switch {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem;
+            border-radius: 999px;
+            border: 1px solid rgba(139,92,246,0.45);
+            background: rgba(139,92,246,0.08);
+        }
+        .front-lang-btn {
+            border: 0;
+            border-radius: 999px;
+            background: transparent;
+            color: var(--text-sub);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.76rem;
+            font-weight: 800;
+            padding: 0.4rem 0.9rem;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .front-lang-btn:hover { color: var(--primary); }
+        .front-lang-btn.is-active { background: #8b5cf6; color: #fff; }
+
         @media (max-width: 768px) {
             .disc-page { padding: 20px 16px; }
             .forum-header-card { padding: 20px; }
@@ -260,7 +351,13 @@ if (!isset($forum) || !isset($messages)) {
 <body>
 <div class="disc-page">
 
-    <a href="<?= $BASE ?>/Controleur/forumC.php" class="back-link">← Retour aux forums</a>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:12px;">
+        <a href="<?= $BASE ?>/Controleur/forumC.php" class="back-link" style="margin-bottom:0;">← <span data-i18n="back_to_forums">Retour aux forums</span></a>
+        <div class="front-lang-switch" role="group" aria-label="Language">
+            <button type="button" class="front-lang-btn" data-lang-choice="en" aria-pressed="false">EN</button>
+            <button type="button" class="front-lang-btn" data-lang-choice="fr" aria-pressed="false">FR</button>
+        </div>
+    </div>
 
     <div class="forum-header-card">
         <h1 class="forum-title"><?= htmlspecialchars($forum['TitreForum'] ?? 'Discussion') ?></h1>
@@ -271,7 +368,7 @@ if (!isset($forum) || !isset($messages)) {
             <span>👁️ <?= (int)($forum['vues'] ?? 0) ?> vues</span>
         </div>
         <div class="forum-sujet-box">
-            <strong>📌 Sujet :</strong> <?= htmlspecialchars($forum['sujet'] ?? 'Discussion générale') ?>
+            <strong>📌 <span data-i18n="subject">Sujet</span> :</strong> <?= htmlspecialchars($forum['sujet'] ?? 'Discussion générale') ?>
         </div>
     </div>
 
@@ -279,11 +376,15 @@ if (!isset($forum) || !isset($messages)) {
         <?php if (empty($messages)): ?>
             <div class="empty-messages">
                 <div class="empty-icon">💬</div>
-                <h3>Aucun message pour le moment</h3>
-                <p>Soyez le premier à participer à cette discussion !</p>
+                <h3 data-i18n="no_messages">Aucun message pour le moment</h3>
+                <p data-i18n="be_first">Soyez le premier à participer à cette discussion !</p>
             </div>
         <?php else: ?>
-            <?php foreach ($messages as $msg): ?>
+            <?php 
+            $currentUserId = $_SESSION['utilisateur']['id'] ?? $_SESSION['user']['id'] ?? $_SESSION['id'] ?? 0;
+            foreach ($messages as $msg): 
+                $isOwner = ((int)$msg['idUtilisateur'] === (int)$currentUserId);
+            ?>
             <div class="message-card" data-message-id="<?= $msg['idMessage'] ?>">
                 <div class="message-header">
                     <div class="message-author-wrap">
@@ -294,20 +395,35 @@ if (!isset($forum) || !isset($messages)) {
                         </div>
                     </div>
                 </div>
-                <div class="message-content"><?= nl2br(htmlspecialchars($msg['message'] ?? '')) ?></div>
+                <div class="message-content" id="content-<?= $msg['idMessage'] ?>"><?= nl2br(htmlspecialchars($msg['message'] ?? '')) ?></div>
+
+                <div class="message-actions">
+                    <?php if ($isOwner): ?>
+                    <button class="btn-msg-action btn-msg-edit" onclick="toggleEdit(<?= $msg['idMessage'] ?>)">✏️ <span data-i18n="modify">Modifier</span></button>
+                    <?php endif; ?>
+                    <button class="btn-msg-action btn-msg-report" onclick="reportMessage(<?= $msg['idMessage'] ?>)">🚩 <span data-i18n="report">Signaler</span></button>
+                </div>
+
+                <div class="edit-area" id="edit-<?= $msg['idMessage'] ?>">
+                    <textarea id="edit-text-<?= $msg['idMessage'] ?>"><?= htmlspecialchars($msg['message'] ?? '') ?></textarea>
+                    <div class="edit-area-btns">
+                        <button class="btn-save-edit" onclick="saveEdit(<?= $msg['idMessage'] ?>)">💾 Sauvegarder</button>
+                        <button class="btn-cancel-edit" onclick="toggleEdit(<?= $msg['idMessage'] ?>)">Annuler</button>
+                    </div>
+                </div>
             </div>
             <?php endforeach; ?>
         <?php endif; ?>
     </div>
 
     <?php 
-    $userId = $_SESSION['utilisateur']['id'] ?? $_SESSION['user_id'] ?? 0;
+    $userId = $_SESSION['utilisateur']['id'] ?? $_SESSION['user']['id'] ?? $_SESSION['id'] ?? $_SESSION['user_id'] ?? 0;
     if ($userId > 0): 
     ?>
         <div class="reply-form-card">
-            <h3>✏️ Répondre à la discussion</h3>
-            <textarea id="newMessage" rows="4" placeholder="Écrivez votre message ici..."></textarea>
-            <button id="sendMessageBtn" class="btn-submit">📤 Publier le message</button>
+            <h3>✏️ <span data-i18n="reply_to_discussion">Répondre à la discussion</span></h3>
+            <textarea id="newMessage" rows="4" data-i18n-placeholder="write_message" placeholder="Écrivez votre message ici..."></textarea>
+            <button id="sendMessageBtn" class="btn-submit"><span data-i18n="publish_message">📤 Publier le message</span></button>
         </div>
     <?php else: ?>
         <div class="reply-form-card" style="text-align:center;">
@@ -330,6 +446,123 @@ if (!isset($forum) || !isset($messages)) {
         } catch(e) {}
     })();
 
+    // ── Translations ─────────────────────────────────────────────────────────
+    const discTranslations = {
+        fr: {
+            back_to_forums: 'Retour aux forums',
+            subject: 'Sujet',
+            no_messages: 'Aucun message pour le moment',
+            be_first: 'Soyez le premier à participer à cette discussion !',
+            reply_to_discussion: 'Répondre à la discussion',
+            write_message: 'Écrivez votre message ici... (max 2000 caractères)',
+            publish_message: '📤 Publier le message',
+            empty_message: 'Veuillez écrire un message',
+            connection_error: 'Erreur de connexion'
+        },
+        en: {
+            back_to_forums: 'Back to forums',
+            subject: 'Subject',
+            no_messages: 'No messages yet',
+            be_first: 'Be the first to participate in this discussion!',
+            reply_to_discussion: 'Reply to discussion',
+            write_message: 'Write your message here... (max 2000 characters)',
+            publish_message: '📤 Publish message',
+            empty_message: 'Please write a message',
+            connection_error: 'Connection error'
+        }
+    };
+
+    function applyDiscTranslation(lang) {
+        const safe = (lang === 'en') ? 'en' : 'fr';
+        try { localStorage.setItem('cre8_lang', safe); } catch(e) {}
+        const t = discTranslations[safe];
+
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (t[key] !== undefined) el.textContent = t[key];
+        });
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            const key = el.getAttribute('data-i18n-placeholder');
+            if (t[key] !== undefined) el.placeholder = t[key];
+        });
+        document.querySelectorAll('[data-lang-choice]').forEach(btn => {
+            const active = btn.getAttribute('data-lang-choice') === safe;
+            btn.classList.toggle('is-active', active);
+            btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+    }
+
+    // ── Profanity filter ─────────────────────────────────────────────────────
+    const BAD_WORDS = [
+        'fuck','shit','bitch','asshole','bastard','cunt','dick','pussy','cock',
+        'merde','putain','connard','salope','enculé','bordel','con','bite','chier',
+        'niquer','pute','fdp','tg','va te faire'
+    ];
+
+    function containsProfanity(text) {
+        const lower = text.toLowerCase();
+        return BAD_WORDS.some(w => lower.includes(w));
+    }
+
+    function maskProfanity(text) {
+        let result = text;
+        BAD_WORDS.forEach(w => {
+            const regex = new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+            result = result.replace(regex, '*'.repeat(w.length));
+        });
+        return result;
+    }
+
+    // ── Edit / Report ─────────────────────────────────────────────────────────
+    function toggleEdit(id) {
+        const area = document.getElementById('edit-' + id);
+        area.style.display = area.style.display === 'block' ? 'none' : 'block';
+        if (area.style.display === 'block') {
+            document.getElementById('edit-text-' + id).focus();
+        }
+    }
+
+    async function saveEdit(id) {
+        const text = document.getElementById('edit-text-' + id).value.trim();
+        if (!text) { showToast('Message vide', true); return; }
+
+        let finalText = text;
+        if (containsProfanity(text)) {
+            if (!confirm('⚠️ Votre message contient des mots inappropriés qui seront masqués.\n\nCliquez OK pour continuer ou Annuler pour modifier.')) return;
+            finalText = maskProfanity(text);
+        }
+
+        try {
+            const fd = new FormData();
+            fd.append('message', finalText);
+            const res = await fetch('<?= $BASE ?>/Controleur/forumC.php?action=modifier_message&id=' + id, {
+                method: 'POST', body: fd
+            });
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('content-' + id).innerHTML = finalText.replace(/\n/g, '<br>');
+                toggleEdit(id);
+                showToast('Message modifié !');
+            } else {
+                showToast(data.message || 'Erreur', true);
+            }
+        } catch(e) {
+            showToast('Erreur de connexion', true);
+        }
+    }
+
+    async function reportMessage(id) {
+        if (!confirm('Voulez-vous signaler ce message à l\'administrateur ?')) return;
+        try {
+            const res = await fetch('<?= $BASE ?>/Controleur/forumC.php?action=signaler&id=' + id, {
+                method: 'POST'
+            });
+            showToast('Message signalé. Merci !');
+        } catch(e) {
+            showToast('Erreur de connexion', true);
+        }
+    }
+
     function showToast(message, isError = false) {
         const toast = document.getElementById('toastMsg');
         toast.textContent = message;
@@ -341,10 +574,18 @@ if (!isset($forum) || !isset($messages)) {
     const sendBtn = document.getElementById('sendMessageBtn');
     if (sendBtn) {
         sendBtn.addEventListener('click', async function() {
-            const message = document.getElementById('newMessage').value.trim();
+            let message = document.getElementById('newMessage').value.trim();
             if (!message) {
                 showToast('Veuillez écrire un message', true);
                 return;
+            }
+
+            // Profanity check
+            if (containsProfanity(message)) {
+                if (!confirm('⚠️ Votre message contient des mots inappropriés qui seront masqués.\n\nCliquez OK pour continuer ou Annuler pour modifier.')) {
+                    return;
+                }
+                message = maskProfanity(message);
             }
             
             sendBtn.disabled = true;
@@ -378,6 +619,19 @@ if (!isset($forum) || !isset($messages)) {
             }
         });
     }
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function() {
+        let savedLang = 'fr';
+        try { savedLang = localStorage.getItem('cre8_lang') || 'fr'; } catch(e) {}
+        applyDiscTranslation(savedLang);
+
+        document.querySelectorAll('[data-lang-choice]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                applyDiscTranslation(this.getAttribute('data-lang-choice'));
+            });
+        });
+    });
 </script>
 </body>
 </html>

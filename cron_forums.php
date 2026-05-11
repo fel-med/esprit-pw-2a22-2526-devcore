@@ -1,9 +1,10 @@
 <?php
-require_once 'config.php';
-require_once 'Controleur/forumC.php';
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/Controleur/forumC.php';
 
-$ctrl = new ForumControleur();
-$ctrl->creerForumsAuto();
+if (session_status() === PHP_SESSION_NONE) session_start();
 
-echo "Forums créés !";
+$ctrl = new ForumC();
+$created = $ctrl->creerForumsAuto();
+echo "✅ $created forum(s) créé(s) automatiquement.\n";
 ?>
