@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../../../config.php';
-require_once __DIR__ . '/../../../Modele/Reclamation.php';
+require_once __DIR__ . '/../../../Modele/reclamation.php';
 require_once __DIR__ . '/../../../Controleur/reclamationC.php';
 
 session_start();

@@ -1,6 +1,6 @@
 <?php
 require_once '../../../config.php';
-require_once '../../../Modele/Reponse.php';
+require_once '../../../Modele/reponse.php';
 require_once '../../../Controleur/reponseC.php';
 
 session_start();

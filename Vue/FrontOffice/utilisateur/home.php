@@ -2,7 +2,7 @@
 session_start();
 
 if (!isset($_SESSION['user'])) {
-    header("Location: auth/login.php");
+    header("Location: /Vue/FrontOffice/utilisateur/login.php");
     exit;
 }
 ?>

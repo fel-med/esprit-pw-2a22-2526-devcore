@@ -15,7 +15,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['nom'])) {
 
     else {
 
-        $secret = "6Le_S9ksAAAAAOEjx9cRk48RuR3fYR1RxZrSWtYk";
+        $secret = "6LdaUuMsAAAAAPA5KSLGkLRB3B0SSElEUkYXpzVP";
 
         $verify = file_get_contents(
             "https://www.google.com/recaptcha/api/siteverify?secret=".$secret."&response=".$_POST['g-recaptcha-response']
@@ -161,7 +161,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['nom'])) {
         </select>
         <small id="roleError" class="text-danger"></small>
     </div>
-   <div class="g-recaptcha" data-sitekey="6Le_S9ksAAAAALQ8QeII5XANm_kyXmRF-Sq5OBt8"></div>
+   <div class="g-recaptcha" data-sitekey="6LdaUuMsAAAAADN1NSqJ2kxp9LX3ljs7xmKwDtIB"></div>
 
       <br/>
     <video id="video" width="300" autoplay style="display:none; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.12);"></video>

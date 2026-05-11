@@ -4,7 +4,7 @@ require_once '../../../Controleur/utilisateurC.php';
 require_once '../../../Controleur/reclamationC.php';
 
 if (!isset($_SESSION['user']) || $_SESSION['role'] != 'admin') {
-    header("Location: ../FrontOffice/auth/login.php");
+    header("Location: /Vue/FrontOffice/utilisateur/login.php");
     exit;
 }
 
