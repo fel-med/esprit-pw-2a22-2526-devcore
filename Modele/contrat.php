@@ -3,7 +3,7 @@
 class Contrat
 {
     private ?int    $id;
-    private int     $idCampagne;
+    private ?int    $idCampagne;
     private int     $idMarque;
     private int     $idCreateur;
     private string  $titre;
@@ -16,7 +16,7 @@ class Contrat
     private ?string $fichierPdf;
 
     public function __construct(
-        ?int $id, int $idCampagne, int $idMarque, int $idCreateur,
+        ?int $id, ?int $idCampagne, int $idMarque, int $idCreateur,
         string $titre, string $description, float $montant,
         string $dateDebut, string $dateFin,
         string $statut = 'en_attente', string $dateCreation = '',
@@ -37,7 +37,7 @@ class Contrat
     }
 
     public function getId(): ?int             { return $this->id; }
-    public function getIdCampagne(): int      { return $this->idCampagne; }
+    public function getIdCampagne(): ?int     { return $this->idCampagne; }
     public function getIdMarque(): int        { return $this->idMarque; }
     public function getIdCreateur(): int      { return $this->idCreateur; }
     public function getTitre(): string        { return $this->titre; }
@@ -50,7 +50,7 @@ class Contrat
     public function getFichierPdf(): ?string  { return $this->fichierPdf; }
 
     public function setId(?int $v): void           { $this->id = $v; }
-    public function setIdCampagne(int $v): void    { $this->idCampagne = $v; }
+    public function setIdCampagne(?int $v): void   { $this->idCampagne = $v; }
     public function setIdMarque(int $v): void      { $this->idMarque = $v; }
     public function setIdCreateur(int $v): void    { $this->idCreateur = $v; }
     public function setTitre(string $v): void      { $this->titre = $v; }

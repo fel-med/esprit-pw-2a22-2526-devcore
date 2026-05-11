@@ -6,6 +6,7 @@ require_once __DIR__ . '/../config.php';
 class ContratC
 {
     private PDO $pdo;
+    private array $columnCache = [];
 
     public function __construct()
     {
@@ -16,17 +17,63 @@ class ContratC
     // CRUD DE BASE
     // ─────────────────────────────────────────────
 
+    private function normalizeIntOrNull($value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        $int = (int) $value;
+        return $int > 0 ? $int : null;
+    }
+
+    private function sourceJoinSql(): string
+    {
+        $candidatureColumn = $this->firstExistingColumn('contrat', ['id_candidature', 'idCandidature']);
+        if (!$candidatureColumn) {
+            return "
+            LEFT JOIN campagne ca ON c.id_campagne = ca.idCampagne
+            ";
+        }
+
+        return "
+            LEFT JOIN candidature cand ON c.`{$candidatureColumn}` = cand.idCandidature
+            LEFT JOIN offre off ON cand.origineCandidature = 'par_offre' AND off.idOffre = cand.idSource
+            LEFT JOIN campagne ca ON ca.idCampagne = COALESCE(
+                CASE WHEN cand.origineCandidature = 'par_campagne' THEN cand.idSource ELSE NULL END,
+                c.id_campagne
+            )
+        ";
+    }
+
+    private function sourceSelectSql(): string
+    {
+        $candidatureColumn = $this->firstExistingColumn('contrat', ['id_candidature', 'idCandidature']);
+        if (!$candidatureColumn) {
+            return "ca.TitreCampagne AS titreCampagne";
+        }
+
+        return "
+                   COALESCE(NULLIF(ca.TitreCampagne, ''), NULLIF(off.titre, '')) AS titreCampagne,
+                   cand.idCandidature AS idCandidature,
+                   cand.origineCandidature AS origineCandidature,
+                   cand.idSource AS idSource,
+                   off.titre AS titreOffre
+        ";
+    }
+
     public function getAll(): array
     {
+        $sourceSelect = $this->sourceSelectSql();
+        $sourceJoin = $this->sourceJoinSql();
         $stmt = $this->pdo->query("
             SELECT c.*,
                    u1.nom AS nomMarque,
                    u2.nom AS nomCreateur,
-                   ca.TitreCampagne AS titreCampagne
+                   {$sourceSelect}
             FROM contrat c
             LEFT JOIN utilisateur u1 ON c.id_marque   = u1.id
             LEFT JOIN utilisateur u2 ON c.id_createur = u2.id
-            LEFT JOIN campagne ca    ON c.id_campagne  = ca.idCampagne
+            {$sourceJoin}
             ORDER BY c.date_creation DESC
         ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -34,13 +81,15 @@ class ContratC
 
     public function getByMarque(int $idMarque): array
     {
+        $sourceSelect = $this->sourceSelectSql();
+        $sourceJoin = $this->sourceJoinSql();
         $stmt = $this->pdo->prepare("
             SELECT c.*,
                    u2.nom AS nomCreateur,
-                   ca.TitreCampagne AS titreCampagne
+                   {$sourceSelect}
             FROM contrat c
             LEFT JOIN utilisateur u2 ON c.id_createur = u2.id
-            LEFT JOIN campagne ca    ON c.id_campagne  = ca.idCampagne
+            {$sourceJoin}
             WHERE c.id_marque = :idMarque
             ORDER BY c.date_creation DESC
         ");
@@ -50,13 +99,15 @@ class ContratC
 
     public function getByCreateur(int $idCreateur): array
     {
+        $sourceSelect = $this->sourceSelectSql();
+        $sourceJoin = $this->sourceJoinSql();
         $stmt = $this->pdo->prepare("
             SELECT c.*,
                    u1.nom AS nomMarque,
-                   ca.TitreCampagne AS titreCampagne
+                   {$sourceSelect}
             FROM contrat c
             LEFT JOIN utilisateur u1 ON c.id_marque   = u1.id
-            LEFT JOIN campagne ca    ON c.id_campagne  = ca.idCampagne
+            {$sourceJoin}
             WHERE c.id_createur = :idCreateur
             ORDER BY c.date_creation DESC
         ");
@@ -66,15 +117,17 @@ class ContratC
 
     public function getById(int $id): ?array
     {
+        $sourceSelect = $this->sourceSelectSql();
+        $sourceJoin = $this->sourceJoinSql();
         $stmt = $this->pdo->prepare("
             SELECT c.*,
                    u1.nom AS nomMarque,
                    u2.nom AS nomCreateur,
-                   ca.TitreCampagne AS titreCampagne
+                   {$sourceSelect}
             FROM contrat c
             LEFT JOIN utilisateur u1 ON c.id_marque   = u1.id
             LEFT JOIN utilisateur u2 ON c.id_createur = u2.id
-            LEFT JOIN campagne ca    ON c.id_campagne  = ca.idCampagne
+            {$sourceJoin}
             WHERE c.id = :id
         ");
         $stmt->execute([':id' => $id]);
@@ -141,7 +194,7 @@ class ContratC
     public function updateStatut(int $id, string $statut): bool
     {
         $allowed = ['en_attente', 'signe', 'resilie', 'expire'];
-        if (!in_array($statut, $allowed)) return false;
+        if (!in_array($statut, $allowed, true)) return false;
         $stmt = $this->pdo->prepare("UPDATE contrat SET statut = :statut WHERE id = :id");
         return $stmt->execute([':statut' => $statut, ':id' => $id]);
     }
@@ -159,6 +212,225 @@ class ContratC
             FROM contrat
         ");
         return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+
+    // ─────────────────────────────────────────────
+    // CREATE FROM ACCEPTED CANDIDATURE
+    // ─────────────────────────────────────────────
+
+    private function tableHasColumn(string $table, string $column): bool
+    {
+        $key = strtolower($table . '.' . $column);
+        if (array_key_exists($key, $this->columnCache)) {
+            return $this->columnCache[$key];
+        }
+
+        try {
+            $safeTable = str_replace('`', '``', $table);
+            $stmt = $this->pdo->prepare("SHOW COLUMNS FROM `{$safeTable}` LIKE :column");
+            $stmt->execute([':column' => $column]);
+            $this->columnCache[$key] = (bool) $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Throwable $e) {
+            $this->columnCache[$key] = false;
+        }
+
+        return $this->columnCache[$key];
+    }
+
+    private function firstExistingColumn(string $table, array $columns): ?string
+    {
+        foreach ($columns as $column) {
+            if ($this->tableHasColumn($table, $column)) {
+                return $column;
+            }
+        }
+        return null;
+    }
+
+    private function candidatureFromContext(array $context): ?object
+    {
+        return isset($context['condidature']) && is_object($context['condidature'])
+            ? $context['condidature']
+            : null;
+    }
+
+    public function supportsCandidatureOrigin(array $context): bool
+    {
+        $candidature = $this->candidatureFromContext($context);
+        if (!$candidature || !method_exists($candidature, 'getOrigineCandidature')) {
+            return false;
+        }
+
+        $origin = (string) $candidature->getOrigineCandidature();
+        if ($origin === 'par_campagne') {
+            return true;
+        }
+
+        if ($origin === 'par_offre') {
+            return $this->firstExistingColumn('contrat', ['id_candidature', 'idCandidature']) !== null
+                || $this->firstExistingColumn('contrat', ['id_offre', 'idOffre']) !== null
+                || ($this->firstExistingColumn('contrat', ['origine_candidature', 'origineCandidature']) !== null
+                    && $this->firstExistingColumn('contrat', ['id_source', 'idSource']) !== null);
+        }
+
+        return false;
+    }
+
+    public function contractExistsForCandidature(array $context, int $idMarque): bool
+    {
+        $candidature = $this->candidatureFromContext($context);
+        if (!$candidature) {
+            return false;
+        }
+
+        $idCandidature = method_exists($candidature, 'getIdCandidature') ? (int) $candidature->getIdCandidature() : 0;
+        $idCreateur = method_exists($candidature, 'getIdCreateur') ? (int) $candidature->getIdCreateur() : 0;
+        $origin = method_exists($candidature, 'getOrigineCandidature') ? (string) $candidature->getOrigineCandidature() : '';
+        $idSource = method_exists($candidature, 'getIdSource') ? (int) $candidature->getIdSource() : 0;
+
+        $candidatureColumn = $this->firstExistingColumn('contrat', ['id_candidature', 'idCandidature']);
+        if ($candidatureColumn && $idCandidature > 0) {
+            $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM contrat WHERE `{$candidatureColumn}` = :idCandidature AND id_marque = :idMarque");
+            $stmt->execute([
+                ':idCandidature' => $idCandidature,
+                ':idMarque' => $idMarque,
+            ]);
+            if ((int) $stmt->fetchColumn() > 0) {
+                return true;
+            }
+        }
+
+        if ($origin === 'par_campagne' && $idSource > 0 && $idCreateur > 0) {
+            $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM contrat WHERE id_marque = :idMarque AND id_createur = :idCreateur AND id_campagne = :idCampagne");
+            $stmt->execute([
+                ':idMarque' => $idMarque,
+                ':idCreateur' => $idCreateur,
+                ':idCampagne' => $idSource,
+            ]);
+            return (int) $stmt->fetchColumn() > 0;
+        }
+
+        $offerColumn = $this->firstExistingColumn('contrat', ['id_offre', 'idOffre']);
+        if ($origin === 'par_offre' && $offerColumn && $idSource > 0 && $idCreateur > 0) {
+            $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM contrat WHERE id_marque = :idMarque AND id_createur = :idCreateur AND `{$offerColumn}` = :idOffre");
+            $stmt->execute([
+                ':idMarque' => $idMarque,
+                ':idCreateur' => $idCreateur,
+                ':idOffre' => $idSource,
+            ]);
+            if ((int) $stmt->fetchColumn() > 0) {
+                return true;
+            }
+        }
+
+        // Legacy safety fallback: old offer contracts created before id_candidature existed
+        // cannot be matched exactly. We only use this when no exact id_candidature link exists.
+        if ($origin === 'par_offre' && $idCreateur > 0) {
+            $amount = $this->getAmountFromCandidatureContext($context);
+            $sql = "SELECT COUNT(*) FROM contrat
+                    WHERE id_marque = :idMarque
+                      AND id_createur = :idCreateur
+                      AND ABS(montant - :montant) < 0.01";
+            $params = [
+                ':idMarque' => $idMarque,
+                ':idCreateur' => $idCreateur,
+                ':montant' => $amount,
+            ];
+            if ($candidatureColumn) {
+                $sql .= " AND (`{$candidatureColumn}` IS NULL OR `{$candidatureColumn}` = 0)";
+            }
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+            return (int) $stmt->fetchColumn() > 0;
+        }
+
+        return false;
+    }
+
+    public function getAmountFromCandidatureContext(array $context): float
+    {
+        $candidature = $this->candidatureFromContext($context);
+        $candidateAmount = 0.0;
+        if ($candidature && method_exists($candidature, 'getBudgetPropose')) {
+            $candidateAmount = (float) $candidature->getBudgetPropose();
+        }
+
+        if ($candidateAmount > 0) {
+            return $candidateAmount;
+        }
+
+        return isset($context['source']['budgetPropose']) ? (float) $context['source']['budgetPropose'] : 0.0;
+    }
+
+    public function createFromCandidatureContext(array $context, int $idMarque, string $titre, string $description, string $dateDebut, string $dateFin): bool
+    {
+        $candidature = $this->candidatureFromContext($context);
+        if (!$candidature) {
+            throw new RuntimeException('Selected application was not found.');
+        }
+
+        $idCandidature = method_exists($candidature, 'getIdCandidature') ? (int) $candidature->getIdCandidature() : 0;
+        $idCreateur = method_exists($candidature, 'getIdCreateur') ? (int) $candidature->getIdCreateur() : 0;
+        $origin = method_exists($candidature, 'getOrigineCandidature') ? (string) $candidature->getOrigineCandidature() : '';
+        $idSource = method_exists($candidature, 'getIdSource') ? (int) $candidature->getIdSource() : 0;
+        $montant = $this->getAmountFromCandidatureContext($context);
+
+        if ($idCandidature <= 0 || $idCreateur <= 0 || $idSource <= 0 || $idMarque <= 0) {
+            throw new RuntimeException('Invalid application data.');
+        }
+
+        if (!$this->supportsCandidatureOrigin($context)) {
+            throw new RuntimeException('This application source is not supported by the current contract table. Run the contract migration first.');
+        }
+
+        $candidatureColumn = $this->firstExistingColumn('contrat', ['id_candidature', 'idCandidature']);
+        $idCampagne = $origin === 'par_campagne' ? $idSource : null;
+
+        $columns = [
+            'id_campagne' => $idCampagne,
+            'id_marque' => $idMarque,
+            'id_createur' => $idCreateur,
+            'titre' => $titre,
+            'description' => $description,
+            'montant' => $montant,
+            'date_debut' => $dateDebut,
+            'date_fin' => $dateFin,
+            'statut' => 'en_attente',
+            'date_creation' => date('Y-m-d H:i:s'),
+            'fichier_pdf' => null,
+        ];
+
+        if ($candidatureColumn) {
+            $columns[$candidatureColumn] = $idCandidature;
+        }
+
+        $originColumn = $this->firstExistingColumn('contrat', ['origine_candidature', 'origineCandidature', 'source_type']);
+        if ($originColumn) {
+            $columns[$originColumn] = $origin;
+        }
+
+        $sourceColumn = $this->firstExistingColumn('contrat', ['id_source', 'idSource']);
+        if ($sourceColumn) {
+            $columns[$sourceColumn] = $idSource;
+        }
+
+        if ($origin === 'par_offre') {
+            $offerColumn = $this->firstExistingColumn('contrat', ['id_offre', 'idOffre']);
+            if ($offerColumn) {
+                $columns[$offerColumn] = $idSource;
+            }
+        }
+
+        $fieldNames = array_keys($columns);
+        $sql = 'INSERT INTO contrat (`' . implode('`, `', $fieldNames) . '`) VALUES (:' . implode(', :', $fieldNames) . ')';
+        $params = [];
+        foreach ($columns as $field => $value) {
+            $params[':' . $field] = $value;
+        }
+
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute($params);
     }
 
     // ════════════════════════════════════════════════════════════════

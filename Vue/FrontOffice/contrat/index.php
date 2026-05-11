@@ -1,10 +1,11 @@
-﻿<?php
+<?php
 /**
  * Vue/FrontOffice/contrat/index.php
  * Rôle : MARQUE — gérer ses contrats + générer via IA
  */
 
 require_once __DIR__ . '/../../../Controleur/contratC.php';
+require_once __DIR__ . '/../../../Controleur/condidatureC.php';
 require_once __DIR__ . '/../../../Modele/contrat.php';
 require_once __DIR__ . '/../layout/session_bridge.php';
 $currentBrandUser = cre8_front_require_user('marque');
@@ -13,11 +14,90 @@ $currentBrandUser = cre8_front_require_user('marque');
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 $controller = new ContratC();
+$candidatureController = new CondidatureC();
 $action     = $_GET['action'] ?? 'index';
 $idMarque = (int) ($currentBrandUser['id'] ?? 0);
 $contrat    = null;
 $iaResult   = null;
 $iaError    = '';
+$formError  = '';
+
+
+function contract_normalize_date(?string $date): string
+{
+    $date = trim((string) $date);
+    if ($date === '') {
+        return '';
+    }
+    try {
+        return (new DateTime($date))->format('Y-m-d');
+    } catch (Throwable $e) {
+        return '';
+    }
+}
+
+function contract_normalize_str(?string $value): string
+{
+    return strtolower(trim((string) $value));
+}
+
+/**
+ * Final accepted only: used for contract creation list + POST (do not trust the client).
+ *
+ * @param array<string, mixed>|null $context Optional row context kept for compatibility.
+ */
+function isContractEligibleCandidature(?object $candidature, ?array $context = null): bool
+{
+    if (!$candidature || !method_exists($candidature, 'getStatutCandidature')) {
+        return false;
+    }
+    if ((string) $candidature->getStatutCandidature() !== 'acceptee') {
+        return false;
+    }
+    $dateDecision = '';
+    if (method_exists($candidature, 'getDateDecision')) {
+        $dateDecision = trim((string) $candidature->getDateDecision());
+    }
+    if ($dateDecision === '' || $dateDecision === '0000-00-00 00:00:00') {
+        return false;
+    }
+    // Do not reject on typeReponse = 'negociation' here.
+    // In this project, an application can finish as statutCandidature = 'acceptee'
+    // while keeping typeReponse = 'negociation' as the historical last negotiation step.
+    // The real contract eligibility signal is the final workflow status + decision date.
+    return true;
+}
+
+function contract_context_amount(ContratC $controller, array $context): float
+{
+    return $controller->getAmountFromCandidatureContext($context);
+}
+
+function contract_context_payload(ContratC $controller, array $context): array
+{
+    $candidature = $context['condidature'] ?? null;
+    $source = $context['source'] ?? [];
+    $creator = $context['creator'] ?? [];
+    $origin = is_object($candidature) && method_exists($candidature, 'getOrigineCandidature')
+        ? (string) $candidature->getOrigineCandidature()
+        : (string) ($source['origin'] ?? '');
+
+    $availableFrom = is_object($candidature) && method_exists($candidature, 'getDateDisponibilite')
+        ? contract_normalize_date($candidature->getDateDisponibilite())
+        : '';
+
+    return [
+        'id' => is_object($candidature) && method_exists($candidature, 'getIdCandidature') ? (int) $candidature->getIdCandidature() : 0,
+        'origin' => $origin,
+        'originLabel' => $origin === 'par_campagne' ? 'Campaign' : 'Offer',
+        'sourceTitle' => (string) ($source['title'] ?? ''),
+        'sourceId' => is_object($candidature) && method_exists($candidature, 'getIdSource') ? (int) $candidature->getIdSource() : (int) ($source['id'] ?? 0),
+        'creatorName' => (string) ($creator['nom'] ?? ''),
+        'creatorId' => (int) ($creator['id'] ?? 0),
+        'amount' => contract_context_amount($controller, $context),
+        'availableFrom' => $availableFrom,
+    ];
+}
 
 // ── CRUD (HANDLER PHP) ────────────────────────────────────────────────────────
 
@@ -31,19 +111,51 @@ if ($action === 'delete') {
 }
 
 if ($action === 'create' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $obj = new Contrat(
-        null,
-        (int)$_POST['id_campagne'],
-        $idMarque,
-        (int)$_POST['id_createur'],
-        trim($_POST['titre']),
-        trim($_POST['description']),
-        (float)$_POST['montant'],
-        $_POST['date_debut'],
-        $_POST['date_fin']
-    );
-    $controller->create($obj);
-    header('Location: index.php?action=index&success=1'); exit;
+    $idCandidature = (int) ($_POST['id_candidature'] ?? 0);
+    $titre = trim((string) ($_POST['titre'] ?? ''));
+    $description = trim((string) ($_POST['description'] ?? ''));
+    $dateDebut = contract_normalize_date($_POST['date_debut'] ?? '');
+    $dateFin = contract_normalize_date($_POST['date_fin'] ?? '');
+
+    try {
+        if ($titre === '') {
+            throw new RuntimeException('Please enter a contract title.');
+        }
+        if ($idCandidature <= 0) {
+            throw new RuntimeException('Please select an accepted application.');
+        }
+        if ($dateDebut === '' || $dateFin === '') {
+            throw new RuntimeException('Please enter valid start and end dates.');
+        }
+        if ($dateFin < $dateDebut) {
+            throw new RuntimeException('The end date must be after the start date.');
+        }
+
+        $context = $candidatureController->getBrandCandidatureById($idCandidature, $idMarque);
+        $selectedCandidature = $context['condidature'] ?? null;
+        if (!$context || !$selectedCandidature) {
+            throw new RuntimeException('The selected application was not found for your brand.');
+        }
+        if (!isContractEligibleCandidature($selectedCandidature, is_array($context) ? $context : null)) {
+            throw new RuntimeException('Only final accepted applications can be used to create a contract.');
+        }
+        if (!$controller->supportsCandidatureOrigin($context)) {
+            throw new RuntimeException('This application source is not supported by the current contract table.');
+        }
+        if ($controller->contractExistsForCandidature($context, $idMarque)) {
+            throw new RuntimeException('A contract already exists for this application.');
+        }
+
+        $availableFrom = contract_normalize_date($selectedCandidature->getDateDisponibilite());
+        if ($availableFrom !== '' && $dateDebut < $availableFrom) {
+            throw new RuntimeException('The start date must be on or after the creator availability date: ' . $availableFrom . '.');
+        }
+
+        $controller->createFromCandidatureContext($context, $idMarque, $titre, $description, $dateDebut, $dateFin);
+        header('Location: index.php?action=index&success=1'); exit;
+    } catch (Throwable $e) {
+        $formError = $e->getMessage();
+    }
 }
 
 if ($action === 'edit') {
@@ -82,6 +194,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action_ia'] ?? '') === 'ge
 }
 
 $contrats = $controller->getByMarque($idMarque);
+$acceptedCandidatureContexts = [];
+$unsupportedAcceptedCandidatureCount = 0;
+try {
+    $candidateContexts = $candidatureController->getBrandCandidatures($idMarque, ['status' => 'acceptee']);
+    foreach ($candidateContexts as $ctx) {
+        $rowCandidature = $ctx['condidature'] ?? null;
+        if (!isContractEligibleCandidature(is_object($rowCandidature) ? $rowCandidature : null, is_array($ctx) ? $ctx : null)) {
+            continue;
+        }
+        if ($controller->contractExistsForCandidature($ctx, $idMarque)) {
+            continue;
+        }
+        if (!$controller->supportsCandidatureOrigin($ctx)) {
+            $unsupportedAcceptedCandidatureCount++;
+            continue;
+        }
+        $acceptedCandidatureContexts[] = $ctx;
+    }
+} catch (Throwable $e) {
+    if ($formError === '') {
+        $formError = 'Unable to load accepted applications: ' . $e->getMessage();
+    }
+}
+$acceptedCandidaturePayloads = array_map(static fn($ctx) => contract_context_payload($controller, $ctx), $acceptedCandidatureContexts);
 $isEdit   = ($action === 'edit') && isset($contrat);
 $isCreate = ($action === 'create');
 
@@ -93,7 +229,7 @@ $totalVal = array_sum(array_column($contrats, 'montant'));
 $frontActive = 'campaigns';
 ?>
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <?php require_once __DIR__ . '/../layout/front-theme-bootstrap.php'; ?>
@@ -210,6 +346,12 @@ nav{background:var(--bg-white);border-bottom:1px solid var(--border);padding:0 4
 .filter-group label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
 .filter-input { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-dark); background: var(--bg); color: var(--text-primary); font-size: 0.85rem; }
 
+.contract-source-preview{grid-column:span 2;background:var(--bg-soft);border:1px solid var(--border);border-radius:12px;padding:14px;display:none;gap:8px;flex-direction:column;color:var(--text-secondary);font-size:.86rem;}
+.contract-source-preview strong{color:var(--text-primary);}
+.contract-helper{font-size:.76rem;color:var(--text-muted);margin-top:4px;line-height:1.4;}
+.contract-empty{background:var(--warning-soft);color:var(--warning);border:1px solid rgba(217,119,6,.25);border-radius:12px;padding:14px;font-size:.86rem;grid-column:span 2;}
+.ia-fg input[readonly]{opacity:.9;cursor:not-allowed;background:var(--bg-soft);}
+
 /* PAGINATION CSS */
 .pagination-container { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 40px; }
 .page-btn { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-white); color: var(--text-primary); cursor: pointer; font-weight: 600; }
@@ -273,6 +415,9 @@ nav{background:var(--bg-white);border-bottom:1px solid var(--border);padding:0 4
 
 <?php if (isset($_GET['success'])): ?>
 <div class="alert alert-success">✅ <span data-i18n="success_msg">Opération réalisée avec succès.</span></div>
+<?php endif; ?>
+<?php if ($formError !== ''): ?>
+<div class="alert" style="background:var(--danger-soft);color:var(--danger);border:1px solid rgba(220,38,38,.25);">⚠ <?= htmlspecialchars($formError) ?></div>
 <?php endif; ?>
 
 <?php if (!$isEdit && !$isCreate): ?>
@@ -390,39 +535,80 @@ nav{background:var(--bg-white);border-bottom:1px solid var(--border);padding:0 4
             <form method="POST" action="index.php?action=<?= $isEdit ? 'edit&id='.$contrat['id'] : 'create' ?>">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     <div class="ia-fg" style="grid-column: span 2;">
-                        <label data-i18n="l_title">Titre du contrat</label>
-                        <input type="text" name="titre" required value="<?= $isEdit ? htmlspecialchars($contrat['titre']) : '' ?>" placeholder="ex: Collaboration 2026">
+                        <label data-i18n="l_title">Contract title</label>
+                        <input type="text" name="titre" required value="<?= $isEdit ? htmlspecialchars($contrat['titre']) : htmlspecialchars($_POST['titre'] ?? '') ?>" placeholder="ex: Collaboration 2026">
+                    </div>
+
+                    <?php if ($isCreate): ?>
+                        <?php if (empty($acceptedCandidatureContexts)): ?>
+                            <div class="contract-empty">
+                                No accepted applications are available for contract creation. Accept an application first, or check that it does not already have a contract.
+                                <?php if ($unsupportedAcceptedCandidatureCount > 0): ?>
+                                    <br><?= (int) $unsupportedAcceptedCandidatureCount ?> accepted offer application(s) need an id_candidature or id_offre column in the contract table before they can be used safely.
+                                <?php endif; ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="ia-fg" style="grid-column: span 2;">
+                                <label>Accepted application</label>
+                                <select name="id_candidature" id="contractCandidatureSelect" required>
+                                    <option value="">Select an accepted application</option>
+                                    <?php foreach ($acceptedCandidaturePayloads as $payload): ?>
+                                        <?php
+                                            $label = sprintf(
+                                                '%s — %s — %s — %.2f €%s',
+                                                $payload['creatorName'] !== '' ? $payload['creatorName'] : ('Creator #' . $payload['creatorId']),
+                                                $payload['originLabel'],
+                                                $payload['sourceTitle'] !== '' ? $payload['sourceTitle'] : ('Source #' . $payload['sourceId']),
+                                                (float) $payload['amount'],
+                                                $payload['availableFrom'] !== '' ? (' — available from ' . $payload['availableFrom']) : ''
+                                            );
+                                        ?>
+                                        <option value="<?= (int) $payload['id'] ?>" <?= ((int)($_POST['id_candidature'] ?? 0) === (int)$payload['id']) ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <div class="contract-helper">Only accepted applications without an existing contract are shown.</div>
+                            </div>
+                            <div class="contract-source-preview" id="contractSourcePreview"></div>
+                        <?php endif; ?>
+                    <?php else: ?>
+                        <div class="ia-fg">
+                            <label>ID Campaign</label>
+                            <input type="number" name="id_campagne" readonly value="<?= (int) $contrat['id_campagne'] ?>">
+                        </div>
+                        <div class="ia-fg">
+                            <label>ID Creator</label>
+                            <input type="number" name="id_createur" readonly value="<?= (int) $contrat['id_createur'] ?>">
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="ia-fg">
+                        <label data-i18n="l_amount">Amount (€)</label>
+                        <input type="number" step="0.01" name="<?= $isEdit ? 'montant' : 'montant_preview' ?>" id="contractAmountPreview" readonly value="<?= $isEdit ? htmlspecialchars((string)$contrat['montant']) : '' ?>">
+                        <div class="contract-helper">The amount is taken from the accepted application and cannot be edited here.</div>
                     </div>
                     <div class="ia-fg">
-                        <label>ID Campagne</label>
-                        <input type="number" name="id_campagne" required value="<?= $isEdit ? $contrat['id_campagne'] : '' ?>">
+                        <label data-i18n="f_status">Status</label>
+                        <?php if ($isCreate): ?>
+                            <input type="text" value="Pending" readonly>
+                        <?php else: ?>
+                            <select name="statut">
+                                <option value="en_attente" <?= ($contrat['statut'] == 'en_attente') ? 'selected' : '' ?>>Pending</option>
+                                <option value="signe" <?= ($contrat['statut'] == 'signe') ? 'selected' : '' ?>>Signed</option>
+                            </select>
+                        <?php endif; ?>
                     </div>
                     <div class="ia-fg">
-                        <label>ID Créateur</label>
-                        <input type="number" name="id_createur" required value="<?= $isEdit ? $contrat['id_createur'] : '' ?>">
+                        <label data-i18n="l_start">Start date</label>
+                        <input type="date" name="date_debut" id="contractStartDate" required value="<?= $isEdit ? htmlspecialchars($contrat['date_debut']) : htmlspecialchars($_POST['date_debut'] ?? '') ?>">
+                        <div class="contract-helper" id="contractAvailabilityHelp"></div>
                     </div>
                     <div class="ia-fg">
-                        <label data-i18n="l_amount">Montant (€)</label>
-                        <input type="number" step="0.01" name="montant" required value="<?= $isEdit ? $contrat['montant'] : '' ?>">
-                    </div>
-                    <div class="ia-fg">
-                        <label data-i18n="f_status">Statut</label>
-                        <select name="statut">
-                            <option value="en_attente" <?= ($isEdit && $contrat['statut'] == 'en_attente') ? 'selected' : '' ?>>En attente</option>
-                            <option value="signe" <?= ($isEdit && $contrat['statut'] == 'signe') ? 'selected' : '' ?>>Signé</option>
-                        </select>
-                    </div>
-                    <div class="ia-fg">
-                        <label data-i18n="l_start">Date début</label>
-                        <input type="date" name="date_debut" required value="<?= $isEdit ? $contrat['date_debut'] : '' ?>">
-                    </div>
-                    <div class="ia-fg">
-                        <label data-i18n="l_end">Date fin</label>
-                        <input type="date" name="date_fin" required value="<?= $isEdit ? $contrat['date_fin'] : '' ?>">
+                        <label data-i18n="l_end">End date</label>
+                        <input type="date" name="date_fin" id="contractEndDate" required value="<?= $isEdit ? htmlspecialchars($contrat['date_fin']) : htmlspecialchars($_POST['date_fin'] ?? '') ?>">
                     </div>
                     <div class="ia-fg" style="grid-column: span 2;">
                         <label>Description</label>
-                        <textarea name="description" rows="4" style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--border-dark); background:var(--bg); color:var(--text-primary);"><?= $isEdit ? htmlspecialchars($contrat['description']) : '' ?></textarea>
+                        <textarea name="description" rows="4" style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--border-dark); background:var(--bg); color:var(--text-primary);"><?= $isEdit ? htmlspecialchars($contrat['description']) : htmlspecialchars($_POST['description'] ?? '') ?></textarea>
                     </div>
                 </div>
                 <div style="margin-top: 20px; display: flex; gap: 10px;">
@@ -565,6 +751,56 @@ function switchLanguage(lang) {
     });
 }
 
+
+const acceptedCandidatures = <?= json_encode($acceptedCandidaturePayloads ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+
+function formatContractAmount(amount) {
+    const value = Number(amount || 0);
+    return Number.isFinite(value) ? value.toFixed(2) : '0.00';
+}
+
+function updateContractCandidaturePreview() {
+    const select = document.getElementById('contractCandidatureSelect');
+    if (!select) return;
+    const selectedId = Number(select.value || 0);
+    const selected = acceptedCandidatures.find(item => Number(item.id) === selectedId);
+    const amountInput = document.getElementById('contractAmountPreview');
+    const startInput = document.getElementById('contractStartDate');
+    const endInput = document.getElementById('contractEndDate');
+    const help = document.getElementById('contractAvailabilityHelp');
+    const preview = document.getElementById('contractSourcePreview');
+
+    if (!selected) {
+        if (amountInput) amountInput.value = '';
+        if (help) help.textContent = '';
+        if (preview) {
+            preview.style.display = 'none';
+            preview.innerHTML = '';
+        }
+        return;
+    }
+
+    if (amountInput) amountInput.value = formatContractAmount(selected.amount);
+    if (startInput && selected.availableFrom) {
+        startInput.min = selected.availableFrom;
+        if (startInput.value && startInput.value < selected.availableFrom) startInput.value = selected.availableFrom;
+    }
+    if (endInput && startInput) {
+        endInput.min = startInput.value || selected.availableFrom || '';
+    }
+    if (help) {
+        help.textContent = selected.availableFrom ? `Creator available from ${selected.availableFrom}` : 'No specific creator availability date was provided.';
+    }
+    if (preview) {
+        preview.style.display = 'flex';
+        preview.innerHTML = `
+            <div><strong>Creator:</strong> ${selected.creatorName || ('#' + selected.creatorId)}</div>
+            <div><strong>Source:</strong> ${selected.originLabel} — ${selected.sourceTitle || ('#' + selected.sourceId)}</div>
+            <div><strong>Amount:</strong> ${formatContractAmount(selected.amount)} €</div>
+        `;
+    }
+}
+
 // ===== FEATURE 3 & 4: PAGINATION, FILTERING, SORTING =====
 const grid = document.getElementById('contractsGrid');
 const cards = grid ? Array.from(grid.getElementsByClassName('contract-card')) : [];
@@ -625,6 +861,21 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-lang-choice]').forEach(btn => {
         btn.addEventListener('click', () => switchLanguage(btn.getAttribute('data-lang-choice')));
     });
+    const candidatureSelect = document.getElementById('contractCandidatureSelect');
+    if (candidatureSelect) {
+        candidatureSelect.addEventListener('change', updateContractCandidaturePreview);
+        updateContractCandidaturePreview();
+    }
+    const startInput = document.getElementById('contractStartDate');
+    const endInput = document.getElementById('contractEndDate');
+    if (startInput && endInput) {
+        startInput.addEventListener('change', () => {
+            endInput.min = startInput.value || endInput.min || '';
+            if (endInput.value && startInput.value && endInput.value < startInput.value) {
+                endInput.value = startInput.value;
+            }
+        });
+    }
     updateList();
 });
 </script>
