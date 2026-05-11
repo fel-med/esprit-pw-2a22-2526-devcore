@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // ── Compute backoffice asset paths before any HTML output ──────────────────
 require_once __DIR__ . '/../layout/bo_paths.php';
 
@@ -56,7 +56,14 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])
         header('Location: ' . strtok($_SERVER['PHP_SELF'], '?') . '?deleted=1'); exit;
     } catch (Exception $e) { $error = "Erreur lors de la suppression"; }
 }
-$BASE = rtrim(str_replace('\\', '/', dirname(dirname($_SERVER['SCRIPT_NAME']))), '/');
+$scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+if (($pos = strpos($scriptName, '/Controleur/')) !== false) {
+    $BASE = rtrim(substr($scriptName, 0, $pos), '/');
+} elseif (($pos = strpos($scriptName, '/Vue/')) !== false) {
+    $BASE = rtrim(substr($scriptName, 0, $pos), '/');
+} else {
+    $BASE = rtrim(dirname(dirname($scriptName)), '/');
+}
 $kpi_total = 0; $kpi_inscrits = 0; $kpi_actifs = 0; $kpi_upcoming = 0; $kpi_taux = 0;
 $topEvents = []; $types = []; $months_labels = []; $events_data = []; $participants_data = []; $pendingEvents = 0;
 if (!isset($evenements)) {
@@ -750,6 +757,16 @@ try {
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
+  const EVENT_APP_BASE = <?= json_encode($BASE, JSON_UNESCAPED_SLASHES) ?>;
+  function eventAppUrl(path) {
+    return EVENT_APP_BASE.replace(/\/$/, '') + '/' + String(path || '').replace(/^\/+/, '');
+  }
+  function normalizeEventDate(value) {
+    const raw = String(value || '');
+    if (!raw) return '';
+    return raw.split('T')[0].split(' ')[0].slice(0, 10);
+  }
+
   let sortColumn = 2;
   let sortDirection = 'asc';
   let originalRows = [];
@@ -797,35 +814,35 @@ try {
   }
 
   function editEvent(id) {
-    fetch('<?= $BASE ?>/Controleur/evenementC.php?action=get&id=' + id)
+    fetch(eventAppUrl('Controleur/evenementC.php?action=get&id=' + encodeURIComponent(id)))
       .then(r => r.json())
       .then(data => {
         document.getElementById('edit_id').value = data.id;
         document.getElementById('edit_titre').value = data.titre;
         document.getElementById('edit_description').value = data.description;
         document.getElementById('edit_duree').value = data.duree;
-        document.getElementById('edit_date').value = data.date_evenement;
+        document.getElementById('edit_date').value = normalizeEventDate(data.date_evenement);
         document.getElementById('edit_type').value = data.type;
         document.getElementById('edit_statut').value = data.statut;
         document.getElementById('edit_lieu').value = data.lieu;
         document.getElementById('edit_capacite').value = data.capacite;
         document.getElementById('edit_adresse').value = data.adresse_complete || '';
         if (data.image) {
-          document.getElementById('currentImageInfo').innerHTML = '<strong>Image actuelle:</strong><br><img src="<?= $BASE ?>/' + data.image + '" style="max-width:100px;border-radius:8px;margin-top:5px;">';
+          document.getElementById('currentImageInfo').innerHTML = '<strong>Current image:</strong><br><img src="' + eventAppUrl(data.image) + '" style="max-width:100px;border-radius:8px;margin-top:5px;">';
         } else {
-          document.getElementById('currentImageInfo').innerHTML = '<strong>Aucune image</strong>';
+          document.getElementById('currentImageInfo').innerHTML = '<strong>No image</strong>';
         }
-        document.getElementById('editForm').action = '<?= $BASE ?>/Controleur/evenementC.php?action=edit&id=' + id;
+        document.getElementById('editForm').action = eventAppUrl('Controleur/evenementC.php?action=edit&id=' + encodeURIComponent(id));
         document.getElementById('editPreview').innerHTML = '';
         const m = new bootstrap.Modal(document.getElementById('editModal'));
         m.show();
       })
-      .catch(() => alert('Erreur lors du chargement'));
+      .catch(() => alert('Error while loading event details'));
   }
 
   function deleteEvent(id, titre) {
     if (confirm('Supprimer l\'evenement "' + titre + '" ?')) {
-      window.location.href = '<?= $BASE ?>/Controleur/evenementC.php?action=delete&id=' + id;
+      window.location.href = eventAppUrl('Controleur/evenementC.php?action=delete&id=' + encodeURIComponent(id));
     }
   }
 

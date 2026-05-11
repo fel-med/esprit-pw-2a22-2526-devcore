@@ -3,11 +3,31 @@ require_once '../../../Controleur/session_helper.php';
 cc_start_session();
 require_once '../../../Controleur/commentC.php';
 
-// ── VÉRIFICATION SESSION ──────────────────────────────────────
+function cre8_is_ajax_request(): bool {
+    return strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest';
+}
+
+function cre8_comment_json_response(bool $success, string $message = '', array $extra = []): void {
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(array_merge([
+        'success' => $success,
+        'message' => $message,
+    ], $extra));
+    exit();
+}
+
+$isAjax = cre8_is_ajax_request();
+
+// ── SESSION CHECK ──────────────────────────────────────────────
 $idUser = cc_require_login('../utilisateur/login.php');
 
-$commentId = trim($_GET['id'] ?? '');
+$commentId = trim((string)($_POST['id'] ?? $_GET['id'] ?? ''));
+$postId    = trim((string)($_POST['postId'] ?? $_GET['postId'] ?? ''));
+
 if ($commentId === '') {
+    if ($isAjax) {
+        cre8_comment_json_response(false, 'Comment ID is required.');
+    }
     die('Comment ID is required.');
 }
 
@@ -15,7 +35,18 @@ $commentC = new CommentC();
 $deleted = $commentC->deleteComment($commentId, $idUser);
 
 if (!$deleted) {
-    die('Failed to delete comment. The comment may not exist anymore, or it does not belong to you.');
+    $message = 'Failed to delete comment. The comment may not exist anymore, or it does not belong to you.';
+    if ($isAjax) {
+        cre8_comment_json_response(false, $message);
+    }
+    die($message);
+}
+
+if ($isAjax) {
+    cre8_comment_json_response(true, 'Comment deleted successfully.', [
+        'id' => $commentId,
+        'postId' => $postId,
+    ]);
 }
 
 // ── REDIRECTION APRÈS SUPPRESSION ────────────────────────────

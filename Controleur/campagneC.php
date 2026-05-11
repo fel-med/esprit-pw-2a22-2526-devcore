@@ -12,9 +12,9 @@ class CampagneC
             throw new Exception("Invalid campaign: title required, budget must be >= 0");
         }
         $sql = "INSERT INTO campagne
-                    (titre, description, dateDebut, dateFin, statut, idMarque)
+                    (titreCampagne, description, dateDebut, dateFin, budget, statut, idMarque, objectif, estArchive)
                 VALUES
-                    (:titre, :description, :dateDebut, :dateFin, :statut, :idMarque)";
+                    (:titre, :description, :dateDebut, :dateFin, :budget, :statut, :idMarque, :objectif, :estArchive)";
         $db  = config::getConnexion();
         $q   = $db->prepare($sql);
         $q->execute([
@@ -37,11 +37,14 @@ class CampagneC
             throw new Exception("Invalid campaign: title required, budget must be >= 0");
         }
         $sql = "UPDATE campagne SET
-                    titre = :titre,
+                    titreCampagne = :titre,
                     description   = :description,
                     dateDebut     = :dateDebut,
                     dateFin       = :dateFin,
-                    statut        = :statut
+                    budget        = :budget,
+                    statut        = :statut,
+                    objectif      = :objectif,
+                    estArchive    = :estArchive
                 WHERE idCampagne = :id";
         $db  = config::getConnexion();
         $q   = $db->prepare($sql);
