@@ -1,27 +1,23 @@
 <?php
-session_start();
+require_once __DIR__ . '/../layout/session_bridge.php';
 
-if (!isset($_SESSION['user'])) {
-    header("Location: auth/login.php");
+$currentFrontUser = cre8_front_session_user();
+
+if (empty($currentFrontUser['isLoggedIn'])) {
+    header('Location: ' . cre8_front_login_url());
     exit;
 }
-?>
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Home</title>
-<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
-<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
-<link rel="apple-touch-icon" href="../../public/images/logo.png">
-</head>
-<body>
+$currentRole = cre8_front_normalize_role($currentFrontUser['role'] ?? '');
+$scriptPath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
+$frontOfficeMarker = '/Vue/FrontOffice/';
+$frontOfficePos = strpos($scriptPath, $frontOfficeMarker);
+$projectBase = $frontOfficePos !== false ? substr($scriptPath, 0, $frontOfficePos) : '';
 
-<h2>Bienvenue <?php echo $_SESSION['user']['nom']; ?></h2>
+if ($currentRole === 'admin') {
+    header('Location: ' . $projectBase . '/Vue/BackOffice/dashboard/index.php');
+    exit;
+}
 
-<p>Role: <?php echo $_SESSION['role']; ?></p>
-
-<a href="logout.php">Logout</a>
-
-</body>
-</html>
+header('Location: ' . $projectBase . '/Vue/FrontOffice/utilisateur/creator.php');
+exit;
