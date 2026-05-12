@@ -315,12 +315,12 @@ foreach ($liste as $rec) {
   </script>
   <?php endif; ?>
 
-  <div class="container-scroller">
+  <div class="container-scroller cre8-admin-page">
     <?php
     $backActive = 'reclamations';
     require_once __DIR__ . '/../layout/sidebar.php';
     ?>
-    <div class="container-fluid page-body-wrapper">
+    <div class="container-fluid page-body-wrapper cre8-admin-main">
       <?php require_once __DIR__ . '/../layout/header.php'; ?>
       <div class="main-panel">
         <div class="content-wrapper">

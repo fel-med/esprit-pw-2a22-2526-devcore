@@ -15,7 +15,7 @@ class CondidatureC
     private $pdo;
     private const MODULE_TIMEZONE = 'Africa/Tunis';
     private const MESSAGE_META_PATTERN = '/\s*<!--cre8connect-condidature-form-meta:(.*?)-->\s*$/s';
-    private const CRE8PILOT_ROUTER_VERSION = 'chaos_json_shield_category_fix_1';
+    private const CRE8PILOT_ROUTER_VERSION = 'role_context_policy_match_restore_1';
     private $negotiationTableExists = null;
     private $cre8PilotDebug = [];
     private $cre8PilotLlmContext = [];
@@ -23,6 +23,90 @@ class CondidatureC
     public function __construct()
     {
         $this->pdo = config::getConnexion();
+    }
+
+    private function normalizeCre8PilotRoleValue($role): string
+    {
+        $role = strtolower(trim((string) $role));
+        $role = str_replace(
+            ['é', 'è', 'ê', 'ë', 'à', 'â', 'î', 'ï', 'ô', 'ù', 'û', 'ç'],
+            ['e', 'e', 'e', 'e', 'a', 'a', 'i', 'i', 'o', 'u', 'u', 'c'],
+            $role
+        );
+
+        return match ($role) {
+            'brand', 'brands', 'marque' => 'marque',
+            'creator', 'creators', 'createur', 'creatrice' => 'createur',
+            'admin', 'administrator', 'administrateur' => 'admin',
+            default => $role,
+        };
+    }
+
+    private function cre8PilotRoleExpectedByPageContext(string $page, string $mode): string
+    {
+        $page = strtolower(trim($page));
+        $mode = strtolower(trim($mode));
+
+        if (str_starts_with($page, 'brand_') || in_array($page, [
+            'brand_offer_workspace',
+            'brand_candidature_workspace',
+            'brand_create_offer',
+            'brand_edit_offer',
+            'brand_offer_list',
+            'brand_offer_details',
+            'brand_candidature_review',
+            'create_offer',
+            'edit_offer',
+        ], true)) {
+            return 'marque';
+        }
+
+        if (str_starts_with($page, 'creator_') || in_array($page, [
+            'creator_offer_workspace',
+            'creator_candidature_workspace',
+            'creator_offer_list',
+            'creator_offer_details',
+            'creator_candidature_list',
+            'creator_candidature_form',
+            'candidature_form',
+        ], true)) {
+            return 'createur';
+        }
+
+        if (str_starts_with($page, 'admin_') || in_array($page, [
+            'admin_offer_workspace',
+            'admin_candidature_workspace',
+            'admin_offers',
+            'admin_candidatures',
+        ], true)) {
+            return 'admin';
+        }
+
+        return '';
+    }
+
+    private function resolveCre8PilotEffectiveRole(array $payload, array $sessionUser, string $page, string $mode): string
+    {
+        $sessionRole = $this->normalizeCre8PilotRoleValue($sessionUser['role'] ?? '');
+        $payloadRole = $this->normalizeCre8PilotRoleValue($payload['role'] ?? '');
+        $pageRole = $this->cre8PilotRoleExpectedByPageContext($page, $mode);
+
+        /*
+         * Cre8Pilot is a preparation-only assistant. Some validation flows load brand
+         * workspaces while the browser still has a creator session, then pass the real
+         * page context in the JSON payload. Use that page context for policy routing
+         * only when it is internally consistent, so safe drafts and the match model
+         * do not depend on whichever role was last logged into the browser.
+         */
+        if ($pageRole !== '' && ($payloadRole === '' || $payloadRole === $pageRole)) {
+            return $pageRole;
+        }
+
+        if ($payloadRole !== '' && $pageRole === '') {
+            return $payloadRole;
+        }
+
+        return $sessionRole;
     }
 
     private function getModuleTimezone()
@@ -2335,6 +2419,9 @@ class CondidatureC
             'page' => $page,
             'mode' => $mode,
             'role' => $role,
+            'sessionRole' => $sessionRole,
+            'payloadRole' => $payloadRole,
+            'contextRole' => $contextRole,
             'detectedIntentBeforePolicy' => $intent,
             'finalIntent' => $intent,
             'allowedActions' => $allowedActions,
@@ -11740,9 +11827,9 @@ class CondidatureC
     public function handleCre8PilotMockRequest(array $payload, array $sessionUser = [])
     {
         $userId = isset($sessionUser['id']) ? (int) $sessionUser['id'] : 0;
-        $role = strtolower(trim((string) ($sessionUser['role'] ?? '')));
+        $sessionRole = $this->normalizeCre8PilotRoleValue($sessionUser['role'] ?? '');
 
-        if ($userId <= 0 || $role === '') {
+        if ($userId <= 0 || $sessionRole === '') {
             return $this->buildCre8PilotResponse(
                 'blocked',
                 'blocked_request',
@@ -11760,6 +11847,9 @@ class CondidatureC
         $entityType = preg_replace('/[^a-z0-9_\\-]/i', '', (string) ($payload['visibleEntityType'] ?? $payload['entityType'] ?? ''));
         $entityId = preg_replace('/[^a-z0-9_\\-]/i', '', (string) ($payload['visibleEntityId'] ?? $payload['entityId'] ?? ''));
         $allowedActions = $this->normalizeCre8PilotAllowedActions($payload['allowedActions'] ?? []);
+        $role = $this->resolveCre8PilotEffectiveRole($payload, $sessionUser, $page, $mode);
+        $payloadRole = $this->normalizeCre8PilotRoleValue($payload['role'] ?? '');
+        $contextRole = $this->cre8PilotRoleExpectedByPageContext($page, $mode);
         $visibleData = is_array($payload['visibleData'] ?? null) ? $payload['visibleData'] : [];
         $visibleData['page'] = $page;
         $visibleData['mode'] = $mode;
@@ -11791,6 +11881,9 @@ class CondidatureC
                 'page' => $page,
                 'mode' => $mode,
                 'role' => $role,
+                'sessionRole' => $sessionRole,
+                'payloadRole' => $payloadRole ?? '',
+                'contextRole' => $contextRole ?? '',
                 'detectedIntentBeforePolicy' => 'page_scan',
                 'finalIntent' => 'page_scan',
                 'allowedActions' => $allowedActions,
@@ -11875,6 +11968,9 @@ class CondidatureC
             'page' => $page,
             'mode' => $mode,
             'role' => $role,
+            'sessionRole' => $sessionRole,
+            'payloadRole' => $payloadRole,
+            'contextRole' => $contextRole,
             'detectedIntentBeforePolicy' => $intent,
             'finalIntent' => $intent,
             'allowedActions' => $allowedActions,
