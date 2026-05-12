@@ -1,23 +1,63 @@
 <?php
-require_once __DIR__ . '/../layout/session_bridge.php';
+// Legacy compatibility entry for old/restored links to utilisateur/home.php.
+// Do not render the old minimal page; send logged-in users to the real hub.
 
-$currentFrontUser = cre8_front_session_user();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-if (empty($currentFrontUser['isLoggedIn'])) {
-    header('Location: ' . cre8_front_login_url());
+function cre8_home_normalize_role_compat($role)
+{
+    $role = strtolower(trim((string) $role));
+    $role = str_replace(
+        ['é', 'è', 'ê', 'ë', 'à', 'â', 'î', 'ï', 'ô', 'ù', 'û', 'ç'],
+        ['e', 'e', 'e', 'e', 'a', 'a', 'i', 'i', 'o', 'u', 'u', 'c'],
+        $role
+    );
+
+    if (in_array($role, ['brand', 'brands', 'marque'], true)) {
+        return 'marque';
+    }
+    if (in_array($role, ['creator', 'creators', 'createur', 'creatrice'], true)) {
+        return 'createur';
+    }
+    if (in_array($role, ['admin', 'administrator', 'administrateur'], true)) {
+        return 'admin';
+    }
+    return $role;
+}
+
+$sessionUser = isset($_SESSION['user']) && is_array($_SESSION['user']) ? $_SESSION['user'] : [];
+$frontUser = isset($_SESSION['utilisateur']) && is_array($_SESSION['utilisateur']) ? $_SESSION['utilisateur'] : [];
+
+$userId = $sessionUser['id']
+    ?? $frontUser['id']
+    ?? $_SESSION['id']
+    ?? $_SESSION['user_id']
+    ?? null;
+
+$role = $sessionUser['role']
+    ?? $frontUser['role']
+    ?? $_SESSION['role']
+    ?? '';
+
+$isLoggedIn = !empty($_SESSION['connected'])
+    || !empty($sessionUser)
+    || !empty($frontUser)
+    || !empty($userId);
+
+if (!$isLoggedIn) {
+    header('Location: login.php');
     exit;
 }
 
-$currentRole = cre8_front_normalize_role($currentFrontUser['role'] ?? '');
-$scriptPath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
-$frontOfficeMarker = '/Vue/FrontOffice/';
-$frontOfficePos = strpos($scriptPath, $frontOfficeMarker);
-$projectBase = $frontOfficePos !== false ? substr($scriptPath, 0, $frontOfficePos) : '';
+$role = cre8_home_normalize_role_compat($role);
 
-if ($currentRole === 'admin') {
-    header('Location: ' . $projectBase . '/Vue/BackOffice/dashboard/index.php');
+// Keep admin users in BackOffice; creators and brands use the shared FrontOffice hub.
+if ($role === 'admin') {
+    header('Location: ../../BackOffice/dashboard/index.php');
     exit;
 }
 
-header('Location: ' . $projectBase . '/Vue/FrontOffice/utilisateur/creator.php');
+header('Location: creator.php');
 exit;
