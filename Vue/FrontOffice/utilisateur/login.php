@@ -32,6 +32,39 @@ if (isset($_POST['reset_email'])) {
         <!-- Core theme CSS (includes Bootstrap)-->
         <link href="css/styles.css" rel="stylesheet" />
         <style>
+           .auth-shell {
+    min-height: 100vh;
+}
+
+.auth-topbar {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    padding-top: 0.35rem !important;
+    padding-bottom: 0.35rem !important;
+}
+
+.auth-topbar .navbar-brand {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    line-height: 1;
+}
+
+.auth-topbar .container {
+    min-height: 0;
+}
+
+.auth-main {
+    padding: 2rem 0;
+}
+
+.auth-home-link {
+    border-radius: 999px;
+    font-weight: 700;
+}
+
+.auth-card {
+    border-radius: 20px;
+}
+
            .text-gradient {
     background: linear-gradient(45deg, #4e54c8, #8f94fb);
     -webkit-background-clip: text;
@@ -61,24 +94,57 @@ if (isset($_POST['reset_email'])) {
 .input-custom:focus {
     border-color: #4e54c8;
     box-shadow: 0 0 8px rgba(78, 84, 200, 0.3);
-} </style>
+}
+
+@media (max-width: 575.98px) {
+    .auth-main {
+        padding: 1.25rem 0;
+    }
+
+    .auth-form-panel {
+        padding: 2rem !important;
+    }
+} 
+
+            .public-nav-logo {
+                width: 240px;
+                height: auto;
+                max-height: 100px;
+                object-fit: contain;
+                display: block;
+            }
+
+            .auth-hero-logo {
+                max-width: 250px;
+                width: 60%;
+                height: auto;
+                object-fit: contain;
+                filter: drop-shadow(0 18px 32px rgba(0, 0, 0, 0.18));
+            }
+</style>
 <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
 <link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
 <link rel="apple-touch-icon" href="../../public/images/logo.png">
     </head>
-    <body class="d-flex flex-column h-100 bg-light">
-        <main class="flex-shrink-0 d-flex align-items-center justify-content-center" style="min-height: 100vh;">
+    <body class="d-flex flex-column h-100 bg-light auth-shell">
+        <header class="auth-topbar bg-white">
+            <div class="container px-4 px-lg-5 d-flex align-items-center justify-content-between gap-3">
+                <a class="navbar-brand m-0 d-inline-flex align-items-center" href="index.php"><img src="../../public/images/logoweb.png" alt="Cre8Connect" class="public-nav-logo"></a>
+                <a class="btn btn-outline-dark btn-sm auth-home-link px-3" href="index.php">&larr; Home</a>
+            </div>
+        </header>
+        <main class="flex-grow-1 d-flex align-items-center justify-content-center auth-main">
 
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-lg-10">
 
             <!-- CARD -->
-            <div class="card shadow-lg border-0 overflow-hidden" style="border-radius: 20px;">
+            <div class="card shadow-lg border-0 overflow-hidden auth-card">
 
                 <div class="row g-0">
 
-            <div class="col-lg-6 p-5 d-flex flex-column justify-content-center">
+            <div class="col-lg-6 p-5 d-flex flex-column justify-content-center auth-form-panel">
 
     <h2 class="fw-bold mb-4 text-gradient text-center">Log in to your account</h2>
 
@@ -109,7 +175,7 @@ if (isset($_POST['reset_email'])) {
         </div>
 
         <button type="button" class="btn btn-outline-primary w-100 py-2" id="scanLogin">
-            📸 Log in with Face
+            Scan face
         </button>
 
     </form>
@@ -130,7 +196,7 @@ if (isset($_POST['reset_email'])) {
                     <!-- IMAGE (RIGHT) -->
                     <div class="col-lg-6 d-none d-lg-flex align-items-center justify-content-center bg-gradient-primary-to-secondary position-relative">
 
-                        <img src="assets/logo.png" class="img-fluid animate-img" style="max-width: 250px;">
+                        <img src="assets/logo.png" alt="Cre8Connect logo" class="img-fluid animate-img auth-hero-logo">
 
                     </div>
 
@@ -179,7 +245,7 @@ if (isset($_POST['reset_email'])) {
         <footer class="bg-white py-4 mt-auto">
             <div class="container px-5">
                 <div class="row align-items-center justify-content-between flex-column flex-sm-row">
-                    <div class="col-auto"><div class="small m-0">Copyright &copy; Your Website 2023</div></div>
+                    <div class="col-auto"><div class="small m-0">Copyright &copy; cre8connect 2026</div></div>
                     <div class="col-auto">
                         <a class="small" href="#!">Privacy</a>
                         <span class="mx-1">&middot;</span>

@@ -1,5 +1,6 @@
 <?php
 require_once '../../../config.php';
+require_once '../../../Controleur/session_helper.php';
 
 session_start();
 
@@ -116,8 +117,8 @@ if ($bestUser && $bestDist < 0.75) {
         'email' => $bestUser['email'] ?? '',
     ];
 
-    if ($normalizedRole === 'admin') {
-        $redirect = cre8_login_url('Vue/BackOffice/utilisateur/index.php');
+    if (isBackOfficeRole($normalizedRole)) {
+        $redirect = cre8_login_url('Vue/BackOffice/dashboard/index.php');
     } else {
         $redirect = cre8_login_url('Vue/FrontOffice/utilisateur/creator.php');
     }

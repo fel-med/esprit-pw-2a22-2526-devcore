@@ -1,13 +1,13 @@
 <?php
-// Legacy compatibility entry for old/restored links to utilisateur/home.php.
-// Guests go to the public PHP landing page; logged-in users go to the real hub.
-require_once __DIR__ . '/../../../Controleur/session_helper.php';
+// Cre8Connect project entry point.
+// Guests go to the public PHP landing page.
+// Logged-in users continue to the existing role-based home flow.
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-function cre8_home_normalize_role_compat($role)
+function cre8_root_normalize_role($role)
 {
     $role = strtolower(trim((string) $role));
     $role = str_replace(
@@ -48,17 +48,16 @@ $isLoggedIn = !empty($_SESSION['connected'])
     || !empty($userId);
 
 if (!$isLoggedIn) {
-    header('Location: index.php');
+    header('Location: Vue/FrontOffice/utilisateur/index.php');
     exit;
 }
 
-$role = cre8_home_normalize_role_compat($role);
+$role = cre8_root_normalize_role($role);
 
-// Keep BackOffice users in BackOffice; creators and brands use the shared FrontOffice hub.
-if (isBackOfficeRole($role)) {
-    header('Location: ../../BackOffice/dashboard/index.php');
+if ($role === 'admin') {
+    header('Location: Vue/BackOffice/dashboard/index.php');
     exit;
 }
 
-header('Location: creator.php');
+header('Location: Vue/FrontOffice/utilisateur/creator.php');
 exit;

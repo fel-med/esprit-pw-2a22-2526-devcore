@@ -1,9 +1,35 @@
+<?php
+// Public Cre8Connect landing page.
+// Guests see this page. Logged-in users are sent to the existing role hub.
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+$sessionUser = isset($_SESSION['user']) && is_array($_SESSION['user']) ? $_SESSION['user'] : [];
+$frontUser = isset($_SESSION['utilisateur']) && is_array($_SESSION['utilisateur']) ? $_SESSION['utilisateur'] : [];
+
+$userId = $sessionUser['id']
+    ?? $frontUser['id']
+    ?? $_SESSION['id']
+    ?? $_SESSION['user_id']
+    ?? null;
+
+$isLoggedIn = !empty($_SESSION['connected'])
+    || !empty($sessionUser)
+    || !empty($frontUser)
+    || !empty($userId);
+
+if ($isLoggedIn) {
+    header('Location: home.php');
+    exit;
+}
+?>
 <html lang="en"><head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <meta name="description" content="">
         <meta name="author" content="">
-        <title>Personal - cre8connect</title>
+        <title>Cre8Connect - Home</title>
         <!-- Favicon-->
         <!-- Custom Google font-->
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,20 +42,37 @@
 <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
 <link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
 <link rel="apple-touch-icon" href="../../public/images/logo.png">
+
+        <style>
+            .public-nav-logo {
+                width: 240px;
+                height: auto;
+                max-height: 100px;
+                object-fit: contain;
+                display: block;
+            }
+
+            @media (max-width: 575.98px) {
+                .public-nav-logo {
+                    height: 42px;
+                    max-width: 200px;
+                }
+            }
+        </style>
     </head>
     <body class="d-flex flex-column h-100">
         <main class="flex-shrink-0">
             <!-- Navigation-->
             <nav class="navbar navbar-expand-lg navbar-light bg-white py-3">
                 <div class="container px-5">
-                    <a class="navbar-brand" href="index.html"><span class="fw-bolder text-primary">CRE8CONNECT</span></a>
+                    <a class="navbar-brand d-inline-flex align-items-center" href="index.php"><img src="../../public/images/logoweb.png" alt="Cre8Connect" class="public-nav-logo"></a>
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
                     <div class="collapse navbar-collapse" id="navbarSupportedContent">
                         <ul class="navbar-nav ms-auto mb-2 mb-lg-0 small fw-bolder">
-                            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="index.php">Home</a></li>
                             <li class="nav-item"><a class="nav-link" href="register.php">sign up </a></li>
                             <li class="nav-item"><a class="nav-link" href="login.php">sign in </a></li>
-                            <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
+                            <li class="nav-item"><a class="nav-link" href="#about">Contact</a></li>
                         </ul>
                     </div>
                 </div>
@@ -176,12 +219,12 @@
                 </div>
             </header>
             <!-- About Section-->
-            <section class="bg-light py-5">
+            <section id="about" class="bg-light py-5">
                 <div class="container px-5">
                     <div class="row gx-5 justify-content-center">
                         <div class="col-xxl-8">
                             <div class="text-center my-5">
-                                <h2 class="display-5 fw-bolder"><span class="text-gradient d-inline">About Me</span></h2>
+                                <h2 class="display-5 fw-bolder"><span class="text-gradient d-inline">About Cre8Connect</span></h2>
                                 <p class="lead fw-light mb-4">We provide a smart platform that facilitates collaboration between creators and brands</p>
                                 
                                 <div class="d-flex justify-content-center fs-2 gap-4">

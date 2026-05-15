@@ -1,7 +1,10 @@
 <?php session_start(); ?>
 <?php
 require_once __DIR__ . '/../layout/early-theme.php';
+require_once '../../../Controleur/session_helper.php';
 require_once '../../../Controleur/utilisateurC.php';
+
+cc_require_admin('../../FrontOffice/utilisateur/login.php');
 
 $userC = new UtilisateurC();
 

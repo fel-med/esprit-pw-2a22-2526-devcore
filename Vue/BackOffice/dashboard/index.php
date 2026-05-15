@@ -4,6 +4,9 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../layout/early-theme.php';
+require_once __DIR__ . '/../../../Controleur/session_helper.php';
+
+cc_require_admin('../../FrontOffice/utilisateur/login.php');
 
 $backActive = 'dashboard';
 

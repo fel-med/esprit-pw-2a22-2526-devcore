@@ -2,22 +2,15 @@
 session_start();
 
 require_once __DIR__ . '/../layout/early-theme.php';
+require_once __DIR__ . '/../../../Controleur/session_helper.php';
 require_once __DIR__ . '/../../../Controleur/condidatureC.php';
 
 $controller = new CondidatureC();
-$sessionUser = $_SESSION['utilisateur'] ?? [];
+$sessionUser = $_SESSION['utilisateur'] ?? ($_SESSION['user'] ?? []);
 
-if (!isset($sessionUser['id']) || (($sessionUser['role'] ?? '') !== 'admin')) {
-    $defaultAdmin = $controller->getDefaultUserByRole('admin');
-    if ($defaultAdmin) {
-        $_SESSION['utilisateur'] = [
-            'id' => (int) $defaultAdmin['id'],
-            'role' => 'admin',
-            'nom' => $defaultAdmin['nom'],
-            'email' => $defaultAdmin['email'],
-        ];
-        $sessionUser = $_SESSION['utilisateur'];
-    }
+if (!isset($sessionUser['id']) || !isBackOfficeRole(cc_current_user_role())) {
+    header('Location: ../../FrontOffice/utilisateur/login.php');
+    exit;
 }
 
 $idCandidature = isset($_GET['idCandidature']) && is_numeric($_GET['idCandidature']) ? (int) $_GET['idCandidature'] : null;

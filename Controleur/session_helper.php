@@ -17,10 +17,15 @@ if (!function_exists('cc_current_user_id')) {
     function cc_current_user_id(): ?int
     {
         cc_start_session();
-        if (!isset($_SESSION['id']) || (int)$_SESSION['id'] <= 0) {
+        $id = $_SESSION['id']
+            ?? ($_SESSION['user']['id'] ?? null)
+            ?? ($_SESSION['utilisateur']['id'] ?? null);
+
+        if (!is_numeric($id) || (int)$id <= 0) {
             return null;
         }
-        return (int)$_SESSION['id'];
+
+        return (int)$id;
     }
 }
 
@@ -32,7 +37,31 @@ if (!function_exists('cc_current_user_role')) {
         if ($role === '' && isset($_SESSION['user']) && is_array($_SESSION['user'])) {
             $role = $_SESSION['user']['role'] ?? '';
         }
+        if ($role === '' && isset($_SESSION['utilisateur']) && is_array($_SESSION['utilisateur'])) {
+            $role = $_SESSION['utilisateur']['role'] ?? '';
+        }
         return strtolower(trim((string)$role));
+    }
+}
+
+if (!function_exists('isBackOfficeRole')) {
+    function isBackOfficeRole($role): bool
+    {
+        return in_array(strtolower(trim((string)$role)), ['admin', 'super_admin', 'hyper_admin'], true);
+    }
+}
+
+if (!function_exists('isSuperAdminRole')) {
+    function isSuperAdminRole($role): bool
+    {
+        return in_array(strtolower(trim((string)$role)), ['super_admin', 'hyper_admin'], true);
+    }
+}
+
+if (!function_exists('isHyperAdmin')) {
+    function isHyperAdmin($role): bool
+    {
+        return strtolower(trim((string)$role)) === 'hyper_admin';
     }
 }
 
@@ -47,7 +76,7 @@ if (!function_exists('cc_is_logged_in')) {
 if (!function_exists('cc_is_admin')) {
     function cc_is_admin(): bool
     {
-        return cc_is_logged_in() && cc_current_user_role() === 'admin';
+        return cc_is_logged_in() && isBackOfficeRole(cc_current_user_role());
     }
 }
 
@@ -98,7 +127,7 @@ if (!function_exists('cc_require_admin')) {
         $userId = cc_require_login($redirectPath, false);
         if (!cc_is_admin()) {
             http_response_code(403);
-            die('Access denied. Admin account required.');
+            die('Access denied. BackOffice account required.');
         }
         return $userId;
     }

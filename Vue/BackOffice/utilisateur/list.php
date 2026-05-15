@@ -2,8 +2,9 @@
 session_start();
 require_once '../../../Controleur/utilisateurC.php';
 require_once '../../../Controleur/reclamationC.php';
+require_once '../../../Controleur/session_helper.php';
 
-if (!isset($_SESSION['user']) || $_SESSION['role'] != 'admin') {
+if (!isset($_SESSION['user']) || !isBackOfficeRole(cc_current_user_role())) {
     header("Location: ../../FrontOffice/utilisateur/login.php");
     exit;
 }
@@ -361,8 +362,8 @@ $stats = $userC->getStatistiquesUtilisateurs();
                                 <td><?= htmlspecialchars($u['nom']) ?></td>
                                 <td><?= htmlspecialchars($u['email']) ?></td>
                                 <td>
-                                    <span class="badge <?= ($u['role'] == 'admin') ? 'badge-admin' : 'badge-client' ?>">
-                                        <?= ($u['role'] == 'admin') ? 'Admin' : (($u['role'] == 'createur') ? 'Creator' : 'Brand') ?>
+                                    <span class="badge <?= isBackOfficeRole($u['role'] ?? '') ? 'badge-admin' : 'badge-client' ?>">
+                                        <?= isBackOfficeRole($u['role'] ?? '') ? htmlspecialchars(str_replace('_', ' ', ucwords($u['role'] ?? 'admin', '_'))) : (($u['role'] == 'createur') ? 'Creator' : 'Brand') ?>
                                     </span>
                                 </td>
                                 <td>

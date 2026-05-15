@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../../config.php';
 require_once __DIR__ . '/../../../Controleur/reclamationC.php';
+require_once __DIR__ . '/../../../Controleur/session_helper.php';
 
 session_start();
 
@@ -10,7 +11,7 @@ if (!isset($_SESSION['id'])) {
 }
 
 // 🔐 vérifier rôle admin
-if ($_SESSION['role'] != 'admin') {
+if (!isBackOfficeRole(cc_current_user_role())) {
     die("Accès refusé");
 }
 

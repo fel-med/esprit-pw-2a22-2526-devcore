@@ -1,11 +1,12 @@
 <?php
 require_once '../../../Controleur/utilisateurC.php';
+require_once '../../../Controleur/session_helper.php';
 require_once '../../../config.php';
 
 session_start();
 
 // Vérifier que c'est un admin
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+if (!isBackOfficeRole(cc_current_user_role())) {
     header('Content-Type: application/json');
     echo json_encode(["success" => false, "message" => "Accès refusé"]);
     exit();

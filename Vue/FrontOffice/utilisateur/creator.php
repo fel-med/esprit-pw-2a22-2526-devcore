@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../layout/session_bridge.php';
+require_once __DIR__ . '/../../../Controleur/session_helper.php';
 
 $currentFrontUser = cre8_front_session_user();
 
@@ -10,12 +11,12 @@ if (empty($currentFrontUser['isLoggedIn'])) {
 
 $currentRole = cre8_front_normalize_role($currentFrontUser['role'] ?? '');
 
-if ($currentRole === 'admin') {
+if (isBackOfficeRole($currentRole)) {
     $scriptPath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
     $frontOfficeMarker = '/Vue/FrontOffice/';
     $frontOfficePos = strpos($scriptPath, $frontOfficeMarker);
     $projectBase = $frontOfficePos !== false ? substr($scriptPath, 0, $frontOfficePos) : '';
-    header('Location: ' . $projectBase . '/Vue/BackOffice/utilisateur/index.php');
+    header('Location: ' . $projectBase . '/Vue/BackOffice/dashboard/index.php');
     exit;
 }
 

@@ -11,6 +11,26 @@
  * Immediately after opening <body class="cre8-admin-layout">:
  *   <?php cre8_bo_early_theme_print_body_script(); ?>
  */
+require_once __DIR__ . '/../../../Controleur/session_helper.php';
+
+if (!function_exists('cre8_bo_login_url')) {
+    function cre8_bo_login_url(): string
+    {
+        $script = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
+
+        foreach (['/Vue/BackOffice/', '/Controleur/'] as $marker) {
+            $pos = strpos($script, $marker);
+            if ($pos !== false) {
+                return substr($script, 0, $pos) . '/Vue/FrontOffice/utilisateur/login.php';
+            }
+        }
+
+        return '../../FrontOffice/utilisateur/login.php';
+    }
+}
+
+cc_require_admin(cre8_bo_login_url());
+
 if (!function_exists('cre8_bo_early_theme_print_head_script')) {
 
     /**

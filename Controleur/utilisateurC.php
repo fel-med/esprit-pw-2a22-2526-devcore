@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../Modele/utilisateur.php';
+require_once __DIR__ . '/session_helper.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -42,6 +43,64 @@ public function updateUser($id, $nom, $email, $role) {
         
     ]);
 }
+
+public function afficherAdminAccounts(array $roles) {
+    $db = config::getConnexion();
+    $roles = array_values(array_intersect($roles, ['admin', 'super_admin']));
+    if (empty($roles)) {
+        return [];
+    }
+
+    $placeholders = implode(',', array_fill(0, count($roles), '?'));
+    $stmt = $db->prepare("SELECT id, nom, email, role, statut FROM utilisateur WHERE role IN ($placeholders) ORDER BY role DESC, id DESC");
+    $stmt->execute($roles);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+public function getUserById($id) {
+    $db = config::getConnexion();
+    $stmt = $db->prepare("SELECT id, nom, email, role, statut FROM utilisateur WHERE id = ?");
+    $stmt->execute([(int)$id]);
+
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+public function ajouterAdminAccount($nom, $email, $password, $role) {
+    $db = config::getConnexion();
+
+    $check = $db->prepare("SELECT id FROM utilisateur WHERE email = ?");
+    $check->execute([$email]);
+    if ($check->fetch()) {
+        return "Email deja utilise";
+    }
+
+    $stmt = $db->prepare("
+        INSERT INTO utilisateur (nom, email, mot_de_passe, role, statut, tentatives_login, face_descriptor)
+        VALUES (?, ?, ?, ?, 'actif', 0, '')
+    ");
+    $stmt->execute([
+        $nom,
+        $email,
+        password_hash($password, PASSWORD_DEFAULT),
+        $role,
+    ]);
+
+    return "success";
+}
+
+public function updateUserStatus($id, $status) {
+    $db = config::getConnexion();
+    $stmt = $db->prepare("UPDATE utilisateur SET statut = ? WHERE id = ?");
+    $stmt->execute([$status, (int)$id]);
+}
+
+public function deleteUserById($id) {
+    $db = config::getConnexion();
+    $stmt = $db->prepare("DELETE FROM utilisateur WHERE id = ?");
+    $stmt->execute([(int)$id]);
+}
+
     public function afficherUsers($search = '', $role = '', $page = 1, $limit = 10) {
     $db = config::getConnexion();
     $sql = "SELECT * FROM utilisateur WHERE 1=1";
@@ -271,7 +330,7 @@ public function resetPassword($password, $token) {
         $total = $db->query("SELECT COUNT(*) as total FROM utilisateur")->fetch()['total'];
         
         // Par rôle
-        $admin = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE role='admin'")->fetch()['count'];
+        $admin = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE role IN ('admin', 'super_admin', 'hyper_admin')")->fetch()['count'];
         $createur = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE role='createur'")->fetch()['count'];
         $marque = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE role='marque'")->fetch()['count'];
         
@@ -514,7 +573,7 @@ public function login($email, $password) {
     session_write_close();
 
     // REDIRECTION
-    if ($normalizedRole === 'admin') {
+    if (isBackOfficeRole($normalizedRole)) {
         header('Location: ' . $this->appUrl('Vue/BackOffice/dashboard/index.php'));
     } else {
         header('Location: ' . $this->appUrl('Vue/FrontOffice/utilisateur/creator.php'));

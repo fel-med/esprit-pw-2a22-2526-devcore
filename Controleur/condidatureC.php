@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../Modele/condidature.php';
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/session_helper.php';
 if (is_file(__DIR__ . '/../config/env.php')) {
     require_once __DIR__ . '/../config/env.php';
 }
@@ -5371,7 +5372,7 @@ class CondidatureC
             return $intro . ' For invitations: pending can mean you have not answered yet; negotiation means you proposed changes; accepted or refused describe the outcome; expired means the invitation timed out.';
         }
 
-        if ($role === 'admin') {
+        if (isBackOfficeRole($role)) {
             return $intro . ' In admin tables, statuses group items by lifecycle: drafts, live items, items awaiting review, negotiations, final decisions, and expired or archived rows. Use filters to separate noise from items that still need human review.';
         }
 
@@ -5415,7 +5416,7 @@ class CondidatureC
             return 'As an admin, start with pending or high-impact rows, then expired or stuck negotiations, then items with unclear origin or inconsistent status, and finally routine archives. Use this page to review and supervise only—final business decisions stay with brands and creators in the front office.' . $tail;
         }
 
-        if ($role === 'admin') {
+        if (isBackOfficeRole($role)) {
             return 'Review pending or sensitive rows first, then expired or long-running negotiations, then data-quality issues (duplicates, placeholders, odd origins). Monitor and inspect; do not assume the platform will auto-decide brand or creator outcomes.' . $tail;
         }
 

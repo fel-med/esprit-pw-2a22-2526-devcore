@@ -2,6 +2,7 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+require_once __DIR__ . '/../../../Controleur/session_helper.php';
 
 $backActive = $backActive ?? 'dashboard';
 
@@ -41,6 +42,16 @@ $backItems = [
     ['key' => 'events',         'label' => 'Events',         'url' => $backBoControleurWeb . '/evenementC.php?action=admin', 'icon' => 'mdi-calendar-check',  'iconClass' => 'text-success'],
     ['key' => 'forum',          'label' => 'Forum',          'url' => $backBoControleurWeb . '/forumC.php?action=admin',     'icon' => 'mdi-forum-outline',   'iconClass' => 'text-primary'],
 ];
+
+if (isSuperAdminRole(cc_current_user_role())) {
+    array_splice($backItems, 2, 0, [[
+        'key' => 'admin_management',
+        'label' => 'Admin Management',
+        'url' => $backBoRootWeb . '/utilisateur/admin_management.php',
+        'icon' => 'mdi-shield-account',
+        'iconClass' => 'text-success',
+    ]]);
+}
 ?>
 <!-- partial:partials/_sidebar.html -->
 <nav class="sidebar sidebar-offcanvas" id="sidebar">

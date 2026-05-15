@@ -2,9 +2,10 @@
 session_start();
 require_once '../../../Controleur/utilisateurC.php';
 require_once '../../../Controleur/reclamationC.php';
+require_once '../../../Controleur/session_helper.php';
 
-if (!isset($_SESSION['user']) || $_SESSION['role'] != 'admin') {
-    header("Location: ../FrontOffice/auth/login.php");
+if (!isset($_SESSION['user']) || !isBackOfficeRole(cc_current_user_role())) {
+    header("Location: ../../FrontOffice/utilisateur/login.php");
     exit;
 }
 
@@ -17,7 +18,7 @@ $reclamations = $reclamationC->afficherReclamationsAdmin();
 
 // Calculate user statistics
 $totalUsers = count($users);
-$admins = count(array_filter($users, fn($u) => $u['role'] == 'admin'));
+$admins = count(array_filter($users, fn($u) => isBackOfficeRole($u['role'] ?? '')));
 $clients = count(array_filter($users, fn($u) => $u['role'] == 'client'));
 ?>
 

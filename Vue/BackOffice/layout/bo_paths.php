@@ -21,3 +21,8 @@ if (!isset($backBoRootWeb)) {
 
     $backBoUtilisateurWeb = $backBoRootWeb . '/utilisateur';
 }
+
+require_once __DIR__ . '/../../../Controleur/session_helper.php';
+
+$backBoLoginWeb = preg_replace('#/Vue/BackOffice$#', '', $backBoRootWeb) . '/Vue/FrontOffice/utilisateur/login.php';
+cc_require_admin($backBoLoginWeb);

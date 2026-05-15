@@ -4,24 +4,17 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../layout/early-theme.php';
+require_once __DIR__ . '/../../../Controleur/session_helper.php';
 require_once __DIR__ . '/../../../Controleur/offreC.php';
 require_once __DIR__ . '/../../../Controleur/condidatureC.php';
 
 $offreController = new OffreC();
 $candidatureController = new CondidatureC();
-$sessionUser = $_SESSION['utilisateur'] ?? [];
+$sessionUser = $_SESSION['utilisateur'] ?? ($_SESSION['user'] ?? []);
 
-if (!isset($sessionUser['id']) || (($sessionUser['role'] ?? '') !== 'admin')) {
-    $defaultAdmin = $candidatureController->getDefaultUserByRole('admin');
-    if ($defaultAdmin) {
-        $_SESSION['utilisateur'] = [
-            'id' => (int) $defaultAdmin['id'],
-            'role' => 'admin',
-            'nom' => $defaultAdmin['nom'],
-            'email' => $defaultAdmin['email'],
-        ];
-        $sessionUser = $_SESSION['utilisateur'];
-    }
+if (!isset($sessionUser['id']) || !isBackOfficeRole(cc_current_user_role())) {
+    header('Location: ../../FrontOffice/utilisateur/login.php');
+    exit;
 }
 
 $notificationController = $candidatureController;
