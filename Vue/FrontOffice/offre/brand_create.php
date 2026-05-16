@@ -265,9 +265,10 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
     <link rel="stylesheet" href="../css/frontoffice.css">
     <link rel="stylesheet" href="offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre.css')); ?>">
     <link rel="stylesheet" href="../layout/front-header.css">
-<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
-<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
-<link rel="apple-touch-icon" href="../../public/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
 </head>
 <body>
     <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>

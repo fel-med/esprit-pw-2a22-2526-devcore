@@ -9,28 +9,6 @@ $controller = new CondidatureC();
 $sessionUser = $currentUser;
 
 $creatorId = isset($sessionUser['id']) ? (int) $sessionUser['id'] : null;
-$notificationController = $controller;
-$notificationUserId = (int) ($creatorId ?? 0);
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['notificationAction'])) {
-    $notificationAction = (string) $_POST['notificationAction'];
-    if ($notificationAction === 'mark_one') {
-        $notificationController->markNotificationActionAsRead((int) ($_POST['idNotificationAction'] ?? 0), $notificationUserId);
-    } elseif ($notificationAction === 'mark_all') {
-        $notificationController->markAllNotificationActionsAsRead($notificationUserId);
-    }
-
-    $redirect = basename((string) ($_SERVER['SCRIPT_NAME'] ?? 'campaign_opportunities.php'));
-    if (!empty($_SERVER['QUERY_STRING'])) {
-        $redirect .= '?' . $_SERVER['QUERY_STRING'];
-    }
-    header('Location: ' . $redirect);
-    exit;
-}
-
-if ($notificationUserId > 0) {
-    $notificationController->generateCreatorDeadlineSoonNotifications($notificationUserId);
-}
 
 $filters = [
     'keyword' => '',
@@ -112,9 +90,10 @@ if ($creatorId) {
     <link rel="stylesheet" href="../offre/offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../offre/offre.css')); ?>">
     <link rel="stylesheet" href="condidature.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/condidature.css')); ?>">
     <link rel="stylesheet" href="../layout/front-header.css">
-<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
-<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
-<link rel="apple-touch-icon" href="../../public/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
 </head>
 <body>
     <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
@@ -128,7 +107,6 @@ if ($creatorId) {
                     <p class="lead text-muted mb-0">Browse active campaign briefs and submit a structured creator application.</p>
                 </div>
                 <div class="compact-actions">
-                    <?php require __DIR__ . '/notification_widget.php'; ?>
                     <a class="btn btn-outline-secondary" href="index.php">My candidatures</a>
                     <a class="btn btn-outline-secondary" href="../offre/creator_list.php">Offer inbox</a>
                 </div>

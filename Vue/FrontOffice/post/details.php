@@ -11,6 +11,7 @@ cc_require_login('../utilisateur/login.php');
 $postC    = new PostC();
 $commentC = new CommentC();
 $idUser   = (int)$_SESSION['id'];
+$currentUserName = (string)($_SESSION['nom'] ?? $_SESSION['user']['nom'] ?? $_SESSION['utilisateur']['nom'] ?? 'User');
 
 if (!isset($_GET['id']) || empty($_GET['id'])) {
     die('Post ID is missing.');
@@ -44,9 +45,7 @@ require_once '../partials/header.php';
 
         <article class="social-post-card">
             <div class="social-post-header">
-                <div class="social-post-avatar">
-                    <?= htmlspecialchars(substr($post['creatorName'] ?? 'C', 0, 1)) ?>
-                </div>
+                <?= cre8_render_avatar($post['idCreateur'] ?? 0, (string)($post['creatorName'] ?? 'Creator'), 'social-post-avatar') ?>
                 <div>
                     <div class="social-post-author"><?= htmlspecialchars($post['creatorName'] ?? ('Creator #' . $post['idCreateur'])) ?></div>
                     <div class="social-post-meta"><?= htmlspecialchars($post['creationDate']) ?></div>
@@ -103,7 +102,7 @@ require_once '../partials/header.php';
             </h3>
 
             <div class="comment-form-wrap mb-4">
-                <div class="comment-avatar-sm">U</div>
+                <?= cre8_render_avatar($idUser, $currentUserName, 'comment-avatar-sm') ?>
                 <div class="comment-input-area">
                     <?php render_comment_form($postId, $postId, 'post', 'details', 'Write a comment...', 'Post'); ?>
                 </div>

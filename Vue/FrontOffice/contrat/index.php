@@ -278,33 +278,6 @@ nav{background:var(--bg-white);border-bottom:1px solid var(--border);padding:0 4
 
 .page-header{background:linear-gradient(135deg,var(--accent) 0%,#8b5cf6 100%);padding:40px;color:white;}
 .page-header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;}
-.contract-front .page-header .front-lang-switch {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.25rem;
-    border-radius: 999px;
-    border: 1px solid rgba(255,255,255,0.45);
-    background: rgba(255,255,255,0.12);
-    flex-shrink: 0;
-}
-.contract-front .page-header .front-lang-btn {
-    border: 0;
-    border-radius: 999px;
-    background: transparent;
-    color: rgba(255,255,255,0.88);
-    font: inherit;
-    font-size: 0.76rem;
-    font-weight: 800;
-    padding: 0.4rem 0.7rem;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-}
-.contract-front .page-header .front-lang-btn:hover { color: #fff; }
-.contract-front .page-header .front-lang-btn.is-active {
-    background: #fff;
-    color: #7c3aed;
-}
 .contract-front .page-header-actions-row {
     display: flex;
     align-items: center;
@@ -382,9 +355,10 @@ nav{background:var(--bg-white);border-bottom:1px solid var(--border);padding:0 4
     <!-- Shared FrontOffice header assets -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="../layout/front-header.css">
-<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
-<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
-<link rel="apple-touch-icon" href="../../public/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
 </head>
 <body>
 
@@ -398,10 +372,6 @@ nav{background:var(--bg-white);border-bottom:1px solid var(--border);padding:0 4
             <p data-i18n="header_subtitle">Gérez vos accords de collaboration et générez des contrats avec l'IA</p>
         </div>
         <div class="page-header-actions-row">
-            <div class="front-lang-switch" role="group" aria-label="Language">
-                <button type="button" class="front-lang-btn" data-lang-choice="en" aria-pressed="false">EN</button>
-                <button type="button" class="front-lang-btn" data-lang-choice="fr" aria-pressed="false">FR</button>
-            </div>
             <?php if (!$isEdit && !$isCreate): ?>
             <a href="index.php?action=create" class="btn btn-sm" style="background:rgba(255,255,255,.2);border:1px solid #fff;color:#fff;" data-i18n="new_contract">
                 + Nouveau contrat
@@ -625,22 +595,6 @@ nav{background:var(--bg-white);border-bottom:1px solid var(--border);padding:0 4
 
 <script>
 // ===== FEATURE 1: TRANSLATION SYSTEM =====
-function cre8FrontReadLang() {
-    try {
-        var k = localStorage.getItem('cre8_front_lang');
-        if (k === 'fr' || k === 'en') return k;
-        var legacy = localStorage.getItem('cc_lang')
-            || localStorage.getItem('cre8_lang')
-            || localStorage.getItem('cre8_lang_produit')
-            || localStorage.getItem('cre8_lang_creator_produit');
-        if (legacy === 'fr' || legacy === 'en') return legacy;
-    } catch (e) {}
-    return 'en';
-}
-function cre8FrontWriteLang(lang) {
-    var safe = lang === 'fr' ? 'fr' : 'en';
-    try { localStorage.setItem('cre8_front_lang', safe); } catch (e) {}
-}
 
 const langData = {
     fr: {
@@ -725,12 +679,11 @@ const langData = {
     }
 };
 
-let contractUiLang = cre8FrontReadLang();
+let contractUiLang = 'en';
 
 function switchLanguage(lang) {
     const safe = lang === 'fr' ? 'fr' : 'en';
     contractUiLang = safe;
-    cre8FrontWriteLang(safe);
     const dict = langData[safe] || langData.en;
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
@@ -743,11 +696,6 @@ function switchLanguage(lang) {
     document.querySelectorAll('[data-i18n-title]').forEach(el => {
         const key = el.getAttribute('data-i18n-title');
         if (key && dict[key] !== undefined) el.setAttribute('title', dict[key]);
-    });
-    document.querySelectorAll('[data-lang-choice]').forEach(btn => {
-        const on = btn.getAttribute('data-lang-choice') === safe;
-        btn.classList.toggle('is-active', on);
-        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
 }
 
@@ -857,9 +805,12 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         document.body.classList.toggle('dark-mode', document.documentElement.getAttribute('data-theme') === 'dark');
     }
+    contractUiLang = typeof window.cre8RegisterTranslations === 'function'
+        ? window.cre8RegisterTranslations(langData)
+        : (typeof window.cre8FrontReadLang === 'function' ? window.cre8FrontReadLang() : 'en');
     switchLanguage(contractUiLang);
-    document.querySelectorAll('[data-lang-choice]').forEach(btn => {
-        btn.addEventListener('click', () => switchLanguage(btn.getAttribute('data-lang-choice')));
+    window.addEventListener('cre8:languagechange', function (event) {
+        switchLanguage(event.detail && event.detail.lang ? event.detail.lang : contractUiLang);
     });
     const candidatureSelect = document.getElementById('contractCandidatureSelect');
     if (candidatureSelect) {

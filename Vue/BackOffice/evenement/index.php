@@ -118,7 +118,10 @@ try {
   <link rel="stylesheet" href="<?= $backBoUtilisateurWeb ?>/assets/css/style.css">
   <!-- End layout styles -->
   <link rel="stylesheet" href="<?= $backBoRootWeb ?>/layout/back-layout.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/back-layout.css')); ?>">
-  <link rel="shortcut icon" href="<?= $backBoUtilisateurWeb ?>/assets/images/favicon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="<?= htmlspecialchars(dirname($backBoRootWeb) . '/public/images/favicon-16.png') ?>">
+  <link rel="icon" type="image/png" sizes="32x32" href="<?= htmlspecialchars(dirname($backBoRootWeb) . '/public/images/favicon-32.png') ?>">
+  <link rel="shortcut icon" type="image/png" href="<?= htmlspecialchars(dirname($backBoRootWeb) . '/public/images/favicon-32.png') ?>">
+  <link rel="apple-touch-icon" sizes="180x180" href="<?= htmlspecialchars(dirname($backBoRootWeb) . '/public/images/apple-touch-icon.png') ?>">
   <style>
     body.light-mode {
       background-color: #f8fafc !important;

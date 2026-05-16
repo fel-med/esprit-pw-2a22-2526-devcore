@@ -7,6 +7,7 @@
 
 require_once __DIR__ . '/../../../Controleur/campagneC.php';
 require_once __DIR__ . '/../../../Controleur/produitC.php';
+require_once __DIR__ . '/../layout/avatar_helper.php';
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 $frontActive = 'campaigns';
@@ -138,44 +139,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-main
 .theme-toggle:hover { border-color: var(--primary); color: var(--primary); }
 /* ===== END DARK MODE TOGGLE ===== */
 
-/* ===== ADDED FEATURE: LANGUAGE SWITCHER ===== */
-.campaign-front .front-lang-switch {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.25rem;
-    border-radius: 999px;
-    border: 1px solid rgba(139, 92, 246, 0.45);
-    background: rgba(139, 92, 246, 0.08);
-    flex-shrink: 0;
-}
-.campaign-front .front-lang-btn {
-    border: 0;
-    border-radius: 999px;
-    background: transparent;
-    color: var(--text-sub);
-    font: inherit;
-    font-size: 0.76rem;
-    font-weight: 800;
-    padding: 0.4rem 0.7rem;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-}
-.campaign-front .front-lang-btn:hover { color: var(--primary); }
-.campaign-front .front-lang-btn.is-active {
-    background: #8b5cf6;
-    color: #fff;
-}
-html[data-theme="dark"] .campaign-front .front-lang-btn:not(.is-active),
-body.dark-mode .campaign-front .front-lang-btn:not(.is-active) {
-    color: var(--text-sub);
-}
-.hero-lang-row {
-    display: flex;
-    justify-content: flex-end;
-    width: 100%;
-    margin-bottom: 10px;
-}
 .hero-inner-row {
     display: flex;
     align-items: center;
@@ -409,6 +372,9 @@ body.dark-mode .campaign-front .front-lang-btn:not(.is-active) {
 .camp-desc { font-size: 13px; color: var(--text-sub); line-height: 1.65; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
 .camp-obj { font-size: 12px; background: var(--primary-light); color: var(--primary); border-radius: 20px; padding: 6px 13px; font-weight: 600; }
 .camp-meta { font-size: 12px; color: var(--text-sub); }
+.camp-brand-row,
+.detail-brand-row { display: inline-flex; align-items: center; gap: 7px; margin-top: 6px; }
+.detail-brand-row { margin-top: 0; }
 .camp-budget { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 900; color: var(--primary); letter-spacing: -0.5px; }
 .camp-prod-pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 20px; padding: 4px 13px; font-size: 12px; font-weight: 700; }
 .camp-prod-pill.has { background: var(--success-light); color: var(--success); border: 1px solid var(--success-border); }
@@ -493,9 +459,10 @@ body.dark-mode .campaign-front .front-lang-btn:not(.is-active) {
     <!-- Shared FrontOffice header assets (after page CSS so front-header wins on shared tokens) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="../layout/front-header.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/front-header.css')); ?>">
-<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
-<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
-<link rel="apple-touch-icon" href="../../public/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
 </head>
 <body>
 <?php require_once __DIR__ . '/../layout/header.php'; ?>
@@ -503,12 +470,6 @@ body.dark-mode .campaign-front .front-lang-btn:not(.is-active) {
 <!-- HERO -->
 <div class="hero">
     <div class="hero-content campaign-front">
-        <div class="hero-lang-row">
-            <div class="front-lang-switch" role="group" aria-label="Language">
-                <button type="button" class="front-lang-btn" data-lang-choice="en" aria-pressed="false">EN</button>
-                <button type="button" class="front-lang-btn" data-lang-choice="fr" aria-pressed="false">FR</button>
-            </div>
-        </div>
         <div class="hero-inner-row">
         <div class="hero-left">
             <div class="hero-tag">⚡ <span data-i18n="hero_tag">Campagnes disponibles</span></div>
@@ -639,6 +600,7 @@ body.dark-mode .campaign-front .front-lang-btn:not(.is-active) {
     <div class="camp-grid" id="campGrid">
         <?php foreach ($campagnes as $c):
             $nbProd = $campagneC->compterProduitsCampagne($c['idCampagne']);
+            $brandName = trim((string) ($c['nomMarque'] ?? ''));
         ?>
         <div class="camp-card"
              data-id="<?= $c['idCampagne'] ?>"
@@ -656,8 +618,13 @@ body.dark-mode .campaign-front .front-lang-btn:not(.is-active) {
                 <?php if (!empty($c['objectif'])): ?><div class="camp-obj">🎯 <?= htmlspecialchars($c['objectif']) ?></div><?php endif; ?>
                 <div class="camp-meta">
                     📅 <?= $c['dateDebut'] ?? '—' ?> → 🏁 <?= $c['dateFin'] ?? '—' ?>
-                    <?php if (!empty($c['nomMarque'])): ?><br>🏢 <?= htmlspecialchars($c['nomMarque']) ?><?php endif; ?>
                 </div>
+                <?php if ($brandName !== ''): ?>
+                    <div class="camp-brand-row">
+                        <?= cre8_render_avatar((int) ($c['idMarque'] ?? 0), $brandName, 'cre8-avatar-sm') ?>
+                        <span><?= htmlspecialchars($brandName) ?></span>
+                    </div>
+                <?php endif; ?>
                 <div class="camp-budget"><?= number_format((float)$c['budget'], 2, ',', ' ') ?> €</div>
                 <span class="camp-prod-pill <?= $nbProd > 0 ? 'has' : 'none' ?>">
                     📦 <?= $nbProd ?> <span data-i18n="products_linked">produit<?= $nbProd !== 1 ? 's' : '' ?> lié<?= $nbProd !== 1 ? 's' : '' ?></span>
@@ -728,6 +695,12 @@ const BASE_URL = <?= json_encode($baseUrl, JSON_UNESCAPED_SLASHES) ?>;
 
 const campagnesMap = {};
 <?php foreach ($campagnes as $c): ?>
+<?php
+    $brandNameForMap = trim((string) ($c['nomMarque'] ?? ''));
+    $brandHtmlForMap = $brandNameForMap !== ''
+        ? cre8_render_avatar((int) ($c['idMarque'] ?? 0), $brandNameForMap, 'cre8-avatar-sm') . '<span>' . htmlspecialchars($brandNameForMap, ENT_QUOTES, 'UTF-8') . '</span>'
+        : '';
+?>
 campagnesMap[<?= $c['idCampagne'] ?>] = {
     id: <?= $c['idCampagne'] ?>,
     titre: <?= json_encode($c['titreCampagne']) ?>,
@@ -737,7 +710,8 @@ campagnesMap[<?= $c['idCampagne'] ?>] = {
     debut: <?= json_encode($c['dateDebut'] ?? '') ?>,
     fin:   <?= json_encode($c['dateFin'] ?? '') ?>,
     statut: <?= json_encode($c['statut']) ?>,
-    marque: <?= json_encode($c['nomMarque'] ?? '') ?>,
+    marque: <?= json_encode($brandNameForMap) ?>,
+    marqueHtml: <?= json_encode($brandHtmlForMap) ?>,
 };
 <?php endforeach; ?>
 
@@ -876,29 +850,11 @@ const translations = {
     }
 };
 
-function cre8FrontReadLang() {
-    try {
-        var k = localStorage.getItem('cre8_front_lang');
-        if (k === 'fr' || k === 'en') return k;
-        var legacy = localStorage.getItem('cre8_lang')
-            || localStorage.getItem('cre8_lang_produit')
-            || localStorage.getItem('cre8_lang_creator_produit')
-            || localStorage.getItem('cc_lang');
-        if (legacy === 'fr' || legacy === 'en') return legacy;
-    } catch (e) {}
-    return 'en';
-}
-function cre8FrontWriteLang(lang) {
-    var safe = lang === 'fr' ? 'fr' : 'en';
-    try { localStorage.setItem('cre8_front_lang', safe); } catch (e) {}
-}
-
-let currentLang = cre8FrontReadLang();
+let currentLang = 'en';
 
 function applyTranslation(lang) {
     const safe = lang === 'fr' ? 'fr' : 'en';
     currentLang = safe;
-    cre8FrontWriteLang(safe);
     const dict = translations[safe] || translations['fr'];
 
     document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -916,12 +872,6 @@ function applyTranslation(lang) {
         if (dict[key]) el.setAttribute('title', dict[key]);
     });
 
-    document.querySelectorAll('[data-lang-choice]').forEach(btn => {
-        const on = btn.getAttribute('data-lang-choice') === safe;
-        btn.classList.toggle('is-active', on);
-        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    });
-
     document.querySelectorAll('.s-chip').forEach(btn => {
         const key = btn.getAttribute('data-i18n');
         if (key && dict[key]) btn.textContent = dict[key];
@@ -930,15 +880,13 @@ function applyTranslation(lang) {
     renderPaginationInfo();
 }
 
-function setLang(lang) { applyTranslation(lang); }
-
-applyTranslation(currentLang);
-
 document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('[data-lang-choice]').forEach(btn => {
-        btn.addEventListener('click', function () {
-            applyTranslation(btn.getAttribute('data-lang-choice'));
-        });
+    currentLang = typeof window.cre8RegisterTranslations === 'function'
+        ? window.cre8RegisterTranslations(translations)
+        : (typeof window.cre8FrontReadLang === 'function' ? window.cre8FrontReadLang() : 'en');
+    applyTranslation(currentLang);
+    window.addEventListener('cre8:languagechange', function (event) {
+        applyTranslation(event.detail && event.detail.lang ? event.detail.lang : currentLang);
     });
 });
 // ===== END TRANSLATION SYSTEM =====
@@ -1082,7 +1030,20 @@ function openDetail(id) {
     badge.style.background = sBgs[c.statut] || '#f0f0f0';
     badge.style.color = sColors[c.statut] || '#555';
     document.getElementById('detailTitle').textContent = c.titre;
-    document.getElementById('detailMarque').textContent = c.marque ? '🏢 ' + c.marque : '';
+    const detailMarque = document.getElementById('detailMarque');
+    if (c.marqueHtml) {
+        detailMarque.innerHTML = c.marqueHtml;
+        detailMarque.className = 'detail-brand-row';
+        detailMarque.style.display = 'inline-flex';
+    } else if (c.marque) {
+        detailMarque.textContent = c.marque;
+        detailMarque.className = '';
+        detailMarque.style.display = '';
+    } else {
+        detailMarque.textContent = '';
+        detailMarque.className = '';
+        detailMarque.style.display = 'none';
+    }
     document.getElementById('detailDesc').textContent = c.desc || 'Aucune description.';
     const objWrap = document.getElementById('detailObjWrap');
     if (c.obj) { document.getElementById('detailObj').textContent = c.obj; objWrap.style.display = ''; }

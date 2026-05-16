@@ -13,6 +13,7 @@ $commentC = new CommentC();
 $pageTitle = 'Actuality';
 $currentPage = 'actuality';
 $currentUserId = (int)$_SESSION['id'];
+$currentUserName = (string)($_SESSION['nom'] ?? $_SESSION['user']['nom'] ?? $_SESSION['utilisateur']['nom'] ?? 'User');
 
 $search = trim($_GET['search'] ?? '');
 $sort = $_GET['sort'] ?? 'recent';
@@ -60,9 +61,10 @@ $frontActive = 'myspace';
     <link href="../layout/front-header.css" rel="stylesheet" />
     <link href="../assets/post-front.css?v=3" rel="stylesheet" />
     <link rel="stylesheet" href="../assets/comment-front.css">
-<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
-<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
-<link rel="apple-touch-icon" href="../../public/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
 </head>
 <body class="d-flex flex-column min-vh-100 social-body">
 <main class="flex-shrink-0">
@@ -162,9 +164,7 @@ $frontActive = 'myspace';
 
                             <!-- Header -->
                             <div class="social-post-header">
-                                <div class="social-post-avatar">
-                                    <?= htmlspecialchars(substr($post['creatorName'] ?? 'C', 0, 1)) ?>
-                                </div>
+                                <?= cre8_render_avatar($post['idCreateur'] ?? 0, (string)($post['creatorName'] ?? 'Creator'), 'social-post-avatar') ?>
                                 <div>
                                     <div class="social-post-author"><?= htmlspecialchars($post['creatorName'] ?? ('Creator #' . $post['idCreateur'])) ?></div>
                                     <div class="social-post-meta"><?= htmlspecialchars($post['creationDate']) ?></div>
@@ -325,7 +325,7 @@ $frontActive = 'myspace';
                                      data-post-id="<?= htmlspecialchars($post['id']) ?>"
                                      data-context="index">
                                     <div class="comment-form-wrap mb-4">
-                                        <div class="comment-avatar-sm">U</div>
+                                        <?= cre8_render_avatar($currentUserId, $currentUserName, 'comment-avatar-sm') ?>
                                         <div class="comment-input-area">
                                             <?php render_comment_form($post['id'], $post['id'], 'post', 'index', 'Add a comment...', 'Post'); ?>
                                         </div>

@@ -89,7 +89,10 @@ if (!isset($evenements)) {
     <title>Événements - Cre8Connect</title>
     <link rel="stylesheet" href="<?= htmlspecialchars(event_front_url('Vue/FrontOffice/css/frontoffice.css')) ?>">
     <link rel="stylesheet" href="<?= htmlspecialchars(event_front_url('Vue/FrontOffice/layout/front-header.css')) ?>">
-    <link rel="icon" type="image/png" sizes="32x32" href="<?= htmlspecialchars(event_front_url('Vue/public/images/logo.png')) ?>">
+    <link rel="icon" type="image/png" sizes="16x16" href="<?= htmlspecialchars(event_front_url('Vue/public/images/favicon-16.png')) ?>">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= htmlspecialchars(event_front_url('Vue/public/images/favicon-32.png')) ?>">
+    <link rel="shortcut icon" type="image/png" href="<?= htmlspecialchars(event_front_url('Vue/public/images/favicon-32.png')) ?>">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?= htmlspecialchars(event_front_url('Vue/public/images/apple-touch-icon.png')) ?>">
     <style>
 
         /* =========================================================
@@ -267,31 +270,6 @@ if (!isset($evenements)) {
             color: var(--text-sub);
         }
         /* Language toggle */
-        .front-lang-switch {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            padding: 0.25rem;
-            border-radius: 999px;
-            border: 1px solid rgba(139,92,246,0.45);
-            background: rgba(139,92,246,0.08);
-            flex-shrink: 0;
-        }
-        .front-lang-btn {
-            border: 0;
-            border-radius: 999px;
-            background: transparent;
-            color: var(--text-sub);
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.76rem;
-            font-weight: 800;
-            padding: 0.4rem 0.9rem;
-            cursor: pointer;
-            transition: background 0.15s, color 0.15s;
-        }
-        .front-lang-btn:hover { color: var(--primary); }
-        .front-lang-btn.is-active { background: #8b5cf6; color: #fff; }
-
         .events-layout {
             display: flex;
             gap: 32px;
@@ -690,10 +668,6 @@ if (!isset($evenements)) {
                 <h2 data-i18n="all_events">Tous les événements</h2>
                 <p data-i18n="events_subtitle">Découvrez les événements disponibles près de chez vous ou en ligne</p>
             </div>
-            <div class="front-lang-switch" role="group" aria-label="Language">
-                <button type="button" class="front-lang-btn" data-lang-choice="en" aria-pressed="false">EN</button>
-                <button type="button" class="front-lang-btn" data-lang-choice="fr" aria-pressed="false">FR</button>
-            </div>
         </div>
 
         <div class="events-layout">
@@ -743,7 +717,7 @@ if (!isset($evenements)) {
     if (isset($forumsData[$event->getId()])) {
         $forumId = (int)$forumsData[$event->getId()]['idForum'];
         $forumHref = event_front_url('Controleur/forumC.php?idForum=' . $forumId);
-        $forumLink = '<a href="' . htmlspecialchars($forumHref) . '" class="btn-event-secondary mt-2">💬 Accéder au forum</a>';
+        $forumLink = '<a href="' . htmlspecialchars($forumHref) . '" class="btn-event-secondary mt-2">💬 <span data-i18n="access_forum">Accéder au forum</span></a>';
     }
 ?>
                         <div class="event-product-card" data-type="<?= $event->getType() ?>" data-title="<?= strtolower(htmlspecialchars($event->getTitre())) ?>" data-date="<?= strtotime($event->getDateEvenement()) ?>" data-spots="<?= $spotsLeft ?>" data-lieu="<?= strpos(strtolower($event->getLieu()), 'en ligne') !== false || empty($event->getLieu()) ? 'en_ligne' : 'presentiel' ?>">
@@ -835,7 +809,7 @@ if (!isset($evenements)) {
     <script src="<?= htmlspecialchars(event_front_url('Vue/FrontOffice/layout/front-header.js')) ?>"></script>
     <script>
         let currentEventId = null;
-        let currentLang = 'fr';
+        let currentLang = 'en';
         const EVENT_APP_BASE = <?= json_encode($APP_BASE, JSON_UNESCAPED_SLASHES) ?>;
 
         function eventAppUrl(path) {
@@ -920,7 +894,7 @@ if (!isset($evenements)) {
                 spots_available: 'Available spots',
                 register: 'Register',
                 view_details: 'View details',
-                access_forum: 'Access forum',
+                access_forum: 'Open forum',
                 full: 'Full',
                 spots_left: 'spots left',
                 // Modal
@@ -941,7 +915,6 @@ if (!isset($evenements)) {
         function applyTranslation(lang) {
             const safe = (lang === 'en') ? 'en' : 'fr';
             currentLang = safe;
-            try { localStorage.setItem('cre8_lang', safe); } catch(e) {}
 
             const t = translations[safe];
 
@@ -980,12 +953,6 @@ if (!isset($evenements)) {
                 if (num) countEl.textContent = num[0] + ' ' + t['events_count_suffix'];
             }
 
-            // toggle button active state
-            document.querySelectorAll('[data-lang-choice]').forEach(btn => {
-                const active = btn.getAttribute('data-lang-choice') === safe;
-                btn.classList.toggle('is-active', active);
-                btn.setAttribute('aria-pressed', active ? 'true' : 'false');
-            });
         }
 
         function showToast(message, isError = false) {
@@ -1178,16 +1145,12 @@ if (!isset($evenements)) {
 
         // ── Language toggle init ──────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', function() {
-            // Restore saved language
-            let savedLang = 'fr';
-            try { savedLang = localStorage.getItem('cre8_lang') || 'fr'; } catch(e) {}
-            applyTranslation(savedLang);
-
-            // Wire toggle buttons
-            document.querySelectorAll('[data-lang-choice]').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    applyTranslation(this.getAttribute('data-lang-choice'));
-                });
+            currentLang = typeof window.cre8RegisterTranslations === 'function'
+                ? window.cre8RegisterTranslations(translations)
+                : (typeof window.cre8FrontReadLang === 'function' ? window.cre8FrontReadLang() : 'en');
+            applyTranslation(currentLang);
+            window.addEventListener('cre8:languagechange', function(event) {
+                applyTranslation(event.detail && event.detail.lang ? event.detail.lang : currentLang);
             });
         });
     </script>

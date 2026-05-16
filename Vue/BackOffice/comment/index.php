@@ -134,9 +134,10 @@ body.light-mode .comment-admin {
 .comment-admin .pag-select select { background:var(--comment-bg-card-2); border:1.5px solid var(--comment-border); border-radius:7px; color:var(--comment-text); padding:4px 8px; font-size:13px; cursor:pointer; outline:none; }
 .comment-admin .post-creator-badge { color:var(--comment-label); font-weight:700; }
 </style>
-<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
-<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
-<link rel="apple-touch-icon" href="../../public/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
 </head>
 <body class="cre8-admin-layout"><?php cre8_bo_early_theme_print_body_script(); ?>
 

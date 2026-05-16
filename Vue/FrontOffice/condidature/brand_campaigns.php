@@ -10,28 +10,6 @@ $sessionUser = $currentUser;
 
 $brandId = isset($sessionUser['id']) ? (int) $sessionUser['id'] : null;
 $brandUser = $brandId ? ($controller->getUsersByIds([$brandId], 'marque')[$brandId] ?? null) : null;
-$notificationController = $controller;
-$notificationUserId = (int) ($brandId ?? 0);
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['notificationAction'])) {
-    $notificationAction = (string) $_POST['notificationAction'];
-    if ($notificationAction === 'mark_one') {
-        $notificationController->markNotificationActionAsRead((int) ($_POST['idNotificationAction'] ?? 0), $notificationUserId);
-    } elseif ($notificationAction === 'mark_all') {
-        $notificationController->markAllNotificationActionsAsRead($notificationUserId);
-    }
-
-    $redirect = basename((string) ($_SERVER['SCRIPT_NAME'] ?? 'brand_campaigns.php'));
-    if (!empty($_SERVER['QUERY_STRING'])) {
-        $redirect .= '?' . $_SERVER['QUERY_STRING'];
-    }
-    header('Location: ' . $redirect);
-    exit;
-}
-
-if ($notificationUserId > 0) {
-    $notificationController->generateBrandDeadlineSoonNotifications($notificationUserId);
-}
 
 $campaigns = [];
 $error = null;
@@ -92,9 +70,10 @@ if ($brandId) {
     <link rel="stylesheet" href="../offre/offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../offre/offre.css')); ?>">
     <link rel="stylesheet" href="condidature.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/condidature.css')); ?>">
     <link rel="stylesheet" href="../layout/front-header.css">
-<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
-<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
-<link rel="apple-touch-icon" href="../../public/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
 </head>
 <body>
     <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
@@ -108,7 +87,6 @@ if ($brandId) {
                     <p class="lead text-muted mb-0">Review the campaigns owned by your brand and jump to their creator applications.</p>
                 </div>
                 <div class="compact-actions">
-                    <?php require __DIR__ . '/notification_widget.php'; ?>
                     <a class="btn btn-outline-secondary" href="brand_index.php?origin=par_campagne">Campaign applications</a>
                     <a class="btn btn-outline-secondary" href="../offre/brand_index.php">My offers</a>
                 </div>

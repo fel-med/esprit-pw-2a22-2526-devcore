@@ -4,6 +4,7 @@ $notificationUserId = isset($notificationUserId) ? (int) $notificationUserId : 0
 $notificationItemsAll = [];
 $notificationItemsUnread = [];
 $notificationUnreadCount = 0;
+$notificationActionUrl = $notificationActionUrl ?? '../layout/notification_actions.php';
 
 if ($notificationController && $notificationUserId > 0) {
     $notificationItemsAll = $notificationController->getNotificationActionsByUser($notificationUserId, false, 10);
@@ -52,9 +53,9 @@ if (!function_exists('cre8RenderNotificationItems')) {
                             <a href="<?php echo htmlspecialchars($link); ?>">Open</a>
                         <?php endif; ?>
                         <?php if ($isUnread): ?>
-                            <form method="post" class="notification-inline-form" data-notification-read-form data-notification-id="<?php echo (int) ($item['idNotificationAction'] ?? 0); ?>">
+                            <form method="post" action="<?php echo htmlspecialchars((string) $notificationActionUrl); ?>" class="notification-inline-form" data-notification-read-form data-notification-id="<?php echo (int) ($item['idNotificationAction'] ?? 0); ?>">
                                 <input type="hidden" name="notificationAction" value="mark_one">
-                                <input type="hidden" name="idNotificationAction" value="<?php echo (int) ($item['idNotificationAction'] ?? 0); ?>">
+                                <input type="hidden" name="notificationId" value="<?php echo (int) ($item['idNotificationAction'] ?? 0); ?>">
                                 <button type="submit">Mark read</button>
                             </form>
                         <?php endif; ?>
@@ -67,7 +68,7 @@ if (!function_exists('cre8RenderNotificationItems')) {
 ?>
 <div class="notification-widget notification-widget-front" data-notification-widget>
     <button type="button" class="notification-bell" data-notification-toggle aria-label="Open notifications">
-        <span class="notification-bell-glyph" aria-hidden="true">&#128276;</span>
+        <span class="notification-bell-glyph" aria-hidden="true"><i class="bi bi-bell"></i></span>
         <span class="notification-count" data-notification-count<?php echo $notificationUnreadCount > 0 ? '' : ' hidden'; ?>><?php echo $notificationUnreadCount > 99 ? '99+' : (int) $notificationUnreadCount; ?></span>
     </button>
 
@@ -77,7 +78,7 @@ if (!function_exists('cre8RenderNotificationItems')) {
                 <strong>Notifications</strong>
                 <span data-notification-unread-label><?php echo (int) $notificationUnreadCount; ?> unread</span>
             </div>
-            <form method="post" data-notification-read-all-form>
+            <form method="post" action="<?php echo htmlspecialchars((string) $notificationActionUrl); ?>" data-notification-read-all-form>
                 <input type="hidden" name="notificationAction" value="mark_all">
                 <button type="submit" <?php echo $notificationUnreadCount <= 0 ? 'disabled' : ''; ?>>Mark all as read</button>
             </form>
@@ -187,14 +188,15 @@ if (!function_exists('cre8RenderNotificationItems')) {
             if (submitButton) {
                 submitButton.disabled = true;
             }
-            fetch(window.location.href, {
+            fetch(form.getAttribute('action') || <?php echo json_encode((string) $notificationActionUrl); ?>, {
                 method: 'POST',
                 body: new FormData(form),
                 credentials: 'same-origin',
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             })
+                .then((response) => response.json())
                 .then((response) => {
-                    if (!response.ok) {
+                    if (!response || response.success !== true) {
                         throw new Error('Notification update failed.');
                     }
                     onSuccess();

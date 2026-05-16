@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../layout/avatar_helper.php';
+
 if (!function_exists('comment_escape')) {
     function comment_escape($value): string
     {
@@ -9,7 +11,7 @@ if (!function_exists('comment_escape')) {
 if (!function_exists('comment_user_initial')) {
     function comment_user_initial(array $comment): string
     {
-        return strtoupper(substr((string)($comment['userName'] ?? 'U'), 0, 1));
+        return cre8_user_initial((string)($comment['userName'] ?? 'U'));
     }
 }
 
@@ -151,7 +153,7 @@ if (!function_exists('render_comment_tree_node')) {
         $owned = (int)($comment['idUser'] ?? 0) === $currentUserId;
         ?>
         <div class="comment-item" id="comment-item-<?= comment_escape($commentId) ?>" style="margin-left: <?= (int)$margin ?>px;">
-            <div class="comment-avatar-sm"><?= comment_escape(comment_user_initial($comment)) ?></div>
+            <?= cre8_render_avatar($comment['idUser'] ?? 0, (string)($comment['userName'] ?? 'User'), 'comment-avatar-sm') ?>
             <div style="flex:1;min-width:0;">
                 <div class="comment-bubble" id="bubble-<?= comment_escape($commentId) ?>">
                     <div class="comment-author"><?= comment_escape($comment['userName'] ?? ('User #' . ($comment['idUser'] ?? ''))) ?></div>
@@ -218,7 +220,7 @@ if (!function_exists('render_preview_comments')) {
         foreach ($previewComments as $preview) {
             ?>
             <div class="comment-item mb-2">
-                <div class="comment-avatar-sm"><?= comment_escape(comment_user_initial($preview)) ?></div>
+                <?= cre8_render_avatar($preview['idUser'] ?? 0, (string)($preview['userName'] ?? 'User'), 'comment-avatar-sm') ?>
                 <div style="flex:1;min-width:0;">
                     <div class="comment-bubble">
                         <div class="comment-author"><?= comment_escape($preview['userName'] ?? 'User') ?></div>

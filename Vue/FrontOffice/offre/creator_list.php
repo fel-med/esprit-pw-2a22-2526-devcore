@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../layout/session_bridge.php';
 $currentUser = cre8_front_require_user('createur');
 $frontActive = 'collaborations';
+require_once __DIR__ . '/../layout/avatar_helper.php';
 
 require_once __DIR__ . '/../../../Controleur/offreC.php';
 require_once __DIR__ . '/../../../Controleur/condidatureC.php';
@@ -9,28 +10,6 @@ require_once __DIR__ . '/../../../Controleur/condidatureC.php';
 $controller = new OffreC();
 $candidatureController = new CondidatureC();
 $creatorId = (int) $currentUser['id'];
-$notificationController = $candidatureController;
-$notificationUserId = (int) $creatorId;
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['notificationAction'])) {
-    $notificationAction = (string) $_POST['notificationAction'];
-    if ($notificationAction === 'mark_one') {
-        $notificationController->markNotificationActionAsRead((int) ($_POST['idNotificationAction'] ?? 0), $notificationUserId);
-    } elseif ($notificationAction === 'mark_all') {
-        $notificationController->markAllNotificationActionsAsRead($notificationUserId);
-    }
-
-    $redirect = basename((string) ($_SERVER['SCRIPT_NAME'] ?? 'creator_list.php'));
-    if (!empty($_SERVER['QUERY_STRING'])) {
-        $redirect .= '?' . $_SERVER['QUERY_STRING'];
-    }
-    header('Location: ' . $redirect);
-    exit;
-}
-
-if ($notificationUserId > 0) {
-    $notificationController->generateCreatorDeadlineSoonNotifications($notificationUserId);
-}
 
 $offres = [];
 $error = null;
@@ -427,9 +406,10 @@ $nextPageUrl = $hasNextPage ? 'creator_list.php?' . http_build_query($pagination
     <link rel="stylesheet" href="../css/frontoffice.css">
     <link rel="stylesheet" href="offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre.css')); ?>">
     <link rel="stylesheet" href="../layout/front-header.css">
-<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
-<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
-<link rel="apple-touch-icon" href="../../public/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
 </head>
 <body>
     <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
@@ -441,9 +421,6 @@ $nextPageUrl = $hasNextPage ? 'creator_list.php?' . http_build_query($pagination
                         <span class="module-eyebrow">Creator inbox</span>
                         <h1 class="display-5 fw-bold mt-3 mb-2 gradient-title">Offers for you</h1>
                         <p class="lead text-muted">Browse targeted invitations from brands, save the ones you want to revisit, and respond when the collaboration feels right.</p>
-                    </div>
-                    <div class="compact-actions">
-                        <?php require __DIR__ . '/../condidature/notification_widget.php'; ?>
                     </div>
                 </div>
             </section>
@@ -514,7 +491,10 @@ $nextPageUrl = $hasNextPage ? 'creator_list.php?' . http_build_query($pagination
                                     <span class="offer-chip"><?php echo htmlspecialchars(formatMoney($offre->getBudgetPropose())); ?></span>
                                     <span class="offer-chip">Deadline: <?php echo htmlspecialchars($offre->getDateLimite()); ?></span>
                                     <?php if ($brand): ?>
-                                        <span class="offer-chip">Brand: <?php echo htmlspecialchars($brand['nom']); ?></span>
+                                        <div class="offer-chip">
+                                            <?php echo cre8_render_avatar($brand['id'] ?? $offre->getIdMarque(), (string) ($brand['nom'] ?? 'Brand'), 'cre8-avatar-sm'); ?>
+                                            Brand: <?php echo htmlspecialchars($brand['nom']); ?>
+                                        </div>
                                     <?php endif; ?>
                                 </div>
 
@@ -670,7 +650,10 @@ $nextPageUrl = $hasNextPage ? 'creator_list.php?' . http_build_query($pagination
                                                         <span class="offer-chip"><?php echo htmlspecialchars(formatMoney($offre->getBudgetPropose())); ?></span>
                                                         <span class="offer-chip">Deadline: <?php echo htmlspecialchars($offre->getDateLimite()); ?></span>
                                                         <?php if ($brand): ?>
-                                                            <span class="offer-chip">Brand: <?php echo htmlspecialchars($brand['nom']); ?></span>
+                                                            <div class="offer-chip">
+                                                                <?php echo cre8_render_avatar($brand['id'] ?? $offre->getIdMarque(), (string) ($brand['nom'] ?? 'Brand'), 'cre8-avatar-sm'); ?>
+                                                                Brand: <?php echo htmlspecialchars($brand['nom']); ?>
+                                                            </div>
                                                         <?php endif; ?>
                                                     </div>
 
@@ -729,15 +712,23 @@ $nextPageUrl = $hasNextPage ? 'creator_list.php?' . http_build_query($pagination
                                                         <span class="offer-chip"><?php echo htmlspecialchars(formatMoney($offre->getBudgetPropose())); ?></span>
                                                         <span class="offer-chip">Deadline: <?php echo htmlspecialchars($offre->getDateLimite()); ?></span>
                                                         <?php if ($brand): ?>
-                                                            <span class="offer-chip">Brand: <?php echo htmlspecialchars($brand['nom']); ?></span>
+                                                            <div class="offer-chip">
+                                                                <?php echo cre8_render_avatar($brand['id'] ?? $offre->getIdMarque(), (string) ($brand['nom'] ?? 'Brand'), 'cre8-avatar-sm'); ?>
+                                                                Brand: <?php echo htmlspecialchars($brand['nom']); ?>
+                                                            </div>
                                                         <?php endif; ?>
                                                     </div>
 
                                                     <div class="offer-detail-list">
                                                         <div class="offer-detail-item">
                                                             <strong>Brand</strong>
-                                                            <span><?php echo htmlspecialchars($brand['nom'] ?? 'Unknown brand'); ?></span>
-                                                            <p><?php echo htmlspecialchars($brand['email'] ?? ''); ?></p>
+                                                            <div style="display:flex;align-items:center;gap:.65rem;">
+                                                                <?php echo cre8_render_avatar($brand['id'] ?? $offre->getIdMarque(), (string) ($brand['nom'] ?? 'Brand'), 'cre8-avatar-md'); ?>
+                                                                <div>
+                                                                    <span><?php echo htmlspecialchars($brand['nom'] ?? 'Unknown brand'); ?></span>
+                                                                    <p><?php echo htmlspecialchars($brand['email'] ?? ''); ?></p>
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                         <div class="offer-detail-item">
                                                             <strong>Objective</strong>

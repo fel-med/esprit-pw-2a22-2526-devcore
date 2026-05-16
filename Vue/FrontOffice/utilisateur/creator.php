@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../layout/session_bridge.php';
 require_once __DIR__ . '/../../../Controleur/session_helper.php';
+require_once __DIR__ . '/../../../Controleur/profileC.php';
 
 $currentFrontUser = cre8_front_session_user();
 
@@ -31,6 +32,16 @@ $userInitial = function_exists('mb_substr')
     : substr($userName, 0, 1);
 $userInitial = strtoupper((string) $userInitial);
 $userInitial = $userInitial !== '' ? $userInitial : 'U';
+
+$profileImageUrl = null;
+if (!empty($currentFrontUser['id'])) {
+    try {
+        $profileC = new ProfileC();
+        $profileImageUrl = $profileC->getProfileImageUrl((int) $currentFrontUser['id'], '../../public/uploads/profile');
+    } catch (Throwable $e) {
+        $profileImageUrl = null;
+    }
+}
 
 $userHandle = strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '_', $userName), '_'));
 $userHandle = $userHandle !== '' ? $userHandle : 'user';
@@ -346,9 +357,10 @@ $welcomeText = $isBrand
             .quick-links { grid-template-columns: 1fr 1fr; }
         }
     </style>
-<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
-<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
-<link rel="apple-touch-icon" href="../../public/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
 </head>
 <body>
 
@@ -359,7 +371,11 @@ $welcomeText = $isBrand
 
     <!-- Cover -->
     <div class="creator-cover">
-        <div class="cover-avatar"><?php echo $userInitial; ?></div>
+        <?php if ($profileImageUrl): ?>
+            <img class="cover-avatar" src="<?php echo htmlspecialchars($profileImageUrl); ?>" alt="Profile photo" style="object-fit:cover;padding:0;">
+        <?php else: ?>
+            <div class="cover-avatar"><?php echo htmlspecialchars($userInitial); ?></div>
+        <?php endif; ?>
         <div>
             <div class="cover-name"><?php echo htmlspecialchars($userName); ?></div>
             <div class="cover-role"><i class="bi <?php echo htmlspecialchars($roleIcon); ?>"></i> <?php echo htmlspecialchars($roleLabel); ?></div>

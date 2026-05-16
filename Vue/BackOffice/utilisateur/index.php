@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../layout/early-theme.php';
 require_once '../../../Controleur/session_helper.php';
 require_once '../../../Controleur/utilisateurC.php';
+require_once __DIR__ . '/../../FrontOffice/layout/avatar_helper.php';
 
 cc_require_admin('../../FrontOffice/utilisateur/login.php');
 
@@ -50,7 +51,10 @@ $stats = $userC->getStatistiquesUtilisateurs();
   <link rel="stylesheet" href="assets/css/style.css">
   <!-- End layout styles -->
   <link rel="stylesheet" href="../layout/back-layout.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/back-layout.css')); ?>">
-  <link rel="shortcut icon" href="assets/images/favicon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+  <link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
   <style type="text/css">
     /* Chart.js */
     @keyframes chartjs-render-animation {
@@ -305,7 +309,48 @@ $stats = $userC->getStatistiquesUtilisateurs();
       background-color: #f8fafc !important;
     }
 
-  </style>
+  
+    .cre8-bo-user-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      min-width: 220px;
+    }
+
+    .cre8-bo-user-cell .form-control {
+      min-width: 0;
+    }
+
+    .cre8-bo-user-avatar,
+    .cre8-bo-user-avatar.cre8-avatar-sm,
+    .cre8-bo-user-avatar img {
+      width: 38px !important;
+      height: 38px !important;
+      min-width: 38px !important;
+      border-radius: 50% !important;
+      object-fit: cover !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      overflow: hidden !important;
+      flex: 0 0 38px !important;
+    }
+
+    .cre8-bo-user-avatar {
+      background: linear-gradient(135deg, #9B5DE0, #E11D74) !important;
+      color: #fff !important;
+      font-weight: 800 !important;
+      font-size: 0.95rem !important;
+      box-shadow: 0 8px 18px rgba(155, 93, 224, 0.22);
+      border: 2px solid rgba(255, 255, 255, 0.85);
+    }
+
+    body.light-mode .cre8-bo-user-avatar {
+      border-color: #fff;
+      box-shadow: 0 8px 18px rgba(17, 24, 39, 0.12);
+    }
+
+</style>
 </head>
 
 <body class="cre8-admin-layout"><?php cre8_bo_early_theme_print_body_script(); ?>
@@ -477,8 +522,11 @@ $stats = $userC->getStatistiquesUtilisateurs();
                               <td><?= $u['id'] ?></td>
 
                               <td>
-                                <input type="text" name="nom" value="<?= htmlspecialchars($u['nom']) ?>"
-                                  class="form-control form-control-sm">
+                                <div class="cre8-bo-user-cell">
+                                  <?= cre8_render_avatar((int)($u['id'] ?? 0), (string)($u['nom'] ?? 'User'), 'cre8-avatar-sm cre8-bo-user-avatar') ?>
+                                  <input type="text" name="nom" value="<?= htmlspecialchars($u['nom']) ?>"
+                                    class="form-control form-control-sm">
+                                </div>
                               </td>
 
                               <td>

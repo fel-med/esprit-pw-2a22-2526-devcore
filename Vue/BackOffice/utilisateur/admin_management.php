@@ -145,7 +145,10 @@ unset($_SESSION['admin_management_flash']);
   <link rel="stylesheet" href="assets/vendors/css/vendor.bundle.base.css">
   <link rel="stylesheet" href="assets/css/style.css">
   <link rel="stylesheet" href="../layout/back-layout.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/back-layout.css')); ?>">
-  <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+  <link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
   <style>
     .admin-management-card {
       border: 1px solid rgba(255,255,255,.08);

@@ -3,6 +3,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+require_once __DIR__ . '/../layout/avatar_helper.php';
+
 if (!isset($pageTitle)) {
     $pageTitle = 'Community Posts';
 }
@@ -35,9 +37,10 @@ if (!isset($currentPage)) {
     <link href="../assets/css/styles.css" rel="stylesheet" />
     <link href="../assets/post-front.css?v=3" rel="stylesheet" />
 
-<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
-<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
-<link rel="apple-touch-icon" href="../../public/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
 </head>
 
 <body class="d-flex flex-column min-vh-100 social-body">
@@ -118,10 +121,10 @@ if (!isset($currentPage)) {
 
                     <li class="nav-item d-flex align-items-center gap-2">
 
-                        <span class="navbar-text text-muted">
-                            <i class="bi bi-person-circle"></i>
+                        <div class="navbar-text text-muted d-inline-flex align-items-center gap-2">
+                            <?= cre8_render_avatar($_SESSION['id'], (string)($_SESSION['nom'] ?? 'User'), 'cre8-avatar-sm') ?>
                             <?= htmlspecialchars($_SESSION['nom'] ?? 'User') ?>
-                        </span>
+                        </div>
 
                         <!-- Logout -->
                         <a class="btn social-nav-btn social-logout-btn"

@@ -301,44 +301,11 @@ $contrats = $controller->getByCreateur($idCreateur);
             z-index:999;
         }
         .toast.show { display:flex; }
-
-        .hero-lang-row {
-            display: flex;
-            justify-content: flex-end;
-            width: 100%;
-            margin-bottom: 12px;
-        }
-        .contract-front .hero .front-lang-switch {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            padding: 0.25rem;
-            border-radius: 999px;
-            border: 1px solid rgba(255,255,255,0.45);
-            background: rgba(255,255,255,0.12);
-            flex-shrink: 0;
-        }
-        .contract-front .hero .front-lang-btn {
-            border: 0;
-            border-radius: 999px;
-            background: transparent;
-            color: rgba(255,255,255,0.88);
-            font: inherit;
-            font-size: 0.76rem;
-            font-weight: 800;
-            padding: 0.4rem 0.7rem;
-            cursor: pointer;
-            transition: background 0.15s, color 0.15s;
-        }
-        .contract-front .hero .front-lang-btn:hover { color: #fff; }
-        .contract-front .hero .front-lang-btn.is-active {
-            background: #fff;
-            color: #7c3aed;
-        }
     </style>
-<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
-<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
-<link rel="apple-touch-icon" href="../../public/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
 </head>
 <body>
 
@@ -347,12 +314,6 @@ $contrats = $controller->getByCreateur($idCreateur);
 <div class="contract-front">
 <div class="hero">
     <div class="hero-inner">
-        <div class="hero-lang-row">
-            <div class="front-lang-switch" role="group" aria-label="Language">
-                <button type="button" class="front-lang-btn" data-lang-choice="en" aria-pressed="false">EN</button>
-                <button type="button" class="front-lang-btn" data-lang-choice="fr" aria-pressed="false">FR</button>
-            </div>
-        </div>
         <h1 data-i18n="hero_title">Mes Contrats</h1>
         <p data-i18n="hero_desc">Consultez et signez vos accords de collaboration avec les marques</p>
     </div>
@@ -504,22 +465,6 @@ $contrats = $controller->getByCreateur($idCreateur);
 
 <script>
 // ===== ADDED FEATURE: TRANSLATION SYSTEM =====
-function cre8FrontReadLang() {
-    try {
-        var k = localStorage.getItem('cre8_front_lang');
-        if (k === 'fr' || k === 'en') return k;
-        var legacy = localStorage.getItem('cc_lang')
-            || localStorage.getItem('cre8_lang')
-            || localStorage.getItem('cre8_lang_produit')
-            || localStorage.getItem('cre8_lang_creator_produit');
-        if (legacy === 'fr' || legacy === 'en') return legacy;
-    } catch (e) {}
-    return 'en';
-}
-function cre8FrontWriteLang(lang) {
-    var safe = lang === 'fr' ? 'fr' : 'en';
-    try { localStorage.setItem('cre8_front_lang', safe); } catch (e) {}
-}
 
 const translations = {
     fr: {
@@ -548,12 +493,11 @@ const translations = {
     }
 };
 
-let creatorContractLang = cre8FrontReadLang();
+let creatorContractLang = 'en';
 
 function switchLang(lang) {
     const safe = lang === 'fr' ? 'fr' : 'en';
     creatorContractLang = safe;
-    cre8FrontWriteLang(safe);
     const dict = translations[safe] || translations.fr;
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
@@ -566,11 +510,6 @@ function switchLang(lang) {
     document.querySelectorAll('[data-i18n-title]').forEach(el => {
         const key = el.getAttribute('data-i18n-title');
         if (key && dict[key] !== undefined) el.setAttribute('title', dict[key]);
-    });
-    document.querySelectorAll('[data-lang-choice]').forEach(btn => {
-        const on = btn.getAttribute('data-lang-choice') === safe;
-        btn.classList.toggle('is-active', on);
-        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
 }
 
@@ -667,9 +606,12 @@ document.addEventListener('DOMContentLoaded', () => {
         var savedTheme = localStorage.getItem('cre8_theme') || localStorage.getItem('cc_theme');
         document.body.classList.toggle('dark-mode', savedTheme === 'dark');
     }
+    creatorContractLang = typeof window.cre8RegisterTranslations === 'function'
+        ? window.cre8RegisterTranslations(translations)
+        : (typeof window.cre8FrontReadLang === 'function' ? window.cre8FrontReadLang() : 'en');
     switchLang(creatorContractLang);
-    document.querySelectorAll('[data-lang-choice]').forEach(btn => {
-        btn.addEventListener('click', () => switchLang(btn.getAttribute('data-lang-choice')));
+    window.addEventListener('cre8:languagechange', function (event) {
+        switchLang(event.detail && event.detail.lang ? event.detail.lang : creatorContractLang);
     });
     applyAllFilters();
 });

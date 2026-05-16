@@ -5,6 +5,7 @@ require_once __DIR__ . '/../layout/early-theme.php';
 require_once __DIR__ . '/../../../Controleur/session_helper.php';
 require_once __DIR__ . '/../../../Controleur/cre8shieldC.php';
 require_once __DIR__ . '/../../../Controleur/condidatureC.php';
+require_once __DIR__ . '/../../FrontOffice/layout/avatar_helper.php';
 
 $candidatureController = new CondidatureC();
 $cre8shieldController = new Cre8ShieldC();
@@ -468,9 +469,14 @@ function cre8shieldRenderUserCell($role, $userId, array $userMap, $variant = 're
     $effectiveRole = $role !== '' ? $role : (string) ($known['role'] ?? '');
     $primary = $name !== '' ? $name : ('User #' . $userId);
 
+    $avatarHtml = cre8_render_avatar($userId, $primary, 'cre8-avatar-sm cre8shield-user-avatar');
+
     return '<button type="button" class="cre8shield-user-link variant-' . htmlspecialchars($variant) . '" data-cre8shield-user-trigger data-user-id="' . $userId . '" title="Open user details">'
+        . $avatarHtml
+        . '<span class="cre8shield-user-link-copy">'
         . '<strong>' . htmlspecialchars($primary) . '</strong>'
         . '<span class="cre8shield-user-link-meta">' . htmlspecialchars(($effectiveRole !== '' ? ucfirst($effectiveRole) : 'User') . ' · #' . $userId) . '</span>'
+        . '</span>'
         . '</button>';
 }
 
@@ -529,17 +535,22 @@ function cre8shieldRenderUserCardTemplate(int $userId, array $user)
     ?>
     <article class="cre8shield-modal-user-card">
         <header class="cre8shield-modal-user-head">
-            <span class="cre8shield-role-pill <?php echo htmlspecialchars(cre8shieldRoleColorClass($role)); ?>">
-                <?php echo htmlspecialchars($role !== '' ? ucfirst($role) : 'User'); ?>
-            </span>
+            <div class="cre8shield-modal-user-identity">
+                <?php echo cre8_render_avatar($userId, $name, 'cre8-avatar-lg cre8shield-modal-user-avatar'); ?>
+                <div class="cre8shield-modal-user-copy">
+                    <span class="cre8shield-role-pill <?php echo htmlspecialchars(cre8shieldRoleColorClass($role)); ?>">
+                        <?php echo htmlspecialchars($role !== '' ? ucfirst($role) : 'User'); ?>
+                    </span>
+                    <h3 class="cre8shield-modal-user-name"><?php echo htmlspecialchars($name); ?></h3>
+                    <?php if ($email !== ''): ?>
+                        <p class="cre8shield-modal-user-email">
+                            <a href="mailto:<?php echo htmlspecialchars($email); ?>"><?php echo htmlspecialchars($email); ?></a>
+                        </p>
+                    <?php endif; ?>
+                </div>
+            </div>
             <span class="cre8shield-modal-user-id">ID #<?php echo $userId; ?></span>
         </header>
-        <h3 class="cre8shield-modal-user-name"><?php echo htmlspecialchars($name); ?></h3>
-        <?php if ($email !== ''): ?>
-            <p class="cre8shield-modal-user-email">
-                <a href="mailto:<?php echo htmlspecialchars($email); ?>"><?php echo htmlspecialchars($email); ?></a>
-            </p>
-        <?php endif; ?>
         <dl class="cre8shield-modal-grid">
             <?php if ($statut !== ''): ?>
                 <div>
@@ -992,15 +1003,200 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
             color: #64748b;
         }
 
+
+        .cre8shield-user-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.7rem;
+            text-align: left;
+        }
+
+        .cre8shield-user-link-copy {
+            display: inline-flex;
+            flex-direction: column;
+            gap: 0.1rem;
+            min-width: 0;
+        }
+
+        .cre8shield-user-avatar,
+        .cre8shield-modal-user-avatar,
+        .cre8shield-user-avatar img,
+        .cre8shield-modal-user-avatar img {
+            border-radius: 999px !important;
+            object-fit: cover !important;
+            overflow: hidden !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        .cre8shield-user-avatar {
+            width: 34px !important;
+            height: 34px !important;
+            min-width: 34px !important;
+            flex: 0 0 34px !important;
+            font-size: 0.84rem !important;
+            font-weight: 800 !important;
+            color: #fff !important;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899) !important;
+            box-shadow: 0 8px 18px rgba(139, 92, 246, 0.22);
+            border: 2px solid rgba(255, 255, 255, 0.76);
+        }
+
+        .cre8shield-modal-user-identity {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            min-width: 0;
+        }
+
+        .cre8shield-modal-user-avatar {
+            width: 64px !important;
+            height: 64px !important;
+            min-width: 64px !important;
+            flex: 0 0 64px !important;
+            font-size: 1.35rem !important;
+            font-weight: 900 !important;
+            color: #fff !important;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899) !important;
+            box-shadow: 0 14px 28px rgba(139, 92, 246, 0.24);
+            border: 3px solid rgba(255, 255, 255, 0.82);
+        }
+
+        .cre8shield-modal-user-head {
+            align-items: center;
+            gap: 1rem;
+        }
+
         @media (max-width: 900px) {
             .collaboration-subnav__list {
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Cre8Shield user modal final clean alignment */
+        .cre8shield-modal-user-card {
+            padding: 1.05rem 1.1rem 1.15rem !important;
+            gap: 0.85rem !important;
+        }
+
+        .cre8shield-modal-user-head {
+            display: flex !important;
+            align-items: flex-start !important;
+            justify-content: space-between !important;
+            gap: 1rem !important;
+        }
+
+        .cre8shield-modal-user-identity {
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.85rem !important;
+            min-width: 0 !important;
+            flex: 1 1 auto !important;
+        }
+
+        .cre8shield-modal-user-avatar,
+        .cre8shield-modal-user-avatar img {
+            width: 56px !important;
+            height: 56px !important;
+            min-width: 56px !important;
+            flex: 0 0 56px !important;
+            border-radius: 50% !important;
+            object-fit: cover !important;
+        }
+
+        .cre8shield-modal-user-copy {
+            min-width: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 0.22rem !important;
+        }
+
+        .cre8shield-modal-user-copy .cre8shield-role-pill {
+            margin: 0 !important;
+            width: fit-content !important;
+        }
+
+        .cre8shield-modal-user-name {
+            margin: 0 !important;
+            font-size: 1.05rem !important;
+            line-height: 1.18 !important;
+            font-weight: 800 !important;
+            max-width: 100% !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+        }
+
+        .cre8shield-modal-user-email {
+            padding-left: 0 !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+            font-size: 0.86rem !important;
+            line-height: 1.3 !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+        }
+
+        .cre8shield-modal-user-id {
+            flex: 0 0 auto !important;
+            align-self: flex-start !important;
+            white-space: nowrap !important;
+            margin-top: 0.1rem !important;
+        }
+
+        .cre8shield-modal-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            gap: 0.6rem !important;
+            margin-top: 0.2rem !important;
+        }
+
+        .cre8shield-modal-user-actions {
+            padding-left: 0 !important;
+            margin-top: 0.05rem !important;
+            display: flex !important;
+            justify-content: flex-end !important;
+            width: 100% !important;
+        }
+
+        .cre8shield-modal-user-actions .cre8shield-action-btn,
+        .cre8shield-modal-user-actions a.cre8shield-action-btn {
+            min-width: 190px !important;
+            text-align: center !important;
+            justify-content: center !important;
+        }
+
+        @media (max-width: 640px) {
+            .cre8shield-modal-user-head {
+                flex-direction: column !important;
+                align-items: stretch !important;
+            }
+
+            .cre8shield-modal-user-id {
+                align-self: flex-start !important;
+            }
+
+            .cre8shield-modal-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .cre8shield-modal-user-actions {
+                justify-content: stretch !important;
+            }
+
+            .cre8shield-modal-user-actions .cre8shield-action-btn,
+            .cre8shield-modal-user-actions a.cre8shield-action-btn {
+                width: 100% !important;
+                min-width: 0 !important;
+            }
+        }
     </style>
-<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
-<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
-<link rel="apple-touch-icon" href="../../public/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
 </head>
 <body class="cre8-admin-layout"><?php cre8_bo_early_theme_print_body_script(); ?>
     <div class="container-scroller cre8-admin-page">

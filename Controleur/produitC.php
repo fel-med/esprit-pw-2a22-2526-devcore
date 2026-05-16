@@ -95,8 +95,12 @@ class ProduitC
     // ─── AFFICHER (actifs) ─────────────────────────────────────────────────────
     public function afficherProduits(?int $idMarque = null): array
     {
-        $where = $idMarque ? "WHERE estArchive = 0 AND idMarque = :idMarque" : "WHERE estArchive = 0";
-        $sql   = "SELECT * FROM produit $where ORDER BY estEpingle DESC, sortOrder ASC, idProduit DESC";
+        $where = $idMarque ? "WHERE p.estArchive = 0 AND p.idMarque = :idMarque" : "WHERE p.estArchive = 0";
+        $sql   = "SELECT p.*, u.nom AS nomMarque
+                  FROM produit p
+                  LEFT JOIN utilisateur u ON u.id = p.idMarque
+                  $where
+                  ORDER BY p.estEpingle DESC, p.sortOrder ASC, p.idProduit DESC";
         $db    = config::getConnexion();
         if ($idMarque) {
             $q = $db->prepare($sql);
@@ -109,8 +113,12 @@ class ProduitC
     // ─── AFFICHER ARCHIVÉS ─────────────────────────────────────────────────────
     public function afficherProduitsArchives(?int $idMarque = null): array
     {
-        $where = $idMarque ? "WHERE estArchive = 1 AND idMarque = :idMarque" : "WHERE estArchive = 1";
-        $sql   = "SELECT * FROM produit $where ORDER BY idProduit DESC";
+        $where = $idMarque ? "WHERE p.estArchive = 1 AND p.idMarque = :idMarque" : "WHERE p.estArchive = 1";
+        $sql   = "SELECT p.*, u.nom AS nomMarque
+                  FROM produit p
+                  LEFT JOIN utilisateur u ON u.id = p.idMarque
+                  $where
+                  ORDER BY p.idProduit DESC";
         $db    = config::getConnexion();
         if ($idMarque) {
             $q = $db->prepare($sql);
@@ -123,7 +131,12 @@ class ProduitC
     // ─── RÉCUPÉRER UN PRODUIT ──────────────────────────────────────────────────
     public function recupererProduit(int $id): ?array
     {
-        $q = config::getConnexion()->prepare("SELECT * FROM produit WHERE idProduit = :id");
+        $q = config::getConnexion()->prepare("
+            SELECT p.*, u.nom AS nomMarque
+            FROM produit p
+            LEFT JOIN utilisateur u ON u.id = p.idMarque
+            WHERE p.idProduit = :id
+        ");
         $q->execute(['id' => $id]);
         $r = $q->fetch();
         return $r ?: null;

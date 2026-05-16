@@ -1,18 +1,40 @@
 <?php
+require_once __DIR__ . '/../../../Controleur/session_helper.php';
+require_once __DIR__ . '/../../../Controleur/profileC.php';
+
+cc_start_session();
+
 $cre8SelfPath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
 $cre8Marker = '/Vue/BackOffice/';
 $cre8Pos = strpos($cre8SelfPath, $cre8Marker);
 
 if ($cre8Pos !== false) {
-    $backBoRootWeb = substr($cre8SelfPath, 0, $cre8Pos) . '/Vue/BackOffice';
+    $backProjectBase = substr($cre8SelfPath, 0, $cre8Pos);
+    $backBoRootWeb = $backProjectBase . '/Vue/BackOffice';
 } else {
     $_ctrlPos = strpos($cre8SelfPath, '/Controleur/');
-    $backBoRootWeb = ($_ctrlPos !== false ? substr($cre8SelfPath, 0, $_ctrlPos) : '') . '/Vue/BackOffice';
+    $backProjectBase = $_ctrlPos !== false ? substr($cre8SelfPath, 0, $_ctrlPos) : '';
+    $backBoRootWeb = $backProjectBase . '/Vue/BackOffice';
 }
 $backBoUtilisateurWeb = $backBoRootWeb . '/utilisateur';
+$backProfileSettingsUrl = $backBoUtilisateurWeb . '/profile_settings.php';
+$backProfileUploadWeb = $backProjectBase . '/Vue/public/uploads/profile';
 
 $adminName = $_SESSION['user']['nom'] ?? ($_SESSION['utilisateur']['nom'] ?? ($_SESSION['nom'] ?? 'Utilisateur')); 
 $adminName = trim((string) $adminName) ?: 'Utilisateur';
+$adminInitial = function_exists('mb_substr') ? mb_substr($adminName, 0, 1, 'UTF-8') : substr($adminName, 0, 1);
+$adminInitial = strtoupper((string) $adminInitial) ?: 'U';
+$adminAvatarUrl = null;
+$adminId = cc_current_user_id();
+
+if ($adminId !== null) {
+    try {
+        $profileC = new ProfileC();
+        $adminAvatarUrl = $profileC->getProfileImageUrl($adminId, $backProfileUploadWeb);
+    } catch (Throwable $e) {
+        $adminAvatarUrl = null;
+    }
+}
 ?>
       <!-- partial:partials/_navbar.html -->
       <nav class="navbar p-0 fixed-top d-flex flex-row">
@@ -100,7 +122,11 @@ $adminName = trim((string) $adminName) ?: 'Utilisateur';
             <li class="nav-item dropdown cre8-profile-dropdown" data-cre8-profile-dropdown>
               <a class="nav-link cre8-profile-toggle" id="profileDropdown" href="#" data-toggle="dropdown" data-cre8-profile-toggle aria-haspopup="true" aria-expanded="false">
                 <div class="navbar-profile">
-                  <img class="img-xs rounded-circle" src="<?php echo htmlspecialchars($backBoUtilisateurWeb . '/assets/images/faces/face15.jpg'); ?>" alt="">
+                  <?php if ($adminAvatarUrl): ?>
+                    <img class="img-xs rounded-circle" src="<?php echo htmlspecialchars($adminAvatarUrl); ?>" alt="Profile photo" style="object-fit:cover;">
+                  <?php else: ?>
+                    <span class="img-xs rounded-circle d-inline-flex align-items-center justify-content-center text-white font-weight-bold" style="background:linear-gradient(135deg,#5b4fff,#8b5cf6);"><?php echo htmlspecialchars($adminInitial); ?></span>
+                  <?php endif; ?>
                   <p class="mb-0 d-none d-sm-block navbar-profile-name"><?php echo htmlspecialchars($adminName); ?></p>
                   <i class="mdi mdi-menu-down d-none d-sm-block"></i>
                 </div>
@@ -108,7 +134,7 @@ $adminName = trim((string) $adminName) ?: 'Utilisateur';
               <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list cre8-profile-menu" aria-labelledby="profileDropdown" data-cre8-profile-menu>
                 <h6 class="p-3 mb-0">Profile</h6>
                 <div class="dropdown-divider"></div>
-                <a class="dropdown-item preview-item" href="#">
+                <a class="dropdown-item preview-item" href="<?php echo htmlspecialchars($backProfileSettingsUrl); ?>">
                   <div class="preview-thumbnail"><div class="preview-icon bg-dark rounded-circle"><i class="mdi mdi-settings text-success"></i></div></div>
                   <div class="preview-item-content"><p class="preview-subject mb-1">Settings</p></div>
                 </a>
@@ -117,8 +143,6 @@ $adminName = trim((string) $adminName) ?: 'Utilisateur';
                   <div class="preview-thumbnail"><div class="preview-icon bg-dark rounded-circle"><i class="mdi mdi-logout text-danger"></i></div></div>
                   <div class="preview-item-content"><p class="preview-subject mb-1">Log out</p></div>
                 </a>
-                <div class="dropdown-divider"></div>
-                <p class="p-3 mb-0 text-center">Advanced settings</p>
               </div>
             </li>
           </ul>

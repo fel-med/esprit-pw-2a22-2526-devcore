@@ -7,7 +7,36 @@ $reclamationC = new ReclamationC();
 
 // Récupérer les paramètres de recherche et tri
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
-$priorite = isset($_GET['priorite']) ? trim($_GET['priorite']) : '';
+$rawPriorite = isset($_GET['priorite']) ? trim($_GET['priorite']) : '';
+$priorityAliasMap = [
+    'haute' => 'haute',
+    'high' => 'haute',
+    'normale' => 'normale',
+    'normal' => 'normale',
+    'moyenne' => 'normale',
+    'medium' => 'normale',
+    'faible' => 'faible',
+    'low' => 'faible',
+    'basse' => 'faible',
+];
+$prioriteKey = strtolower($rawPriorite);
+$priorite = $priorityAliasMap[$prioriteKey] ?? '';
+
+if (!function_exists('cre8_bo_priority_label')) {
+    function cre8_bo_priority_label($value) {
+        $key = strtolower(trim((string) $value));
+        if (in_array($key, ['haute', 'high'], true)) {
+            return 'High';
+        }
+        if (in_array($key, ['normale', 'normal', 'moyenne', 'medium'], true)) {
+            return 'Normal';
+        }
+        if (in_array($key, ['faible', 'low', 'basse'], true)) {
+            return 'Low';
+        }
+        return $value !== '' ? ucfirst($value) : 'Normal';
+    }
+}
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $limit = 4; // Records per page
 
@@ -28,12 +57,17 @@ $priorityTimeline = $reclamationC->getReclamationPriorityTimeline(14);
 
 // Calculate priority statistics
 $haute = 0;
-$moyenne = 0;
-$basse = 0;
+$normale = 0;
+$faible = 0;
 foreach ($liste as $rec) {
-    if ($rec['priorite'] == 'haute') $haute++;
-    elseif ($rec['priorite'] == 'moyenne') $moyenne++;
-    else $basse++;
+    $priorityKey = strtolower(trim((string) ($rec['priorite'] ?? '')));
+    if (in_array($priorityKey, ['haute', 'high'], true)) {
+        $haute++;
+    } elseif (in_array($priorityKey, ['normale', 'normal', 'moyenne', 'medium'], true)) {
+        $normale++;
+    } else {
+        $faible++;
+    }
 }
 ?>
 
@@ -62,7 +96,10 @@ foreach ($liste as $rec) {
   <link rel="stylesheet" href="assets/css/style.css">
   <link rel="stylesheet" href="../layout/back-layout.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/back-layout.css')); ?>">
   <!-- End layout styles -->
-  <link rel="shortcut icon" href="assets/images/favicon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+  <link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
   <style type="text/css">
     /* Chart.js */
     @keyframes chartjs-render-animation {
@@ -416,7 +453,7 @@ foreach ($liste as $rec) {
                     <div class="col-md-6">
                       <form method="GET" action="reclamations.php" class="d-flex gap-2">
                         <input type="text" name="search" class="form-control" placeholder="Search by user or description..." value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
-                        <input type="hidden" name="priorite" value="<?php echo isset($_GET['priorite']) ? htmlspecialchars($_GET['priorite']) : ''; ?>">
+                        <input type="hidden" name="priorite" value="<?php echo htmlspecialchars($priorite); ?>">
                         <button type="submit" class="btn btn-sm" style="background-color: #9B5DE0; color: white; width: 90px;">Search</button>
                       </form>
                     </div>
@@ -425,9 +462,9 @@ foreach ($liste as $rec) {
                         <input type="hidden" name="search" value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
                         <select name="priorite" class="form-select form-select-sm" onchange="this.form.submit()" style="background-color: #FDCFFA; border-color: #D78FEE;">
                           <option value="">Filter by priority</option>
-                          <option value="haute" <?php echo isset($_GET['priorite']) && $_GET['priorite'] == 'haute' ? 'selected' : ''; ?>>High</option>
-                          <option value="moyenne" <?php echo isset($_GET['priorite']) && $_GET['priorite'] == 'moyenne' ? 'selected' : ''; ?>>Medium</option>
-                          <option value="basse" <?php echo isset($_GET['priorite']) && $_GET['priorite'] == 'basse' ? 'selected' : ''; ?>>Low</option>
+                          <option value="haute" <?php echo $priorite === 'haute' ? 'selected' : ''; ?>>High</option>
+                          <option value="normale" <?php echo $priorite === 'normale' ? 'selected' : ''; ?>>Normal</option>
+                          <option value="faible" <?php echo $priorite === 'faible' ? 'selected' : ''; ?>>Low</option>
                         </select>
                       </form>
                     </div>
@@ -455,7 +492,7 @@ foreach ($liste as $rec) {
                             <td><?php echo $rec['nom']; ?></td>
                             <td><?php echo $rec['description']; ?></td>
                             <td><?php echo $rec['date_creation']; ?></td>
-                            <td><?php echo ($rec['priorite'] == 'haute' ? 'High' : ($rec['priorite'] == 'moyenne' ? 'Medium' : 'Low')); ?></td>
+                            <td><?php echo htmlspecialchars(cre8_bo_priority_label($rec['priorite'] ?? '')); ?></td>
 
                             <td>
                               <span class="badge bg-<?php echo ($rec['statut'] == 'traitee') ? 'success' : 'warning'; ?>">
@@ -714,24 +751,24 @@ foreach ($liste as $rec) {
         statutEnAttente: '#D78FEE',
         statutTraitee: '#AEEA94',
         prioriteHaute: '#E11D74',
-        prioriteMoyenne: '#FDFFB8',
-        prioriteBasse: '#4E56C0'
+        prioriteNormale: '#FDFFB8',
+        prioriteFaible: '#4E56C0'
       };
 
       const reclamationStats = {
         enAttente: <?= intval($stats['en_attente']) ?>,
         traitee: <?= intval($stats['traitee']) ?>,
         haute: <?= intval($stats['haute']) ?>,
-        moyenne: <?= intval($stats['moyenne']) ?>,
-        basse: <?= intval($stats['basse']) ?>
+        normale: <?= intval($stats['normale'] ?? $stats['moyenne'] ?? 0) ?>,
+        faible: <?= intval($stats['faible'] ?? $stats['basse'] ?? 0) ?>
       };
 
       const dateLabels = <?= json_encode($statusTimeline['dates']) ?>;
       const statusEnAttente = <?= json_encode($statusTimeline['en_attente']) ?>;
       const statusTraitee = <?= json_encode($statusTimeline['traitee']) ?>;
       const priorityHaute = <?= json_encode($priorityTimeline['haute']) ?>;
-      const priorityMoyenne = <?= json_encode($priorityTimeline['moyenne']) ?>;
-      const priorityBasse = <?= json_encode($priorityTimeline['basse']) ?>;
+      const priorityNormale = <?= json_encode($priorityTimeline['normale'] ?? $priorityTimeline['moyenne'] ?? []) ?>;
+      const priorityFaible = <?= json_encode($priorityTimeline['faible'] ?? $priorityTimeline['basse'] ?? []) ?>;
 
       const ctxAreaStatut = document.getElementById('chartAreaStatut');
       new Chart(ctxAreaStatut, {
@@ -817,27 +854,27 @@ foreach ($liste as $rec) {
               borderWidth: 3
             },
             {
-              label: 'Medium',
-              data: priorityMoyenne,
-              borderColor: colors.prioriteMoyenne,
-              backgroundColor: colors.prioriteMoyenne + '33',
+              label: 'Normal',
+              data: priorityNormale,
+              borderColor: colors.prioriteNormale,
+              backgroundColor: colors.prioriteNormale + '33',
               fill: true,
               tension: 0.4,
               pointRadius: 5,
-              pointBackgroundColor: colors.prioriteMoyenne,
+              pointBackgroundColor: colors.prioriteNormale,
               pointBorderColor: '#fff',
               pointBorderWidth: 2,
               borderWidth: 3
             },
             {
               label: 'Low',
-              data: priorityBasse,
-              borderColor: colors.prioriteBasse,
-              backgroundColor: colors.prioriteBasse + '33',
+              data: priorityFaible,
+              borderColor: colors.prioriteFaible,
+              backgroundColor: colors.prioriteFaible + '33',
               fill: true,
               tension: 0.4,
               pointRadius: 5,
-              pointBackgroundColor: colors.prioriteBasse,
+              pointBackgroundColor: colors.prioriteFaible,
               pointBorderColor: '#fff',
               pointBorderWidth: 2,
               borderWidth: 3

@@ -3,6 +3,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+require_once __DIR__ . '/../layout/avatar_helper.php';
+
 $scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME']);
 if (($pos = strpos($scriptPath, '/Vue/')) !== false) {
     $BASE = substr($scriptPath, 0, $pos);
@@ -24,7 +26,10 @@ if (!isset($forum) || !isset($messages)) {
     <?php require_once __DIR__ . '/../layout/front-theme-bootstrap.php'; ?>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($forum['TitreForum'] ?? 'Forum') ?> - Cre8Connect</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="<?= $BASE ?>/Vue/public/images/logo.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="<?= $BASE ?>/Vue/public/images/favicon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= $BASE ?>/Vue/public/images/favicon-32.png">
+    <link rel="shortcut icon" type="image/png" href="<?= $BASE ?>/Vue/public/images/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?= $BASE ?>/Vue/public/images/apple-touch-icon.png">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,700;9..144,800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -317,30 +322,6 @@ if (!isset($forum) || !isset($messages)) {
         .toast-notification.show { opacity: 1; }
 
         /* ── LANGUAGE TOGGLE ── */
-        .front-lang-switch {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            padding: 0.25rem;
-            border-radius: 999px;
-            border: 1px solid rgba(139,92,246,0.45);
-            background: rgba(139,92,246,0.08);
-        }
-        .front-lang-btn {
-            border: 0;
-            border-radius: 999px;
-            background: transparent;
-            color: var(--text-sub);
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.76rem;
-            font-weight: 800;
-            padding: 0.4rem 0.9rem;
-            cursor: pointer;
-            transition: background 0.15s, color 0.15s;
-        }
-        .front-lang-btn:hover { color: var(--primary); }
-        .front-lang-btn.is-active { background: #8b5cf6; color: #fff; }
-
         @media (max-width: 768px) {
             .disc-page { padding: 20px 16px; }
             .forum-header-card { padding: 20px; }
@@ -353,17 +334,16 @@ if (!isset($forum) || !isset($messages)) {
 
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:12px;">
         <a href="<?= $BASE ?>/Controleur/forumC.php" class="back-link" style="margin-bottom:0;">← <span data-i18n="back_to_forums">Retour aux forums</span></a>
-        <div class="front-lang-switch" role="group" aria-label="Language">
-            <button type="button" class="front-lang-btn" data-lang-choice="en" aria-pressed="false">EN</button>
-            <button type="button" class="front-lang-btn" data-lang-choice="fr" aria-pressed="false">FR</button>
-        </div>
     </div>
 
     <div class="forum-header-card">
         <h1 class="forum-title"><?= htmlspecialchars($forum['TitreForum'] ?? 'Discussion') ?></h1>
         <div class="forum-meta-row">
             <span>🎯 <?= htmlspecialchars($forum['nom_evenement'] ?? 'Événement') ?></span>
-            <span>👤 <?= htmlspecialchars($forum['nom_utilisateur'] ?? 'Admin') ?></span>
+            <div style="display:inline-flex;align-items:center;gap:.35rem;">
+                <?= cre8_render_avatar($forum['idUtilisateur'] ?? 0, (string)($forum['nom_utilisateur'] ?? 'Admin'), 'cre8-avatar-sm') ?>
+                <?= htmlspecialchars($forum['nom_utilisateur'] ?? 'Admin') ?>
+            </div>
             <span>📅 <?= date('d/m/Y', strtotime($forum['dateCreation'] ?? 'now')) ?></span>
             <span>👁️ <?= (int)($forum['vues'] ?? 0) ?> vues</span>
         </div>
@@ -388,7 +368,7 @@ if (!isset($forum) || !isset($messages)) {
             <div class="message-card" data-message-id="<?= $msg['idMessage'] ?>">
                 <div class="message-header">
                     <div class="message-author-wrap">
-                        <div class="author-avatar"><?= strtoupper(substr($msg['nom_utilisateur'] ?? 'U', 0, 1)) ?></div>
+                        <?= cre8_render_avatar($msg['idUtilisateur'] ?? 0, (string)($msg['nom_utilisateur'] ?? 'Utilisateur'), 'author-avatar') ?>
                         <div>
                             <div class="author-name"><?= htmlspecialchars($msg['nom_utilisateur'] ?? 'Utilisateur') ?></div>
                             <div class="message-date"><?= date('d/m/Y H:i', strtotime($msg['dateMessage'] ?? 'now')) ?></div>
@@ -479,7 +459,6 @@ if (!isset($forum) || !isset($messages)) {
 
     function applyDiscTranslation(lang) {
         const safe = (lang === 'en') ? 'en' : 'fr';
-        try { localStorage.setItem('cre8_lang', safe); } catch(e) {}
         const t = discTranslations[safe];
 
         document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -490,11 +469,16 @@ if (!isset($forum) || !isset($messages)) {
             const key = el.getAttribute('data-i18n-placeholder');
             if (t[key] !== undefined) el.placeholder = t[key];
         });
-        document.querySelectorAll('[data-lang-choice]').forEach(btn => {
-            const active = btn.getAttribute('data-lang-choice') === safe;
-            btn.classList.toggle('is-active', active);
-            btn.setAttribute('aria-pressed', active ? 'true' : 'false');
-        });
+    }
+
+    function readDiscussionLang() {
+        try {
+            const sharedLang = localStorage.getItem('cre8_front_lang');
+            if (sharedLang === 'en' || sharedLang === 'fr') return sharedLang;
+            const legacyLang = localStorage.getItem('cre8_lang');
+            if (legacyLang === 'en' || legacyLang === 'fr') return legacyLang;
+        } catch(e) {}
+        return 'en';
     }
 
     // ── Profanity filter ─────────────────────────────────────────────────────
@@ -627,15 +611,7 @@ if (!isset($forum) || !isset($messages)) {
 
     // ── Init ──────────────────────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', function() {
-        let savedLang = 'fr';
-        try { savedLang = localStorage.getItem('cre8_lang') || 'fr'; } catch(e) {}
-        applyDiscTranslation(savedLang);
-
-        document.querySelectorAll('[data-lang-choice]').forEach(btn => {
-            btn.addEventListener('click', function() {
-                applyDiscTranslation(this.getAttribute('data-lang-choice'));
-            });
-        });
+        applyDiscTranslation(readDiscussionLang());
     });
 </script>
 </body>

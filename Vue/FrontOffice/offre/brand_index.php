@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../layout/session_bridge.php';
 $currentUser = cre8_front_require_user('marque');
 $frontActive = 'collaborations';
+require_once __DIR__ . '/../layout/avatar_helper.php';
 
 require_once __DIR__ . '/../../../Controleur/offreC.php';
 require_once __DIR__ . '/../../../Controleur/condidatureC.php';
@@ -9,28 +10,6 @@ require_once __DIR__ . '/../../../Controleur/condidatureC.php';
 $brandId = (int) $currentUser['id'];
 $controller = new OffreC();
 $candidatureController = new CondidatureC();
-$notificationController = $candidatureController;
-$notificationUserId = (int) $brandId;
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['notificationAction'])) {
-    $notificationAction = (string) $_POST['notificationAction'];
-    if ($notificationAction === 'mark_one') {
-        $notificationController->markNotificationActionAsRead((int) ($_POST['idNotificationAction'] ?? 0), $notificationUserId);
-    } elseif ($notificationAction === 'mark_all') {
-        $notificationController->markAllNotificationActionsAsRead($notificationUserId);
-    }
-
-    $redirect = basename((string) ($_SERVER['SCRIPT_NAME'] ?? 'brand_index.php'));
-    if (!empty($_SERVER['QUERY_STRING'])) {
-        $redirect .= '?' . $_SERVER['QUERY_STRING'];
-    }
-    header('Location: ' . $redirect);
-    exit;
-}
-
-if ($notificationUserId > 0) {
-    $notificationController->generateBrandDeadlineSoonNotifications($notificationUserId);
-}
 
 $offres = [];
 $error = null;
@@ -424,9 +403,10 @@ if (!empty($averageBudgetCards)) {
     <link rel="stylesheet" href="../css/frontoffice.css">
     <link rel="stylesheet" href="offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre.css')); ?>">
     <link rel="stylesheet" href="../layout/front-header.css">
-<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
-<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
-<link rel="apple-touch-icon" href="../../public/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
 </head>
 <body>
     <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
@@ -440,7 +420,6 @@ if (!empty($averageBudgetCards)) {
                         <p class="lead text-muted">Track every invitation you sent to creators, monitor response signals, and keep the next collaboration moving.</p>
                     </div>
                     <div class="compact-actions">
-                        <?php require __DIR__ . '/../condidature/notification_widget.php'; ?>
                         <a class="btn btn-primary btn-lg" href="brand_create.php">Create a new offer</a>
                         <a class="btn btn-outline-secondary btn-lg" href="../condidature/brand_index.php">Open response workspace</a>
                     </div>
@@ -673,8 +652,13 @@ if (!empty($averageBudgetCards)) {
                                             <div class="offer-detail-list">
                                                 <div class="offer-detail-item">
                                                     <strong>Target creator</strong>
-                                                    <span><?php echo htmlspecialchars($creator['nom'] ?? 'No creator selected yet'); ?></span>
-                                                    <p><?php echo htmlspecialchars($creator['email'] ?? ''); ?></p>
+                                                    <div style="display:flex;align-items:center;gap:.65rem;">
+                                                        <?php echo cre8_render_avatar($creator['id'] ?? $offre->getIdCreateurCible(), (string) ($creator['nom'] ?? 'Creator'), 'cre8-avatar-md'); ?>
+                                                        <div>
+                                                            <span><?php echo htmlspecialchars($creator['nom'] ?? 'No creator selected yet'); ?></span>
+                                                            <p><?php echo htmlspecialchars($creator['email'] ?? ''); ?></p>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                                 <div class="offer-detail-item">
                                                     <strong>Objective</strong>

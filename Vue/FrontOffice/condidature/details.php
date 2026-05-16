@@ -3,6 +3,7 @@ require_once __DIR__ . '/../layout/session_bridge.php';
 $currentUser = cre8_front_require_user('createur');
 $frontActive = 'collaborations';
 
+require_once __DIR__ . '/../layout/avatar_helper.php';
 require_once __DIR__ . '/../../../Controleur/condidatureC.php';
 
 $controller = new CondidatureC();
@@ -614,9 +615,10 @@ if (!empty($errors) && !$lockedForCreator) {
     <link rel="stylesheet" href="../offre/offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../offre/offre.css')); ?>">
     <link rel="stylesheet" href="condidature.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/condidature.css')); ?>">
     <link rel="stylesheet" href="../layout/front-header.css">
-<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
-<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
-<link rel="apple-touch-icon" href="../../public/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
 </head>
 <body>
     <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
@@ -688,8 +690,13 @@ if (!empty($errors) && !$lockedForCreator) {
                             <div class="offer-detail-list mt-4">
                                 <div class="offer-detail-item">
                                     <strong>Brand</strong>
-                                    <span><?php echo htmlspecialchars($brand['nom'] ?? 'Unknown brand'); ?></span>
-                                    <p><?php echo htmlspecialchars($brand['email'] ?? ''); ?></p>
+                                    <div style="display:flex;align-items:center;gap:.65rem;">
+                                        <?php echo cre8_render_avatar($brand['id'] ?? 0, (string) ($brand['nom'] ?? 'Brand'), 'cre8-avatar-md'); ?>
+                                        <div>
+                                            <span><?php echo htmlspecialchars($brand['nom'] ?? 'Unknown brand'); ?></span>
+                                            <p><?php echo htmlspecialchars($brand['email'] ?? ''); ?></p>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="offer-detail-item">
                                     <strong><?php echo $isOfferFlow ? 'Offer objective' : 'Campaign brief'; ?></strong>
@@ -825,16 +832,25 @@ if (!empty($errors) && !$lockedForCreator) {
                             <?php if (!empty($negotiation['history'])): ?>
                                 <div class="negotiation-thread mt-4">
                                     <?php foreach ($negotiation['history'] as $entry): ?>
+                                        <?php
+                                        $entryIsBrand = ($entry['auteur'] ?? '') === 'marque';
+                                        $entryAvatarUser = $entryIsBrand
+                                            ? ($brand ?? [])
+                                            : ($context['creator'] ?? ['id' => $creatorId, 'nom' => $sessionUser['nom'] ?? 'Creator']);
+                                        ?>
                                         <article class="negotiation-entry negotiation-entry-<?php echo htmlspecialchars($entry['auteur']); ?>">
                                             <div class="negotiation-entry-top">
-                                                <div class="negotiation-author-block">
-                                                    <span class="negotiation-role negotiation-role-<?php echo htmlspecialchars($entry['auteur']); ?>">
-                                                        <?php echo htmlspecialchars($entry['authorRoleLabel']); ?>
-                                                    </span>
-                                                    <strong><?php echo htmlspecialchars($entry['authorName']); ?></strong>
-                                                    <?php if (!empty($entry['authorEmail'])): ?>
-                                                        <span><?php echo htmlspecialchars($entry['authorEmail']); ?></span>
-                                                    <?php endif; ?>
+                                                <div class="negotiation-author-block" style="display:flex;align-items:center;gap:.65rem;">
+                                                    <?php echo cre8_render_avatar($entryAvatarUser['id'] ?? 0, (string) ($entry['authorName'] ?? ''), 'cre8-avatar-md'); ?>
+                                                    <div>
+                                                        <span class="negotiation-role negotiation-role-<?php echo htmlspecialchars($entry['auteur']); ?>">
+                                                            <?php echo htmlspecialchars($entry['authorRoleLabel']); ?>
+                                                        </span>
+                                                        <strong><?php echo htmlspecialchars($entry['authorName']); ?></strong>
+                                                        <?php if (!empty($entry['authorEmail'])): ?>
+                                                            <span><?php echo htmlspecialchars($entry['authorEmail']); ?></span>
+                                                        <?php endif; ?>
+                                                    </div>
                                                 </div>
                                                 <span class="offer-chip"><?php echo htmlspecialchars(formatDateTimeLabel($entry['dateMessage'] ?? null)); ?></span>
                                             </div>

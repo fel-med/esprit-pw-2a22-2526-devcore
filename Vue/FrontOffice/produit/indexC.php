@@ -3,6 +3,7 @@ require_once __DIR__ . '/../layout/session_bridge.php';
 cre8_front_start_session();
 
 require_once __DIR__ . '/../../../Controleur/produitC.php';
+require_once __DIR__ . '/../layout/avatar_helper.php';
 
 $frontActive = 'campaigns';
 
@@ -154,37 +155,6 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
             gap: 12px;
             flex-shrink: 0;
         }
-        .product-front .front-lang-switch {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            padding: 0.25rem;
-            border-radius: 999px;
-            border: 1px solid rgba(139, 92, 246, 0.45);
-            background: rgba(139, 92, 246, 0.1);
-            flex-shrink: 0;
-        }
-        .product-front .front-lang-btn {
-            border: 0;
-            border-radius: 999px;
-            background: transparent;
-            color: var(--text-sub);
-            font: inherit;
-            font-size: 0.76rem;
-            font-weight: 800;
-            padding: 0.4rem 0.7rem;
-            cursor: pointer;
-            transition: background 0.15s, color 0.15s;
-        }
-        .product-front .front-lang-btn:hover { color: var(--primary); }
-        .product-front .front-lang-btn.is-active {
-            background: #8b5cf6;
-            color: #fff;
-        }
-        html[data-theme="dark"] .product-front .front-lang-btn:not(.is-active),
-        body.dark-mode .product-front .front-lang-btn:not(.is-active) {
-            color: var(--text-sub);
-        }
         .hero-left h1 { font-family: 'Fraunces', serif; font-size: 32px; font-weight: 900; color: var(--text-main); letter-spacing: -0.8px; line-height: 1.1; }
         .hero-left p { font-size: 14px; color: var(--text-sub); margin-top: 7px; max-width: 480px; line-height: 1.6; }
         .hero-stats { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 18px; }
@@ -291,6 +261,8 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
 
         .pcard-cat { font-size: 11px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
         .pcard-cat .cat-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); opacity: 0.5; }
+        .product-brand-row { display: inline-flex; align-items: center; gap: 7px; color: var(--text-sub); font-size: 12px; font-weight: 700; margin-bottom: 8px; max-width: 100%; }
+        .product-brand-row span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .pcard-name { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 800; color: var(--text-main); line-height: 1.25; margin-bottom: 6px; letter-spacing: -0.2px; }
         .pcard-desc { font-size: 13px; color: var(--text-sub); line-height: 1.6; margin-bottom: 10px; flex: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
@@ -336,7 +308,7 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
         .detail-carac { font-size: 13px; color: var(--primary); background: var(--primary-light); border-radius: 8px; padding: 10px 14px; }
         .detail-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
         .detail-tag { font-size: 12px; font-weight: 600; color: var(--primary); background: var(--primary-light); border-radius: 6px; padding: 5px 11px; }
-        .detail-marque { display: inline-flex; align-items: center; gap: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600; color: var(--text-sub); margin-bottom: 14px; }
+        .detail-marque { display: inline-flex; align-items: center; gap: 7px; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px 4px 5px; font-size: 12px; font-weight: 600; color: var(--text-sub); margin-bottom: 14px; }
         .detail-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border); }
         .btn-primary-detail { display: inline-flex; align-items: center; gap: 7px; background: var(--primary); color: #fff; border: none; border-radius: var(--radius-sm); padding: 11px 22px; font-size: 14px; font-weight: 700; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background .2s; box-shadow: 0 3px 10px var(--primary-glow); }
         .btn-primary-detail:hover { background: var(--primary-hover); }
@@ -356,9 +328,10 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
         @media (max-width: 900px) { .nav-links { display: none; } .catalog-hero { padding: 28px 24px; } .detail-box { flex-direction: column; } .detail-img { width: 100%; height: 200px; } }
         @media (max-width: 600px) { .products-grid { grid-template-columns: 1fr; } .hero-left h1 { font-size: 24px; } .nav-controls { gap: 5px; } }
     </style>
-<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
-<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
-<link rel="apple-touch-icon" href="../../public/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
 </head>
 <body>
 
@@ -392,10 +365,6 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
             </div>
         </div>
         <div class="catalog-hero-aside">
-            <div class="front-lang-switch" role="group" aria-label="Language">
-                <button type="button" class="front-lang-btn" data-lang-choice="en" aria-pressed="false">EN</button>
-                <button type="button" class="front-lang-btn" data-lang-choice="fr" aria-pressed="false">FR</button>
-            </div>
             <div class="hero-right">🛍️</div>
         </div>
     </div>
@@ -496,6 +465,7 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
             $dispo       = $p['dateDisponibilite'] ?? null;
             $dispoFuture = $dispo && strtotime($dispo) > time();
             $tags        = array_filter(array_map('trim', explode(',', $p['caracteristiques'] ?? '')));
+            $brandName   = trim((string) ($p['nomMarque'] ?? ''));
         ?>
         <div class="product-card <?= $isPinned ? 'is-pinned' : '' ?>"
              data-id="<?= $p['idProduit'] ?>"
@@ -543,6 +513,12 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
                     <div class="pcard-cat">
                         <span class="cat-dot"></span>
                         <?= htmlspecialchars($p['categorie']) ?>
+                    </div>
+                <?php endif; ?>
+                <?php if ($brandName !== ''): ?>
+                    <div class="product-brand-row">
+                        <?= cre8_render_avatar((int) ($p['idMarque'] ?? 0), $brandName, 'cre8-avatar-sm') ?>
+                        <span><?= htmlspecialchars($brandName) ?></span>
                     </div>
                 <?php endif; ?>
 
@@ -641,6 +617,12 @@ const BASE_URL = <?= json_encode($baseUrl, JSON_UNESCAPED_SLASHES) ?>;
 // ── PRODUCT DATA ───────────────────────────────────────────────────
 const produitsMap = {};
 <?php foreach ($produits as $p): ?>
+<?php
+    $brandName = trim((string) ($p['nomMarque'] ?? ''));
+    $brandHtml = $brandName !== ''
+        ? cre8_render_avatar((int) ($p['idMarque'] ?? 0), $brandName, 'cre8-avatar-sm') . '<span>' . htmlspecialchars($brandName, ENT_QUOTES, 'UTF-8') . '</span>'
+        : '';
+?>
 produitsMap[<?= $p['idProduit'] ?>] = {
     id:     <?= $p['idProduit'] ?>,
     nom:    <?= json_encode($p['nomProduit']) ?>,
@@ -650,7 +632,8 @@ produitsMap[<?= $p['idProduit'] ?>] = {
     img:    <?= json_encode(!empty($p['image']) ? cre8_product_image_url($p['image']) : null) ?>,
     cat:    <?= json_encode($p['categorie'] ?? '') ?>,
     dispo:  <?= json_encode($p['dateDisponibilite'] ?? '') ?>,
-    marque: <?= json_encode($p['nomMarque'] ?? ($p['idMarque'] ? 'Brand ID #' . $p['idMarque'] : null)) ?>,
+    marque: <?= json_encode($brandName !== '' ? $brandName : (($p['idMarque'] ?? null) ? 'Brand ID #' . $p['idMarque'] : null)) ?>,
+    marqueHtml: <?= json_encode($brandHtml) ?>,
 };
 <?php endforeach; ?>
 
@@ -756,7 +739,13 @@ function openDetail(e, id) {
     }
 
     const marqueEl = document.getElementById('detailMarque');
-    if (p.marque) { marqueEl.innerHTML = '🏢 ' + p.marque; marqueEl.style.display = 'inline-flex'; }
+    if (p.marqueHtml) {
+        marqueEl.innerHTML = p.marqueHtml;
+        marqueEl.style.display = 'inline-flex';
+    } else if (p.marque) {
+        marqueEl.textContent = p.marque;
+        marqueEl.style.display = 'inline-flex';
+    }
     else { marqueEl.style.display = 'none'; }
 
     document.getElementById('detailDesc').textContent = p.desc || (T.noDescription || 'No description available.');
@@ -1041,29 +1030,11 @@ const translations = {
     }
 };
 
-function cre8FrontReadLang() {
-    try {
-        var k = localStorage.getItem('cre8_front_lang');
-        if (k === 'fr' || k === 'en') return k;
-        var legacy = localStorage.getItem('cre8_lang_creator_produit')
-            || localStorage.getItem('cre8_lang_produit')
-            || localStorage.getItem('cre8_lang')
-            || localStorage.getItem('cc_lang');
-        if (legacy === 'fr' || legacy === 'en') return legacy;
-    } catch (e) {}
-    return 'en';
-}
-function cre8FrontWriteLang(lang) {
-    var safe = lang === 'fr' ? 'fr' : 'en';
-    try { localStorage.setItem('cre8_front_lang', safe); } catch (e) {}
-}
-
-let currentLang = cre8FrontReadLang();
+let currentLang = 'en';
 
 function setLang(lang) {
     const safe = lang === 'fr' ? 'fr' : 'en';
     currentLang = safe;
-    cre8FrontWriteLang(safe);
     applyTranslations();
     applyPagination();
 }
@@ -1084,12 +1055,6 @@ function applyTranslations() {
     document.querySelectorAll('[data-i18n-title]').forEach(el => {
         const key = el.getAttribute('data-i18n-title');
         if (T[key] !== undefined) el.setAttribute('title', T[key]);
-    });
-
-    document.querySelectorAll('[data-lang-choice]').forEach(btn => {
-        const on = btn.getAttribute('data-lang-choice') === currentLang;
-        btn.classList.toggle('is-active', on);
-        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
 
     const rangeEl = document.querySelector('[data-i18n-template="catalogRange"]');
@@ -1143,9 +1108,12 @@ function initTheme() {
 // ═══════════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
+    currentLang = typeof window.cre8RegisterTranslations === 'function'
+        ? window.cre8RegisterTranslations(translations)
+        : (typeof window.cre8FrontReadLang === 'function' ? window.cre8FrontReadLang() : 'en');
     applyTranslations();
-    document.querySelectorAll('[data-lang-choice]').forEach(btn => {
-        btn.addEventListener('click', () => setLang(btn.getAttribute('data-lang-choice')));
+    window.addEventListener('cre8:languagechange', function (event) {
+        setLang(event.detail && event.detail.lang ? event.detail.lang : currentLang);
     });
 
 });

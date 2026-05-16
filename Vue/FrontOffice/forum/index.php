@@ -3,6 +3,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+require_once __DIR__ . '/../layout/avatar_helper.php';
+
 $scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME']);
 // Strip from /Controleur/ or /Vue/ to get the project root — same logic as events page
 if (($pos = strpos($scriptPath, '/Vue/')) !== false) {
@@ -47,7 +49,10 @@ $totalMessages = array_sum(array_column($forums, 'nb_messages'));
     <link rel="stylesheet" href="<?= $BASE ?>/Vue/FrontOffice/css/frontoffice.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="<?= $BASE ?>/Vue/FrontOffice/layout/front-header.css">
-    <link rel="icon" type="image/png" sizes="32x32" href="<?= $BASE ?>/Vue/public/images/logo.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="<?= $BASE ?>/Vue/public/images/favicon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= $BASE ?>/Vue/public/images/favicon-32.png">
+    <link rel="shortcut icon" type="image/png" href="<?= $BASE ?>/Vue/public/images/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?= $BASE ?>/Vue/public/images/apple-touch-icon.png">
     <style>
         /* Map to front-header.css tokens (avoids undefined --text-main / --text-dim) */
         :root {
@@ -271,31 +276,6 @@ $totalMessages = array_sum(array_column($forums, 'nb_messages'));
         .empty-state p { color: var(--text-sub); }
 
         /* ── LANGUAGE TOGGLE ── */
-        .front-lang-switch {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            padding: 0.25rem;
-            border-radius: 999px;
-            border: 1px solid rgba(139,92,246,0.45);
-            background: rgba(139,92,246,0.08);
-            flex-shrink: 0;
-        }
-        .front-lang-btn {
-            border: 0;
-            border-radius: 999px;
-            background: transparent;
-            color: var(--text-sub);
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.76rem;
-            font-weight: 800;
-            padding: 0.4rem 0.9rem;
-            cursor: pointer;
-            transition: background 0.15s, color 0.15s;
-        }
-        .front-lang-btn:hover { color: var(--primary); }
-        .front-lang-btn.is-active { background: #8b5cf6; color: #fff; }
-
         /* ── SECTION HEADER flex row ── */
         .section-header {
             display: flex;
@@ -350,10 +330,6 @@ $totalMessages = array_sum(array_column($forums, 'nb_messages'));
                 <h2 data-i18n="all_forums">Tous les forums</h2>
                 <p data-i18n="forums_subtitle">Participez aux discussions des événements qui vous intéressent</p>
             </div>
-            <div class="front-lang-switch" role="group" aria-label="Language">
-                <button type="button" class="front-lang-btn" data-lang-choice="en" aria-pressed="false">EN</button>
-                <button type="button" class="front-lang-btn" data-lang-choice="fr" aria-pressed="false">FR</button>
-            </div>
         </div>
 
         <!-- Layout: sidebar + grid -->
@@ -406,7 +382,10 @@ $totalMessages = array_sum(array_column($forums, 'nb_messages'));
                                     <div class="forum-event">🎯 <?= htmlspecialchars($forum['nom_evenement'] ?? 'Événement') ?></div>
                                     <div class="forum-sujet">📌 <?= htmlspecialchars(mb_substr($forum['sujet'] ?? '', 0, 100)) ?>...</div>
                                     <div class="forum-meta">
-                                        <span>👤 <?= htmlspecialchars($forum['nom_utilisateur'] ?? 'Admin') ?></span>
+                                        <div style="display:inline-flex;align-items:center;gap:.35rem;">
+                                            <?= cre8_render_avatar($forum['idUtilisateur'] ?? 0, (string)($forum['nom_utilisateur'] ?? 'Admin'), 'cre8-avatar-sm') ?>
+                                            <?= htmlspecialchars($forum['nom_utilisateur'] ?? 'Admin') ?>
+                                        </div>
                                         <span>📅 <?= date('d/m/Y', strtotime($forum['dateCreation'] ?? 'now')) ?></span>
                                         <span>💬 <?= (int)($forum['nb_messages'] ?? 0) ?> messages</span>
                                         <span>👁️ <?= (int)($forum['vues'] ?? 0) ?> vues</span>
@@ -454,7 +433,6 @@ $totalMessages = array_sum(array_column($forums, 'nb_messages'));
 
         function applyForumTranslation(lang) {
             const safe = (lang === 'en') ? 'en' : 'fr';
-            try { localStorage.setItem('cre8_lang', safe); } catch(e) {}
             const t = forumTranslations[safe];
 
             document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -464,11 +442,6 @@ $totalMessages = array_sum(array_column($forums, 'nb_messages'));
             document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
                 const key = el.getAttribute('data-i18n-placeholder');
                 if (t[key] !== undefined) el.placeholder = t[key];
-            });
-            document.querySelectorAll('[data-lang-choice]').forEach(btn => {
-                const active = btn.getAttribute('data-lang-choice') === safe;
-                btn.classList.toggle('is-active', active);
-                btn.setAttribute('aria-pressed', active ? 'true' : 'false');
             });
         }
 
@@ -488,14 +461,12 @@ $totalMessages = array_sum(array_column($forums, 'nb_messages'));
 
         // ── Init ──────────────────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', function() {
-            let savedLang = 'fr';
-            try { savedLang = localStorage.getItem('cre8_lang') || 'fr'; } catch(e) {}
+            const savedLang = typeof window.cre8RegisterTranslations === 'function'
+                ? window.cre8RegisterTranslations(forumTranslations)
+                : (typeof window.cre8FrontReadLang === 'function' ? window.cre8FrontReadLang() : 'en');
             applyForumTranslation(savedLang);
-
-            document.querySelectorAll('[data-lang-choice]').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    applyForumTranslation(this.getAttribute('data-lang-choice'));
-                });
+            window.addEventListener('cre8:languagechange', function(event) {
+                applyForumTranslation(event.detail && event.detail.lang ? event.detail.lang : savedLang);
             });
         });
     </script>

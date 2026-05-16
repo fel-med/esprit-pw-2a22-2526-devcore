@@ -39,9 +39,10 @@ session_start();
         .stat-box { display: inline-block; background: linear-gradient(135deg, var(--primary), #667eea); color: white; padding: 20px 30px; border-radius: 8px; margin: 10px; font-weight: bold; font-size: 1.1rem; }
         .badge-feature { display: inline-block; background: var(--primary); color: white; padding: 5px 10px; border-radius: 20px; margin: 5px; font-size: 0.85rem; }
     </style>
-<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
-<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
-<link rel="apple-touch-icon" href="../../public/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
 </head>
 <body>
     <div class="container">

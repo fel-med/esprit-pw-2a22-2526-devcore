@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../layout/session_bridge.php';
 $currentUser = cre8_front_require_user('marque');
 $frontActive = 'collaborations';
+require_once __DIR__ . '/../layout/avatar_helper.php';
 
 require_once __DIR__ . '/../../../Controleur/offreC.php';
 
@@ -99,9 +100,10 @@ $isEditLocked = $response && isAcceptedResponseLockStatus($response['statutCandi
     <link rel="stylesheet" href="../css/frontoffice.css">
     <link rel="stylesheet" href="offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre.css')); ?>">
     <link rel="stylesheet" href="../layout/front-header.css">
-<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
-<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
-<link rel="apple-touch-icon" href="../../public/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
 </head>
 <body>
     <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
@@ -140,8 +142,13 @@ $isEditLocked = $response && isAcceptedResponseLockStatus($response['statutCandi
                             <div class="offer-detail-list mt-4">
                                 <div class="offer-detail-item">
                                     <strong>Target creator</strong>
-                                    <span><?php echo htmlspecialchars($creator['nom'] ?? 'No creator selected yet'); ?></span>
-                                    <p><?php echo htmlspecialchars($creator['email'] ?? ''); ?></p>
+                                    <div style="display:flex;align-items:center;gap:.65rem;">
+                                        <?php echo cre8_render_avatar($creator['id'] ?? ($offre ? $offre->getIdCreateurCible() : 0), (string) ($creator['nom'] ?? 'Creator'), 'cre8-avatar-md'); ?>
+                                        <div>
+                                            <span><?php echo htmlspecialchars($creator['nom'] ?? 'No creator selected yet'); ?></span>
+                                            <p><?php echo htmlspecialchars($creator['email'] ?? ''); ?></p>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="offer-detail-item">
                                     <strong>Objective</strong>

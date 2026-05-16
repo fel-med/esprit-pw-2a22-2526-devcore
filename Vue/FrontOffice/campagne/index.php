@@ -248,39 +248,6 @@ nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 48px
     flex-wrap: wrap;
     justify-content: flex-end;
 }
-.campaign-front .front-lang-switch {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.25rem;
-    border-radius: 999px;
-    border: 1px solid rgba(139, 92, 246, 0.45);
-    background: rgba(139, 92, 246, 0.08);
-    flex-shrink: 0;
-}
-.campaign-front .front-lang-btn {
-    border: 0;
-    border-radius: 999px;
-    background: transparent;
-    color: var(--text-sub);
-    font: inherit;
-    font-size: 0.76rem;
-    font-weight: 800;
-    padding: 0.4rem 0.7rem;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-}
-.campaign-front .front-lang-btn:hover { color: var(--primary); }
-.campaign-front .front-lang-btn.is-active {
-    background: #8b5cf6;
-    color: #fff;
-}
-html[data-theme="dark"] .campaign-front .front-lang-btn:not(.is-active),
-body.dark-mode .campaign-front .front-lang-btn:not(.is-active) {
-    color: var(--text-sub);
-}
-/* ===== END LANGUAGE SWITCHER ===== */
-
 /* PAGE */
 .page-wrapper{max-width:1160px;margin:0 auto;padding:40px 24px 80px;}
 .page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:32px;gap:20px;flex-wrap:wrap;}
@@ -504,10 +471,6 @@ textarea.form-input{resize:vertical;min-height:90px;}
             <p data-i18n="page_subtitle">Créez, gérez et analysez vos campagnes de collaboration.</p>
         </div>
         <div class="page-header-right">
-            <div class="front-lang-switch" role="group" aria-label="Language">
-                <button type="button" class="front-lang-btn" data-lang-choice="en" aria-pressed="false">EN</button>
-                <button type="button" class="front-lang-btn" data-lang-choice="fr" aria-pressed="false">FR</button>
-            </div>
             <div class="page-header-actions">
             <a href="#formAnchor" class="btn-primary">
                 <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
@@ -782,22 +745,6 @@ if (flash) setTimeout(() => { flash.style.opacity='0'; flash.style.transition='o
 // Do not use cre8_theme_fo or applyDark here — they conflicted with the header and broke dark mode.
 
 // ===== ADDED FEATURE: TRANSLATION SYSTEM =====
-function cre8FrontReadLang() {
-    try {
-        var k = localStorage.getItem('cre8_front_lang');
-        if (k === 'fr' || k === 'en') return k;
-        var legacy = localStorage.getItem('cre8_lang')
-            || localStorage.getItem('cre8_lang_produit')
-            || localStorage.getItem('cre8_lang_creator_produit')
-            || localStorage.getItem('cc_lang');
-        if (legacy === 'fr' || legacy === 'en') return legacy;
-    } catch (e) {}
-    return 'en';
-}
-function cre8FrontWriteLang(lang) {
-    var safe = lang === 'fr' ? 'fr' : 'en';
-    try { localStorage.setItem('cre8_front_lang', safe); } catch (e) {}
-}
 
 const translations = {
     fr: {
@@ -944,12 +891,11 @@ const translations = {
     }
 };
 
-let currentLang = cre8FrontReadLang();
+let currentLang = 'en';
 
 function applyTranslation(lang) {
     const safe = lang === 'fr' ? 'fr' : 'en';
     currentLang = safe;
-    cre8FrontWriteLang(safe);
     const dict = translations[safe] || translations['fr'];
 
     document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -967,24 +913,16 @@ function applyTranslation(lang) {
         if (dict[key]) el.setAttribute('title', dict[key]);
     });
 
-    document.querySelectorAll('[data-lang-choice]').forEach(btn => {
-        const on = btn.getAttribute('data-lang-choice') === safe;
-        btn.classList.toggle('is-active', on);
-        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    });
-
     renderPaginationInfo();
 }
 
-function setLang(lang) { applyTranslation(lang); }
-
-applyTranslation(currentLang);
-
 document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('[data-lang-choice]').forEach(btn => {
-        btn.addEventListener('click', function () {
-            applyTranslation(btn.getAttribute('data-lang-choice'));
-        });
+    currentLang = typeof window.cre8RegisterTranslations === 'function'
+        ? window.cre8RegisterTranslations(translations)
+        : (typeof window.cre8FrontReadLang === 'function' ? window.cre8FrontReadLang() : 'en');
+    applyTranslation(currentLang);
+    window.addEventListener('cre8:languagechange', function (event) {
+        applyTranslation(event.detail && event.detail.lang ? event.detail.lang : currentLang);
     });
 });
 // ===== END TRANSLATION SYSTEM =====

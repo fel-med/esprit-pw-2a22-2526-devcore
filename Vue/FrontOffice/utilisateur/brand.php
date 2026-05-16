@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/../../../Controleur/profileC.php';
 
 if (!isset($_SESSION['id'])) {
 
@@ -14,6 +15,18 @@ if (!isset($_SESSION['id'])) {
 */
 
 $userName = $_SESSION['nom'] ?? 'Brand User';
+$userInitial = function_exists('mb_substr')
+    ? mb_substr($userName, 0, 1, 'UTF-8')
+    : substr($userName, 0, 1);
+$userInitial = strtoupper((string) $userInitial) ?: 'B';
+$profileImageUrl = null;
+
+try {
+    $profileC = new ProfileC();
+    $profileImageUrl = $profileC->getProfileImageUrl((int) $_SESSION['id'], '../../public/uploads/profile');
+} catch (Throwable $e) {
+    $profileImageUrl = null;
+}
 
 $brandPagePath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
 $brandFrontMarker = '/Vue/FrontOffice/';
@@ -551,9 +564,10 @@ $projectBase = $brandFrontPos !== false ? substr($brandPagePath, 0, $brandFrontP
         }
 
     </style>
-<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
-<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
-<link rel="apple-touch-icon" href="../../public/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
 
 </head>
 
@@ -610,9 +624,13 @@ $projectBase = $brandFrontPos !== false ? substr($brandPagePath, 0, $brandFrontP
             👤 <?php echo htmlspecialchars($userName); ?>
         </div>
 
-        <div class="nav-avatar">
-            <?php echo strtoupper(substr($userName,0,1)); ?>
-        </div>
+        <?php if ($profileImageUrl): ?>
+            <img class="nav-avatar" src="<?php echo htmlspecialchars($profileImageUrl); ?>" alt="Profile photo" style="object-fit:cover;padding:0;">
+        <?php else: ?>
+            <div class="nav-avatar">
+                <?php echo htmlspecialchars($userInitial); ?>
+            </div>
+        <?php endif; ?>
 
     </div>
 

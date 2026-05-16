@@ -3,6 +3,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 require_once __DIR__ . '/../../../Controleur/session_helper.php';
+require_once __DIR__ . '/../../../Controleur/profileC.php';
 
 $backActive = $backActive ?? 'dashboard';
 
@@ -19,15 +20,36 @@ if ($cre8Pos !== false) {
     $backBoRootWeb = ($_ctrlPos !== false ? substr($cre8SelfPath, 0, $_ctrlPos) : '') . '/Vue/BackOffice';
 }
 $backBoUtilisateurWeb = $backBoRootWeb . '/utilisateur';
+$backProfileSettingsUrl = $backBoUtilisateurWeb . '/profile_settings.php';
 // Controller base — extract project root the same way as above
 $_ctrlPosForUrl = strpos($cre8SelfPath, '/Controleur/');
 $_projectRootForUrl = $_ctrlPosForUrl !== false
     ? substr($cre8SelfPath, 0, $_ctrlPosForUrl)
     : ($cre8Pos !== false ? substr($cre8SelfPath, 0, $cre8Pos) : '');
+$backProfileUploadWeb = $_projectRootForUrl . '/Vue/public/uploads/profile';
 $backBoControleurWeb = $_projectRootForUrl . '/Controleur';
 
 $backUserName = $_SESSION['nom'] ?? ($_SESSION['user']['nom'] ?? ($_SESSION['utilisateur']['nom'] ?? 'User'));
 $backUserName = trim((string) $backUserName) !== '' ? trim((string) $backUserName) : 'User';
+$backUserInitial = function_exists('mb_substr') ? mb_substr($backUserName, 0, 1, 'UTF-8') : substr($backUserName, 0, 1);
+$backUserInitial = strtoupper((string) $backUserInitial) ?: 'U';
+$backRole = cc_current_user_role();
+$backRoleLabel = match ($backRole) {
+    'hyper_admin' => 'Hyper Admin',
+    'super_admin' => 'Super Admin',
+    default => 'Admin',
+};
+$backAvatarUrl = null;
+$backUserId = cc_current_user_id();
+
+if ($backUserId !== null) {
+    try {
+        $profileC = new ProfileC();
+        $backAvatarUrl = $profileC->getProfileImageUrl($backUserId, $backProfileUploadWeb);
+    } catch (Throwable $e) {
+        $backAvatarUrl = null;
+    }
+}
 
 $backItems = [
     ['key' => 'dashboard',      'label' => 'Dashboard',      'url' => $backBoRootWeb . '/dashboard/index.php',      'icon' => 'mdi-speedometer',            'iconClass' => 'text-primary'],
@@ -69,18 +91,22 @@ if (isSuperAdminRole(cc_current_user_role())) {
       <div class="profile-desc">
         <div class="profile-pic">
           <div class="count-indicator">
-            <img class="img-xs rounded-circle" src="<?php echo htmlspecialchars($backBoUtilisateurWeb . '/assets/images/faces/face15.jpg'); ?>" alt="Admin avatar">
+            <?php if ($backAvatarUrl): ?>
+              <img class="img-xs rounded-circle" src="<?php echo htmlspecialchars($backAvatarUrl); ?>" alt="Profile photo" style="object-fit:cover;">
+            <?php else: ?>
+              <span class="img-xs rounded-circle d-inline-flex align-items-center justify-content-center text-white font-weight-bold" style="background:linear-gradient(135deg,#5b4fff,#8b5cf6);"><?php echo htmlspecialchars($backUserInitial); ?></span>
+            <?php endif; ?>
             <span class="count bg-success"></span>
           </div>
           <div class="profile-name">
             <h5 class="mb-0 font-weight-normal"><?php echo htmlspecialchars($backUserName); ?></h5>
-            <span>Admin</span>
+            <span><?php echo htmlspecialchars($backRoleLabel); ?></span>
           </div>
         </div>
 
         <a href="#" id="profile-dropdown" data-toggle="dropdown" aria-label="Profile menu"><i class="mdi mdi-dots-vertical"></i></a>
         <div class="dropdown-menu dropdown-menu-right sidebar-dropdown preview-list" aria-labelledby="profile-dropdown">
-          <a href="#" class="dropdown-item preview-item">
+          <a href="<?php echo htmlspecialchars($backProfileSettingsUrl); ?>" class="dropdown-item preview-item">
             <div class="preview-thumbnail"><div class="preview-icon bg-dark rounded-circle"><i class="mdi mdi-settings text-primary"></i></div></div>
             <div class="preview-item-content"><p class="preview-subject ellipsis mb-1 text-small">Account settings</p></div>
           </a>

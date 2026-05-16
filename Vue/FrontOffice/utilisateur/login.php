@@ -38,18 +38,6 @@ if (isset($_POST['reset_email'])) {
 
 .auth-topbar {
     border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-    padding-top: 0.35rem !important;
-    padding-bottom: 0.35rem !important;
-}
-
-.auth-topbar .navbar-brand {
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    line-height: 1;
-}
-
-.auth-topbar .container {
-    min-height: 0;
 }
 
 .auth-main {
@@ -59,6 +47,21 @@ if (isset($_POST['reset_email'])) {
 .auth-home-link {
     border-radius: 999px;
     font-weight: 700;
+}
+
+.auth-brand-logo {
+    width: 170px;
+    height: auto;
+    max-height: 52px;
+    object-fit: contain;
+    display: block;
+}
+
+@media (max-width: 575.98px) {
+    .auth-brand-logo {
+        width: 145px;
+        max-height: 46px;
+    }
 }
 
 .auth-card {
@@ -96,6 +99,38 @@ if (isset($_POST['reset_email'])) {
     box-shadow: 0 0 8px rgba(78, 84, 200, 0.3);
 }
 
+.face-login-panel {
+    padding: 0.85rem;
+    border: 1px solid rgba(78, 84, 200, 0.16);
+    border-radius: 16px;
+    background: rgba(78, 84, 200, 0.04);
+}
+
+.face-video-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto;
+    line-height: 0;
+}
+
+.face-video {
+    width: 100%;
+    display: block;
+    border-radius: 12px;
+    background: #111;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+}
+
+.face-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    border-radius: 12px;
+}
+
 @media (max-width: 575.98px) {
     .auth-main {
         padding: 1.25rem 0;
@@ -104,32 +139,15 @@ if (isset($_POST['reset_email'])) {
     .auth-form-panel {
         padding: 2rem !important;
     }
-} 
-
-            .public-nav-logo {
-                width: 240px;
-                height: auto;
-                max-height: 100px;
-                object-fit: contain;
-                display: block;
-            }
-
-            .auth-hero-logo {
-                max-width: 250px;
-                width: 60%;
-                height: auto;
-                object-fit: contain;
-                filter: drop-shadow(0 18px 32px rgba(0, 0, 0, 0.18));
-            }
-</style>
+} </style>
 <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
 <link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
 <link rel="apple-touch-icon" href="../../public/images/logo.png">
     </head>
     <body class="d-flex flex-column h-100 bg-light auth-shell">
-        <header class="auth-topbar bg-white">
-            <div class="container px-4 px-lg-5 d-flex align-items-center justify-content-between gap-3">
-                <a class="navbar-brand m-0 d-inline-flex align-items-center" href="index.php"><img src="../../public/images/logoweb.png" alt="Cre8Connect" class="public-nav-logo"></a>
+        <header class="auth-topbar bg-white py-2">
+            <div class="container-fluid px-3 px-lg-4 d-flex align-items-center justify-content-between gap-3">
+                <a class="navbar-brand m-0 d-inline-flex align-items-center" href="index.php"><img src="../../public/images/logoweb.png" alt="Cre8Connect" class="auth-brand-logo"></a>
                 <a class="btn btn-outline-dark btn-sm auth-home-link px-3" href="index.php">&larr; Home</a>
             </div>
         </header>
@@ -169,13 +187,23 @@ if (isset($_POST['reset_email'])) {
             Sign in
         </button>
 
-        <!-- 👁 camera -->
-        <div class="text-center mb-2">
-            <video id="video" width="250" autoplay style="display:none;" class="rounded-3 shadow"></video>
+        <!-- Face login panel -->
+        <div id="faceLoginPanel" class="face-login-panel mb-3" style="display:none;">
+            <div class="face-video-wrap">
+                <video id="video" autoplay muted playsinline class="face-video"></video>
+                <canvas id="faceOverlay" class="face-overlay"></canvas>
+            </div>
+            <div id="faceLoginStatus" class="small text-muted mt-2 text-center">
+                Camera is open. Click Capture / Retry when your face is clear.
+            </div>
+            <div class="d-flex gap-2 mt-3">
+                <button type="button" id="cancelFaceLogin" class="btn btn-outline-secondary flex-fill py-2">Cancel</button>
+                <button type="button" id="captureFaceLogin" class="btn btn-gradient flex-fill py-2">Capture / Retry</button>
+            </div>
         </div>
 
         <button type="button" class="btn btn-outline-primary w-100 py-2" id="scanLogin">
-            Scan face
+            Log in with Face
         </button>
 
     </form>
@@ -196,7 +224,7 @@ if (isset($_POST['reset_email'])) {
                     <!-- IMAGE (RIGHT) -->
                     <div class="col-lg-6 d-none d-lg-flex align-items-center justify-content-center bg-gradient-primary-to-secondary position-relative">
 
-                        <img src="assets/logo.png" alt="Cre8Connect logo" class="img-fluid animate-img auth-hero-logo">
+                        <img src="assets/logo.png" class="img-fluid animate-img" style="max-width: 250px;">
 
                     </div>
 
@@ -260,69 +288,262 @@ if (isset($_POST['reset_email'])) {
         <!-- Bootstrap core JS-->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
         <script defer src="https://cdn.jsdelivr.net/npm/face-api.js/dist/face-api.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/face-api.js/dist/face-api.min.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
-
     const video = document.getElementById("video");
-    const btn = document.getElementById("scanLogin");
+    const scanBtn = document.getElementById("scanLogin");
+    const faceLoginPanel = document.getElementById("faceLoginPanel");
+    const faceLoginStatus = document.getElementById("faceLoginStatus");
+    const cancelFaceLogin = document.getElementById("cancelFaceLogin");
+    const captureFaceLogin = document.getElementById("captureFaceLogin");
+    const overlay = document.getElementById("faceOverlay");
+    const overlayCtx = overlay ? overlay.getContext("2d") : null;
 
-    let stream = null;
     let modelsLoaded = false;
+    let cameraOpen = false;
+    let stream = null;
+    let scanInProgress = false;
+    let liveLoopId = null;
+    let liveDetecting = false;
 
-    btn.onclick = async () => {
+    scanBtn.disabled = true;
 
-        // 🎥 activate camera only on click
-        if (!stream) {
-            stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            video.srcObject = stream;
-            video.style.display = "block";
+    function updateStatus(message, type = "muted") {
+        faceLoginStatus.textContent = message;
+        faceLoginStatus.className = "small mt-2 text-center text-" + type;
+    }
+
+    function clearOverlay() {
+        if (overlayCtx) {
+            overlayCtx.clearRect(0, 0, overlay.width || 0, overlay.height || 0);
+        }
+    }
+
+    function resizeOverlayToVideo() {
+        if (!overlay || !video) {
+            return false;
         }
 
-        // 📦 load models only once
-        if (!modelsLoaded) {
-            const currentPath = window.location.pathname.replace(/\/[^\/]*$/, '');
-            const modelBase = window.location.origin + currentPath + '/../../../models';
-            await faceapi.nets.faceRecognitionNet.loadFromUri(modelBase);
-            await faceapi.nets.faceLandmark68Net.loadFromUri(modelBase);
-            await faceapi.nets.ssdMobilenetv1.loadFromUri(modelBase);
-            modelsLoaded = true;
+        const width = video.clientWidth || video.videoWidth || 0;
+        const height = video.clientHeight || video.videoHeight || 0;
+
+        if (!width || !height) {
+            return false;
         }
 
-        const detection = await faceapi
-            .detectSingleFace(video)
-            .withFaceLandmarks()
-            .withFaceDescriptor();
+        if (overlay.width !== width || overlay.height !== height) {
+            overlay.width = width;
+            overlay.height = height;
+        }
 
-        if (!detection) {
-            alert("Face not detected ❌");
+        return true;
+    }
+
+    function drawDetectionBox(detection) {
+        if (!overlayCtx || !resizeOverlayToVideo() || !video.videoWidth || !video.videoHeight) {
             return;
         }
 
-        let descriptor = Array.from(detection.descriptor);
+        clearOverlay();
 
-        fetch("login_face.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ face: descriptor })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
+        const box = detection.detection.box;
+        const scaleX = overlay.width / video.videoWidth;
+        const scaleY = overlay.height / video.videoHeight;
 
-                // 🛑 close camera after login
-                stream.getTracks().forEach(track => track.stop());
+        overlayCtx.lineWidth = 3;
+        overlayCtx.strokeStyle = "#22c55e";
+        overlayCtx.shadowColor = "rgba(34, 197, 94, 0.8)";
+        overlayCtx.shadowBlur = 8;
+        overlayCtx.strokeRect(
+            box.x * scaleX,
+            box.y * scaleY,
+            box.width * scaleX,
+            box.height * scaleY
+        );
+        overlayCtx.shadowBlur = 0;
+    }
 
-                window.location.href = data.redirect;
-            } else {
-                const message = data.message || "User not recognized ❌";
-                alert(`${message} \nDistance: ${Number(data.distance).toFixed(4)}`);
+    async function liveDetectLoop() {
+        if (!cameraOpen) {
+            clearOverlay();
+            return;
+        }
+
+        if (!liveDetecting && video.readyState >= 2) {
+            liveDetecting = true;
+
+            try {
+                const detection = await faceapi
+                    .detectSingleFace(video)
+                    .withFaceLandmarks();
+
+                if (detection) {
+                    drawDetectionBox(detection);
+                    if (!scanInProgress) {
+                        updateStatus("Face detected ✅. Click Capture / Retry to log in.", "success");
+                    }
+                } else {
+                    clearOverlay();
+                    if (!scanInProgress) {
+                        updateStatus("No face detected ❌. Adjust your position.", "danger");
+                    }
+                }
+            } catch (error) {
+                console.error(error);
+                clearOverlay();
+                if (!scanInProgress) {
+                    updateStatus("Face detection failed. Please try again.", "danger");
+                }
+            } finally {
+                liveDetecting = false;
             }
-        });
-    };
+        }
+
+        liveLoopId = requestAnimationFrame(liveDetectLoop);
+    }
+
+    function stopLiveDetection() {
+        if (liveLoopId) {
+            cancelAnimationFrame(liveLoopId);
+            liveLoopId = null;
+        }
+        liveDetecting = false;
+        clearOverlay();
+    }
+
+    async function startCamera() {
+        if (!stream) {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+            await video.play();
+        }
+
+        cameraOpen = true;
+        faceLoginPanel.style.display = "block";
+        updateStatus("Camera is open. Click Capture / Retry when your face is clear.", "muted");
+        resizeOverlayToVideo();
+        stopLiveDetection();
+        liveLoopId = requestAnimationFrame(liveDetectLoop);
+    }
+
+    function stopCamera() {
+        stopLiveDetection();
+
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+
+        video.srcObject = null;
+        cameraOpen = false;
+        faceLoginPanel.style.display = "none";
+        captureFaceLogin.disabled = false;
+        scanInProgress = false;
+        updateStatus("Camera is open. Click Capture / Retry when your face is clear.", "muted");
+    }
+
+    function getModelBasePath() {
+        const currentPath = window.location.pathname.replace(/\/[^\/]*$/, "");
+        return window.location.origin + currentPath + "/../../../models";
+    }
+
+    async function captureAndLogin() {
+        if (!cameraOpen || scanInProgress) {
+            return;
+        }
+
+        scanInProgress = true;
+        captureFaceLogin.disabled = true;
+        updateStatus("Scanning face...", "muted");
+
+        try {
+            const detection = await faceapi
+                .detectSingleFace(video)
+                .withFaceLandmarks()
+                .withFaceDescriptor();
+
+            if (!detection) {
+                clearOverlay();
+                updateStatus("Face not detected ❌. Adjust your position and click Capture / Retry.", "danger");
+                return;
+            }
+
+            drawDetectionBox(detection);
+            updateStatus("Face detected ✅. Checking account...", "success");
+
+            const descriptor = Array.from(detection.descriptor);
+
+            const response = await fetch("login_face.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ face: descriptor })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                stopCamera();
+                window.location.href = data.redirect;
+                return;
+            }
+
+            const distanceText = Number.isFinite(Number(data.distance))
+                ? " Distance: " + Number(data.distance).toFixed(4)
+                : "";
+
+            updateStatus((data.message || "User not recognized ❌") + distanceText, "danger");
+        } catch (error) {
+            console.error(error);
+            updateStatus("Face login failed. Please click Capture / Retry again.", "danger");
+        } finally {
+            captureFaceLogin.disabled = false;
+            scanInProgress = false;
+        }
+    }
+
+    try {
+        const modelBase = getModelBasePath();
+        await faceapi.nets.faceRecognitionNet.loadFromUri(modelBase);
+        await faceapi.nets.faceLandmark68Net.loadFromUri(modelBase);
+        await faceapi.nets.ssdMobilenetv1.loadFromUri(modelBase);
+
+        modelsLoaded = true;
+        scanBtn.disabled = false;
+    } catch (error) {
+        console.error("Face models failed to load ❌", error);
+        scanBtn.textContent = "Face login unavailable";
+        scanBtn.disabled = true;
+    }
+
+    scanBtn.addEventListener("click", async () => {
+        if (!modelsLoaded) {
+            updateStatus("Face login is not available right now.", "warning");
+            return;
+        }
+
+        try {
+            await startCamera();
+        } catch (error) {
+            console.error(error);
+            stopCamera();
+            alert("Impossible d'accéder à la caméra. Vérifiez les autorisations ou réessayez.");
+        }
+    });
+
+    cancelFaceLogin.addEventListener("click", () => {
+        stopCamera();
+    });
+
+    captureFaceLogin.addEventListener("click", async () => {
+        await captureAndLogin();
+    });
+
+    window.addEventListener("beforeunload", () => {
+        stopCamera();
+    });
 });
 </script>
-        <script>
+<script>
 const form = document.getElementById("resetForm");
 const emailInput = document.getElementById("emailInput");
 const emailError = document.getElementById("emailError");

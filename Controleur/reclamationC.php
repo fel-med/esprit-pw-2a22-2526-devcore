@@ -31,9 +31,12 @@ public function afficherReclamationsAvecReponsesUser($idUtilisateur) {
                 r.statut,
                 r.priorite,
                 rep.contenu AS reponse,
-                rep.date_reponse
+                rep.date_reponse,
+                rep.idAdmin AS id_admin_reponse,
+                admin.nom AS admin_nom
             FROM reclamation r
             LEFT JOIN reponse rep ON r.id = rep.idReclamation
+            LEFT JOIN utilisateur admin ON rep.idAdmin = admin.id
             WHERE r.idUtilisateur = :id
             ORDER BY r.date_creation DESC";
 
@@ -62,13 +65,16 @@ public function statistiques() {
                 COUNT(*) AS total,
                 SUM(statut = 'en_attente') AS en_attente,
                 SUM(statut = 'traitee') AS traitee,
-                SUM(priorite = 'haute') AS haute,
-                SUM(priorite = 'moyenne') AS moyenne,
-                SUM(priorite = 'basse') AS basse
+                SUM(priorite IN ('haute', 'high')) AS haute,
+                SUM(priorite IN ('normale', 'normal', 'moyenne', 'medium')) AS normale,
+                SUM(priorite IN ('faible', 'low', 'basse')) AS faible
             FROM reclamation";
 
     $db = config::getConnexion();
-    return $db->query($sql)->fetch();
+    $stats = $db->query($sql)->fetch(PDO::FETCH_ASSOC);
+    $stats['moyenne'] = $stats['normale'] ?? 0; // backward-compatible key for old views
+    $stats['basse'] = $stats['faible'] ?? 0;    // backward-compatible key for old views
+    return $stats;
 }
 
 private function generateTimelineDates(int $days): array {
@@ -119,9 +125,9 @@ public function getReclamationStatusTimeline(int $days = 14): array {
 
 public function getReclamationPriorityTimeline(int $days = 14): array {
     $sql = "SELECT DATE(date_creation) AS day,
-                   SUM(priorite = 'haute') AS haute,
-                   SUM(priorite = 'moyenne') AS moyenne,
-                   SUM(priorite = 'basse') AS basse
+                   SUM(priorite IN ('haute', 'high')) AS haute,
+                   SUM(priorite IN ('normale', 'normal', 'moyenne', 'medium')) AS normale,
+                   SUM(priorite IN ('faible', 'low', 'basse')) AS faible
             FROM reclamation
             WHERE date_creation >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
             GROUP BY DATE(date_creation)
@@ -137,29 +143,81 @@ public function getReclamationPriorityTimeline(int $days = 14): array {
     foreach ($rows as $row) {
         $dateMap[$row['day']] = [
             'haute' => intval($row['haute']),
-            'moyenne' => intval($row['moyenne']),
-            'basse' => intval($row['basse'])
+            'normale' => intval($row['normale']),
+            'faible' => intval($row['faible'])
         ];
     }
 
     $timeline = [
         'dates' => [],
         'haute' => [],
+        'normale' => [],
+        'faible' => [],
+        // backward-compatible keys for old views
         'moyenne' => [],
         'basse' => []
     ];
 
     foreach ($this->generateTimelineDates($days) as $date) {
+        $normalValue = $dateMap[$date]['normale'] ?? 0;
+        $lowValue = $dateMap[$date]['faible'] ?? 0;
+
         $timeline['dates'][] = $date;
         $timeline['haute'][] = $dateMap[$date]['haute'] ?? 0;
-        $timeline['moyenne'][] = $dateMap[$date]['moyenne'] ?? 0;
-        $timeline['basse'][] = $dateMap[$date]['basse'] ?? 0;
+        $timeline['normale'][] = $normalValue;
+        $timeline['faible'][] = $lowValue;
+        $timeline['moyenne'][] = $normalValue;
+        $timeline['basse'][] = $lowValue;
     }
 
     return $timeline;
 }
 
+
+private function normalizePriorityValues($priorite): array {
+    $key = strtolower(trim((string) $priorite));
+
+    if (in_array($key, ['haute', 'high'], true)) {
+        return ['haute', 'high'];
+    }
+
+    if (in_array($key, ['normale', 'normal', 'moyenne', 'medium'], true)) {
+        return ['normale', 'normal', 'moyenne', 'medium'];
+    }
+
+    if (in_array($key, ['faible', 'low', 'basse'], true)) {
+        return ['faible', 'low', 'basse'];
+    }
+
+    return [];
+}
+
+private function appendPriorityFilter(string &$sql, array $priorityValues, string $alias = 'r'): array {
+    if (empty($priorityValues)) {
+        return [];
+    }
+
+    $placeholders = [];
+    $params = [];
+    foreach ($priorityValues as $index => $value) {
+        $paramName = ':priority_' . $index;
+        $placeholders[] = $paramName;
+        $params[$paramName] = $value;
+    }
+
+    $sql .= " AND {$alias}.priorite IN (" . implode(', ', $placeholders) . ")";
+    return $params;
+}
+
+private function bindPriorityParams(PDOStatement $stmt, array $priorityParams): void {
+    foreach ($priorityParams as $paramName => $value) {
+        $stmt->bindValue($paramName, $value);
+    }
+}
+
 public function afficherReclamationsAdmin($search = '', $priorite = '', $page = 1, $limit = 10) {
+    $priorityValues = $this->normalizePriorityValues($priorite);
+
     $sql = "SELECT 
                 r.id,
                 u.nom,
@@ -178,9 +236,7 @@ public function afficherReclamationsAdmin($search = '', $priorite = '', $page = 
         $sql .= " AND (u.nom LIKE :search OR r.description LIKE :search)";
     }
 
-    if (!empty($priorite)) {
-        $sql .= " AND r.priorite = :priorite";
-    }
+    $priorityParams = $this->appendPriorityFilter($sql, $priorityValues);
 
     $sql .= " ORDER BY r.date_creation DESC";
 
@@ -191,42 +247,36 @@ public function afficherReclamationsAdmin($search = '', $priorite = '', $page = 
         $stmt = $db->prepare($sql);
         if (!empty($search)) {
             $searchTerm = "%$search%";
-            $stmt->bindParam(':search', $searchTerm);
+            $stmt->bindValue(':search', $searchTerm);
         }
-        if (!empty($priorite)) {
-            $stmt->bindParam(':priorite', $priorite);
-        }
+        $this->bindPriorityParams($stmt, $priorityParams);
         $stmt->execute();
         return $stmt;
     }
-    
+
     // Get total count for pagination
     $countSql = "SELECT COUNT(*) FROM reclamation r
                  JOIN utilisateur u ON r.idUtilisateur = u.id
                  LEFT JOIN reponse rep ON r.id = rep.idReclamation
                  WHERE 1=1";
-    
+
     if (!empty($search)) {
         $countSql .= " AND (u.nom LIKE :search OR r.description LIKE :search)";
     }
 
-    if (!empty($priorite)) {
-        $countSql .= " AND r.priorite = :priorite";
-    }
+    $countPriorityParams = $this->appendPriorityFilter($countSql, $priorityValues);
 
     $countStmt = $db->prepare($countSql);
 
     if (!empty($search)) {
         $searchTerm = "%$search%";
-        $countStmt->bindParam(':search', $searchTerm);
+        $countStmt->bindValue(':search', $searchTerm);
     }
 
-    if (!empty($priorite)) {
-        $countStmt->bindParam(':priorite', $priorite);
-    }
+    $this->bindPriorityParams($countStmt, $countPriorityParams);
 
     $countStmt->execute();
-    $totalRecords = $countStmt->fetchColumn();
+    $totalRecords = intval($countStmt->fetchColumn());
 
     // Add LIMIT and OFFSET
     $offset = ($page - 1) * $limit;
@@ -235,24 +285,22 @@ public function afficherReclamationsAdmin($search = '', $priorite = '', $page = 
     $stmt = $db->prepare($sql);
 
     if (!empty($search)) {
-        $stmt->bindParam(':search', $searchTerm);
+        $stmt->bindValue(':search', $searchTerm);
     }
 
-    if (!empty($priorite)) {
-        $stmt->bindParam(':priorite', $priorite);
-    }
+    $this->bindPriorityParams($stmt, $priorityParams);
 
-    $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
-    $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+    $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
 
     $stmt->execute();
-    
+
     return [
         'stmt' => $stmt,
         'total' => $totalRecords,
         'page' => $page,
         'limit' => $limit,
-        'totalPages' => ceil($totalRecords / $limit)
+        'totalPages' => max(1, (int) ceil($totalRecords / max(1, $limit)))
     ];
 }
     // ✔️ Afficher toutes les réclamations avec jointure

@@ -3,6 +3,7 @@ require_once '../../../Controleur/session_helper.php';
 cc_start_session();
 require_once '../../../Controleur/postC.php';
 require_once '../../../Controleur/commentC.php';
+require_once '../../../Controleur/profileC.php';
 require_once '../comment/_render.php';
 
 // ── VÉRIFICATION SESSION ──────────────────────────────────────
@@ -50,6 +51,18 @@ $creatorHandle = strtolower(trim((string) $handleSource));
 $creatorHandle = preg_replace('/[^a-z0-9_]+/', '_', $creatorHandle);
 $creatorHandle = trim((string) $creatorHandle, '_');
 $creatorHandle = $creatorHandle !== '' ? '@' . $creatorHandle : '@myspace_creator';
+$creatorInitial = function_exists('mb_substr')
+    ? mb_substr($creatorDisplayName, 0, 1, 'UTF-8')
+    : substr($creatorDisplayName, 0, 1);
+$creatorInitial = strtoupper((string) $creatorInitial) ?: 'C';
+$profileImageUrl = null;
+
+try {
+    $profileC = new ProfileC();
+    $profileImageUrl = $profileC->getProfileImageUrl($creatorId, '../../public/uploads/profile');
+} catch (Throwable $e) {
+    $profileImageUrl = null;
+}
 
 $frontActive = 'myspace';
 ?>
@@ -68,9 +81,10 @@ $frontActive = 'myspace';
     <link href="../layout/front-header.css" rel="stylesheet" />
     <link href="../assets/post-front.css?v=3" rel="stylesheet" />
     <link rel="stylesheet" href="../assets/comment-front.css">
-<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
-<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
-<link rel="apple-touch-icon" href="../../public/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
 </head>
 <body class="d-flex flex-column min-vh-100 social-body">
 <main class="flex-shrink-0">
@@ -83,12 +97,16 @@ $frontActive = 'myspace';
                 <div class="d-flex align-items-center gap-3">
 
                     <!-- Avatar -->
-                    <div class="creator-avatar">
-                        <svg viewBox="0 0 24 24" fill="none" style="width:2rem;height:2rem;opacity:.85;">
-                            <circle cx="12" cy="8" r="4" stroke="white" stroke-width="2"/>
-                            <path d="M4 20c0-4 3.58-7 8-7s8 3 8 7" stroke="white" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </div>
+                    <?php if ($profileImageUrl): ?>
+                        <img class="creator-avatar" src="<?= htmlspecialchars($profileImageUrl) ?>" alt="Profile photo" style="object-fit:cover;padding:0;">
+                    <?php else: ?>
+                        <div class="creator-avatar">
+                            <svg viewBox="0 0 24 24" fill="none" style="width:2rem;height:2rem;opacity:.85;">
+                                <circle cx="12" cy="8" r="4" stroke="white" stroke-width="2"/>
+                                <path d="M4 20c0-4 3.58-7 8-7s8 3 8 7" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                    <?php endif; ?>
 
                     <div>
                         <div class="creator-name"><?= htmlspecialchars($creatorDisplayName) ?></div>
@@ -116,15 +134,6 @@ $frontActive = 'myspace';
 
                 <!-- Action buttons -->
                 <div class="d-flex gap-2 flex-wrap">
-
-                    <a href="../utilisateur/reclamation.php" class="btn-new-post"
-                       style="background:rgba(244,63,94,0.18);border-color:rgba(244,63,94,0.4);color:#f43f5e;">
-                        <svg viewBox="0 0 24 24" fill="none">
-                            <path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
-                                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        Réclamation
-                    </a>
 
                     <a href="./create.php" class="btn-new-post">
                         <svg viewBox="0 0 24 24" fill="none">
@@ -166,9 +175,13 @@ $frontActive = 'myspace';
 
                             <!-- Header -->
                             <div class="social-post-header">
-                                <div class="social-post-avatar">
-                                    <?= htmlspecialchars(substr($post['creatorName'] ?? 'C', 0, 1)) ?>
-                                </div>
+                                <?php if ($profileImageUrl): ?>
+                                    <img class="social-post-avatar" src="<?= htmlspecialchars($profileImageUrl) ?>" alt="Profile photo" style="object-fit:cover;padding:0;">
+                                <?php else: ?>
+                                    <div class="social-post-avatar">
+                                        <?= htmlspecialchars(substr($post['creatorName'] ?? 'C', 0, 1)) ?>
+                                    </div>
+                                <?php endif; ?>
                                 <div>
                                     <div class="social-post-author"><?= htmlspecialchars($post['creatorName'] ?? ('Creator #' . $post['idCreateur'])) ?></div>
                                     <div class="social-post-meta"><?= htmlspecialchars($post['creationDate']) ?></div>
@@ -318,7 +331,11 @@ $frontActive = 'myspace';
                                      data-post-id="<?= htmlspecialchars($post['id']) ?>"
                                      data-context="portfolio">
                                     <div class="comment-form-wrap mb-4">
-                                        <div class="comment-avatar-sm">U</div>
+                                        <?php if ($profileImageUrl): ?>
+                                            <img class="comment-avatar-sm" src="<?= htmlspecialchars($profileImageUrl) ?>" alt="Profile photo" style="object-fit:cover;padding:0;">
+                                        <?php else: ?>
+                                            <div class="comment-avatar-sm"><?= htmlspecialchars($creatorInitial) ?></div>
+                                        <?php endif; ?>
                                         <div class="comment-input-area">
                                             <?php render_comment_form($post['id'], $post['id'], 'post', 'portfolio', 'Add a comment...', 'Post'); ?>
                                         </div>

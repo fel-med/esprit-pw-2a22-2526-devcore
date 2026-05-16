@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/session_bridge.php';
+require_once __DIR__ . '/../../../Controleur/profileC.php';
 
 $currentFrontUser = cre8_front_session_user();
 
@@ -36,6 +37,7 @@ if ($frontOfficePos !== false) {
     }
 }
 $frontBaseUrl = $projectBase . '/Vue/FrontOffice';
+$profileUploadWeb = $projectBase . '/Vue/public/uploads/profile';
 
 $sessionRole = cre8_front_normalize_role($currentFrontUser['role'] ?? '');
 
@@ -62,6 +64,34 @@ $createPostUrl = $frontBaseUrl . '/post/create.php';
 $eventsUrl = $frontBaseUrl . '/evenement/index.php';
 $forumUrl  = $projectBase . '/Controleur/forumC.php';
 $logoutUrl = $frontBaseUrl . '/utilisateur/logout.php';
+$profileSettingsUrl = $frontBaseUrl . '/utilisateur/profile_settings.php';
+$notificationActionUrl = $frontBaseUrl . '/layout/notification_actions.php';
+$profileImageUrl = null;
+$notificationController = null;
+$notificationUserId = (int) ($currentFrontUser['id'] ?? 0);
+
+if (!empty($currentFrontUser['id'])) {
+    try {
+        $profileC = new ProfileC();
+        $profileImageUrl = $profileC->getProfileImageUrl((int) $currentFrontUser['id'], $profileUploadWeb);
+    } catch (Throwable $e) {
+        $profileImageUrl = null;
+    }
+}
+
+if ($notificationUserId > 0 && in_array($sessionRole, ['createur', 'marque'], true)) {
+    try {
+        require_once __DIR__ . '/../../../Controleur/condidatureC.php';
+        $notificationController = new CondidatureC();
+        if ($sessionRole === 'createur' && method_exists($notificationController, 'generateCreatorDeadlineSoonNotifications')) {
+            $notificationController->generateCreatorDeadlineSoonNotifications($notificationUserId);
+        } elseif ($sessionRole === 'marque' && method_exists($notificationController, 'generateBrandDeadlineSoonNotifications')) {
+            $notificationController->generateBrandDeadlineSoonNotifications($notificationUserId);
+        }
+    } catch (Throwable $e) {
+        $notificationController = null;
+    }
+}
 
 if (!isset($frontActive)) {
     if (strpos($currentPath, '/utilisateur/creator.php') !== false) {
@@ -92,6 +122,7 @@ if (!isset($frontActive)) {
     } catch (e) {}
 })();
 </script>
+<script src="<?php echo htmlspecialchars($frontBaseUrl . '/layout/front-translate.js'); ?>" defer></script>
 <nav class="front-nav cre8-front-header" aria-label="FrontOffice navigation">
     <a class="front-nav-logo cre8-front-brand" href="<?php echo htmlspecialchars($homeUrl); ?>" aria-label="Cre8Connect home">
         <img src="<?php echo htmlspecialchars($projectBase . '/Vue/public/images/logoweb.png'); ?>" alt="Cre8Connect" class="front-header-logo">
@@ -110,7 +141,7 @@ if (!isset($frontActive)) {
             </button>
             <div class="front-nav-dropdown" role="menu">
                 <a href="<?php echo htmlspecialchars($offersUrl); ?>" role="menuitem">Offers</a>
-                <a href="<?php echo htmlspecialchars($candidaturesUrl); ?>" role="menuitem">Candidatures</a>
+                <a href="<?php echo htmlspecialchars($candidaturesUrl); ?>" role="menuitem">Applications</a>
             </div>
         </li>
 
@@ -119,9 +150,9 @@ if (!isset($frontActive)) {
                 <i class="bi bi-megaphone"></i> Campaigns <i class="bi bi-chevron-down front-nav-caret"></i>
             </button>
             <div class="front-nav-dropdown" role="menu">
-                <a href="<?php echo htmlspecialchars($campaignsUrl); ?>" role="menuitem">Campagnes</a>
-                <a href="<?php echo htmlspecialchars($productsUrl); ?>" role="menuitem">Produits</a>
-                <a href="<?php echo htmlspecialchars($contractsUrl); ?>" role="menuitem">Contrats</a>
+                <a href="<?php echo htmlspecialchars($campaignsUrl); ?>" role="menuitem">Campaigns</a>
+                <a href="<?php echo htmlspecialchars($productsUrl); ?>" role="menuitem">Products</a>
+                <a href="<?php echo htmlspecialchars($contractsUrl); ?>" role="menuitem">Contracts</a>
             </div>
         </li>
 
@@ -141,34 +172,137 @@ if (!isset($frontActive)) {
                 <i class="bi bi-calendar-event"></i> Events <i class="bi bi-chevron-down front-nav-caret"></i>
             </button>
             <div class="front-nav-dropdown" role="menu">
-                <a href="<?php echo htmlspecialchars($eventsUrl); ?>" role="menuitem">Événements</a>
+                <a href="<?php echo htmlspecialchars($eventsUrl); ?>" role="menuitem">Events</a>
                 <a href="<?php echo htmlspecialchars($forumUrl); ?>" role="menuitem">Forum</a>
             </div>
         </li>
 
         <li class="front-nav-item">
             <a href="<?php echo htmlspecialchars($reclamationUrl); ?>" class="cre8-front-nav-link <?php echo $frontActive === 'reclamation' ? 'active is-active' : ''; ?>">
-                <i class="bi bi-flag"></i> Réclamation
+                <i class="bi bi-flag"></i> Complaints
             </a>
         </li>
 
-        <li class="front-nav-item">
-            <button class="front-theme-btn" id="themeBtn" title="Toggle dark mode" type="button">
-                <i class="bi bi-moon-stars" id="themeIcon"></i>
-            </button>
-        </li>
-        <li class="front-nav-item">
-            <a href="<?php echo htmlspecialchars($logoutUrl); ?>" class="front-nav-logout cre8-front-logout">
-                <i class="bi bi-box-arrow-right"></i> Logout
-            </a>
+        <li class="front-nav-item front-notification-item">
+            <?php require __DIR__ . '/../condidature/notification_widget.php'; ?>
         </li>
     </ul>
 
-    <div class="front-nav-right cre8-front-user">
+    <div class="front-nav-right cre8-front-user front-profile-menu" tabindex="0" role="button" aria-haspopup="true" aria-label="Profile menu">
         <div class="front-nav-badge cre8-front-role-pill">
-            <i class="bi bi-person-circle"></i>
             <?php echo htmlspecialchars($userName); ?>
         </div>
-        <div class="front-nav-avatar cre8-front-avatar"><?php echo htmlspecialchars($userInitial); ?></div>
+        <?php if ($profileImageUrl): ?>
+            <img class="front-nav-avatar cre8-front-avatar" src="<?php echo htmlspecialchars($profileImageUrl); ?>" alt="Profile photo">
+        <?php else: ?>
+            <div class="front-nav-avatar cre8-front-avatar"><?php echo htmlspecialchars($userInitial); ?></div>
+        <?php endif; ?>
+        <i class="bi bi-chevron-down front-profile-caret" aria-hidden="true"></i>
+
+        <div class="front-profile-dropdown" role="menu">
+            <a class="front-profile-menu-row front-profile-settings-row" href="<?php echo htmlspecialchars($profileSettingsUrl); ?>" role="menuitem">
+                <span class="front-profile-row-left">
+                    <span class="front-profile-row-icon"><i class="bi bi-person-gear"></i></span>
+                    <span class="front-profile-row-text">Profile settings</span>
+                </span>
+            </a>
+
+            <button type="button" class="front-profile-menu-row front-profile-language-toggle" data-lang-toggle role="menuitem" aria-label="Switch language">
+                <span class="front-profile-row-left">
+                    <span class="front-profile-row-icon"><i class="bi bi-globe2"></i></span>
+                    <span class="front-profile-row-text">Language</span>
+                </span>
+                <span class="front-profile-lang-mini" aria-hidden="true">
+                    <span class="front-profile-lang-chip" data-profile-lang-chip="en">EN</span>
+                    <span class="front-profile-lang-chip" data-profile-lang-chip="fr">FR</span>
+                </span>
+                <span class="sr-only">Current language: <span data-profile-lang-current>EN</span></span>
+            </button>
+
+            <button class="front-profile-menu-row front-profile-theme-btn" id="themeBtn" title="Toggle dark mode" type="button" role="menuitem">
+                <span class="front-profile-row-left">
+                    <span class="front-profile-row-icon"><i class="bi bi-moon-stars" id="themeIcon"></i></span>
+                    <span class="front-profile-row-text">Appearance</span>
+                </span>
+                <span class="front-profile-theme-switch" aria-hidden="true">
+                    <span class="front-profile-theme-dot"></span>
+                    <span class="front-profile-theme-label"><span class="theme-label-light">Light</span><span class="theme-label-dark">Dark</span></span>
+                </span>
+            </button>
+
+            <a href="<?php echo htmlspecialchars($logoutUrl); ?>" class="front-profile-menu-row front-profile-logout" role="menuitem">
+                <span class="front-profile-row-left">
+                    <span class="front-profile-row-icon"><i class="bi bi-box-arrow-right"></i></span>
+                    <span class="front-profile-row-text">Logout</span>
+                </span>
+            </a>
+        </div>
     </div>
 </nav>
+
+
+<script>
+(function () {
+    if (window.__cre8ProfileMenuLanguageToggle) return;
+    window.__cre8ProfileMenuLanguageToggle = true;
+
+    function readLang() {
+        try {
+            return localStorage.getItem('cre8_front_lang') || localStorage.getItem('cre8_lang') || 'en';
+        } catch (e) {
+            return 'en';
+        }
+    }
+
+    function normalizeLang(lang) {
+        return lang === 'fr' ? 'fr' : 'en';
+    }
+
+    function updateProfileLanguageState(lang) {
+        var activeLang = normalizeLang(lang || readLang());
+        document.querySelectorAll('[data-profile-lang-current]').forEach(function (node) {
+            node.textContent = activeLang.toUpperCase();
+        });
+        document.querySelectorAll('[data-profile-lang-chip]').forEach(function (chip) {
+            var isActive = chip.getAttribute('data-profile-lang-chip') === activeLang;
+            chip.classList.toggle('is-active', isActive);
+        });
+        document.querySelectorAll('[data-lang-choice]').forEach(function (choice) {
+            var isActive = choice.getAttribute('data-lang-choice') === activeLang;
+            choice.classList.toggle('is-active', isActive);
+            choice.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+    }
+
+    function setLang(lang) {
+        var next = normalizeLang(lang);
+        if (typeof window.cre8SetLanguage === 'function') {
+            window.cre8SetLanguage(next);
+        } else {
+            try {
+                localStorage.setItem('cre8_front_lang', next);
+            } catch (e) {}
+            document.dispatchEvent(new CustomEvent('cre8:languagechange', { detail: { lang: next } }));
+        }
+        updateProfileLanguageState(next);
+    }
+
+    document.addEventListener('click', function (event) {
+        var row = event.target.closest('[data-lang-toggle]');
+        if (!row) return;
+        event.preventDefault();
+        var current = normalizeLang(readLang());
+        setLang(current === 'en' ? 'fr' : 'en');
+    });
+
+    document.addEventListener('cre8:languagechange', function (event) {
+        updateProfileLanguageState(event.detail && event.detail.lang);
+    });
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () { updateProfileLanguageState(); });
+    } else {
+        updateProfileLanguageState();
+    }
+})();
+</script>
