@@ -325,6 +325,99 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
         .pg-info { font-size: 12px; color: var(--text-dim); font-weight: 600; margin-left: 8px; }
         /* ===== END ADDED FEATURE ===== */
 
+        /* Unified FrontOffice indicators */
+        .hero-stat {
+            background: linear-gradient(135deg, rgba(236,233,255,0.82), rgba(255,255,255,0.9));
+            border: 1px solid var(--primary-border);
+            border-radius: 16px;
+            padding: 8px 12px;
+            box-shadow: 0 8px 22px rgba(91,79,255,0.08);
+        }
+        .hero-stat-val {
+            color: var(--primary);
+            font-family: 'Fraunces', serif;
+            font-weight: 900;
+            line-height: 1;
+        }
+        .hero-stat-label {
+            color: var(--text-sub);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .count-pill,
+        .pcard-tag,
+        .detail-tag {
+            background: var(--primary-light);
+            border: 1px solid var(--primary-border);
+            border-radius: 999px;
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .pcard-tag { font-size: 11px; padding: 4px 10px; }
+        .pcard-tags .pcard-tag[style] {
+            background: var(--bg) !important;
+            border-color: var(--border) !important;
+            color: var(--text-sub) !important;
+        }
+        .cat-chip {
+            background: var(--white);
+            border-color: var(--border);
+            border-radius: 999px;
+            color: var(--text-sub);
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .cat-chip.active,
+        .cat-chip:hover {
+            background: var(--primary-light);
+            border-color: var(--primary-border);
+            color: var(--primary);
+        }
+        .pcard-price-badge,
+        .badge-epingle,
+        .badge-dispo {
+            border-radius: 999px;
+            font-weight: 700;
+        }
+        .pcard-price-badge {
+            background: var(--primary);
+            font-family: 'Fraunces', serif;
+        }
+        .badge-dispo.available {
+            background: var(--success-light);
+            border: 1px solid var(--success-border);
+            color: var(--success);
+        }
+        .badge-dispo.future {
+            background: var(--warning-light);
+            border: 1px solid var(--warning-border);
+            color: var(--warning);
+        }
+        .badge-epingle {
+            background: var(--warning-light);
+            border: 1px solid var(--warning-border);
+            color: var(--warning);
+        }
+        body.dark-mode .hero-stat {
+            background: linear-gradient(135deg, rgba(42,38,96,0.76), rgba(20,23,32,0.92));
+            border-color: var(--primary-border);
+            box-shadow: 0 8px 22px rgba(0,0,0,0.24);
+        }
+        body.dark-mode .cat-chip,
+        body.dark-mode .pcard-tags .pcard-tag[style] {
+            background: var(--bg) !important;
+            border-color: var(--border) !important;
+            color: var(--text-sub) !important;
+        }
+        body.dark-mode .cat-chip.active,
+        body.dark-mode .cat-chip:hover {
+            background: var(--primary-light) !important;
+            border-color: var(--primary-border) !important;
+            color: var(--primary) !important;
+        }
+
         @media (max-width: 900px) { .nav-links { display: none; } .catalog-hero { padding: 28px 24px; } .detail-box { flex-direction: column; } .detail-img { width: 100%; height: 200px; } }
         @media (max-width: 600px) { .products-grid { grid-template-columns: 1fr; } .hero-left h1 { font-size: 24px; } .nav-controls { gap: 5px; } }
     </style>

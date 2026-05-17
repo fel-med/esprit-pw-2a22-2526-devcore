@@ -1860,3 +1860,663 @@ html[data-theme="dark"] .response-modal-actions {
   border-color: var(--border-color) !important;
 }
 
+/* Shared FrontOffice visual bridge for candidature pages. */
+.front-pagination,
+.brand-source-tab-button,
+.brand-source-panel-heading,
+.source-feed-card,
+.candidature-card,
+.candidature-card.is-draft,
+.candidature-card.is-review,
+.candidature-card.is-accepted,
+.candidature-card.is-declined,
+.candidature-card.is-outdated,
+.composer-card,
+.locked-state-card,
+.decision-note-card,
+.timeline-card,
+.brand-action-card,
+.composer-mode-card,
+.composer-mode-card[data-mode="accept"],
+.composer-mode-card[data-mode="negotiate"],
+.composer-mode-card[data-mode="decline"],
+.composer-mode-card[data-mode="accept"].is-active,
+.composer-mode-card[data-mode="negotiate"].is-active,
+.composer-mode-card[data-mode="decline"].is-active,
+.composer-field-card,
+#acceptFields,
+.composer-negotiation-panel,
+.composer-decline-panel,
+.creator-modal-section,
+.creator-modal-section-warning,
+.creator-modal-section-danger,
+.response-callout-review,
+.creator-response-modal-card,
+.response-modal-card,
+.response-modal-card[data-modal-variant="negotiate"],
+.response-modal-preview,
+.response-modal-card[data-modal-variant="accept"] .response-modal-preview,
+.response-modal-card[data-modal-variant="refuse"] .response-modal-preview,
+.response-modal-card[data-modal-variant="negotiate"] .response-modal-preview,
+.campaign-opportunity-card {
+  background: var(--white) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 14px !important;
+  color: var(--text) !important;
+  box-shadow: 0 12px 32px rgba(15, 14, 26, 0.06) !important;
+}
+
+.front-pagination span,
+.brand-source-tab-button strong,
+.origin-badge,
+.campaign-opportunity-meta span,
+.candidature-inline-meta .offer-chip,
+.negotiation-role,
+.response-modal-kicker {
+  background: var(--primary-light, #ece9ff) !important;
+  border-color: color-mix(in srgb, var(--primary, #5b4fff) 20%, var(--border, #ebebf2)) !important;
+  color: var(--primary) !important;
+}
+
+.brand-source-tab-button.is-active,
+.composer-mode-card.is-active,
+.composer-mode-card[data-mode="accept"].is-active,
+.composer-mode-card[data-mode="negotiate"].is-active,
+.composer-mode-card[data-mode="decline"].is-active {
+  border-color: var(--primary) !important;
+  box-shadow: 0 16px 34px rgba(91, 79, 255, 0.12) !important;
+}
+
+.brand-source-tab-button.is-active strong {
+  background: var(--primary) !important;
+  color: #ffffff !important;
+}
+
+.candidature-card::before,
+.response-modal-card::before {
+  background: var(--primary) !important;
+}
+
+.candidature-card.is-draft::before,
+.candidature-card.is-outdated::before {
+  background: #64748b !important;
+}
+
+.candidature-card.is-review::before,
+.response-modal-card[data-modal-variant="negotiate"]::before {
+  background: #d97706 !important;
+}
+
+.candidature-card.is-accepted::before,
+.response-modal-card[data-modal-variant="accept"]::before {
+  background: #14804a !important;
+}
+
+.candidature-card.is-declined::before,
+.response-modal-card[data-modal-variant="refuse"]::before {
+  background: #b42318 !important;
+}
+
+.brand-action-launch,
+.brand-action-launch-accept,
+.brand-action-launch-refuse,
+.brand-action-launch-negotiate,
+.creator-response-action-card {
+  background: var(--bg) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+  box-shadow: none !important;
+}
+
+.brand-action-launch:hover,
+.creator-response-action-card:hover {
+  border-color: color-mix(in srgb, var(--primary, #5b4fff) 24%, var(--border, #ebebf2)) !important;
+  box-shadow: 0 12px 28px rgba(91, 79, 255, 0.1) !important;
+}
+
+.candidature-card-title,
+.source-feed-title,
+.brand-action-card h2,
+.brand-action-launch strong,
+.composer-mode-card strong,
+.composer-field-card-top strong,
+.locked-state-card h3,
+.decision-note-card strong,
+.timeline-card strong,
+.response-modal-header h2,
+.response-modal-preview strong,
+.campaign-opportunity-card h2 {
+  font-family: 'Fraunces', serif;
+  color: var(--text) !important;
+  -webkit-text-fill-color: currentColor !important;
+  letter-spacing: 0;
+}
+
+.candidature-card-copy,
+.source-feed-copy,
+.brand-action-launch span,
+.composer-mode-card span,
+.composer-field-card-top p,
+.locked-state-card p,
+.decision-note-card p,
+.timeline-card p,
+.response-modal-subtitle,
+.response-modal-copy,
+.response-modal-preview span:not(.response-modal-preview-label),
+.negotiation-entry-message,
+.negotiation-author-block span,
+.composer-context-note,
+.candidature-signal-copy,
+.campaign-opportunity-card p {
+  color: var(--text-sub) !important;
+}
+
+.response-modal-header,
+.response-modal-body,
+.response-modal-card[data-modal-variant="negotiate"] .response-modal-body,
+.response-modal-actions,
+.response-modal-card[data-modal-variant="accept"] .response-modal-actions,
+.response-modal-card[data-modal-variant="refuse"] .response-modal-actions,
+.response-modal-card[data-modal-variant="negotiate"] .response-modal-actions,
+.negotiation-entry,
+.negotiation-entry-createur,
+.negotiation-entry-marque,
+.composer-state-bar {
+  background: var(--bg) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+.composer-two-column .form-control,
+.composer-two-column .form-select,
+.response-modal-card input,
+.response-modal-card select,
+.response-modal-card textarea,
+.response-modal-card .form-control,
+.response-modal-card .form-select {
+  background: var(--bg) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 10px !important;
+  color: var(--text) !important;
+  font-family: 'DM Sans', sans-serif !important;
+  box-shadow: none !important;
+}
+
+.composer-two-column .form-control:focus,
+.composer-two-column .form-select:focus,
+.response-modal-card input:focus,
+.response-modal-card select:focus,
+.response-modal-card textarea:focus,
+.response-modal-card .form-control:focus,
+.response-modal-card .form-select:focus {
+  background: var(--white) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow, rgba(91, 79, 255, 0.15)) !important;
+}
+
+html[data-theme="dark"] .front-pagination,
+html[data-theme="dark"] .brand-source-tab-button,
+html[data-theme="dark"] .brand-source-panel-heading,
+html[data-theme="dark"] .source-feed-card,
+html[data-theme="dark"] .candidature-card,
+html[data-theme="dark"] .candidature-card.is-draft,
+html[data-theme="dark"] .candidature-card.is-review,
+html[data-theme="dark"] .candidature-card.is-accepted,
+html[data-theme="dark"] .candidature-card.is-declined,
+html[data-theme="dark"] .candidature-card.is-outdated,
+html[data-theme="dark"] .composer-card,
+html[data-theme="dark"] .locked-state-card,
+html[data-theme="dark"] .decision-note-card,
+html[data-theme="dark"] .timeline-card,
+html[data-theme="dark"] .brand-action-card,
+html[data-theme="dark"] .composer-mode-card,
+html[data-theme="dark"] .composer-mode-card[data-mode="accept"],
+html[data-theme="dark"] .composer-mode-card[data-mode="negotiate"],
+html[data-theme="dark"] .composer-mode-card[data-mode="decline"],
+html[data-theme="dark"] .composer-field-card,
+html[data-theme="dark"] #acceptFields,
+html[data-theme="dark"] .composer-negotiation-panel,
+html[data-theme="dark"] .composer-decline-panel,
+html[data-theme="dark"] .creator-modal-section,
+html[data-theme="dark"] .response-callout-review,
+html[data-theme="dark"] .creator-response-modal-card,
+html[data-theme="dark"] .response-modal-card,
+html[data-theme="dark"] .response-modal-card[data-modal-variant="negotiate"],
+html[data-theme="dark"] .response-modal-preview,
+html[data-theme="dark"] .campaign-opportunity-card {
+  background: var(--white) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22) !important;
+}
+
+html[data-theme="dark"] .response-modal-header,
+html[data-theme="dark"] .response-modal-body,
+html[data-theme="dark"] .response-modal-actions,
+html[data-theme="dark"] .negotiation-entry,
+html[data-theme="dark"] .composer-state-bar,
+html[data-theme="dark"] .brand-action-launch,
+html[data-theme="dark"] .creator-response-action-card {
+  background: var(--bg) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+/* Marketplace body composition for candidature pages. */
+.candidature-stats-grid {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+  gap: 0.7rem !important;
+}
+
+.candidature-stats-grid .stat-card {
+  min-height: auto !important;
+  padding: 0.82rem 0.95rem !important;
+  border-radius: 16px !important;
+  background:
+    linear-gradient(135deg, rgba(236, 233, 255, 0.72), rgba(255, 255, 255, 0.88)) !important;
+  border: 1px solid rgba(91, 79, 255, 0.12) !important;
+  box-shadow: 0 10px 26px rgba(91, 79, 255, 0.08) !important;
+}
+
+.candidature-stats-grid .stat-card::before,
+.candidature-card::before,
+.response-modal-card::before {
+  display: none !important;
+}
+
+.candidature-stats-grid .stat-label {
+  color: var(--text-sub) !important;
+  font-size: 0.76rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.candidature-stats-grid .stat-value {
+  color: var(--primary) !important;
+  font-size: clamp(1.3rem, 2vw, 1.7rem) !important;
+  line-height: 1.1 !important;
+}
+
+.candidature-stats-grid .stat-note {
+  font-size: 0.8rem !important;
+  line-height: 1.4 !important;
+}
+
+.source-feed-card,
+.candidature-card,
+.composer-card,
+.locked-state-card,
+.decision-note-card,
+.timeline-card,
+.brand-action-card,
+.creator-response-modal-card,
+.response-modal-card {
+  border-radius: 18px !important;
+  box-shadow: 0 14px 34px rgba(91, 79, 255, 0.07) !important;
+}
+
+.brand-source-tab-list,
+.composer-mode-grid,
+.brand-action-grid {
+  gap: 0.65rem !important;
+}
+
+.brand-source-tab-button,
+.composer-mode-card,
+.brand-action-launch,
+.creator-response-action-card {
+  border-radius: 16px !important;
+  background: color-mix(in srgb, var(--white) 84%, var(--primary-light, #ece9ff)) !important;
+  box-shadow: 0 10px 24px rgba(91, 79, 255, 0.06) !important;
+}
+
+.brand-source-tab-button.is-active,
+.composer-mode-card.is-active {
+  background: var(--primary-light, #ece9ff) !important;
+}
+
+.front-pagination {
+  border-radius: 18px !important;
+  background: color-mix(in srgb, var(--white) 86%, var(--primary-light, #ece9ff)) !important;
+}
+
+html[data-theme="dark"] .candidature-stats-grid .stat-card,
+html[data-theme="dark"] .brand-source-tab-button,
+html[data-theme="dark"] .composer-mode-card,
+html[data-theme="dark"] .brand-action-launch,
+html[data-theme="dark"] .creator-response-action-card,
+html[data-theme="dark"] .front-pagination {
+  background: color-mix(in srgb, var(--white) 82%, var(--primary-light, #1e1a3a)) !important;
+  border-color: var(--border) !important;
+}
+
+/* Cre8Connect accent polish for candidature surfaces. */
+.candidature-stats-grid .stat-card {
+  position: relative;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(226, 30, 128, 0.10), transparent 46%),
+    linear-gradient(135deg, rgba(236, 233, 255, 0.88), rgba(255, 255, 255, 0.92)) !important;
+  border-color: rgba(91, 79, 255, 0.18) !important;
+  box-shadow: 0 14px 30px rgba(91, 79, 255, 0.11) !important;
+}
+
+.candidature-stats-grid .stat-card::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--primary, #5b4fff), #e21e80);
+  opacity: 0.78;
+}
+
+.candidature-stats-grid .stat-value {
+  background: linear-gradient(135deg, var(--primary, #5b4fff), #8b5cf6 52%, #e21e80);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: var(--primary) !important;
+  -webkit-text-fill-color: transparent;
+}
+
+.source-feed-card,
+.candidature-card,
+.composer-card,
+.locked-state-card,
+.decision-note-card,
+.timeline-card,
+.brand-action-card,
+.creator-response-modal-card,
+.response-modal-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.98)),
+    radial-gradient(circle at 100% 0%, rgba(236, 233, 255, 0.60), transparent 42%) !important;
+  border-color: rgba(91, 79, 255, 0.14) !important;
+  box-shadow: 0 16px 36px rgba(91, 79, 255, 0.09) !important;
+}
+
+.source-feed-card,
+.candidature-card,
+.composer-card,
+.brand-action-card {
+  position: relative;
+}
+
+.source-feed-card::after,
+.candidature-card::after,
+.composer-card::after,
+.brand-action-card::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  border-radius: 18px 0 0 18px;
+  background: linear-gradient(180deg, rgba(91, 79, 255, 0.70), rgba(226, 30, 128, 0.58));
+  opacity: 0.74;
+}
+
+.brand-source-tab-button,
+.composer-mode-card,
+.brand-action-launch,
+.creator-response-action-card,
+.front-pagination {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(226, 30, 128, 0.07), transparent 42%),
+    linear-gradient(135deg, rgba(236, 233, 255, 0.76), rgba(255, 255, 255, 0.90)) !important;
+  border-color: rgba(91, 79, 255, 0.16) !important;
+}
+
+.brand-source-tab-button.is-active,
+.composer-mode-card.is-active {
+  background: linear-gradient(135deg, rgba(236, 233, 255, 0.96), rgba(255, 255, 255, 0.92)) !important;
+  border-color: rgba(91, 79, 255, 0.24) !important;
+  color: var(--primary) !important;
+}
+
+.brand-source-tab-button.is-active strong,
+.response-modal-primary,
+.creator-response-modal-card .btn-primary,
+.brand-action-card .btn-primary {
+  background: linear-gradient(135deg, var(--primary, #5b4fff), #8b5cf6 48%, #e21e80) !important;
+  border-color: transparent !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 22px rgba(91, 79, 255, 0.22) !important;
+}
+
+.candidature-badge.status-draft,
+.candidature-badge.status-pending,
+.candidature-badge.status-outdated,
+.origin-badge,
+.negotiation-role,
+.response-modal-kicker,
+.campaign-opportunity-meta span {
+  background: rgba(236, 233, 255, 0.82) !important;
+  color: var(--primary, #5b4fff) !important;
+  border-color: rgba(91, 79, 255, 0.18) !important;
+}
+
+html[data-theme="dark"] .candidature-stats-grid .stat-card,
+html[data-theme="dark"] .brand-source-tab-button,
+html[data-theme="dark"] .composer-mode-card,
+html[data-theme="dark"] .brand-action-launch,
+html[data-theme="dark"] .creator-response-action-card,
+html[data-theme="dark"] .front-pagination {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(226, 30, 128, 0.12), transparent 44%),
+    color-mix(in srgb, var(--white) 78%, var(--primary-light, #1e1a3a)) !important;
+  border-color: color-mix(in srgb, var(--primary, #7c6fff) 28%, var(--border, #2a2840)) !important;
+}
+
+html[data-theme="dark"] .source-feed-card,
+html[data-theme="dark"] .candidature-card,
+html[data-theme="dark"] .composer-card,
+html[data-theme="dark"] .locked-state-card,
+html[data-theme="dark"] .decision-note-card,
+html[data-theme="dark"] .timeline-card,
+html[data-theme="dark"] .brand-action-card,
+html[data-theme="dark"] .creator-response-modal-card,
+html[data-theme="dark"] .response-modal-card {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(139, 92, 246, 0.10), transparent 42%),
+    var(--white) !important;
+  border-color: color-mix(in srgb, var(--primary, #7c6fff) 22%, var(--border, #2a2840)) !important;
+}
+
+html[data-theme="dark"] .candidature-badge.status-draft,
+html[data-theme="dark"] .candidature-badge.status-pending,
+html[data-theme="dark"] .candidature-badge.status-outdated,
+html[data-theme="dark"] .origin-badge,
+html[data-theme="dark"] .negotiation-role,
+html[data-theme="dark"] .response-modal-kicker,
+html[data-theme="dark"] .campaign-opportunity-meta span {
+  background: color-mix(in srgb, var(--primary-light, #1e1a3a) 72%, var(--white)) !important;
+  color: #ddd6fe !important;
+  border-color: color-mix(in srgb, var(--primary, #7c6fff) 28%, var(--border, #2a2840)) !important;
+}
+
+/* Filter/tab cleanup: keep candidature controls branded, not loud. */
+.brand-source-tab-button,
+.composer-mode-card,
+.brand-action-launch,
+.creator-response-action-card,
+.front-pagination {
+  background: color-mix(in srgb, var(--white) 94%, var(--primary-light, #ece9ff)) !important;
+  border-color: rgba(91, 79, 255, 0.12) !important;
+  box-shadow: 0 8px 20px rgba(91, 79, 255, 0.055) !important;
+}
+
+.brand-source-tab-button:not(.is-active),
+.composer-mode-card:not(.is-active) {
+  color: var(--text-sub) !important;
+}
+
+.brand-source-tab-button:hover,
+.composer-mode-card:hover {
+  background: color-mix(in srgb, var(--white) 78%, var(--primary-light, #ece9ff)) !important;
+  border-color: rgba(91, 79, 255, 0.14) !important;
+  color: var(--text) !important;
+}
+
+.brand-source-tab-button.is-active,
+.composer-mode-card.is-active,
+.composer-mode-card[data-mode="accept"].is-active,
+.composer-mode-card[data-mode="negotiate"].is-active,
+.composer-mode-card[data-mode="decline"].is-active {
+  background: var(--primary-light, #ece9ff) !important;
+  color: var(--primary, #5b4fff) !important;
+  border-color: rgba(91, 79, 255, 0.20) !important;
+  box-shadow: 0 8px 20px rgba(91, 79, 255, 0.08) !important;
+}
+
+.brand-source-tab-button strong,
+.front-pagination span {
+  background: rgba(91, 79, 255, 0.10) !important;
+  color: var(--primary, #5b4fff) !important;
+  box-shadow: none !important;
+}
+
+.brand-source-tab-button.is-active strong {
+  background: linear-gradient(135deg, var(--primary, #5b4fff), #e21e80) !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .brand-source-tab-button,
+html[data-theme="dark"] .composer-mode-card,
+html[data-theme="dark"] .brand-action-launch,
+html[data-theme="dark"] .creator-response-action-card,
+html[data-theme="dark"] .front-pagination {
+  background: color-mix(in srgb, var(--white) 92%, var(--primary-light, #1e1a3a)) !important;
+  border-color: color-mix(in srgb, var(--primary, #7c6fff) 16%, var(--border, #2a2840)) !important;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18) !important;
+}
+
+html[data-theme="dark"] .brand-source-tab-button:hover,
+html[data-theme="dark"] .composer-mode-card:hover {
+  background: color-mix(in srgb, var(--white) 78%, var(--primary-light, #1e1a3a)) !important;
+  color: var(--text) !important;
+}
+
+html[data-theme="dark"] .brand-source-tab-button.is-active,
+html[data-theme="dark"] .composer-mode-card.is-active,
+html[data-theme="dark"] .composer-mode-card[data-mode="accept"].is-active,
+html[data-theme="dark"] .composer-mode-card[data-mode="negotiate"].is-active,
+html[data-theme="dark"] .composer-mode-card[data-mode="decline"].is-active {
+  background: color-mix(in srgb, var(--primary-light, #1e1a3a) 78%, var(--white)) !important;
+  color: #ddd6fe !important;
+  border-color: color-mix(in srgb, var(--primary, #7c6fff) 24%, var(--border, #2a2840)) !important;
+}
+
+html[data-theme="dark"] .brand-source-tab-button strong,
+html[data-theme="dark"] .front-pagination span {
+  background: color-mix(in srgb, var(--primary-light, #1e1a3a) 72%, var(--white)) !important;
+  color: #ddd6fe !important;
+}
+
+/* Unified FrontOffice indicators for candidature pages. */
+.candidature-stats-grid .stat-card {
+  position: relative;
+  min-height: auto !important;
+  padding: 0.82rem 0.95rem !important;
+  border-radius: 16px !important;
+  background: color-mix(in srgb, var(--white) 86%, var(--primary-light, #ece9ff)) !important;
+  border: 1px solid color-mix(in srgb, var(--primary, #5b4fff) 14%, var(--border, #ebebf2)) !important;
+  box-shadow: 0 10px 24px rgba(91, 79, 255, 0.07) !important;
+}
+
+.candidature-stats-grid .stat-card::before,
+.candidature-stats-grid .stat-card::after,
+.candidature-card::before,
+.response-modal-card::before {
+  display: none !important;
+  content: none !important;
+}
+
+.candidature-stats-grid .stat-label {
+  color: var(--text-sub) !important;
+  font-size: 0.76rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.candidature-stats-grid .stat-value {
+  background: none !important;
+  color: var(--primary, #5b4fff) !important;
+  -webkit-text-fill-color: currentColor !important;
+  font-family: 'Fraunces', serif !important;
+  font-size: clamp(1.3rem, 2vw, 1.68rem) !important;
+  line-height: 1.05 !important;
+}
+
+.candidature-stats-grid .stat-note {
+  color: var(--text-sub) !important;
+  font-size: 0.8rem !important;
+  line-height: 1.4 !important;
+}
+
+.candidature-badge,
+.origin-badge,
+.negotiation-role,
+.response-modal-kicker,
+.campaign-opportunity-meta span,
+.front-pagination span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.55rem;
+  padding: 0.22rem 0.58rem !important;
+  border-radius: 999px !important;
+  border: 1px solid color-mix(in srgb, var(--primary, #5b4fff) 14%, var(--border, #ebebf2)) !important;
+  background: var(--primary-light, #ece9ff) !important;
+  color: var(--primary, #5b4fff) !important;
+  font-size: 0.73rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  box-shadow: none !important;
+}
+
+.candidature-badge.status-sent,
+.candidature-badge.status-accepted {
+  background: rgba(20, 128, 74, 0.12) !important;
+  border-color: rgba(20, 128, 74, 0.18) !important;
+  color: #14804a !important;
+}
+
+.candidature-badge.status-review,
+.candidature-badge.status-negotiation {
+  background: rgba(245, 158, 11, 0.14) !important;
+  border-color: rgba(245, 158, 11, 0.20) !important;
+  color: #b54708 !important;
+}
+
+.candidature-badge.status-refused,
+.candidature-badge.status-withdrawn {
+  background: rgba(180, 35, 24, 0.10) !important;
+  border-color: rgba(180, 35, 24, 0.16) !important;
+  color: #b42318 !important;
+}
+
+.brand-source-tab-button strong,
+.front-pagination span {
+  background: color-mix(in srgb, var(--white) 56%, var(--primary-light, #ece9ff)) !important;
+  color: var(--primary, #5b4fff) !important;
+}
+
+.brand-source-tab-button.is-active strong {
+  background: linear-gradient(135deg, var(--primary, #5b4fff), #e21e80) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+
+html[data-theme="dark"] .candidature-stats-grid .stat-card,
+html[data-theme="dark"] .candidature-badge,
+html[data-theme="dark"] .origin-badge,
+html[data-theme="dark"] .negotiation-role,
+html[data-theme="dark"] .response-modal-kicker,
+html[data-theme="dark"] .campaign-opportunity-meta span,
+html[data-theme="dark"] .front-pagination span,
+html[data-theme="dark"] .brand-source-tab-button strong {
+  background: color-mix(in srgb, var(--primary-light, #1e1a3a) 70%, var(--white)) !important;
+  border-color: color-mix(in srgb, var(--primary, #7c6fff) 20%, var(--border, #2a2840)) !important;
+  color: #ddd6fe !important;
+}

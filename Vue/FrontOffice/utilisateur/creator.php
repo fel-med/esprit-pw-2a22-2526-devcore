@@ -378,6 +378,23 @@ $welcomeText = $isBrand
             .welcome-banner h2 { font-size: 1.6rem; }
             .quick-links { grid-template-columns: 1fr 1fr; }
         }
+
+        /* Unified FrontOffice indicators */
+        .cover-role {
+            background: var(--primary-light);
+            border: 1px solid rgba(91,79,255,0.14);
+            border-radius: 999px;
+            color: var(--primary);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 7px 13px;
+            box-shadow: 0 8px 22px rgba(91,79,255,0.08);
+        }
+        [data-theme="dark"] .cover-role {
+            border-color: rgba(124,111,255,0.26);
+            box-shadow: 0 8px 22px rgba(0,0,0,0.24);
+        }
     </style>
 <link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">

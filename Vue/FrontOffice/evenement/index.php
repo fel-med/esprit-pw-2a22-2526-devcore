@@ -244,7 +244,7 @@ if (!isset($evenements)) {
             align-items: center;
             justify-content: space-between;
             background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg) 100%);
-            border-radius: 24px;
+            border-radius: 14px;
             padding: 40px 48px;
             margin-bottom: 32px;
             border: 1px solid var(--border);
@@ -322,7 +322,7 @@ if (!isset($evenements)) {
         }
         .events-sidebar .filter-section {
             background: var(--white);
-            border-radius: 16px;
+            border-radius: 14px;
             padding: 20px;
             margin-bottom: 20px;
             border: 1px solid var(--border);
@@ -417,7 +417,7 @@ if (!isset($evenements)) {
         }
         .event-product-card {
             background: var(--white);
-            border-radius: 20px;
+            border-radius: 14px;
             overflow: hidden;
             border: 1px solid var(--border);
             transition: transform 0.2s, box-shadow 0.2s;
@@ -448,7 +448,7 @@ if (!isset($evenements)) {
         .event-badge {
             display: inline-block;
             padding: 4px 12px;
-            border-radius: 20px;
+            border-radius: 14px;
             font-size: 11px;
             font-weight: 700;
             margin-bottom: 12px;
@@ -544,7 +544,7 @@ if (!isset($evenements)) {
         }
         .detail-modal-content {
             background: var(--white);
-            border-radius: 20px;
+            border-radius: 14px;
             width: 860px;
             max-width: 90%;
             max-height: 85vh;
@@ -587,7 +587,7 @@ if (!isset($evenements)) {
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 20px 0 0 20px;
+            border-radius: 14px 0 0 14px;
             overflow: hidden;
             font-size: 3rem;
             color: #c0bde0;
@@ -675,7 +675,313 @@ if (!isset($evenements)) {
             .events-layout { flex-direction: column; }
             .events-sidebar { width: 100%; }
             .detail-modal-body { flex-direction: column; }
-            .detail-image { border-radius: 20px 20px 0 0; min-height: 200px; }
+            .detail-image { border-radius: 14px 14px 0 0; min-height: 200px; }
+        }
+
+        /* Shared FrontOffice visual bridge for event pages. */
+        body,
+        .event-page-main {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg) !important;
+            color: var(--text) !important;
+        }
+
+        .hero-content h1,
+        .section-header h2,
+        .section-header-text h2,
+        .event-card-title,
+        .detail-info h2 {
+            font-family: 'Fraunces', serif;
+            color: var(--text) !important;
+            letter-spacing: 0;
+        }
+
+        .hero-content p,
+        .section-header p,
+        .section-header-text p,
+        .event-card-desc,
+        .event-card-meta,
+        .events-count,
+        .detail-info p,
+        .detail-meta span {
+            color: var(--text-sub) !important;
+        }
+
+        .hero-section,
+        .event-product-card,
+        .events-sidebar .filter-section,
+        .detail-modal-content,
+        .inscription-modal-card,
+        .empty-state {
+            background: var(--white) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 14px !important;
+            color: var(--text) !important;
+            box-shadow: 0 12px 32px rgba(15, 14, 26, 0.06) !important;
+        }
+
+        .event-product-card:hover {
+            border-color: color-mix(in srgb, var(--primary, #5b4fff) 24%, var(--border, #ebebf2));
+            box-shadow: 0 18px 42px rgba(91, 79, 255, 0.12) !important;
+        }
+
+        .event-card-image,
+        .detail-image,
+        .events-sidebar .search-box,
+        .events-sidebar .chip:not(.active),
+        .sort-select,
+        .inscription-modal-card .form-control {
+            background: var(--bg) !important;
+            border-color: var(--border) !important;
+            color: var(--text) !important;
+        }
+
+        .events-sidebar .search-box,
+        .sort-select,
+        .inscription-modal-card .form-control {
+            border-radius: 10px !important;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .sort-select:focus,
+        .events-sidebar .search-box:focus-within,
+        .inscription-modal-card .form-control:focus {
+            background: var(--white) !important;
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 3px var(--primary-glow, rgba(91, 79, 255, 0.15)) !important;
+        }
+
+        .btn-event-primary,
+        .btn-inscription-detail,
+        body > main .btn-primary {
+            background: var(--primary) !important;
+            border-color: var(--primary) !important;
+            border-radius: 10px !important;
+            color: #ffffff !important;
+            font-family: 'DM Sans', sans-serif !important;
+            box-shadow: 0 3px 10px var(--primary-glow, rgba(91, 79, 255, 0.15)) !important;
+        }
+
+        .btn-event-primary:hover,
+        .btn-inscription-detail:hover,
+        body > main .btn-primary:hover {
+            background: var(--primary-hover, var(--primary)) !important;
+            border-color: var(--primary-hover, var(--primary)) !important;
+        }
+
+        .btn-event-secondary,
+        body > main .btn-outline-secondary {
+            background: var(--bg) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 10px !important;
+            color: var(--text) !important;
+            font-family: 'DM Sans', sans-serif !important;
+            box-shadow: none !important;
+        }
+
+        .btn-event-secondary:hover,
+        body > main .btn-outline-secondary:hover {
+            border-color: var(--primary) !important;
+            color: var(--primary) !important;
+        }
+
+        .event-badge.formation { background: var(--primary-light) !important; color: var(--primary) !important; }
+
+        [data-theme="dark"] .hero-section,
+        [data-theme="dark"] .event-product-card,
+        [data-theme="dark"] .events-sidebar .filter-section,
+        [data-theme="dark"] .detail-modal-content,
+        [data-theme="dark"] .inscription-modal-card,
+        [data-theme="dark"] .empty-state {
+            background: var(--white) !important;
+            border-color: var(--border) !important;
+            box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22) !important;
+        }
+
+        /* Marketplace body composition for the event page. */
+        .event-page-main {
+            max-width: 1220px;
+            margin-inline: auto;
+        }
+
+        .hero-section {
+            position: relative;
+            overflow: hidden;
+            min-height: auto;
+            padding: clamp(1.5rem, 3vw, 2.05rem) !important;
+            border-radius: 22px !important;
+            background:
+                radial-gradient(circle at 88% 12%, rgba(124, 111, 255, 0.20), transparent 12rem),
+                radial-gradient(circle at 10% 0%, rgba(255, 255, 255, 0.88), transparent 15rem),
+                linear-gradient(135deg, rgba(236, 233, 255, 0.90), rgba(255, 255, 255, 0.92)) !important;
+            border-color: rgba(91, 79, 255, 0.14) !important;
+            box-shadow: 0 18px 44px rgba(91, 79, 255, 0.10) !important;
+        }
+
+        .hero-content h1 {
+            max-width: 720px;
+            font-size: clamp(2rem, 4vw, 3.05rem);
+            line-height: 1.04;
+        }
+
+        .hero-content p {
+            max-width: 680px;
+            margin-bottom: 1rem;
+        }
+
+        .hero-stats {
+            gap: 0.65rem;
+            flex-wrap: wrap;
+        }
+
+        .hero-stat {
+            min-width: 130px;
+            padding: 0.68rem 0.85rem;
+            border: 1px solid rgba(91, 79, 255, 0.12);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.62);
+        }
+
+        .hero-stat-number {
+            font-size: 1.28rem;
+            line-height: 1;
+        }
+
+        .hero-image {
+            width: clamp(96px, 14vw, 140px);
+            height: clamp(96px, 14vw, 140px);
+            padding: 0.8rem;
+            border-radius: 28px;
+            background: rgba(255, 255, 255, 0.50);
+            box-shadow: inset 0 0 0 1px rgba(91, 79, 255, 0.10);
+        }
+
+        .events-layout {
+            gap: 1.15rem;
+            align-items: flex-start;
+        }
+
+        .events-sidebar {
+            width: min(260px, 100%);
+        }
+
+        .events-sidebar .filter-section {
+            padding: 0.9rem !important;
+            border-radius: 18px !important;
+            background: color-mix(in srgb, var(--white) 84%, var(--primary-light, #ece9ff)) !important;
+            box-shadow: 0 10px 26px rgba(91, 79, 255, 0.07) !important;
+        }
+
+        .events-sidebar .filter-title {
+            margin-bottom: 0.7rem;
+            color: var(--text-sub);
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+        .events-sidebar .filter-options {
+            gap: 0.55rem;
+        }
+
+        .events-sidebar .chip-group {
+            gap: 0.45rem;
+        }
+
+        .events-sidebar .chip {
+            border-radius: 999px !important;
+            background: var(--white) !important;
+        }
+
+        .events-header-bar {
+            margin-bottom: 1rem;
+        }
+
+        .events-product-grid {
+            gap: 1rem;
+        }
+
+        .event-product-card {
+            border-radius: 18px !important;
+            box-shadow: 0 14px 34px rgba(91, 79, 255, 0.07) !important;
+        }
+
+        .event-card-content {
+            padding: 1rem;
+        }
+
+        [data-theme="dark"] .hero-section {
+            background:
+                radial-gradient(circle at 88% 12%, rgba(124, 111, 255, 0.18), transparent 12rem),
+                linear-gradient(135deg, color-mix(in srgb, var(--primary-light, #1e1a3a) 52%, var(--white)), var(--white)) !important;
+            border-color: color-mix(in srgb, var(--primary, #7c6fff) 28%, var(--border, #2a2840)) !important;
+        }
+
+        [data-theme="dark"] .hero-stat,
+        [data-theme="dark"] .hero-image,
+        [data-theme="dark"] .events-sidebar .filter-section {
+            background: color-mix(in srgb, var(--white) 82%, var(--primary-light, #1e1a3a)) !important;
+            border-color: var(--border) !important;
+        }
+
+        /* Unified FrontOffice indicators. */
+        .hero-stats {
+            gap: 0.55rem !important;
+            align-items: center;
+        }
+
+        .hero-stat {
+            min-width: auto !important;
+            display: inline-flex !important;
+            align-items: center;
+            flex-direction: row !important;
+            gap: 0.45rem;
+            padding: 0.48rem 0.72rem !important;
+            border-radius: 999px !important;
+            background: color-mix(in srgb, var(--white) 66%, var(--primary-light, #ece9ff)) !important;
+            border: 1px solid color-mix(in srgb, var(--primary, #5b4fff) 14%, var(--border, #ebebf2)) !important;
+            box-shadow: 0 8px 20px rgba(91, 79, 255, 0.07);
+        }
+
+        .hero-stat-number {
+            font-family: 'Fraunces', serif;
+            font-size: 1.2rem !important;
+            line-height: 1;
+            color: var(--primary) !important;
+        }
+
+        .hero-stat-label {
+            color: var(--text-sub) !important;
+            font-size: 0.76rem !important;
+            font-weight: 700;
+        }
+
+        .event-badge {
+            min-height: 1.55rem;
+            padding: 0.22rem 0.62rem !important;
+            border-radius: 999px !important;
+            border: 1px solid transparent;
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0 !important;
+        }
+
+        .event-badge.formation,
+        .event-badge:not(.webinaire):not(.meetup):not(.atelier) {
+            background: var(--primary-light) !important;
+            border-color: color-mix(in srgb, var(--primary) 14%, var(--border)) !important;
+            color: var(--primary) !important;
+        }
+
+        .event-badge.webinaire { background: rgba(245, 158, 11, 0.14) !important; border-color: rgba(245, 158, 11, 0.20); color: #b54708 !important; }
+        .event-badge.meetup { background: rgba(226, 30, 128, 0.10) !important; border-color: rgba(226, 30, 128, 0.16); color: #b42367 !important; }
+        .event-badge.atelier { background: rgba(20, 128, 74, 0.12) !important; border-color: rgba(20, 128, 74, 0.18); color: #14804a !important; }
+
+        [data-theme="dark"] .hero-stat,
+        [data-theme="dark"] .event-badge.formation,
+        [data-theme="dark"] .event-badge:not(.webinaire):not(.meetup):not(.atelier) {
+            background: color-mix(in srgb, var(--primary-light, #1e1a3a) 70%, var(--white)) !important;
+            border-color: color-mix(in srgb, var(--primary, #7c6fff) 20%, var(--border, #2a2840)) !important;
+            color: #ddd6fe !important;
         }
     </style>
 </head>
@@ -822,8 +1128,8 @@ if (!isset($evenements)) {
 
     <!-- Inscription Modal -->
     <div id="inscriptionModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(6px); z-index: 1060; align-items: center; justify-content: center;">
-        <div class="inscription-modal-card" style="background: var(--white); border-radius: 24px; width: 460px; max-width: 90%; overflow: hidden;">
-            <div style="background: linear-gradient(135deg, #5b4fff, #7c3aed); padding: 24px; text-align: center; color: white;">
+        <div class="inscription-modal-card" style="background: var(--white); border-radius: 14px; width: 460px; max-width: 90%; overflow: hidden;">
+            <div style="background: var(--primary); padding: 24px; text-align: center; color: white;">
                 <h3>✨ <span data-i18n="registration">Inscription</span></h3>
                 <p data-i18n="join_event">Rejoignez cet événement</p>
             </div>

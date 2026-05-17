@@ -455,6 +455,115 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-main
     color: var(--text-sub); outline: none; transition: background .3s;
 }
 /* ===== END PAGINATION ===== */
+
+/* Unified FrontOffice indicators */
+.hero-tag {
+    background: rgba(255,255,255,0.78);
+    border: 1px solid var(--primary-border);
+    border-radius: 999px;
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 700;
+}
+.hero-stat {
+    background: linear-gradient(135deg, rgba(236,233,255,0.82), rgba(255,255,255,0.9));
+    border: 1px solid var(--primary-border);
+    border-radius: 16px;
+    padding: 8px 12px;
+    box-shadow: 0 8px 22px rgba(91,79,255,0.08);
+}
+.hero-stat-icon {
+    background: var(--primary-light) !important;
+    border: 1px solid var(--primary-border);
+    border-radius: 999px;
+    color: var(--primary) !important;
+    font-family: 'Fraunces', serif;
+    font-size: 12px !important;
+    font-weight: 900;
+}
+.hero-stat-val {
+    color: var(--primary);
+    font-family: 'Fraunces', serif;
+    font-weight: 900;
+}
+.hero-stat-label {
+    color: var(--text-sub);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+}
+.count-pill,
+.camp-obj,
+.camp-prod-pill,
+.s-chip {
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+.count-pill,
+.camp-obj {
+    background: var(--primary-light);
+    border: 1px solid var(--primary-border);
+    color: var(--primary);
+}
+.s-chip {
+    background: var(--white);
+    border-color: var(--border);
+    color: var(--text-sub);
+}
+.s-chip:hover,
+.s-chip.active {
+    background: var(--primary-light);
+    border-color: var(--primary-border);
+    color: var(--primary);
+    box-shadow: none;
+}
+.camp-badge {
+    border: 1px solid rgba(15,14,26,0.08);
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+}
+.camp-prod-pill.has {
+    background: var(--success-light);
+    border-color: var(--success-border);
+    color: var(--success);
+}
+.camp-prod-pill.none {
+    background: var(--primary-light);
+    border-color: var(--primary-border);
+    color: var(--primary);
+}
+html[data-theme="dark"] .hero-tag,
+body.dark-mode .hero-tag {
+    background: rgba(28,26,46,0.82);
+    border-color: var(--primary-border);
+    color: var(--primary);
+}
+html[data-theme="dark"] .hero-stat,
+body.dark-mode .hero-stat {
+    background: linear-gradient(135deg, rgba(42,38,96,0.72), rgba(28,26,46,0.92));
+    border-color: var(--primary-border);
+    box-shadow: 0 8px 22px rgba(0,0,0,0.24);
+}
+html[data-theme="dark"] .s-chip,
+body.dark-mode .s-chip {
+    background: var(--white);
+    border-color: var(--border);
+    color: var(--text-sub);
+}
+html[data-theme="dark"] .s-chip:hover,
+html[data-theme="dark"] .s-chip.active,
+body.dark-mode .s-chip:hover,
+body.dark-mode .s-chip.active {
+    background: var(--primary-light);
+    border-color: var(--primary-border);
+    color: var(--primary);
+}
+html[data-theme="dark"] .camp-badge,
+body.dark-mode .camp-badge {
+    border-color: rgba(255,255,255,0.08);
+}
 </style>
     <!-- Shared FrontOffice header assets (after page CSS so front-header wins on shared tokens) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">

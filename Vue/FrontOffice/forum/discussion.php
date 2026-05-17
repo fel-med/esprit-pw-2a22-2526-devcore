@@ -30,6 +30,7 @@ if (!isset($forum) || !isset($messages)) {
     <link rel="icon" type="image/png" sizes="32x32" href="<?= $BASE ?>/Vue/public/images/favicon-32.png">
     <link rel="shortcut icon" type="image/png" href="<?= $BASE ?>/Vue/public/images/favicon-32.png">
     <link rel="apple-touch-icon" sizes="180x180" href="<?= $BASE ?>/Vue/public/images/apple-touch-icon.png">
+    <link rel="stylesheet" href="<?= $BASE ?>/Vue/FrontOffice/layout/front-header.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,700;9..144,800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -38,30 +39,32 @@ if (!isset($forum) || !isset($messages)) {
             --primary-hover: #4438e0;
             --primary-glow: rgba(91,79,255,0.15);
             --primary-border: rgba(91,79,255,0.2);
-            --text-main: #0f0e1a;
+            --text: #0f0e1a;
+            --text-main: var(--text);
             --text-sub: #6b6f80;
             --text-dim: #a0a4b2;
-            --border: #e8e8f0;
-            --bg: #f4f4fb;
+            --border: #ebebf2;
+            --bg: #f6f6fc;
             --white: #ffffff;
             --danger: #f43f5e;
             --success: #0ea370;
-            --radius: 16px;
+            --radius: 14px;
             --radius-sm: 10px;
-            --shadow: 0 1px 4px rgba(15,14,26,0.07), 0 4px 16px rgba(91,79,255,0.05);
+            --shadow: 0 12px 32px rgba(15,14,26,0.06);
             --shadow-hover: 0 8px 32px rgba(91,79,255,0.13);
         }
 
         html[data-theme="dark"], body.dark-mode {
-            --primary: #7c6eff;
-            --primary-light: #2a2648;
-            --primary-hover: #8f82ff;
-            --text-main: #e6edf3;
-            --text-sub: #8b949e;
-            --text-dim: #8b949e;
-            --border: #30363d;
-            --bg: #0d1117;
-            --white: #161b22;
+            --primary: #7c6fff;
+            --primary-light: #1e1a3a;
+            --primary-hover: #9d8fff;
+            --text: #e8e6f5;
+            --text-main: var(--text);
+            --text-sub: #9b9db8;
+            --text-dim: #9b9db8;
+            --border: #2a2840;
+            --bg: #13121f;
+            --white: #1c1a2e;
         }
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -105,8 +108,9 @@ if (!isset($forum) || !isset($messages)) {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary), #7c3aed);
+            height: 2px;
+            background: var(--primary);
+            opacity: 0.55;
         }
         .forum-title {
             font-family: 'Fraunces', serif;
@@ -164,8 +168,8 @@ if (!isset($forum) || !isset($messages)) {
         .author-avatar {
             width: 38px;
             height: 38px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            border-radius: 10px;
+            background: var(--primary);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -198,7 +202,7 @@ if (!isset($forum) || !isset($messages)) {
         }
         .btn-msg-action {
             padding: 5px 14px;
-            border-radius: 20px;
+            border-radius: var(--radius-sm);
             border: 1px solid var(--border);
             background: transparent;
             font-size: 12px;
@@ -326,6 +330,192 @@ if (!isset($forum) || !isset($messages)) {
             .disc-page { padding: 20px 16px; }
             .forum-header-card { padding: 20px; }
             .message-card { padding: 16px; }
+        }
+
+        /* Shared FrontOffice visual bridge for discussion pages. */
+        html,
+        body,
+        html[data-theme="dark"],
+        html[data-theme="dark"] body,
+        body.dark-mode {
+            background: var(--bg) !important;
+            color: var(--text) !important;
+        }
+
+        .forum-title,
+        .reply-form-card h3,
+        .empty-messages h3 {
+            font-family: 'Fraunces', serif;
+            color: var(--text) !important;
+            letter-spacing: 0;
+        }
+
+        .forum-header-card,
+        .message-card,
+        .empty-messages,
+        .reply-form-card {
+            background: var(--white) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 14px !important;
+            color: var(--text) !important;
+            box-shadow: var(--shadow) !important;
+        }
+
+        .message-card:hover {
+            border-color: color-mix(in srgb, var(--primary, #5b4fff) 24%, var(--border, #ebebf2)) !important;
+            box-shadow: var(--shadow-hover) !important;
+        }
+
+        .forum-sujet-box,
+        .reply-form-card textarea,
+        .edit-area textarea {
+            background: var(--bg) !important;
+            border-color: var(--border) !important;
+            border-radius: 10px !important;
+            color: var(--text) !important;
+        }
+
+        .reply-form-card textarea:focus,
+        .edit-area textarea:focus {
+            background: var(--white) !important;
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 3px var(--primary-glow, rgba(91, 79, 255, 0.15)) !important;
+            outline: none;
+        }
+
+        .forum-meta-row,
+        .forum-sujet-box,
+        .message-content,
+        .message-date,
+        .empty-messages p {
+            color: var(--text-sub) !important;
+        }
+
+        .btn-submit,
+        .btn-save-edit {
+            background: var(--primary) !important;
+            border-radius: 10px !important;
+            color: #ffffff !important;
+            font-family: 'DM Sans', sans-serif !important;
+            box-shadow: 0 3px 10px var(--primary-glow, rgba(91, 79, 255, 0.15));
+        }
+
+        .btn-submit:hover,
+        .btn-save-edit:hover {
+            background: var(--primary-hover, var(--primary)) !important;
+        }
+
+        .btn-cancel-edit,
+        .btn-msg-action {
+            background: var(--bg) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 10px !important;
+            color: var(--text-sub) !important;
+            font-family: 'DM Sans', sans-serif !important;
+        }
+
+        .btn-cancel-edit:hover,
+        .btn-msg-action:hover {
+            border-color: var(--primary) !important;
+            color: var(--primary) !important;
+        }
+
+        html[data-theme="dark"] .forum-header-card,
+        html[data-theme="dark"] .message-card,
+        html[data-theme="dark"] .empty-messages,
+        html[data-theme="dark"] .reply-form-card,
+        body.dark-mode .forum-header-card,
+        body.dark-mode .message-card,
+        body.dark-mode .empty-messages,
+        body.dark-mode .reply-form-card {
+            background: var(--white) !important;
+            border-color: var(--border) !important;
+            box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22) !important;
+        }
+
+        /* Community discussion composition. */
+        .disc-page {
+            max-width: 980px;
+            padding-top: 1.75rem;
+        }
+
+        .forum-header-card {
+            overflow: hidden;
+            border-radius: 22px !important;
+            padding: clamp(1.35rem, 3vw, 2rem) !important;
+            background:
+                radial-gradient(circle at 92% 8%, rgba(124, 111, 255, 0.18), transparent 12rem),
+                linear-gradient(135deg, rgba(236, 233, 255, 0.88), rgba(255, 255, 255, 0.92)) !important;
+            border-color: rgba(91, 79, 255, 0.14) !important;
+            box-shadow: 0 18px 44px rgba(91, 79, 255, 0.10) !important;
+        }
+
+        .forum-header-card::before {
+            display: none;
+        }
+
+        .forum-title {
+            font-size: clamp(1.6rem, 3vw, 2.35rem);
+            line-height: 1.08;
+        }
+
+        .forum-meta-row {
+            gap: 0.55rem;
+            border-bottom-color: rgba(91, 79, 255, 0.12);
+        }
+
+        .forum-meta-row > span,
+        .forum-meta-row > div {
+            padding: 0.42rem 0.65rem;
+            border: 1px solid rgba(91, 79, 255, 0.12);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.58);
+        }
+
+        .forum-sujet-box {
+            border-left: 0 !important;
+            border: 1px solid rgba(91, 79, 255, 0.12) !important;
+            background: rgba(255, 255, 255, 0.62) !important;
+        }
+
+        .message-card,
+        .empty-messages,
+        .reply-form-card {
+            border-radius: 18px !important;
+            box-shadow: 0 14px 34px rgba(91, 79, 255, 0.07) !important;
+        }
+
+        .message-header {
+            border-bottom-color: var(--border);
+        }
+
+        .author-avatar {
+            border-radius: 14px;
+            box-shadow: 0 8px 18px rgba(91, 79, 255, 0.18);
+        }
+
+        .reply-form-card {
+            background: color-mix(in srgb, var(--white) 88%, var(--primary-light, #ece9ff)) !important;
+        }
+
+        html[data-theme="dark"] .forum-header-card,
+        body.dark-mode .forum-header-card {
+            background:
+                radial-gradient(circle at 92% 8%, rgba(124, 111, 255, 0.18), transparent 12rem),
+                linear-gradient(135deg, color-mix(in srgb, var(--primary-light, #1e1a3a) 52%, var(--white)), var(--white)) !important;
+            border-color: color-mix(in srgb, var(--primary, #7c6fff) 28%, var(--border, #2a2840)) !important;
+        }
+
+        html[data-theme="dark"] .forum-meta-row > span,
+        html[data-theme="dark"] .forum-meta-row > div,
+        html[data-theme="dark"] .forum-sujet-box,
+        html[data-theme="dark"] .reply-form-card,
+        body.dark-mode .forum-meta-row > span,
+        body.dark-mode .forum-meta-row > div,
+        body.dark-mode .forum-sujet-box,
+        body.dark-mode .reply-form-card {
+            background: color-mix(in srgb, var(--white) 82%, var(--primary-light, #1e1a3a)) !important;
+            border-color: var(--border) !important;
         }
     </style>
 </head>

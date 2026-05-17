@@ -13,31 +13,32 @@ body {
 }
 
 :root {
-  --bg-color: #f6f7fb;
-  --card-bg: #ffffff;
-  --card-bg-soft: #f8f9ff;
-  --text-color: #101828;
-  --muted-text: #64748b;
-  --border-color: rgba(30, 48, 243, 0.1);
-  --border-color-strong: rgba(30, 48, 243, 0.2);
-  --primary-color: #6c5ce7;
-  --primary-color-strong: #1e30f3;
-  --shadow-color: rgba(20, 31, 80, 0.08);
-  --input-bg: #ffffff;
-  --input-text: #101828;
-  --input-border: rgba(30, 48, 243, 0.16);
-  --table-bg: #ffffff;
-  --table-header-bg: #f7f9ff;
-  --badge-bg: rgba(108, 92, 231, 0.1);
-  --offre-surface: #ffffff;
-  --offre-surface-soft: #f8f9ff;
-  --offre-border: rgba(30, 48, 243, 0.1);
-  --offre-border-strong: rgba(30, 48, 243, 0.2);
-  --offre-shadow: 0 22px 55px rgba(20, 31, 80, 0.08);
-  --offre-muted: #64748b;
-  --offre-title: #101828;
-  --offre-accent: #1e30f3;
-  --offre-accent-soft: rgba(30, 48, 243, 0.08);
+  --bg-color: var(--bg, #f6f6fc);
+  --card-bg: var(--white, #ffffff);
+  --card-bg-soft: color-mix(in srgb, var(--bg, #f6f6fc) 76%, var(--white, #ffffff));
+  --text-color: var(--text, #0f0e1a);
+  --muted-text: var(--text-sub, #6b6f80);
+  --muted-color: var(--text-sub, #6b6f80);
+  --border-color: var(--border, #ebebf2);
+  --border-color-strong: color-mix(in srgb, var(--primary, #5b4fff) 24%, var(--border, #ebebf2));
+  --primary-color: var(--primary, #5b4fff);
+  --primary-color-strong: var(--primary, #5b4fff);
+  --shadow-color: rgba(15, 14, 26, 0.06);
+  --input-bg: var(--bg, #f6f6fc);
+  --input-text: var(--text, #0f0e1a);
+  --input-border: var(--border, #ebebf2);
+  --table-bg: var(--white, #ffffff);
+  --table-header-bg: var(--bg, #f6f6fc);
+  --badge-bg: var(--primary-light, #ece9ff);
+  --offre-surface: var(--white, #ffffff);
+  --offre-surface-soft: var(--bg, #f6f6fc);
+  --offre-border: var(--border, #ebebf2);
+  --offre-border-strong: color-mix(in srgb, var(--primary, #5b4fff) 24%, var(--border, #ebebf2));
+  --offre-shadow: 0 12px 32px rgba(15, 14, 26, 0.06);
+  --offre-muted: var(--text-sub, #6b6f80);
+  --offre-title: var(--text, #0f0e1a);
+  --offre-accent: var(--primary, #5b4fff);
+  --offre-accent-soft: var(--primary-light, #ece9ff);
   --offre-success: #14804a;
   --offre-warning: #b54708;
   --offre-gold: #b7791f;
@@ -45,22 +46,23 @@ body {
 }
 
 [data-theme="dark"] {
-  --bg-color: #0b1220;
-  --card-bg: #111827;
-  --card-bg-soft: #172033;
-  --text-color: #f8fafc;
-  --muted-text: #a7b3c7;
-  --border-color: rgba(148, 163, 184, 0.18);
-  --border-color-strong: rgba(167, 139, 250, 0.34);
-  --primary-color: #a78bfa;
-  --primary-color-strong: #8b5cf6;
-  --shadow-color: rgba(0, 0, 0, 0.32);
-  --input-bg: #0f172a;
-  --input-text: #f8fafc;
-  --input-border: rgba(148, 163, 184, 0.28);
-  --table-bg: #111827;
-  --table-header-bg: #172033;
-  --badge-bg: rgba(167, 139, 250, 0.16);
+  --bg-color: var(--bg, #13121f);
+  --card-bg: var(--white, #1c1a2e);
+  --card-bg-soft: color-mix(in srgb, var(--bg, #13121f) 72%, var(--white, #1c1a2e));
+  --text-color: var(--text, #e8e6f5);
+  --muted-text: var(--text-sub, #9b9db8);
+  --muted-color: var(--text-sub, #9b9db8);
+  --border-color: var(--border, #2a2840);
+  --border-color-strong: color-mix(in srgb, var(--primary, #7c6fff) 32%, var(--border, #2a2840));
+  --primary-color: var(--primary, #7c6fff);
+  --primary-color-strong: var(--primary, #7c6fff);
+  --shadow-color: rgba(0, 0, 0, 0.22);
+  --input-bg: var(--bg, #13121f);
+  --input-text: var(--text, #e8e6f5);
+  --input-border: var(--border, #2a2840);
+  --table-bg: var(--white, #1c1a2e);
+  --table-header-bg: var(--bg, #13121f);
+  --badge-bg: var(--primary-light, #1e1a3a);
   --offre-surface: var(--card-bg);
   --offre-surface-soft: var(--card-bg-soft);
   --offre-border: var(--border-color);
@@ -69,7 +71,7 @@ body {
   --offre-muted: var(--muted-text);
   --offre-title: var(--text-color);
   --offre-accent: var(--primary-color);
-  --offre-accent-soft: rgba(167, 139, 250, 0.14);
+  --offre-accent-soft: var(--primary-light, #1e1a3a);
 }
 
 html[data-theme="dark"],
@@ -81,6 +83,7 @@ html[data-theme="dark"] body {
 body {
   background: var(--bg-color);
   color: var(--text-color);
+  font-family: 'DM Sans', sans-serif;
 }
 
 .gradient-title {
@@ -5014,4 +5017,860 @@ body > main.container-fluid {
     width: min(200px, 52vw);
     height: min(240px, 62vw);
   }
+}
+
+/* Shared FrontOffice visual bridge for offer pages. */
+html,
+html[data-theme="dark"],
+body,
+html[data-theme="dark"] body {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif !important;
+}
+
+h1,
+h2,
+h3,
+.display-5,
+.gradient-title,
+.section-title,
+.offer-card-title,
+.saved-offer-head h3,
+.source-feed-title,
+.candidature-card-title,
+.wizard-step-head h3,
+.quick-overview-card h3,
+.candidature-review-card h3,
+.campaign-opportunity-card h2 {
+  font-family: 'Fraunces', serif;
+  color: var(--text) !important;
+  -webkit-text-fill-color: currentColor !important;
+  background: none !important;
+  letter-spacing: 0;
+}
+
+.section-subtitle,
+.module-hero p,
+.lead,
+.text-muted,
+.stat-note,
+.offer-summary,
+.saved-offer-head p,
+.offer-card p,
+.response-card p,
+.info-card p,
+.quick-overview-description,
+.campaign-opportunity-card p {
+  color: var(--text-sub) !important;
+}
+
+.module-hero,
+.section-card,
+.filter-card,
+.offer-card,
+.saved-offer-card,
+.empty-state-card,
+.info-card,
+.response-card,
+.invitation-card,
+.wizard-card,
+.wizard-sidebar,
+.stat-card,
+.review-card,
+.quick-overview-card,
+.candidature-review-card,
+.campaign-opportunity-card,
+.modal-card,
+.creator-modal-card,
+.response-modal-card,
+dialog.delete-dialog,
+.front-pagination {
+  background: var(--white) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 14px !important;
+  color: var(--text) !important;
+  box-shadow: 0 12px 32px rgba(15, 14, 26, 0.06) !important;
+}
+
+.module-hero {
+  overflow: visible;
+  padding: 1.55rem 1.75rem;
+}
+
+.module-hero::after {
+  display: none !important;
+}
+
+.filter-stack,
+.offer-tab-list,
+.offer-detail-item,
+.note-block,
+.review-item,
+.creator-selection-summary,
+.creator-modal-section,
+.composer-state-bar,
+.table-responsive {
+  background: var(--bg) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+.stat-card::before {
+  background: var(--primary) !important;
+}
+
+.offer-card:hover,
+.saved-offer-card:hover,
+.source-feed-card:hover,
+.candidature-card:hover,
+.stat-card:hover,
+.campaign-opportunity-card:hover {
+  border-color: color-mix(in srgb, var(--primary, #5b4fff) 24%, var(--border, #ebebf2)) !important;
+  box-shadow: 0 18px 42px rgba(91, 79, 255, 0.12) !important;
+}
+
+body > main .btn-primary,
+body > main .search-actions button,
+body > main .candidature-review-actions button,
+.module-hero .btn-primary,
+.creator-modal-card .btn-primary,
+.response-modal-card .btn-primary {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  border-radius: 10px !important;
+  color: #ffffff !important;
+  font-family: 'DM Sans', sans-serif !important;
+  box-shadow: 0 3px 10px var(--primary-glow, rgba(91, 79, 255, 0.15)) !important;
+}
+
+body > main .btn-primary:hover,
+body > main .search-actions button:hover,
+body > main .candidature-review-actions button:hover,
+.module-hero .btn-primary:hover,
+.creator-modal-card .btn-primary:hover,
+.response-modal-card .btn-primary:hover {
+  background: var(--primary-hover, var(--primary)) !important;
+  border-color: var(--primary-hover, var(--primary)) !important;
+}
+
+body > main .btn-outline-secondary,
+body > main .clear-link,
+.creator-modal-card .btn-outline-secondary,
+.response-modal-card .btn-outline-secondary {
+  background: var(--bg) !important;
+  border-color: var(--border) !important;
+  border-radius: 10px !important;
+  color: var(--text-sub) !important;
+  font-family: 'DM Sans', sans-serif !important;
+  box-shadow: none !important;
+}
+
+body > main .btn-outline-secondary:hover,
+body > main .clear-link:hover,
+.creator-modal-card .btn-outline-secondary:hover,
+.response-modal-card .btn-outline-secondary:hover {
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+body > main input,
+body > main select,
+body > main textarea,
+body > main .form-control,
+body > main .form-select,
+.creator-modal-card input,
+.creator-modal-card select,
+.creator-modal-card textarea,
+.creator-modal-card .form-control,
+.creator-modal-card .form-select,
+.response-modal-card input,
+.response-modal-card select,
+.response-modal-card textarea,
+.response-modal-card .form-control,
+.response-modal-card .form-select {
+  background: var(--bg) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 10px !important;
+  color: var(--text) !important;
+  font-family: 'DM Sans', sans-serif !important;
+  box-shadow: none !important;
+}
+
+body > main input:focus,
+body > main select:focus,
+body > main textarea:focus,
+body > main .form-control:focus,
+body > main .form-select:focus,
+.creator-modal-card input:focus,
+.creator-modal-card select:focus,
+.creator-modal-card textarea:focus,
+.creator-modal-card .form-control:focus,
+.creator-modal-card .form-select:focus,
+.response-modal-card input:focus,
+.response-modal-card select:focus,
+.response-modal-card textarea:focus,
+.response-modal-card .form-control:focus,
+.response-modal-card .form-select:focus {
+  background: var(--white) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow, rgba(91, 79, 255, 0.15)) !important;
+}
+
+body > main input::placeholder,
+body > main textarea::placeholder,
+.creator-modal-card input::placeholder,
+.creator-modal-card textarea::placeholder,
+.response-modal-card input::placeholder,
+.response-modal-card textarea::placeholder {
+  color: var(--text-sub) !important;
+}
+
+html[data-theme="dark"] .module-hero,
+html[data-theme="dark"] .section-card,
+html[data-theme="dark"] .filter-card,
+html[data-theme="dark"] .offer-card,
+html[data-theme="dark"] .saved-offer-card,
+html[data-theme="dark"] .empty-state-card,
+html[data-theme="dark"] .info-card,
+html[data-theme="dark"] .response-card,
+html[data-theme="dark"] .invitation-card,
+html[data-theme="dark"] .wizard-card,
+html[data-theme="dark"] .wizard-sidebar,
+html[data-theme="dark"] .stat-card,
+html[data-theme="dark"] .review-card,
+html[data-theme="dark"] .quick-overview-card,
+html[data-theme="dark"] .candidature-review-card,
+html[data-theme="dark"] .campaign-opportunity-card,
+html[data-theme="dark"] .modal-card,
+html[data-theme="dark"] .creator-modal-card,
+html[data-theme="dark"] .response-modal-card,
+html[data-theme="dark"] dialog.delete-dialog,
+html[data-theme="dark"] .front-pagination {
+  background: var(--white) !important;
+  border-color: var(--border) !important;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22) !important;
+}
+
+/* Marketplace body composition: softer community feel below the shared header. */
+body > main.container,
+body > main.container-fluid {
+  width: min(1220px, calc(100vw - 2rem)) !important;
+  max-width: 1220px !important;
+}
+
+.offre-page-shell,
+.creator-live-region {
+  gap: 1.15rem;
+}
+
+.module-hero {
+  isolation: isolate;
+  overflow: hidden !important;
+  padding: clamp(1.55rem, 3vw, 2.1rem) !important;
+  border-radius: 22px !important;
+  background:
+    radial-gradient(circle at 92% 8%, rgba(124, 111, 255, 0.20), transparent 14rem),
+    radial-gradient(circle at 8% 0%, rgba(255, 255, 255, 0.86), transparent 16rem),
+    linear-gradient(135deg, rgba(236, 233, 255, 0.9), rgba(255, 255, 255, 0.92)) !important;
+  border: 1px solid rgba(91, 79, 255, 0.14) !important;
+  box-shadow: 0 18px 44px rgba(91, 79, 255, 0.10) !important;
+}
+
+.module-hero::after {
+  content: "" !important;
+  display: block !important;
+  position: absolute;
+  inset: auto -3.5rem -4.5rem auto;
+  width: 13rem;
+  height: 13rem;
+  border-radius: 999px;
+  background: rgba(91, 79, 255, 0.12);
+  filter: blur(1px);
+  z-index: -1;
+}
+
+.module-hero .display-5,
+.module-hero h1 {
+  max-width: 780px;
+  font-size: clamp(2rem, 4vw, 3.25rem) !important;
+  line-height: 1.02 !important;
+}
+
+.module-hero p {
+  max-width: 720px;
+}
+
+.stats-grid,
+.candidature-stats-grid {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
+  gap: 0.75rem !important;
+}
+
+.stat-card,
+.candidature-stats-grid .stat-card {
+  min-height: auto !important;
+  padding: 0.85rem 1rem !important;
+  border-radius: 16px !important;
+  background:
+    linear-gradient(135deg, rgba(236, 233, 255, 0.74), rgba(255, 255, 255, 0.88)) !important;
+  border-color: rgba(91, 79, 255, 0.12) !important;
+  box-shadow: 0 10px 26px rgba(91, 79, 255, 0.08) !important;
+}
+
+.stat-card::before,
+.candidature-card::before {
+  display: none !important;
+}
+
+.stat-label,
+.candidature-stats-grid .stat-label {
+  color: var(--text-sub) !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.stat-value,
+.candidature-stats-grid .stat-value {
+  color: var(--primary) !important;
+  font-size: clamp(1.35rem, 2vw, 1.75rem) !important;
+  line-height: 1.1 !important;
+}
+
+.stat-note,
+.candidature-stats-grid .stat-note {
+  font-size: 0.82rem !important;
+  line-height: 1.45 !important;
+}
+
+.filter-card {
+  padding: 0.95rem !important;
+  border-radius: 18px !important;
+  background: color-mix(in srgb, var(--white) 82%, var(--primary-light, #ece9ff)) !important;
+  box-shadow: 0 10px 28px rgba(91, 79, 255, 0.07) !important;
+}
+
+.filter-card .section-title,
+.filter-card h2,
+.filter-card h3 {
+  font-size: 1rem !important;
+}
+
+.filter-grid {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.65rem !important;
+}
+
+.filter-grid > *,
+.filter-actions {
+  flex: 1 1 160px;
+  min-width: min(100%, 150px);
+}
+
+.filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem !important;
+}
+
+.filter-actions .btn,
+.search-actions .btn,
+.search-actions button {
+  min-height: 2.45rem;
+  padding: 0.55rem 0.85rem !important;
+}
+
+.offer-tab-list {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem !important;
+  padding: 0.45rem !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 999px !important;
+  background: color-mix(in srgb, var(--white) 86%, var(--primary-light, #ece9ff)) !important;
+}
+
+.offer-tab-button {
+  width: auto !important;
+  min-height: 2.35rem !important;
+  padding: 0.55rem 0.9rem !important;
+  border: 1px solid transparent !important;
+  border-radius: 999px !important;
+  color: var(--text-sub) !important;
+}
+
+.offer-tab-button:hover,
+.offer-tab-button.is-active {
+  background: var(--primary-light, #ece9ff) !important;
+  border-color: color-mix(in srgb, var(--primary, #5b4fff) 18%, var(--border, #ebebf2)) !important;
+  color: var(--primary) !important;
+}
+
+.offer-card,
+.saved-offer-card,
+.source-feed-card,
+.candidature-card,
+.campaign-opportunity-card {
+  border-radius: 18px !important;
+  box-shadow: 0 14px 34px rgba(91, 79, 255, 0.07) !important;
+}
+
+html[data-theme="dark"] .module-hero {
+  background:
+    radial-gradient(circle at 92% 8%, rgba(124, 111, 255, 0.18), transparent 14rem),
+    linear-gradient(135deg, color-mix(in srgb, var(--primary-light, #1e1a3a) 52%, var(--white)), var(--white)) !important;
+  border-color: color-mix(in srgb, var(--primary, #7c6fff) 28%, var(--border, #2a2840)) !important;
+}
+
+html[data-theme="dark"] .stat-card,
+html[data-theme="dark"] .candidature-stats-grid .stat-card,
+html[data-theme="dark"] .filter-card,
+html[data-theme="dark"] .offer-tab-list {
+  background: color-mix(in srgb, var(--white) 82%, var(--primary-light, #1e1a3a)) !important;
+  border-color: var(--border) !important;
+}
+
+/* Cre8Connect accent polish: keep the marketplace layout, restore brand personality. */
+.module-hero {
+  background:
+    radial-gradient(circle at 90% 20%, rgba(226, 30, 128, 0.15), transparent 32%),
+    radial-gradient(circle at 12% 0%, rgba(139, 92, 246, 0.18), transparent 30%),
+    linear-gradient(135deg, rgba(236, 233, 255, 0.94), rgba(255, 255, 255, 0.96)) !important;
+  border-color: rgba(91, 79, 255, 0.22) !important;
+  box-shadow: 0 22px 52px rgba(91, 79, 255, 0.16) !important;
+}
+
+.module-hero::after {
+  background:
+    radial-gradient(circle, rgba(226, 30, 128, 0.20), rgba(139, 92, 246, 0.13) 54%, transparent 72%) !important;
+  filter: blur(2px);
+}
+
+.module-eyebrow,
+.hero-eyebrow {
+  background: rgba(255, 255, 255, 0.62) !important;
+  color: var(--primary) !important;
+  border: 1px solid rgba(91, 79, 255, 0.16) !important;
+}
+
+.stat-card,
+.candidature-stats-grid .stat-card {
+  position: relative;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(226, 30, 128, 0.10), transparent 46%),
+    linear-gradient(135deg, rgba(236, 233, 255, 0.88), rgba(255, 255, 255, 0.92)) !important;
+  border-color: rgba(91, 79, 255, 0.18) !important;
+  box-shadow: 0 14px 30px rgba(91, 79, 255, 0.11) !important;
+}
+
+.stat-card::after,
+.candidature-stats-grid .stat-card::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--primary, #5b4fff), #e21e80);
+  opacity: 0.78;
+}
+
+.stat-value,
+.candidature-stats-grid .stat-value {
+  background: linear-gradient(135deg, var(--primary, #5b4fff), #8b5cf6 52%, #e21e80);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: var(--primary) !important;
+  -webkit-text-fill-color: transparent;
+}
+
+.filter-card {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(226, 30, 128, 0.08), transparent 42%),
+    linear-gradient(135deg, rgba(236, 233, 255, 0.78), rgba(255, 255, 255, 0.88)) !important;
+  border-color: rgba(91, 79, 255, 0.16) !important;
+  box-shadow: 0 14px 32px rgba(91, 79, 255, 0.10) !important;
+}
+
+.filter-actions .btn-primary,
+.search-actions button,
+body > main .btn-primary,
+.compact-actions .btn-primary,
+.module-hero .btn-primary,
+.creator-modal-card .btn-primary,
+.response-modal-card .btn-primary,
+.cre8pilot-composer button[type="submit"] {
+  background: linear-gradient(135deg, var(--primary, #5b4fff), #8b5cf6 48%, #e21e80) !important;
+  border-color: transparent !important;
+  box-shadow: 0 10px 22px rgba(91, 79, 255, 0.22) !important;
+}
+
+.filter-actions .btn-primary:hover,
+.search-actions button:hover,
+body > main .btn-primary:hover,
+.compact-actions .btn-primary:hover,
+.module-hero .btn-primary:hover,
+.creator-modal-card .btn-primary:hover,
+.response-modal-card .btn-primary:hover {
+  filter: saturate(1.08) brightness(0.98);
+  box-shadow: 0 14px 28px rgba(226, 30, 128, 0.18) !important;
+}
+
+.offer-tab-list {
+  background:
+    linear-gradient(135deg, rgba(236, 233, 255, 0.76), rgba(255, 255, 255, 0.9)) !important;
+  border-color: rgba(91, 79, 255, 0.16) !important;
+  box-shadow: inset 0 0 0 1px rgba(226, 30, 128, 0.04), 0 10px 24px rgba(91, 79, 255, 0.08) !important;
+}
+
+.offer-tab-button.is-active,
+.offer-tab-button:hover {
+  background: linear-gradient(135deg, rgba(236, 233, 255, 0.96), rgba(255, 255, 255, 0.92)) !important;
+  color: var(--primary) !important;
+  border-color: rgba(91, 79, 255, 0.24) !important;
+}
+
+.offer-tab-button.is-active .offer-tab-badge,
+.offer-tab-badge {
+  background: linear-gradient(135deg, var(--primary, #5b4fff), #e21e80) !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 14px rgba(91, 79, 255, 0.18);
+}
+
+.offer-card,
+.saved-offer-card,
+.source-feed-card,
+.candidature-card,
+.campaign-opportunity-card,
+.response-card,
+.info-card,
+.quick-overview-card,
+.candidature-review-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.98)),
+    radial-gradient(circle at 100% 0%, rgba(236, 233, 255, 0.60), transparent 42%) !important;
+  border-color: rgba(91, 79, 255, 0.14) !important;
+  box-shadow: 0 16px 36px rgba(91, 79, 255, 0.09) !important;
+}
+
+.offer-card,
+.saved-offer-card,
+.source-feed-card,
+.candidature-card {
+  position: relative;
+}
+
+.offer-card::after,
+.saved-offer-card::after,
+.source-feed-card::after,
+.candidature-card::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  border-radius: 18px 0 0 18px;
+  background: linear-gradient(180deg, rgba(91, 79, 255, 0.70), rgba(226, 30, 128, 0.58));
+  opacity: 0.78;
+}
+
+.offer-status.status-draft,
+.status-draft,
+.status-pending,
+.status-waiting,
+.response-status.pending,
+.response-status.draft,
+.offer-status.neutral,
+.saved-badge,
+.priority-badge {
+  background: rgba(236, 233, 255, 0.82) !important;
+  color: var(--primary, #5b4fff) !important;
+  border-color: rgba(91, 79, 255, 0.18) !important;
+}
+
+html[data-theme="dark"] .module-hero {
+  background:
+    radial-gradient(circle at 90% 20%, rgba(226, 30, 128, 0.18), transparent 32%),
+    radial-gradient(circle at 12% 0%, rgba(139, 92, 246, 0.20), transparent 30%),
+    linear-gradient(135deg, color-mix(in srgb, var(--primary-light, #1e1a3a) 64%, var(--white)), var(--white)) !important;
+  border-color: color-mix(in srgb, var(--primary, #7c6fff) 38%, var(--border, #2a2840)) !important;
+  box-shadow: 0 22px 52px rgba(0, 0, 0, 0.28) !important;
+}
+
+html[data-theme="dark"] .stat-card,
+html[data-theme="dark"] .candidature-stats-grid .stat-card,
+html[data-theme="dark"] .filter-card,
+html[data-theme="dark"] .offer-tab-list {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(226, 30, 128, 0.12), transparent 44%),
+    color-mix(in srgb, var(--white) 78%, var(--primary-light, #1e1a3a)) !important;
+  border-color: color-mix(in srgb, var(--primary, #7c6fff) 28%, var(--border, #2a2840)) !important;
+}
+
+html[data-theme="dark"] .offer-card,
+html[data-theme="dark"] .saved-offer-card,
+html[data-theme="dark"] .source-feed-card,
+html[data-theme="dark"] .candidature-card,
+html[data-theme="dark"] .campaign-opportunity-card,
+html[data-theme="dark"] .response-card,
+html[data-theme="dark"] .info-card,
+html[data-theme="dark"] .quick-overview-card,
+html[data-theme="dark"] .candidature-review-card {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(139, 92, 246, 0.10), transparent 42%),
+    var(--white) !important;
+  border-color: color-mix(in srgb, var(--primary, #7c6fff) 22%, var(--border, #2a2840)) !important;
+}
+
+/* Filter/tab cleanup: branded but calm after the accent pass. */
+.filter-card {
+  background: color-mix(in srgb, var(--white) 94%, var(--primary-light, #ece9ff)) !important;
+  border-color: rgba(91, 79, 255, 0.13) !important;
+  box-shadow: 0 10px 24px rgba(91, 79, 255, 0.07) !important;
+}
+
+.filter-card label,
+.filter-card .form-label,
+.filter-card .section-title,
+.filter-card h2,
+.filter-card h3 {
+  color: var(--text) !important;
+}
+
+.filter-card input,
+.filter-card select,
+.filter-card textarea,
+.filter-card .form-control,
+.filter-card .form-select {
+  background: var(--white) !important;
+  border-color: var(--border) !important;
+}
+
+.filter-card input:focus,
+.filter-card select:focus,
+.filter-card textarea:focus,
+.filter-card .form-control:focus,
+.filter-card .form-select:focus {
+  border-color: var(--primary, #5b4fff) !important;
+  box-shadow: 0 0 0 3px rgba(91, 79, 255, 0.14) !important;
+}
+
+.filter-actions .btn-outline-secondary,
+.filter-actions .clear-link,
+.search-actions .btn-outline-secondary,
+.search-actions .clear-link {
+  background: color-mix(in srgb, var(--white) 82%, var(--primary-light, #ece9ff)) !important;
+  border-color: rgba(91, 79, 255, 0.12) !important;
+  color: var(--text-sub) !important;
+  box-shadow: none !important;
+}
+
+.offer-tab-list {
+  background: color-mix(in srgb, var(--white) 96%, var(--primary-light, #ece9ff)) !important;
+  border-color: rgba(91, 79, 255, 0.12) !important;
+  box-shadow: 0 8px 20px rgba(91, 79, 255, 0.055) !important;
+}
+
+.offer-tab-button {
+  background: transparent !important;
+  color: var(--text-sub) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.offer-tab-button:hover {
+  background: color-mix(in srgb, var(--white) 78%, var(--primary-light, #ece9ff)) !important;
+  color: var(--text) !important;
+  border-color: rgba(91, 79, 255, 0.10) !important;
+}
+
+.offer-tab-button.is-active {
+  background: var(--primary-light, #ece9ff) !important;
+  color: var(--primary, #5b4fff) !important;
+  border-color: rgba(91, 79, 255, 0.18) !important;
+}
+
+.offer-tab-button:not(.is-active) .offer-tab-badge {
+  background: rgba(91, 79, 255, 0.10) !important;
+  color: var(--primary, #5b4fff) !important;
+  box-shadow: none !important;
+}
+
+.offer-tab-button.is-active .offer-tab-badge {
+  background: linear-gradient(135deg, var(--primary, #5b4fff), #e21e80) !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .filter-card,
+html[data-theme="dark"] .offer-tab-list {
+  background: color-mix(in srgb, var(--white) 92%, var(--primary-light, #1e1a3a)) !important;
+  border-color: color-mix(in srgb, var(--primary, #7c6fff) 16%, var(--border, #2a2840)) !important;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18) !important;
+}
+
+html[data-theme="dark"] .filter-card input,
+html[data-theme="dark"] .filter-card select,
+html[data-theme="dark"] .filter-card textarea,
+html[data-theme="dark"] .filter-card .form-control,
+html[data-theme="dark"] .filter-card .form-select {
+  background: var(--bg) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+html[data-theme="dark"] .offer-tab-button:hover {
+  background: color-mix(in srgb, var(--white) 78%, var(--primary-light, #1e1a3a)) !important;
+  color: var(--text) !important;
+}
+
+html[data-theme="dark"] .offer-tab-button.is-active {
+  background: color-mix(in srgb, var(--primary-light, #1e1a3a) 78%, var(--white)) !important;
+  color: #ddd6fe !important;
+  border-color: color-mix(in srgb, var(--primary, #7c6fff) 24%, var(--border, #2a2840)) !important;
+}
+
+/* Unified FrontOffice indicators: soft, token-driven, non-dashboard. */
+.module-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 1.9rem;
+  padding: 0.38rem 0.8rem !important;
+  border-radius: 999px !important;
+  background: color-mix(in srgb, var(--white) 72%, var(--primary-light, #ece9ff)) !important;
+  border: 1px solid color-mix(in srgb, var(--primary, #5b4fff) 18%, var(--border, #ebebf2)) !important;
+  color: var(--primary, #5b4fff) !important;
+  font-size: 0.76rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.02em !important;
+}
+
+.stat-card,
+.candidature-stats-grid .stat-card {
+  position: relative;
+  min-height: auto !important;
+  padding: 0.85rem 1rem !important;
+  border-radius: 16px !important;
+  background: color-mix(in srgb, var(--white) 86%, var(--primary-light, #ece9ff)) !important;
+  border: 1px solid color-mix(in srgb, var(--primary, #5b4fff) 14%, var(--border, #ebebf2)) !important;
+  box-shadow: 0 10px 24px rgba(91, 79, 255, 0.07) !important;
+}
+
+.stat-card::before,
+.stat-card::after,
+.candidature-stats-grid .stat-card::before,
+.candidature-stats-grid .stat-card::after {
+  display: none !important;
+  content: none !important;
+}
+
+.stat-label,
+.candidature-stats-grid .stat-label {
+  color: var(--text-sub) !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.stat-value,
+.candidature-stats-grid .stat-value {
+  background: none !important;
+  color: var(--primary, #5b4fff) !important;
+  -webkit-text-fill-color: currentColor !important;
+  font-family: 'Fraunces', serif !important;
+  font-size: clamp(1.35rem, 2vw, 1.72rem) !important;
+  line-height: 1.05 !important;
+}
+
+.stat-note,
+.candidature-stats-grid .stat-note {
+  color: var(--text-sub) !important;
+  font-size: 0.8rem !important;
+  line-height: 1.4 !important;
+}
+
+.offer-tab-badge,
+.offer-section-count,
+.offer-chip,
+.front-pagination span,
+.saved-badge,
+.priority-badge,
+.response-status,
+.offer-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.55rem;
+  padding: 0.22rem 0.58rem !important;
+  border-radius: 999px !important;
+  border: 1px solid color-mix(in srgb, var(--primary, #5b4fff) 14%, var(--border, #ebebf2)) !important;
+  background: var(--primary-light, #ece9ff) !important;
+  color: var(--primary, #5b4fff) !important;
+  font-size: 0.73rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  box-shadow: none !important;
+}
+
+.offer-tab-button:not(.is-active) .offer-tab-badge {
+  background: color-mix(in srgb, var(--white) 56%, var(--primary-light, #ece9ff)) !important;
+  color: var(--primary, #5b4fff) !important;
+  border-color: color-mix(in srgb, var(--primary, #5b4fff) 12%, var(--border, #ebebf2)) !important;
+}
+
+.offer-tab-button.is-active .offer-tab-badge {
+  background: linear-gradient(135deg, var(--primary, #5b4fff), #e21e80) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+
+.offer-status.status-published,
+.status-published,
+.response-status.accepted,
+.status-accepted {
+  background: rgba(20, 128, 74, 0.12) !important;
+  border-color: rgba(20, 128, 74, 0.18) !important;
+  color: #14804a !important;
+}
+
+.response-status.review,
+.status-review,
+.status-waiting {
+  background: rgba(245, 158, 11, 0.14) !important;
+  border-color: rgba(245, 158, 11, 0.20) !important;
+  color: #b54708 !important;
+}
+
+.response-status.declined,
+.status-declined,
+.status-closed,
+.status-expired,
+.status-archived {
+  background: rgba(180, 35, 24, 0.10) !important;
+  border-color: rgba(180, 35, 24, 0.16) !important;
+  color: #b42318 !important;
+}
+
+html[data-theme="dark"] .module-eyebrow,
+html[data-theme="dark"] .stat-card,
+html[data-theme="dark"] .candidature-stats-grid .stat-card,
+html[data-theme="dark"] .offer-tab-badge,
+html[data-theme="dark"] .offer-section-count,
+html[data-theme="dark"] .offer-chip,
+html[data-theme="dark"] .front-pagination span,
+html[data-theme="dark"] .saved-badge,
+html[data-theme="dark"] .priority-badge,
+html[data-theme="dark"] .response-status,
+html[data-theme="dark"] .offer-status {
+  background: color-mix(in srgb, var(--primary-light, #1e1a3a) 70%, var(--white)) !important;
+  border-color: color-mix(in srgb, var(--primary, #7c6fff) 20%, var(--border, #2a2840)) !important;
+  color: #ddd6fe !important;
 }
