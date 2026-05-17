@@ -112,6 +112,50 @@ if (!isset($frontActive)) {
         $frontActive = '';
     }
 }
+
+if (!function_exists('cre8_notification_icon')) {
+    function cre8_notification_icon($typeAction): string
+    {
+        return match ((string) $typeAction) {
+            'post_comment' => 'bi-chat-dots',
+            'post_reaction' => 'bi-heart',
+            'offer_invitation',
+            'offer_accepted',
+            'offer_refused',
+            'candidature_received',
+            'candidature_accepted',
+            'candidature_refused',
+            'negotiation_message' => 'bi-briefcase',
+            'admin_post_removed',
+            'admin_product_removed' => 'bi-shield-exclamation',
+            'complaint_answered' => 'bi-life-preserver',
+            'event_today' => 'bi-calendar-event',
+            default => 'bi-bell',
+        };
+    }
+}
+
+if (!function_exists('cre8_notification_group_class')) {
+    function cre8_notification_group_class($typeAction): string
+    {
+        return match ((string) $typeAction) {
+            'post_comment',
+            'post_reaction' => 'type-post',
+            'offer_invitation',
+            'offer_accepted',
+            'offer_refused',
+            'candidature_received',
+            'candidature_accepted',
+            'candidature_refused',
+            'negotiation_message' => 'type-collaboration',
+            'admin_post_removed',
+            'admin_product_removed' => 'type-admin',
+            'complaint_answered' => 'type-complaint',
+            'event_today' => 'type-event',
+            default => 'type-default',
+        };
+    }
+}
 ?>
 <script>
 (function () {

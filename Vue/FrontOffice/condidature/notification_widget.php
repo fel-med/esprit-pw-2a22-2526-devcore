@@ -38,6 +38,50 @@ if (!function_exists('cre8NotificationDateLabel')) {
     }
 }
 
+if (!function_exists('cre8_notification_icon')) {
+    function cre8_notification_icon($typeAction): string
+    {
+        return match ((string) $typeAction) {
+            'post_comment' => 'bi-chat-dots',
+            'post_reaction' => 'bi-heart',
+            'offer_invitation',
+            'offer_accepted',
+            'offer_refused',
+            'candidature_received',
+            'candidature_accepted',
+            'candidature_refused',
+            'negotiation_message' => 'bi-briefcase',
+            'admin_post_removed',
+            'admin_product_removed' => 'bi-shield-exclamation',
+            'complaint_answered' => 'bi-life-preserver',
+            'event_today' => 'bi-calendar-event',
+            default => 'bi-bell',
+        };
+    }
+}
+
+if (!function_exists('cre8_notification_group_class')) {
+    function cre8_notification_group_class($typeAction): string
+    {
+        return match ((string) $typeAction) {
+            'post_comment',
+            'post_reaction' => 'type-post',
+            'offer_invitation',
+            'offer_accepted',
+            'offer_refused',
+            'candidature_received',
+            'candidature_accepted',
+            'candidature_refused',
+            'negotiation_message' => 'type-collaboration',
+            'admin_post_removed',
+            'admin_product_removed' => 'type-admin',
+            'complaint_answered' => 'type-complaint',
+            'event_today' => 'type-event',
+            default => 'type-default',
+        };
+    }
+}
+
 if (!function_exists('cre8RenderNotificationItems')) {
     function cre8RenderNotificationItems(array $items)
     {
@@ -51,16 +95,22 @@ if (!function_exists('cre8RenderNotificationItems')) {
         foreach ($items as $item):
             $isUnread = (int) ($item['estLu'] ?? 0) === 0;
             $link = trim((string) ($item['lien'] ?? ''));
+            $typeAction = (string) ($item['typeAction'] ?? '');
+            $typeClass = cre8_notification_group_class($typeAction);
+            $iconClass = cre8_notification_icon($typeAction);
             ?>
-            <article class="notification-item<?php echo $isUnread ? ' is-unread' : ''; ?>" data-notification-item data-notification-id="<?php echo (int) ($item['idNotificationAction'] ?? 0); ?>">
-                <span class="notification-dot" aria-hidden="true"></span>
+            <article class="notification-item front-notification-row <?php echo htmlspecialchars($typeClass); ?><?php echo $isUnread ? ' is-unread' : ''; ?>" data-notification-item data-notification-id="<?php echo (int) ($item['idNotificationAction'] ?? 0); ?>">
+                <span class="notification-type-icon" aria-hidden="true">
+                    <i class="bi <?php echo htmlspecialchars($iconClass); ?>"></i>
+                    <span class="notification-dot"></span>
+                </span>
                 <div class="notification-item-body">
                     <strong><?php echo htmlspecialchars((string) ($item['titre'] ?? 'Notification')); ?></strong>
                     <p><?php echo htmlspecialchars((string) ($item['message'] ?? '')); ?></p>
                     <time><?php echo htmlspecialchars(cre8NotificationDateLabel($item['dateCreation'] ?? null)); ?></time>
                     <div class="notification-item-actions">
                         <?php if ($link !== ''): ?>
-                            <a href="<?php echo htmlspecialchars($link); ?>">Open</a>
+                            <a class="notification-open-link" href="<?php echo htmlspecialchars($link); ?>">Open</a>
                         <?php endif; ?>
                         <?php if ($isUnread): ?>
                             <form method="post" action="<?php echo htmlspecialchars((string) $notificationActionUrl); ?>" class="notification-inline-form" data-notification-read-form data-notification-id="<?php echo (int) ($item['idNotificationAction'] ?? 0); ?>">
