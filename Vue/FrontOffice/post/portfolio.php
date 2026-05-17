@@ -81,6 +81,50 @@ $frontActive = 'myspace';
     <link href="../layout/front-header.css" rel="stylesheet" />
     <link href="../assets/post-front.css?v=3" rel="stylesheet" />
     <link rel="stylesheet" href="../assets/comment-front.css">
+
+    <style>
+        /* MySpace hero create button polish: readable in light mode and consistent in dark mode. */
+        .portfolio-hero .btn-new-post {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.55rem;
+            min-height: 44px;
+            padding: 0.72rem 1.25rem;
+            border: 1px solid rgba(255, 255, 255, 0.42);
+            border-radius: 999px;
+            background: linear-gradient(135deg, #5b4fff 0%, #8b5cf6 48%, #d81993 100%);
+            color: #fff !important;
+            font-weight: 900;
+            letter-spacing: 0.01em;
+            text-decoration: none;
+            box-shadow: 0 14px 32px rgba(91, 79, 255, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+            transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+        }
+
+        .portfolio-hero .btn-new-post svg {
+            width: 1.05rem;
+            height: 1.05rem;
+            flex: 0 0 auto;
+        }
+
+        .portfolio-hero .btn-new-post:hover,
+        .portfolio-hero .btn-new-post:focus {
+            transform: translateY(-2px);
+            filter: brightness(1.04);
+            box-shadow: 0 18px 38px rgba(91, 79, 255, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.42);
+            outline: none;
+        }
+
+        .portfolio-hero .btn-new-post:active {
+            transform: translateY(0);
+        }
+
+        [data-theme="dark"] .portfolio-hero .btn-new-post {
+            border-color: rgba(124, 111, 255, 0.4);
+            box-shadow: 0 14px 32px rgba(0, 0, 0, 0.32), 0 0 0 1px rgba(124, 111, 255, 0.18) inset;
+        }
+    </style>
 <link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
 <link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
@@ -114,19 +158,19 @@ $frontActive = 'myspace';
                         <div class="creator-stats">
                             <div class="creator-stat">
                                 <strong><?= (int)$stats['totalPosts'] ?></strong>
-                                <span>Posts</span>
+                                <span data-i18n="post.posts">Posts</span>
                             </div>
                             <div class="creator-stat">
                                 <strong><?= (int)$stats['totalLikes'] ?></strong>
-                                <span>Likes</span>
+                                <span data-i18n="post.likes">Likes</span>
                             </div>
                             <div class="creator-stat">
                                 <strong><?= (int)$stats['totalDislikes'] ?></strong>
-                                <span>Dislikes</span>
+                                <span data-i18n="post.dislikes">Dislikes</span>
                             </div>
                             <div class="creator-stat">
                                 <strong><?= (int)$stats['totalViews'] ?></strong>
-                                <span>Views</span>
+                                <span data-i18n="post.viewsTitle">Views</span>
                             </div>
                         </div>
                     </div>
@@ -141,7 +185,7 @@ $frontActive = 'myspace';
                             <line x1="12" y1="8" x2="12" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                             <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                         </svg>
-                        New Post
+                        <span data-i18n="post.newPost">New Post</span>
                     </a>
 
                 </div>
@@ -154,9 +198,9 @@ $frontActive = 'myspace';
     <div class="container px-4 px-lg-5">
         <?php if (empty($posts)) : ?>
             <div class="empty-state-box">
-                <h3>No posts yet</h3>
-                <p class="text-muted mb-4">Start building your creator space with your first publication.</p>
-                <a href="./create.php" class="action-btn readmore-btn">Create First Post</a>
+                <h3 data-i18n="post.noPostsYet">No posts yet</h3>
+                <p class="text-muted mb-4" data-i18n="post.noPostsYetCopy">Start building your creator space with your first publication.</p>
+                <a href="./create.php" class="action-btn readmore-btn" data-i18n="post.createFirst">Create First Post</a>
             </div>
         <?php else : ?>
             <div class="social-grid">
@@ -233,7 +277,7 @@ $frontActive = 'myspace';
                                                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/>
                                                     <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
                                                 </svg>
-                                                <span class="js-view-count"><?= (int)$post['numberOfView'] ?></span> views
+                                                <span class="js-view-count"><?= (int)$post['numberOfView'] ?></span> <span data-i18n="post.views">views</span>
                                             </span>
                                             <span>
                                                 <svg viewBox="0 0 24 24" fill="none" style="width:12px;height:12px;color:#0369a1;">
@@ -264,7 +308,7 @@ $frontActive = 'myspace';
                                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/>
                                                 <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
                                             </svg>
-                                            View
+                                            <span data-i18n="post.view">View</span>
                                         </a>
 
                                         <a href="./edit.php?id=<?= urlencode($post['id']) ?>" class="action-btn edit-btn">
@@ -272,17 +316,17 @@ $frontActive = 'myspace';
                                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                             </svg>
-                                            Edit
+                                            <span data-i18n="post.edit">Edit</span>
                                         </a>
 
                                         <a href="./delete.php?id=<?= urlencode($post['id']) ?>"
                                            class="action-btn delete-btn"
-                                           onclick="return confirm('Are you sure you want to delete this post?');">
+                                           onclick="return confirm(((localStorage.getItem('cre8_front_lang') || localStorage.getItem('cre8_lang')) === 'fr') ? 'Voulez-vous vraiment supprimer ce post ?' : 'Are you sure you want to delete this post?');">
                                             <svg viewBox="0 0 24 24" fill="none" style="width:13px;height:13px;">
                                                 <polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                             </svg>
-                                            Delete
+                                            <span data-i18n="post.delete">Delete</span>
                                         </a>
                                     </div>
                                 </div>
@@ -301,7 +345,7 @@ $frontActive = 'myspace';
                                                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                                                   fill="currentColor" fill-opacity="0.1"/>
                                         </svg>
-                                        See all comments
+                                        <span data-i18n="post.seeAllComments">See all comments</span>
                                     </button>
                                 </div>
                             <?php endif; ?>
@@ -322,7 +366,7 @@ $frontActive = 'myspace';
                                                 <line x1="8" y1="13" x2="13" y2="13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                                             </svg>
                                         </span>
-                                        Comments — <?= htmlspecialchars($post['subject']) ?>
+                                        <span data-i18n="post.comments">Comments</span> - <?= htmlspecialchars($post['subject']) ?>
                                         <span class="comment-count-badge js-comment-count"><?= $commentCount ?></span>
                                     </h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -347,7 +391,7 @@ $frontActive = 'myspace';
                                                     <path d="M21 15C21 15.53 20.79 16.04 20.41 16.41C20.04 16.79 19.53 17 19 17H7L3 21V5C3 4.47 3.21 3.96 3.59 3.59C3.96 3.21 4.47 3 5 3H19C19.53 3 20.04 3.21 20.41 3.59C20.79 3.96 21 4.47 21 5V15Z"
                                                           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                                 </svg>
-                                                <p class="mt-2 mb-0">No comments yet. Be the first to comment!</p>
+                                                <p class="mt-2 mb-0" data-i18n="post.noCommentsLong">No comments yet. Be the first to comment!</p>
                                             </div>
                                         <?php else : ?>
                                             <?php foreach ($allCommentsTree as $commentNode) : ?>
@@ -366,6 +410,132 @@ $frontActive = 'myspace';
     </div>
 </section>
 
+<script>
+(function () {
+    var translations = {
+        en: {
+            'post.posts': 'Posts',
+            'post.likes': 'Likes',
+            'post.dislikes': 'Dislikes',
+            'post.viewsTitle': 'Views',
+            'post.views': 'views',
+            'post.newPost': 'New Post',
+            'post.noPostsYet': 'No posts yet',
+            'post.noPostsYetCopy': 'Start building your creator space with your first publication.',
+            'post.createFirst': 'Create First Post',
+            'post.view': 'View',
+            'post.edit': 'Edit',
+            'post.delete': 'Delete',
+            'post.seeAllComments': 'See all comments',
+            'post.comments': 'Comments',
+            'post.noCommentsLong': 'No comments yet. Be the first to comment!',
+            'post.noCommentsShort': 'No comments yet.',
+            'post.commentPlaceholder': 'Add a comment...',
+            'post.replyPlaceholder': 'Reply to this comment...',
+            'post.editCommentPlaceholder': 'Edit your comment...',
+            'post.postButton': 'Post',
+            'post.reply': 'Reply',
+            'post.save': 'Save',
+            'post.cancel': 'Cancel',
+            'post.removeCurrentImage': 'Remove current image',
+            'post.emoji': 'Emoji',
+            'post.addImage': 'Add image',
+            'post.replaceImage': 'Replace image',
+            'post.voiceTranscription': 'Voice transcription',
+            'post.transcriptionLanguage': 'Transcription language',
+            'post.voiceIdle': 'Tap the microphone to dictate your comment',
+            'post.voiceRecording': 'Listening... speak now'
+        },
+        fr: {
+            'post.posts': 'Posts',
+            'post.likes': 'J aime',
+            'post.dislikes': 'Je n aime pas',
+            'post.viewsTitle': 'Vues',
+            'post.views': 'vues',
+            'post.newPost': 'Nouveau post',
+            'post.noPostsYet': 'Aucun post pour le moment',
+            'post.noPostsYetCopy': 'Commencez a construire votre espace createur avec votre premiere publication.',
+            'post.createFirst': 'Creer le premier post',
+            'post.view': 'Voir',
+            'post.edit': 'Modifier',
+            'post.delete': 'Supprimer',
+            'post.seeAllComments': 'Voir tous les commentaires',
+            'post.comments': 'Commentaires',
+            'post.noCommentsLong': 'Aucun commentaire pour le moment. Soyez le premier a commenter !',
+            'post.noCommentsShort': 'Aucun commentaire pour le moment.',
+            'post.commentPlaceholder': 'Ajouter un commentaire...',
+            'post.replyPlaceholder': 'Repondre a ce commentaire...',
+            'post.editCommentPlaceholder': 'Modifier votre commentaire...',
+            'post.postButton': 'Publier',
+            'post.reply': 'Repondre',
+            'post.save': 'Enregistrer',
+            'post.cancel': 'Annuler',
+            'post.removeCurrentImage': 'Supprimer l image actuelle',
+            'post.emoji': 'Emoji',
+            'post.addImage': 'Ajouter une image',
+            'post.replaceImage': 'Remplacer l image',
+            'post.voiceTranscription': 'Transcription vocale',
+            'post.transcriptionLanguage': 'Langue de transcription',
+            'post.voiceIdle': 'Appuyez sur le micro pour dicter votre commentaire',
+            'post.voiceRecording': 'Ecoute en cours... parlez maintenant'
+        }
+    };
+    var portfolioI18nObserver = null;
+    var portfolioI18nApplying = false;
+
+    function reconnectPortfolioObserver() {
+        if (portfolioI18nObserver && document.body) {
+            portfolioI18nObserver.observe(document.body, { childList: true, subtree: true });
+        }
+    }
+
+    function applyExtraLabels() {
+        if (portfolioI18nApplying) {
+            return;
+        }
+        portfolioI18nApplying = true;
+        if (portfolioI18nObserver) {
+            portfolioI18nObserver.disconnect();
+        }
+
+        try {
+            if (typeof window.cre8ApplyI18n === 'function') {
+                window.cre8ApplyI18n(translations);
+            }
+            Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-idle-label]'), function (el) {
+                var lang = typeof window.cre8FrontReadLang === 'function' ? window.cre8FrontReadLang() : 'en';
+                var value = translations[lang] && translations[lang][el.getAttribute('data-i18n-idle-label')];
+                if (value) el.setAttribute('data-idle-label', value);
+            });
+            Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-recording-label]'), function (el) {
+                var lang = typeof window.cre8FrontReadLang === 'function' ? window.cre8FrontReadLang() : 'en';
+                var value = translations[lang] && translations[lang][el.getAttribute('data-i18n-recording-label')];
+                if (value) el.setAttribute('data-recording-label', value);
+            });
+        } finally {
+            window.setTimeout(function () {
+                portfolioI18nApplying = false;
+                reconnectPortfolioObserver();
+            }, 0);
+        }
+    }
+    function registerPostTranslations() {
+        if (typeof window.cre8RegisterTranslations === 'function') {
+            window.cre8RegisterTranslations(translations);
+        }
+        if (!portfolioI18nObserver && typeof MutationObserver !== 'undefined') {
+            portfolioI18nObserver = new MutationObserver(applyExtraLabels);
+        }
+        applyExtraLabels();
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', registerPostTranslations);
+    } else {
+        registerPostTranslations();
+    }
+    window.addEventListener('cre8:languagechange', applyExtraLabels);
+})();
+</script>
 <script src="../assets/comment-front.js"></script>
 <script src="../layout/front-header.js"></script>
 <?php require_once '../partials/footer.php'; ?>

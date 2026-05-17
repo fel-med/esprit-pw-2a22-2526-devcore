@@ -406,6 +406,18 @@ $nextPageUrl = $hasNextPage ? 'creator_list.php?' . http_build_query($pagination
     <link rel="stylesheet" href="../css/frontoffice.css">
     <link rel="stylesheet" href="offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre.css')); ?>">
     <link rel="stylesheet" href="../layout/front-header.css">
+    <style>
+        /* Keep only the shared header notification bell. Hide any old page-level notification widget. */
+        body > .notification-widget,
+        body > .notification-widget-front,
+        main .notification-widget,
+        main .notification-widget-front {
+            display: none !important;
+        }
+        .front-nav .notification-widget-front {
+            display: inline-flex !important;
+        }
+    </style>
 <link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
 <link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
@@ -415,7 +427,7 @@ $nextPageUrl = $hasNextPage ? 'creator_list.php?' . http_build_query($pagination
     <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
     <main class="container py-5">
         <div class="offre-page-shell">
-            <section class="module-hero module-hero-notification-shell">
+            <section class="module-hero">
                 <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
                     <div>
                         <span class="module-eyebrow">Creator inbox</span>
@@ -445,7 +457,7 @@ $nextPageUrl = $hasNextPage ? 'creator_list.php?' . http_build_query($pagination
                 <article class="stat-card">
                     <span class="stat-label">Best proposed budget</span>
                     <span class="stat-value"><?php echo htmlspecialchars(formatMoney($creatorMetrics['bestProposedBudget'] ?? 0)); ?></span>
-                    <span class="stat-note"><?php echo (int) ($creatorMetrics['draftApplications'] ?? 0); ?> draft applications</span>
+                    <span class="stat-note"><?php echo (int) ($creatorMetrics['draftApplications'] ?? 0); ?> <span data-i18n="offer.draftApplications">draft applications</span></span>
                 </article>
             </section>
 
@@ -516,47 +528,47 @@ $nextPageUrl = $hasNextPage ? 'creator_list.php?' . http_build_query($pagination
             </section>
 
             <section class="filter-card">
-                <h2 class="section-title">Filter your invitation inbox</h2>
-                <p class="section-subtitle">Narrow the list by topic, budget, or deadline.</p>
+                <h2 class="section-title" data-i18n="offer.filterInbox">Filter your invitation inbox</h2>
+                <p class="section-subtitle" data-i18n="offer.filterSubtitle">Narrow the list by topic, budget, or deadline.</p>
                 <form method="get" action="creator_list.php" class="filter-stack mt-4" data-module-validation="creator-filters" data-creator-filter-form novalidate>
                     <div class="filter-grid">
                         <div>
-                            <label for="keyword" class="form-label fw-semibold">Keyword</label>
-                            <input type="text" class="form-control" id="keyword" name="keyword" value="<?php echo htmlspecialchars($keyword ?? ''); ?>" placeholder="Brand message, offer title, objective...">
+                            <label for="keyword" class="form-label fw-semibold" data-i18n="offer.keyword">Keyword</label>
+                            <input type="text" class="form-control" id="keyword" name="keyword" value="<?php echo htmlspecialchars($keyword ?? ''); ?>" placeholder="Brand message, offer title, objective..." data-i18n-placeholder="offer.keywordPlaceholder">
                         </div>
                         <div>
-                            <label for="budgetFrom" class="form-label fw-semibold">Budget from</label>
+                            <label for="budgetFrom" class="form-label fw-semibold" data-i18n="offer.budgetFrom">Budget from</label>
                             <input type="number" class="form-control" id="budgetFrom" name="budgetFrom" value="<?php echo htmlspecialchars($budgetFrom ?? ''); ?>" step="0.01">
                         </div>
                         <div>
-                            <label for="budgetTo" class="form-label fw-semibold">Budget to</label>
+                            <label for="budgetTo" class="form-label fw-semibold" data-i18n="offer.budgetTo">Budget to</label>
                             <input type="number" class="form-control" id="budgetTo" name="budgetTo" value="<?php echo htmlspecialchars($budgetTo ?? ''); ?>" step="0.01">
                         </div>
                         <div>
-                            <label for="dateLimite" class="form-label fw-semibold">Deadline from</label>
+                            <label for="dateLimite" class="form-label fw-semibold" data-i18n="offer.deadlineFrom">Deadline from</label>
                             <input type="date" class="form-control" id="dateLimite" name="dateLimite" value="<?php echo htmlspecialchars($dateLimite ?? ''); ?>">
                         </div>
                         <div>
-                            <label for="dateLimiteTo" class="form-label fw-semibold">Deadline to</label>
+                            <label for="dateLimiteTo" class="form-label fw-semibold" data-i18n="offer.deadlineTo">Deadline to</label>
                             <input type="date" class="form-control" id="dateLimiteTo" name="dateLimiteTo" value="<?php echo htmlspecialchars($dateLimiteTo ?? ''); ?>">
                         </div>
                         <div>
-                            <label for="sort" class="form-label fw-semibold">Sort</label>
+                            <label for="sort" class="form-label fw-semibold" data-i18n="offer.sort">Sort</label>
                             <select class="form-select" id="sort" name="sort">
-                                <option value=""<?php echo $sort === '' ? ' selected' : ''; ?>>Recommended</option>
-                                <option value="recently_saved"<?php echo $sort === 'recently_saved' ? ' selected' : ''; ?>>Recently saved</option>
-                                <option value="newest"<?php echo $sort === 'newest' ? ' selected' : ''; ?>>Newest</option>
-                                <option value="oldest"<?php echo $sort === 'oldest' ? ' selected' : ''; ?>>Oldest</option>
-                                <option value="deadline_soon"<?php echo $sort === 'deadline_soon' ? ' selected' : ''; ?>>Deadline soon</option>
-                                <option value="budget_high"<?php echo $sort === 'budget_high' ? ' selected' : ''; ?>>Budget high to low</option>
-                                <option value="budget_low"<?php echo $sort === 'budget_low' ? ' selected' : ''; ?>>Budget low to high</option>
-                                <option value="status"<?php echo $sort === 'status' ? ' selected' : ''; ?>>Status</option>
+                                <option value=""<?php echo $sort === '' ? ' selected' : ''; ?> data-i18n-opt="offer.recommended">Recommended</option>
+                                <option value="recently_saved"<?php echo $sort === 'recently_saved' ? ' selected' : ''; ?> data-i18n-opt="offer.recentlySaved">Recently saved</option>
+                                <option value="newest"<?php echo $sort === 'newest' ? ' selected' : ''; ?> data-i18n-opt="offer.newest">Newest</option>
+                                <option value="oldest"<?php echo $sort === 'oldest' ? ' selected' : ''; ?> data-i18n-opt="offer.oldest">Oldest</option>
+                                <option value="deadline_soon"<?php echo $sort === 'deadline_soon' ? ' selected' : ''; ?> data-i18n-opt="offer.deadlineSoon">Deadline soon</option>
+                                <option value="budget_high"<?php echo $sort === 'budget_high' ? ' selected' : ''; ?> data-i18n-opt="offer.budgetHighLow">Budget high to low</option>
+                                <option value="budget_low"<?php echo $sort === 'budget_low' ? ' selected' : ''; ?> data-i18n-opt="offer.budgetLowHigh">Budget low to high</option>
+                                <option value="status"<?php echo $sort === 'status' ? ' selected' : ''; ?> data-i18n-opt="offer.status">Status</option>
                             </select>
                         </div>
                     </div>
                     <div class="filter-actions">
-                        <button type="submit" class="btn btn-primary">Apply filters</button>
-                        <a class="btn btn-outline-secondary" href="creator_list.php" data-creator-reset-link>Reset</a>
+                        <button type="submit" class="btn btn-primary" data-i18n="offer.applyFilters">Apply filters</button>
+                        <a class="btn btn-outline-secondary" href="creator_list.php" data-creator-reset-link data-i18n="offer.reset">Reset</a>
                     </div>
                 </form>
             </section>
@@ -787,7 +799,7 @@ $nextPageUrl = $hasNextPage ? 'creator_list.php?' . http_build_query($pagination
                     </div>
                 </section>
                 <nav class="front-pagination" aria-label="Creator invitation pages">
-                    <span>Page <?php echo $page; ?> · Showing up to <?php echo $perPage; ?> filtered invitations</span>
+                    <span><span data-i18n="offer.page">Page</span> <?php echo $page; ?> · <span data-i18n="offer.showingUpTo">Showing up to</span> <?php echo $perPage; ?> <span data-i18n="offer.filteredInvitations">filtered invitations</span></span>
                     <div>
                         <?php if ($prevPageUrl !== ''): ?>
                             <a class="btn btn-outline-secondary" href="<?php echo htmlspecialchars($prevPageUrl); ?>">Previous</a>
@@ -826,6 +838,302 @@ $cre8PilotContext = [
 ];
 require __DIR__ . '/../condidature/cre8pilot_widget.php';
 ?>
+    <script>
+        (() => {
+            const translations = {
+                en: {
+                    'offer.creatorInbox': 'Creator inbox',
+                    'offer.offersForYou': 'Offers for you',
+                    'offer.creatorHeroCopy': 'Browse targeted invitations from brands, save the ones you want to revisit, and respond when the collaboration feels right.',
+                    'offer.invitationsToAnswer': 'Invitations to answer',
+                    'offer.activeOffersWithoutFinalResponse': 'Active offers without a final response',
+                    'offer.negotiationsWaitingReply': 'Negotiations waiting reply',
+                    'offer.activeNegotiationCandidatures': 'Active negotiation candidatures',
+                    'offer.closestDeadline': 'Closest deadline',
+                    'offer.nearestActiveInvitation': 'Nearest active invitation or candidature',
+                    'offer.bestProposedBudget': 'Best proposed budget',
+                    'offer.draftApplications': 'draft applications',
+                    'offer.filterInbox': 'Filter your invitation inbox',
+                    'offer.filterSubtitle': 'Narrow the list by topic, budget, or deadline.',
+                    'offer.keyword': 'Keyword',
+                    'offer.keywordPlaceholder': 'Brand message, offer title, objective...',
+                    'offer.budgetFrom': 'Budget from',
+                    'offer.budgetTo': 'Budget to',
+                    'offer.deadlineFrom': 'Deadline from',
+                    'offer.deadlineTo': 'Deadline to',
+                    'offer.sort': 'Sort',
+                    'offer.recommended': 'Recommended',
+                    'offer.recentlySaved': 'Recently saved',
+                    'offer.newest': 'Newest',
+                    'offer.oldest': 'Oldest',
+                    'offer.deadlineSoon': 'Deadline soon',
+                    'offer.budgetHighLow': 'Budget high to low',
+                    'offer.budgetLowHigh': 'Budget low to high',
+                    'offer.status': 'Status',
+                    'offer.applyFilters': 'Apply filters',
+                    'offer.reset': 'Reset',
+                    'offer.page': 'Page',
+                    'offer.showingUpTo': 'Showing up to',
+                    'offer.filteredInvitations': 'filtered invitations',
+                    'offer.savedForLater': 'Saved for later',
+                    'offer.savedSubtitle': 'Saved offers stay here so you can come back to them later.',
+                    'offer.saved': 'Saved',
+                    'offer.accepted': 'Accepted',
+                    'offer.declined': 'Declined',
+                    'offer.removeSaved': 'Remove saved',
+                    'offer.saveForLater': 'Save for later',
+                    'offer.deadline': 'Deadline',
+                    'offer.brand': 'Brand',
+                    'offer.objective': 'Objective',
+                    'offer.whyPicked': 'Why you were picked',
+                    'offer.currentResponse': 'Your current response',
+                    'offer.deadlinePassed': 'Deadline passed',
+                    'offer.deadlinePassedCopy': 'This invitation is kept for history, but the response window has ended.',
+                    'offer.waitingResponse': 'Waiting for your response',
+                    'offer.waitingResponseCopy': 'This invitation is still open and ready for your decision.',
+                    'offer.noTargetedFound': 'No targeted offers found',
+                    'offer.noTargetedCopy': 'Adjust the filters and check back soon for new brand invitations.',
+                    'offer.resetFilters': 'Reset filters',
+                    'offer.previous': 'Previous',
+                    'offer.loadMore': 'Load more',
+                    'offer.waitingInvitations': 'Waiting invitations',
+                    'offer.waitingInvitationsSubtitle': 'Invitations you can still review, open, or continue discussing with the brand.',
+                    'offer.noWaitingInvitations': 'No waiting invitations right now.',
+                    'offer.acceptedInvitations': 'Accepted invitations',
+                    'offer.acceptedInvitationsSubtitle': 'Offers you already accepted and kept active in your collaboration pipeline.',
+                    'offer.noAcceptedInvitations': 'You have not accepted any invitation yet.',
+                    'offer.declinedInvitations': 'Declined invitations',
+                    'offer.declinedInvitationsSubtitle': 'Offers you decided not to continue, kept visible as pipeline history.',
+                    'offer.noDeclinedInvitations': 'No declined invitations in your history.',
+                    'offer.outdatedInvitations': 'Outdated invitations',
+                    'offer.outdatedInvitationsSubtitle': 'Invitations whose deadline has already passed without a final answer.',
+                    'offer.noOutdatedInvitations': 'No outdated invitations right now.',
+                    'offer.savedInvitations': 'Saved invitations',
+                    'offer.savedInvitationsSubtitle': 'Offers you bookmarked so you can come back to them later.',
+                    'offer.noSavedInvitations': 'No saved invitations yet. Save invitations to review them later.',
+                    'offer.topBudgetMatch': 'Top budget match',
+                    'offer.draftResponse': 'Draft response',
+                    'offer.waitingInvitation': 'Waiting invitation',
+                    'offer.outdated': 'Outdated',
+                    'offer.draft': 'Draft',
+                    'offer.published': 'Published',
+                    'offer.closed': 'Closed',
+                    'offer.expired': 'Expired',
+                    'offer.archived': 'Archived',
+                    'offer.active': 'Active',
+                    'offer.unknownBrand': 'Unknown brand'
+                },
+                fr: {
+                    'offer.creatorInbox': 'Boite createur',
+                    'offer.offersForYou': 'Offres pour vous',
+                    'offer.creatorHeroCopy': 'Parcourez les invitations ciblees des marques, enregistrez celles a revoir et repondez quand la collaboration vous convient.',
+                    'offer.invitationsToAnswer': 'Invitations a traiter',
+                    'offer.activeOffersWithoutFinalResponse': 'Offres actives sans reponse finale',
+                    'offer.negotiationsWaitingReply': 'Negociations en attente de reponse',
+                    'offer.activeNegotiationCandidatures': 'Candidatures en negociation active',
+                    'offer.closestDeadline': 'Echeance la plus proche',
+                    'offer.nearestActiveInvitation': 'Invitation ou candidature active la plus proche',
+                    'offer.bestProposedBudget': 'Meilleur budget propose',
+                    'offer.draftApplications': 'candidatures en brouillon',
+                    'offer.filterInbox': 'Filtrer votre boite d invitations',
+                    'offer.filterSubtitle': 'Affinez la liste par sujet, budget ou echeance.',
+                    'offer.keyword': 'Mot-cle',
+                    'offer.keywordPlaceholder': 'Message de marque, titre d offre, objectif...',
+                    'offer.budgetFrom': 'Budget min',
+                    'offer.budgetTo': 'Budget max',
+                    'offer.deadlineFrom': 'Echeance du',
+                    'offer.deadlineTo': 'Echeance au',
+                    'offer.sort': 'Tri',
+                    'offer.recommended': 'Recommande',
+                    'offer.recentlySaved': 'Enregistrees recemment',
+                    'offer.newest': 'Plus recentes',
+                    'offer.oldest': 'Plus anciennes',
+                    'offer.deadlineSoon': 'Echeance proche',
+                    'offer.budgetHighLow': 'Budget decroissant',
+                    'offer.budgetLowHigh': 'Budget croissant',
+                    'offer.status': 'Statut',
+                    'offer.applyFilters': 'Appliquer les filtres',
+                    'offer.reset': 'Reinitialiser',
+                    'offer.page': 'Page',
+                    'offer.showingUpTo': 'Affichage jusqu a',
+                    'offer.filteredInvitations': 'invitations filtrees',
+                    'offer.savedForLater': 'Enregistrees pour plus tard',
+                    'offer.savedSubtitle': 'Les offres enregistrees restent ici pour y revenir plus tard.',
+                    'offer.saved': 'Enregistree',
+                    'offer.accepted': 'Acceptee',
+                    'offer.declined': 'Refusee',
+                    'offer.removeSaved': 'Retirer',
+                    'offer.saveForLater': 'Enregistrer',
+                    'offer.deadline': 'Echeance',
+                    'offer.brand': 'Marque',
+                    'offer.objective': 'Objectif',
+                    'offer.whyPicked': 'Pourquoi vous avez ete choisi',
+                    'offer.currentResponse': 'Votre reponse actuelle',
+                    'offer.deadlinePassed': 'Echeance depassee',
+                    'offer.deadlinePassedCopy': 'Cette invitation reste dans l historique, mais la periode de reponse est terminee.',
+                    'offer.waitingResponse': 'En attente de votre reponse',
+                    'offer.waitingResponseCopy': 'Cette invitation est encore ouverte et prete pour votre decision.',
+                    'offer.noTargetedFound': 'Aucune offre ciblee trouvee',
+                    'offer.noTargetedCopy': 'Ajustez les filtres et revenez bientot pour de nouvelles invitations.',
+                    'offer.resetFilters': 'Reinitialiser les filtres',
+                    'offer.previous': 'Precedent',
+                    'offer.loadMore': 'Charger plus',
+                    'offer.waitingInvitations': 'Invitations en attente',
+                    'offer.waitingInvitationsSubtitle': 'Invitations que vous pouvez encore consulter, ouvrir ou discuter avec la marque.',
+                    'offer.noWaitingInvitations': 'Aucune invitation en attente pour le moment.',
+                    'offer.acceptedInvitations': 'Invitations acceptees',
+                    'offer.acceptedInvitationsSubtitle': 'Offres deja acceptees et gardees actives dans votre pipeline.',
+                    'offer.noAcceptedInvitations': 'Vous n avez encore accepte aucune invitation.',
+                    'offer.declinedInvitations': 'Invitations refusees',
+                    'offer.declinedInvitationsSubtitle': 'Offres que vous avez decide de ne pas poursuivre, gardees dans l historique.',
+                    'offer.noDeclinedInvitations': 'Aucune invitation refusee dans votre historique.',
+                    'offer.outdatedInvitations': 'Invitations expirees',
+                    'offer.outdatedInvitationsSubtitle': 'Invitations dont l echeance est deja passee sans reponse finale.',
+                    'offer.noOutdatedInvitations': 'Aucune invitation expiree pour le moment.',
+                    'offer.savedInvitations': 'Invitations enregistrees',
+                    'offer.savedInvitationsSubtitle': 'Offres marquees pour y revenir plus tard.',
+                    'offer.noSavedInvitations': 'Aucune invitation enregistree. Enregistrez des invitations pour les revoir plus tard.',
+                    'offer.topBudgetMatch': 'Meilleur budget',
+                    'offer.draftResponse': 'Reponse brouillon',
+                    'offer.waitingInvitation': 'Invitation en attente',
+                    'offer.outdated': 'Expiree',
+                    'offer.draft': 'Brouillon',
+                    'offer.published': 'Publiee',
+                    'offer.closed': 'Fermee',
+                    'offer.expired': 'Expiree',
+                    'offer.archived': 'Archivee',
+                    'offer.active': 'Active',
+                    'offer.unknownBrand': 'Marque inconnue'
+                }
+            };
+            const textKeys = {
+                'Creator inbox': 'offer.creatorInbox',
+                'Offers for you': 'offer.offersForYou',
+                'Browse targeted invitations from brands, save the ones you want to revisit, and respond when the collaboration feels right.': 'offer.creatorHeroCopy',
+                'Invitations to answer': 'offer.invitationsToAnswer',
+                'Active offers without a final response': 'offer.activeOffersWithoutFinalResponse',
+                'Negotiations waiting reply': 'offer.negotiationsWaitingReply',
+                'Active negotiation candidatures': 'offer.activeNegotiationCandidatures',
+                'Closest deadline': 'offer.closestDeadline',
+                'Nearest active invitation or candidature': 'offer.nearestActiveInvitation',
+                'Best proposed budget': 'offer.bestProposedBudget',
+                'Saved for later': 'offer.savedForLater',
+                'Saved offers stay here so you can come back to them later.': 'offer.savedSubtitle',
+                'Saved': 'offer.saved',
+                'Accepted': 'offer.accepted',
+                'Declined': 'offer.declined',
+                'Remove saved': 'offer.removeSaved',
+                'Save for later': 'offer.saveForLater',
+                'Deadline': 'offer.deadline',
+                'Brand': 'offer.brand',
+                'Objective': 'offer.objective',
+                'Why you were picked': 'offer.whyPicked',
+                'Your current response': 'offer.currentResponse',
+                'Deadline passed': 'offer.deadlinePassed',
+                'This invitation is kept for history, but the response window has ended.': 'offer.deadlinePassedCopy',
+                'Waiting for your response': 'offer.waitingResponse',
+                'This invitation is still open and ready for your decision.': 'offer.waitingResponseCopy',
+                'No targeted offers found': 'offer.noTargetedFound',
+                'Adjust the filters and check back soon for new brand invitations.': 'offer.noTargetedCopy',
+                'Reset filters': 'offer.resetFilters',
+                'draft applications': 'offer.draftApplications',
+                'Filter your invitation inbox': 'offer.filterInbox',
+                'Narrow the list by topic, budget, or deadline.': 'offer.filterSubtitle',
+                'Keyword': 'offer.keyword',
+                'Budget from': 'offer.budgetFrom',
+                'Budget to': 'offer.budgetTo',
+                'Deadline from': 'offer.deadlineFrom',
+                'Deadline to': 'offer.deadlineTo',
+                'Sort': 'offer.sort',
+                'Recommended': 'offer.recommended',
+                'Recently saved': 'offer.recentlySaved',
+                'Newest': 'offer.newest',
+                'Oldest': 'offer.oldest',
+                'Deadline soon': 'offer.deadlineSoon',
+                'Budget high to low': 'offer.budgetHighLow',
+                'Budget low to high': 'offer.budgetLowHigh',
+                'Status': 'offer.status',
+                'Apply filters': 'offer.applyFilters',
+                'Reset': 'offer.reset',
+                'Page': 'offer.page',
+                'Showing up to': 'offer.showingUpTo',
+                'filtered invitations': 'offer.filteredInvitations',
+                'Previous': 'offer.previous',
+                'Load more': 'offer.loadMore',
+                'Waiting invitations': 'offer.waitingInvitations',
+                'Invitations you can still review, open, or continue discussing with the brand.': 'offer.waitingInvitationsSubtitle',
+                'No waiting invitations right now.': 'offer.noWaitingInvitations',
+                'Accepted invitations': 'offer.acceptedInvitations',
+                'Offers you already accepted and kept active in your collaboration pipeline.': 'offer.acceptedInvitationsSubtitle',
+                'You have not accepted any invitation yet.': 'offer.noAcceptedInvitations',
+                'Declined invitations': 'offer.declinedInvitations',
+                'Offers you decided not to continue, kept visible as pipeline history.': 'offer.declinedInvitationsSubtitle',
+                'No declined invitations in your history.': 'offer.noDeclinedInvitations',
+                'Outdated invitations': 'offer.outdatedInvitations',
+                'Invitations whose deadline has already passed without a final answer.': 'offer.outdatedInvitationsSubtitle',
+                'No outdated invitations right now.': 'offer.noOutdatedInvitations',
+                'Saved invitations': 'offer.savedInvitations',
+                'Offers you bookmarked so you can come back to them later.': 'offer.savedInvitationsSubtitle',
+                'No saved invitations yet. Save invitations to review them later.': 'offer.noSavedInvitations',
+                'Top budget match': 'offer.topBudgetMatch',
+                'Draft response': 'offer.draftResponse',
+                'Waiting invitation': 'offer.waitingInvitation',
+                'Outdated': 'offer.outdated',
+                'Draft': 'offer.draft',
+                'Published': 'offer.published',
+                'Closed': 'offer.closed',
+                'Expired': 'offer.expired',
+                'Archived': 'offer.archived',
+                'Active': 'offer.active',
+                'Unknown brand': 'offer.unknownBrand'
+            };
+            function currentLang() {
+                return typeof window.cre8FrontReadLang === 'function' ? window.cre8FrontReadLang() : 'en';
+            }
+            function keyForText(value) {
+                const clean = String(value).trim();
+                if (textKeys[clean]) return textKeys[clean];
+                for (const lang of Object.keys(translations)) {
+                    for (const key of Object.keys(translations[lang])) {
+                        if (translations[lang][key] === clean) return key;
+                    }
+                }
+                return '';
+            }
+            function applyOfferTranslations(root = document) {
+                const dict = translations[currentLang()] || translations.en;
+                if (typeof window.cre8ApplyI18n === 'function') {
+                    window.cre8ApplyI18n(translations);
+                }
+                const walker = document.createTreeWalker(root.body || root, NodeFilter.SHOW_TEXT, {
+                    acceptNode(node) {
+                        const parent = node.parentElement;
+                        if (!parent || ['SCRIPT', 'STYLE', 'TEXTAREA'].includes(parent.tagName)) return NodeFilter.FILTER_REJECT;
+                        return node.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                    }
+                });
+                const nodes = [];
+                while (walker.nextNode()) nodes.push(walker.currentNode);
+                nodes.forEach((node) => {
+                    const key = keyForText(node.nodeValue);
+                    if (!key || dict[key] === undefined) return;
+                    node.nodeValue = node.nodeValue.replace(node.nodeValue.trim(), dict[key]);
+                    if (node.parentElement && node.parentElement.childNodes.length === 1) {
+                        node.parentElement.setAttribute('data-i18n', key);
+                    }
+                });
+            }
+            window.cre8OfferApplyTranslations = applyOfferTranslations;
+            document.addEventListener('DOMContentLoaded', () => {
+                if (typeof window.cre8RegisterTranslations === 'function') {
+                    window.cre8RegisterTranslations(translations);
+                }
+                applyOfferTranslations();
+            });
+            window.addEventListener('cre8:languagechange', () => applyOfferTranslations());
+            window.addEventListener('creatorListUpdated', () => window.setTimeout(applyOfferTranslations, 0));
+        })();
+    </script>
     <script src="../layout/front-header.js"></script>
 </body>
 </html>

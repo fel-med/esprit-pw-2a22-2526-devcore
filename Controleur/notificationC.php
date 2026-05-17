@@ -229,6 +229,135 @@ class NotificationC
         return $row;
     }
 
+
+    public function getNotificationsForUserFiltered($idUtilisateur, string $status = 'all', string $category = 'all', int $limit = 120): array
+    {
+        $idUtilisateur = (int) $idUtilisateur;
+        if ($idUtilisateur <= 0) {
+            return [];
+        }
+
+        $status = in_array($status, ['all', 'unread', 'read'], true) ? $status : 'all';
+        $category = in_array($category, ['all', 'posts', 'collaboration', 'admin', 'complaints', 'events'], true) ? $category : 'all';
+        $limit = max(1, min(200, (int) $limit));
+
+        $params = ['idUtilisateur' => $idUtilisateur];
+        $where = ['idUtilisateur = :idUtilisateur'];
+
+        if ($status === 'unread') {
+            $where[] = 'estLu = 0';
+        } elseif ($status === 'read') {
+            $where[] = 'estLu = 1';
+        }
+
+        $types = $this->notificationTypesForCategory($category);
+        if (!empty($types)) {
+            $placeholders = [];
+            foreach ($types as $index => $type) {
+                $key = 'type' . $index;
+                $placeholders[] = ':' . $key;
+                $params[$key] = $type;
+            }
+            $where[] = 'typeAction IN (' . implode(',', $placeholders) . ')';
+        }
+
+        $sql = '
+            SELECT
+                idNotificationAction,
+                idUtilisateur,
+                idActeur,
+                roleActeur,
+                typeAction,
+                titre,
+                message,
+                lien,
+                sourceType,
+                idSource,
+                cleAction,
+                donneesJson,
+                estLu,
+                dateCreation,
+                dateLecture
+            FROM notification_actions
+            WHERE ' . implode(' AND ', $where) . '
+            ORDER BY dateCreation DESC, idNotificationAction DESC
+            LIMIT :limit
+        ';
+
+        $stmt = $this->pdo->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue(':' . $key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return array_map([$this, 'normalizeNotificationRow'], $stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    public function countNotificationsForUser($idUtilisateur, string $status = 'all', string $category = 'all'): int
+    {
+        $idUtilisateur = (int) $idUtilisateur;
+        if ($idUtilisateur <= 0) {
+            return 0;
+        }
+
+        $status = in_array($status, ['all', 'unread', 'read'], true) ? $status : 'all';
+        $category = in_array($category, ['all', 'posts', 'collaboration', 'admin', 'complaints', 'events'], true) ? $category : 'all';
+
+        $params = ['idUtilisateur' => $idUtilisateur];
+        $where = ['idUtilisateur = :idUtilisateur'];
+
+        if ($status === 'unread') {
+            $where[] = 'estLu = 0';
+        } elseif ($status === 'read') {
+            $where[] = 'estLu = 1';
+        }
+
+        $types = $this->notificationTypesForCategory($category);
+        if (!empty($types)) {
+            $placeholders = [];
+            foreach ($types as $index => $type) {
+                $key = 'type' . $index;
+                $placeholders[] = ':' . $key;
+                $params[$key] = $type;
+            }
+            $where[] = 'typeAction IN (' . implode(',', $placeholders) . ')';
+        }
+
+        $stmt = $this->pdo->prepare('
+            SELECT COUNT(*) AS total
+            FROM notification_actions
+            WHERE ' . implode(' AND ', $where)
+        );
+        foreach ($params as $key => $value) {
+            $stmt->bindValue(':' . $key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
+        }
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        return (int) ($row['total'] ?? 0);
+    }
+
+    private function notificationTypesForCategory(string $category): array
+    {
+        return match ($category) {
+            'posts' => ['post_comment', 'post_reaction'],
+            'collaboration' => [
+                'offer_invitation',
+                'offer_accepted',
+                'offer_refused',
+                'candidature_received',
+                'candidature_accepted',
+                'candidature_refused',
+                'negotiation_message',
+            ],
+            'admin' => ['admin_post_removed', 'admin_product_removed'],
+            'complaints' => ['complaint_answered'],
+            'events' => ['event_today'],
+            default => [],
+        };
+    }
+
     private function findIdByActionKey(string $cleAction): int
     {
         $stmt = $this->pdo->prepare('

@@ -4,13 +4,13 @@ require_once __DIR__ . '/../../../Controleur/profileC.php';
 
 if (!isset($_SESSION['id'])) {
 
-    echo "Utilisateur non connecté";
+    echo "User not connected";
     exit();
 }
 
 /*
 |--------------------------------------------------------------------------
-| Nom utilisateur connecté
+| Connected user name
 |--------------------------------------------------------------------------
 */
 
@@ -36,7 +36,7 @@ $projectBase = $brandFrontPos !== false ? substr($brandPagePath, 0, $brandFrontP
 ?>
 
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 
 <head>
 
@@ -587,19 +587,19 @@ $projectBase = $brandFrontPos !== false ? substr($brandPagePath, 0, $brandFrontP
 
         <li>
             <a href="brand.php" class="active">
-                Home
+                <span data-i18n="brand.home">Home</span>
             </a>
         </li>
 
         <li>
             <a href="../evenement/index.php">
-                Events
+                <span data-i18n="brand.events">Events</span>
             </a>
         </li>
 
         <li>
             <a href="reclamation.php">
-                Reclamation
+                <span data-i18n="brand.complaints">Complaints</span>
             </a>
         </li>
 
@@ -612,7 +612,7 @@ $projectBase = $brandFrontPos !== false ? substr($brandPagePath, 0, $brandFrontP
         <li>
             <a href="logout.php" style="color:#ef4444;">
                 <i class="bi bi-box-arrow-right"></i>
-                Logout
+                <span data-i18n="brand.logout">Logout</span>
             </a>
         </li>
 
@@ -621,7 +621,7 @@ $projectBase = $brandFrontPos !== false ? substr($brandPagePath, 0, $brandFrontP
     <div class="nav-right">
 
         <div class="nav-badge">
-            👤 <?php echo htmlspecialchars($userName); ?>
+            &#128100; <?php echo htmlspecialchars($userName); ?>
         </div>
 
         <?php if ($profileImageUrl): ?>
@@ -646,10 +646,10 @@ $projectBase = $brandFrontPos !== false ? substr($brandPagePath, 0, $brandFrontP
 
         <div class="page-header-left">
 
-            <h1>Brand Page</h1>
+            <h1 data-i18n="brand.pageTitle">Brand Page</h1>
 
             <p>
-                Hello :
+                <span data-i18n="brand.hello">Hello</span> :
                 <strong>
                     <?php echo htmlspecialchars($userName); ?>
                 </strong>
@@ -660,15 +660,15 @@ $projectBase = $brandFrontPos !== false ? substr($brandPagePath, 0, $brandFrontP
         <div class="page-header-actions">
 
             <a href="reclamation.php" class="btn-export">
-                Reclamation
+                <span data-i18n="brand.complaints">Complaints</span>
             </a>
 
             <a href="#" class="btn-brand">
-                Brand Space
+                <span data-i18n="brand.brandSpace">Brand Space</span>
             </a>
 
             <a href="../evenement/index.php" class="btn-brand">
-                Events
+                <span data-i18n="brand.events">Events</span>
             </a>
 
         </div>
@@ -682,7 +682,7 @@ $projectBase = $brandFrontPos !== false ? substr($brandPagePath, 0, $brandFrontP
         <div class="hero-content">
 
             <h2>
-                  Let's build something together
+                  <span data-i18n="brand.heroTitle">Let's build something together</span>
             </h2>
 
     
@@ -695,8 +695,8 @@ $projectBase = $brandFrontPos !== false ? substr($brandPagePath, 0, $brandFrontP
 
         <a href="../evenement/index.php" class="info-card info-card-link event-card">
             <i class="bi bi-calendar-event"></i>
-            <h3>Events</h3>
-            <p>Découvrir les formations, meetups, webinaires et ateliers disponibles pour la communauté.</p>
+            <h3 data-i18n="brand.events">Events</h3>
+            <p data-i18n="brand.eventsHelp">Discover training sessions, meetups, webinars, and workshops available for the community.</p>
         </a>
 
     </div>
@@ -711,12 +711,58 @@ $projectBase = $brandFrontPos !== false ? substr($brandPagePath, 0, $brandFrontP
 <footer>
 
     <p>
-        Copyright © Cre8connect 2026
+        <span data-i18n="brand.copyright">Copyright © Cre8connect 2026</span>
     </p>
 
 </footer>
 
 <script src="../layout/front-header.js"></script>
+<script src="../layout/front-translate.js"></script>
+<script>
+(function () {
+    var translations = {
+        en: {
+            'brand.home': 'Home',
+            'brand.events': 'Events',
+            'brand.complaints': 'Complaints',
+            'brand.logout': 'Logout',
+            'brand.pageTitle': 'Brand Page',
+            'brand.documentTitle': 'Brand Page',
+            'brand.hello': 'Hello',
+            'brand.brandSpace': 'Brand Space',
+            'brand.heroTitle': "Let's build something together",
+            'brand.eventsHelp': 'Discover training sessions, meetups, webinars, and workshops available for the community.',
+            'brand.copyright': 'Copyright © Cre8connect 2026'
+        },
+        fr: {
+            'brand.home': 'Accueil',
+            'brand.events': 'Evenements',
+            'brand.complaints': 'Reclamations',
+            'brand.logout': 'Deconnexion',
+            'brand.pageTitle': 'Page marque',
+            'brand.documentTitle': 'Page marque',
+            'brand.hello': 'Bonjour',
+            'brand.brandSpace': 'Espace marque',
+            'brand.heroTitle': 'Construisons quelque chose ensemble',
+            'brand.eventsHelp': 'Decouvrez les formations, meetups, webinaires et ateliers disponibles pour la communaute.',
+            'brand.copyright': 'Copyright © Cre8connect 2026'
+        }
+    };
+    function registerBrandTranslations() {
+        if (typeof window.cre8RegisterTranslations === 'function') {
+            window.cre8RegisterTranslations(translations);
+        }
+        var lang = typeof window.cre8FrontReadLang === 'function' ? window.cre8FrontReadLang() : 'en';
+        document.title = (translations[lang] && translations[lang]['brand.documentTitle']) || translations.en['brand.documentTitle'];
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', registerBrandTranslations);
+    } else {
+        registerBrandTranslations();
+    }
+    window.addEventListener('cre8:languagechange', registerBrandTranslations);
+})();
+</script>
 <script>
 (function () {
     function syncBrandDarkUiClass() {

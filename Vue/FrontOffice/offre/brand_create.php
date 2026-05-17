@@ -269,6 +269,23 @@ if (!$selectedCreatorProfile && $selectedCreatorId > 0) {
 <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
 <link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
+
+    <style>
+        /* Hide any stale page-level notification bell while keeping the real shared header bell. */
+        main .notification-widget-front,
+        .offre-page-shell .notification-widget-front,
+        .module-hero .notification-widget-front,
+        .module-hero-notification-shell .notification-widget-front,
+        body > .notification-widget-front {
+            display: none !important;
+        }
+
+        .front-nav .notification-widget-front,
+        header .notification-widget-front,
+        nav .notification-widget-front {
+            display: inline-flex !important;
+        }
+    </style>
 </head>
 <body>
     <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
@@ -755,6 +772,269 @@ $cre8PilotContext = [
 ];
 require __DIR__ . '/../condidature/cre8pilot_widget.php';
 ?>
+    <script>
+        (() => {
+            const translations = {
+                en: {
+                    'offer.brandWorkspace': 'Brand workspace',
+                    'offer.createTargeted': 'Create a targeted collaboration offer',
+                    'offer.createCopy': 'Build the invitation in clear steps: choose the creator, explain the fit, define the offer, and review the final brief before sending it.',
+                    'offer.reviewForm': 'Please review the form.',
+                    'offer.chooseCreator': 'Choose the creator',
+                    'offer.chooseCreatorCopy': 'Pick the creator who should receive this offer.',
+                    'offer.searchCreators': 'Search creators',
+                    'offer.browseCreatorsCopy': 'Browse the available creators or search by name, email, or ID.',
+                    'offer.selectedCreator': 'Selected creator',
+                    'offer.clear': 'Clear',
+                    'offer.noCreators': 'No creators available',
+                    'offer.noCreatorsCopy': 'Creator accounts are not available yet.',
+                    'offer.browseMore': 'Browse more creators',
+                    'offer.creatorBrowser': 'Creator browser',
+                    'offer.browseCreators': 'Browse creators',
+                    'offer.browseModalCopy': 'Scroll through the creator stack, select one profile, or load the next group when you reach the bottom.',
+                    'offer.close': 'Close',
+                    'offer.offerDetails': 'Offer details',
+                    'offer.offerDetailsCopy': 'Define the collaboration brief, budget, timing, and success context.',
+                    'offer.offerTitle': 'Offer title',
+                    'offer.objective': 'Objective',
+                    'offer.proposedBudget': 'Proposed budget',
+                    'offer.description': 'Detailed description',
+                    'offer.publicationDate': 'Publication date',
+                    'offer.deadline': 'Deadline',
+                    'offer.whyCreator': 'Why this creator?',
+                    'offer.whyCreatorCopy': 'This whole section is optional. Use it when you want to explain the creator fit more clearly and make the invitation feel more personal.',
+                    'offer.whySelected': 'Why was this creator selected?',
+                    'offer.optional': 'Optional',
+                    'offer.whyHelper': 'Use this only if you want to explain the audience match, tone, or previous work that made this creator a good fit.',
+                    'offer.expectedFit': 'Expected collaboration fit',
+                    'offer.personalNote': 'Personal note',
+                    'offer.reviewSend': 'Review and send',
+                    'offer.reviewSendCopy': 'Use the live summary on the right, then either publish the invitation now or keep it as a draft for later refinement.',
+                    'offer.finalCheck': 'Final check',
+                    'offer.finalCheckCopy': 'Publish when the creator fit, proposed budget, and timeline are ready. If you still need to refine the brief, save it as a draft and come back without losing your progress.',
+                    'offer.publishTargeted': 'Publish targeted offer',
+                    'offer.saveDraft': 'Save as draft',
+                    'offer.cancel': 'Cancel',
+                    'offer.liveReview': 'Live review',
+                    'offer.liveReviewCopy': 'A final summary of the creator, core offer details, and optional collaboration context.',
+                    'offer.chooseCreatorStep': 'Choose a creator from step 1.',
+                    'offer.reviewOfferDetails': 'Offer details',
+                    'offer.titleFallback': 'Title: Your title will appear here.',
+                    'offer.objectiveFallback': 'Objective: Define the collaboration goal.',
+                    'offer.budgetFallback': 'Budget and timing: Add a proposed budget and schedule.',
+                    'offer.fit': 'Collaboration fit',
+                    'offer.fitFallback': 'Optional collaboration notes will appear here.',
+                    'offer.quickTips': 'Quick tips',
+                    'offer.clearMatch': 'Choose a clear match',
+                    'offer.clearMatchCopy': 'Pick a creator whose audience and style fit the offer.',
+                    'offer.specificBrief': 'Keep the brief specific',
+                    'offer.specificBriefCopy': 'Clear goals, budget, and dates make it easier for creators to answer.',
+                    'offer.addContext': 'Add context only when useful',
+                    'offer.addContextCopy': 'A short personal note can help, but it does not need to be long.',
+                    'offer.selected': 'Selected',
+                    'offer.ready': 'Ready',
+                    'offer.pendingReview': 'Pending review',
+                    'offer.limited': 'Limited'
+                },
+                fr: {
+                    'offer.brandWorkspace': 'Espace marque',
+                    'offer.createTargeted': 'Creer une offre de collaboration ciblee',
+                    'offer.createCopy': 'Construisez l invitation en etapes claires : choisir le createur, expliquer l adequation, definir l offre et verifier le brief final.',
+                    'offer.reviewForm': 'Veuillez verifier le formulaire.',
+                    'offer.chooseCreator': 'Choisir le createur',
+                    'offer.chooseCreatorCopy': 'Choisissez le createur qui recevra cette offre.',
+                    'offer.searchCreators': 'Rechercher des createurs',
+                    'offer.browseCreatorsCopy': 'Parcourez les createurs disponibles ou recherchez par nom, email ou ID.',
+                    'offer.selectedCreator': 'Createur selectionne',
+                    'offer.clear': 'Effacer',
+                    'offer.noCreators': 'Aucun createur disponible',
+                    'offer.noCreatorsCopy': 'Les comptes createurs ne sont pas encore disponibles.',
+                    'offer.browseMore': 'Parcourir plus de createurs',
+                    'offer.creatorBrowser': 'Navigateur de createurs',
+                    'offer.browseCreators': 'Parcourir les createurs',
+                    'offer.browseModalCopy': 'Parcourez la liste, selectionnez un profil ou chargez le groupe suivant.',
+                    'offer.close': 'Fermer',
+                    'offer.offerDetails': 'Details de l offre',
+                    'offer.offerDetailsCopy': 'Definissez le brief, le budget, le timing et le contexte de succes.',
+                    'offer.offerTitle': 'Titre de l offre',
+                    'offer.objective': 'Objectif',
+                    'offer.proposedBudget': 'Budget propose',
+                    'offer.description': 'Description detaillee',
+                    'offer.publicationDate': 'Date de publication',
+                    'offer.deadline': 'Echeance',
+                    'offer.whyCreator': 'Pourquoi ce createur ?',
+                    'offer.whyCreatorCopy': 'Cette section est optionnelle. Utilisez-la pour expliquer plus clairement l adequation du createur.',
+                    'offer.whySelected': 'Pourquoi ce createur a-t-il ete selectionne ?',
+                    'offer.optional': 'Optionnel',
+                    'offer.whyHelper': 'Utilisez ceci seulement pour expliquer l audience, le ton ou le travail precedent qui rendent ce createur pertinent.',
+                    'offer.expectedFit': 'Adequation attendue',
+                    'offer.personalNote': 'Note personnelle',
+                    'offer.reviewSend': 'Verifier et envoyer',
+                    'offer.reviewSendCopy': 'Utilisez le resume a droite, puis publiez l invitation ou gardez-la en brouillon.',
+                    'offer.finalCheck': 'Verification finale',
+                    'offer.finalCheckCopy': 'Publiez quand le createur, le budget et le calendrier sont prets. Sinon, enregistrez un brouillon.',
+                    'offer.publishTargeted': 'Publier l offre ciblee',
+                    'offer.saveDraft': 'Enregistrer en brouillon',
+                    'offer.cancel': 'Annuler',
+                    'offer.liveReview': 'Apercu en direct',
+                    'offer.liveReviewCopy': 'Resume final du createur, des details de l offre et du contexte optionnel.',
+                    'offer.chooseCreatorStep': 'Choisissez un createur a l etape 1.',
+                    'offer.reviewOfferDetails': 'Details de l offre',
+                    'offer.titleFallback': 'Titre : votre titre apparaitra ici.',
+                    'offer.objectiveFallback': 'Objectif : definissez le but de la collaboration.',
+                    'offer.budgetFallback': 'Budget et timing : ajoutez un budget et un calendrier.',
+                    'offer.fit': 'Adequation de collaboration',
+                    'offer.fitFallback': 'Les notes optionnelles apparaitront ici.',
+                    'offer.quickTips': 'Conseils rapides',
+                    'offer.clearMatch': 'Choisissez une correspondance claire',
+                    'offer.clearMatchCopy': 'Selectionnez un createur dont l audience et le style correspondent a l offre.',
+                    'offer.specificBrief': 'Gardez un brief precis',
+                    'offer.specificBriefCopy': 'Des objectifs, un budget et des dates clairs facilitent la reponse.',
+                    'offer.addContext': 'Ajoutez du contexte seulement si utile',
+                    'offer.addContextCopy': 'Une courte note personnelle peut aider, sans etre longue.',
+                    'offer.selected': 'Selectionne',
+                    'offer.ready': 'Pret',
+                    'offer.pendingReview': 'En attente',
+                    'offer.limited': 'Limite'
+                }
+            };
+            const textKeys = {
+                'Brand workspace': 'offer.brandWorkspace',
+                'Create a targeted collaboration offer': 'offer.createTargeted',
+                'Build the invitation in clear steps: choose the creator, explain the fit, define the offer, and review the final brief before sending it.': 'offer.createCopy',
+                'Please review the form.': 'offer.reviewForm',
+                'Choose the creator': 'offer.chooseCreator',
+                'Pick the creator who should receive this offer.': 'offer.chooseCreatorCopy',
+                'Search creators': 'offer.searchCreators',
+                'Browse the available creators or search by name, email, or ID.': 'offer.browseCreatorsCopy',
+                'Selected creator': 'offer.selectedCreator',
+                'Clear': 'offer.clear',
+                'No creators available': 'offer.noCreators',
+                'Creator accounts are not available yet.': 'offer.noCreatorsCopy',
+                'Browse more creators': 'offer.browseMore',
+                'Creator browser': 'offer.creatorBrowser',
+                'Browse creators': 'offer.browseCreators',
+                'Scroll through the creator stack, select one profile, or load the next group when you reach the bottom.': 'offer.browseModalCopy',
+                'Close': 'offer.close',
+                'Offer details': 'offer.offerDetails',
+                'Define the collaboration brief, budget, timing, and success context.': 'offer.offerDetailsCopy',
+                'Offer title': 'offer.offerTitle',
+                'Objective': 'offer.objective',
+                'Proposed budget': 'offer.proposedBudget',
+                'Detailed description': 'offer.description',
+                'Publication date': 'offer.publicationDate',
+                'Deadline': 'offer.deadline',
+                'Why this creator?': 'offer.whyCreator',
+                'This whole section is optional. Use it when you want to explain the creator fit more clearly and make the invitation feel more personal.': 'offer.whyCreatorCopy',
+                'Why was this creator selected?': 'offer.whySelected',
+                'Optional': 'offer.optional',
+                'Use this only if you want to explain the audience match, tone, or previous work that made this creator a good fit.': 'offer.whyHelper',
+                'Expected collaboration fit': 'offer.expectedFit',
+                'Personal note': 'offer.personalNote',
+                'Review and send': 'offer.reviewSend',
+                'Use the live summary on the right, then either publish the invitation now or keep it as a draft for later refinement.': 'offer.reviewSendCopy',
+                'Final check': 'offer.finalCheck',
+                'Publish when the creator fit, proposed budget, and timeline are ready. If you still need to refine the brief, save it as a draft and come back without losing your progress.': 'offer.finalCheckCopy',
+                'Publish targeted offer': 'offer.publishTargeted',
+                'Save as draft': 'offer.saveDraft',
+                'Cancel': 'offer.cancel',
+                'Live review': 'offer.liveReview',
+                'A final summary of the creator, core offer details, and optional collaboration context.': 'offer.liveReviewCopy',
+                'Choose a creator from step 1.': 'offer.chooseCreatorStep',
+                'Title: Your title will appear here.': 'offer.titleFallback',
+                'Objective: Define the collaboration goal.': 'offer.objectiveFallback',
+                'Budget and timing: Add a proposed budget and schedule.': 'offer.budgetFallback',
+                'Collaboration fit': 'offer.fit',
+                'Optional collaboration notes will appear here.': 'offer.fitFallback',
+                'Quick tips': 'offer.quickTips',
+                'Choose a clear match': 'offer.clearMatch',
+                'Pick a creator whose audience and style fit the offer.': 'offer.clearMatchCopy',
+                'Keep the brief specific': 'offer.specificBrief',
+                'Clear goals, budget, and dates make it easier for creators to answer.': 'offer.specificBriefCopy',
+                'Add context only when useful': 'offer.addContext',
+                'A short personal note can help, but it does not need to be long.': 'offer.addContextCopy',
+                'Selected': 'offer.selected',
+                'Ready': 'offer.ready',
+                'Pending review': 'offer.pendingReview',
+                'Limited': 'offer.limited'
+            };
+            const placeholderKeys = {
+                'Search by name, email, or ID': 'offer.searchCreators',
+                'Example: Short-form product launch package': 'offer.offerTitle',
+                'Example: Drive 10 product demo videos in 2 weeks': 'offer.objective',
+                'Explain the deliverables, expected tone, product context, and what success looks like.': 'offer.description',
+                'Audience fit, previous work, tone, niche expertise...': 'offer.whySelected',
+                'What kind of partnership, energy, deliverables, or rhythm do you expect?': 'offer.expectedFit',
+                'Optional warm introduction or context for this creator.': 'offer.personalNote'
+            };
+            function currentLang() { return typeof window.cre8FrontReadLang === 'function' ? window.cre8FrontReadLang() : 'en'; }
+            function keyForText(value) {
+                const clean = String(value).trim();
+                if (textKeys[clean]) return textKeys[clean];
+                for (const lang of Object.keys(translations)) for (const key of Object.keys(translations[lang])) if (translations[lang][key] === clean) return key;
+                return '';
+            }
+            function translateAttributes(root, dict) {
+                root.querySelectorAll('[placeholder]').forEach((el) => {
+                    const key = placeholderKeys[el.getAttribute('placeholder')] || el.getAttribute('data-i18n-placeholder');
+                    if (key && dict[key]) {
+                        el.setAttribute('data-i18n-placeholder', key);
+                        el.setAttribute('placeholder', dict[key]);
+                    }
+                });
+            }
+            function applyOfferTranslations(root = document) {
+                const dict = translations[currentLang()] || translations.en;
+                if (typeof window.cre8ApplyI18n === 'function') window.cre8ApplyI18n(translations);
+                translateAttributes(root, dict);
+                const walker = document.createTreeWalker(root.body || root, NodeFilter.SHOW_TEXT, {
+                    acceptNode(node) {
+                        const parent = node.parentElement;
+                        if (!parent || ['SCRIPT', 'STYLE', 'TEXTAREA'].includes(parent.tagName)) return NodeFilter.FILTER_REJECT;
+                        return node.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                    }
+                });
+                const nodes = [];
+                while (walker.nextNode()) nodes.push(walker.currentNode);
+                nodes.forEach((node) => {
+                    const key = keyForText(node.nodeValue);
+                    if (!key || dict[key] === undefined) return;
+                    node.nodeValue = node.nodeValue.replace(node.nodeValue.trim(), dict[key]);
+                    if (node.parentElement && node.parentElement.childNodes.length === 1) node.parentElement.setAttribute('data-i18n', key);
+                });
+            }
+            window.cre8OfferApplyTranslations = applyOfferTranslations;
+            document.addEventListener('DOMContentLoaded', () => {
+                if (typeof window.cre8RegisterTranslations === 'function') window.cre8RegisterTranslations(translations);
+                applyOfferTranslations();
+                document.addEventListener('input', () => window.setTimeout(applyOfferTranslations, 0), true);
+                document.addEventListener('creatorpicker:render', () => window.setTimeout(applyOfferTranslations, 0), true);
+                document.addEventListener('creatorpicker:change', () => window.setTimeout(applyOfferTranslations, 0), true);
+            });
+            window.addEventListener('cre8:languagechange', () => applyOfferTranslations());
+        })();
+    </script>
+
+    <script>
+        (function () {
+            function removeDuplicatePageBells() {
+                document.querySelectorAll('.notification-widget-front, .notification-widget').forEach(function (widget) {
+                    if (widget.closest('.front-nav') || widget.closest('header') || widget.closest('nav')) {
+                        return;
+                    }
+                    if (widget.closest('main') || widget.parentElement === document.body) {
+                        widget.remove();
+                    }
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', removeDuplicatePageBells);
+            } else {
+                removeDuplicatePageBells();
+            }
+        })();
+    </script>
     <script src="../layout/front-header.js"></script>
 </body>
 </html>

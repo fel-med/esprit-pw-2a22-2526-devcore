@@ -103,6 +103,14 @@
                 window.initializeModuleValidation(nextRegion);
             }
 
+            if (typeof window.cre8OfferApplyTranslations === 'function') {
+                window.setTimeout(() => window.cre8OfferApplyTranslations(nextRegion), 0);
+            }
+
+            window.dispatchEvent(new CustomEvent('creatorListUpdated', {
+                detail: { region: nextRegion }
+            }));
+
             return true;
         } finally {
             setCreatorRegionLoading(getCreatorRegion(), false);

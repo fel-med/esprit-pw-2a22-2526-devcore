@@ -60,35 +60,45 @@ $quickCards = $isBrand
             'iconClass' => 'icon-purple',
             'icon' => 'bi-megaphone',
             'title' => 'My Campaigns',
+            'titleKey' => 'account.myCampaigns',
             'subtitle' => 'Create and manage your campaigns',
+            'subtitleKey' => 'account.manageCampaigns',
         ],
         [
             'href' => '../produit/index.php',
             'iconClass' => 'icon-blue',
             'icon' => 'bi-box-seam',
             'title' => 'Products',
+            'titleKey' => 'account.products',
             'subtitle' => 'Organize your product catalog',
+            'subtitleKey' => 'account.productCatalog',
         ],
         [
             'href' => '../contrat/index.php',
             'iconClass' => 'icon-green',
             'icon' => 'bi-file-earmark-text',
             'title' => 'Contracts',
+            'titleKey' => 'account.contracts',
             'subtitle' => 'Track your collaboration agreements',
+            'subtitleKey' => 'account.trackContracts',
         ],
         [
             'href' => '../offre/brand_index.php',
             'iconClass' => 'icon-red',
             'icon' => 'bi-briefcase',
             'title' => 'Collaborations',
+            'titleKey' => 'account.collaborations',
             'subtitle' => 'Manage offers and received applications',
+            'subtitleKey' => 'account.manageCollaborations',
         ],
         [
             'href' => '../evenement/index.php',
             'iconClass' => 'icon-orange',
             'icon' => 'bi-calendar-event',
             'title' => 'Events',
+            'titleKey' => 'account.events',
             'subtitle' => 'Discover community events',
+            'subtitleKey' => 'account.discoverEvents',
         ],
     ]
     : [
@@ -97,42 +107,54 @@ $quickCards = $isBrand
             'iconClass' => 'icon-purple',
             'icon' => 'bi-person-badge',
             'title' => 'My Space',
+            'titleKey' => 'account.mySpace',
             'subtitle' => 'Manage your portfolio and publications',
+            'subtitleKey' => 'account.managePortfolio',
         ],
         [
             'href' => '../post/index.php',
             'iconClass' => 'icon-blue',
             'icon' => 'bi-newspaper',
             'title' => 'Feeds',
+            'titleKey' => 'account.feeds',
             'subtitle' => 'View community posts',
+            'subtitleKey' => 'account.viewPosts',
         ],
         [
             'href' => '../offre/creator_list.php',
             'iconClass' => 'icon-green',
             'icon' => 'bi-briefcase',
             'title' => 'Offers',
+            'titleKey' => 'account.offers',
             'subtitle' => 'Browse brand invitations',
+            'subtitleKey' => 'account.browseOffers',
         ],
         [
             'href' => '../condidature/index.php',
             'iconClass' => 'icon-red',
             'icon' => 'bi-send-check',
             'title' => 'Applications',
+            'titleKey' => 'account.applications',
             'subtitle' => 'Track your replies and negotiations',
+            'subtitleKey' => 'account.trackApplications',
         ],
         [
             'href' => '../campagne/indexC.php',
             'iconClass' => 'icon-purple',
             'icon' => 'bi-megaphone',
             'title' => 'Campaigns',
+            'titleKey' => 'account.campaigns',
             'subtitle' => 'Discover available campaigns',
+            'subtitleKey' => 'account.discoverCampaigns',
         ],
         [
             'href' => '../evenement/index.php',
             'iconClass' => 'icon-orange',
             'icon' => 'bi-calendar-event',
             'title' => 'Events',
+            'titleKey' => 'account.events',
             'subtitle' => 'Join events and workshops',
+            'subtitleKey' => 'account.joinEvents',
         ],
     ];
 
@@ -378,7 +400,7 @@ $welcomeText = $isBrand
         <?php endif; ?>
         <div>
             <div class="cover-name"><?php echo htmlspecialchars($userName); ?></div>
-            <div class="cover-role"><i class="bi <?php echo htmlspecialchars($roleIcon); ?>"></i> <?php echo htmlspecialchars($roleLabel); ?></div>
+            <div class="cover-role"><i class="bi <?php echo htmlspecialchars($roleIcon); ?>"></i> <span data-i18n="<?php echo $isBrand ? 'account.roleBrand' : 'account.roleCreator'; ?>"><?php echo htmlspecialchars($roleLabel); ?></span></div>
             <div class="cover-handle">@<?php echo htmlspecialchars($userHandle); ?></div>
         </div>
     </div>
@@ -389,8 +411,8 @@ $welcomeText = $isBrand
             <a href="<?php echo htmlspecialchars($card['href']); ?>" class="quick-card">
                 <div class="quick-card-icon <?php echo htmlspecialchars($card['iconClass']); ?>"><i class="bi <?php echo htmlspecialchars($card['icon']); ?>"></i></div>
                 <div>
-                    <div class="quick-card-title"><?php echo htmlspecialchars($card['title']); ?></div>
-                    <div class="quick-card-sub"><?php echo htmlspecialchars($card['subtitle']); ?></div>
+                    <div class="quick-card-title" data-i18n="<?php echo htmlspecialchars($card['titleKey']); ?>"><?php echo htmlspecialchars($card['title']); ?></div>
+                    <div class="quick-card-sub" data-i18n="<?php echo htmlspecialchars($card['subtitleKey']); ?>"><?php echo htmlspecialchars($card['subtitle']); ?></div>
                 </div>
             </a>
         <?php endforeach; ?>
@@ -398,8 +420,8 @@ $welcomeText = $isBrand
 
     <!-- Welcome banner -->
     <div class="welcome-banner">
-        <h2>Welcome, <?php echo htmlspecialchars($userName); ?> 👋</h2>
-        <p><?php echo htmlspecialchars($welcomeText); ?></p>
+        <h2><span data-i18n="account.welcome">Welcome</span>, <?php echo htmlspecialchars($userName); ?></h2>
+        <p data-i18n="<?php echo $isBrand ? 'account.brandWelcomeText' : 'account.creatorWelcomeText'; ?>"><?php echo htmlspecialchars($welcomeText); ?></p>
     </div>
 
 </div>
@@ -408,6 +430,78 @@ $welcomeText = $isBrand
 <footer>Copyright © Cre8connect 2026</footer>
 
 <script src="../layout/front-header.js"></script>
+<script>
+(function () {
+    var translations = {
+        en: {
+            'account.roleBrand': 'Brand',
+            'account.roleCreator': 'Creator',
+            'account.myCampaigns': 'My Campaigns',
+            'account.manageCampaigns': 'Create and manage your campaigns',
+            'account.products': 'Products',
+            'account.productCatalog': 'Organize your product catalog',
+            'account.contracts': 'Contracts',
+            'account.trackContracts': 'Track your collaboration agreements',
+            'account.collaborations': 'Collaborations',
+            'account.manageCollaborations': 'Manage offers and received applications',
+            'account.events': 'Events',
+            'account.discoverEvents': 'Discover community events',
+            'account.mySpace': 'My Space',
+            'account.managePortfolio': 'Manage your portfolio and publications',
+            'account.feeds': 'Feeds',
+            'account.viewPosts': 'View community posts',
+            'account.offers': 'Offers',
+            'account.browseOffers': 'Browse brand invitations',
+            'account.applications': 'Applications',
+            'account.trackApplications': 'Track your replies and negotiations',
+            'account.campaigns': 'Campaigns',
+            'account.discoverCampaigns': 'Discover available campaigns',
+            'account.joinEvents': 'Join events and workshops',
+            'account.welcome': 'Welcome',
+            'account.brandWelcomeText': 'Your brand space helps you manage campaigns, organize products, track contracts, manage collaborations, and discover events from one place.',
+            'account.creatorWelcomeText': 'Your creator space helps you publish content, grow your portfolio, discover available campaigns and events, reply to offers, and track your applications easily.'
+        },
+        fr: {
+            'account.roleBrand': 'Marque',
+            'account.roleCreator': 'Createur',
+            'account.myCampaigns': 'Mes campagnes',
+            'account.manageCampaigns': 'Creez et gerez vos campagnes',
+            'account.products': 'Produits',
+            'account.productCatalog': 'Organisez votre catalogue de produits',
+            'account.contracts': 'Contrats',
+            'account.trackContracts': 'Suivez vos accords de collaboration',
+            'account.collaborations': 'Collaborations',
+            'account.manageCollaborations': 'Gerez les offres et les candidatures recues',
+            'account.events': 'Evenements',
+            'account.discoverEvents': 'Decouvrez les evenements de la communaute',
+            'account.mySpace': 'My Space',
+            'account.managePortfolio': 'Gerez votre portfolio et vos publications',
+            'account.feeds': 'Feeds',
+            'account.viewPosts': 'Voir les posts de la communaute',
+            'account.offers': 'Offres',
+            'account.browseOffers': 'Parcourez les invitations des marques',
+            'account.applications': 'Candidatures',
+            'account.trackApplications': 'Suivez vos reponses et negociations',
+            'account.campaigns': 'Campagnes',
+            'account.discoverCampaigns': 'Decouvrez les campagnes disponibles',
+            'account.joinEvents': 'Participez aux evenements et ateliers',
+            'account.welcome': 'Bienvenue',
+            'account.brandWelcomeText': 'Votre espace marque vous aide a gerer vos campagnes, organiser vos produits, suivre vos contrats, gerer vos collaborations et decouvrir les evenements depuis un seul endroit.',
+            'account.creatorWelcomeText': 'Votre espace createur vous aide a publier du contenu, developper votre portfolio, decouvrir les campagnes et evenements disponibles, repondre aux offres et suivre facilement vos candidatures.'
+        }
+    };
+    function registerAccountTranslations() {
+        if (typeof window.cre8RegisterTranslations === 'function') {
+            window.cre8RegisterTranslations(translations);
+        }
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', registerAccountTranslations);
+    } else {
+        registerAccountTranslations();
+    }
+})();
+</script>
 
 </body>
 </html>

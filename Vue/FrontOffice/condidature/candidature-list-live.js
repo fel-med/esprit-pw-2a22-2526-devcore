@@ -177,6 +177,14 @@
                 window.initOfferTabs(nextRegion);
             }
 
+            if (typeof window.cre8CandidatureApplyTranslations === 'function') {
+                window.setTimeout(() => window.cre8CandidatureApplyTranslations(nextRegion), 0);
+            }
+
+            window.dispatchEvent(new CustomEvent('candidatureListUpdated', {
+                detail: { region: nextRegion }
+            }));
+
             return true;
         } finally {
             const region = getRegion();

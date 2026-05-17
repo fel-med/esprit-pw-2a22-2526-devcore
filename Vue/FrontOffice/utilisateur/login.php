@@ -50,22 +50,47 @@ if (isset($_POST['reset_email'])) {
 }
 
 .auth-brand-logo {
-    width: 170px;
+    width: 235px;
     height: auto;
-    max-height: 52px;
+    max-height: 72px;
     object-fit: contain;
     display: block;
 }
 
 @media (max-width: 575.98px) {
     .auth-brand-logo {
-        width: 145px;
-        max-height: 46px;
+        width: 175px;
+        max-height: 56px;
     }
 }
 
 .auth-card {
     border-radius: 20px;
+}
+
+.public-lang-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    border: 1px solid rgba(78, 84, 200, .22);
+    border-radius: 999px;
+    padding: .2rem;
+    background: #fff;
+}
+
+.public-lang-switch button {
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #5f6674;
+    font-weight: 800;
+    font-size: .72rem;
+    padding: .25rem .55rem;
+}
+
+.public-lang-switch button.is-active {
+    background: #4e54c8;
+    color: #fff;
 }
 
            .text-gradient {
@@ -140,15 +165,22 @@ if (isset($_POST['reset_email'])) {
         padding: 2rem !important;
     }
 } </style>
-<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
-<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
-<link rel="apple-touch-icon" href="../../public/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
     </head>
     <body class="d-flex flex-column h-100 bg-light auth-shell">
-        <header class="auth-topbar bg-white py-2">
+        <header class="auth-topbar bg-white">
             <div class="container-fluid px-3 px-lg-4 d-flex align-items-center justify-content-between gap-3">
                 <a class="navbar-brand m-0 d-inline-flex align-items-center" href="index.php"><img src="../../public/images/logoweb.png" alt="Cre8Connect" class="auth-brand-logo"></a>
-                <a class="btn btn-outline-dark btn-sm auth-home-link px-3" href="index.php">&larr; Home</a>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="public-lang-switch" aria-label="Language">
+                        <button type="button" data-lang-choice="en">EN</button>
+                        <button type="button" data-lang-choice="fr">FR</button>
+                    </div>
+                    <a class="btn btn-outline-dark btn-sm auth-home-link px-3" href="index.php">&larr; <span data-i18n="auth.home">Home</span></a>
+                </div>
             </div>
         </header>
         <main class="flex-grow-1 d-flex align-items-center justify-content-center auth-main">
@@ -164,7 +196,7 @@ if (isset($_POST['reset_email'])) {
 
             <div class="col-lg-6 p-5 d-flex flex-column justify-content-center auth-form-panel">
 
-    <h2 class="fw-bold mb-4 text-gradient text-center">Log in to your account</h2>
+    <h2 class="fw-bold mb-4 text-gradient text-center" data-i18n="auth.loginTitle">Log in to your account</h2>
 
     <?php if (!empty($loginMessage)): ?>
         <div class="alert alert-danger alert-dismissible fade show text-center" role="alert">
@@ -176,15 +208,15 @@ if (isset($_POST['reset_email'])) {
     <form method="POST" class="shadow p-4 rounded-4 bg-white">
 
         <div class="mb-3">
-            <input type="text" name="email" class="form-control input-custom" placeholder="Email">
+            <input type="text" name="email" class="form-control input-custom" placeholder="Email" data-i18n-placeholder="auth.email">
         </div>
 
         <div class="mb-3">
-            <input type="password" name="password" class="form-control input-custom" placeholder="Password">
+            <input type="password" name="password" class="form-control input-custom" placeholder="Password" data-i18n-placeholder="auth.password">
         </div>
 
         <button name="login" class="btn btn-gradient w-100 py-2 mb-3">
-            Sign in
+            <span data-i18n="auth.signIn">Sign in</span>
         </button>
 
         <!-- Face login panel -->
@@ -194,28 +226,28 @@ if (isset($_POST['reset_email'])) {
                 <canvas id="faceOverlay" class="face-overlay"></canvas>
             </div>
             <div id="faceLoginStatus" class="small text-muted mt-2 text-center">
-                Camera is open. Click Capture / Retry when your face is clear.
+                <span data-i18n="auth.faceCameraOpen">Camera is open. Click Capture / Retry when your face is clear.</span>
             </div>
             <div class="d-flex gap-2 mt-3">
-                <button type="button" id="cancelFaceLogin" class="btn btn-outline-secondary flex-fill py-2">Cancel</button>
-                <button type="button" id="captureFaceLogin" class="btn btn-gradient flex-fill py-2">Capture / Retry</button>
+                <button type="button" id="cancelFaceLogin" class="btn btn-outline-secondary flex-fill py-2" data-i18n="auth.cancel">Cancel</button>
+                <button type="button" id="captureFaceLogin" class="btn btn-gradient flex-fill py-2" data-i18n="auth.captureRetry">Capture / Retry</button>
             </div>
         </div>
 
         <button type="button" class="btn btn-outline-primary w-100 py-2" id="scanLogin">
-            Log in with Face
+            <span data-i18n="auth.faceLogin">Log in with Face</span>
         </button>
 
     </form>
 
     <p class="mt-3 text-center text-muted">
-        You don't have an account?
-        <a href="register.php" class="fw-bold text-gradient">Sign up</a>
+        <span data-i18n="auth.noAccount">You don't have an account?</span>
+        <a href="register.php" class="fw-bold text-gradient" data-i18n="auth.signUp">Sign up</a>
     </p>
 
     <p class="text-center">
         <a href="#" data-bs-toggle="modal" data-bs-target="#forgotModal" class="text-decoration-none">
-            Forgot password?
+            <span data-i18n="auth.forgotPasswordQ">Forgot password?</span>
         </a>
     </p>
 
@@ -241,7 +273,7 @@ if (isset($_POST['reset_email'])) {
     <div class="modal-content p-4" style="border-radius: 15px;">
 
       <div class="modal-header border-0">
-        <h5 class="modal-title">🔐 Forgot password</h5>
+        <h5 class="modal-title" data-i18n="auth.forgotPassword">Forgot password</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
 
@@ -251,14 +283,14 @@ if (isset($_POST['reset_email'])) {
 
           <input type="email" name="reset_email" id="emailInput"
                  class="form-control mb-2"
-                 placeholder="Enter your email" required>
+                 placeholder="Enter your email" data-i18n-placeholder="auth.enterEmail" required>
 
           <small id="emailError" class="text-danger d-none">
-            Invalid email
+            <span data-i18n="auth.invalidEmail">Invalid email</span>
           </small>
 
           <button name="reset" class="btn btn-primary w-100 mt-2" id="resetBtn">
-            <span id="btnText">Send link</span>
+            <span id="btnText" data-i18n="auth.sendLink">Send link</span>
             <span id="btnLoader" class="spinner-border spinner-border-sm d-none"></span>
           </button>
 
@@ -275,11 +307,11 @@ if (isset($_POST['reset_email'])) {
                 <div class="row align-items-center justify-content-between flex-column flex-sm-row">
                     <div class="col-auto"><div class="small m-0">Copyright &copy; cre8connect 2026</div></div>
                     <div class="col-auto">
-                        <a class="small" href="#!">Privacy</a>
+                        <a class="small" href="#!" data-i18n="auth.privacy">Privacy</a>
                         <span class="mx-1">&middot;</span>
-                        <a class="small" href="#!">Terms</a>
+                        <a class="small" href="#!" data-i18n="auth.terms">Terms</a>
                         <span class="mx-1">&middot;</span>
-                        <a class="small" href="#!">Contact</a>
+                        <a class="small" href="#!" data-i18n="auth.contact">Contact</a>
                     </div>
                 </div>
             </div>
@@ -287,6 +319,89 @@ if (isset($_POST['reset_email'])) {
         </footer>
         <!-- Bootstrap core JS-->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="../layout/front-translate.js"></script>
+<script>
+const cre8AuthTranslations = {
+    en: {
+        'auth.home': 'Home',
+        'auth.loginTitle': 'Log in to your account',
+        'auth.email': 'Email',
+        'auth.password': 'Password',
+        'auth.signIn': 'Sign in',
+        'auth.faceCameraOpen': 'Camera is open. Click Capture / Retry when your face is clear.',
+        'auth.cancel': 'Cancel',
+        'auth.captureRetry': 'Capture / Retry',
+        'auth.faceLogin': 'Log in with Face',
+        'auth.noAccount': "You don't have an account?",
+        'auth.signUp': 'Sign up',
+        'auth.forgotPasswordQ': 'Forgot password?',
+        'auth.forgotPassword': 'Forgot password',
+        'auth.enterEmail': 'Enter your email',
+        'auth.invalidEmail': 'Invalid email',
+        'auth.sendLink': 'Send link',
+        'auth.faceDetectedLogin': 'Face detected. Click Capture / Retry to log in.',
+        'auth.noFaceDetected': 'No face detected. Adjust your position.',
+        'auth.faceDetectionFailed': 'Face detection failed. Please try again.',
+        'auth.scanningFace': 'Scanning face...',
+        'auth.faceNotDetectedRetry': 'Face not detected. Adjust your position and click Capture / Retry.',
+        'auth.faceChecking': 'Face detected. Checking account...',
+        'auth.userNotRecognized': 'User not recognized',
+        'auth.faceLoginFailed': 'Face login failed. Please click Capture / Retry again.',
+        'auth.faceUnavailable': 'Face login unavailable',
+        'auth.faceNotAvailable': 'Face login is not available right now.',
+        'auth.cameraPermission': 'Could not access the camera. Check permissions or try again.',
+        'auth.privacy': 'Privacy',
+        'auth.terms': 'Terms',
+        'auth.contact': 'Contact'
+    },
+    fr: {
+        'auth.home': 'Accueil',
+        'auth.loginTitle': 'Connectez-vous a votre compte',
+        'auth.email': 'Email',
+        'auth.password': 'Mot de passe',
+        'auth.signIn': 'Se connecter',
+        'auth.faceCameraOpen': 'La camera est ouverte. Cliquez sur Capturer / Reessayer quand votre visage est clair.',
+        'auth.cancel': 'Annuler',
+        'auth.captureRetry': 'Capturer / Reessayer',
+        'auth.faceLogin': 'Connexion avec Face ID',
+        'auth.noAccount': "Vous n avez pas de compte ?",
+        'auth.signUp': 'S inscrire',
+        'auth.forgotPasswordQ': 'Mot de passe oublie ?',
+        'auth.forgotPassword': 'Mot de passe oublie',
+        'auth.enterEmail': 'Entrez votre email',
+        'auth.invalidEmail': 'Email invalide',
+        'auth.sendLink': 'Envoyer le lien',
+        'auth.faceDetectedLogin': 'Visage detecte. Cliquez sur Capturer / Reessayer pour vous connecter.',
+        'auth.noFaceDetected': 'Aucun visage detecte. Ajustez votre position.',
+        'auth.faceDetectionFailed': 'Detection du visage echouee. Veuillez reessayer.',
+        'auth.scanningFace': 'Scan du visage...',
+        'auth.faceNotDetectedRetry': 'Visage non detecte. Ajustez votre position et cliquez sur Capturer / Reessayer.',
+        'auth.faceChecking': 'Visage detecte. Verification du compte...',
+        'auth.userNotRecognized': 'Utilisateur non reconnu',
+        'auth.faceLoginFailed': 'Connexion Face ID echouee. Cliquez sur Capturer / Reessayer.',
+        'auth.faceUnavailable': 'Connexion Face ID indisponible',
+        'auth.faceNotAvailable': 'La connexion Face ID est indisponible pour le moment.',
+        'auth.cameraPermission': 'Impossible d acceder a la camera. Verifiez les autorisations ou reessayez.',
+        'auth.privacy': 'Confidentialite',
+        'auth.terms': 'Conditions',
+        'auth.contact': 'Contact'
+    }
+};
+function cre8AuthLang() {
+    if (typeof cre8FrontReadLang === 'function') return cre8FrontReadLang();
+    try { return (localStorage.getItem('cre8_front_lang') || localStorage.getItem('cre8_lang')) === 'fr' ? 'fr' : 'en'; } catch (e) { return 'en'; }
+}
+function cre8AuthText(key) {
+    const lang = cre8AuthLang();
+    return (cre8AuthTranslations[lang] && cre8AuthTranslations[lang][key]) || cre8AuthTranslations.en[key] || key;
+}
+function cre8RegisterAuthTranslations() {
+    if (typeof cre8RegisterTranslations === 'function') cre8RegisterTranslations(cre8AuthTranslations);
+    document.title = cre8AuthLang() === 'fr' ? 'Cre8Connect - Connexion' : 'Cre8Connect - Login';
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', cre8RegisterAuthTranslations); else cre8RegisterAuthTranslations();
+window.addEventListener('cre8:languagechange', cre8RegisterAuthTranslations);
+</script>
         <script defer src="https://cdn.jsdelivr.net/npm/face-api.js/dist/face-api.min.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
@@ -309,7 +424,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     scanBtn.disabled = true;
 
     function updateStatus(message, type = "muted") {
-        faceLoginStatus.textContent = message;
+        faceLoginStatus.textContent = cre8AuthText(message);
         faceLoginStatus.className = "small mt-2 text-center text-" + type;
     }
 
@@ -380,19 +495,19 @@ document.addEventListener("DOMContentLoaded", async () => {
                 if (detection) {
                     drawDetectionBox(detection);
                     if (!scanInProgress) {
-                        updateStatus("Face detected ✅. Click Capture / Retry to log in.", "success");
+                        updateStatus("auth.faceDetectedLogin", "success");
                     }
                 } else {
                     clearOverlay();
                     if (!scanInProgress) {
-                        updateStatus("No face detected ❌. Adjust your position.", "danger");
+                        updateStatus("auth.noFaceDetected", "danger");
                     }
                 }
             } catch (error) {
                 console.error(error);
                 clearOverlay();
                 if (!scanInProgress) {
-                    updateStatus("Face detection failed. Please try again.", "danger");
+                    updateStatus("auth.faceDetectionFailed", "danger");
                 }
             } finally {
                 liveDetecting = false;
@@ -420,7 +535,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         cameraOpen = true;
         faceLoginPanel.style.display = "block";
-        updateStatus("Camera is open. Click Capture / Retry when your face is clear.", "muted");
+        updateStatus("auth.faceCameraOpen", "muted");
         resizeOverlayToVideo();
         stopLiveDetection();
         liveLoopId = requestAnimationFrame(liveDetectLoop);
@@ -439,7 +554,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         faceLoginPanel.style.display = "none";
         captureFaceLogin.disabled = false;
         scanInProgress = false;
-        updateStatus("Camera is open. Click Capture / Retry when your face is clear.", "muted");
+        updateStatus("auth.faceCameraOpen", "muted");
     }
 
     function getModelBasePath() {
@@ -454,7 +569,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         scanInProgress = true;
         captureFaceLogin.disabled = true;
-        updateStatus("Scanning face...", "muted");
+        updateStatus("auth.scanningFace", "muted");
 
         try {
             const detection = await faceapi
@@ -464,12 +579,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             if (!detection) {
                 clearOverlay();
-                updateStatus("Face not detected ❌. Adjust your position and click Capture / Retry.", "danger");
+                updateStatus("auth.faceNotDetectedRetry", "danger");
                 return;
             }
 
             drawDetectionBox(detection);
-            updateStatus("Face detected ✅. Checking account...", "success");
+            updateStatus("auth.faceChecking", "success");
 
             const descriptor = Array.from(detection.descriptor);
 
@@ -491,10 +606,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                 ? " Distance: " + Number(data.distance).toFixed(4)
                 : "";
 
-            updateStatus((data.message || "User not recognized ❌") + distanceText, "danger");
+            updateStatus((data.message || cre8AuthText("auth.userNotRecognized")) + distanceText, "danger");
         } catch (error) {
             console.error(error);
-            updateStatus("Face login failed. Please click Capture / Retry again.", "danger");
+            updateStatus("auth.faceLoginFailed", "danger");
         } finally {
             captureFaceLogin.disabled = false;
             scanInProgress = false;
@@ -511,13 +626,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         scanBtn.disabled = false;
     } catch (error) {
         console.error("Face models failed to load ❌", error);
-        scanBtn.textContent = "Face login unavailable";
+        scanBtn.textContent = cre8AuthText("auth.faceUnavailable");
         scanBtn.disabled = true;
     }
 
     scanBtn.addEventListener("click", async () => {
         if (!modelsLoaded) {
-            updateStatus("Face login is not available right now.", "warning");
+            updateStatus("auth.faceNotAvailable", "warning");
             return;
         }
 
@@ -526,7 +641,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         } catch (error) {
             console.error(error);
             stopCamera();
-            alert("Impossible d'accéder à la caméra. Vérifiez les autorisations ou réessayez.");
+            alert(cre8AuthText("auth.cameraPermission"));
         }
     });
 

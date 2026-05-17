@@ -255,7 +255,7 @@ $frontActive = 'reclamation';
             <div class="container px-5 mb-5">
                 <div class="text-center mb-5">
                     <h1 class="display-5 fw-bolder mb-0">
-                        <span class="text-gradient d-inline">Submit a complaint</span>
+                        <span class="text-gradient d-inline" data-i18n="account.submitComplaint">Submit a complaint</span>
                     </h1>
                 </div>
 
@@ -269,26 +269,26 @@ $frontActive = 'reclamation';
 
                                     <!-- Description -->
                                     <div class="mb-4">
-                                        <label class="form-label fw-bold">Description</label>
+                                        <label class="form-label fw-bold" data-i18n="account.description">Description</label>
                                         <textarea name="description" id="descriptionInput" class="form-control" rows="4"
-                                            placeholder="Describe your problem..."></textarea>
+                                            placeholder="Describe your problem..." data-i18n-placeholder="account.descriptionPlaceholder"></textarea>
                                         <small class="text-danger d-none" id="descriptionError"></small>
                                     </div>
 
                                     <!-- Priority -->
                                     <div class="mb-4">
-                                        <label class="form-label fw-bold">Priority</label>
+                                        <label class="form-label fw-bold" data-i18n="account.priority">Priority</label>
                                         <select name="priorite" id="prioriteInput" class="form-select">
-                                            <option value="faible">Low</option>
-                                            <option value="normale" selected>Normal</option>
-                                            <option value="haute">High</option>
+                                            <option value="faible" data-i18n-opt="account.low">Low</option>
+                                            <option value="normale" selected data-i18n-opt="account.normal">Normal</option>
+                                            <option value="haute" data-i18n-opt="account.high">High</option>
                                         </select>
                                     </div>
 
                                     <!-- Button -->
                                     <div class="d-grid">
                                         <button type="submit" class="btn btn-primary btn-lg">
-                                            Submit complaint
+                                            <span data-i18n="account.submitComplaintButton">Submit complaint</span>
                                         </button>
                                     </div>
 
@@ -305,17 +305,17 @@ $frontActive = 'reclamation';
             <div class="container px-5">
 
                 <div class="text-center mb-5">
-                    <h2 class="fw-bolder">My complaints</h2>
+                    <h2 class="fw-bolder" data-i18n="account.myComplaints">My complaints</h2>
                 </div>
 
                 <?php if (isset($_GET['success'])): ?>
                     <div class="alert alert-success text-center">
-                        Complaint sent successfully!
+                        <span data-i18n="account.complaintSuccess">Complaint sent successfully!</span>
                     </div>
                 <?php endif; ?>
 
                 <?php if (empty($liste)): ?>
-                    <p class="text-center text-muted">No complaints yet</p>
+                    <p class="text-center text-muted" data-i18n="account.noComplaints">No complaints yet</p>
                 <?php else: ?>
 
                     <div class="row">
@@ -337,12 +337,12 @@ $frontActive = 'reclamation';
 
                                         <?php if ($rec['reponse']): ?>
                                             <div class="alert alert-success">
-                                                <strong>Admin response:</strong><br>
+                                                <strong data-i18n="account.adminResponse">Admin response:</strong><br>
                                                 <?php echo htmlspecialchars($rec['reponse']); ?>
                                             </div>
                                         <?php else: ?>
                                             <div class="alert alert-warning">
-                                                Waiting for a response...
+                                                <span data-i18n="account.waitingResponse">Waiting for a response...</span>
                                             </div>
                                         <?php endif; ?>
 
@@ -358,7 +358,7 @@ $frontActive = 'reclamation';
 
                                             <!-- Delete -->
                                             <form method="POST" action="supprimerReclamation.php"
-                                                onsubmit="return confirm('Do you really want to delete this complaint?');">
+                                                onsubmit="return confirm(cre8ComplaintText('account.deleteConfirm'));">
 
                                                 <input type="hidden" name="id" value="<?php echo $rec['id']; ?>">
 
@@ -391,7 +391,7 @@ $frontActive = 'reclamation';
                         <form method="POST" action="modifierReclamation.php">
 
                             <div class="modal-header">
-                                <h5 class="modal-title">Edit complaint</h5>
+                                <h5 class="modal-title" data-i18n="account.editComplaint">Edit complaint</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
 
@@ -401,22 +401,22 @@ $frontActive = 'reclamation';
 
                                 <!-- Description -->
                                 <div class="mb-3">
-                                    <label>Description</label>
+                                    <label data-i18n="account.description">Description</label>
                                     <textarea name="description" class="form-control"
                                         required><?php echo $rec['description']; ?></textarea>
                                 </div>
 
                                 <!-- Priority -->
                                 <div class="mb-3">
-                                    <label>Priority</label>
+                                    <label data-i18n="account.priority">Priority</label>
                                     <select name="priorite" class="form-select">
-                                        <option value="faible" <?php if ($rec['priorite'] == 'faible')
+                                        <option value="faible" data-i18n-opt="account.low" <?php if ($rec['priorite'] == 'faible')
                                             echo 'selected'; ?>>
                                             Low</option>
-                                        <option value="normale" <?php if ($rec['priorite'] == 'normale')
+                                        <option value="normale" data-i18n-opt="account.normal" <?php if ($rec['priorite'] == 'normale')
                                             echo 'selected'; ?>>
                                             Normal</option>
-                                        <option value="haute" <?php if ($rec['priorite'] == 'haute')
+                                        <option value="haute" data-i18n-opt="account.high" <?php if ($rec['priorite'] == 'haute')
                                             echo 'selected'; ?>>High
                                         </option>
                                     </select>
@@ -425,7 +425,7 @@ $frontActive = 'reclamation';
                             </div>
 
                             <div class="modal-footer">
-                                <button type="submit" class="btn btn-success">Save</button>
+                                <button type="submit" class="btn btn-success" data-i18n="account.save">Save</button>
                             </div>
 
                         </form>
@@ -461,6 +461,85 @@ $frontActive = 'reclamation';
 
     <!-- JavaScript input validation -->
     <script>
+        const cre8ComplaintTranslations = {
+            en: {
+                'account.submitComplaint': 'Submit a complaint',
+                'account.description': 'Description',
+                'account.descriptionPlaceholder': 'Describe your problem...',
+                'account.priority': 'Priority',
+                'account.low': 'Low',
+                'account.normal': 'Normal',
+                'account.high': 'High',
+                'account.submitComplaintButton': 'Submit complaint',
+                'account.myComplaints': 'My complaints',
+                'account.complaintSuccess': 'Complaint sent successfully!',
+                'account.noComplaints': 'No complaints yet',
+                'account.adminResponse': 'Admin response:',
+                'account.waitingResponse': 'Waiting for a response...',
+                'account.deleteConfirm': 'Do you really want to delete this complaint?',
+                'account.editComplaint': 'Edit complaint',
+                'account.save': 'Save',
+                'account.requiredError': 'Description is required.',
+                'account.minError': 'Description must contain at least 10 characters.',
+                'account.maxError': 'Description must not exceed 50 characters.',
+                'account.spacesError': 'Description cannot contain only spaces.',
+                'account.characters': 'characters'
+            },
+            fr: {
+                'account.submitComplaint': 'Envoyer une reclamation',
+                'account.description': 'Description',
+                'account.descriptionPlaceholder': 'Decrivez votre probleme...',
+                'account.priority': 'Priorite',
+                'account.low': 'Faible',
+                'account.normal': 'Normale',
+                'account.high': 'Haute',
+                'account.submitComplaintButton': 'Envoyer la reclamation',
+                'account.myComplaints': 'Mes reclamations',
+                'account.complaintSuccess': 'Reclamation envoyee avec succes !',
+                'account.noComplaints': 'Aucune reclamation pour le moment',
+                'account.adminResponse': 'Reponse admin :',
+                'account.waitingResponse': 'En attente de reponse...',
+                'account.deleteConfirm': 'Voulez-vous vraiment supprimer cette reclamation ?',
+                'account.editComplaint': 'Modifier la reclamation',
+                'account.save': 'Enregistrer',
+                'account.requiredError': 'La description est obligatoire.',
+                'account.minError': 'La description doit contenir au moins 10 caracteres.',
+                'account.maxError': 'La description ne doit pas depasser 50 caracteres.',
+                'account.spacesError': 'La description ne peut pas contenir seulement des espaces.',
+                'account.characters': 'caracteres'
+            }
+        };
+        function cre8ComplaintLang() {
+            if (typeof window.cre8FrontReadLang === 'function') {
+                return window.cre8FrontReadLang();
+            }
+            try {
+                return (localStorage.getItem('cre8_front_lang') || localStorage.getItem('cre8_lang')) === 'fr' ? 'fr' : 'en';
+            } catch (e) {
+                return 'en';
+            }
+        }
+        function cre8ComplaintText(key) {
+            const lang = cre8ComplaintLang();
+            return (cre8ComplaintTranslations[lang] && cre8ComplaintTranslations[lang][key]) || cre8ComplaintTranslations.en[key] || key;
+        }
+        function cre8RegisterComplaintTranslations() {
+            if (typeof window.cre8RegisterTranslations === 'function') {
+                window.cre8RegisterTranslations(cre8ComplaintTranslations);
+            }
+            const counter = document.getElementById('charCounter');
+            const input = document.getElementById('descriptionInput');
+            if (counter && input) {
+                counter.textContent = `${input.value.length}/50 ${cre8ComplaintText('account.characters')}`;
+            }
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', cre8RegisterComplaintTranslations);
+        } else {
+            cre8RegisterComplaintTranslations();
+        }
+        window.addEventListener('cre8:languagechange', cre8RegisterComplaintTranslations);
+
         // ===== COMPLAINT FORM VALIDATION =====
         function validateReclamation(form) {
             const descriptionInput = document.getElementById('descriptionInput');
@@ -474,7 +553,7 @@ $frontActive = 'reclamation';
             
             // Check 1: field must not be empty
             if (description === '') {
-                descriptionError.textContent = '❌ Description is required.';
+                descriptionError.textContent = cre8ComplaintText('account.requiredError');
                 descriptionError.classList.remove('d-none');
                 descriptionInput.classList.add('border-danger');
                 descriptionInput.focus();
@@ -483,7 +562,7 @@ $frontActive = 'reclamation';
             
             // Check 2: minimum 10 characters
             if (description.length < 10) {
-                descriptionError.textContent = `❌ Description must contain at least 10 characters. (${description.length}/10)`;
+                descriptionError.textContent = `${cre8ComplaintText('account.minError')} (${description.length}/10)`;
                 descriptionError.classList.remove('d-none');
                 descriptionInput.classList.add('border-danger');
                 descriptionInput.focus();
@@ -492,7 +571,7 @@ $frontActive = 'reclamation';
             
             // Check 3: maximum 50 characters
             if (description.length > 50) {
-                descriptionError.textContent = `❌ Description must not exceed 50 characters. (${description.length}/50)`;
+                descriptionError.textContent = `${cre8ComplaintText('account.maxError')} (${description.length}/50)`;
                 descriptionError.classList.remove('d-none');
                 descriptionInput.classList.add('border-danger');
                 descriptionInput.focus();
@@ -501,7 +580,7 @@ $frontActive = 'reclamation';
             
             // Check 4: not only spaces
             if (!/\S/.test(description)) {
-                descriptionError.textContent = '❌ Description cannot contain only spaces.';
+                descriptionError.textContent = cre8ComplaintText('account.spacesError');
                 descriptionError.classList.remove('d-none');
                 descriptionInput.classList.add('border-danger');
                 descriptionInput.focus();
@@ -521,7 +600,7 @@ $frontActive = 'reclamation';
             const counterElement = document.createElement('small');
             counterElement.id = 'charCounter';
             counterElement.className = 'text-muted d-block mt-2';
-            counterElement.textContent = '0/50 characters';
+            counterElement.textContent = `0/50 ${cre8ComplaintText('account.characters')}`;
             descriptionInput.parentNode.insertBefore(counterElement, descriptionInput.nextSibling);
             
             // Update the counter live
@@ -530,7 +609,7 @@ $frontActive = 'reclamation';
                 const counter = document.getElementById('charCounter');
                 
                 if (counter) {
-                    counter.textContent = `${length}/50 characters`;
+                    counter.textContent = `${length}/50 ${cre8ComplaintText('account.characters')}`;
                     
                     // Counter color based on length
                     if (length < 10) {
@@ -556,3 +635,4 @@ $frontActive = 'reclamation';
 </body>
 
 </html>
+

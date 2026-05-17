@@ -3,7 +3,7 @@
 
     var STORAGE_KEY = 'cre8_front_lang';
     var LEGACY_KEY = 'cre8_lang';
-    var currentDict = null;
+    var currentDict = { en: {}, fr: {} };
 
     function normalizeLang(lang) {
         return lang === 'fr' ? 'fr' : 'en';
@@ -32,6 +32,41 @@
             localStorage.setItem(STORAGE_KEY, safe);
         } catch (e) {}
         return safe;
+    }
+
+    function isPlainObject(value) {
+        return value && typeof value === 'object' && !Array.isArray(value);
+    }
+
+    function mergeDict(target, source) {
+        if (!isPlainObject(source)) {
+            return target;
+        }
+
+        if (!isPlainObject(target.en)) target.en = {};
+        if (!isPlainObject(target.fr)) target.fr = {};
+
+        Object.keys(source).forEach(function (key) {
+            var value = source[key];
+
+            if ((key === 'en' || key === 'fr') && isPlainObject(value)) {
+                Object.keys(value).forEach(function (translationKey) {
+                    target[key][translationKey] = value[translationKey];
+                });
+                return;
+            }
+
+            if (isPlainObject(value)) {
+                if (Object.prototype.hasOwnProperty.call(value, 'en')) {
+                    target.en[key] = value.en;
+                }
+                if (Object.prototype.hasOwnProperty.call(value, 'fr')) {
+                    target.fr[key] = value.fr;
+                }
+            }
+        });
+
+        return target;
     }
 
     function getText(dict, lang, key) {
@@ -70,23 +105,26 @@
     }
 
     function applyI18n(dict) {
+        if (dict) {
+            mergeDict(currentDict, dict);
+        }
+
         var lang = readStoredLang();
         syncLanguageButtons(lang);
 
-        if (!dict) {
-            return lang;
-        }
-
-        applyValue(document.querySelectorAll('[data-i18n]'), 'data-i18n', dict, lang, function (el, value) {
+        applyValue(document.querySelectorAll('[data-i18n]'), 'data-i18n', currentDict, lang, function (el, value) {
             el.textContent = value;
         });
-        applyValue(document.querySelectorAll('[data-i18n-placeholder]'), 'data-i18n-placeholder', dict, lang, function (el, value) {
+        applyValue(document.querySelectorAll('[data-i18n-html]'), 'data-i18n-html', currentDict, lang, function (el, value) {
+            el.innerHTML = value;
+        });
+        applyValue(document.querySelectorAll('[data-i18n-placeholder]'), 'data-i18n-placeholder', currentDict, lang, function (el, value) {
             el.setAttribute('placeholder', value);
         });
-        applyValue(document.querySelectorAll('[data-i18n-title]'), 'data-i18n-title', dict, lang, function (el, value) {
+        applyValue(document.querySelectorAll('[data-i18n-title]'), 'data-i18n-title', currentDict, lang, function (el, value) {
             el.setAttribute('title', value);
         });
-        applyValue(document.querySelectorAll('[data-i18n-opt]'), 'data-i18n-opt', dict, lang, function (el, value) {
+        applyValue(document.querySelectorAll('[data-i18n-opt]'), 'data-i18n-opt', currentDict, lang, function (el, value) {
             el.textContent = value;
         });
 
@@ -94,23 +132,29 @@
     }
 
     function dispatchLanguageChange(lang) {
+        var event = null;
         try {
-            window.dispatchEvent(new CustomEvent('cre8:languagechange', {
-                detail: { lang: lang }
-            }));
+            event = new CustomEvent('cre8:languagechange', { detail: { lang: lang } });
         } catch (e) {}
+
+        if (event) {
+            try { window.dispatchEvent(event); } catch (e) {}
+            try {
+                document.dispatchEvent(new CustomEvent('cre8:languagechange', { detail: { lang: lang } }));
+            } catch (e) {}
+        }
     }
 
     function setLanguage(lang) {
         var safe = writeStoredLang(lang);
-        applyI18n(currentDict);
+        applyI18n();
         dispatchLanguageChange(safe);
         return safe;
     }
 
     function registerTranslations(dict) {
-        currentDict = dict || null;
-        return applyI18n(currentDict);
+        mergeDict(currentDict, dict || {});
+        return applyI18n();
     }
 
     window.cre8FrontReadLang = readStoredLang;
@@ -119,8 +163,21 @@
     window.cre8RegisterTranslations = registerTranslations;
     window.cre8SetLanguage = setLanguage;
 
+    function processQueuedTranslations() {
+        var queue = window.cre8TranslationQueue || [];
+        if (!Array.isArray(queue)) {
+            return;
+        }
+
+        while (queue.length) {
+            registerTranslations(queue.shift());
+        }
+    }
+
     function bindLanguageButtons() {
-        applyI18n(currentDict);
+        processQueuedTranslations();
+        applyI18n();
+
         Array.prototype.forEach.call(document.querySelectorAll('[data-lang-choice]'), function (btn) {
             if (btn.dataset.cre8LangBound === '1') {
                 return;

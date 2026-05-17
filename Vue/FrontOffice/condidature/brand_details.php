@@ -280,19 +280,19 @@ $brandNegotiationBaselineDelay = $brandIsLatestNegotiationSender && ($latestNego
                     <div class="candidature-inline-meta mt-4">
                         <span class="offer-chip"><?php echo htmlspecialchars($condidature->getResponseTypeLabel()); ?></span>
                         <span class="offer-chip"><?php echo htmlspecialchars(formatMoney($condidature->getBudgetPropose())); ?></span>
-                        <span class="offer-chip"><?php echo (int) $condidature->getDelaiPropose(); ?> days</span>
-                        <span class="offer-chip"><?php echo (int) ($negotiation['count'] ?? 0); ?> negotiation message<?php echo (int) ($negotiation['count'] ?? 0) === 1 ? '' : 's'; ?></span>
+                        <span class="offer-chip"><?php echo (int) $condidature->getDelaiPropose(); ?> <span data-i18n="cand.days">days</span></span>
+                        <span class="offer-chip"><?php echo (int) ($negotiation['count'] ?? 0); ?> <span data-i18n="<?php echo (int) ($negotiation['count'] ?? 0) === 1 ? 'cand.negotiationMessageSingular' : 'cand.negotiationMessagePlural'; ?>"><?php echo (int) ($negotiation['count'] ?? 0) === 1 ? 'negotiation message' : 'negotiation messages'; ?></span></span>
                     </div>
                 </section>
 
                 <div class="invitation-grid">
                     <div class="response-grid">
                         <section class="section-card">
-                            <h2 class="section-title">Response context</h2>
-                            <p class="section-subtitle">Keep the creator profile and source details visible while you review the thread.</p>
+                            <h2 class="section-title" data-i18n="cand.responseContext">Response context</h2>
+                            <p class="section-subtitle" data-i18n="cand.responseContextCopy">Keep the creator profile and source details visible while you review the thread.</p>
                             <div class="offer-detail-list mt-4">
                                 <div class="offer-detail-item">
-                                    <strong>Creator</strong>
+                                    <strong data-i18n="cand.creator">Creator</strong>
                                     <div style="display:flex;align-items:center;gap:.65rem;">
                                         <?php echo cre8_render_avatar($creator['id'] ?? 0, (string) ($creator['nom'] ?? 'Creator'), 'cre8-avatar-md'); ?>
                                         <div>
@@ -302,7 +302,7 @@ $brandNegotiationBaselineDelay = $brandIsLatestNegotiationSender && ($latestNego
                                     </div>
                                 </div>
                                 <div class="offer-detail-item">
-                                    <strong>Brand workspace</strong>
+                                    <strong data-i18n="cand.brandWorkspace">Brand workspace</strong>
                                     <div style="display:flex;align-items:center;gap:.65rem;">
                                         <?php echo cre8_render_avatar($brand['id'] ?? $brandId, (string) ($brand['nom'] ?? 'Brand'), 'cre8-avatar-md'); ?>
                                         <div>
@@ -312,35 +312,35 @@ $brandNegotiationBaselineDelay = $brandIsLatestNegotiationSender && ($latestNego
                                     </div>
                                 </div>
                                 <div class="offer-detail-item">
-                                    <strong><?php echo ($source['origin'] ?? '') === 'par_campagne' ? 'Campaign description' : 'Offer objective'; ?></strong>
+                                    <strong data-i18n="<?php echo ($source['origin'] ?? '') === 'par_campagne' ? 'cand.campaignDescription' : 'cand.offerObjective'; ?>"><?php echo ($source['origin'] ?? '') === 'par_campagne' ? 'Campaign description' : 'Offer objective'; ?></strong>
                                     <span><?php echo htmlspecialchars($source['objective'] ?: 'No source objective was attached to this candidature.'); ?></span>
                                 </div>
                                 <div class="offer-detail-item">
-                                    <strong><?php echo ($source['origin'] ?? '') === 'par_campagne' ? 'Campaign start date' : 'Source published'; ?></strong>
+                                    <strong data-i18n="<?php echo ($source['origin'] ?? '') === 'par_campagne' ? 'cand.campaignStart' : 'cand.sourcePublished'; ?>"><?php echo ($source['origin'] ?? '') === 'par_campagne' ? 'Campaign start date' : 'Source published'; ?></strong>
                                     <span><?php echo htmlspecialchars(formatShortDate($source['datePublication'] ?? null)); ?></span>
                                 </div>
                                 <div class="offer-detail-item">
-                                    <strong><?php echo ($source['origin'] ?? '') === 'par_campagne' ? 'Campaign end date' : 'Source deadline'; ?></strong>
+                                    <strong data-i18n="<?php echo ($source['origin'] ?? '') === 'par_campagne' ? 'cand.campaignEnd' : 'cand.sourceDeadline'; ?>"><?php echo ($source['origin'] ?? '') === 'par_campagne' ? 'Campaign end date' : 'Source deadline'; ?></strong>
                                     <span><?php echo htmlspecialchars(formatShortDate($source['dateLimite'] ?? null)); ?></span>
                                 </div>
                                 <div class="offer-detail-item">
-                                    <strong>CV/reference file</strong>
+                                    <strong data-i18n="cand.cvFile">CV/reference file</strong>
                                     <?php if (trim((string) $condidature->getCvPath()) !== ''): ?>
                                         <a class="current-upload-link" href="<?php echo htmlspecialchars(candidatureStoredFileHref($condidature->getCvPath())); ?>" target="_blank" rel="noopener noreferrer">
                                             <?php echo htmlspecialchars(candidatureStoredFileName($condidature->getCvPath()) ?: $condidature->getCvPath()); ?>
                                         </a>
                                     <?php else: ?>
-                                        <span>No file attached yet</span>
+                                        <span data-i18n="cand.noFile">No file attached yet</span>
                                     <?php endif; ?>
                                 </div>
                                 <div class="offer-detail-item">
-                                    <strong>Portfolio URL</strong>
+                                    <strong data-i18n="cand.portfolio">Portfolio URL</strong>
                                     <?php if (trim((string) $condidature->getPortfolioUrl()) !== ''): ?>
                                         <a class="current-upload-link" href="<?php echo htmlspecialchars($condidature->getPortfolioUrl()); ?>" target="_blank" rel="noopener noreferrer">
                                             <?php echo htmlspecialchars($condidature->getPortfolioUrl()); ?>
                                         </a>
                                     <?php else: ?>
-                                        <span>No portfolio link attached yet</span>
+                                        <span data-i18n="cand.noPortfolio">No portfolio link attached yet</span>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -348,9 +348,9 @@ $brandNegotiationBaselineDelay = $brandIsLatestNegotiationSender && ($latestNego
 
                         <div class="candidature-summary-grid">
                             <section class="info-card">
-                                <h2 class="section-title">Creator message</h2>
+                                <h2 class="section-title" data-i18n="cand.creatorMessage">Creator message</h2>
                                 <div class="decision-note-card mt-3">
-                                    <strong><?php echo htmlspecialchars($latestCreatorLabel); ?></strong>
+                                    <strong data-i18n="<?php echo $latestCreatorEntry ? 'cand.latestCreatorUpdate' : 'cand.initialContext'; ?>"><?php echo htmlspecialchars($latestCreatorLabel); ?></strong>
                                     <p><?php echo htmlspecialchars($latestCreatorMessage); ?></p>
                                     <?php if ($latestCreatorEntry): ?>
                                         <div class="candidature-inline-meta mt-3">
@@ -359,7 +359,7 @@ $brandNegotiationBaselineDelay = $brandIsLatestNegotiationSender && ($latestNego
                                                 <span class="offer-chip"><?php echo htmlspecialchars(formatMoney($latestCreatorEntry['budgetPropose'])); ?></span>
                                             <?php endif; ?>
                                             <?php if ($latestCreatorEntry['delaiPropose'] !== null): ?>
-                                                <span class="offer-chip">Timeline: <?php echo (int) $latestCreatorEntry['delaiPropose']; ?> days</span>
+                                                <span class="offer-chip"><span data-i18n="cand.timeline">Timeline</span>: <?php echo (int) $latestCreatorEntry['delaiPropose']; ?> <span data-i18n="cand.days">days</span></span>
                                             <?php endif; ?>
                                         </div>
                                     <?php endif; ?>
@@ -377,10 +377,10 @@ $brandNegotiationBaselineDelay = $brandIsLatestNegotiationSender && ($latestNego
                         <section class="section-card">
                             <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
                                 <div>
-                                    <h2 class="section-title">Negotiation history</h2>
-                                    <p class="section-subtitle">Every creator and brand message is kept in order so the current negotiation state stays readable.</p>
+                                    <h2 class="section-title" data-i18n="cand.negotiationHistory">Negotiation history</h2>
+                                    <p class="section-subtitle" data-i18n="cand.brandNegotiationHistoryCopy">Every creator and brand message is kept in order so the current negotiation state stays readable.</p>
                                 </div>
-                                <span class="offer-chip"><?php echo (int) ($negotiation['count'] ?? 0); ?> message<?php echo (int) ($negotiation['count'] ?? 0) === 1 ? '' : 's'; ?></span>
+                                <span class="offer-chip"><?php echo (int) ($negotiation['count'] ?? 0); ?> <span data-i18n="<?php echo (int) ($negotiation['count'] ?? 0) === 1 ? 'cand.messageSingular' : 'cand.messagePlural'; ?>"><?php echo (int) ($negotiation['count'] ?? 0) === 1 ? 'message' : 'messages'; ?></span></span>
                             </div>
 
                             <?php if (!empty($negotiation['history'])): ?>
@@ -413,7 +413,7 @@ $brandNegotiationBaselineDelay = $brandIsLatestNegotiationSender && ($latestNego
                                                         <span class="offer-chip"><?php echo htmlspecialchars(formatMoney($entry['budgetPropose'])); ?></span>
                                                     <?php endif; ?>
                                                     <?php if ($entry['delaiPropose'] !== null): ?>
-                                                        <span class="offer-chip">Timeline: <?php echo (int) $entry['delaiPropose']; ?> days</span>
+                                                        <span class="offer-chip"><span data-i18n="cand.timeline">Timeline</span>: <?php echo (int) $entry['delaiPropose']; ?> <span data-i18n="cand.days">days</span></span>
                                                     <?php endif; ?>
                                                 </div>
                                             <?php endif; ?>
@@ -486,7 +486,7 @@ $brandNegotiationBaselineDelay = $brandIsLatestNegotiationSender && ($latestNego
                                         </button>
                                     <?php endif; ?>
                                 </div>
-                                <p class="composer-context-note mt-3">
+                                <p class="composer-context-note mt-3" data-i18n="cand.brandRealAdjustmentsOnly">
                                     Use negotiation only for real adjustments. If the latest terms are already acceptable, finish the workflow with Accept or Refuse instead of repeating the same proposal in another message.
                                 </p>
                             </section>
@@ -695,6 +695,251 @@ $cre8PilotContext = [
 ];
 require __DIR__ . '/cre8pilot_widget.php';
 ?>
+    <script>
+        (() => {
+            const translations = {
+                en: {
+                    'cand.unavailable': 'Candidature unavailable',
+                    'cand.backBrand': 'Back to brand workspace',
+                    'cand.offerInvitation': 'Offer invitation',
+                    'cand.campaignApplication': 'Campaign application',
+                    'cand.heroCopy': 'Review the creator response, follow the negotiation thread, and send a compact brand-side counter-proposal without leaving this workspace.',
+                    'cand.responseContext': 'Response context',
+                    'cand.responseContextCopy': 'Keep the creator profile and source details visible while you review the thread.',
+                    'cand.creator': 'Creator',
+                    'cand.unknownCreator': 'Unknown creator',
+                    'cand.brandWorkspace': 'Brand workspace',
+                    'cand.unknownBrand': 'Unknown brand',
+                    'cand.campaignDescription': 'Campaign description',
+                    'cand.offerObjective': 'Offer objective',
+                    'cand.campaignStart': 'Campaign start date',
+                    'cand.sourcePublished': 'Source published',
+                    'cand.campaignEnd': 'Campaign end date',
+                    'cand.sourceDeadline': 'Source deadline',
+                    'cand.cvFile': 'CV/reference file',
+                    'cand.noFile': 'No file attached yet',
+                    'cand.portfolio': 'Portfolio URL',
+                    'cand.noPortfolio': 'No portfolio link attached yet',
+                    'cand.creatorMessage': 'Creator message',
+                    'cand.latestCreatorUpdate': 'Latest creator update',
+                    'cand.initialContext': 'Initial context',
+                    'cand.timeline': 'Timeline',
+                    'cand.days': 'days',
+                    'cand.messageSingular': 'message',
+                    'cand.messagePlural': 'messages',
+                    'cand.negotiationMessageSingular': 'negotiation message',
+                    'cand.negotiationMessagePlural': 'negotiation messages',
+                    'cand.negotiationHistory': 'Negotiation history',
+                    'cand.brandNegotiationHistoryCopy': 'Every creator and brand message is kept in order so the current negotiation state stays readable.',
+                    'cand.brandActions': 'Brand actions',
+                    'cand.brandActionsCopy': 'Choose the next move from one action hub instead of managing separate stacked forms.',
+                    'cand.brandRealAdjustmentsOnly': 'Use negotiation only for real adjustments. If the latest terms are already acceptable, finish the workflow with Accept or Refuse instead of repeating the same proposal in another message.',
+                    'cand.accept': 'Accept',
+                    'cand.acceptCopy': 'Approve the creator response and close the workflow with a final decision.',
+                    'cand.refuse': 'Refuse',
+                    'cand.refuseCopy': 'Stop the current response and store a clear refusal note for later review.',
+                    'cand.updateProposal': 'Update your proposal',
+                    'cand.replyNegotiation': 'Reply to negotiation',
+                    'cand.startNegotiation': 'Start negotiation',
+                    'cand.negotiation': 'Negotiation',
+                    'cand.negotiationMessage': 'Negotiation message',
+                    'cand.budgetProposal': 'Budget proposal',
+                    'cand.timelineProposal': 'Timeline proposal',
+                    'cand.keepReviewing': 'Keep reviewing',
+                    'cand.sendReply': 'Send negotiation reply',
+                    'cand.startNegotiationButton': 'Start negotiation',
+                    'cand.brandDecision': 'Brand decision',
+                    'cand.acceptQuestion': 'Accept this candidature?',
+                    'cand.decisionSubtitle': 'Confirm the final outcome for this creator response without leaving the current page.',
+                    'cand.selectedResponse': 'Selected response',
+                    'cand.decisionNote': 'Decision note',
+                    'cand.acceptCandidature': 'Accept candidature',
+                    'cand.actionsLocked': 'Actions locked',
+                    'cand.actionsLockedCopy': 'This candidature already has a final outcome, so the brand can keep reviewing the thread but cannot send a new decision or negotiation reply from here.',
+                    'cand.viewSourceOffer': 'View source offer',
+                    'cand.draftResponse': 'Draft response',
+                    'cand.acceptedInvitation': 'Accepted invitation',
+                    'cand.underReview': 'Response under review',
+                    'cand.negotiationRequested': 'Negotiation requested',
+                    'cand.acceptedTerms': 'Accepted terms',
+                    'cand.refusedBrand': 'Refused by brand',
+                    'cand.declinedInvitation': 'Declined invitation'
+                },
+                fr: {
+                    'cand.unavailable': 'Candidature indisponible',
+                    'cand.backBrand': 'Retour a l espace marque',
+                    'cand.offerInvitation': 'Invitation offre',
+                    'cand.campaignApplication': 'Candidature campagne',
+                    'cand.heroCopy': 'Examinez la reponse du createur, suivez la negociation et envoyez une contre-proposition cote marque.',
+                    'cand.responseContext': 'Contexte de reponse',
+                    'cand.responseContextCopy': 'Gardez le profil createur et les details source visibles pendant la revue.',
+                    'cand.creator': 'Createur',
+                    'cand.unknownCreator': 'Createur inconnu',
+                    'cand.brandWorkspace': 'Espace marque',
+                    'cand.unknownBrand': 'Marque inconnue',
+                    'cand.campaignDescription': 'Description de la campagne',
+                    'cand.offerObjective': 'Objectif de l offre',
+                    'cand.campaignStart': 'Date de debut de campagne',
+                    'cand.sourcePublished': 'Source publiee',
+                    'cand.campaignEnd': 'Date de fin de campagne',
+                    'cand.sourceDeadline': 'Echeance source',
+                    'cand.cvFile': 'CV / fichier de reference',
+                    'cand.noFile': 'Aucun fichier joint',
+                    'cand.portfolio': 'URL portfolio',
+                    'cand.noPortfolio': 'Aucun lien portfolio joint',
+                    'cand.creatorMessage': 'Message createur',
+                    'cand.latestCreatorUpdate': 'Derniere mise a jour createur',
+                    'cand.initialContext': 'Contexte initial',
+                    'cand.timeline': 'Chronologie',
+                    'cand.days': 'jours',
+                    'cand.messageSingular': 'message',
+                    'cand.messagePlural': 'messages',
+                    'cand.negotiationMessageSingular': 'message de negociation',
+                    'cand.negotiationMessagePlural': 'messages de negociation',
+                    'cand.negotiationHistory': 'Historique de negociation',
+                    'cand.brandNegotiationHistoryCopy': 'Chaque message createur et marque est conserve dans l ordre pour garder l etat de negociation lisible.',
+                    'cand.brandActions': 'Actions marque',
+                    'cand.brandActionsCopy': 'Choisissez la prochaine action depuis un seul hub.',
+                    'cand.brandRealAdjustmentsOnly': 'Utilisez la negociation uniquement pour de vrais ajustements. Si les derniers termes conviennent deja, terminez avec Accepter ou Refuser au lieu de repeter la meme proposition.',
+                    'cand.accept': 'Accepter',
+                    'cand.acceptCopy': 'Approuver la reponse du createur et cloturer le workflow.',
+                    'cand.refuse': 'Refuser',
+                    'cand.refuseCopy': 'Arreter la reponse actuelle et enregistrer une note de refus.',
+                    'cand.updateProposal': 'Mettre a jour votre proposition',
+                    'cand.replyNegotiation': 'Repondre a la negociation',
+                    'cand.startNegotiation': 'Demarrer la negociation',
+                    'cand.negotiation': 'Negociation',
+                    'cand.negotiationMessage': 'Message de negociation',
+                    'cand.budgetProposal': 'Proposition budget',
+                    'cand.timelineProposal': 'Proposition delai',
+                    'cand.keepReviewing': 'Continuer la revue',
+                    'cand.sendReply': 'Envoyer la reponse',
+                    'cand.startNegotiationButton': 'Demarrer la negociation',
+                    'cand.brandDecision': 'Decision marque',
+                    'cand.acceptQuestion': 'Accepter cette candidature ?',
+                    'cand.decisionSubtitle': 'Confirmez le resultat final pour cette reponse createur sans quitter la page.',
+                    'cand.selectedResponse': 'Reponse selectionnee',
+                    'cand.decisionNote': 'Note de decision',
+                    'cand.acceptCandidature': 'Accepter la candidature',
+                    'cand.actionsLocked': 'Actions verrouillees',
+                    'cand.actionsLockedCopy': 'Cette candidature a deja un resultat final, la marque peut consulter le fil mais ne peut plus envoyer de decision ou negociation.',
+                    'cand.viewSourceOffer': 'Voir l offre source',
+                    'cand.draftResponse': 'Reponse brouillon',
+                    'cand.acceptedInvitation': 'Invitation acceptee',
+                    'cand.underReview': 'Reponse en examen',
+                    'cand.negotiationRequested': 'Negociation demandee',
+                    'cand.acceptedTerms': 'Termes acceptes',
+                    'cand.refusedBrand': 'Refusee par la marque',
+                    'cand.declinedInvitation': 'Invitation refusee'
+                }
+            };
+            const textKeys = {
+                'Candidature unavailable': 'cand.unavailable',
+                'Back to brand workspace': 'cand.backBrand',
+                'Offer invitation': 'cand.offerInvitation',
+                'Campaign application': 'cand.campaignApplication',
+                'Review the creator response, follow the negotiation thread, and send a compact brand-side counter-proposal without leaving this workspace.': 'cand.heroCopy',
+                'Response context': 'cand.responseContext',
+                'Keep the creator profile and source details visible while you review the thread.': 'cand.responseContextCopy',
+                'Creator': 'cand.creator',
+                'Unknown creator': 'cand.unknownCreator',
+                'Brand workspace': 'cand.brandWorkspace',
+                'Unknown brand': 'cand.unknownBrand',
+                'Campaign description': 'cand.campaignDescription',
+                'Offer objective': 'cand.offerObjective',
+                'Campaign start date': 'cand.campaignStart',
+                'Source published': 'cand.sourcePublished',
+                'Campaign end date': 'cand.campaignEnd',
+                'Source deadline': 'cand.sourceDeadline',
+                'CV/reference file': 'cand.cvFile',
+                'No file attached yet': 'cand.noFile',
+                'Portfolio URL': 'cand.portfolio',
+                'No portfolio link attached yet': 'cand.noPortfolio',
+                'Creator message': 'cand.creatorMessage',
+                'Latest creator update': 'cand.latestCreatorUpdate',
+                'Initial context': 'cand.initialContext',
+                'Timeline': 'cand.timeline',
+                'Brand actions': 'cand.brandActions',
+                'Choose the next move from one action hub instead of managing separate stacked forms.': 'cand.brandActionsCopy',
+                'Accept': 'cand.accept',
+                'Approve the creator response and close the workflow with a final decision.': 'cand.acceptCopy',
+                'Refuse': 'cand.refuse',
+                'Stop the current response and store a clear refusal note for later review.': 'cand.refuseCopy',
+                'Update your proposal': 'cand.updateProposal',
+                'Reply to negotiation': 'cand.replyNegotiation',
+                'Start negotiation': 'cand.startNegotiation',
+                'Negotiation': 'cand.negotiation',
+                'Negotiation message': 'cand.negotiationMessage',
+                'Budget proposal': 'cand.budgetProposal',
+                'Timeline proposal': 'cand.timelineProposal',
+                'Keep reviewing': 'cand.keepReviewing',
+                'Send negotiation reply': 'cand.sendReply',
+                'Start negotiation': 'cand.startNegotiationButton',
+                'Brand decision': 'cand.brandDecision',
+                'Accept this candidature?': 'cand.acceptQuestion',
+                'Confirm the final outcome for this creator response without leaving the current page.': 'cand.decisionSubtitle',
+                'Selected response': 'cand.selectedResponse',
+                'Decision note': 'cand.decisionNote',
+                'Accept candidature': 'cand.acceptCandidature',
+                'Actions locked': 'cand.actionsLocked',
+                'This candidature already has a final outcome, so the brand can keep reviewing the thread but cannot send a new decision or negotiation reply from here.': 'cand.actionsLockedCopy',
+                'View source offer': 'cand.viewSourceOffer',
+                'Draft response': 'cand.draftResponse',
+                'Accepted invitation': 'cand.acceptedInvitation',
+                'Response under review': 'cand.underReview',
+                'Negotiation requested': 'cand.negotiationRequested',
+                'Accepted terms': 'cand.acceptedTerms',
+                'Refused by brand': 'cand.refusedBrand',
+                'Declined invitation': 'cand.declinedInvitation'
+            };
+            const placeholderKeys = {
+                'Add optional feedback for the creator or your internal review trail.': 'cand.decisionNote',
+                'Explain the adjustment you want to propose or clarify the current terms.': 'cand.negotiationMessage'
+            };
+            function candLang() { return typeof window.cre8FrontReadLang === 'function' ? window.cre8FrontReadLang() : 'en'; }
+            function keyForText(value) {
+                const clean = String(value).trim().replace(/:$/, '');
+                if (textKeys[clean]) return textKeys[clean];
+                for (const locale of Object.keys(translations)) for (const key of Object.keys(translations[locale])) if (translations[locale][key] === clean) return key;
+                return '';
+            }
+            function applyCandidatureTranslations(root = document) {
+                const dict = translations[candLang()] || translations.en;
+                if (typeof window.cre8ApplyI18n === 'function') window.cre8ApplyI18n(translations);
+                root.querySelectorAll('[placeholder]').forEach((el) => {
+                    const key = placeholderKeys[el.getAttribute('placeholder')] || el.getAttribute('data-i18n-placeholder');
+                    if (key && dict[key]) {
+                        el.setAttribute('data-i18n-placeholder', key);
+                        el.setAttribute('placeholder', dict[key]);
+                    }
+                });
+                const walker = document.createTreeWalker(root.body || root, NodeFilter.SHOW_TEXT, {
+                    acceptNode(node) {
+                        const parent = node.parentElement;
+                        if (!parent || ['SCRIPT', 'STYLE', 'TEXTAREA'].includes(parent.tagName)) return NodeFilter.FILTER_REJECT;
+                        return node.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                    }
+                });
+                const nodes = [];
+                while (walker.nextNode()) nodes.push(walker.currentNode);
+                nodes.forEach((node) => {
+                    const original = node.nodeValue.trim();
+                    const key = keyForText(original);
+                    if (!key || dict[key] === undefined) return;
+                    const suffix = original.endsWith(':') ? ':' : '';
+                    node.nodeValue = node.nodeValue.replace(original, dict[key] + suffix);
+                    if (node.parentElement && node.parentElement.childNodes.length === 1) node.parentElement.setAttribute('data-i18n', key);
+                });
+            }
+            window.cre8CandidatureApplyTranslations = applyCandidatureTranslations;
+            document.addEventListener('DOMContentLoaded', () => {
+                if (typeof window.cre8RegisterTranslations === 'function') window.cre8RegisterTranslations(translations);
+                applyCandidatureTranslations();
+                document.addEventListener('click', () => window.setTimeout(applyCandidatureTranslations, 0), true);
+            });
+            window.addEventListener('cre8:languagechange', () => applyCandidatureTranslations());
+        })();
+    </script>
     <script src="../layout/front-header.js"></script>
 </body>
 </html>

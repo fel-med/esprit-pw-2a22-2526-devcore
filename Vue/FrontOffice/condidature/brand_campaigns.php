@@ -70,6 +70,18 @@ if ($brandId) {
     <link rel="stylesheet" href="../offre/offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../offre/offre.css')); ?>">
     <link rel="stylesheet" href="condidature.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/condidature.css')); ?>">
     <link rel="stylesheet" href="../layout/front-header.css">
+    <style>
+        /* Keep only the shared header notification bell. Hide any old page-level notification widget. */
+        body > .notification-widget,
+        body > .notification-widget-front,
+        main .notification-widget,
+        main .notification-widget-front {
+            display: none !important;
+        }
+        .front-nav .notification-widget-front {
+            display: inline-flex !important;
+        }
+    </style>
 <link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
 <link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
@@ -80,7 +92,7 @@ if ($brandId) {
 
     <main class="container py-5">
         <div class="offre-page-shell">
-            <section class="module-hero module-hero-notification-shell campaign-opportunities-hero">
+            <section class="module-hero campaign-opportunities-hero">
                 <div>
                     <span class="module-eyebrow">Brand campaigns</span>
                     <h1 class="display-5 fw-bold mt-3 mb-2 gradient-title">My campaigns</h1>
@@ -152,6 +164,105 @@ $cre8PilotContext = [
 ];
 require __DIR__ . '/cre8pilot_widget.php';
 ?>
+    <script>
+        (() => {
+            const translations = {
+                en: {
+                    'cand.brandCampaigns': 'Brand campaigns',
+                    'cand.myCampaigns': 'My campaigns',
+                    'cand.myCampaignsCopy': 'Review the campaigns owned by your brand and jump to their creator applications.',
+                    'cand.campaignApplications': 'Campaign applications',
+                    'cand.myOffers': 'My offers',
+                    'cand.campaignsUnavailable': 'Campaigns unavailable',
+                    'cand.noCampaigns': 'No campaigns found',
+                    'cand.noCampaignsCopy': 'No campaign is currently attached to this brand account.',
+                    'cand.campaign': 'Campaign',
+                    'cand.noCampaignDescription': 'No campaign description was provided yet.',
+                    'cand.start': 'Start',
+                    'cand.end': 'End',
+                    'cand.totalApplications': 'Total applications',
+                    'cand.waiting': 'Waiting',
+                    'cand.accepted': 'Accepted',
+                    'cand.refused': 'Refused',
+                    'cand.reviewApplications': 'Review applications',
+                    'cand.statusNotSet': 'Status not set'
+                },
+                fr: {
+                    'cand.brandCampaigns': 'Campagnes marque',
+                    'cand.myCampaigns': 'Mes campagnes',
+                    'cand.myCampaignsCopy': 'Consultez les campagnes de votre marque et accedez a leurs candidatures createurs.',
+                    'cand.campaignApplications': 'Candidatures de campagne',
+                    'cand.myOffers': 'Mes offres',
+                    'cand.campaignsUnavailable': 'Campagnes indisponibles',
+                    'cand.noCampaigns': 'Aucune campagne trouvee',
+                    'cand.noCampaignsCopy': 'Aucune campagne n est actuellement attachee a ce compte marque.',
+                    'cand.campaign': 'Campagne',
+                    'cand.noCampaignDescription': 'Aucune description de campagne n a encore ete fournie.',
+                    'cand.start': 'Debut',
+                    'cand.end': 'Fin',
+                    'cand.totalApplications': 'Total candidatures',
+                    'cand.waiting': 'En attente',
+                    'cand.accepted': 'Acceptees',
+                    'cand.refused': 'Refusees',
+                    'cand.reviewApplications': 'Examiner les candidatures',
+                    'cand.statusNotSet': 'Statut non defini'
+                }
+            };
+            const textKeys = {
+                'Brand campaigns': 'cand.brandCampaigns',
+                'My campaigns': 'cand.myCampaigns',
+                'Review the campaigns owned by your brand and jump to their creator applications.': 'cand.myCampaignsCopy',
+                'Campaign applications': 'cand.campaignApplications',
+                'My offers': 'cand.myOffers',
+                'Campaigns unavailable': 'cand.campaignsUnavailable',
+                'No campaigns found': 'cand.noCampaigns',
+                'No campaign is currently attached to this brand account.': 'cand.noCampaignsCopy',
+                'Campaign': 'cand.campaign',
+                'No campaign description was provided yet.': 'cand.noCampaignDescription',
+                'Start': 'cand.start',
+                'End': 'cand.end',
+                'Total applications': 'cand.totalApplications',
+                'Waiting': 'cand.waiting',
+                'Accepted': 'cand.accepted',
+                'Refused': 'cand.refused',
+                'Review applications': 'cand.reviewApplications',
+                'Status not set': 'cand.statusNotSet'
+            };
+            function lang() { return typeof window.cre8FrontReadLang === 'function' ? window.cre8FrontReadLang() : 'en'; }
+            function keyForText(value) {
+                const clean = String(value).trim().replace(/:$/, '');
+                if (textKeys[clean]) return textKeys[clean];
+                for (const locale of Object.keys(translations)) for (const key of Object.keys(translations[locale])) if (translations[locale][key] === clean) return key;
+                return '';
+            }
+            function applyTranslations(root = document) {
+                const dict = translations[lang()] || translations.en;
+                if (typeof window.cre8ApplyI18n === 'function') window.cre8ApplyI18n(translations);
+                const walker = document.createTreeWalker(root.body || root, NodeFilter.SHOW_TEXT, {
+                    acceptNode(node) {
+                        const parent = node.parentElement;
+                        if (!parent || ['SCRIPT', 'STYLE', 'TEXTAREA'].includes(parent.tagName)) return NodeFilter.FILTER_REJECT;
+                        return node.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                    }
+                });
+                const nodes = [];
+                while (walker.nextNode()) nodes.push(walker.currentNode);
+                nodes.forEach((node) => {
+                    const original = node.nodeValue.trim();
+                    const key = keyForText(original);
+                    if (!key || dict[key] === undefined) return;
+                    const suffix = original.endsWith(':') ? ':' : '';
+                    node.nodeValue = node.nodeValue.replace(original, dict[key] + suffix);
+                    if (node.parentElement && node.parentElement.childNodes.length === 1) node.parentElement.setAttribute('data-i18n', key);
+                });
+            }
+            document.addEventListener('DOMContentLoaded', () => {
+                if (typeof window.cre8RegisterTranslations === 'function') window.cre8RegisterTranslations(translations);
+                applyTranslations();
+            });
+            window.addEventListener('cre8:languagechange', () => applyTranslations());
+        })();
+    </script>
     <script src="../layout/front-header.js"></script>
 </body>
 </html>

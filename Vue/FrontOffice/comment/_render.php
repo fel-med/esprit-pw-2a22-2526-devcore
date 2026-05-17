@@ -21,7 +21,7 @@ if (!function_exists('render_voice_language_selector')) {
         $allowed = ['fr-FR', 'en-US', 'ar-SA'];
         $defaultValue = in_array($defaultValue, $allowed, true) ? $defaultValue : 'en-US';
         ?>
-        <select class="comment-voice-lang-select js-voice-lang-select" aria-label="Transcription language">
+        <select class="comment-voice-lang-select js-voice-lang-select" aria-label="Transcription language" title="Transcription language" data-i18n-title="post.transcriptionLanguage">
             <option value="fr-FR" <?= $defaultValue === 'fr-FR' ? 'selected' : '' ?>>FR</option>
             <option value="en-US" <?= $defaultValue === 'en-US' ? 'selected' : '' ?>>EN</option>
             <option value="ar-SA" <?= $defaultValue === 'ar-SA' ? 'selected' : '' ?>>AR</option>
@@ -34,6 +34,9 @@ if (!function_exists('render_comment_form')) {
     function render_comment_form(string $postId, string $targetId, string $targetType, string $context, string $placeholder = 'Add a comment...', string $submitLabel = 'Post'): void
     {
         $defaultVoiceLang = 'en-US';
+        $placeholderKey = $targetType === 'comment'
+            ? 'post.replyPlaceholder'
+            : ($placeholder === 'Write a comment...' ? 'post.writeCommentPlaceholder' : 'post.commentPlaceholder');
         ?>
         <form action="../comment/createc.php" method="POST" enctype="multipart/form-data" class="js-comment-form" data-post-id="<?= comment_escape($postId) ?>" data-context="<?= comment_escape($context) ?>">
             <input type="hidden" name="postId" value="<?= comment_escape($postId) ?>">
@@ -42,13 +45,13 @@ if (!function_exists('render_comment_form')) {
             <input type="hidden" name="from" value="<?= comment_escape($context) ?>">
             <input type="hidden" name="sticker" class="js-sticker-input" value="">
 
-            <textarea name="text" class="comment-textarea" placeholder="<?= comment_escape($placeholder) ?>" rows="2"></textarea>
+            <textarea name="text" class="comment-textarea" placeholder="<?= comment_escape($placeholder) ?>" data-i18n-placeholder="<?= comment_escape($placeholderKey) ?>" rows="2"></textarea>
             <div class="sticker-bar"></div>
 
             <div class="comment-form-toolbar">
-                <button type="button" class="btn-form-icon btn-emoji-toggle" title="Emoji"><i class="bi bi-emoji-smile"></i></button>
+                <button type="button" class="btn-form-icon btn-emoji-toggle" title="Emoji" data-i18n-title="post.emoji"><i class="bi bi-emoji-smile"></i></button>
 
-                <label class="btn-form-icon" title="Add image" style="cursor:pointer;display:inline-flex;align-items:center;">
+                <label class="btn-form-icon" title="Add image" data-i18n-title="post.addImage" style="cursor:pointer;display:inline-flex;align-items:center;">
                     <i class="bi bi-image"></i>
                     <input type="file" name="image" accept="image/*" class="d-none js-image-input">
                 </label>
@@ -61,13 +64,16 @@ if (!function_exists('render_comment_form')) {
                     type="button"
                     class="btn-form-icon js-voice-transcript-btn"
                     title="Voice transcription"
+                    data-i18n-title="post.voiceTranscription"
                     data-idle-label="Tap the microphone to dictate your comment"
                     data-recording-label="Listening... speak now"
+                    data-i18n-idle-label="post.voiceIdle"
+                    data-i18n-recording-label="post.voiceRecording"
                     data-voice-lang="<?= comment_escape($defaultVoiceLang) ?>">
                     <i class="bi bi-mic"></i>
                 </button>
 
-                <button type="submit" class="btn-comment-submit"><i class="bi bi-send"></i> <?= comment_escape($submitLabel) ?></button>
+                <button type="submit" class="btn-comment-submit"><i class="bi bi-send"></i> <span data-i18n="<?= strtolower($submitLabel) === 'reply' ? 'post.reply' : 'post.postButton' ?>"><?= comment_escape($submitLabel) ?></span></button>
             </div>
 
             <div class="comment-voice-status" aria-live="polite"></div>
@@ -96,22 +102,22 @@ if (!function_exists('render_edit_comment_form')) {
                 <input type="hidden" name="from" value="<?= comment_escape($context) ?>">
                 <input type="hidden" name="sticker" class="js-sticker-input" value="<?= comment_escape($selectedSticker) ?>">
 
-                <textarea name="text" class="comment-textarea" rows="3" placeholder="Edit your comment..."><?= comment_escape($comment['text'] ?? '') ?></textarea>
+                <textarea name="text" class="comment-textarea" rows="3" placeholder="Edit your comment..." data-i18n-placeholder="post.editCommentPlaceholder"><?= comment_escape($comment['text'] ?? '') ?></textarea>
                 <div class="sticker-bar" data-selected="<?= comment_escape($selectedSticker) ?>"></div>
 
                 <?php if ($image !== '') : ?>
                     <div class="comment-current-image mb-2">
                         <img src="../../public/<?= comment_escape($image) ?>" alt="current image" class="comment-image">
                         <label class="comment-inline-check mt-2">
-                            <input type="checkbox" name="removeImage" value="1"> Remove current image
+                            <input type="checkbox" name="removeImage" value="1"> <span data-i18n="post.removeCurrentImage">Remove current image</span>
                         </label>
                     </div>
                 <?php endif; ?>
 
                 <div class="comment-form-toolbar">
-                    <button type="button" class="btn-form-icon btn-emoji-toggle" title="Emoji"><i class="bi bi-emoji-smile"></i></button>
+                    <button type="button" class="btn-form-icon btn-emoji-toggle" title="Emoji" data-i18n-title="post.emoji"><i class="bi bi-emoji-smile"></i></button>
 
-                    <label class="btn-form-icon" title="Replace image" style="cursor:pointer;display:inline-flex;align-items:center;">
+                    <label class="btn-form-icon" title="Replace image" data-i18n-title="post.replaceImage" style="cursor:pointer;display:inline-flex;align-items:center;">
                         <i class="bi bi-image"></i>
                         <input type="file" name="image" accept="image/*" class="d-none js-image-input">
                     </label>
@@ -123,14 +129,17 @@ if (!function_exists('render_edit_comment_form')) {
                         type="button"
                         class="btn-form-icon js-voice-transcript-btn"
                         title="Voice transcription"
+                        data-i18n-title="post.voiceTranscription"
                         data-idle-label="Tap the microphone to dictate your comment"
                         data-recording-label="Listening... speak now"
+                        data-i18n-idle-label="post.voiceIdle"
+                        data-i18n-recording-label="post.voiceRecording"
                         data-voice-lang="<?= comment_escape($defaultVoiceLang) ?>">
                         <i class="bi bi-mic"></i>
                     </button>
 
-                    <button type="submit" class="btn-comment-submit"><i class="bi bi-check2-circle"></i> Save</button>
-                    <button type="button" class="btn-comment-secondary btn-cancel-edit" data-comment-id="<?= comment_escape($commentId) ?>">Cancel</button>
+                    <button type="submit" class="btn-comment-submit"><i class="bi bi-check2-circle"></i> <span data-i18n="post.save">Save</span></button>
+                    <button type="button" class="btn-comment-secondary btn-cancel-edit" data-comment-id="<?= comment_escape($commentId) ?>" data-i18n="post.cancel">Cancel</button>
                 </div>
 
                 <div class="comment-voice-status" aria-live="polite"></div>
@@ -185,12 +194,12 @@ if (!function_exists('render_comment_tree_node')) {
                     </button>
 
                     <button type="button" class="btn-comment-action js-reply-toggle" data-target="reply-form-<?= comment_escape($commentId) ?>">
-                        <i class="bi bi-reply"></i> Reply
+                        <i class="bi bi-reply"></i> <span data-i18n="post.reply">Reply</span>
                     </button>
 
                     <?php if ($owned) : ?>
-                        <button type="button" class="btn-comment-action edit btn-edit-comment" data-comment-id="<?= comment_escape($commentId) ?>"><i class="bi bi-pencil-square"></i> Edit</button>
-                        <button type="button" class="btn-comment-action delete js-delete-comment" data-comment-id="<?= comment_escape($commentId) ?>" data-post-id="<?= comment_escape($postId) ?>" data-context="<?= comment_escape($context) ?>"><i class="bi bi-trash3"></i> Delete</button>
+                        <button type="button" class="btn-comment-action edit btn-edit-comment" data-comment-id="<?= comment_escape($commentId) ?>"><i class="bi bi-pencil-square"></i> <span data-i18n="post.edit">Edit</span></button>
+                        <button type="button" class="btn-comment-action delete js-delete-comment" data-comment-id="<?= comment_escape($commentId) ?>" data-post-id="<?= comment_escape($postId) ?>" data-context="<?= comment_escape($context) ?>"><i class="bi bi-trash3"></i> <span data-i18n="post.delete">Delete</span></button>
                     <?php endif; ?>
                 </div>
 
@@ -213,7 +222,7 @@ if (!function_exists('render_preview_comments')) {
     function render_preview_comments(array $previewComments): void
     {
         if (empty($previewComments)) {
-            echo '<div class="text-muted small">No comments yet.</div>';
+            echo '<div class="text-muted small" data-i18n="post.noCommentsShort">No comments yet.</div>';
             return;
         }
 

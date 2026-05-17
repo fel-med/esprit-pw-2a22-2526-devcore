@@ -104,6 +104,29 @@ $isEditLocked = $response && isAcceptedResponseLockStatus($response['statutCandi
 <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
 <link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
+<style>
+/* Cre8 safety: hide stale page-level notification widgets only.
+   The real notification bell must stay inside the shared .front-nav header. */
+body > .notification-widget,
+body > .notification-widget-front,
+main .notification-widget,
+main .notification-widget-front,
+.offre-page-shell .notification-widget,
+.offre-page-shell .notification-widget-front,
+.module-hero .notification-widget,
+.module-hero .notification-widget-front {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+.front-nav .notification-widget,
+.front-nav .notification-widget-front {
+    display: inline-flex !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+</style>
 </head>
 <body>
     <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
@@ -281,6 +304,181 @@ $cre8PilotContext = [
 ];
 require __DIR__ . '/../condidature/cre8pilot_widget.php';
 ?>
+    <script>
+        (() => {
+            const translations = {
+                en: {
+                    'offer.notAvailable': 'Offer not available',
+                    'offer.backMine': 'Back to my offers',
+                    'offer.brief': 'Targeted collaboration brief',
+                    'offer.goesLive': 'Goes live',
+                    'offer.published': 'Published',
+                    'offer.snapshot': 'Offer snapshot',
+                    'offer.snapshotCopy': 'A clean view of the invitation this creator receives.',
+                    'offer.targetCreator': 'Target creator',
+                    'offer.noCreator': 'No creator selected yet',
+                    'offer.objective': 'Objective',
+                    'offer.deadline': 'Deadline',
+                    'offer.budget': 'Budget',
+                    'offer.whyCreator': 'Why this creator',
+                    'offer.rationale': 'Selection rationale',
+                    'offer.noRationale': 'No specific rationale was added for this offer yet.',
+                    'offer.expectedFit': 'Expected collaboration fit',
+                    'offer.howWork': 'How this should work',
+                    'offer.noExpectations': 'No collaboration expectations were written yet.',
+                    'offer.personalNote': 'Personal note to the creator',
+                    'offer.message': 'Message',
+                    'offer.noPersonalNote': 'No personal note has been added to this invitation.',
+                    'offer.creatorResponse': 'Creator response',
+                    'offer.status': 'Status',
+                    'offer.creatorAction': 'Creator action',
+                    'offer.budgetReply': 'Budget reply',
+                    'offer.timelineReply': 'Timeline reply',
+                    'offer.creatorMessage': 'Creator message',
+                    'offer.responseWorkspace': 'Response workspace',
+                    'offer.responseWorkspaceCopy': 'Open the candidature workspace to review the full response thread and continue negotiation if this collaboration still needs adjustments.',
+                    'offer.openCandidatureDetails': 'Open candidature details',
+                    'offer.noResponse': 'No response yet',
+                    'offer.noResponseCopy': 'The targeted creator has not answered this invitation yet.',
+                    'offer.actions': 'Actions',
+                    'offer.editingLocked': 'Editing locked',
+                    'offer.editingLockedCopy': 'The targeted creator already accepted this offer, so the brief can no longer be modified by the brand.',
+                    'offer.editOffer': 'Edit offer',
+                    'offer.openResponse': 'Open response',
+                    'offer.delete': 'Delete',
+                    'offer.draft': 'Draft',
+                    'offer.pendingLaunch': 'Pending launch',
+                    'offer.closed': 'Closed',
+                    'offer.expired': 'Expired',
+                    'offer.archived': 'Archived',
+                    'offer.active': 'Active'
+                },
+                fr: {
+                    'offer.notAvailable': 'Offre indisponible',
+                    'offer.backMine': 'Retour a mes offres',
+                    'offer.brief': 'Brief de collaboration ciblee',
+                    'offer.goesLive': 'Mise en ligne',
+                    'offer.published': 'Publiee',
+                    'offer.snapshot': 'Apercu de l offre',
+                    'offer.snapshotCopy': 'Une vue claire de l invitation recue par ce createur.',
+                    'offer.targetCreator': 'Createur cible',
+                    'offer.noCreator': 'Aucun createur selectionne',
+                    'offer.objective': 'Objectif',
+                    'offer.deadline': 'Echeance',
+                    'offer.budget': 'Budget',
+                    'offer.whyCreator': 'Pourquoi ce createur',
+                    'offer.rationale': 'Raison de la selection',
+                    'offer.noRationale': 'Aucune raison specifique n a encore ete ajoutee.',
+                    'offer.expectedFit': 'Adequation attendue',
+                    'offer.howWork': 'Comment cela devrait fonctionner',
+                    'offer.noExpectations': 'Aucune attente de collaboration n a encore ete ecrite.',
+                    'offer.personalNote': 'Note personnelle au createur',
+                    'offer.message': 'Message',
+                    'offer.noPersonalNote': 'Aucune note personnelle n a ete ajoutee a cette invitation.',
+                    'offer.creatorResponse': 'Reponse du createur',
+                    'offer.status': 'Statut',
+                    'offer.creatorAction': 'Action du createur',
+                    'offer.budgetReply': 'Reponse budget',
+                    'offer.timelineReply': 'Reponse delai',
+                    'offer.creatorMessage': 'Message du createur',
+                    'offer.responseWorkspace': 'Espace de reponse',
+                    'offer.responseWorkspaceCopy': 'Ouvrez l espace candidature pour examiner le fil complet et continuer la negociation si besoin.',
+                    'offer.openCandidatureDetails': 'Ouvrir les details de candidature',
+                    'offer.noResponse': 'Aucune reponse',
+                    'offer.noResponseCopy': 'Le createur cible n a pas encore repondu a cette invitation.',
+                    'offer.actions': 'Actions',
+                    'offer.editingLocked': 'Modification verrouillee',
+                    'offer.editingLockedCopy': 'Le createur cible a deja accepte cette offre, le brief ne peut plus etre modifie.',
+                    'offer.editOffer': 'Modifier l offre',
+                    'offer.openResponse': 'Ouvrir la reponse',
+                    'offer.delete': 'Supprimer',
+                    'offer.draft': 'Brouillon',
+                    'offer.pendingLaunch': 'Publication planifiee',
+                    'offer.closed': 'Fermee',
+                    'offer.expired': 'Expiree',
+                    'offer.archived': 'Archivee',
+                    'offer.active': 'Active'
+                }
+            };
+            const textKeys = {
+                'Offer not available': 'offer.notAvailable',
+                'Back to my offers': 'offer.backMine',
+                'Targeted collaboration brief': 'offer.brief',
+                'Goes live': 'offer.goesLive',
+                'Published': 'offer.published',
+                'Offer snapshot': 'offer.snapshot',
+                'A clean view of the invitation this creator receives.': 'offer.snapshotCopy',
+                'Target creator': 'offer.targetCreator',
+                'No creator selected yet': 'offer.noCreator',
+                'Objective': 'offer.objective',
+                'Deadline': 'offer.deadline',
+                'Budget': 'offer.budget',
+                'Why this creator': 'offer.whyCreator',
+                'Selection rationale': 'offer.rationale',
+                'No specific rationale was added for this offer yet.': 'offer.noRationale',
+                'Expected collaboration fit': 'offer.expectedFit',
+                'How this should work': 'offer.howWork',
+                'No collaboration expectations were written yet.': 'offer.noExpectations',
+                'Personal note to the creator': 'offer.personalNote',
+                'Message': 'offer.message',
+                'No personal note has been added to this invitation.': 'offer.noPersonalNote',
+                'Creator response': 'offer.creatorResponse',
+                'Status': 'offer.status',
+                'Creator action': 'offer.creatorAction',
+                'Budget reply': 'offer.budgetReply',
+                'Timeline reply': 'offer.timelineReply',
+                'Creator message': 'offer.creatorMessage',
+                'Response workspace': 'offer.responseWorkspace',
+                'Open the candidature workspace to review the full response thread and continue negotiation if this collaboration still needs adjustments.': 'offer.responseWorkspaceCopy',
+                'Open candidature details': 'offer.openCandidatureDetails',
+                'No response yet': 'offer.noResponse',
+                'The targeted creator has not answered this invitation yet.': 'offer.noResponseCopy',
+                'Actions': 'offer.actions',
+                'Editing locked': 'offer.editingLocked',
+                'The targeted creator already accepted this offer, so the brief can no longer be modified by the brand.': 'offer.editingLockedCopy',
+                'Edit offer': 'offer.editOffer',
+                'Open response': 'offer.openResponse',
+                'Delete': 'offer.delete',
+                'Draft': 'offer.draft',
+                'Pending launch': 'offer.pendingLaunch',
+                'Closed': 'offer.closed',
+                'Expired': 'offer.expired',
+                'Archived': 'offer.archived',
+                'Active': 'offer.active'
+            };
+            function currentLang() { return typeof window.cre8FrontReadLang === 'function' ? window.cre8FrontReadLang() : 'en'; }
+            function keyForText(value) {
+                const clean = String(value).trim();
+                if (textKeys[clean]) return textKeys[clean];
+                for (const lang of Object.keys(translations)) for (const key of Object.keys(translations[lang])) if (translations[lang][key] === clean) return key;
+                return '';
+            }
+            function applyOfferTranslations(root = document) {
+                const dict = translations[currentLang()] || translations.en;
+                if (typeof window.cre8ApplyI18n === 'function') window.cre8ApplyI18n(translations);
+                const walker = document.createTreeWalker(root.body || root, NodeFilter.SHOW_TEXT, {
+                    acceptNode(node) {
+                        const parent = node.parentElement;
+                        if (!parent || ['SCRIPT', 'STYLE', 'TEXTAREA'].includes(parent.tagName)) return NodeFilter.FILTER_REJECT;
+                        return node.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                    }
+                });
+                const nodes = [];
+                while (walker.nextNode()) nodes.push(walker.currentNode);
+                nodes.forEach((node) => {
+                    const key = keyForText(node.nodeValue);
+                    if (!key || dict[key] === undefined) return;
+                    node.nodeValue = node.nodeValue.replace(node.nodeValue.trim(), dict[key]);
+                    if (node.parentElement && node.parentElement.childNodes.length === 1) node.parentElement.setAttribute('data-i18n', key);
+                });
+            }
+            document.addEventListener('DOMContentLoaded', () => {
+                if (typeof window.cre8RegisterTranslations === 'function') window.cre8RegisterTranslations(translations);
+                applyOfferTranslations();
+            });
+            window.addEventListener('cre8:languagechange', () => applyOfferTranslations());
+        })();
+    </script>
     <script src="../layout/front-header.js"></script>
 </body>
 </html>

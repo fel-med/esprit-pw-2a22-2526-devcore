@@ -144,6 +144,22 @@ $declineWorkspaceUrl = $idOffre !== null ? buildResponseWorkspaceUrl($idOffre, '
 <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
 <link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
+    <style>
+        /* Keep only the shared header notification bell.
+           Some old offer/candidature pages can leave a stale widget in the page body. */
+        body > .notification-widget,
+        body > .notification-widget-front,
+        main .notification-widget,
+        main .notification-widget-front,
+        .container > .notification-widget,
+        .container > .notification-widget-front,
+        .offre-page-shell > .notification-widget,
+        .offre-page-shell > .notification-widget-front,
+        .module-hero .notification-widget,
+        .module-hero .notification-widget-front {
+            display: none !important;
+        }
+    </style>
 </head>
 <body>
     <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
@@ -322,6 +338,178 @@ $cre8PilotContext = [
 ];
 require __DIR__ . '/../condidature/cre8pilot_widget.php';
 ?>
+    <script>
+        (() => {
+            const translations = {
+                en: {
+                    'offer.invitationUnavailable': 'Invitation unavailable',
+                    'offer.backToOffers': 'Back to offers',
+                    'offer.targetedInvitation': 'Targeted invitation',
+                    'offer.removeSaved': 'Remove saved',
+                    'offer.saveForLater': 'Save for later',
+                    'offer.invitationContext': 'Invitation context',
+                    'offer.invitationContextCopy': 'This is a targeted collaboration request from a brand that selected you directly.',
+                    'offer.brand': 'Brand',
+                    'offer.objective': 'Objective',
+                    'offer.proposedBudget': 'Proposed budget',
+                    'offer.deadline': 'Deadline',
+                    'offer.whyChosen': 'Why you were chosen',
+                    'offer.brandContext': 'Brand context',
+                    'offer.noSelectionNote': 'The brand did not add a detailed selection note yet.',
+                    'offer.expectedFit': 'Expected collaboration fit',
+                    'offer.partnership': 'How they imagine the partnership',
+                    'offer.noExpectation': 'No detailed collaboration expectation was attached to this invitation.',
+                    'offer.personalNote': 'Personal note from the brand',
+                    'offer.message': 'Message',
+                    'offer.yourResponse': 'Your response',
+                    'offer.currentStatus': 'Current status',
+                    'offer.responsePath': 'Response path',
+                    'offer.budgetReply': 'Your budget reply',
+                    'offer.timeline': 'Your proposed timeline',
+                    'offer.yourMessage': 'Your message',
+                    'offer.noResponseMessage': 'No response message has been added yet.',
+                    'offer.noResponseStarted': 'No response started yet',
+                    'offer.noResponseStartedCopy': 'Open the response workflow to accept, decline, request negotiation, or save a draft for later.',
+                    'offer.responseWorkflow': 'Response workflow',
+                    'offer.responseWorkflowCopy': 'Complete your response, terms, availability, and negotiation from the candidature workspace.',
+                    'offer.responseStored': 'Response already stored',
+                    'offer.negotiationContinues': 'Negotiation continues in candidature',
+                    'offer.readyRespond': 'Ready to respond',
+                    'offer.reviewFinal': 'Open the candidature workspace to review the final response details and decision history.',
+                    'offer.useWorkspace': 'Use the candidature workspace for the real Accept, Decline, Negotiate, and Save as draft actions.',
+                    'offer.openWorkspace': 'Open candidature workspace',
+                    'offer.draft': 'Draft',
+                    'offer.published': 'Published',
+                    'offer.closed': 'Closed',
+                    'offer.expired': 'Expired',
+                    'offer.archived': 'Archived',
+                    'offer.active': 'Active',
+                    'offer.noResponseStartedLabel': 'No response started'
+                },
+                fr: {
+                    'offer.invitationUnavailable': 'Invitation indisponible',
+                    'offer.backToOffers': 'Retour aux offres',
+                    'offer.targetedInvitation': 'Invitation ciblee',
+                    'offer.removeSaved': 'Retirer',
+                    'offer.saveForLater': 'Enregistrer',
+                    'offer.invitationContext': 'Contexte de l invitation',
+                    'offer.invitationContextCopy': 'Ceci est une demande de collaboration ciblee envoyee par une marque qui vous a selectionne directement.',
+                    'offer.brand': 'Marque',
+                    'offer.objective': 'Objectif',
+                    'offer.proposedBudget': 'Budget propose',
+                    'offer.deadline': 'Echeance',
+                    'offer.whyChosen': 'Pourquoi vous avez ete choisi',
+                    'offer.brandContext': 'Contexte de la marque',
+                    'offer.noSelectionNote': 'La marque n a pas encore ajoute de note detaillee.',
+                    'offer.expectedFit': 'Adequation attendue',
+                    'offer.partnership': 'Comment la marque imagine le partenariat',
+                    'offer.noExpectation': 'Aucune attente detaillee n a ete ajoutee a cette invitation.',
+                    'offer.personalNote': 'Note personnelle de la marque',
+                    'offer.message': 'Message',
+                    'offer.yourResponse': 'Votre reponse',
+                    'offer.currentStatus': 'Statut actuel',
+                    'offer.responsePath': 'Parcours de reponse',
+                    'offer.budgetReply': 'Votre reponse budget',
+                    'offer.timeline': 'Votre delai propose',
+                    'offer.yourMessage': 'Votre message',
+                    'offer.noResponseMessage': 'Aucun message de reponse n a encore ete ajoute.',
+                    'offer.noResponseStarted': 'Aucune reponse commencee',
+                    'offer.noResponseStartedCopy': 'Ouvrez le workflow pour accepter, refuser, negocier ou enregistrer un brouillon.',
+                    'offer.responseWorkflow': 'Workflow de reponse',
+                    'offer.responseWorkflowCopy': 'Completez votre reponse, vos conditions, disponibilites et negociation depuis l espace candidature.',
+                    'offer.responseStored': 'Reponse deja enregistree',
+                    'offer.negotiationContinues': 'La negociation continue dans la candidature',
+                    'offer.readyRespond': 'Pret a repondre',
+                    'offer.reviewFinal': 'Ouvrez l espace candidature pour revoir la reponse finale et l historique de decision.',
+                    'offer.useWorkspace': 'Utilisez l espace candidature pour accepter, refuser, negocier et enregistrer un brouillon.',
+                    'offer.openWorkspace': 'Ouvrir l espace candidature',
+                    'offer.draft': 'Brouillon',
+                    'offer.published': 'Publiee',
+                    'offer.closed': 'Fermee',
+                    'offer.expired': 'Expiree',
+                    'offer.archived': 'Archivee',
+                    'offer.active': 'Active',
+                    'offer.noResponseStartedLabel': 'Aucune reponse commencee'
+                }
+            };
+            const textKeys = {
+                'Invitation unavailable': 'offer.invitationUnavailable',
+                'Back to offers': 'offer.backToOffers',
+                'Targeted invitation': 'offer.targetedInvitation',
+                'Remove saved': 'offer.removeSaved',
+                'Save for later': 'offer.saveForLater',
+                'Invitation context': 'offer.invitationContext',
+                'This is a targeted collaboration request from a brand that selected you directly.': 'offer.invitationContextCopy',
+                'Brand': 'offer.brand',
+                'Objective': 'offer.objective',
+                'Proposed budget': 'offer.proposedBudget',
+                'Deadline': 'offer.deadline',
+                'Why you were chosen': 'offer.whyChosen',
+                'Brand context': 'offer.brandContext',
+                'The brand did not add a detailed selection note yet.': 'offer.noSelectionNote',
+                'Expected collaboration fit': 'offer.expectedFit',
+                'How they imagine the partnership': 'offer.partnership',
+                'No detailed collaboration expectation was attached to this invitation.': 'offer.noExpectation',
+                'Personal note from the brand': 'offer.personalNote',
+                'Message': 'offer.message',
+                'Your response': 'offer.yourResponse',
+                'Current status': 'offer.currentStatus',
+                'Response path': 'offer.responsePath',
+                'Your budget reply': 'offer.budgetReply',
+                'Your proposed timeline': 'offer.timeline',
+                'Your message': 'offer.yourMessage',
+                'No response message has been added yet.': 'offer.noResponseMessage',
+                'No response started yet': 'offer.noResponseStarted',
+                'Open the response workflow to accept, decline, request negotiation, or save a draft for later.': 'offer.noResponseStartedCopy',
+                'Response workflow': 'offer.responseWorkflow',
+                'Complete your response, terms, availability, and negotiation from the candidature workspace.': 'offer.responseWorkflowCopy',
+                'Response already stored': 'offer.responseStored',
+                'Negotiation continues in candidature': 'offer.negotiationContinues',
+                'Ready to respond': 'offer.readyRespond',
+                'Open the candidature workspace to review the final response details and decision history.': 'offer.reviewFinal',
+                'Use the candidature workspace for the real Accept, Decline, Negotiate, and Save as draft actions.': 'offer.useWorkspace',
+                'Open candidature workspace': 'offer.openWorkspace',
+                'Draft': 'offer.draft',
+                'Published': 'offer.published',
+                'Closed': 'offer.closed',
+                'Expired': 'offer.expired',
+                'Archived': 'offer.archived',
+                'Active': 'offer.active',
+                'No response started': 'offer.noResponseStartedLabel'
+            };
+            function currentLang() { return typeof window.cre8FrontReadLang === 'function' ? window.cre8FrontReadLang() : 'en'; }
+            function keyForText(value) {
+                const clean = String(value).trim();
+                if (textKeys[clean]) return textKeys[clean];
+                for (const lang of Object.keys(translations)) for (const key of Object.keys(translations[lang])) if (translations[lang][key] === clean) return key;
+                return '';
+            }
+            function applyOfferTranslations(root = document) {
+                const dict = translations[currentLang()] || translations.en;
+                if (typeof window.cre8ApplyI18n === 'function') window.cre8ApplyI18n(translations);
+                const walker = document.createTreeWalker(root.body || root, NodeFilter.SHOW_TEXT, {
+                    acceptNode(node) {
+                        const parent = node.parentElement;
+                        if (!parent || ['SCRIPT', 'STYLE', 'TEXTAREA'].includes(parent.tagName)) return NodeFilter.FILTER_REJECT;
+                        return node.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                    }
+                });
+                const nodes = [];
+                while (walker.nextNode()) nodes.push(walker.currentNode);
+                nodes.forEach((node) => {
+                    const key = keyForText(node.nodeValue);
+                    if (!key || dict[key] === undefined) return;
+                    node.nodeValue = node.nodeValue.replace(node.nodeValue.trim(), dict[key]);
+                    if (node.parentElement && node.parentElement.childNodes.length === 1) node.parentElement.setAttribute('data-i18n', key);
+                });
+            }
+            document.addEventListener('DOMContentLoaded', () => {
+                if (typeof window.cre8RegisterTranslations === 'function') window.cre8RegisterTranslations(translations);
+                applyOfferTranslations();
+            });
+            window.addEventListener('cre8:languagechange', () => applyOfferTranslations());
+        })();
+    </script>
     <script src="../layout/front-header.js"></script>
 </body>
 </html>

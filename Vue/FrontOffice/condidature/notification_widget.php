@@ -5,6 +5,22 @@ $notificationItemsAll = [];
 $notificationItemsUnread = [];
 $notificationUnreadCount = 0;
 $notificationActionUrl = $notificationActionUrl ?? '../layout/notification_actions.php';
+$notificationPageUrl = $notificationPageUrl ?? null;
+if (!$notificationPageUrl) {
+    if (!empty($frontBaseUrl)) {
+        $notificationPageUrl = rtrim((string) $frontBaseUrl, '/') . '/notifications/index.php';
+    } else {
+        $notificationCurrentPath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
+        $notificationMarker = '/Vue/FrontOffice/';
+        $notificationPos = strpos($notificationCurrentPath, $notificationMarker);
+        if ($notificationPos !== false) {
+            $notificationProjectBase = substr($notificationCurrentPath, 0, $notificationPos);
+            $notificationPageUrl = $notificationProjectBase . '/Vue/FrontOffice/notifications/index.php';
+        } else {
+            $notificationPageUrl = '../notifications/index.php';
+        }
+    }
+}
 
 if ($notificationController && $notificationUserId > 0) {
     if (method_exists($notificationController, 'getNotificationsForUser')) {
@@ -87,7 +103,7 @@ if (!function_exists('cre8RenderNotificationItems')) {
     {
         if (empty($items)) {
             ?>
-            <div class="notification-empty">No notifications yet.</div>
+            <div class="notification-empty" data-i18n="notifications.empty">No notifications yet.</div>
             <?php
             return;
         }
@@ -110,13 +126,13 @@ if (!function_exists('cre8RenderNotificationItems')) {
                     <time><?php echo htmlspecialchars(cre8NotificationDateLabel($item['dateCreation'] ?? null)); ?></time>
                     <div class="notification-item-actions">
                         <?php if ($link !== ''): ?>
-                            <a class="notification-open-link" href="<?php echo htmlspecialchars($link); ?>">Open</a>
+                            <a class="notification-open-link" href="<?php echo htmlspecialchars($link); ?>" data-i18n="notifications.open">Open</a>
                         <?php endif; ?>
                         <?php if ($isUnread): ?>
                             <form method="post" action="<?php echo htmlspecialchars((string) $notificationActionUrl); ?>" class="notification-inline-form" data-notification-read-form data-notification-id="<?php echo (int) ($item['idNotificationAction'] ?? 0); ?>">
                                 <input type="hidden" name="notificationAction" value="mark_one">
                                 <input type="hidden" name="notificationId" value="<?php echo (int) ($item['idNotificationAction'] ?? 0); ?>">
-                                <button type="submit">Mark read</button>
+                                <button type="submit" data-i18n="notifications.markRead">Mark read</button>
                             </form>
                         <?php endif; ?>
                     </div>
@@ -127,7 +143,7 @@ if (!function_exists('cre8RenderNotificationItems')) {
 }
 ?>
 <div class="notification-widget notification-widget-front" data-notification-widget>
-    <button type="button" class="notification-bell" data-notification-toggle aria-label="Open notifications">
+    <button type="button" class="notification-bell" data-notification-toggle aria-label="Open notifications" title="Open notifications" data-i18n-title="notifications.openNotifications">
         <span class="notification-bell-glyph" aria-hidden="true"><i class="bi bi-bell"></i></span>
         <span class="notification-count" data-notification-count<?php echo $notificationUnreadCount > 0 ? '' : ' hidden'; ?>><?php echo $notificationUnreadCount > 99 ? '99+' : (int) $notificationUnreadCount; ?></span>
     </button>
@@ -135,18 +151,18 @@ if (!function_exists('cre8RenderNotificationItems')) {
     <section class="notification-panel" data-notification-panel hidden>
         <div class="notification-panel-head">
             <div>
-                <strong>Notifications</strong>
-                <span data-notification-unread-label><?php echo (int) $notificationUnreadCount; ?> unread</span>
+                <strong data-i18n="notifications.title">Notifications</strong>
+                <span data-notification-unread-label><span data-notification-unread-number><?php echo (int) $notificationUnreadCount; ?></span> <span data-i18n="notifications.unread">unread</span></span>
             </div>
             <form method="post" action="<?php echo htmlspecialchars((string) $notificationActionUrl); ?>" data-notification-read-all-form>
                 <input type="hidden" name="notificationAction" value="mark_all">
-                <button type="submit" <?php echo $notificationUnreadCount <= 0 ? 'disabled' : ''; ?>>Mark all as read</button>
+                <button type="submit" <?php echo $notificationUnreadCount <= 0 ? 'disabled' : ''; ?> data-i18n="notifications.markAllRead">Mark all as read</button>
             </form>
         </div>
 
         <div class="notification-tabs" role="tablist" aria-label="Notification filters">
-            <button type="button" class="is-active" data-notification-tab="all">All</button>
-            <button type="button" data-notification-tab="unread">Unread</button>
+            <button type="button" class="is-active" data-notification-tab="all" data-i18n="notifications.all">All</button>
+            <button type="button" data-notification-tab="unread" data-i18n="notifications.unreadTab">Unread</button>
         </div>
 
         <div class="notification-list" data-notification-list="all">
@@ -155,15 +171,82 @@ if (!function_exists('cre8RenderNotificationItems')) {
         <div class="notification-list" data-notification-list="unread" hidden>
             <?php cre8RenderNotificationItems($notificationItemsUnread); ?>
         </div>
+
+        <div class="notification-panel-foot">
+            <a class="notification-view-all" href="<?php echo htmlspecialchars((string) $notificationPageUrl); ?>">
+                <span data-i18n="notifications.viewAll">View all notifications</span> <i class="bi bi-arrow-right-short" aria-hidden="true"></i>
+            </a>
+        </div>
     </section>
 </div>
 <script>
 (() => {
+    const notificationTranslations = {
+        en: {
+            'notifications.title': 'Notifications',
+            'notifications.unread': 'unread',
+            'notifications.markAllRead': 'Mark all as read',
+            'notifications.all': 'All',
+            'notifications.unreadTab': 'Unread',
+            'notifications.open': 'Open',
+            'notifications.markRead': 'Mark read',
+            'notifications.viewAll': 'View all notifications',
+            'notifications.empty': 'No notifications yet.',
+            'notifications.openNotifications': 'Open notifications'
+        },
+        fr: {
+            'notifications.title': 'Notifications',
+            'notifications.unread': 'non lues',
+            'notifications.markAllRead': 'Tout marquer comme lu',
+            'notifications.all': 'Toutes',
+            'notifications.unreadTab': 'Non lues',
+            'notifications.open': 'Ouvrir',
+            'notifications.markRead': 'Marquer comme lu',
+            'notifications.viewAll': 'Voir toutes les notifications',
+            'notifications.empty': 'Aucune notification pour le moment.',
+            'notifications.openNotifications': 'Ouvrir les notifications'
+        }
+    };
+
+    function getNotificationLang() {
+        if (typeof window.cre8FrontReadLang === 'function') {
+            return window.cre8FrontReadLang();
+        }
+        try {
+            const stored = localStorage.getItem('cre8_front_lang') || localStorage.getItem('cre8_lang');
+            return stored === 'fr' ? 'fr' : 'en';
+        } catch (error) {
+            return 'en';
+        }
+    }
+
+    function applyNotificationTranslations(root) {
+        const lang = getNotificationLang();
+        const dict = notificationTranslations[lang] || notificationTranslations.en;
+        root.querySelectorAll('[data-i18n]').forEach((element) => {
+            const key = element.getAttribute('data-i18n');
+            if (Object.prototype.hasOwnProperty.call(dict, key)) {
+                element.textContent = dict[key];
+            }
+        });
+        root.querySelectorAll('[data-i18n-title]').forEach((element) => {
+            const key = element.getAttribute('data-i18n-title');
+            if (Object.prototype.hasOwnProperty.call(dict, key)) {
+                element.setAttribute('title', dict[key]);
+                if (element.hasAttribute('aria-label')) {
+                    element.setAttribute('aria-label', dict[key]);
+                }
+            }
+        });
+    }
+
     document.querySelectorAll('[data-notification-widget]').forEach((widget) => {
         if (widget.dataset.notificationReady === '1') {
             return;
         }
         widget.dataset.notificationReady = '1';
+        applyNotificationTranslations(widget);
+        window.addEventListener('cre8:languagechange', () => applyNotificationTranslations(widget));
         const toggle = widget.querySelector('[data-notification-toggle]');
         const panel = widget.querySelector('[data-notification-panel]');
         const tabs = widget.querySelectorAll('[data-notification-tab]');
@@ -184,7 +267,10 @@ if (!function_exists('cre8RenderNotificationItems')) {
                 countBadge.hidden = unreadCount <= 0;
             }
             if (unreadLabel) {
-                unreadLabel.textContent = unreadCount + ' unread';
+                const unreadNumber = unreadLabel.querySelector('[data-notification-unread-number]');
+                if (unreadNumber) {
+                    unreadNumber.textContent = String(unreadCount);
+                }
             }
             if (markAllForm) {
                 const button = markAllForm.querySelector('button');
@@ -200,7 +286,8 @@ if (!function_exists('cre8RenderNotificationItems')) {
                 return;
             }
             if (!unreadList.querySelector('.notification-empty')) {
-                unreadList.innerHTML = '<div class="notification-empty">No notifications yet.</div>';
+                unreadList.innerHTML = '<div class="notification-empty" data-i18n="notifications.empty">No notifications yet.</div>';
+                applyNotificationTranslations(unreadList);
             }
         }
 

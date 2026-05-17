@@ -809,6 +809,257 @@ $cre8PilotContext = [
 ];
 require __DIR__ . '/../condidature/cre8pilot_widget.php';
 ?>
+    <script>
+        (() => {
+            const translations = {
+                en: {
+                    'offer.notFound': 'Offer not found',
+                    'offer.notFoundCopy': 'The targeted offer does not exist or you do not have permission to edit it.',
+                    'offer.backMine': 'Back to my offers',
+                    'offer.brandWorkspace': 'Brand workspace',
+                    'offer.refineOffer': 'Refine your targeted offer',
+                    'offer.lockedHero': 'This accepted offer is now locked to preserve the agreed collaboration brief.',
+                    'offer.editHero': 'Update the brief, budget, and dates while keeping the same offer flow.',
+                    'offer.reviewChanges': 'Please review the changes.',
+                    'offer.lockedTitle': 'Editing locked after creator acceptance',
+                    'offer.lockedCopy': 'The targeted creator already accepted this offer, so the brand can review the response but cannot change the brief anymore.',
+                    'offer.currentResponse': 'Current response',
+                    'offer.status': 'Status',
+                    'offer.budgetReply': 'Budget reply',
+                    'offer.creatorMessage': 'Creator message',
+                    'offer.noCreatorMessage': 'No creator message was submitted.',
+                    'offer.nextSteps': 'Next steps',
+                    'offer.whyLocked': 'Why editing is blocked',
+                    'offer.whyLockedCopy': 'Once the targeted creator accepts, the offer becomes a fixed agreement point and can no longer be edited by the brand.',
+                    'offer.openDetails': 'Open offer details',
+                    'offer.targetCreator': 'Target creator',
+                    'offer.fixedCreatorCopy': 'The selected creator stays the same while you edit the rest of the offer.',
+                    'offer.selectCreatorCopy': 'Select the creator before you publish this offer.',
+                    'offer.selectedCreator': 'Selected creator',
+                    'offer.creatorNotFound': 'Creator not found',
+                    'offer.creatorMissing': 'This creator record is no longer available.',
+                    'offer.searchCreators': 'Search creators',
+                    'offer.browseCreatorsCopy': 'Browse the available creators or search by name, email, or ID.',
+                    'offer.clear': 'Clear',
+                    'offer.noCreators': 'No creators available',
+                    'offer.browseMore': 'Browse more creators',
+                    'offer.creatorBrowser': 'Creator browser',
+                    'offer.browseCreators': 'Browse creators',
+                    'offer.close': 'Close',
+                    'offer.context': 'Collaboration context',
+                    'offer.contextCopy': 'Update the optional context that explains why this creator fits the collaboration.',
+                    'offer.whySelected': 'Why was this creator selected?',
+                    'offer.expectedFit': 'Expected collaboration fit',
+                    'offer.personalNote': 'Personal note',
+                    'offer.offerDetails': 'Offer details',
+                    'offer.offerDetailsCopy': 'Keep the brief practical and easy to assess at a glance.',
+                    'offer.offerTitle': 'Offer title',
+                    'offer.objective': 'Objective',
+                    'offer.proposedBudget': 'Proposed budget',
+                    'offer.description': 'Detailed description',
+                    'offer.publicationDate': 'Publication date',
+                    'offer.dateLocked': 'This offer is already live, so the original publication date stays locked.',
+                    'offer.deadline': 'Deadline',
+                    'offer.saveImproved': 'Save the improved offer',
+                    'offer.saveImprovedCopy': 'Review the summary, then publish the changes or keep the offer as a draft.',
+                    'offer.publishOffer': 'Publish offer',
+                    'offer.publishUpdates': 'Publish updates',
+                    'offer.keepDraft': 'Keep as draft',
+                    'offer.saveDraft': 'Save as draft',
+                    'offer.cancel': 'Cancel',
+                    'offer.liveReview': 'Live review',
+                    'offer.liveReviewCopy': 'A quick summary of the current creator, the offer context, and the updated details.',
+                    'offer.selectCreator': 'Select a creator for this offer.',
+                    'offer.titleFallback': 'Your title will appear here.',
+                    'offer.objectiveFallback': 'Define the collaboration goal.',
+                    'offer.budgetTiming': 'Budget and timing',
+                    'offer.budgetFallback': 'Update the budget and schedule.',
+                    'offer.fit': 'Collaboration fit',
+                    'offer.fitFallback': 'Add optional context about the collaboration fit.',
+                    'offer.currentCreatorResponse': 'Current creator response',
+                    'offer.ready': 'Ready',
+                    'offer.pendingReview': 'Pending review',
+                    'offer.limited': 'Limited',
+                    'offer.selected': 'Selected'
+                },
+                fr: {
+                    'offer.notFound': 'Offre introuvable',
+                    'offer.notFoundCopy': 'L offre ciblee n existe pas ou vous n avez pas la permission de la modifier.',
+                    'offer.backMine': 'Retour a mes offres',
+                    'offer.brandWorkspace': 'Espace marque',
+                    'offer.refineOffer': 'Affiner votre offre ciblee',
+                    'offer.lockedHero': 'Cette offre acceptee est verrouillee pour preserver le brief convenu.',
+                    'offer.editHero': 'Mettez a jour le brief, le budget et les dates en gardant le meme flux.',
+                    'offer.reviewChanges': 'Veuillez verifier les modifications.',
+                    'offer.lockedTitle': 'Modification verrouillee apres acceptation',
+                    'offer.lockedCopy': 'Le createur cible a deja accepte cette offre, la marque peut consulter la reponse mais ne peut plus modifier le brief.',
+                    'offer.currentResponse': 'Reponse actuelle',
+                    'offer.status': 'Statut',
+                    'offer.budgetReply': 'Reponse budget',
+                    'offer.creatorMessage': 'Message du createur',
+                    'offer.noCreatorMessage': 'Aucun message createur n a ete soumis.',
+                    'offer.nextSteps': 'Prochaines etapes',
+                    'offer.whyLocked': 'Pourquoi la modification est bloquee',
+                    'offer.whyLockedCopy': 'Quand le createur accepte, l offre devient un point d accord fixe et ne peut plus etre modifiee.',
+                    'offer.openDetails': 'Ouvrir les details',
+                    'offer.targetCreator': 'Createur cible',
+                    'offer.fixedCreatorCopy': 'Le createur selectionne reste le meme pendant la modification du reste de l offre.',
+                    'offer.selectCreatorCopy': 'Selectionnez le createur avant de publier cette offre.',
+                    'offer.selectedCreator': 'Createur selectionne',
+                    'offer.creatorNotFound': 'Createur introuvable',
+                    'offer.creatorMissing': 'Cet enregistrement createur n est plus disponible.',
+                    'offer.searchCreators': 'Rechercher des createurs',
+                    'offer.browseCreatorsCopy': 'Parcourez les createurs disponibles ou recherchez par nom, email ou ID.',
+                    'offer.clear': 'Effacer',
+                    'offer.noCreators': 'Aucun createur disponible',
+                    'offer.browseMore': 'Parcourir plus de createurs',
+                    'offer.creatorBrowser': 'Navigateur de createurs',
+                    'offer.browseCreators': 'Parcourir les createurs',
+                    'offer.close': 'Fermer',
+                    'offer.context': 'Contexte de collaboration',
+                    'offer.contextCopy': 'Mettez a jour le contexte optionnel qui explique pourquoi ce createur convient.',
+                    'offer.whySelected': 'Pourquoi ce createur a-t-il ete selectionne ?',
+                    'offer.expectedFit': 'Adequation attendue',
+                    'offer.personalNote': 'Note personnelle',
+                    'offer.offerDetails': 'Details de l offre',
+                    'offer.offerDetailsCopy': 'Gardez le brief pratique et facile a evaluer.',
+                    'offer.offerTitle': 'Titre de l offre',
+                    'offer.objective': 'Objectif',
+                    'offer.proposedBudget': 'Budget propose',
+                    'offer.description': 'Description detaillee',
+                    'offer.publicationDate': 'Date de publication',
+                    'offer.dateLocked': 'Cette offre est deja en ligne, la date de publication originale reste verrouillee.',
+                    'offer.deadline': 'Echeance',
+                    'offer.saveImproved': 'Enregistrer l offre amelioree',
+                    'offer.saveImprovedCopy': 'Verifiez le resume, puis publiez les modifications ou gardez l offre en brouillon.',
+                    'offer.publishOffer': 'Publier l offre',
+                    'offer.publishUpdates': 'Publier les modifications',
+                    'offer.keepDraft': 'Garder en brouillon',
+                    'offer.saveDraft': 'Enregistrer en brouillon',
+                    'offer.cancel': 'Annuler',
+                    'offer.liveReview': 'Apercu en direct',
+                    'offer.liveReviewCopy': 'Resume rapide du createur actuel, du contexte et des details mis a jour.',
+                    'offer.selectCreator': 'Selectionnez un createur pour cette offre.',
+                    'offer.titleFallback': 'Votre titre apparaitra ici.',
+                    'offer.objectiveFallback': 'Definissez le but de la collaboration.',
+                    'offer.budgetTiming': 'Budget et timing',
+                    'offer.budgetFallback': 'Mettez a jour le budget et le calendrier.',
+                    'offer.fit': 'Adequation de collaboration',
+                    'offer.fitFallback': 'Ajoutez un contexte optionnel sur l adequation.',
+                    'offer.currentCreatorResponse': 'Reponse actuelle du createur',
+                    'offer.ready': 'Pret',
+                    'offer.pendingReview': 'En attente',
+                    'offer.limited': 'Limite',
+                    'offer.selected': 'Selectionne'
+                }
+            };
+            const textKeys = {
+                'Offer not found': 'offer.notFound',
+                'The targeted offer does not exist or you do not have permission to edit it.': 'offer.notFoundCopy',
+                'Back to my offers': 'offer.backMine',
+                'Brand workspace': 'offer.brandWorkspace',
+                'Refine your targeted offer': 'offer.refineOffer',
+                'This accepted offer is now locked to preserve the agreed collaboration brief.': 'offer.lockedHero',
+                'Update the brief, budget, and dates while keeping the same offer flow.': 'offer.editHero',
+                'Please review the changes.': 'offer.reviewChanges',
+                'Editing locked after creator acceptance': 'offer.lockedTitle',
+                'The targeted creator already accepted this offer, so the brand can review the response but cannot change the brief anymore.': 'offer.lockedCopy',
+                'Current response': 'offer.currentResponse',
+                'Status': 'offer.status',
+                'Budget reply': 'offer.budgetReply',
+                'Creator message': 'offer.creatorMessage',
+                'No creator message was submitted.': 'offer.noCreatorMessage',
+                'Next steps': 'offer.nextSteps',
+                'Why editing is blocked': 'offer.whyLocked',
+                'Once the targeted creator accepts, the offer becomes a fixed agreement point and can no longer be edited by the brand.': 'offer.whyLockedCopy',
+                'Open offer details': 'offer.openDetails',
+                'Target creator': 'offer.targetCreator',
+                'The selected creator stays the same while you edit the rest of the offer.': 'offer.fixedCreatorCopy',
+                'Select the creator before you publish this offer.': 'offer.selectCreatorCopy',
+                'Selected creator': 'offer.selectedCreator',
+                'Creator not found': 'offer.creatorNotFound',
+                'This creator record is no longer available.': 'offer.creatorMissing',
+                'Search creators': 'offer.searchCreators',
+                'Browse the available creators or search by name, email, or ID.': 'offer.browseCreatorsCopy',
+                'Clear': 'offer.clear',
+                'No creators available': 'offer.noCreators',
+                'Browse more creators': 'offer.browseMore',
+                'Creator browser': 'offer.creatorBrowser',
+                'Browse creators': 'offer.browseCreators',
+                'Close': 'offer.close',
+                'Collaboration context': 'offer.context',
+                'Update the optional context that explains why this creator fits the collaboration.': 'offer.contextCopy',
+                'Why was this creator selected?': 'offer.whySelected',
+                'Expected collaboration fit': 'offer.expectedFit',
+                'Personal note': 'offer.personalNote',
+                'Offer details': 'offer.offerDetails',
+                'Keep the brief practical and easy to assess at a glance.': 'offer.offerDetailsCopy',
+                'Offer title': 'offer.offerTitle',
+                'Objective': 'offer.objective',
+                'Proposed budget': 'offer.proposedBudget',
+                'Detailed description': 'offer.description',
+                'Publication date': 'offer.publicationDate',
+                'This offer is already live, so the original publication date stays locked.': 'offer.dateLocked',
+                'Deadline': 'offer.deadline',
+                'Save the improved offer': 'offer.saveImproved',
+                'Review the summary, then publish the changes or keep the offer as a draft.': 'offer.saveImprovedCopy',
+                'Publish offer': 'offer.publishOffer',
+                'Publish updates': 'offer.publishUpdates',
+                'Keep as draft': 'offer.keepDraft',
+                'Save as draft': 'offer.saveDraft',
+                'Cancel': 'offer.cancel',
+                'Live review': 'offer.liveReview',
+                'A quick summary of the current creator, the offer context, and the updated details.': 'offer.liveReviewCopy',
+                'Select a creator for this offer.': 'offer.selectCreator',
+                'Your title will appear here.': 'offer.titleFallback',
+                'Define the collaboration goal.': 'offer.objectiveFallback',
+                'Budget and timing': 'offer.budgetTiming',
+                'Update the budget and schedule.': 'offer.budgetFallback',
+                'Collaboration fit': 'offer.fit',
+                'Add optional context about the collaboration fit.': 'offer.fitFallback',
+                'Current creator response': 'offer.currentCreatorResponse',
+                'Ready': 'offer.ready',
+                'Pending review': 'offer.pendingReview',
+                'Limited': 'offer.limited',
+                'Selected': 'offer.selected'
+            };
+            function currentLang() { return typeof window.cre8FrontReadLang === 'function' ? window.cre8FrontReadLang() : 'en'; }
+            function keyForText(value) {
+                const clean = String(value).trim();
+                if (textKeys[clean]) return textKeys[clean];
+                for (const lang of Object.keys(translations)) for (const key of Object.keys(translations[lang])) if (translations[lang][key] === clean) return key;
+                return '';
+            }
+            function applyOfferTranslations(root = document) {
+                const dict = translations[currentLang()] || translations.en;
+                if (typeof window.cre8ApplyI18n === 'function') window.cre8ApplyI18n(translations);
+                const walker = document.createTreeWalker(root.body || root, NodeFilter.SHOW_TEXT, {
+                    acceptNode(node) {
+                        const parent = node.parentElement;
+                        if (!parent || ['SCRIPT', 'STYLE', 'TEXTAREA'].includes(parent.tagName)) return NodeFilter.FILTER_REJECT;
+                        return node.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                    }
+                });
+                const nodes = [];
+                while (walker.nextNode()) nodes.push(walker.currentNode);
+                nodes.forEach((node) => {
+                    const key = keyForText(node.nodeValue);
+                    if (!key || dict[key] === undefined) return;
+                    node.nodeValue = node.nodeValue.replace(node.nodeValue.trim(), dict[key]);
+                    if (node.parentElement && node.parentElement.childNodes.length === 1) node.parentElement.setAttribute('data-i18n', key);
+                });
+            }
+            window.cre8OfferApplyTranslations = applyOfferTranslations;
+            document.addEventListener('DOMContentLoaded', () => {
+                if (typeof window.cre8RegisterTranslations === 'function') window.cre8RegisterTranslations(translations);
+                applyOfferTranslations();
+                document.addEventListener('input', () => window.setTimeout(applyOfferTranslations, 0), true);
+                document.addEventListener('creatorpicker:render', () => window.setTimeout(applyOfferTranslations, 0), true);
+                document.addEventListener('creatorpicker:change', () => window.setTimeout(applyOfferTranslations, 0), true);
+            });
+            window.addEventListener('cre8:languagechange', () => applyOfferTranslations());
+        })();
+    </script>
     <script src="../layout/front-header.js"></script>
 </body>
 </html>

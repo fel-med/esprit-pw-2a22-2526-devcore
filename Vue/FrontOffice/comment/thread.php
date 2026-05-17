@@ -29,7 +29,7 @@ if (empty($allCommentsTree)) {
     ?>
     <div class="no-comments-msg">
         <i class="bi bi-chat-square" style="font-size:2rem;opacity:.4;"></i>
-        <p class="mt-2 mb-0">No comments yet. Be the first to comment!</p>
+        <p class="mt-2 mb-0" data-i18n="post.noCommentsLong">No comments yet. Be the first to comment!</p>
     </div>
     <?php
 } else {

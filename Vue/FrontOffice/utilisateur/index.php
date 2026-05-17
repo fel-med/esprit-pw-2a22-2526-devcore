@@ -39,9 +39,10 @@ if ($isLoggedIn) {
         <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
         <!-- Core theme CSS (includes Bootstrap)-->
         <link href="css/styles.css" rel="stylesheet">
-<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
-<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
-<link rel="apple-touch-icon" href="../../public/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
     
         <style>
             .public-nav-logo {
@@ -50,6 +51,38 @@ if ($isLoggedIn) {
                 max-height: 72px;
                 object-fit: contain;
                 display: block;
+            }
+
+
+
+            .public-compact-header {
+                position: sticky;
+                top: 0;
+                z-index: 1030;
+                min-height: 72px;
+                padding-top: 0 !important;
+                padding-bottom: 0 !important;
+                box-shadow: 0 .35rem 1.25rem rgba(31, 38, 135, .08);
+            }
+
+            .public-compact-header .container-fluid {
+                min-height: 72px;
+            }
+
+            .public-compact-header .navbar-brand {
+                padding-top: 0 !important;
+                padding-bottom: 0 !important;
+                margin-right: 1rem;
+            }
+
+            .public-compact-header .public-nav-logo {
+                width: 235px;
+                max-height: 64px;
+            }
+
+            .public-compact-header .nav-link {
+                padding-top: .35rem;
+                padding-bottom: .35rem;
             }
 
             .landing-section {
@@ -222,10 +255,50 @@ if ($isLoggedIn) {
                 background: #fff !important;
             }
 
+            .public-lang-switch {
+                display: inline-flex;
+                align-items: center;
+                gap: .25rem;
+                border: 1px solid rgba(95, 49, 232, .18);
+                border-radius: 999px;
+                padding: .2rem;
+                background: #fff;
+            }
+
+            .public-lang-switch button {
+                border: 0;
+                border-radius: 999px;
+                background: transparent;
+                color: #5f6674;
+                font-weight: 800;
+                font-size: .72rem;
+                padding: .25rem .55rem;
+            }
+
+            .public-lang-switch button.is-active {
+                background: #5f31e8;
+                color: #fff;
+            }
+
             @media (max-width: 575.98px) {
                 .public-nav-logo {
                     width: 175px;
                     max-height: 56px;
+                }
+
+
+
+                .public-compact-header {
+                    min-height: 62px;
+                }
+
+                .public-compact-header .container-fluid {
+                    min-height: 62px;
+                }
+
+                .public-compact-header .public-nav-logo {
+                    width: 175px;
+                    max-height: 54px;
                 }
 
                 .hero-actions {
@@ -242,11 +315,20 @@ if ($isLoggedIn) {
                 }
             }
         </style>
-    </head>
+    
+<style>
+/* Keep public landing CTA labels compact in long languages without changing layout. */
+.hero-actions .hero-action-btn { min-width: 0; }
+.hero-actions .hero-action-btn span { white-space: nowrap; }
+@media (max-width: 768px) {
+    .hero-actions .hero-action-btn span { white-space: normal; }
+}
+</style>
+</head>
     <body>
         <main class="flex-shrink-0">
             <!-- Navigation-->
-            <nav class="navbar navbar-expand-lg navbar-light bg-white py-2">
+            <nav class="navbar navbar-expand-lg navbar-light bg-white py-1 public-compact-header public-sticky-header">
                 <div class="container-fluid px-3 px-lg-4">
                     <a class="navbar-brand d-inline-flex align-items-center" href="index.php"><img src="../../public/images/logoweb.png" alt="Cre8Connect" class="public-nav-logo"></a>
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
@@ -258,6 +340,12 @@ if ($isLoggedIn) {
                             <li class="nav-item"><a class="nav-link" href="register.php">Sign up</a></li>
                             <li class="nav-item"><a class="nav-link" href="login.php">Sign in</a></li>
                             <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+                            <li class="nav-item">
+                                <div class="public-lang-switch ms-lg-2" aria-label="Language">
+                                    <button type="button" data-lang-choice="en">EN</button>
+                                    <button type="button" data-lang-choice="fr">FR</button>
+                                </div>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -274,9 +362,9 @@ if ($isLoggedIn) {
                                 <h1 class="display-3 fw-bolder mb-4"><span class="text-gradient d-inline">Where Creators and Brands Build Real Collaborations</span></h1>
                                 <p class="lead fw-light text-muted mb-5 hero-copy mx-auto mx-xxl-0">Find offers, launch campaigns, manage contracts, and grow with AI-powered support that keeps final decisions in your hands.</p>
                                 <div class="hero-actions mx-auto mx-xxl-0 mb-3">
-                                    <a class="btn hero-action-btn btn-gradient-main" href="register.php?role=createur"><i class="bi bi-camera-reels"></i><span>Join as Creator</span></a>
-                                    <a class="btn hero-action-btn btn-outline-gradient-main" href="register.php?role=marque"><i class="bi bi-building"></i><span>Join as Brand</span></a>
-                                    <a class="btn hero-action-btn btn-gradient-main" href="login.php"><i class="bi bi-box-arrow-in-right"></i><span>Sign in</span></a>
+                                    <a class="btn hero-action-btn btn-gradient-main" href="register.php?role=createur"><i class="bi bi-camera-reels"></i><span data-i18n="public.joinCreator">Join as Creator</span></a>
+                                    <a class="btn hero-action-btn btn-outline-gradient-main" href="register.php?role=marque"><i class="bi bi-building"></i><span data-i18n="public.joinBrand">Join as Brand</span></a>
+                                    <a class="btn hero-action-btn btn-gradient-main" href="login.php"><i class="bi bi-box-arrow-in-right"></i><span data-i18n="public.signIn">Sign in</span></a>
                                 </div>
                             </div>
                         </div>
@@ -453,26 +541,26 @@ if ($isLoggedIn) {
                                 <div class="col-md-6">
                                     <div class="card landing-card p-4">
                                         <div class="feature-icon mb-3"><i class="bi bi-camera-reels"></i></div>
-                                        <h3 class="h4 fw-bolder">For Creators</h3>
+                                        <h3 class="h4 fw-bolder" data-i18n="public.forCreators">For Creators</h3>
                                         <ul class="check-list mt-3">
-                                            <li><i class="bi bi-check-circle-fill"></i><span>Discover collaboration offers.</span></li>
-                                            <li><i class="bi bi-check-circle-fill"></i><span>Apply to campaigns and negotiate terms.</span></li>
-                                            <li><i class="bi bi-check-circle-fill"></i><span>Publish posts and grow visibility.</span></li>
-                                            <li><i class="bi bi-check-circle-fill"></i><span>Join events, webinars, and forums.</span></li>
-                                            <li><i class="bi bi-check-circle-fill"></i><span>Track performance and engagement.</span></li>
+                                            <li><i class="bi bi-check-circle-fill"></i><span data-i18n="public.creatorBullet.discover">Discover collaboration offers.</span></li>
+                                            <li><i class="bi bi-check-circle-fill"></i><span data-i18n="public.creatorBullet.apply">Apply to campaigns and negotiate terms.</span></li>
+                                            <li><i class="bi bi-check-circle-fill"></i><span data-i18n="public.creatorBullet.publish">Publish posts and grow visibility.</span></li>
+                                            <li><i class="bi bi-check-circle-fill"></i><span data-i18n="public.creatorBullet.events">Join events, webinars, and forums.</span></li>
+                                            <li><i class="bi bi-check-circle-fill"></i><span data-i18n="public.creatorBullet.track">Track performance and engagement.</span></li>
                                         </ul>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="card landing-card p-4">
                                         <div class="feature-icon mb-3"><i class="bi bi-briefcase"></i></div>
-                                        <h3 class="h4 fw-bolder">For Brands</h3>
+                                        <h3 class="h4 fw-bolder" data-i18n="public.forBrands">For Brands</h3>
                                         <ul class="check-list mt-3">
-                                            <li><i class="bi bi-check-circle-fill"></i><span>Create offers and campaigns.</span></li>
-                                            <li><i class="bi bi-check-circle-fill"></i><span>Manage products and contracts.</span></li>
-                                            <li><i class="bi bi-check-circle-fill"></i><span>Review creator applications.</span></li>
-                                            <li><i class="bi bi-check-circle-fill"></i><span>Negotiate and accept collaborations.</span></li>
-                                            <li><i class="bi bi-check-circle-fill"></i><span>Track campaign performance.</span></li>
+                                            <li><i class="bi bi-check-circle-fill"></i><span data-i18n="public.brandBullet.create">Create offers and campaigns.</span></li>
+                                            <li><i class="bi bi-check-circle-fill"></i><span data-i18n="public.brandBullet.manage">Manage products and contracts.</span></li>
+                                            <li><i class="bi bi-check-circle-fill"></i><span data-i18n="public.brandBullet.review">Review creator applications.</span></li>
+                                            <li><i class="bi bi-check-circle-fill"></i><span data-i18n="public.brandBullet.negotiate">Negotiate and accept collaborations.</span></li>
+                                            <li><i class="bi bi-check-circle-fill"></i><span data-i18n="public.brandBullet.track">Track campaign performance.</span></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -494,22 +582,22 @@ if ($isLoggedIn) {
                         <div class="col-lg-6">
                             <div class="card landing-card soft-gradient-card p-4 p-lg-5">
                                 <div class="feature-icon mb-3"><i class="bi bi-stars"></i></div>
-                                <h3 class="h2 fw-bolder mb-3"><span class="text-gradient d-inline">For creators</span></h3>
+                                <h3 class="h2 fw-bolder mb-3"><span class="text-gradient d-inline" data-i18n="public.aiForCreators">For creators</span></h3>
                                 <ul class="check-list">
-                                    <li><i class="bi bi-check-circle-fill"></i><span><strong>Cre8Pilot</strong> helps improve applications, summarize opportunities, and prepare negotiation messages.</span></li>
-                                    <li><i class="bi bi-check-circle-fill"></i><span><strong>Crea</strong> supports post creation with smarter content ideas and writing help.</span></li>
-                                    <li><i class="bi bi-check-circle-fill"></i><span><strong>Personalized campaign suggestions</strong> recommend opportunities that match the creator profile and interests.</span></li>
+                                    <li><i class="bi bi-check-circle-fill"></i><span><strong>Cre8Pilot</strong><span data-i18n="public.aiCreator.cre8pilotText"> helps improve applications, summarize opportunities, and prepare negotiation messages.</span></span></li>
+                                    <li><i class="bi bi-check-circle-fill"></i><span><strong>Crea</strong><span data-i18n="public.aiCreator.creaText"> supports post creation with smarter content ideas and writing help.</span></span></li>
+                                    <li><i class="bi bi-check-circle-fill"></i><span><strong data-i18n="public.aiCreator.personalizedTitle">Personalized campaign suggestions</strong><span data-i18n="public.aiCreator.personalizedText"> recommend opportunities that match the creator profile and interests.</span></span></li>
                                 </ul>
                             </div>
                         </div>
                         <div class="col-lg-6" id="security">
                             <div class="card landing-card p-4 p-lg-5">
                                 <div class="feature-icon mb-3"><i class="bi bi-magic"></i></div>
-                                <h3 class="h2 fw-bolder mb-3"><span class="text-gradient d-inline">For brands</span></h3>
+                                <h3 class="h2 fw-bolder mb-3"><span class="text-gradient d-inline" data-i18n="public.aiForBrands">For brands</span></h3>
                                 <ul class="check-list">
-                                    <li><i class="bi bi-check-circle-fill"></i><span><strong>Generate a campaign with AI</strong> from a product, objective, audience, and budget.</span></li>
-                                    <li><i class="bi bi-check-circle-fill"></i><span><strong>Generate a contract with AI</strong> after an accepted collaboration, then review it before use.</span></li>
-                                    <li><i class="bi bi-check-circle-fill"></i><span><strong>Cre8Shield</strong> helps warn users about suspicious links, off-platform payment pressure, fake support messages, and risky behavior.</span></li>
+                                    <li><i class="bi bi-check-circle-fill"></i><span><strong data-i18n="public.aiBrand.campaignTitle">Generate a campaign with AI</strong><span data-i18n="public.aiBrand.campaignText"> from a product, objective, audience, and budget.</span></span></li>
+                                    <li><i class="bi bi-check-circle-fill"></i><span><strong data-i18n="public.aiBrand.contractTitle">Generate a contract with AI</strong><span data-i18n="public.aiBrand.contractText"> after an accepted collaboration, then review it before use.</span></span></li>
+                                    <li><i class="bi bi-check-circle-fill"></i><span><strong>Cre8Shield</strong><span data-i18n="public.aiBrand.shieldText"> helps warn users about suspicious links, off-platform payment pressure, fake support messages, and risky behavior.</span></span></li>
                                 </ul>
                             </div>
                         </div>
@@ -529,10 +617,10 @@ if ($isLoggedIn) {
                         </div>
                         <div class="col-lg-6">
                             <div class="row g-3">
-                                <div class="col-sm-6"><div class="feature-pill"><i class="bi bi-calendar-event me-2 text-primary"></i> Events</div></div>
-                                <div class="col-sm-6"><div class="feature-pill"><i class="bi bi-easel me-2 text-primary"></i> Webinars</div></div>
-                                <div class="col-sm-6"><div class="feature-pill"><i class="bi bi-tools me-2 text-primary"></i> Workshops</div></div>
-                                <div class="col-sm-6"><div class="feature-pill"><i class="bi bi-chat-square-text me-2 text-primary"></i> Forums</div></div>
+                                <div class="col-sm-6"><div class="feature-pill"><i class="bi bi-calendar-event me-2 text-primary"></i> <span data-i18n="public.community.event">Events</span></div></div>
+                                <div class="col-sm-6"><div class="feature-pill"><i class="bi bi-easel me-2 text-primary"></i> <span data-i18n="public.community.webinars">Webinars</span></div></div>
+                                <div class="col-sm-6"><div class="feature-pill"><i class="bi bi-tools me-2 text-primary"></i> <span data-i18n="public.community.workshops">Workshops</span></div></div>
+                                <div class="col-sm-6"><div class="feature-pill"><i class="bi bi-chat-square-text me-2 text-primary"></i> <span data-i18n="public.community.forums">Forums</span></div></div>
                             </div>
                         </div>
                     </div>
@@ -548,15 +636,15 @@ if ($isLoggedIn) {
                         <p class="lead fw-light text-muted mb-0">A focused workspace for creators and brands, from discovery to content delivery.</p>
                     </div>
                     <div class="row g-3">
-                        <div class="col-md-6 col-lg-4"><div class="feature-pill"><i class="bi bi-broadcast me-2 text-primary"></i> Collaboration Offers</div></div>
-                        <div class="col-md-6 col-lg-4"><div class="feature-pill"><i class="bi bi-chat-left-text me-2 text-primary"></i> Applications & Negotiation</div></div>
-                        <div class="col-md-6 col-lg-4"><div class="feature-pill"><i class="bi bi-kanban me-2 text-primary"></i> Campaign Planning</div></div>
-                        <div class="col-md-6 col-lg-4"><div class="feature-pill"><i class="bi bi-box-seam me-2 text-primary"></i> Product Showcases</div></div>
-                        <div class="col-md-6 col-lg-4"><div class="feature-pill"><i class="bi bi-file-earmark-text me-2 text-primary"></i> Collaboration Contracts</div></div>
-                        <div class="col-md-6 col-lg-4"><div class="feature-pill"><i class="bi bi-pencil-square me-2 text-primary"></i> Creator Posts with Crea</div></div>
-                        <div class="col-md-6 col-lg-4"><div class="feature-pill"><i class="bi bi-lightbulb me-2 text-primary"></i> AI Campaign Suggestions</div></div>
-                        <div class="col-md-6 col-lg-4"><div class="feature-pill"><i class="bi bi-magic me-2 text-primary"></i> AI Campaign & Contract Generation</div></div>
-                        <div class="col-md-6 col-lg-4"><div class="feature-pill"><i class="bi bi-people me-2 text-primary"></i> Events & Forums</div></div>
+                        <div class="col-md-6 col-lg-4"><div class="feature-pill"><i class="bi bi-broadcast me-2 text-primary"></i> <span data-i18n="public.feature.offers">Collaboration Offers</span></div></div>
+                        <div class="col-md-6 col-lg-4"><div class="feature-pill"><i class="bi bi-chat-left-text me-2 text-primary"></i> <span data-i18n="public.feature.applications">Applications & Negotiation</span></div></div>
+                        <div class="col-md-6 col-lg-4"><div class="feature-pill"><i class="bi bi-kanban me-2 text-primary"></i> <span data-i18n="public.feature.campaignPlanning">Campaign Planning</span></div></div>
+                        <div class="col-md-6 col-lg-4"><div class="feature-pill"><i class="bi bi-box-seam me-2 text-primary"></i> <span data-i18n="public.feature.products">Product Showcases</span></div></div>
+                        <div class="col-md-6 col-lg-4"><div class="feature-pill"><i class="bi bi-file-earmark-text me-2 text-primary"></i> <span data-i18n="public.feature.contracts">Collaboration Contracts</span></div></div>
+                        <div class="col-md-6 col-lg-4"><div class="feature-pill"><i class="bi bi-pencil-square me-2 text-primary"></i> <span data-i18n="public.feature.posts">Creator Posts with Crea</span></div></div>
+                        <div class="col-md-6 col-lg-4"><div class="feature-pill"><i class="bi bi-lightbulb me-2 text-primary"></i> <span data-i18n="public.feature.campaignSuggestions">AI Campaign Suggestions</span></div></div>
+                        <div class="col-md-6 col-lg-4"><div class="feature-pill"><i class="bi bi-magic me-2 text-primary"></i> <span data-i18n="public.feature.aiGeneration">AI Campaign & Contract Generation</span></div></div>
+                        <div class="col-md-6 col-lg-4"><div class="feature-pill"><i class="bi bi-people me-2 text-primary"></i> <span data-i18n="public.feature.eventsForums">Events & Forums</span></div></div>
                     </div>
                 </div>
             </section>
@@ -605,6 +693,289 @@ if ($isLoggedIn) {
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
         <!-- Core theme JS-->
         <script src="js/scripts.js"></script>
+        <script src="../layout/front-translate.js"></script>
+        <script>
+        (function () {
+            var translations = {
+                en: {
+                    'public.home': 'Home',
+                    'public.howItWorks': 'How it works',
+                    'public.features': 'Features',
+                    'public.signUp': 'Sign up',
+                    'public.signIn': 'Sign in',
+                    'public.contact': 'Contact',
+                    'public.badge': 'Create · Connect · Grow',
+                    'public.heroKicker': 'For creators, brands, and real digital partnerships',
+                    'public.heroTitle': 'Where Creators and Brands Build Real Collaborations',
+                    'public.heroCopy': 'Find offers, launch campaigns, manage contracts, and grow with AI-powered support that keeps final decisions in your hands.',
+                    'public.joinCreator': 'Join as Creator',
+                    'public.joinBrand': 'Join as Brand',
+                    'public.flowKicker': 'Simple collaboration flow',
+                    'public.flowTitle': 'How Cre8Connect works',
+                    'public.flowCopy': 'From opportunity to signed collaboration, every step is organized in one workspace.',
+                    'public.brandsPublish': 'Brands publish opportunities',
+                    'public.brandsPublishCopy': 'Brands create offers and campaigns with clear budgets, objectives, products, and collaboration expectations.',
+                    'public.creatorsApply': 'Creators apply and negotiate',
+                    'public.creatorsApplyCopy': 'Creators send applications, propose budgets and timelines, follow their status, and negotiate professionally.',
+                    'public.contractsTitle': 'Collaborations become contracts',
+                    'public.contractsCopy': 'Accepted applications can become structured contracts with dates, amounts, deliverables, and clear responsibilities.',
+                    'public.twoSides': 'Two sides, one platform',
+                    'public.builtFor': 'Built for creators and brands',
+                    'public.builtForCopy': 'Cre8Connect helps creators find serious collaboration opportunities and helps brands manage campaigns from idea to contract.',
+                    'public.forCreators': 'For Creators',
+                    'public.forBrands': 'For Brands',
+                    'public.aiKicker': 'AI-powered collaboration',
+                    'public.aiTitle': 'AI that helps creators and brands move faster',
+                    'public.aiCopy': 'Cre8Connect includes practical assistants for posts, campaigns, applications, contracts, and safer collaboration decisions.',
+                    'public.aiDecision': 'AI helps prepare and suggest. Creators and brands always keep the final decision.',
+                    'public.communityKicker': 'Events & community',
+                    'public.communityTitle': 'Learn, network, and exchange ideas',
+                    'public.communityCopy': 'Cre8Connect supports workshops, webinars, meetups, and forums so users can learn from each other and build stronger professional relationships.',
+                    'public.workspaceKicker': 'Creator & brand workspace',
+                    'public.workspaceTitle': 'Everything needed for a collaboration',
+                    'public.workspaceCopy': 'A focused workspace for creators and brands, from discovery to content delivery.',
+                    'public.buildTogether': "Let's build something together",
+                    'public.startNow': 'Start now',
+                    'public.ready': 'Ready to start your next collaboration?',
+                    'public.readyCopy': 'Join Cre8Connect and connect with the right people for your next campaign.',
+                    'public.createAccount': 'Create Account',
+                    'public.privacy': 'Privacy',
+                    'public.terms': 'Terms',
+                    'public.copyright': 'Copyright © cre8connect 2026'
+                },
+                fr: {
+                    'public.home': 'Accueil',
+                    'public.howItWorks': 'Comment ca marche',
+                    'public.features': 'Fonctionnalites',
+                    'public.signUp': 'S inscrire',
+                    'public.signIn': 'Se connecter',
+                    'public.contact': 'Contact',
+                    'public.badge': 'Creer · Connecter · Grandir',
+                    'public.heroKicker': 'Pour les createurs, les marques et les vrais partenariats digitaux',
+                    'public.heroTitle': 'La ou createurs et marques construisent de vraies collaborations',
+                    'public.heroCopy': 'Trouvez des offres, lancez des campagnes, gerez les contrats et evoluez avec une assistance IA tout en gardant la decision finale.',
+                    'public.joinCreator': 'Rejoindre comme createur',
+                    'public.joinBrand': 'Rejoindre comme marque',
+                    'public.flowKicker': 'Parcours de collaboration simple',
+                    'public.flowTitle': 'Comment fonctionne Cre8Connect',
+                    'public.flowCopy': 'De l opportunite au contrat signe, chaque etape est organisee dans un seul espace.',
+                    'public.brandsPublish': 'Les marques publient des opportunites',
+                    'public.brandsPublishCopy': 'Les marques creent des offres et campagnes avec budgets, objectifs, produits et attentes clairs.',
+                    'public.creatorsApply': 'Les createurs postulent et negocient',
+                    'public.creatorsApplyCopy': 'Les createurs envoient des candidatures, proposent budgets et delais, suivent leur statut et negocient professionnellement.',
+                    'public.contractsTitle': 'Les collaborations deviennent des contrats',
+                    'public.contractsCopy': 'Les candidatures acceptees peuvent devenir des contrats structures avec dates, montants, livrables et responsabilites claires.',
+                    'public.twoSides': 'Deux cotes, une plateforme',
+                    'public.builtFor': 'Concu pour les createurs et les marques',
+                    'public.builtForCopy': 'Cre8Connect aide les createurs a trouver de vraies opportunites et aide les marques a gerer leurs campagnes de l idee au contrat.',
+                    'public.forCreators': 'Pour les createurs',
+                    'public.forBrands': 'Pour les marques',
+                    'public.aiKicker': 'Collaboration assistee par IA',
+                    'public.aiTitle': 'Une IA qui aide createurs et marques a avancer plus vite',
+                    'public.aiCopy': 'Cre8Connect inclut des assistants pratiques pour posts, campagnes, candidatures, contrats et decisions plus sures.',
+                    'public.aiDecision': 'L IA aide a preparer et suggerer. Les createurs et marques gardent toujours la decision finale.',
+                    'public.communityKicker': 'Evenements et communaute',
+                    'public.communityTitle': 'Apprendre, reseauter et echanger des idees',
+                    'public.communityCopy': 'Cre8Connect soutient ateliers, webinaires, meetups et forums afin que les utilisateurs apprennent ensemble et construisent de meilleures relations professionnelles.',
+                    'public.workspaceKicker': 'Espace createur et marque',
+                    'public.workspaceTitle': 'Tout le necessaire pour collaborer',
+                    'public.workspaceCopy': 'Un espace concentre pour createurs et marques, de la decouverte a la livraison du contenu.',
+                    'public.buildTogether': 'Construisons quelque chose ensemble',
+                    'public.startNow': 'Commencer maintenant',
+                    'public.ready': 'Pret a lancer votre prochaine collaboration ?',
+                    'public.readyCopy': 'Rejoignez Cre8Connect et connectez-vous aux bonnes personnes pour votre prochaine campagne.',
+                    'public.createAccount': 'Creer un compte',
+                    'public.privacy': 'Confidentialite',
+                    'public.terms': 'Conditions',
+                    'public.copyright': 'Copyright © cre8connect 2026'
+                }
+            };
+            var aliases = {
+                'Home': 'public.home',
+                'How it works': 'public.howItWorks',
+                'Features': 'public.features',
+                'Sign up': 'public.signUp',
+                'Sign in': 'public.signIn',
+                'Contact': 'public.contact',
+                'Create · Connect · Grow': 'public.badge',
+                'For creators, brands, and real digital partnerships': 'public.heroKicker',
+                'Where Creators and Brands Build Real Collaborations': 'public.heroTitle',
+                'Find offers, launch campaigns, manage contracts, and grow with AI-powered support that keeps final decisions in your hands.': 'public.heroCopy',
+                'Join as Creator': 'public.joinCreator',
+                'Join as Brand': 'public.joinBrand',
+                'Simple collaboration flow': 'public.flowKicker',
+                'How Cre8Connect works': 'public.flowTitle',
+                'From opportunity to signed collaboration, every step is organized in one workspace.': 'public.flowCopy',
+                'Brands publish opportunities': 'public.brandsPublish',
+                'Brands create offers and campaigns with clear budgets, objectives, products, and collaboration expectations.': 'public.brandsPublishCopy',
+                'Creators apply and negotiate': 'public.creatorsApply',
+                'Creators send applications, propose budgets and timelines, follow their status, and negotiate professionally.': 'public.creatorsApplyCopy',
+                'Collaborations become contracts': 'public.contractsTitle',
+                'Accepted applications can become structured contracts with dates, amounts, deliverables, and clear responsibilities.': 'public.contractsCopy',
+                'Two sides, one platform': 'public.twoSides',
+                'Built for creators and brands': 'public.builtFor',
+                'Cre8Connect helps creators find serious collaboration opportunities and helps brands manage campaigns from idea to contract.': 'public.builtForCopy',
+                'For Creators': 'public.forCreators',
+                'For Brands': 'public.forBrands',
+                'AI-powered collaboration': 'public.aiKicker',
+                'AI that helps creators and brands move faster': 'public.aiTitle',
+                'Cre8Connect includes practical assistants for posts, campaigns, applications, contracts, and safer collaboration decisions.': 'public.aiCopy',
+                'AI helps prepare and suggest. Creators and brands always keep the final decision.': 'public.aiDecision',
+                'Events & community': 'public.communityKicker',
+                'Learn, network, and exchange ideas': 'public.communityTitle',
+                'Cre8Connect supports workshops, webinars, meetups, and forums so users can learn from each other and build stronger professional relationships.': 'public.communityCopy',
+                'Creator & brand workspace': 'public.workspaceKicker',
+                'Everything needed for a collaboration': 'public.workspaceTitle',
+                'A focused workspace for creators and brands, from discovery to content delivery.': 'public.workspaceCopy',
+                "Let's build something together": 'public.buildTogether',
+                'Start now': 'public.startNow',
+                'Ready to start your next collaboration?': 'public.ready',
+                'Join Cre8Connect and connect with the right people for your next campaign.': 'public.readyCopy',
+                'Create Account': 'public.createAccount',
+                'Privacy': 'public.privacy',
+                'Terms': 'public.terms',
+                'Copyright © cre8connect 2026': 'public.copyright'
+            };
+
+            // Landing page translation fixes for the current design.
+            // Keep the existing layout untouched; only add missing static labels.
+            Object.assign(translations.en, {
+                'public.creatorBullet.discover': 'Discover collaboration offers.',
+                'public.creatorBullet.apply': 'Apply to campaigns and negotiate terms.',
+                'public.creatorBullet.publish': 'Publish posts and grow visibility.',
+                'public.creatorBullet.events': 'Join events, webinars, and forums.',
+                'public.creatorBullet.track': 'Track performance and engagement.',
+                'public.brandBullet.create': 'Create offers and campaigns.',
+                'public.brandBullet.manage': 'Manage products and contracts.',
+                'public.brandBullet.review': 'Review creator applications.',
+                'public.brandBullet.negotiate': 'Negotiate and accept collaborations.',
+                'public.brandBullet.track': 'Track campaign performance.',
+                'public.aiForCreators': 'For creators',
+                'public.aiForBrands': 'For brands',
+                'public.aiCreator.cre8pilotText': ' helps improve applications, summarize opportunities, and prepare negotiation messages.',
+                'public.aiCreator.creaText': ' supports post creation with smarter content ideas and writing help.',
+                'public.aiCreator.personalizedTitle': 'Personalized campaign suggestions',
+                'public.aiCreator.personalizedText': ' recommend opportunities that match the creator profile and interests.',
+                'public.aiBrand.campaignTitle': 'Generate a campaign with AI',
+                'public.aiBrand.campaignText': ' from a product, objective, audience, and budget.',
+                'public.aiBrand.contractTitle': 'Generate a contract with AI',
+                'public.aiBrand.contractText': ' after an accepted collaboration, then review it before use.',
+                'public.aiBrand.shieldText': ' helps warn users about suspicious links, off-platform payment pressure, fake support messages, and risky behavior.',
+                'public.community.event': 'Events',
+                'public.community.webinars': 'Webinars',
+                'public.community.workshops': 'Workshops',
+                'public.community.forums': 'Forums',
+                'public.feature.offers': 'Collaboration Offers',
+                'public.feature.applications': 'Applications & Negotiation',
+                'public.feature.campaignPlanning': 'Campaign Planning',
+                'public.feature.products': 'Product Showcases',
+                'public.feature.contracts': 'Collaboration Contracts',
+                'public.feature.posts': 'Creator Posts with Crea',
+                'public.feature.campaignSuggestions': 'AI Campaign Suggestions',
+                'public.feature.aiGeneration': 'AI Campaign & Contract Generation',
+                'public.feature.eventsForums': 'Events & Forums'
+            });
+            Object.assign(translations.fr, {
+                // Short hero CTA labels prevent the French version from overflowing.
+                'public.joinCreator': 'Créateur',
+                'public.joinBrand': 'Marque',
+                'public.creatorBullet.discover': 'Découvrez des offres de collaboration.',
+                'public.creatorBullet.apply': 'Postulez aux campagnes et négociez les conditions.',
+                'public.creatorBullet.publish': 'Publiez des posts et augmentez votre visibilité.',
+                'public.creatorBullet.events': 'Participez aux événements, webinaires et forums.',
+                'public.creatorBullet.track': 'Suivez la performance et l’engagement.',
+                'public.brandBullet.create': 'Créez des offres et des campagnes.',
+                'public.brandBullet.manage': 'Gérez produits et contrats.',
+                'public.brandBullet.review': 'Analysez les candidatures des créateurs.',
+                'public.brandBullet.negotiate': 'Négociez et acceptez les collaborations.',
+                'public.brandBullet.track': 'Suivez la performance des campagnes.',
+                'public.aiForCreators': 'Pour les créateurs',
+                'public.aiForBrands': 'Pour les marques',
+                'public.aiCreator.cre8pilotText': ' aide à améliorer les candidatures, résumer les opportunités et préparer les messages de négociation.',
+                'public.aiCreator.creaText': ' accompagne la création de posts avec des idées de contenu et une aide à la rédaction.',
+                'public.aiCreator.personalizedTitle': 'Suggestions de campagnes personnalisées',
+                'public.aiCreator.personalizedText': ' recommandent des opportunités adaptées au profil et aux intérêts du créateur.',
+                'public.aiBrand.campaignTitle': 'Générer une campagne avec l’IA',
+                'public.aiBrand.campaignText': ' à partir d’un produit, d’un objectif, d’une audience et d’un budget.',
+                'public.aiBrand.contractTitle': 'Générer un contrat avec l’IA',
+                'public.aiBrand.contractText': ' après une collaboration acceptée, puis le vérifier avant utilisation.',
+                'public.aiBrand.shieldText': ' aide à signaler les liens suspects, la pression de paiement hors plateforme, les faux messages de support et les comportements risqués.',
+                'public.community.event': 'Événements',
+                'public.community.webinars': 'Webinaires',
+                'public.community.workshops': 'Ateliers',
+                'public.community.forums': 'Forums',
+                'public.feature.offers': 'Offres de collaboration',
+                'public.feature.applications': 'Candidatures et négociation',
+                'public.feature.campaignPlanning': 'Planification de campagnes',
+                'public.feature.products': 'Présentation des produits',
+                'public.feature.contracts': 'Contrats de collaboration',
+                'public.feature.posts': 'Posts créateur avec Crea',
+                'public.feature.campaignSuggestions': 'Suggestions de campagnes IA',
+                'public.feature.aiGeneration': 'Génération IA de campagnes et contrats',
+                'public.feature.eventsForums': 'Événements et forums'
+            });
+            Object.assign(aliases, {
+                'Discover collaboration offers.': 'public.creatorBullet.discover',
+                'Apply to campaigns and negotiate terms.': 'public.creatorBullet.apply',
+                'Publish posts and grow visibility.': 'public.creatorBullet.publish',
+                'Join events, webinars, and forums.': 'public.creatorBullet.events',
+                'Track performance and engagement.': 'public.creatorBullet.track',
+                'Create offers and campaigns.': 'public.brandBullet.create',
+                'Manage products and contracts.': 'public.brandBullet.manage',
+                'Review creator applications.': 'public.brandBullet.review',
+                'Negotiate and accept collaborations.': 'public.brandBullet.negotiate',
+                'Track campaign performance.': 'public.brandBullet.track',
+                'For creators': 'public.aiForCreators',
+                'For brands': 'public.aiForBrands',
+                'helps improve applications, summarize opportunities, and prepare negotiation messages.': 'public.aiCreator.cre8pilotText',
+                'supports post creation with smarter content ideas and writing help.': 'public.aiCreator.creaText',
+                'Personalized campaign suggestions': 'public.aiCreator.personalizedTitle',
+                'recommend opportunities that match the creator profile and interests.': 'public.aiCreator.personalizedText',
+                'Generate a campaign with AI': 'public.aiBrand.campaignTitle',
+                'from a product, objective, audience, and budget.': 'public.aiBrand.campaignText',
+                'Generate a contract with AI': 'public.aiBrand.contractTitle',
+                'after an accepted collaboration, then review it before use.': 'public.aiBrand.contractText',
+                'helps warn users about suspicious links, off-platform payment pressure, fake support messages, and risky behavior.': 'public.aiBrand.shieldText',
+                'Events': 'public.community.event',
+                'Webinars': 'public.community.webinars',
+                'Workshops': 'public.community.workshops',
+                'Forums': 'public.community.forums',
+                'Collaboration Offers': 'public.feature.offers',
+                'Applications & Negotiation': 'public.feature.applications',
+                'Campaign Planning': 'public.feature.campaignPlanning',
+                'Product Showcases': 'public.feature.products',
+                'Collaboration Contracts': 'public.feature.contracts',
+                'Creator Posts with Crea': 'public.feature.posts',
+                'AI Campaign Suggestions': 'public.feature.campaignSuggestions',
+                'AI Campaign & Contract Generation': 'public.feature.aiGeneration',
+                'Events & Forums': 'public.feature.eventsForums'
+            });
+
+            function lang() { return typeof cre8FrontReadLang === 'function' ? cre8FrontReadLang() : ((localStorage.getItem('cre8_front_lang') || localStorage.getItem('cre8_lang')) === 'fr' ? 'fr' : 'en'); }
+            function text(key) { return (translations[lang()] && translations[lang()][key]) || translations.en[key] || null; }
+            function keyFor(value) {
+                var clean = String(value || '').replace(/\s+/g, ' ').trim();
+                if (aliases[clean]) return aliases[clean];
+                for (var l of ['en', 'fr']) for (var k in translations[l]) if (translations[l][k] === clean) return k;
+                return null;
+            }
+            function applyPublicTranslations() {
+                if (typeof cre8RegisterTranslations === 'function') cre8RegisterTranslations(translations);
+                var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+                var nodes = [];
+                while (walker.nextNode()) nodes.push(walker.currentNode);
+                nodes.forEach(function (node) {
+                    if (!node.parentElement || node.parentElement.closest('script,style,svg')) return;
+                    var key = keyFor(node.nodeValue);
+                    var value = text(key);
+                    if (value) node.nodeValue = node.nodeValue.replace(String(node.nodeValue).trim(), value);
+                });
+                document.title = lang() === 'fr' ? 'Cre8Connect - Accueil' : 'Cre8Connect - Home';
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyPublicTranslations); else applyPublicTranslations();
+            window.addEventListener('cre8:languagechange', applyPublicTranslations);
+        })();
+        </script>
     
 
 </body></html>

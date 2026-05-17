@@ -90,6 +90,18 @@ if ($creatorId) {
     <link rel="stylesheet" href="../offre/offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../offre/offre.css')); ?>">
     <link rel="stylesheet" href="condidature.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/condidature.css')); ?>">
     <link rel="stylesheet" href="../layout/front-header.css">
+    <style>
+        /* Keep only the shared header notification bell. Hide any old page-level notification widget. */
+        body > .notification-widget,
+        body > .notification-widget-front,
+        main .notification-widget,
+        main .notification-widget-front {
+            display: none !important;
+        }
+        .front-nav .notification-widget-front {
+            display: inline-flex !important;
+        }
+    </style>
 <link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
 <link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
@@ -100,7 +112,7 @@ if ($creatorId) {
 
     <main class="container py-5">
         <div class="offre-page-shell">
-            <section class="module-hero module-hero-notification-shell campaign-opportunities-hero">
+            <section class="module-hero campaign-opportunities-hero">
                 <div>
                     <span class="module-eyebrow">Campaign applications</span>
                     <h1 class="display-5 fw-bold mt-3 mb-2 gradient-title">Campaign opportunities</h1>
@@ -176,6 +188,108 @@ $cre8PilotContext = [
 ];
 require __DIR__ . '/cre8pilot_widget.php';
 ?>
+    <script>
+        (() => {
+            const translations = {
+                en: {
+                    'cand.campaignApplications': 'Campaign applications',
+                    'cand.campaignOpportunities': 'Campaign opportunities',
+                    'cand.campaignOpportunitiesCopy': 'Browse active campaign briefs and submit a structured creator application.',
+                    'cand.myCandidatures': 'My candidatures',
+                    'cand.offerInbox': 'Offer inbox',
+                    'cand.campaignsUnavailable': 'Campaigns unavailable',
+                    'cand.noCampaignOpportunities': 'No campaign opportunities found',
+                    'cand.noCampaignOpportunitiesCopy': 'Try a broader search or come back when brands publish more campaign briefs.',
+                    'cand.campaignApplication': 'Campaign application',
+                    'cand.noCampaignDescription': 'No campaign description was provided yet.',
+                    'cand.brand': 'Brand',
+                    'cand.unknownBrand': 'Unknown brand',
+                    'cand.start': 'Start',
+                    'cand.end': 'End',
+                    'cand.applyCampaign': 'Apply to campaign',
+                    'cand.continueDraft': 'Continue draft',
+                    'cand.openNegotiation': 'Open negotiation',
+                    'cand.viewApplication': 'View application',
+                    'cand.statusNotSet': 'Status not set'
+                },
+                fr: {
+                    'cand.campaignApplications': 'Candidatures de campagne',
+                    'cand.campaignOpportunities': 'Opportunites de campagne',
+                    'cand.campaignOpportunitiesCopy': 'Parcourez les briefs de campagne actifs et envoyez une candidature createur structuree.',
+                    'cand.myCandidatures': 'Mes candidatures',
+                    'cand.offerInbox': 'Boite offres',
+                    'cand.campaignsUnavailable': 'Campagnes indisponibles',
+                    'cand.noCampaignOpportunities': 'Aucune opportunite de campagne trouvee',
+                    'cand.noCampaignOpportunitiesCopy': 'Essayez une recherche plus large ou revenez quand les marques publient plus de briefs.',
+                    'cand.campaignApplication': 'Candidature de campagne',
+                    'cand.noCampaignDescription': 'Aucune description de campagne n a encore ete fournie.',
+                    'cand.brand': 'Marque',
+                    'cand.unknownBrand': 'Marque inconnue',
+                    'cand.start': 'Debut',
+                    'cand.end': 'Fin',
+                    'cand.applyCampaign': 'Postuler a la campagne',
+                    'cand.continueDraft': 'Continuer le brouillon',
+                    'cand.openNegotiation': 'Ouvrir la negociation',
+                    'cand.viewApplication': 'Voir la candidature',
+                    'cand.statusNotSet': 'Statut non defini'
+                }
+            };
+            const textKeys = {
+                'Campaign applications': 'cand.campaignApplications',
+                'Campaign opportunities': 'cand.campaignOpportunities',
+                'Browse active campaign briefs and submit a structured creator application.': 'cand.campaignOpportunitiesCopy',
+                'My candidatures': 'cand.myCandidatures',
+                'Offer inbox': 'cand.offerInbox',
+                'Campaigns unavailable': 'cand.campaignsUnavailable',
+                'No campaign opportunities found': 'cand.noCampaignOpportunities',
+                'Try a broader search or come back when brands publish more campaign briefs.': 'cand.noCampaignOpportunitiesCopy',
+                'Campaign application': 'cand.campaignApplication',
+                'No campaign description was provided yet.': 'cand.noCampaignDescription',
+                'Brand': 'cand.brand',
+                'Unknown brand': 'cand.unknownBrand',
+                'Start': 'cand.start',
+                'End': 'cand.end',
+                'Apply to campaign': 'cand.applyCampaign',
+                'Continue draft': 'cand.continueDraft',
+                'Open negotiation': 'cand.openNegotiation',
+                'View application': 'cand.viewApplication',
+                'Status not set': 'cand.statusNotSet'
+            };
+            function lang() { return typeof window.cre8FrontReadLang === 'function' ? window.cre8FrontReadLang() : 'en'; }
+            function keyForText(value) {
+                const clean = String(value).trim().replace(/:$/, '');
+                if (textKeys[clean]) return textKeys[clean];
+                for (const locale of Object.keys(translations)) for (const key of Object.keys(translations[locale])) if (translations[locale][key] === clean) return key;
+                return '';
+            }
+            function applyTranslations(root = document) {
+                const dict = translations[lang()] || translations.en;
+                if (typeof window.cre8ApplyI18n === 'function') window.cre8ApplyI18n(translations);
+                const walker = document.createTreeWalker(root.body || root, NodeFilter.SHOW_TEXT, {
+                    acceptNode(node) {
+                        const parent = node.parentElement;
+                        if (!parent || ['SCRIPT', 'STYLE', 'TEXTAREA'].includes(parent.tagName)) return NodeFilter.FILTER_REJECT;
+                        return node.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                    }
+                });
+                const nodes = [];
+                while (walker.nextNode()) nodes.push(walker.currentNode);
+                nodes.forEach((node) => {
+                    const original = node.nodeValue.trim();
+                    const key = keyForText(original);
+                    if (!key || dict[key] === undefined) return;
+                    const suffix = original.endsWith(':') ? ':' : '';
+                    node.nodeValue = node.nodeValue.replace(original, dict[key] + suffix);
+                    if (node.parentElement && node.parentElement.childNodes.length === 1) node.parentElement.setAttribute('data-i18n', key);
+                });
+            }
+            document.addEventListener('DOMContentLoaded', () => {
+                if (typeof window.cre8RegisterTranslations === 'function') window.cre8RegisterTranslations(translations);
+                applyTranslations();
+            });
+            window.addEventListener('cre8:languagechange', () => applyTranslations());
+        })();
+    </script>
     <script src="../layout/front-header.js"></script>
 </body>
 </html>

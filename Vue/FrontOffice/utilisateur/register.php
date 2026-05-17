@@ -2,6 +2,115 @@
 require_once '../../../Controleur/utilisateurC.php';
 require_once '../../../Controleur/profileC.php';
 
+function cre8RegisterLoadEnv(string $path): array
+{
+    static $cache = [];
+
+    if (isset($cache[$path])) {
+        return $cache[$path];
+    }
+
+    $values = [];
+
+    if (!is_file($path) || !is_readable($path)) {
+        return $cache[$path] = $values;
+    }
+
+    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if ($lines === false) {
+        return $cache[$path] = $values;
+    }
+
+    foreach ($lines as $line) {
+        $line = trim($line);
+
+        if ($line === '' || str_starts_with($line, '#')) {
+            continue;
+        }
+
+        if (str_starts_with($line, 'export ')) {
+            $line = trim(substr($line, 7));
+        }
+
+        if (!str_contains($line, '=')) {
+            continue;
+        }
+
+        [$key, $value] = explode('=', $line, 2);
+        $key = trim($key);
+        $value = trim($value);
+
+        if ($key === '') {
+            continue;
+        }
+
+        $first = $value[0] ?? '';
+        $last = $value !== '' ? $value[strlen($value) - 1] : '';
+        if (($first === '"' && $last === '"') || ($first === "'" && $last === "'")) {
+            $value = substr($value, 1, -1);
+        }
+
+        $values[$key] = $value;
+
+        if (preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $key)) {
+            $_ENV[$key] = $value;
+            $_SERVER[$key] = $value;
+            putenv($key . '=' . $value);
+        }
+    }
+
+    return $cache[$path] = $values;
+}
+
+function cre8RegisterEnvValue(array $keys, array $envValues): string
+{
+    foreach ($keys as $key) {
+        $value = getenv($key);
+        if ($value !== false && trim((string) $value) !== '') {
+            return trim((string) $value);
+        }
+
+        if (isset($_ENV[$key]) && trim((string) $_ENV[$key]) !== '') {
+            return trim((string) $_ENV[$key]);
+        }
+
+        if (isset($_SERVER[$key]) && trim((string) $_SERVER[$key]) !== '') {
+            return trim((string) $_SERVER[$key]);
+        }
+
+        if (isset($envValues[$key]) && trim((string) $envValues[$key]) !== '') {
+            return trim((string) $envValues[$key]);
+        }
+    }
+
+    return '';
+}
+
+$envPath = realpath(__DIR__ . '/../../..') ?: (__DIR__ . '/../../..');
+$envValues = cre8RegisterLoadEnv($envPath . DIRECTORY_SEPARATOR . '.env');
+
+$recaptchaSiteKey = cre8RegisterEnvValue([
+    'RECAPTCHA_SITE_KEY',
+    'GOOGLE_RECAPTCHA_SITE_KEY',
+    'RECAPTCHA_PUBLIC_KEY',
+    'GOOGLE_RECAPTCHA_PUBLIC_KEY',
+    'CAPTCHA_SITE_KEY',
+    'SITE_KEY',
+    'sitekey',
+    'data-sitekey',
+], $envValues);
+
+$recaptchaSecretKey = cre8RegisterEnvValue([
+    'RECAPTCHA_SECRET_KEY',
+    'GOOGLE_RECAPTCHA_SECRET_KEY',
+    'RECAPTCHA_SECRET',
+    'GOOGLE_RECAPTCHA_SECRET',
+    'CAPTCHA_SECRET_KEY',
+    'CAPTCHA_SECRET',
+    'SECRET_KEY',
+    'secret',
+], $envValues);
+
 $error = "";
 $allowedPublicRoles = ['createur', 'marque'];
 $preselectedRole = strtolower(trim($_GET['role'] ?? ''));
@@ -15,18 +124,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['nom'])) {
         $preselectedRole = $submittedRole;
     }
 
-    if (empty($_POST['g-recaptcha-response'])) {
+    if ($recaptchaSecretKey === '') {
+        $error = "Configuration reCAPTCHA manquante ❌";
+    } elseif (empty($_POST['g-recaptcha-response'])) {
         $error = "Veuillez valider le reCAPTCHA ❌";
     } else {
-        $secret = "6Le_S9ksAAAAAOEjx9cRk48RuR3fYR1RxZrSWtYk";
+        $verifyUrl = 'https://www.google.com/recaptcha/api/siteverify?' . http_build_query([
+            'secret' => $recaptchaSecretKey,
+            'response' => $_POST['g-recaptcha-response'],
+            'remoteip' => $_SERVER['REMOTE_ADDR'] ?? '',
+        ]);
 
-        $verify = file_get_contents(
-            "https://www.google.com/recaptcha/api/siteverify?secret=".$secret."&response=".$_POST['g-recaptcha-response']
-        );
+        $verify = @file_get_contents($verifyUrl);
+        $result = $verify !== false ? json_decode($verify) : null;
 
-        $result = json_decode($verify);
-
-        if (!$result->success) {
+        if (!$result || empty($result->success)) {
             $error = "Vérification humaine échouée ❌";
         } elseif (!in_array($submittedRole, $allowedPublicRoles, true)) {
             $error = "Veuillez choisir un rôle valide ❌";
@@ -140,6 +252,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['nom'])) {
             .auth-home-link {
                 border-radius: 999px;
                 font-weight: 700;
+            }
+
+            .public-lang-switch {
+                display: inline-flex;
+                align-items: center;
+                gap: .25rem;
+                border: 1px solid rgba(78, 84, 200, .22);
+                border-radius: 999px;
+                padding: .2rem;
+                background: #fff;
+            }
+
+            .public-lang-switch button {
+                border: 0;
+                border-radius: 999px;
+                background: transparent;
+                color: #5f6674;
+                font-weight: 800;
+                font-size: .72rem;
+                padding: .25rem .55rem;
+            }
+
+            .public-lang-switch button.is-active {
+                background: #4e54c8;
+                color: #fff;
             }
 
 .auth-brand-logo {
@@ -372,16 +509,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['nom'])) {
             }
 </style>
         <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/logo.png">
-<link rel="shortcut icon" type="image/png" href="../../public/images/logo.png">
-<link rel="apple-touch-icon" href="../../public/images/logo.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
         
     </head>
     <body class="d-flex flex-column h-100 bg-light auth-shell">
         <header class="auth-topbar bg-white">
             <div class="container-fluid px-3 px-lg-4 d-flex align-items-center justify-content-between gap-3">
                 <a class="navbar-brand m-0 d-inline-flex align-items-center" href="index.php"><img src="../../public/images/logoweb.png" alt="Cre8Connect" class="auth-brand-logo"></a>
-                <a class="btn btn-outline-dark btn-sm auth-home-link px-3" href="index.php">&larr; Home</a>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="public-lang-switch" aria-label="Language">
+                        <button type="button" data-lang-choice="en">EN</button>
+                        <button type="button" data-lang-choice="fr">FR</button>
+                    </div>
+                    <a class="btn btn-outline-dark btn-sm auth-home-link px-3" href="index.php">&larr; <span data-i18n="auth.home">Home</span></a>
+                </div>
             </div>
         </header>
         <main class="flex-grow-1 d-flex align-items-center justify-content-center auth-main">
@@ -398,34 +542,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['nom'])) {
                     <!-- FORMULAIRE (GAUCHE) -->
                     <div class="col-lg-6 p-5 d-flex flex-column justify-content-center auth-form-panel">
 
-                        <h2 class="fw-bolder mb-4 text-gradient">Create Account</h2>
+                        <h2 class="fw-bolder mb-4 text-gradient" data-i18n="auth.createAccount">Create Account</h2>
 
                         <form id="registerForm" method="POST" >
 
     <div class="mb-3">
-        <input type="text" id="nom" name="nom" class="form-control" placeholder="Name">
+        <input type="text" id="nom" name="nom" class="form-control" placeholder="Name" data-i18n-placeholder="auth.name">
         <small id="nomError" class="text-danger"></small>
     </div>
 
     <div class="mb-3">
-        <input type="text" id="email" name="email" class="form-control" placeholder="Email">
+        <input type="text" id="email" name="email" class="form-control" placeholder="Email" data-i18n-placeholder="auth.email">
         <small id="emailError" class="text-danger"></small>
     </div>
 
     <div class="mb-3">
-        <input type="password" id="password" name="password" class="form-control" placeholder="Password">
+        <input type="password" id="password" name="password" class="form-control" placeholder="Password" data-i18n-placeholder="auth.password">
         <small id="passwordError" class="text-danger"></small>
     </div>
 
     <div class="mb-3">
-        <div class="role-card-grid" role="radiogroup" aria-label="Choose a role">
+        <div class="role-card-grid" role="radiogroup" aria-label="Choose a role" data-i18n-title="auth.chooseRole">
             <div class="position-relative">
                 <input class="role-card-input" type="radio" name="role" id="roleCreateur" value="createur" <?php echo $preselectedRole === 'createur' ? 'checked' : ''; ?>>
                 <label class="role-card" for="roleCreateur">
                     <i class="bi bi-camera-reels"></i>
                     <span>
-                        <span class="role-card-title d-block">Creator</span>
-                        <span class="role-card-subtitle d-block">Create and collaborate</span>
+                        <span class="role-card-title d-block" data-i18n="auth.creator">Creator</span>
+                        <span class="role-card-subtitle d-block" data-i18n="auth.creatorSub">Create and collaborate</span>
                     </span>
                 </label>
             </div>
@@ -434,8 +578,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['nom'])) {
                 <label class="role-card" for="roleMarque">
                     <i class="bi bi-building"></i>
                     <span>
-                        <span class="role-card-title d-block">Brand</span>
-                        <span class="role-card-subtitle d-block">Launch campaigns</span>
+                        <span class="role-card-title d-block" data-i18n="auth.brand">Brand</span>
+                        <span class="role-card-subtitle d-block" data-i18n="auth.brandSub">Launch campaigns</span>
                     </span>
                 </label>
             </div>
@@ -443,18 +587,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['nom'])) {
         <small id="roleError" class="text-danger d-block mt-1"></small>
     </div>
     <div class="mb-3">
-        <label for="aboutMe" class="form-label fw-semibold">About me <span class="text-muted fw-normal">(optional)</span></label>
-        <textarea id="aboutMe" name="aboutMe" class="form-control" rows="3" maxlength="800" placeholder="Tell creators or brands who you are, what you do, and what kind of collaborations you like."><?php echo htmlspecialchars($_POST['aboutMe'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
+        <label for="aboutMe" class="form-label fw-semibold"><span data-i18n="auth.aboutMe">About me</span> <span class="text-muted fw-normal" data-i18n="auth.optional">(optional)</span></label>
+        <textarea id="aboutMe" name="aboutMe" class="form-control" rows="3" maxlength="800" placeholder="Tell creators or brands who you are, what you do, and what kind of collaborations you like." data-i18n-placeholder="auth.aboutDefaultPlaceholder"><?php echo htmlspecialchars($_POST['aboutMe'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
         <div class="about-match-hint" id="aboutMatchHint">
             <i class="bi bi-stars"></i>
-            <span id="aboutMatchHintText">Choose Creator or Brand to see how this helps Cre8Connect suggest better matches.</span>
+            <span id="aboutMatchHintText" data-i18n="auth.aboutDefaultHint">Choose Creator or Brand to see how this helps Cre8Connect suggest better matches.</span>
         </div>
         <div class="d-flex justify-content-end text-muted about-counter mt-1">
             <span id="aboutCount">0</span>/800
         </div>
     </div>
 
-   <div class="g-recaptcha" data-sitekey="6Le_S9ksAAAAALQ8QeII5XANm_kyXmRF-Sq5OBt8"></div>
+   <div class="g-recaptcha" data-sitekey="<?php echo htmlspecialchars($recaptchaSiteKey, ENT_QUOTES, 'UTF-8'); ?>"></div>
 
       <br/>
     <div id="faceScanPanel" class="face-scan-panel mb-3" style="display:none;">
@@ -463,19 +607,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['nom'])) {
             <canvas id="faceOverlay" class="face-overlay"></canvas>
             <div id="faceBox" class="face-detection-box" hidden></div>
         </div>
-        <div id="faceScanStatus" class="small text-muted mt-2">Camera is open. Click Capture / Retry when your face is clear.</div>
+        <div id="faceScanStatus" class="small text-muted mt-2" data-i18n="auth.faceCameraOpen">Camera is open. Click Capture / Retry when your face is clear.</div>
         <div class="d-flex gap-2 mt-3">
-            <button type="button" id="cancelFaceBtn" class="btn btn-outline-secondary flex-fill py-2">Cancel</button>
-            <button type="button" id="retryFaceBtn" class="btn btn-gradient flex-fill py-2">Capture / Retry</button>
+            <button type="button" id="cancelFaceBtn" class="btn btn-outline-secondary flex-fill py-2" data-i18n="auth.cancel">Cancel</button>
+            <button type="button" id="retryFaceBtn" class="btn btn-gradient flex-fill py-2" data-i18n="auth.captureRetry">Capture / Retry</button>
         </div>
     </div>
 <input type="hidden" name="faceDescriptor" id="faceDescriptor">
 
 <button type="button" id="scanBtn" class="btn btn-gradient w-100 py-2 mb-3">
-    Scan face <span class="fw-normal">(optional)</span>
+    <span data-i18n="auth.scanFace">Scan face</span> <span class="fw-normal" data-i18n="auth.optional">(optional)</span>
 </button>
 <button type="submit" id="submitBtn" class="btn btn-outline-gradient w-100 py-2">
-    Create Account
+    <span data-i18n="auth.createAccount">Create Account</span>
 </button>
 </form>
 <?php if (!empty($error)) { ?>
@@ -485,8 +629,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['nom'])) {
 <?php } ?>
 
                         <p class="mt-3 text-muted">
-                            Already have an account?
-                            <a href="login.php">Login</a>
+                            <span data-i18n="auth.alreadyAccount">Already have an account?</span>
+                            <a href="login.php" data-i18n="auth.login">Login</a>
                         </p>
 
                     </div>
@@ -512,19 +656,127 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['nom'])) {
         <footer class="bg-white py-4 mt-auto">
             <div class="container px-5">
                 <div class="row align-items-center justify-content-between flex-column flex-sm-row">
-                    <div class="col-auto"><div class="small m-0">Copyright &copy; cre8connect 2026</div></div>
+                    <div class="col-auto"><div class="small m-0" data-i18n="auth.copyright">Copyright &copy; cre8connect 2026</div></div>
                     <div class="col-auto">
-                        <a class="small" href="#!">Privacy</a>
+                        <a class="small" href="#!" data-i18n="auth.privacy">Privacy</a>
                         <span class="mx-1">&middot;</span>
-                        <a class="small" href="#!">Terms</a>
+                        <a class="small" href="#!" data-i18n="auth.terms">Terms</a>
                         <span class="mx-1">&middot;</span>
-                        <a class="small" href="#!">Contact</a>
+                        <a class="small" href="#!" data-i18n="auth.contact">Contact</a>
                     </div>
                 </div>
             </div>
         </footer>
         <!-- Bootstrap core JS-->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="../layout/front-translate.js"></script>
+        <script>
+const cre8AuthTranslations = {
+    en: {
+        'auth.home': 'Home',
+        'auth.createAccount': 'Create Account',
+        'auth.name': 'Name',
+        'auth.email': 'Email',
+        'auth.password': 'Password',
+        'auth.chooseRole': 'Choose a role',
+        'auth.creator': 'Creator',
+        'auth.creatorSub': 'Create and collaborate',
+        'auth.brand': 'Brand',
+        'auth.brandSub': 'Launch campaigns',
+        'auth.aboutMe': 'About me',
+        'auth.optional': '(optional)',
+        'auth.aboutDefaultPlaceholder': 'Tell creators or brands who you are, what you do, and what kind of collaborations you like.',
+        'auth.aboutCreatorPlaceholder': 'Tell brands what you create, your niche, audience, style, or collaboration goals.',
+        'auth.aboutBrandPlaceholder': 'Tell creators about your brand, products, values, campaign style, and ideal collaborators.',
+        'auth.aboutDefaultHint': 'Choose Creator or Brand to see how this helps Cre8Connect suggest better matches.',
+        'auth.aboutCreatorHint': 'For creators: this helps Cre8Connect understand your niche, audience, style, and goals so brands can discover you and collaboration opportunities can match you better.',
+        'auth.aboutBrandHint': 'For brands: this helps Cre8Connect present your brand, products, values, and campaign style so creators can choose collaborations that fit them best.',
+        'auth.faceCameraOpen': 'Camera is open. Click Capture / Retry when your face is clear.',
+        'auth.cancel': 'Cancel',
+        'auth.captureRetry': 'Capture / Retry',
+        'auth.scanFace': 'Scan face',
+        'auth.alreadyAccount': 'Already have an account?',
+        'auth.login': 'Login',
+        'auth.copyright': 'Copyright © cre8connect 2026',
+        'auth.privacy': 'Privacy',
+        'auth.terms': 'Terms',
+        'auth.contact': 'Contact',
+        'auth.nameRequired': 'Name is required',
+        'auth.nameMin': 'Name must contain at least 3 characters',
+        'auth.nameLetters': 'Name must contain only letters',
+        'auth.emailRequired': 'Email is required',
+        'auth.emailInvalid': 'Please enter a valid email address',
+        'auth.passwordRequired': 'Password is required',
+        'auth.passwordMin': 'Minimum 6 characters',
+        'auth.roleRequired': 'Please select a role',
+        'auth.fixErrors': 'Please correct the errors before continuing!',
+        'auth.removeFaceScan': 'Remove face scan',
+        'auth.faceDetectedSave': 'Face detected. Click Capture / Retry to save it.',
+        'auth.noFaceDetected': 'No face detected. Adjust your position.',
+        'auth.faceDetectionFailed': 'Face detection failed. Please try again.',
+        'auth.faceScanUnavailable': 'Face scan unavailable (optional)',
+        'auth.faceScanNotAvailable': 'Face scan is not available right now. You can still create your account.',
+        'auth.openingCamera': 'Opening camera...',
+        'auth.scanningFace': 'Scanning face...',
+        'auth.faceNotDetectedRetry': 'Face not detected. Adjust your position and click Capture / Retry.',
+        'auth.cameraPermission': 'Could not access the camera. Check permissions or try again.'
+    },
+    fr: {
+        'auth.home': 'Accueil',
+        'auth.createAccount': 'Creer un compte',
+        'auth.name': 'Nom',
+        'auth.email': 'Email',
+        'auth.password': 'Mot de passe',
+        'auth.chooseRole': 'Choisir un role',
+        'auth.creator': 'Createur',
+        'auth.creatorSub': 'Creer et collaborer',
+        'auth.brand': 'Marque',
+        'auth.brandSub': 'Lancer des campagnes',
+        'auth.aboutMe': 'A propos de moi',
+        'auth.optional': '(optionnel)',
+        'auth.aboutDefaultPlaceholder': 'Dites aux createurs ou marques qui vous etes, ce que vous faites et les collaborations que vous aimez.',
+        'auth.aboutCreatorPlaceholder': 'Dites aux marques ce que vous creez, votre niche, votre audience, votre style ou vos objectifs de collaboration.',
+        'auth.aboutBrandPlaceholder': 'Parlez aux createurs de votre marque, vos produits, vos valeurs, votre style de campagne et vos collaborateurs ideaux.',
+        'auth.aboutDefaultHint': 'Choisissez Createur ou Marque pour voir comment cela aide Cre8Connect a suggerer de meilleurs matchs.',
+        'auth.aboutCreatorHint': 'Pour les createurs : cela aide Cre8Connect a comprendre votre niche, audience, style et objectifs afin que les marques puissent vous decouvrir.',
+        'auth.aboutBrandHint': 'Pour les marques : cela aide Cre8Connect a presenter votre marque, vos produits, vos valeurs et votre style de campagne.',
+        'auth.faceCameraOpen': 'La camera est ouverte. Cliquez sur Capturer / Reessayer quand votre visage est clair.',
+        'auth.cancel': 'Annuler',
+        'auth.captureRetry': 'Capturer / Reessayer',
+        'auth.scanFace': 'Scanner le visage',
+        'auth.alreadyAccount': 'Vous avez deja un compte ?',
+        'auth.login': 'Connexion',
+        'auth.copyright': 'Copyright © cre8connect 2026',
+        'auth.privacy': 'Confidentialite',
+        'auth.terms': 'Conditions',
+        'auth.contact': 'Contact',
+        'auth.nameRequired': 'Le nom est requis',
+        'auth.nameMin': 'Le nom doit contenir au moins 3 caracteres',
+        'auth.nameLetters': 'Le nom ne doit contenir que des lettres',
+        'auth.emailRequired': 'L email est requis',
+        'auth.emailInvalid': 'Veuillez entrer une adresse email valide',
+        'auth.passwordRequired': 'Le mot de passe est requis',
+        'auth.passwordMin': 'Minimum 6 caracteres',
+        'auth.roleRequired': 'Veuillez selectionner un role',
+        'auth.fixErrors': 'Veuillez corriger les erreurs avant de continuer !',
+        'auth.removeFaceScan': 'Supprimer le scan visage',
+        'auth.faceDetectedSave': 'Visage detecte. Cliquez sur Capturer / Reessayer pour l enregistrer.',
+        'auth.noFaceDetected': 'Aucun visage detecte. Ajustez votre position.',
+        'auth.faceDetectionFailed': 'Detection du visage echouee. Veuillez reessayer.',
+        'auth.faceScanUnavailable': 'Scan visage indisponible (optionnel)',
+        'auth.faceScanNotAvailable': 'Le scan visage est indisponible pour le moment. Vous pouvez quand meme creer votre compte.',
+        'auth.openingCamera': 'Ouverture de la camera...',
+        'auth.scanningFace': 'Scan du visage...',
+        'auth.faceNotDetectedRetry': 'Visage non detecte. Ajustez votre position et cliquez sur Capturer / Reessayer.',
+        'auth.cameraPermission': 'Impossible d acceder a la camera. Verifiez les autorisations ou reessayez.'
+    }
+};
+function cre8AuthLang() { if (typeof cre8FrontReadLang === 'function') return cre8FrontReadLang(); try { return (localStorage.getItem('cre8_front_lang') || localStorage.getItem('cre8_lang')) === 'fr' ? 'fr' : 'en'; } catch(e) { return 'en'; } }
+function cre8AuthText(key) { const l = cre8AuthLang(); return (cre8AuthTranslations[l] && cre8AuthTranslations[l][key]) || cre8AuthTranslations.en[key] || key; }
+function cre8RegisterAuthTranslations() { if (typeof cre8RegisterTranslations === 'function') cre8RegisterTranslations(cre8AuthTranslations); document.title = cre8AuthLang() === 'fr' ? 'Cre8Connect - Inscription' : 'Cre8Connect - Register'; }
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', cre8RegisterAuthTranslations); else cre8RegisterAuthTranslations();
+window.addEventListener('cre8:languagechange', function () { cre8RegisterAuthTranslations(); updateAboutRoleHint(); });
+        </script>
         <!-- Core theme JS-->
     
             
@@ -543,24 +795,24 @@ const aboutCount = document.getElementById("aboutCount");
 const aboutMatchHintText = document.getElementById("aboutMatchHintText");
 
 const aboutRoleMessages = {
-    createur: "For creators: this helps Cre8Connect understand your niche, audience, style, and goals so brands can discover you and collaboration opportunities can match you better.",
-    marque: "For brands: this helps Cre8Connect present your brand, products, values, and campaign style so creators can choose collaborations that fit them best.",
-    default: "Choose Creator or Brand to see how this helps Cre8Connect suggest better matches."
+    createur: "auth.aboutCreatorHint",
+    marque: "auth.aboutBrandHint",
+    default: "auth.aboutDefaultHint"
 };
 
 const aboutRolePlaceholders = {
-    createur: "Tell brands what you create, your niche, audience, style, or collaboration goals.",
-    marque: "Tell creators about your brand, products, values, campaign style, and ideal collaborators.",
-    default: "Tell creators or brands who you are, what you do, and what kind of collaborations you like."
+    createur: "auth.aboutCreatorPlaceholder",
+    marque: "auth.aboutBrandPlaceholder",
+    default: "auth.aboutDefaultPlaceholder"
 };
 
 function updateAboutRoleHint() {
     const role = getSelectedRole();
     if (aboutMatchHintText) {
-        aboutMatchHintText.textContent = aboutRoleMessages[role] || aboutRoleMessages.default;
+        aboutMatchHintText.textContent = cre8AuthText(aboutRoleMessages[role] || aboutRoleMessages.default);
     }
     if (aboutMe) {
-        aboutMe.placeholder = aboutRolePlaceholders[role] || aboutRolePlaceholders.default;
+        aboutMe.placeholder = cre8AuthText(aboutRolePlaceholders[role] || aboutRolePlaceholders.default);
     }
 }
 
@@ -578,15 +830,15 @@ nom.addEventListener("input", function () {
     let error = document.getElementById("nomError");
 
     if (nom.value.trim() === "") {
-        error.textContent = "Le nom est requis";
+        error.textContent = cre8AuthText("auth.nameRequired");
         nom.classList.add("is-invalid");
     } 
     else if (nom.value.length < 3) {
-        error.textContent = "Le nom doit contenir au moins 3 caractères";
+        error.textContent = cre8AuthText("auth.nameMin");
         nom.classList.add("is-invalid");
     }
     else if (!/^[a-zA-Z\s]+$/.test(nom.value)) {
-        error.textContent = "Le nom ne doit contenir que des lettres";
+        error.textContent = cre8AuthText("auth.nameLetters");
         nom.classList.add("is-invalid");
     }
     else {
@@ -602,11 +854,11 @@ email.addEventListener("input", function () {
     let regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (email.value.trim() === "") {
-        error.textContent = "L'email est requis";
+        error.textContent = cre8AuthText("auth.emailRequired");
         email.classList.add("is-invalid");
     }
     else if (!regex.test(email.value)) {
-        error.textContent = "Veuillez entrer une adresse email valide";
+        error.textContent = cre8AuthText("auth.emailInvalid");
         email.classList.add("is-invalid");
     }
     else {
@@ -621,11 +873,11 @@ password.addEventListener("input", function () {
     let error = document.getElementById("passwordError");
 
     if (password.value.trim() === "") {
-        error.textContent = "Le mot de passe est requis";
+        error.textContent = cre8AuthText("auth.passwordRequired");
         password.classList.add("is-invalid");
     }
     else if (password.value.length < 6) {
-        error.textContent = "Minimum 6 caractères";
+        error.textContent = cre8AuthText("auth.passwordMin");
         password.classList.add("is-invalid");
     }
     else {
@@ -644,7 +896,7 @@ function getSelectedRole() {
 function validateRole() {
     let error = document.getElementById("roleError");
     if (getSelectedRole() === "") {
-        error.textContent = "Veuillez sélectionner un rôle";
+        error.textContent = cre8AuthText("auth.roleRequired");
         return false;
     }
     error.textContent = "";
@@ -670,7 +922,7 @@ document.getElementById("registerForm").addEventListener("submit", function (e) 
         !validateRole()
     ) {
         e.preventDefault();
-        alert("Veuillez corriger les erreurs avant de continuer !");
+        alert(cre8AuthText("auth.fixErrors"));
     }
 
 });
@@ -694,7 +946,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const retryFaceBtn = document.getElementById("retryFaceBtn");
 
     const faceDescriptorInput = document.getElementById("faceDescriptor");
-    const removeScanText = "Remove face scan";
+    const removeScanText = "auth.removeFaceScan";
 
     let faceScanSaved = false;
     let faceModelsReady = false;
@@ -707,11 +959,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     submitBtn.disabled = false;
     scanBtn.disabled = true;
-    scanBtn.innerHTML = 'Scan face <span class="fw-normal">(optional)</span>';
+    scanBtn.innerHTML = cre8AuthText('auth.scanFace') + ' <span class="fw-normal">' + cre8AuthText('auth.optional') + '</span>';
     faceScanPanel.style.display = 'none';
 
     function updateStatus(message, type = 'muted') {
-        faceScanStatus.textContent = message;
+        faceScanStatus.textContent = cre8AuthText(message);
         faceScanStatus.className = 'small mt-2 text-' + type;
     }
 
@@ -791,17 +1043,17 @@ document.addEventListener("DOMContentLoaded", async () => {
                 if (detection) {
                     lastDescriptor = Array.from(detection.descriptor);
                     drawDetectionBox(detection);
-                    if (!scanInProgress) updateStatus("Face detected ✅. Click Capture / Retry to save it.", 'success');
+                    if (!scanInProgress) updateStatus("auth.faceDetectedSave", 'success');
                 } else {
                     lastDescriptor = null;
                     clearOverlay();
-                    if (!scanInProgress) updateStatus("No face detected ❌. Adjust your position.", 'danger');
+                    if (!scanInProgress) updateStatus("auth.noFaceDetected", 'danger');
                 }
             } catch (error) {
                 console.error(error);
                 lastDescriptor = null;
                 clearOverlay();
-                if (!scanInProgress) updateStatus("Face detection failed. Please try again.", 'danger');
+                if (!scanInProgress) updateStatus("auth.faceDetectionFailed", 'danger');
             } finally {
                 liveDetecting = false;
             }
@@ -841,9 +1093,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         faceScanSaved = false;
         lastDescriptor = null;
         closeCameraPanel();
-        scanBtn.innerHTML = 'Scan face <span class="fw-normal">(optional)</span>';
+        scanBtn.innerHTML = cre8AuthText('auth.scanFace') + ' <span class="fw-normal">' + cre8AuthText('auth.optional') + '</span>';
         scanBtn.disabled = !faceModelsReady;
-        updateStatus("Camera is open. Click Capture / Retry when your face is clear.", 'muted');
+        updateStatus("auth.faceCameraOpen", 'muted');
     }
 
     async function startCamera() {
@@ -866,13 +1118,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         try {
             faceScanPanel.style.display = 'block';
-            updateStatus("Opening camera...", 'muted');
+            updateStatus("auth.openingCamera", 'muted');
             await startCamera();
-            updateStatus("Camera is open. Click Capture / Retry when your face is clear.", 'muted');
+            updateStatus("auth.faceCameraOpen", 'muted');
         } catch (err) {
             console.error(err);
             closeCameraPanel();
-            alert("Impossible d'accéder à la caméra. Vérifiez les autorisations ou réessayez.");
+            alert(cre8AuthText("auth.cameraPermission"));
         }
     }
 
@@ -880,10 +1132,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (!cameraOpen || scanInProgress) return;
         scanInProgress = true;
         retryFaceBtn.disabled = true;
-        updateStatus("Scanning face...", 'muted');
+        updateStatus("auth.scanningFace", 'muted');
 
         if (!lastDescriptor) {
-            updateStatus("Face not detected ❌. Adjust your position and click Capture / Retry.", 'danger');
+            updateStatus("auth.faceNotDetectedRetry", 'danger');
             retryFaceBtn.disabled = false;
             scanInProgress = false;
             return;
@@ -893,7 +1145,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         faceScanSaved = true;
         closeCameraPanel();
         submitBtn.disabled = false;
-        scanBtn.textContent = removeScanText;
+        scanBtn.textContent = cre8AuthText(removeScanText);
     }
 
     function getModelBasePath() {
@@ -910,7 +1162,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         scanBtn.disabled = false;
     } catch (error) {
         console.error("Erreur chargement modèles ❌", error);
-        scanBtn.textContent = "Face scan unavailable (optional)";
+        scanBtn.textContent = cre8AuthText("auth.faceScanUnavailable");
         scanBtn.disabled = true;
     }
 
@@ -933,3 +1185,4 @@ document.addEventListener("DOMContentLoaded", async () => {
 <!-- ✅ reCAPTCHA OK -->
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>    </body>
 </html>
+

@@ -20,14 +20,18 @@ if (!function_exists('cre8_back_profile_asset_version')) {
 }
 
 if (!function_exists('cre8_back_profile_sync_session')) {
-    function cre8_back_profile_sync_session(string $name, ?string $imageName): void
+    function cre8_back_profile_sync_session(string $name, string $email, ?string $imageName): void
     {
         $_SESSION['nom'] = $name;
+        $_SESSION['email'] = $email;
+
         if (isset($_SESSION['user']) && is_array($_SESSION['user'])) {
             $_SESSION['user']['nom'] = $name;
+            $_SESSION['user']['email'] = $email;
         }
         if (isset($_SESSION['utilisateur']) && is_array($_SESSION['utilisateur'])) {
             $_SESSION['utilisateur']['nom'] = $name;
+            $_SESSION['utilisateur']['email'] = $email;
         }
         if ($imageName !== null) {
             $_SESSION['profile_image'] = $imageName;
@@ -55,12 +59,50 @@ if (!function_exists('cre8_back_validate_face_descriptor_json')) {
     }
 }
 
+if (!function_exists('cre8_back_profile_email_exists_for_other_user')) {
+    function cre8_back_profile_email_exists_for_other_user(int $userId, string $email): bool
+    {
+        $db = config::getConnexion();
+        $stmt = $db->prepare('SELECT id FROM utilisateur WHERE email = :email AND id <> :id LIMIT 1');
+        $stmt->execute([
+            'email' => $email,
+            'id' => $userId,
+        ]);
+
+        return (bool) $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+}
+
+if (!function_exists('cre8_back_profile_update_user_email')) {
+    function cre8_back_profile_update_user_email(int $userId, string $email): bool
+    {
+        $db = config::getConnexion();
+        $stmt = $db->prepare('UPDATE utilisateur SET email = :email WHERE id = :id');
+
+        return $stmt->execute([
+            'email' => $email,
+            'id' => $userId,
+        ]);
+    }
+}
+
 if (!function_exists('cre8_back_profile_save')) {
     function cre8_back_profile_save(ProfileC $profileC, int $userId): array
     {
         $name = trim((string)($_POST['nom'] ?? ''));
         if ($name === '') {
             return ['type' => 'danger', 'message' => 'Name is required.'];
+        }
+
+        $email = trim((string)($_POST['email'] ?? ''));
+        if ($email === '') {
+            return ['type' => 'danger', 'message' => 'Email address is required.'];
+        }
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return ['type' => 'danger', 'message' => 'Please enter a valid email address.'];
+        }
+        if (cre8_back_profile_email_exists_for_other_user($userId, $email)) {
+            return ['type' => 'danger', 'message' => 'This email address is already used by another account.'];
         }
 
         $removeFace = (string)($_POST['removeFaceDescriptor'] ?? '') === '1';
@@ -100,6 +142,13 @@ if (!function_exists('cre8_back_profile_save')) {
                 return ['type' => 'danger', 'message' => 'Could not update your display name.'];
             }
 
+            if (!cre8_back_profile_update_user_email($userId, $email)) {
+                if ($newImageName !== null) {
+                    $profileC->deleteProfileImage($newImageName);
+                }
+                return ['type' => 'danger', 'message' => 'Could not update your email address.'];
+            }
+
             if (!$profileC->upsertProfileDetails($userId, $newImageName, null, $newImageName !== null, false)) {
                 if ($newImageName !== null) {
                     $profileC->deleteProfileImage($newImageName);
@@ -124,7 +173,7 @@ if (!function_exists('cre8_back_profile_save')) {
             $profileC->deleteProfileImage($oldImageName);
         }
 
-        cre8_back_profile_sync_session($name, $newImageName);
+        cre8_back_profile_sync_session($name, $email, $newImageName);
 
         return ['type' => 'success', 'message' => 'Profile updated successfully.'];
     }
@@ -370,6 +419,20 @@ $profileImageUrl = $profileC->getProfileImageUrl($currentUserId, '../../public/u
       box-shadow: 0 0 0 0.2rem rgba(139, 92, 246, 0.18);
     }
 
+    .admin-profile-card .form-control::placeholder {
+      color: #94a3b8;
+    }
+
+    .admin-profile-card input[type="file"].form-control::file-selector-button {
+      border: 0;
+      border-radius: 10px;
+      background: rgba(124, 92, 255, 0.18);
+      color: #ede9fe;
+      font-weight: 800;
+      margin-right: 0.8rem;
+      padding: 0.55rem 0.8rem;
+    }
+
     .face-status-pill {
       display: inline-flex;
       align-items: center;
@@ -526,6 +589,12 @@ $profileImageUrl = $profileC->getProfileImageUrl($currentUserId, '../../public/u
       border-color: #d1d5db;
     }
 
+    html[data-theme="light"] body.cre8-admin-layout .admin-profile-card input[type="file"].form-control::file-selector-button,
+    body.light-mode .admin-profile-card input[type="file"].form-control::file-selector-button {
+      background: #eef2ff;
+      color: #4338ca;
+    }
+
     @media (max-width: 992px) {
       .admin-profile-grid {
         grid-template-columns: 1fr;
@@ -638,6 +707,12 @@ $profileImageUrl = $profileC->getProfileImageUrl($currentUserId, '../../public/u
                       <div class="mb-3">
                         <label class="form-label" for="profileName">Display name</label>
                         <input type="text" class="form-control" id="profileName" name="nom" value="<?php echo htmlspecialchars($userName); ?>" required>
+                      </div>
+
+                      <div class="mb-3">
+                        <label class="form-label" for="profileEmail">Email address</label>
+                        <input type="email" class="form-control" id="profileEmail" name="email" value="<?php echo htmlspecialchars($userEmail); ?>" required>
+                        <div class="form-text">Use this email to log in and receive account messages.</div>
                       </div>
                     </section>
 

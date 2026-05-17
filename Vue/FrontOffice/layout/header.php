@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/session_bridge.php';
 require_once __DIR__ . '/../../../Controleur/profileC.php';
-require_once __DIR__ . '/../../../Controleur/notificationC.php';
+$notificationController = null;
 
 $currentFrontUser = cre8_front_session_user();
 
@@ -40,7 +40,44 @@ if ($frontOfficePos !== false) {
 $frontBaseUrl = $projectBase . '/Vue/FrontOffice';
 $profileUploadWeb = $projectBase . '/Vue/public/uploads/profile';
 
+$notificationUserId = !empty($currentFrontUser['id']) ? (int) $currentFrontUser['id'] : 0;
+$notificationActionUrl = $frontBaseUrl . '/layout/notification_actions.php';
+$notificationPageUrl = $frontBaseUrl . '/notifications/index.php';
+
+if ($notificationUserId > 0) {
+    $notificationPath = __DIR__ . '/../../../Controleur/notificationC.php';
+    if (is_file($notificationPath)) {
+        require_once $notificationPath;
+        if (class_exists('NotificationC')) {
+            try {
+                $notificationController = new NotificationC();
+            } catch (Throwable $e) {
+                $notificationController = null;
+            }
+        }
+    }
+}
+
 $sessionRole = cre8_front_normalize_role($currentFrontUser['role'] ?? '');
+
+if ($notificationUserId > 0) {
+    $condidatureControllerPath = __DIR__ . '/../../../Controleur/condidatureC.php';
+    if (is_file($condidatureControllerPath)) {
+        try {
+            require_once $condidatureControllerPath;
+            if (class_exists('CondidatureC')) {
+                $deadlineNotificationC = new CondidatureC();
+                if ($sessionRole === 'marque' && method_exists($deadlineNotificationC, 'generateBrandDeadlineSoonNotifications')) {
+                    $deadlineNotificationC->generateBrandDeadlineSoonNotifications($notificationUserId);
+                } elseif ($sessionRole !== 'marque' && method_exists($deadlineNotificationC, 'generateCreatorDeadlineSoonNotifications')) {
+                    $deadlineNotificationC->generateCreatorDeadlineSoonNotifications($notificationUserId);
+                }
+            }
+        } catch (Throwable $e) {
+            // Header must stay safe even if legacy notification generation fails.
+        }
+    }
+}
 
 $homeUrl = $frontBaseUrl . '/utilisateur/creator.php';
 $reclamationUrl = $frontBaseUrl . '/utilisateur/reclamation.php';
@@ -66,10 +103,7 @@ $eventsUrl = $frontBaseUrl . '/evenement/index.php';
 $forumUrl  = $projectBase . '/Controleur/forumC.php';
 $logoutUrl = $frontBaseUrl . '/utilisateur/logout.php';
 $profileSettingsUrl = $frontBaseUrl . '/utilisateur/profile_settings.php';
-$notificationActionUrl = $frontBaseUrl . '/layout/notification_actions.php';
 $profileImageUrl = null;
-$notificationController = null;
-$notificationUserId = (int) ($currentFrontUser['id'] ?? 0);
 
 if (!empty($currentFrontUser['id'])) {
     try {
@@ -77,21 +111,6 @@ if (!empty($currentFrontUser['id'])) {
         $profileImageUrl = $profileC->getProfileImageUrl((int) $currentFrontUser['id'], $profileUploadWeb);
     } catch (Throwable $e) {
         $profileImageUrl = null;
-    }
-}
-
-if ($notificationUserId > 0 && in_array($sessionRole, ['createur', 'marque'], true)) {
-    try {
-        $notificationController = new NotificationC();
-        require_once __DIR__ . '/../../../Controleur/condidatureC.php';
-        $legacyNotificationGenerator = new CondidatureC();
-        if ($sessionRole === 'createur' && method_exists($legacyNotificationGenerator, 'generateCreatorDeadlineSoonNotifications')) {
-            $legacyNotificationGenerator->generateCreatorDeadlineSoonNotifications($notificationUserId);
-        } elseif ($sessionRole === 'marque' && method_exists($legacyNotificationGenerator, 'generateBrandDeadlineSoonNotifications')) {
-            $legacyNotificationGenerator->generateBrandDeadlineSoonNotifications($notificationUserId);
-        }
-    } catch (Throwable $e) {
-        $notificationController = null;
     }
 }
 
@@ -112,50 +131,6 @@ if (!isset($frontActive)) {
         $frontActive = '';
     }
 }
-
-if (!function_exists('cre8_notification_icon')) {
-    function cre8_notification_icon($typeAction): string
-    {
-        return match ((string) $typeAction) {
-            'post_comment' => 'bi-chat-dots',
-            'post_reaction' => 'bi-heart',
-            'offer_invitation',
-            'offer_accepted',
-            'offer_refused',
-            'candidature_received',
-            'candidature_accepted',
-            'candidature_refused',
-            'negotiation_message' => 'bi-briefcase',
-            'admin_post_removed',
-            'admin_product_removed' => 'bi-shield-exclamation',
-            'complaint_answered' => 'bi-life-preserver',
-            'event_today' => 'bi-calendar-event',
-            default => 'bi-bell',
-        };
-    }
-}
-
-if (!function_exists('cre8_notification_group_class')) {
-    function cre8_notification_group_class($typeAction): string
-    {
-        return match ((string) $typeAction) {
-            'post_comment',
-            'post_reaction' => 'type-post',
-            'offer_invitation',
-            'offer_accepted',
-            'offer_refused',
-            'candidature_received',
-            'candidature_accepted',
-            'candidature_refused',
-            'negotiation_message' => 'type-collaboration',
-            'admin_post_removed',
-            'admin_product_removed' => 'type-admin',
-            'complaint_answered' => 'type-complaint',
-            'event_today' => 'type-event',
-            default => 'type-default',
-        };
-    }
-}
 ?>
 <script>
 (function () {
@@ -169,72 +144,83 @@ if (!function_exists('cre8_notification_group_class')) {
 })();
 </script>
 <script src="<?php echo htmlspecialchars($frontBaseUrl . '/layout/front-translate.js'); ?>" defer></script>
-<nav class="front-nav cre8-front-header" aria-label="FrontOffice navigation">
-    <a class="front-nav-logo cre8-front-brand" href="<?php echo htmlspecialchars($homeUrl); ?>" aria-label="Cre8Connect home">
+<nav class="front-nav cre8-front-header" aria-label="FrontOffice navigation" data-i18n-title="header.navAria">
+    <a class="front-nav-logo cre8-front-brand" href="<?php echo htmlspecialchars($homeUrl); ?>" aria-label="Cre8Connect home" data-i18n-title="header.homeAria">
         <img src="<?php echo htmlspecialchars($projectBase . '/Vue/public/images/logoweb.png'); ?>" alt="Cre8Connect" class="front-header-logo">
     </a>
 
     <ul class="front-nav-links cre8-front-nav">
         <li class="front-nav-item">
             <a href="<?php echo htmlspecialchars($homeUrl); ?>" class="cre8-front-nav-link <?php echo $frontActive === 'home' ? 'active is-active' : ''; ?>">
-                <i class="bi bi-house"></i> Home
+                <i class="bi bi-house"></i> <span data-i18n="header.home">Home</span>
             </a>
         </li>
 
         <li class="front-nav-item front-nav-dropdown-item">
             <button class="front-nav-trigger cre8-front-nav-link <?php echo $frontActive === 'collaborations' ? 'active is-active' : ''; ?>" type="button" aria-haspopup="true">
-                <i class="bi bi-briefcase"></i> Collaborations <i class="bi bi-chevron-down front-nav-caret"></i>
+                <i class="bi bi-briefcase"></i> <span data-i18n="header.collaborations">Collaborations</span> <i class="bi bi-chevron-down front-nav-caret"></i>
             </button>
             <div class="front-nav-dropdown" role="menu">
-                <a href="<?php echo htmlspecialchars($offersUrl); ?>" role="menuitem">Offers</a>
-                <a href="<?php echo htmlspecialchars($candidaturesUrl); ?>" role="menuitem">Applications</a>
+                <a href="<?php echo htmlspecialchars($offersUrl); ?>" role="menuitem" data-i18n="header.offers">Offers</a>
+                <a href="<?php echo htmlspecialchars($candidaturesUrl); ?>" role="menuitem" data-i18n="header.applications">Applications</a>
             </div>
         </li>
 
         <li class="front-nav-item front-nav-dropdown-item">
             <button class="front-nav-trigger cre8-front-nav-link <?php echo $frontActive === 'campaigns' ? 'active is-active' : ''; ?>" type="button" aria-haspopup="true">
-                <i class="bi bi-megaphone"></i> Campaigns <i class="bi bi-chevron-down front-nav-caret"></i>
+                <i class="bi bi-megaphone"></i> <span data-i18n="header.campaigns">Campaigns</span> <i class="bi bi-chevron-down front-nav-caret"></i>
             </button>
             <div class="front-nav-dropdown" role="menu">
-                <a href="<?php echo htmlspecialchars($campaignsUrl); ?>" role="menuitem">Campaigns</a>
-                <a href="<?php echo htmlspecialchars($productsUrl); ?>" role="menuitem">Products</a>
-                <a href="<?php echo htmlspecialchars($contractsUrl); ?>" role="menuitem">Contracts</a>
+                <a href="<?php echo htmlspecialchars($campaignsUrl); ?>" role="menuitem" data-i18n="header.campaigns">Campaigns</a>
+                <a href="<?php echo htmlspecialchars($productsUrl); ?>" role="menuitem" data-i18n="header.products">Products</a>
+                <a href="<?php echo htmlspecialchars($contractsUrl); ?>" role="menuitem" data-i18n="header.contracts">Contracts</a>
             </div>
         </li>
 
         <li class="front-nav-item front-nav-dropdown-item">
             <button class="front-nav-trigger cre8-front-nav-link <?php echo $frontActive === 'myspace' ? 'active is-active' : ''; ?>" type="button" aria-haspopup="true">
-                <i class="bi bi-person-badge"></i> Posts <i class="bi bi-chevron-down front-nav-caret"></i>
+                <i class="bi bi-person-badge"></i> <span data-i18n="header.posts">Posts</span> <i class="bi bi-chevron-down front-nav-caret"></i>
             </button>
             <div class="front-nav-dropdown" role="menu">
-                <a href="<?php echo htmlspecialchars($portfolioUrl); ?>" role="menuitem">My Space</a>
-                <a href="<?php echo htmlspecialchars($postsUrl); ?>" role="menuitem">Feeds</a>
-                <a href="<?php echo htmlspecialchars($createPostUrl); ?>" role="menuitem">Create Post</a>
+                <a href="<?php echo htmlspecialchars($portfolioUrl); ?>" role="menuitem" data-i18n="header.mySpace">My Space</a>
+                <a href="<?php echo htmlspecialchars($postsUrl); ?>" role="menuitem" data-i18n="header.feeds">Feeds</a>
+                <a href="<?php echo htmlspecialchars($createPostUrl); ?>" role="menuitem" data-i18n="header.createPost">Create Post</a>
             </div>
         </li>
 
         <li class="front-nav-item front-nav-dropdown-item">
             <button class="front-nav-trigger cre8-front-nav-link <?php echo $frontActive === 'events' ? 'active is-active' : ''; ?>" type="button" aria-haspopup="true">
-                <i class="bi bi-calendar-event"></i> Events <i class="bi bi-chevron-down front-nav-caret"></i>
+                <i class="bi bi-calendar-event"></i> <span data-i18n="header.events">Events</span> <i class="bi bi-chevron-down front-nav-caret"></i>
             </button>
             <div class="front-nav-dropdown" role="menu">
-                <a href="<?php echo htmlspecialchars($eventsUrl); ?>" role="menuitem">Events</a>
-                <a href="<?php echo htmlspecialchars($forumUrl); ?>" role="menuitem">Forum</a>
+                <a href="<?php echo htmlspecialchars($eventsUrl); ?>" role="menuitem" data-i18n="header.events">Events</a>
+                <a href="<?php echo htmlspecialchars($forumUrl); ?>" role="menuitem" data-i18n="header.forum">Forum</a>
             </div>
         </li>
 
         <li class="front-nav-item">
             <a href="<?php echo htmlspecialchars($reclamationUrl); ?>" class="cre8-front-nav-link <?php echo $frontActive === 'reclamation' ? 'active is-active' : ''; ?>">
-                <i class="bi bi-flag"></i> Complaints
+                <i class="bi bi-flag"></i> <span data-i18n="header.complaints">Complaints</span>
             </a>
         </li>
 
         <li class="front-nav-item front-notification-item">
-            <?php require __DIR__ . '/../condidature/notification_widget.php'; ?>
+            <?php
+            $notificationWidgetPath = __DIR__ . '/../condidature/notification_widget.php';
+            if (is_file($notificationWidgetPath)) {
+                require $notificationWidgetPath;
+            } else {
+                ?>
+                <button class="front-icon-btn front-notification-btn" type="button" aria-label="Notifications">
+                    <i class="bi bi-bell"></i>
+                </button>
+                <?php
+            }
+            ?>
         </li>
     </ul>
 
-    <div class="front-nav-right cre8-front-user front-profile-menu" tabindex="0" role="button" aria-haspopup="true" aria-label="Profile menu">
+    <div class="front-nav-right cre8-front-user front-profile-menu" tabindex="0" role="button" aria-haspopup="true" aria-label="Profile menu" data-i18n-title="header.profileMenuAria">
         <div class="front-nav-badge cre8-front-role-pill">
             <?php echo htmlspecialchars($userName); ?>
         </div>
@@ -249,14 +235,14 @@ if (!function_exists('cre8_notification_group_class')) {
             <a class="front-profile-menu-row front-profile-settings-row" href="<?php echo htmlspecialchars($profileSettingsUrl); ?>" role="menuitem">
                 <span class="front-profile-row-left">
                     <span class="front-profile-row-icon"><i class="bi bi-person-gear"></i></span>
-                    <span class="front-profile-row-text">Profile settings</span>
+                    <span class="front-profile-row-text" data-i18n="header.profileSettings">Profile settings</span>
                 </span>
             </a>
 
-            <button type="button" class="front-profile-menu-row front-profile-language-toggle" data-lang-toggle role="menuitem" aria-label="Switch language">
+            <button type="button" class="front-profile-menu-row front-profile-language-toggle" data-lang-toggle role="menuitem" aria-label="Switch language" data-i18n-title="header.switchLanguageTitle">
                 <span class="front-profile-row-left">
                     <span class="front-profile-row-icon"><i class="bi bi-globe2"></i></span>
-                    <span class="front-profile-row-text">Language</span>
+                    <span class="front-profile-row-text" data-i18n="header.language">Language</span>
                 </span>
                 <span class="front-profile-lang-mini" aria-hidden="true">
                     <span class="front-profile-lang-chip" data-profile-lang-chip="en">EN</span>
@@ -265,27 +251,103 @@ if (!function_exists('cre8_notification_group_class')) {
                 <span class="sr-only">Current language: <span data-profile-lang-current>EN</span></span>
             </button>
 
-            <button class="front-profile-menu-row front-profile-theme-btn" id="themeBtn" title="Toggle dark mode" type="button" role="menuitem">
+            <button class="front-profile-menu-row front-profile-theme-btn" id="themeBtn" title="Toggle dark mode" data-i18n-title="header.toggleThemeTitle" type="button" role="menuitem">
                 <span class="front-profile-row-left">
                     <span class="front-profile-row-icon"><i class="bi bi-moon-stars" id="themeIcon"></i></span>
-                    <span class="front-profile-row-text">Appearance</span>
+                    <span class="front-profile-row-text" data-i18n="header.appearance">Appearance</span>
                 </span>
                 <span class="front-profile-theme-switch" aria-hidden="true">
                     <span class="front-profile-theme-dot"></span>
-                    <span class="front-profile-theme-label"><span class="theme-label-light">Light</span><span class="theme-label-dark">Dark</span></span>
+                    <span class="front-profile-theme-label"><span class="theme-label-light" data-i18n="header.themeLight">Light</span><span class="theme-label-dark" data-i18n="header.themeDark">Dark</span></span>
                 </span>
             </button>
 
             <a href="<?php echo htmlspecialchars($logoutUrl); ?>" class="front-profile-menu-row front-profile-logout" role="menuitem">
                 <span class="front-profile-row-left">
                     <span class="front-profile-row-icon"><i class="bi bi-box-arrow-right"></i></span>
-                    <span class="front-profile-row-text">Logout</span>
+                    <span class="front-profile-row-text" data-i18n="header.logout">Logout</span>
                 </span>
             </a>
         </div>
     </div>
 </nav>
 
+
+<script>
+(function () {
+    var headerTranslations = {
+        en: {
+            'header.navAria': 'FrontOffice navigation',
+            'header.homeAria': 'Cre8Connect home',
+            'header.profileMenuAria': 'Profile menu',
+            'header.home': 'Home',
+            'header.collaborations': 'Collaborations',
+            'header.offers': 'Offers',
+            'header.applications': 'Applications',
+            'header.campaigns': 'Campaigns',
+            'header.products': 'Products',
+            'header.contracts': 'Contracts',
+            'header.posts': 'Posts',
+            'header.mySpace': 'My Space',
+            'header.feeds': 'Feeds',
+            'header.createPost': 'Create Post',
+            'header.events': 'Events',
+            'header.forum': 'Forum',
+            'header.complaints': 'Complaints',
+            'header.profileSettings': 'Profile settings',
+            'header.language': 'Language',
+            'header.appearance': 'Appearance',
+            'header.themeLight': 'Light',
+            'header.themeDark': 'Dark',
+            'header.logout': 'Logout',
+            'header.switchLanguageTitle': 'Switch language',
+            'header.toggleThemeTitle': 'Toggle dark mode'
+        },
+        fr: {
+            'header.navAria': 'Navigation FrontOffice',
+            'header.homeAria': 'Accueil Cre8Connect',
+            'header.profileMenuAria': 'Menu du profil',
+            'header.home': 'Accueil',
+            'header.collaborations': 'Collaborations',
+            'header.offers': 'Offres',
+            'header.applications': 'Candidatures',
+            'header.campaigns': 'Campagnes',
+            'header.products': 'Produits',
+            'header.contracts': 'Contrats',
+            'header.posts': 'Publications',
+            'header.mySpace': 'Mon espace',
+            'header.feeds': 'Fil d’actualité',
+            'header.createPost': 'Créer une publication',
+            'header.events': 'Événements',
+            'header.forum': 'Forum',
+            'header.complaints': 'Réclamations',
+            'header.profileSettings': 'Paramètres du profil',
+            'header.language': 'Langue',
+            'header.appearance': 'Apparence',
+            'header.themeLight': 'Clair',
+            'header.themeDark': 'Sombre',
+            'header.logout': 'Déconnexion',
+            'header.switchLanguageTitle': 'Changer de langue',
+            'header.toggleThemeTitle': 'Changer le mode d’affichage'
+        }
+    };
+
+    window.cre8TranslationQueue = window.cre8TranslationQueue || [];
+    window.cre8TranslationQueue.push(headerTranslations);
+
+    function registerHeaderTranslations() {
+        if (typeof window.cre8RegisterTranslations === 'function') {
+            window.cre8RegisterTranslations(headerTranslations);
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', registerHeaderTranslations);
+    } else {
+        registerHeaderTranslations();
+    }
+})();
+</script>
 
 <script>
 (function () {
@@ -341,9 +403,12 @@ if (!function_exists('cre8_notification_group_class')) {
         setLang(current === 'en' ? 'fr' : 'en');
     });
 
-    document.addEventListener('cre8:languagechange', function (event) {
+    function handleLanguageChange(event) {
         updateProfileLanguageState(event.detail && event.detail.lang);
-    });
+    }
+
+    document.addEventListener('cre8:languagechange', handleLanguageChange);
+    window.addEventListener('cre8:languagechange', handleLanguageChange);
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () { updateProfileLanguageState(); });

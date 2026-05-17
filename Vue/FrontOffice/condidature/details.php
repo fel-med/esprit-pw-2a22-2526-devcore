@@ -260,16 +260,16 @@ function renderCreatorPlanFields(array $form, $suffix, $messageMode = 'accept')
     ?>
     <section class="creator-modal-section">
         <div class="creator-modal-section-head">
-            <strong>Availability and delivery</strong>
-            <span>Share when you can start and how long the delivery should take.</span>
+            <strong data-i18n="cand.availabilityDelivery">Availability and delivery</strong>
+            <span data-i18n="cand.availabilityDeliveryCopy">Share when you can start and how long the delivery should take.</span>
         </div>
         <div class="response-modal-field-grid">
             <div>
-                <label for="dateDisponibilite<?php echo htmlspecialchars($suffix); ?>" class="form-label fw-semibold">Availability start date</label>
+                <label for="dateDisponibilite<?php echo htmlspecialchars($suffix); ?>" class="form-label fw-semibold" data-i18n="cand.availabilityStart">Availability start date</label>
                 <input type="date" class="form-control" id="dateDisponibilite<?php echo htmlspecialchars($suffix); ?>" name="dateDisponibilite" data-cre8pilot-field="dateDisponibilite" value="<?php echo formFieldValue($form, 'dateDisponibilite'); ?>">
             </div>
             <div>
-                <label for="delaiPropose<?php echo htmlspecialchars($suffix); ?>" class="form-label fw-semibold"><?php echo $isNegotiation ? 'Proposed delay' : 'Delivery delay'; ?></label>
+                <label for="delaiPropose<?php echo htmlspecialchars($suffix); ?>" class="form-label fw-semibold" data-i18n="<?php echo $isNegotiation ? 'cand.proposedDelay' : 'cand.deliveryDelay'; ?>"><?php echo $isNegotiation ? 'Proposed delay' : 'Delivery delay'; ?></label>
                 <input type="number" class="form-control" id="delaiPropose<?php echo htmlspecialchars($suffix); ?>" name="delaiPropose" min="1" step="1" data-cre8pilot-field="delaiPropose" value="<?php echo formFieldValue($form, 'delaiPropose'); ?>">
             </div>
         </div>
@@ -277,26 +277,26 @@ function renderCreatorPlanFields(array $form, $suffix, $messageMode = 'accept')
 
     <section class="creator-modal-section">
         <div class="creator-modal-section-head">
-            <strong><?php echo $isNegotiation ? 'Negotiation message' : 'Creator message'; ?></strong>
-            <span><?php echo $isNegotiation ? 'Explain the adjustment you want to propose.' : 'Add the short context the brand should read first.'; ?></span>
+            <strong data-i18n="<?php echo $isNegotiation ? 'cand.negotiationMessage' : 'cand.creatorMessage'; ?>"><?php echo $isNegotiation ? 'Negotiation message' : 'Creator message'; ?></strong>
+            <span data-i18n="<?php echo $isNegotiation ? 'cand.adjustmentExplain' : 'cand.shortContextFirst'; ?>"><?php echo $isNegotiation ? 'Explain the adjustment you want to propose.' : 'Add the short context the brand should read first.'; ?></span>
         </div>
-        <label for="messageMotivation<?php echo htmlspecialchars($suffix); ?>" class="form-label fw-semibold"><?php echo $isNegotiation ? 'Negotiation message' : 'Creator message / motivation'; ?></label>
+        <label for="messageMotivation<?php echo htmlspecialchars($suffix); ?>" class="form-label fw-semibold" data-i18n="<?php echo $isNegotiation ? 'cand.negotiationMessage' : 'cand.messageMotivation'; ?>"><?php echo $isNegotiation ? 'Negotiation message' : 'Creator message / motivation'; ?></label>
         <textarea class="form-control" id="messageMotivation<?php echo htmlspecialchars($suffix); ?>" name="messageMotivation" rows="4" data-cre8pilot-field="messageMotivation" placeholder="<?php echo $isNegotiation ? 'Explain the revised budget, timing, or collaboration context.' : 'Explain why this collaboration fits your content, audience, or execution approach.'; ?>"><?php echo formFieldValue($form, 'messageMotivation'); ?></textarea>
 
         <div class="mt-3">
-            <label for="conditionsCreateur<?php echo htmlspecialchars($suffix); ?>" class="form-label fw-semibold">Creator terms and conditions</label>
+            <label for="conditionsCreateur<?php echo htmlspecialchars($suffix); ?>" class="form-label fw-semibold" data-i18n="cand.creatorTerms">Creator terms and conditions</label>
             <textarea class="form-control" id="conditionsCreateur<?php echo htmlspecialchars($suffix); ?>" name="conditionsCreateur" rows="3" data-cre8pilot-field="conditionsCreateur" placeholder="Add optional creator-side conditions, process notes, or collaboration boundaries."><?php echo formFieldValue($form, 'conditionsCreateur'); ?></textarea>
         </div>
     </section>
 
     <section class="creator-modal-section">
         <div class="creator-modal-section-head">
-            <strong>Profile support</strong>
-            <span>Attach simple references the brand can review with your response.</span>
+            <strong data-i18n="cand.profileSupport">Profile support</strong>
+            <span data-i18n="cand.profileSupportCopy">Attach simple references the brand can review with your response.</span>
         </div>
         <div class="response-modal-field-grid">
             <div>
-                <label for="cvFile<?php echo htmlspecialchars($suffix); ?>" class="form-label fw-semibold">CV or reference file</label>
+                <label for="cvFile<?php echo htmlspecialchars($suffix); ?>" class="form-label fw-semibold" data-i18n="cand.cvFile">CV or reference file</label>
                 <input type="hidden" name="existingCvPath" value="<?php echo formFieldValue($form, 'cvPath'); ?>">
                 <input type="file" class="form-control" id="cvFile<?php echo htmlspecialchars($suffix); ?>" name="cvFile" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg">
                 <small class="upload-helper">PDF, DOC, DOCX, PNG, JPG, or JPEG. Max 5 MB.</small>
@@ -307,7 +307,7 @@ function renderCreatorPlanFields(array $form, $suffix, $messageMode = 'accept')
                 <?php endif; ?>
             </div>
             <div>
-                <label for="portfolioUrl<?php echo htmlspecialchars($suffix); ?>" class="form-label fw-semibold">Portfolio URL</label>
+                <label for="portfolioUrl<?php echo htmlspecialchars($suffix); ?>" class="form-label fw-semibold" data-i18n="cand.portfolio">Portfolio URL</label>
                 <input type="url" class="form-control" id="portfolioUrl<?php echo htmlspecialchars($suffix); ?>" name="portfolioUrl" data-cre8pilot-field="portfolioUrl" value="<?php echo formFieldValue($form, 'portfolioUrl'); ?>" placeholder="https://portfolio.example.com">
             </div>
         </div>
@@ -320,10 +320,10 @@ function renderCreatorBudgetField(array $form, $suffix)
     ?>
     <section class="creator-modal-section creator-modal-section-warning">
         <div class="creator-modal-section-head">
-            <strong>Negotiation terms</strong>
-            <span>Add the budget you want to propose for this collaboration.</span>
+            <strong data-i18n="cand.negotiationTerms">Negotiation terms</strong>
+            <span data-i18n="cand.negotiationTermsCopy">Add the budget you want to propose for this collaboration.</span>
         </div>
-        <label for="budgetPropose<?php echo htmlspecialchars($suffix); ?>" class="form-label fw-semibold">Proposed budget</label>
+        <label for="budgetPropose<?php echo htmlspecialchars($suffix); ?>" class="form-label fw-semibold" data-i18n="cand.proposedBudget">Proposed budget</label>
         <div class="input-group">
             <span class="input-group-text">EUR</span>
             <input type="number" class="form-control" id="budgetPropose<?php echo htmlspecialchars($suffix); ?>" name="budgetPropose" step="0.01" data-cre8pilot-field="budgetPropose" value="<?php echo formFieldValue($form, 'budgetPropose'); ?>">
@@ -340,38 +340,38 @@ function renderCampaignApplicationFields(array $form)
     ?>
     <section class="creator-modal-section">
         <div class="creator-modal-section-head">
-            <strong>Application message</strong>
-            <span>Explain why you want to join this campaign and what your content can bring to it.</span>
+            <strong data-i18n="cand.applicationMessage">Application message</strong>
+            <span data-i18n="cand.applicationMessageCopy">Explain why you want to join this campaign and what your content can bring to it.</span>
         </div>
-        <label for="campaignMessageMotivation" class="form-label fw-semibold">Why do you want to join this campaign?</label>
+        <label for="campaignMessageMotivation" class="form-label fw-semibold" data-i18n="cand.whyJoin">Why do you want to join this campaign?</label>
         <textarea class="form-control" id="campaignMessageMotivation" name="messageMotivation" rows="5" data-cre8pilot-field="messageMotivation" placeholder="Share your campaign fit, audience angle, and proposed execution."><?php echo formFieldValue($form, 'messageMotivation'); ?></textarea>
     </section>
 
     <section class="creator-modal-section">
         <div class="creator-modal-section-head">
-            <strong>Your proposed content idea</strong>
-            <span>Add the creator-side concept, terms, or production notes the brand should review.</span>
+            <strong data-i18n="cand.contentIdea">Your proposed content idea</strong>
+            <span data-i18n="cand.contentIdeaCopy">Add the creator-side concept, terms, or production notes the brand should review.</span>
         </div>
-        <label for="campaignConditionsCreateur" class="form-label fw-semibold">Creator terms</label>
+        <label for="campaignConditionsCreateur" class="form-label fw-semibold" data-i18n="cand.creatorTermsShort">Creator terms</label>
         <textarea class="form-control" id="campaignConditionsCreateur" name="conditionsCreateur" rows="4" data-cre8pilot-field="conditionsCreateur" placeholder="Describe your content idea, creator terms, usage boundaries, or production process."><?php echo formFieldValue($form, 'conditionsCreateur'); ?></textarea>
     </section>
 
     <section class="creator-modal-section">
         <div class="creator-modal-section-head">
-            <strong>Availability and proposal</strong>
-            <span>Share your timeline and budget for this campaign application.</span>
+            <strong data-i18n="cand.availabilityProposal">Availability and proposal</strong>
+            <span data-i18n="cand.timelineBudgetCampaign">Share your timeline and budget for this campaign application.</span>
         </div>
         <div class="response-modal-field-grid">
             <div>
-                <label for="campaignDateDisponibilite" class="form-label fw-semibold">Availability date</label>
+                <label for="campaignDateDisponibilite" class="form-label fw-semibold" data-i18n="cand.availabilityDate">Availability date</label>
                 <input type="date" class="form-control" id="campaignDateDisponibilite" name="dateDisponibilite" data-cre8pilot-field="dateDisponibilite" value="<?php echo formFieldValue($form, 'dateDisponibilite'); ?>">
             </div>
             <div>
-                <label for="campaignDelaiPropose" class="form-label fw-semibold">Estimated delivery delay</label>
+                <label for="campaignDelaiPropose" class="form-label fw-semibold" data-i18n="cand.estimatedDelay">Estimated delivery delay</label>
                 <input type="number" class="form-control" id="campaignDelaiPropose" name="delaiPropose" min="1" step="1" data-cre8pilot-field="delaiPropose" value="<?php echo formFieldValue($form, 'delaiPropose'); ?>">
             </div>
             <div>
-                <label for="campaignBudgetPropose" class="form-label fw-semibold">Proposed budget</label>
+                <label for="campaignBudgetPropose" class="form-label fw-semibold" data-i18n="cand.proposedBudget">Proposed budget</label>
                 <div class="input-group">
                     <span class="input-group-text">EUR</span>
                     <input type="number" class="form-control" id="campaignBudgetPropose" name="budgetPropose" step="0.01" data-cre8pilot-field="budgetPropose" value="<?php echo formFieldValue($form, 'budgetPropose'); ?>">
@@ -382,12 +382,12 @@ function renderCampaignApplicationFields(array $form)
 
     <section class="creator-modal-section">
         <div class="creator-modal-section-head">
-            <strong>CV / profile support upload</strong>
-            <span>Attach references and add a portfolio link for brand review.</span>
+            <strong data-i18n="cand.supportUpload">CV / profile support upload</strong>
+            <span data-i18n="cand.attachReferencesPortfolio">Attach references and add a portfolio link for brand review.</span>
         </div>
         <div class="response-modal-field-grid">
             <div>
-                <label for="campaignCvFile" class="form-label fw-semibold">CV or profile support file</label>
+                <label for="campaignCvFile" class="form-label fw-semibold" data-i18n="cand.cvProfileSupportFile">CV or profile support file</label>
                 <input type="hidden" name="existingCvPath" value="<?php echo formFieldValue($form, 'cvPath'); ?>">
                 <input type="file" class="form-control" id="campaignCvFile" name="cvFile" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg">
                 <small class="upload-helper">PDF, DOC, DOCX, PNG, JPG, or JPEG. Max 5 MB.</small>
@@ -398,7 +398,7 @@ function renderCampaignApplicationFields(array $form)
                 <?php endif; ?>
             </div>
             <div>
-                <label for="campaignPortfolioUrl" class="form-label fw-semibold">Portfolio URL</label>
+                <label for="campaignPortfolioUrl" class="form-label fw-semibold" data-i18n="cand.portfolio">Portfolio URL</label>
                 <input type="url" class="form-control" id="campaignPortfolioUrl" name="portfolioUrl" data-cre8pilot-field="portfolioUrl" value="<?php echo formFieldValue($form, 'portfolioUrl'); ?>" placeholder="https://portfolio.example.com">
             </div>
         </div>
@@ -411,14 +411,14 @@ function renderCreatorDeclineFields(array $form, $suffix, $isFinal = false)
     ?>
     <section class="creator-modal-section creator-modal-section-danger">
         <div class="creator-modal-section-head">
-            <strong><?php echo $isFinal ? 'Withdrawal context' : 'Decline context'; ?></strong>
-            <span><?php echo $isFinal ? 'Leave a final note if you want to explain why the latest terms do not work.' : 'A short reason helps the brand understand your decision.'; ?></span>
+            <strong data-i18n="<?php echo $isFinal ? 'cand.withdrawalContext' : 'cand.declineContext'; ?>"><?php echo $isFinal ? 'Withdrawal context' : 'Decline context'; ?></strong>
+            <span data-i18n="<?php echo $isFinal ? 'cand.finalNoteLatestTerms' : 'cand.shortReasonDecision'; ?>"><?php echo $isFinal ? 'Leave a final note if you want to explain why the latest terms do not work.' : 'A short reason helps the brand understand your decision.'; ?></span>
         </div>
-        <label for="motifRefus<?php echo htmlspecialchars($suffix); ?>" class="form-label fw-semibold">Refusal reason</label>
+        <label for="motifRefus<?php echo htmlspecialchars($suffix); ?>" class="form-label fw-semibold" data-i18n="cand.refusalReason">Refusal reason</label>
         <textarea class="form-control" id="motifRefus<?php echo htmlspecialchars($suffix); ?>" name="motifRefus" rows="4" data-cre8pilot-field="motifRefus" placeholder="Explain why you are declining this invitation."><?php echo formFieldValue($form, 'motifRefus'); ?></textarea>
 
         <div class="mt-3">
-            <label for="messageMotivation<?php echo htmlspecialchars($suffix); ?>" class="form-label fw-semibold">Optional short note</label>
+            <label for="messageMotivation<?php echo htmlspecialchars($suffix); ?>" class="form-label fw-semibold" data-i18n="cand.optionalShortNote">Optional short note</label>
             <textarea class="form-control" id="messageMotivation<?php echo htmlspecialchars($suffix); ?>" name="messageMotivation" rows="3" data-cre8pilot-field="messageMotivation" placeholder="Add a short final note if you want to keep extra context."><?php echo formFieldValue($form, 'messageMotivation'); ?></textarea>
         </div>
     </section>
@@ -619,6 +619,29 @@ if (!empty($errors) && !$lockedForCreator) {
 <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
 <link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
+<style>
+/* Cre8 safety: hide stale page-level notification widgets only.
+   The real notification bell must stay inside the shared .front-nav header. */
+body > .notification-widget,
+body > .notification-widget-front,
+main .notification-widget,
+main .notification-widget-front,
+.offre-page-shell .notification-widget,
+.offre-page-shell .notification-widget-front,
+.module-hero .notification-widget,
+.module-hero .notification-widget-front {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+.front-nav .notification-widget,
+.front-nav .notification-widget-front {
+    display: inline-flex !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+</style>
 </head>
 <body>
     <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
@@ -685,11 +708,11 @@ if (!empty($errors) && !$lockedForCreator) {
                 <div class="invitation-grid">
                     <div class="response-grid">
                         <section class="section-card">
-                            <h2 class="section-title"><?php echo $isOfferFlow ? 'Offer response context' : 'Campaign application context'; ?></h2>
-                            <p class="section-subtitle">Keep the source details visible while you shape the candidature response.</p>
+                            <h2 class="section-title" data-i18n="<?php echo $isOfferFlow ? 'cand.offerResponseContext' : 'cand.campaignApplicationContext'; ?>"><?php echo $isOfferFlow ? 'Offer response context' : 'Campaign application context'; ?></h2>
+                            <p class="section-subtitle" data-i18n="cand.sourceDetailsVisible">Keep the source details visible while you shape the candidature response.</p>
                             <div class="offer-detail-list mt-4">
                                 <div class="offer-detail-item">
-                                    <strong>Brand</strong>
+                                    <strong data-i18n="cand.brand">Brand</strong>
                                     <div style="display:flex;align-items:center;gap:.65rem;">
                                         <?php echo cre8_render_avatar($brand['id'] ?? 0, (string) ($brand['nom'] ?? 'Brand'), 'cre8-avatar-md'); ?>
                                         <div>
@@ -699,15 +722,15 @@ if (!empty($errors) && !$lockedForCreator) {
                                     </div>
                                 </div>
                                 <div class="offer-detail-item">
-                                    <strong><?php echo $isOfferFlow ? 'Offer objective' : 'Campaign brief'; ?></strong>
+                                    <strong data-i18n="<?php echo $isOfferFlow ? 'cand.offerObjective' : 'cand.campaignBrief'; ?>"><?php echo $isOfferFlow ? 'Offer objective' : 'Campaign brief'; ?></strong>
                                     <span><?php echo htmlspecialchars(blankToFallback($source['objective'] ?? '', 'No objective was added to this source.')); ?></span>
                                 </div>
                                 <div class="offer-detail-item">
-                                    <strong><?php echo $isOfferFlow ? 'Publication date' : 'Campaign start date'; ?></strong>
+                                    <strong data-i18n="<?php echo $isOfferFlow ? 'cand.publicationDate' : 'cand.campaignStart'; ?>"><?php echo $isOfferFlow ? 'Publication date' : 'Campaign start date'; ?></strong>
                                     <span><?php echo htmlspecialchars(formatShortDate($source['datePublication'] ?? null)); ?></span>
                                 </div>
                                 <div class="offer-detail-item">
-                                    <strong><?php echo $isOfferFlow ? 'Response window' : 'Campaign end date'; ?></strong>
+                                    <strong data-i18n="<?php echo $isOfferFlow ? 'cand.responseWindow' : 'cand.campaignEnd'; ?>"><?php echo $isOfferFlow ? 'Response window' : 'Campaign end date'; ?></strong>
                                     <span><?php echo htmlspecialchars(formatShortDate($source['dateLimite'] ?? null)); ?></span>
                                 </div>
                             </div>
@@ -749,7 +772,7 @@ if (!empty($errors) && !$lockedForCreator) {
                             <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
                                 <div>
                                     <h2 class="section-title"><?php echo htmlspecialchars($responseSummaryTitle); ?></h2>
-                                    <p class="section-subtitle">The structured response fields stay visible here so you can review what was sent with the candidature.</p>
+                                    <p class="section-subtitle" data-i18n="cand.structuredFieldsVisible">The structured response fields stay visible here so you can review what was sent with the candidature.</p>
                                 </div>
                                 <?php if ($condidature): ?>
                                     <span class="offer-chip"><?php echo htmlspecialchars($condidature->getResponseTypeLabel()); ?></span>
@@ -758,7 +781,7 @@ if (!empty($errors) && !$lockedForCreator) {
 
                             <div class="decision-note-grid mt-4">
                                 <section class="decision-note-card">
-                                    <strong><?php echo $displayResponseMode === 'decline' ? 'Refusal reason' : ($isCampaignFlow ? 'Application message' : 'Creator message'); ?></strong>
+                                    <strong data-i18n="<?php echo $displayResponseMode === 'decline' ? 'cand.refusalReason' : ($isCampaignFlow ? 'cand.applicationMessage' : 'cand.creatorMessage'); ?>"><?php echo $displayResponseMode === 'decline' ? 'Refusal reason' : ($isCampaignFlow ? 'Application message' : 'Creator message'); ?></strong>
                                     <p>
                                         <?php
                                         $primaryMessage = $displayResponseMode === 'decline'
@@ -769,7 +792,7 @@ if (!empty($errors) && !$lockedForCreator) {
                                     </p>
                                 </section>
                                 <section class="decision-note-card">
-                                    <strong><?php echo $displayResponseMode === 'decline' ? 'Optional note' : 'Creator terms'; ?></strong>
+                                    <strong data-i18n="<?php echo $displayResponseMode === 'decline' ? 'cand.optionalNote' : 'cand.creatorTermsShort'; ?>"><?php echo $displayResponseMode === 'decline' ? 'Optional note' : 'Creator terms'; ?></strong>
                                     <p>
                                         <?php
                                         $secondaryMessage = $displayResponseMode === 'decline'
@@ -784,35 +807,35 @@ if (!empty($errors) && !$lockedForCreator) {
                             <?php if ($displayResponseMode !== 'decline'): ?>
                                 <div class="decision-note-grid mt-4">
                                     <section class="decision-note-card">
-                                        <strong>Availability start date</strong>
+                                        <strong data-i18n="cand.availabilityStart">Availability start date</strong>
                                         <p><?php echo htmlspecialchars(formatShortDate($displayAvailability, 'Not shared yet')); ?></p>
                                     </section>
                                     <section class="decision-note-card">
-                                        <strong>Delivery plan</strong>
+                                        <strong data-i18n="cand.deliveryPlan">Delivery plan</strong>
                                         <p><?php echo htmlspecialchars(formatDelayLabel($displayDelay)); ?></p>
                                     </section>
                                 </div>
 
                                 <div class="decision-note-grid mt-4">
                                     <section class="decision-note-card">
-                                        <strong>CV reference</strong>
+                                        <strong data-i18n="cand.cvReference">CV reference</strong>
                                         <p>
                                             <?php if (trim((string) $displayCvPath) !== ''): ?>
                                                 <a class="inline-link" href="<?php echo htmlspecialchars(candidatureStoredFileHref($displayCvPath)); ?>" target="_blank" rel="noopener noreferrer">
                                                     <?php echo htmlspecialchars(candidatureStoredFileName($displayCvPath) ?: $displayCvPath); ?>
                                                 </a>
                                             <?php else: ?>
-                                                No CV/reference file was attached.
+                                                <span data-i18n="cand.noCvReference">No CV/reference file was attached.</span>
                                             <?php endif; ?>
                                         </p>
                                     </section>
                                     <section class="decision-note-card">
-                                        <strong>Portfolio URL</strong>
+                                        <strong data-i18n="cand.portfolio">Portfolio URL</strong>
                                         <p>
                                             <?php if (trim((string) $displayPortfolio) !== ''): ?>
                                                 <a class="inline-link" href="<?php echo htmlspecialchars($displayPortfolio); ?>" target="_blank" rel="noopener noreferrer"><?php echo htmlspecialchars($displayPortfolio); ?></a>
                                             <?php else: ?>
-                                                No portfolio URL was attached.
+                                                <span data-i18n="cand.noPortfolioUrl">No portfolio URL was attached.</span>
                                             <?php endif; ?>
                                         </p>
                                     </section>
@@ -823,10 +846,10 @@ if (!empty($errors) && !$lockedForCreator) {
                         <section class="section-card">
                             <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
                                 <div>
-                                    <h2 class="section-title">Negotiation history</h2>
-                                    <p class="section-subtitle">Every negotiation message stays attached to this candidature so you can follow the full exchange in order.</p>
+                                    <h2 class="section-title" data-i18n="cand.negotiationHistory">Negotiation history</h2>
+                                    <p class="section-subtitle" data-i18n="cand.negotiationHistoryCopy">Every negotiation message stays attached to this candidature so you can follow the full exchange in order.</p>
                                 </div>
-                                <span class="offer-chip"><?php echo (int) ($negotiation['count'] ?? 0); ?> message<?php echo (int) ($negotiation['count'] ?? 0) === 1 ? '' : 's'; ?></span>
+                                <span class="offer-chip"><?php echo (int) ($negotiation['count'] ?? 0); ?> <span data-i18n="<?php echo (int) ($negotiation['count'] ?? 0) === 1 ? 'cand.messageSingular' : 'cand.messagePlural'; ?>"><?php echo (int) ($negotiation['count'] ?? 0) === 1 ? 'message' : 'messages'; ?></span></span>
                             </div>
 
                             <?php if (!empty($negotiation['history'])): ?>
@@ -861,7 +884,7 @@ if (!empty($errors) && !$lockedForCreator) {
                                                         <span class="offer-chip"><?php echo htmlspecialchars(formatMoney($entry['budgetPropose'])); ?></span>
                                                     <?php endif; ?>
                                                     <?php if ($entry['delaiPropose'] !== null): ?>
-                                                        <span class="offer-chip">Timeline: <?php echo (int) $entry['delaiPropose']; ?> days</span>
+                                                        <span class="offer-chip"><span data-i18n="cand.timeline">Timeline</span>: <?php echo (int) $entry['delaiPropose']; ?> <span data-i18n="cand.days">days</span></span>
                                                     <?php endif; ?>
                                                 </div>
                                             <?php endif; ?>
@@ -915,8 +938,8 @@ if (!empty($errors) && !$lockedForCreator) {
                             <section class="composer-card brand-action-card creator-response-action-card">
                                 <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
                                     <div>
-                                        <h2 class="section-title"><?php echo $isOfferFlow ? 'Creator response actions' : 'Response actions'; ?></h2>
-                                        <p class="section-subtitle">
+                                        <h2 class="section-title" data-i18n="<?php echo $isOfferFlow ? 'cand.creatorResponseActions' : 'cand.responseActions'; ?>"><?php echo $isOfferFlow ? 'Creator response actions' : 'Response actions'; ?></h2>
+                                        <p class="section-subtitle" data-i18n="<?php echo $negotiationOnly ? 'cand.finalAnswerOrCounter' : 'cand.chooseResponsePath'; ?>">
                                             <?php echo htmlspecialchars($negotiationOnly
                                                 ? 'Choose a final answer or send a real counter-proposal from a focused action window.'
                                                 : 'Choose the response path first. Each action opens a focused window with only the fields needed for that decision.'); ?>
@@ -925,13 +948,13 @@ if (!empty($errors) && !$lockedForCreator) {
                                     <?php if ($condidature && $condidature->isDraft()): ?>
                                         <span class="candidature-badge status-draft"><?php echo htmlspecialchars($condidature->getDisplayStatusLabel()); ?></span>
                                     <?php elseif ($negotiationOnly): ?>
-                                        <span class="candidature-badge status-negotiation">Negotiation open</span>
+                                        <span class="candidature-badge status-negotiation" data-i18n="cand.negotiationOpen">Negotiation open</span>
                                     <?php endif; ?>
                                 </div>
 
                                 <?php if ($negotiationOnly && $latestBrandMessage !== ''): ?>
                                     <div class="response-callout response-callout-review mt-4">
-                                        <strong>Latest brand negotiation update</strong>
+                                        <strong data-i18n="cand.latestBrandNegotiationUpdate">Latest brand negotiation update</strong>
                                         <div class="mt-2 candidature-signal-copy"><?php echo htmlspecialchars($latestBrandMessage); ?></div>
                                         <div class="candidature-inline-meta mt-2">
                                             <?php if (!empty($latestBrandSignal['dateMessage'])): ?>
@@ -941,7 +964,7 @@ if (!empty($errors) && !$lockedForCreator) {
                                                 <span class="offer-chip"><?php echo htmlspecialchars(formatMoney($latestBrandSignal['budgetPropose'])); ?></span>
                                             <?php endif; ?>
                                             <?php if ($latestBrandSignal['delaiPropose'] !== null): ?>
-                                                <span class="offer-chip">Timeline: <?php echo (int) $latestBrandSignal['delaiPropose']; ?> days</span>
+                                                <span class="offer-chip"><span data-i18n="cand.timeline">Timeline</span>: <?php echo (int) $latestBrandSignal['delaiPropose']; ?> <span data-i18n="cand.days">days</span></span>
                                             <?php endif; ?>
                                         </div>
                                     </div>
@@ -951,35 +974,35 @@ if (!empty($errors) && !$lockedForCreator) {
                                     <?php if ($negotiationOnly): ?>
                                         <?php if ($creatorCanFinalizeNegotiation): ?>
                                             <button type="button" class="brand-action-launch brand-action-launch-accept" data-creator-response-modal-trigger="final_accept">
-                                                <strong>Accept latest terms</strong>
-                                                <span>End the negotiation cleanly without adding a duplicate message.</span>
+                                                <strong data-i18n="cand.acceptLatestTerms">Accept latest terms</strong>
+                                                <span data-i18n="cand.endNegotiationCleanly">End the negotiation cleanly without adding a duplicate message.</span>
                                             </button>
                                         <?php endif; ?>
                                         <button type="button" class="brand-action-launch brand-action-launch-refuse" data-creator-response-modal-trigger="decline">
-                                            <strong>Decline</strong>
-                                            <span>Withdraw from the current negotiation and keep the history readable.</span>
+                                            <strong data-i18n="cand.decline">Decline</strong>
+                                            <span data-i18n="cand.withdrawNegotiationReadable">Withdraw from the current negotiation and keep the history readable.</span>
                                         </button>
                                         <button type="button" class="brand-action-launch brand-action-launch-negotiate" data-creator-response-modal-trigger="negotiate">
-                                            <strong>Negotiate</strong>
-                                            <span>Send a real adjustment to the message, budget, or timeline.</span>
+                                            <strong data-i18n="cand.negotiate">Negotiate</strong>
+                                            <span data-i18n="cand.realAdjustment">Send a real adjustment to the message, budget, or timeline.</span>
                                         </button>
                                     <?php else: ?>
                                         <button type="button" class="brand-action-launch brand-action-launch-accept" data-creator-response-modal-trigger="accept">
-                                            <strong>Accept</strong>
-                                            <span>Send your availability, delivery plan, message, and profile references.</span>
+                                            <strong data-i18n="cand.accept">Accept</strong>
+                                            <span data-i18n="cand.acceptCreatorResponseCopy">Send your availability, delivery plan, message, and profile references.</span>
                                         </button>
                                         <button type="button" class="brand-action-launch brand-action-launch-refuse" data-creator-response-modal-trigger="decline">
-                                            <strong>Decline</strong>
-                                            <span>Send a clean refusal reason and keep the invitation in your history.</span>
+                                            <strong data-i18n="cand.decline">Decline</strong>
+                                            <span data-i18n="cand.cleanRefusalCopy">Send a clean refusal reason and keep the invitation in your history.</span>
                                         </button>
                                         <button type="button" class="brand-action-launch brand-action-launch-negotiate" data-creator-response-modal-trigger="negotiate">
-                                            <strong>Negotiate</strong>
-                                            <span>Propose revised budget, timing, or collaboration context.</span>
+                                            <strong data-i18n="cand.negotiate">Negotiate</strong>
+                                            <span data-i18n="cand.proposeRevisedTerms">Propose revised budget, timing, or collaboration context.</span>
                                         </button>
                                     <?php endif; ?>
                                 </div>
 
-                                <p class="composer-context-note mt-4">
+                                <p class="composer-context-note mt-4" data-i18n="<?php echo $negotiationOnly ? 'cand.realChangesOnly' : 'cand.saveDraftLater'; ?>">
                                     <?php echo $negotiationOnly
                                         ? 'Negotiation messages should only be used for real changes. If the latest terms work, accept them as a final decision.'
                                         : 'You can save a draft inside any action window if you want to finish the response later.'; ?>
@@ -1023,20 +1046,20 @@ if (!empty($errors) && !$lockedForCreator) {
                                             <form method="post" action="<?php echo htmlspecialchars($composerAction); ?>" enctype="multipart/form-data" class="response-modal-card creator-response-modal-card" data-modal-variant="accept" role="dialog" aria-modal="true" aria-labelledby="creatorFinalAcceptModalTitle">
                                                 <input type="hidden" name="responseMode" value="accept">
                                                 <div class="response-modal-header">
-                                                    <span class="response-modal-kicker">Final decision</span>
-                                                    <h2 id="creatorFinalAcceptModalTitle">Accept latest terms?</h2>
-                                                    <p class="response-modal-subtitle">Close the negotiation as accepted without creating another duplicate proposal message.</p>
+                                                    <span class="response-modal-kicker" data-i18n="cand.finalDecision">Final decision</span>
+                                                    <h2 id="creatorFinalAcceptModalTitle" data-i18n="cand.acceptLatestTermsQuestion">Accept latest terms?</h2>
+                                                    <p class="response-modal-subtitle" data-i18n="cand.closeAcceptedNoDuplicate">Close the negotiation as accepted without creating another duplicate proposal message.</p>
                                                 </div>
                                                 <div class="response-modal-body">
                                                     <div class="response-modal-preview">
-                                                        <span class="response-modal-preview-label">Latest brand terms</span>
+                                                        <span class="response-modal-preview-label" data-i18n="cand.latestBrandTerms">Latest brand terms</span>
                                                         <strong><?php echo htmlspecialchars($latestBrandMessage !== '' ? $latestBrandMessage : 'The latest brand terms are ready for your final answer.'); ?></strong>
-                                                        <span><?php echo htmlspecialchars(formatMoney($latestBrandSignal['budgetPropose'] ?? $displayBudget)); ?> | Timeline: <?php echo (int) ($latestBrandSignal['delaiPropose'] ?? $displayDelay); ?> days</span>
+                                                        <span><?php echo htmlspecialchars(formatMoney($latestBrandSignal['budgetPropose'] ?? $displayBudget)); ?> | <span data-i18n="cand.timeline">Timeline</span>: <?php echo (int) ($latestBrandSignal['delaiPropose'] ?? $displayDelay); ?> <span data-i18n="cand.days">days</span></span>
                                                     </div>
-                                                    <p class="response-modal-copy">This will update the candidature status and decision date. It will not add another negotiation history message.</p>
+                                                    <p class="response-modal-copy" data-i18n="cand.finalAcceptNoHistoryMessage">This will update the candidature status and decision date. It will not add another negotiation history message.</p>
                                                     <div class="response-modal-actions">
-                                                        <button type="button" class="response-modal-secondary" data-creator-response-modal-close>Keep reviewing</button>
-                                                        <button type="submit" name="submitIntent" value="final_accept" class="response-modal-primary">Accept latest terms</button>
+                                                        <button type="button" class="response-modal-secondary" data-creator-response-modal-close data-i18n="cand.keepReviewing">Keep reviewing</button>
+                                                        <button type="submit" name="submitIntent" value="final_accept" class="response-modal-primary" data-i18n="cand.acceptLatestTerms">Accept latest terms</button>
                                                     </div>
                                                 </div>
                                             </form>
@@ -1047,24 +1070,24 @@ if (!empty($errors) && !$lockedForCreator) {
                                         <form method="post" action="<?php echo htmlspecialchars($composerAction); ?>" enctype="multipart/form-data" class="response-modal-card creator-response-modal-card" data-modal-variant="refuse" role="dialog" aria-modal="true" aria-labelledby="creatorDeclineModalTitle">
                                             <input type="hidden" name="responseMode" value="decline">
                                             <div class="response-modal-header">
-                                                <span class="response-modal-kicker"><?php echo $negotiationOnly ? 'Withdrawal' : 'Decline'; ?></span>
-                                                <h2 id="creatorDeclineModalTitle"><?php echo $negotiationOnly ? 'Decline latest terms?' : 'Decline this offer?'; ?></h2>
-                                                <p class="response-modal-subtitle"><?php echo $negotiationOnly ? 'Close your side of the negotiation while keeping the saved history visible.' : 'Send a clean refusal response without leaving this page.'; ?></p>
+                                                <span class="response-modal-kicker" data-i18n="<?php echo $negotiationOnly ? 'cand.withdrawal' : 'cand.decline'; ?>"><?php echo $negotiationOnly ? 'Withdrawal' : 'Decline'; ?></span>
+                                                <h2 id="creatorDeclineModalTitle" data-i18n="<?php echo $negotiationOnly ? 'cand.declineLatestTermsQuestion' : 'cand.declineOfferQuestion'; ?>"><?php echo $negotiationOnly ? 'Decline latest terms?' : 'Decline this offer?'; ?></h2>
+                                                <p class="response-modal-subtitle" data-i18n="<?php echo $negotiationOnly ? 'cand.closeNegotiationHistoryVisible' : 'cand.cleanRefusalNoLeave'; ?>"><?php echo $negotiationOnly ? 'Close your side of the negotiation while keeping the saved history visible.' : 'Send a clean refusal response without leaving this page.'; ?></p>
                                             </div>
                                             <div class="response-modal-body">
                                                 <div class="response-modal-preview">
-                                                    <span class="response-modal-preview-label">Selected offer</span>
+                                                    <span class="response-modal-preview-label" data-i18n="cand.selectedOffer">Selected offer</span>
                                                     <strong><?php echo htmlspecialchars($source['title'] ?? 'Candidature source'); ?></strong>
                                                     <span><?php echo htmlspecialchars($brand['nom'] ?? 'Unknown brand'); ?></span>
                                                 </div>
                                                 <?php renderCreatorDeclineFields($form, 'Decline', $negotiationOnly); ?>
                                                 <div class="response-modal-actions">
-                                                    <button type="button" class="response-modal-secondary" data-creator-response-modal-close>Keep reviewing</button>
+                                                    <button type="button" class="response-modal-secondary" data-creator-response-modal-close data-i18n="cand.keepReviewing">Keep reviewing</button>
                                                     <?php if (!$negotiationOnly): ?>
-                                                        <button type="submit" name="submitIntent" value="draft" class="response-modal-secondary">Save as draft</button>
-                                                        <button type="submit" name="submitIntent" value="send" class="response-modal-primary">Send decline</button>
+                                                        <button type="submit" name="submitIntent" value="draft" class="response-modal-secondary" data-i18n="cand.saveDraft">Save as draft</button>
+                                                        <button type="submit" name="submitIntent" value="send" class="response-modal-primary" data-i18n="cand.sendDecline">Send decline</button>
                                                     <?php else: ?>
-                                                        <button type="submit" name="submitIntent" value="final_decline" class="response-modal-primary">Decline latest terms</button>
+                                                        <button type="submit" name="submitIntent" value="final_decline" class="response-modal-primary" data-i18n="cand.declineLatestTerms">Decline latest terms</button>
                                                     <?php endif; ?>
                                                 </div>
                                             </div>
@@ -1088,9 +1111,9 @@ if (!empty($errors) && !$lockedForCreator) {
                                         >
                                             <input type="hidden" name="responseMode" value="negotiate">
                                             <div class="response-modal-header">
-                                                <span class="response-modal-kicker">Negotiation</span>
-                                                <h2 id="creatorNegotiateModalTitle"><?php echo $creatorIsLatestNegotiationSender ? 'Update your proposal' : ($negotiationOnly ? 'Send a counter-proposal' : 'Negotiate this offer'); ?></h2>
-                                                <p class="response-modal-subtitle"><?php echo $creatorIsLatestNegotiationSender ? 'You sent the latest negotiation step, so edit that proposal instead of adding a duplicate message.' : 'Use this only when you are proposing a real change to the current terms.'; ?></p>
+                                                <span class="response-modal-kicker" data-i18n="cand.negotiation">Negotiation</span>
+                                                <h2 id="creatorNegotiateModalTitle" data-i18n="<?php echo $creatorIsLatestNegotiationSender ? 'cand.updateYourProposal' : ($negotiationOnly ? 'cand.sendCounterProposal' : 'cand.negotiateThisOffer'); ?>"><?php echo $creatorIsLatestNegotiationSender ? 'Update your proposal' : ($negotiationOnly ? 'Send a counter-proposal' : 'Negotiate this offer'); ?></h2>
+                                                <p class="response-modal-subtitle" data-i18n="<?php echo $creatorIsLatestNegotiationSender ? 'cand.editLatestNoDuplicate' : 'cand.realChangeCurrentTerms'; ?>"><?php echo $creatorIsLatestNegotiationSender ? 'You sent the latest negotiation step, so edit that proposal instead of adding a duplicate message.' : 'Use this only when you are proposing a real change to the current terms.'; ?></p>
                                             </div>
                                             <div class="response-modal-body">
                                                 <?php if (!empty($errors) && $defaultCreatorModal === 'negotiate'): ?>
@@ -1109,34 +1132,34 @@ if (!empty($errors) && !$lockedForCreator) {
                                                     $creatorModalReferenceMessage = trim((string) ($creatorModalReference['message'] ?? ''));
                                                     ?>
                                                     <div class="response-modal-preview">
-                                                        <span class="response-modal-preview-label"><?php echo $creatorIsLatestNegotiationSender ? 'Your latest proposal' : 'Latest brand update'; ?></span>
+                                                        <span class="response-modal-preview-label" data-i18n="<?php echo $creatorIsLatestNegotiationSender ? 'cand.yourLatestProposal' : 'cand.latestBrandUpdate'; ?>"><?php echo $creatorIsLatestNegotiationSender ? 'Your latest proposal' : 'Latest brand update'; ?></span>
                                                         <strong><?php echo htmlspecialchars($creatorModalReferenceMessage !== '' ? $creatorModalReferenceMessage : 'No message body was added to this negotiation step.'); ?></strong>
                                                         <span><?php echo htmlspecialchars(formatDateTimeLabel($creatorModalReference['dateMessage'] ?? null)); ?></span>
                                                     </div>
                                                     <section class="creator-modal-section creator-modal-section-warning">
                                                         <div class="creator-modal-section-head">
-                                                            <strong><?php echo $creatorIsLatestNegotiationSender ? 'Latest proposal edit' : 'Counter-proposal'; ?></strong>
-                                                            <span><?php echo $creatorIsLatestNegotiationSender ? 'Change the message, budget, or timeline before updating your latest proposal.' : 'Change the message, budget, or timeline before sending another negotiation step.'; ?></span>
+                                                            <strong data-i18n="<?php echo $creatorIsLatestNegotiationSender ? 'cand.latestProposalEdit' : 'cand.counterProposal'; ?>"><?php echo $creatorIsLatestNegotiationSender ? 'Latest proposal edit' : 'Counter-proposal'; ?></strong>
+                                                            <span data-i18n="<?php echo $creatorIsLatestNegotiationSender ? 'cand.changeBeforeUpdate' : 'cand.changeBeforeAnotherStep'; ?>"><?php echo $creatorIsLatestNegotiationSender ? 'Change the message, budget, or timeline before updating your latest proposal.' : 'Change the message, budget, or timeline before sending another negotiation step.'; ?></span>
                                                         </div>
-                                                        <label for="messageMotivationNegotiationOnly" class="form-label fw-semibold">Negotiation message</label>
+                                                        <label for="messageMotivationNegotiationOnly" class="form-label fw-semibold" data-i18n="cand.negotiationMessage">Negotiation message</label>
                                                         <textarea class="form-control" id="messageMotivationNegotiationOnly" name="messageMotivation" rows="4" data-cre8pilot-field="messageNegociation" placeholder="Reply to the latest brand update and explain the new terms you want to propose."><?php echo formFieldValue($form, 'messageMotivation'); ?></textarea>
                                                         <div class="response-modal-field-grid mt-3">
                                                             <div>
-                                                                <label for="budgetProposeNegotiationOnly" class="form-label fw-semibold">Proposed budget</label>
+                                                                <label for="budgetProposeNegotiationOnly" class="form-label fw-semibold" data-i18n="cand.proposedBudget">Proposed budget</label>
                                                                 <div class="input-group">
                                                                     <span class="input-group-text">EUR</span>
                                                                     <input type="number" class="form-control" id="budgetProposeNegotiationOnly" name="budgetPropose" step="0.01" data-cre8pilot-field="budgetPropose" value="<?php echo formFieldValue($form, 'budgetPropose'); ?>">
                                                                 </div>
                                                             </div>
                                                             <div>
-                                                                <label for="delaiProposeNegotiationOnly" class="form-label fw-semibold">Proposed timeline</label>
+                                                                <label for="delaiProposeNegotiationOnly" class="form-label fw-semibold" data-i18n="cand.proposedTimeline">Proposed timeline</label>
                                                                 <input type="number" class="form-control" id="delaiProposeNegotiationOnly" name="delaiPropose" min="1" step="1" data-cre8pilot-field="delaiPropose" value="<?php echo formFieldValue($form, 'delaiPropose'); ?>">
                                                             </div>
                                                         </div>
                                                     </section>
                                                 <?php else: ?>
                                                     <div class="response-modal-preview">
-                                                        <span class="response-modal-preview-label">Selected offer</span>
+                                                        <span class="response-modal-preview-label" data-i18n="cand.selectedOffer">Selected offer</span>
                                                         <strong><?php echo htmlspecialchars($source['title'] ?? 'Candidature source'); ?></strong>
                                                         <span><?php echo htmlspecialchars($brand['nom'] ?? 'Unknown brand'); ?> | Current budget: <?php echo htmlspecialchars(formatMoney($source['budgetPropose'] ?? $displayBudget)); ?></span>
                                                     </div>
@@ -1144,11 +1167,11 @@ if (!empty($errors) && !$lockedForCreator) {
                                                     <?php renderCreatorBudgetField($form, 'Negotiate'); ?>
                                                 <?php endif; ?>
                                                 <div class="response-modal-actions">
-                                                    <button type="button" class="response-modal-secondary" data-creator-response-modal-close>Keep reviewing</button>
+                                                    <button type="button" class="response-modal-secondary" data-creator-response-modal-close data-i18n="cand.keepReviewing">Keep reviewing</button>
                                                     <?php if (!$negotiationOnly): ?>
-                                                        <button type="submit" name="submitIntent" value="draft" class="response-modal-secondary">Save as draft</button>
+                                                        <button type="submit" name="submitIntent" value="draft" class="response-modal-secondary" data-i18n="cand.saveDraft">Save as draft</button>
                                                     <?php endif; ?>
-                                                    <button type="submit" name="submitIntent" value="send" class="response-modal-primary response-modal-primary-negotiate"><?php echo $creatorIsLatestNegotiationSender ? 'Update proposal' : ($negotiationOnly ? 'Send counter-proposal' : 'Send negotiation'); ?></button>
+                                                    <button type="submit" name="submitIntent" value="send" class="response-modal-primary response-modal-primary-negotiate" data-i18n="<?php echo $creatorIsLatestNegotiationSender ? 'cand.updateProposal' : ($negotiationOnly ? 'cand.sendCounter' : 'cand.sendNegotiation'); ?>"><?php echo $creatorIsLatestNegotiationSender ? 'Update proposal' : ($negotiationOnly ? 'Send counter-proposal' : 'Send negotiation'); ?></button>
                                                 </div>
                                             </div>
                                         </form>
@@ -1410,6 +1433,423 @@ $cre8PilotContext = [
 ];
 require __DIR__ . '/cre8pilot_widget.php';
 ?>
+    <script>
+        (() => {
+            const translations = {
+                en: {
+                    'cand.unavailable': 'Candidature unavailable',
+                    'cand.backMine': 'Back to my candidatures',
+                    'cand.viewSourceOffer': 'View source offer',
+                    'cand.browseCampaigns': 'Browse campaign opportunities',
+                    'cand.offerInvitation': 'Offer invitation',
+                    'cand.campaignApplication': 'Campaign application',
+                    'cand.acceptanceResponse': 'Acceptance response',
+                    'cand.negotiationRequest': 'Negotiation request',
+                    'cand.declineResponse': 'Decline response',
+                    'cand.offerResponseContext': 'Offer response context',
+                    'cand.campaignApplicationContext': 'Campaign application context',
+                    'cand.sourceDetailsVisible': 'Keep the source details visible while you shape the candidature response.',
+                    'cand.responseContext': 'Response context',
+                    'cand.responseContextCopy': 'Keep the brand and source details visible while you prepare or review the candidature.',
+                    'cand.brand': 'Brand',
+                    'cand.unknownBrand': 'Unknown brand',
+                    'cand.offerObjective': 'Offer objective',
+                    'cand.campaignBrief': 'Campaign brief',
+                    'cand.publicationDate': 'Publication date',
+                    'cand.responseWindow': 'Response window',
+                    'cand.campaignDescription': 'Campaign description',
+                    'cand.sourcePublished': 'Source published',
+                    'cand.sourceDeadline': 'Source deadline',
+                    'cand.campaignStart': 'Campaign start date',
+                    'cand.campaignEnd': 'Campaign end date',
+                    'cand.yourResponse': 'Your response',
+                    'cand.currentStatus': 'Current status',
+                    'cand.responseType': 'Response type',
+                    'cand.budgetReply': 'Budget reply',
+                    'cand.timelineReply': 'Timeline reply',
+                    'cand.availability': 'Availability',
+                    'cand.creatorMessage': 'Creator message',
+                    'cand.creatorTerms': 'Creator terms and conditions',
+                    'cand.creatorTermsShort': 'Creator terms',
+                    'cand.structuredFieldsVisible': 'The structured response fields stay visible here so you can review what was sent with the candidature.',
+                    'cand.refusalReason': 'Refusal reason',
+                    'cand.optionalNote': 'Optional note',
+                    'cand.deliveryPlan': 'Delivery plan',
+                    'cand.cvReference': 'CV reference',
+                    'cand.noCvReference': 'No CV/reference file was attached.',
+                    'cand.noPortfolioUrl': 'No portfolio URL was attached.',
+                    'cand.portfolio': 'Portfolio URL',
+                    'cand.cvFile': 'CV or reference file',
+                    'cand.noFile': 'No file attached yet',
+                    'cand.noPortfolio': 'No portfolio link attached yet',
+                    'cand.negotiationHistory': 'Negotiation history',
+                    'cand.negotiationHistoryCopy': 'Every negotiation message stays attached to this candidature so you can follow the full exchange in order.',
+                    'cand.negotiationThread': 'Negotiation thread',
+                    'cand.latestBrandUpdate': 'Latest brand update',
+                    'cand.latestBrandNegotiationUpdate': 'Latest brand negotiation update',
+                    'cand.yourLatestProposal': 'Your latest proposal',
+                    'cand.latestProposalEdit': 'Latest proposal edit',
+                    'cand.counterProposal': 'Counter-proposal',
+                    'cand.selectedOffer': 'Selected offer',
+                    'cand.candidatureSource': 'Candidature source',
+                    'cand.availabilityDelivery': 'Availability and delivery',
+                    'cand.availabilityDeliveryCopy': 'Share when you can start and how long the delivery should take.',
+                    'cand.availabilityStart': 'Availability start date',
+                    'cand.deliveryDelay': 'Delivery delay',
+                    'cand.proposedDelay': 'Proposed delay',
+                    'cand.proposedTimeline': 'Proposed timeline',
+                    'cand.negotiationMessage': 'Negotiation message',
+                    'cand.adjustmentExplain': 'Explain the adjustment you want to propose.',
+                    'cand.shortContextFirst': 'Add the short context the brand should read first.',
+                    'cand.messageMotivation': 'Creator message / motivation',
+                    'cand.profileSupport': 'Profile support',
+                    'cand.profileSupportCopy': 'Attach simple references the brand can review with your response.',
+                    'cand.negotiationTerms': 'Negotiation terms',
+                    'cand.negotiationTermsCopy': 'Add the budget you want to propose for this collaboration.',
+                    'cand.proposedBudget': 'Proposed budget',
+                    'cand.applicationMessage': 'Application message',
+                    'cand.applicationMessageCopy': 'Explain why you want to join this campaign and what your content can bring to it.',
+                    'cand.whyJoin': 'Why do you want to join this campaign?',
+                    'cand.contentIdea': 'Your proposed content idea',
+                    'cand.contentIdeaCopy': 'Add the creator-side concept, terms, or production notes the brand should review.',
+                    'cand.availabilityProposal': 'Availability and proposal',
+                    'cand.timelineBudgetCampaign': 'Share your timeline and budget for this campaign application.',
+                    'cand.availabilityDate': 'Availability date',
+                    'cand.estimatedDelay': 'Estimated delivery delay',
+                    'cand.supportUpload': 'CV / profile support upload',
+                    'cand.attachReferencesPortfolio': 'Attach references and add a portfolio link for brand review.',
+                    'cand.cvProfileSupportFile': 'CV or profile support file',
+                    'cand.withdrawalContext': 'Withdrawal context',
+                    'cand.declineContext': 'Decline context',
+                    'cand.finalNoteLatestTerms': 'Leave a final note if you want to explain why the latest terms do not work.',
+                    'cand.shortReasonDecision': 'A short reason helps the brand understand your decision.',
+                    'cand.optionalShortNote': 'Optional short note',
+                    'cand.keepReviewing': 'Keep reviewing',
+                    'cand.saveDraft': 'Save as draft',
+                    'cand.sendDecline': 'Send decline',
+                    'cand.sendNegotiation': 'Send negotiation',
+                    'cand.sendCounter': 'Send counter-proposal',
+                    'cand.updateProposal': 'Update proposal',
+                    'cand.datesMarkers': 'Dates and review markers',
+                    'cand.timeline': 'Timeline',
+                    'cand.days': 'days',
+                    'cand.messageSingular': 'message',
+                    'cand.messagePlural': 'messages',
+                    'cand.creatorResponseActions': 'Creator response actions',
+                    'cand.responseActions': 'Response actions',
+                    'cand.finalAnswerOrCounter': 'Choose a final answer or send a real counter-proposal from a focused action window.',
+                    'cand.chooseResponsePath': 'Choose the response path first. Each action opens a focused window with only the fields needed for that decision.',
+                    'cand.negotiationOpen': 'Negotiation open',
+                    'cand.acceptLatestTerms': 'Accept latest terms',
+                    'cand.endNegotiationCleanly': 'End the negotiation cleanly without adding a duplicate message.',
+                    'cand.decline': 'Decline',
+                    'cand.withdrawNegotiationReadable': 'Withdraw from the current negotiation and keep the history readable.',
+                    'cand.negotiate': 'Negotiate',
+                    'cand.realAdjustment': 'Send a real adjustment to the message, budget, or timeline.',
+                    'cand.accept': 'Accept',
+                    'cand.acceptCreatorResponseCopy': 'Send your availability, delivery plan, message, and profile references.',
+                    'cand.cleanRefusalCopy': 'Send a clean refusal reason and keep the invitation in your history.',
+                    'cand.proposeRevisedTerms': 'Propose revised budget, timing, or collaboration context.',
+                    'cand.realChangesOnly': 'Negotiation messages should only be used for real changes. If the latest terms work, accept them as a final decision.',
+                    'cand.saveDraftLater': 'You can save a draft inside any action window if you want to finish the response later.',
+                    'cand.finalDecision': 'Final decision',
+                    'cand.acceptLatestTermsQuestion': 'Accept latest terms?',
+                    'cand.closeAcceptedNoDuplicate': 'Close the negotiation as accepted without creating another duplicate proposal message.',
+                    'cand.latestBrandTerms': 'Latest brand terms',
+                    'cand.finalAcceptNoHistoryMessage': 'This will update the candidature status and decision date. It will not add another negotiation history message.',
+                    'cand.withdrawal': 'Withdrawal',
+                    'cand.declineLatestTermsQuestion': 'Decline latest terms?',
+                    'cand.declineOfferQuestion': 'Decline this offer?',
+                    'cand.closeNegotiationHistoryVisible': 'Close your side of the negotiation while keeping the saved history visible.',
+                    'cand.cleanRefusalNoLeave': 'Send a clean refusal response without leaving this page.',
+                    'cand.declineLatestTerms': 'Decline latest terms',
+                    'cand.negotiation': 'Negotiation',
+                    'cand.updateYourProposal': 'Update your proposal',
+                    'cand.sendCounterProposal': 'Send a counter-proposal',
+                    'cand.negotiateThisOffer': 'Negotiate this offer',
+                    'cand.editLatestNoDuplicate': 'You sent the latest negotiation step, so edit that proposal instead of adding a duplicate message.',
+                    'cand.realChangeCurrentTerms': 'Use this only when you are proposing a real change to the current terms.',
+                    'cand.changeBeforeUpdate': 'Change the message, budget, or timeline before updating your latest proposal.',
+                    'cand.changeBeforeAnotherStep': 'Change the message, budget, or timeline before sending another negotiation step.',
+                    'cand.draftResponse': 'Draft response',
+                    'cand.acceptedInvitation': 'Accepted invitation',
+                    'cand.underReview': 'Response under review',
+                    'cand.negotiationRequested': 'Negotiation requested',
+                    'cand.acceptedTerms': 'Accepted terms',
+                    'cand.refusedBrand': 'Refused by brand',
+                    'cand.declinedInvitation': 'Declined invitation'
+                },
+                fr: {
+                    'cand.unavailable': 'Candidature indisponible',
+                    'cand.backMine': 'Retour a mes candidatures',
+                    'cand.viewSourceOffer': 'Voir l offre source',
+                    'cand.browseCampaigns': 'Parcourir les opportunites de campagne',
+                    'cand.offerInvitation': 'Invitation offre',
+                    'cand.campaignApplication': 'Candidature campagne',
+                    'cand.acceptanceResponse': 'Reponse d acceptation',
+                    'cand.negotiationRequest': 'Demande de negociation',
+                    'cand.declineResponse': 'Reponse de refus',
+                    'cand.offerResponseContext': 'Contexte de reponse a l offre',
+                    'cand.campaignApplicationContext': 'Contexte de candidature campagne',
+                    'cand.sourceDetailsVisible': 'Gardez les details source visibles pendant que vous preparez la reponse de candidature.',
+                    'cand.responseContext': 'Contexte de reponse',
+                    'cand.responseContextCopy': 'Gardez les details de la marque et de la source visibles pendant la preparation ou la revue.',
+                    'cand.brand': 'Marque',
+                    'cand.unknownBrand': 'Marque inconnue',
+                    'cand.offerObjective': 'Objectif de l offre',
+                    'cand.campaignBrief': 'Brief de campagne',
+                    'cand.publicationDate': 'Date de publication',
+                    'cand.responseWindow': 'Fenetre de reponse',
+                    'cand.campaignDescription': 'Description de la campagne',
+                    'cand.sourcePublished': 'Source publiee',
+                    'cand.sourceDeadline': 'Echeance source',
+                    'cand.campaignStart': 'Date de debut de campagne',
+                    'cand.campaignEnd': 'Date de fin de campagne',
+                    'cand.yourResponse': 'Votre reponse',
+                    'cand.currentStatus': 'Statut actuel',
+                    'cand.responseType': 'Type de reponse',
+                    'cand.budgetReply': 'Reponse budget',
+                    'cand.timelineReply': 'Reponse delai',
+                    'cand.availability': 'Disponibilite',
+                    'cand.creatorMessage': 'Message createur',
+                    'cand.creatorTerms': 'Conditions createur',
+                    'cand.creatorTermsShort': 'Conditions createur',
+                    'cand.structuredFieldsVisible': 'Les champs structures de reponse restent visibles ici pour revoir ce qui a ete envoye avec la candidature.',
+                    'cand.refusalReason': 'Motif de refus',
+                    'cand.optionalNote': 'Note optionnelle',
+                    'cand.deliveryPlan': 'Plan de livraison',
+                    'cand.cvReference': 'Reference CV',
+                    'cand.noCvReference': 'Aucun CV/fichier de reference joint.',
+                    'cand.noPortfolioUrl': 'Aucune URL portfolio jointe.',
+                    'cand.portfolio': 'URL portfolio',
+                    'cand.cvFile': 'CV ou fichier de reference',
+                    'cand.noFile': 'Aucun fichier joint',
+                    'cand.noPortfolio': 'Aucun lien portfolio joint',
+                    'cand.negotiationHistory': 'Historique de negociation',
+                    'cand.negotiationHistoryCopy': 'Chaque message de negociation reste attache a cette candidature pour suivre tout l echange dans l ordre.',
+                    'cand.negotiationThread': 'Fil de negociation',
+                    'cand.latestBrandUpdate': 'Derniere mise a jour marque',
+                    'cand.latestBrandNegotiationUpdate': 'Derniere mise a jour de negociation de la marque',
+                    'cand.yourLatestProposal': 'Votre derniere proposition',
+                    'cand.latestProposalEdit': 'Modification de la derniere proposition',
+                    'cand.counterProposal': 'Contre-proposition',
+                    'cand.selectedOffer': 'Offre selectionnee',
+                    'cand.candidatureSource': 'Source de candidature',
+                    'cand.availabilityDelivery': 'Disponibilite et livraison',
+                    'cand.availabilityDeliveryCopy': 'Indiquez quand vous pouvez commencer et le delai de livraison.',
+                    'cand.availabilityStart': 'Date de debut de disponibilite',
+                    'cand.deliveryDelay': 'Delai de livraison',
+                    'cand.proposedDelay': 'Delai propose',
+                    'cand.proposedTimeline': 'Delai propose',
+                    'cand.negotiationMessage': 'Message de negociation',
+                    'cand.adjustmentExplain': 'Expliquez l ajustement que vous souhaitez proposer.',
+                    'cand.shortContextFirst': 'Ajoutez le court contexte que la marque doit lire en premier.',
+                    'cand.messageMotivation': 'Message createur / motivation',
+                    'cand.profileSupport': 'Support de profil',
+                    'cand.profileSupportCopy': 'Joignez des references simples que la marque peut examiner.',
+                    'cand.negotiationTerms': 'Termes de negociation',
+                    'cand.negotiationTermsCopy': 'Ajoutez le budget que vous souhaitez proposer.',
+                    'cand.proposedBudget': 'Budget propose',
+                    'cand.applicationMessage': 'Message de candidature',
+                    'cand.applicationMessageCopy': 'Expliquez pourquoi vous souhaitez rejoindre cette campagne.',
+                    'cand.whyJoin': 'Pourquoi voulez-vous rejoindre cette campagne ?',
+                    'cand.contentIdea': 'Votre idee de contenu proposee',
+                    'cand.contentIdeaCopy': 'Ajoutez le concept, les termes ou notes de production cote createur.',
+                    'cand.availabilityProposal': 'Disponibilite et proposition',
+                    'cand.timelineBudgetCampaign': 'Partagez votre delai et votre budget pour cette candidature campagne.',
+                    'cand.availabilityDate': 'Date de disponibilite',
+                    'cand.estimatedDelay': 'Delai de livraison estime',
+                    'cand.supportUpload': 'CV / support de profil',
+                    'cand.attachReferencesPortfolio': 'Joignez des references et ajoutez un lien portfolio pour la revue de la marque.',
+                    'cand.cvProfileSupportFile': 'CV ou fichier support de profil',
+                    'cand.withdrawalContext': 'Contexte de retrait',
+                    'cand.declineContext': 'Contexte de refus',
+                    'cand.finalNoteLatestTerms': 'Laissez une note finale si vous voulez expliquer pourquoi les derniers termes ne conviennent pas.',
+                    'cand.shortReasonDecision': 'Une courte raison aide la marque a comprendre votre decision.',
+                    'cand.optionalShortNote': 'Courte note optionnelle',
+                    'cand.keepReviewing': 'Continuer la revue',
+                    'cand.saveDraft': 'Enregistrer en brouillon',
+                    'cand.sendDecline': 'Envoyer le refus',
+                    'cand.sendNegotiation': 'Envoyer la negociation',
+                    'cand.sendCounter': 'Envoyer une contre-proposition',
+                    'cand.updateProposal': 'Mettre a jour la proposition',
+                    'cand.datesMarkers': 'Dates et reperes de revue',
+                    'cand.timeline': 'Chronologie',
+                    'cand.days': 'jours',
+                    'cand.messageSingular': 'message',
+                    'cand.messagePlural': 'messages',
+                    'cand.creatorResponseActions': 'Actions de reponse createur',
+                    'cand.responseActions': 'Actions de reponse',
+                    'cand.finalAnswerOrCounter': 'Choisissez une reponse finale ou envoyez une vraie contre-proposition depuis une fenetre d action ciblee.',
+                    'cand.chooseResponsePath': 'Choisissez d abord le type de reponse. Chaque action ouvre une fenetre avec seulement les champs necessaires.',
+                    'cand.negotiationOpen': 'Negociation ouverte',
+                    'cand.acceptLatestTerms': 'Accepter les derniers termes',
+                    'cand.endNegotiationCleanly': 'Terminez proprement la negociation sans ajouter de message en double.',
+                    'cand.decline': 'Refuser',
+                    'cand.withdrawNegotiationReadable': 'Se retirer de la negociation actuelle tout en gardant l historique lisible.',
+                    'cand.negotiate': 'Negocier',
+                    'cand.realAdjustment': 'Envoyer un vrai ajustement du message, du budget ou du delai.',
+                    'cand.accept': 'Accepter',
+                    'cand.acceptCreatorResponseCopy': 'Envoyer votre disponibilite, plan de livraison, message et references de profil.',
+                    'cand.cleanRefusalCopy': 'Envoyer un motif de refus clair et garder l invitation dans votre historique.',
+                    'cand.proposeRevisedTerms': 'Proposer un budget, un delai ou un contexte de collaboration revise.',
+                    'cand.realChangesOnly': 'Les messages de negociation doivent servir uniquement a de vrais changements. Si les derniers termes conviennent, acceptez-les comme decision finale.',
+                    'cand.saveDraftLater': 'Vous pouvez enregistrer un brouillon dans une fenetre d action pour terminer la reponse plus tard.',
+                    'cand.finalDecision': 'Decision finale',
+                    'cand.acceptLatestTermsQuestion': 'Accepter les derniers termes ?',
+                    'cand.closeAcceptedNoDuplicate': 'Cloturer la negociation comme acceptee sans creer de proposition en double.',
+                    'cand.latestBrandTerms': 'Derniers termes de la marque',
+                    'cand.finalAcceptNoHistoryMessage': 'Cela mettra a jour le statut et la date de decision sans ajouter de message a l historique de negociation.',
+                    'cand.withdrawal': 'Retrait',
+                    'cand.declineLatestTermsQuestion': 'Refuser les derniers termes ?',
+                    'cand.declineOfferQuestion': 'Refuser cette offre ?',
+                    'cand.closeNegotiationHistoryVisible': 'Cloturez votre cote de la negociation tout en gardant l historique visible.',
+                    'cand.cleanRefusalNoLeave': 'Envoyez une reponse de refus claire sans quitter cette page.',
+                    'cand.declineLatestTerms': 'Refuser les derniers termes',
+                    'cand.negotiation': 'Negociation',
+                    'cand.updateYourProposal': 'Mettre a jour votre proposition',
+                    'cand.sendCounterProposal': 'Envoyer une contre-proposition',
+                    'cand.negotiateThisOffer': 'Negocier cette offre',
+                    'cand.editLatestNoDuplicate': 'Vous avez envoye la derniere etape de negociation, modifiez cette proposition au lieu d ajouter un message en double.',
+                    'cand.realChangeCurrentTerms': 'Utilisez ceci seulement pour proposer un vrai changement aux termes actuels.',
+                    'cand.changeBeforeUpdate': 'Modifiez le message, le budget ou le delai avant de mettre a jour votre derniere proposition.',
+                    'cand.changeBeforeAnotherStep': 'Modifiez le message, le budget ou le delai avant d envoyer une autre etape de negociation.',
+                    'cand.draftResponse': 'Reponse brouillon',
+                    'cand.acceptedInvitation': 'Invitation acceptee',
+                    'cand.underReview': 'Reponse en examen',
+                    'cand.negotiationRequested': 'Negociation demandee',
+                    'cand.acceptedTerms': 'Termes acceptes',
+                    'cand.refusedBrand': 'Refusee par la marque',
+                    'cand.declinedInvitation': 'Invitation refusee'
+                }
+            };
+            const textKeys = {
+                'Candidature unavailable': 'cand.unavailable',
+                'Back to my candidatures': 'cand.backMine',
+                'View source offer': 'cand.viewSourceOffer',
+                'Browse campaign opportunities': 'cand.browseCampaigns',
+                'Offer invitation': 'cand.offerInvitation',
+                'Campaign application': 'cand.campaignApplication',
+                'Acceptance response': 'cand.acceptanceResponse',
+                'Negotiation request': 'cand.negotiationRequest',
+                'Decline response': 'cand.declineResponse',
+                'Response context': 'cand.responseContext',
+                'Keep the brand and source details visible while you prepare or review the candidature.': 'cand.responseContextCopy',
+                'Brand': 'cand.brand',
+                'Unknown brand': 'cand.unknownBrand',
+                'Offer objective': 'cand.offerObjective',
+                'Campaign description': 'cand.campaignDescription',
+                'Source published': 'cand.sourcePublished',
+                'Source deadline': 'cand.sourceDeadline',
+                'Campaign start date': 'cand.campaignStart',
+                'Campaign end date': 'cand.campaignEnd',
+                'Your response': 'cand.yourResponse',
+                'Current status': 'cand.currentStatus',
+                'Response type': 'cand.responseType',
+                'Budget reply': 'cand.budgetReply',
+                'Timeline reply': 'cand.timelineReply',
+                'Availability': 'cand.availability',
+                'Creator message': 'cand.creatorMessage',
+                'Creator terms and conditions': 'cand.creatorTerms',
+                'Portfolio URL': 'cand.portfolio',
+                'CV or reference file': 'cand.cvFile',
+                'No file attached yet': 'cand.noFile',
+                'No portfolio link attached yet': 'cand.noPortfolio',
+                'Negotiation thread': 'cand.negotiationThread',
+                'Latest brand update': 'cand.latestBrandUpdate',
+                'Your latest proposal': 'cand.yourLatestProposal',
+                'Latest proposal edit': 'cand.latestProposalEdit',
+                'Counter-proposal': 'cand.counterProposal',
+                'Selected offer': 'cand.selectedOffer',
+                'Candidature source': 'cand.candidatureSource',
+                'Availability and delivery': 'cand.availabilityDelivery',
+                'Share when you can start and how long the delivery should take.': 'cand.availabilityDeliveryCopy',
+                'Availability start date': 'cand.availabilityStart',
+                'Delivery delay': 'cand.deliveryDelay',
+                'Proposed delay': 'cand.proposedDelay',
+                'Negotiation message': 'cand.negotiationMessage',
+                'Creator message / motivation': 'cand.messageMotivation',
+                'Profile support': 'cand.profileSupport',
+                'Attach simple references the brand can review with your response.': 'cand.profileSupportCopy',
+                'Negotiation terms': 'cand.negotiationTerms',
+                'Add the budget you want to propose for this collaboration.': 'cand.negotiationTermsCopy',
+                'Proposed budget': 'cand.proposedBudget',
+                'Application message': 'cand.applicationMessage',
+                'Explain why you want to join this campaign and what your content can bring to it.': 'cand.applicationMessageCopy',
+                'Why do you want to join this campaign?': 'cand.whyJoin',
+                'Your proposed content idea': 'cand.contentIdea',
+                'Add the creator-side concept, terms, or production notes the brand should review.': 'cand.contentIdeaCopy',
+                'Estimated delivery delay': 'cand.estimatedDelay',
+                'CV / profile support upload': 'cand.supportUpload',
+                'Keep reviewing': 'cand.keepReviewing',
+                'Save as draft': 'cand.saveDraft',
+                'Send negotiation': 'cand.sendNegotiation',
+                'Send counter-proposal': 'cand.sendCounter',
+                'Update proposal': 'cand.updateProposal',
+                'Dates and review markers': 'cand.datesMarkers',
+                'Timeline': 'cand.timeline',
+                'Draft response': 'cand.draftResponse',
+                'Accepted invitation': 'cand.acceptedInvitation',
+                'Response under review': 'cand.underReview',
+                'Negotiation requested': 'cand.negotiationRequested',
+                'Accepted terms': 'cand.acceptedTerms',
+                'Refused by brand': 'cand.refusedBrand',
+                'Declined invitation': 'cand.declinedInvitation'
+            };
+            const placeholderKeys = {
+                'Explain the revised budget, timing, or collaboration context.': 'cand.negotiationMessage',
+                'Reply to the latest brand update and explain the new terms you want to propose.': 'cand.negotiationMessage',
+                'Explain why this collaboration fits your content, audience, or execution approach.': 'cand.messageMotivation',
+                'Add optional creator-side conditions, process notes, or collaboration boundaries.': 'cand.creatorTerms',
+                'Share your campaign fit, audience angle, and proposed execution.': 'cand.applicationMessage',
+                'Describe your content idea, creator terms, usage boundaries, or production process.': 'cand.contentIdea',
+                'Explain why you are declining this invitation.': 'cand.refusalReason',
+                'Add a short final note if you want to keep extra context.': 'cand.optionalShortNote'
+            };
+            function candLang() { return typeof window.cre8FrontReadLang === 'function' ? window.cre8FrontReadLang() : 'en'; }
+            function keyForText(value) {
+                const clean = String(value).trim().replace(/:$/, '');
+                if (textKeys[clean]) return textKeys[clean];
+                for (const locale of Object.keys(translations)) for (const key of Object.keys(translations[locale])) if (translations[locale][key] === clean) return key;
+                return '';
+            }
+            function applyCandidatureTranslations(root = document) {
+                const dict = translations[candLang()] || translations.en;
+                if (typeof window.cre8ApplyI18n === 'function') window.cre8ApplyI18n(translations);
+                root.querySelectorAll('[placeholder]').forEach((el) => {
+                    const key = placeholderKeys[el.getAttribute('placeholder')] || el.getAttribute('data-i18n-placeholder');
+                    if (key && dict[key]) {
+                        el.setAttribute('data-i18n-placeholder', key);
+                        el.setAttribute('placeholder', dict[key]);
+                    }
+                });
+                const walker = document.createTreeWalker(root.body || root, NodeFilter.SHOW_TEXT, {
+                    acceptNode(node) {
+                        const parent = node.parentElement;
+                        if (!parent || ['SCRIPT', 'STYLE', 'TEXTAREA'].includes(parent.tagName)) return NodeFilter.FILTER_REJECT;
+                        return node.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                    }
+                });
+                const nodes = [];
+                while (walker.nextNode()) nodes.push(walker.currentNode);
+                nodes.forEach((node) => {
+                    const original = node.nodeValue.trim();
+                    const key = keyForText(original);
+                    if (!key || dict[key] === undefined) return;
+                    const suffix = original.endsWith(':') ? ':' : '';
+                    node.nodeValue = node.nodeValue.replace(original, dict[key] + suffix);
+                    if (node.parentElement && node.parentElement.childNodes.length === 1) node.parentElement.setAttribute('data-i18n', key);
+                });
+            }
+            window.cre8CandidatureApplyTranslations = applyCandidatureTranslations;
+            document.addEventListener('DOMContentLoaded', () => {
+                if (typeof window.cre8RegisterTranslations === 'function') window.cre8RegisterTranslations(translations);
+                applyCandidatureTranslations();
+                document.addEventListener('click', () => window.setTimeout(applyCandidatureTranslations, 0), true);
+            });
+            window.addEventListener('cre8:languagechange', () => applyCandidatureTranslations());
+        })();
+    </script>
     <script src="../layout/front-header.js"></script>
 </body>
 </html>

@@ -2,6 +2,16 @@
 
 /* Offre module - FrontOffice */
 
+html,
+body {
+    height: auto !important;
+    min-height: 100% !important;
+}
+
+body {
+    min-height: 100vh !important;
+}
+
 :root {
   --bg-color: #f6f7fb;
   --card-bg: #ffffff;

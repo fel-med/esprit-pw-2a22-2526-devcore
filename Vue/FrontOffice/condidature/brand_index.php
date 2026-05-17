@@ -538,6 +538,18 @@
         <link rel="stylesheet" href="../offre/offre.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../offre/offre.css')); ?>">
         <link rel="stylesheet" href="condidature.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/condidature.css')); ?>">
         <link rel="stylesheet" href="../layout/front-header.css">
+    <style>
+        /* Keep only the shared header notification bell. Hide any old page-level notification widget. */
+        body > .notification-widget,
+        body > .notification-widget-front,
+        main .notification-widget,
+        main .notification-widget-front {
+            display: none !important;
+        }
+        .front-nav .notification-widget-front {
+            display: inline-flex !important;
+        }
+    </style>
     <link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
     <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
     <link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
@@ -547,7 +559,7 @@
         <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
         <main class="container py-5">
             <div class="offre-page-shell" data-candidature-live-region>
-                <section class="module-hero module-hero-notification-shell">
+                <section class="module-hero">
                     <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
                         <div>
                             <span class="module-eyebrow">Brand candidature workspace</span>
@@ -841,6 +853,257 @@
     ];
     require __DIR__ . '/cre8pilot_widget.php';
     ?>
+        <script>
+            (() => {
+                const translations = {
+                    en: {
+                        'cand.brandWorkspace': 'Brand candidature workspace',
+                        'cand.responseWorkspace': 'Response workspace',
+                        'cand.heroCopy': 'Review creator applications, handle negotiation signals, and keep each collaboration path moving from one dashboard.',
+                        'cand.responsesReview': 'Responses to review',
+                        'cand.sentReview': 'Sent or under review',
+                        'cand.negotiationsWaiting': 'Negotiations waiting reply',
+                        'cand.activeNegotiations': 'Active negotiation candidatures',
+                        'cand.offersExpiring': 'Offers expiring soon',
+                        'cand.deadlinesNext': 'Deadlines within the next 7 days',
+                        'cand.acceptedCollaborations': 'Accepted collaborations',
+                        'cand.finalPositive': 'Final positive outcomes',
+                        'cand.acceptedBudgetTotal': 'Accepted budget total',
+                        'cand.acceptedOnly': 'Accepted candidatures only',
+                        'cand.filterWorkspace': 'Filter the response workspace',
+                        'cand.filterCopy': 'Search by creator, source title, status, or keep only one origin in view.',
+                        'cand.activeFilter': 'active filter',
+                        'cand.activeFilters': 'active filters',
+                        'cand.keyword': 'Keyword',
+                        'cand.status': 'Status',
+                        'cand.allStatuses': 'All statuses',
+                        'cand.origin': 'Origin',
+                        'cand.allOrigins': 'All origins',
+                        'cand.responseType': 'Response type',
+                        'cand.allTypes': 'All types',
+                        'cand.submittedFrom': 'Submitted from',
+                        'cand.submittedTo': 'Submitted to',
+                        'cand.cvFile': 'CV file',
+                        'cand.all': 'All',
+                        'cand.hasCv': 'Has CV',
+                        'cand.noCv': 'No CV',
+                        'cand.portfolio': 'Portfolio',
+                        'cand.hasPortfolio': 'Has portfolio',
+                        'cand.noPortfolio': 'No portfolio',
+                        'cand.sort': 'Sort',
+                        'cand.applyFilters': 'Apply filters',
+                        'cand.reset': 'Reset',
+                        'cand.waiting': 'Waiting',
+                        'cand.accepted': 'Accepted',
+                        'cand.refused': 'Refused',
+                        'cand.outdated': 'Outdated',
+                        'cand.waitingSubtitle': 'Responses that still need negotiation handling, review, or a final brand decision.',
+                        'cand.acceptedSubtitle': 'Responses where the latest collaboration terms were fully accepted.',
+                        'cand.refusedSubtitle': 'Responses that ended with a refusal or a declined invitation outcome.',
+                        'cand.outdatedSubtitle': 'Responses linked to sources whose deadline has already passed without a final outcome.',
+                        'cand.noWaiting': 'No waiting responses',
+                        'cand.noAccepted': 'No accepted responses',
+                        'cand.noRefused': 'No refused responses',
+                        'cand.noOutdated': 'No outdated responses',
+                        'cand.creator': 'Creator',
+                        'cand.unknownCreator': 'Unknown creator',
+                        'cand.submitted': 'Submitted',
+                        'cand.lastUpdate': 'Last update',
+                        'cand.finalDecision': 'Final decision',
+                        'cand.latestCreatorSignal': 'Latest creator signal',
+                        'cand.viewSourceOffer': 'View source offer',
+                        'cand.previous': 'Previous',
+                        'cand.loadMore': 'Load more',
+                        'cand.offerInvitation': 'Offer invitation',
+                        'cand.campaignApplication': 'Campaign application',
+                        'cand.draftResponse': 'Draft response',
+                        'cand.acceptedInvitation': 'Accepted invitation',
+                        'cand.underReview': 'Response under review',
+                        'cand.negotiationRequested': 'Negotiation requested',
+                        'cand.acceptedTerms': 'Accepted terms',
+                        'cand.refusedBrand': 'Refused by brand',
+                        'cand.declinedInvitation': 'Declined invitation',
+                        'cand.saveLater': 'Save for later',
+                        'cand.saved': 'Saved'
+                    },
+                    fr: {
+                        'cand.brandWorkspace': 'Espace candidatures marque',
+                        'cand.responseWorkspace': 'Espace reponses',
+                        'cand.heroCopy': 'Examinez les candidatures createurs, gerez les negociations et faites avancer chaque collaboration depuis un tableau de bord.',
+                        'cand.responsesReview': 'Reponses a examiner',
+                        'cand.sentReview': 'Envoyees ou en examen',
+                        'cand.negotiationsWaiting': 'Negociations en attente',
+                        'cand.activeNegotiations': 'Candidatures en negociation active',
+                        'cand.offersExpiring': 'Offres bientot expirees',
+                        'cand.deadlinesNext': 'Echeances dans les 7 prochains jours',
+                        'cand.acceptedCollaborations': 'Collaborations acceptees',
+                        'cand.finalPositive': 'Resultats positifs finaux',
+                        'cand.acceptedBudgetTotal': 'Budget accepte total',
+                        'cand.acceptedOnly': 'Candidatures acceptees seulement',
+                        'cand.filterWorkspace': 'Filtrer l espace reponses',
+                        'cand.filterCopy': 'Recherchez par createur, source, statut ou gardez une seule origine.',
+                        'cand.activeFilter': 'filtre actif',
+                        'cand.activeFilters': 'filtres actifs',
+                        'cand.keyword': 'Mot-cle',
+                        'cand.status': 'Statut',
+                        'cand.allStatuses': 'Tous les statuts',
+                        'cand.origin': 'Origine',
+                        'cand.allOrigins': 'Toutes les origines',
+                        'cand.responseType': 'Type de reponse',
+                        'cand.allTypes': 'Tous les types',
+                        'cand.submittedFrom': 'Envoyee depuis',
+                        'cand.submittedTo': 'Envoyee jusqu au',
+                        'cand.cvFile': 'Fichier CV',
+                        'cand.all': 'Tous',
+                        'cand.hasCv': 'Avec CV',
+                        'cand.noCv': 'Sans CV',
+                        'cand.portfolio': 'Portfolio',
+                        'cand.hasPortfolio': 'Avec portfolio',
+                        'cand.noPortfolio': 'Sans portfolio',
+                        'cand.sort': 'Tri',
+                        'cand.applyFilters': 'Appliquer les filtres',
+                        'cand.reset': 'Reinitialiser',
+                        'cand.waiting': 'En attente',
+                        'cand.accepted': 'Acceptees',
+                        'cand.refused': 'Refusees',
+                        'cand.outdated': 'Expirees',
+                        'cand.waitingSubtitle': 'Reponses qui demandent encore negociation, examen ou decision finale.',
+                        'cand.acceptedSubtitle': 'Reponses dont les derniers termes de collaboration ont ete acceptes.',
+                        'cand.refusedSubtitle': 'Reponses terminees par un refus ou une invitation declinee.',
+                        'cand.outdatedSubtitle': 'Reponses liees a des sources dont l echeance est passee sans resultat final.',
+                        'cand.noWaiting': 'Aucune reponse en attente',
+                        'cand.noAccepted': 'Aucune reponse acceptee',
+                        'cand.noRefused': 'Aucune reponse refusee',
+                        'cand.noOutdated': 'Aucune reponse expiree',
+                        'cand.creator': 'Createur',
+                        'cand.unknownCreator': 'Createur inconnu',
+                        'cand.submitted': 'Envoyee',
+                        'cand.lastUpdate': 'Derniere mise a jour',
+                        'cand.finalDecision': 'Decision finale',
+                        'cand.latestCreatorSignal': 'Dernier signal createur',
+                        'cand.viewSourceOffer': 'Voir l offre source',
+                        'cand.previous': 'Precedent',
+                        'cand.loadMore': 'Charger plus',
+                        'cand.offerInvitation': 'Invitation offre',
+                        'cand.campaignApplication': 'Candidature campagne',
+                        'cand.draftResponse': 'Reponse brouillon',
+                        'cand.acceptedInvitation': 'Invitation acceptee',
+                        'cand.underReview': 'Reponse en examen',
+                        'cand.negotiationRequested': 'Negociation demandee',
+                        'cand.acceptedTerms': 'Termes acceptes',
+                        'cand.refusedBrand': 'Refusee par la marque',
+                        'cand.declinedInvitation': 'Invitation refusee',
+                        'cand.saveLater': 'Enregistrer',
+                        'cand.saved': 'Enregistree'
+                    }
+                };
+                const textKeys = {
+                    'Brand candidature workspace': 'cand.brandWorkspace',
+                    'Response workspace': 'cand.responseWorkspace',
+                    'Review creator applications, handle negotiation signals, and keep each collaboration path moving from one dashboard.': 'cand.heroCopy',
+                    'Responses to review': 'cand.responsesReview',
+                    'Sent or under review': 'cand.sentReview',
+                    'Negotiations waiting reply': 'cand.negotiationsWaiting',
+                    'Active negotiation candidatures': 'cand.activeNegotiations',
+                    'Offers expiring soon': 'cand.offersExpiring',
+                    'Deadlines within the next 7 days': 'cand.deadlinesNext',
+                    'Accepted collaborations': 'cand.acceptedCollaborations',
+                    'Final positive outcomes': 'cand.finalPositive',
+                    'Accepted budget total': 'cand.acceptedBudgetTotal',
+                    'Accepted candidatures only': 'cand.acceptedOnly',
+                    'Filter the response workspace': 'cand.filterWorkspace',
+                    'Search by creator, source title, status, or keep only one origin in view.': 'cand.filterCopy',
+                    'active filter': 'cand.activeFilter',
+                    'active filters': 'cand.activeFilters',
+                    'Keyword': 'cand.keyword',
+                    'Status': 'cand.status',
+                    'All statuses': 'cand.allStatuses',
+                    'Origin': 'cand.origin',
+                    'All origins': 'cand.allOrigins',
+                    'Response type': 'cand.responseType',
+                    'All types': 'cand.allTypes',
+                    'Submitted from': 'cand.submittedFrom',
+                    'Submitted to': 'cand.submittedTo',
+                    'CV file': 'cand.cvFile',
+                    'All': 'cand.all',
+                    'Has CV': 'cand.hasCv',
+                    'No CV': 'cand.noCv',
+                    'Portfolio': 'cand.portfolio',
+                    'Has portfolio': 'cand.hasPortfolio',
+                    'No portfolio': 'cand.noPortfolio',
+                    'Sort': 'cand.sort',
+                    'Apply filters': 'cand.applyFilters',
+                    'Reset': 'cand.reset',
+                    'Waiting': 'cand.waiting',
+                    'Accepted': 'cand.accepted',
+                    'Refused': 'cand.refused',
+                    'Outdated': 'cand.outdated',
+                    'Responses that still need negotiation handling, review, or a final brand decision.': 'cand.waitingSubtitle',
+                    'Responses where the latest collaboration terms were fully accepted.': 'cand.acceptedSubtitle',
+                    'Responses that ended with a refusal or a declined invitation outcome.': 'cand.refusedSubtitle',
+                    'Responses linked to sources whose deadline has already passed without a final outcome.': 'cand.outdatedSubtitle',
+                    'No waiting responses': 'cand.noWaiting',
+                    'No accepted responses': 'cand.noAccepted',
+                    'No refused responses': 'cand.noRefused',
+                    'No outdated responses': 'cand.noOutdated',
+                    'Creator': 'cand.creator',
+                    'Unknown creator': 'cand.unknownCreator',
+                    'Submitted': 'cand.submitted',
+                    'Last update': 'cand.lastUpdate',
+                    'Final decision': 'cand.finalDecision',
+                    'Latest creator signal': 'cand.latestCreatorSignal',
+                    'View source offer': 'cand.viewSourceOffer',
+                    'Previous': 'cand.previous',
+                    'Load more': 'cand.loadMore',
+                    'Offer invitation': 'cand.offerInvitation',
+                    'Campaign application': 'cand.campaignApplication',
+                    'Draft response': 'cand.draftResponse',
+                    'Accepted invitation': 'cand.acceptedInvitation',
+                    'Response under review': 'cand.underReview',
+                    'Negotiation requested': 'cand.negotiationRequested',
+                    'Accepted terms': 'cand.acceptedTerms',
+                    'Refused by brand': 'cand.refusedBrand',
+                    'Declined invitation': 'cand.declinedInvitation',
+                    'Save for later': 'cand.saveLater',
+                    'Saved': 'cand.saved'
+                };
+                function candLang() { return typeof window.cre8FrontReadLang === 'function' ? window.cre8FrontReadLang() : 'en'; }
+                function keyForText(value) {
+                    const clean = String(value).trim().replace(/:$/, '');
+                    if (textKeys[clean]) return textKeys[clean];
+                    for (const locale of Object.keys(translations)) for (const key of Object.keys(translations[locale])) if (translations[locale][key] === clean) return key;
+                    return '';
+                }
+                function applyCandidatureTranslations(root = document) {
+                    const dict = translations[candLang()] || translations.en;
+                    if (typeof window.cre8ApplyI18n === 'function') window.cre8ApplyI18n(translations);
+                    const walker = document.createTreeWalker(root.body || root, NodeFilter.SHOW_TEXT, {
+                        acceptNode(node) {
+                            const parent = node.parentElement;
+                            if (!parent || ['SCRIPT', 'STYLE', 'TEXTAREA'].includes(parent.tagName)) return NodeFilter.FILTER_REJECT;
+                            return node.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                        }
+                    });
+                    const nodes = [];
+                    while (walker.nextNode()) nodes.push(walker.currentNode);
+                    nodes.forEach((node) => {
+                        const original = node.nodeValue.trim();
+                        const key = keyForText(original);
+                        if (!key || dict[key] === undefined) return;
+                        const suffix = original.endsWith(':') ? ':' : '';
+                        node.nodeValue = node.nodeValue.replace(original, dict[key] + suffix);
+                        if (node.parentElement && node.parentElement.childNodes.length === 1) node.parentElement.setAttribute('data-i18n', key);
+                    });
+                }
+                window.cre8CandidatureApplyTranslations = applyCandidatureTranslations;
+                document.addEventListener('DOMContentLoaded', () => {
+                    if (typeof window.cre8RegisterTranslations === 'function') window.cre8RegisterTranslations(translations);
+                    applyCandidatureTranslations();
+                });
+                window.addEventListener('cre8:languagechange', () => applyCandidatureTranslations());
+                window.addEventListener('candidatureListUpdated', () => window.setTimeout(applyCandidatureTranslations, 0));
+            })();
+        </script>
         <script src="../layout/front-header.js"></script>
     </body>
     </html>

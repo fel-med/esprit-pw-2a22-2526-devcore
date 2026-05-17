@@ -23,6 +23,9 @@ if (isset($_POST['update'])) {
 .progress-bar {
     transition: width 0.4s ease;
 }
+.public-lang-switch { position:fixed; top:16px; right:16px; display:inline-flex; gap:.25rem; border:1px solid rgba(78,84,200,.22); border-radius:999px; padding:.2rem; background:#fff; z-index:10; }
+.public-lang-switch button { border:0; border-radius:999px; background:transparent; color:#5f6674; font-weight:800; font-size:.72rem; padding:.25rem .55rem; }
+.public-lang-switch button.is-active { background:#4e54c8; color:#fff; }
 </style>
 <link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
@@ -31,6 +34,10 @@ if (isset($_POST['update'])) {
 </head>
 
 <body class="d-flex align-items-center justify-content-center bg-light" style="min-height:100vh;">
+<div class="public-lang-switch" aria-label="Language">
+    <button type="button" data-lang-choice="en">EN</button>
+    <button type="button" data-lang-choice="fr">FR</button>
+</div>
 
 <div class="container">
     <div class="row justify-content-center">
@@ -38,7 +45,7 @@ if (isset($_POST['update'])) {
 
             <div class="card shadow-lg border-0 p-5 text-center" style="border-radius:20px;">
 
-                <h2 class="fw-bold mb-4 text-gradient">🔐 Nouveau mot de passe</h2>
+                <h2 class="fw-bold mb-4 text-gradient" data-i18n="auth.resetTitle">New password</h2>
 
                 <form method="POST">
 
@@ -48,7 +55,7 @@ if (isset($_POST['update'])) {
                         <div class="input-group mb-3">
     <input type="password" name="password" id="password"
            class="form-control"
-           placeholder="Nouveau mot de passe" required>
+           placeholder="New password" data-i18n-placeholder="auth.newPassword" required>
 
     <button type="button" class="btn btn-outline-secondary" id="togglePassword">
         👁️
@@ -65,7 +72,7 @@ if (isset($_POST['update'])) {
                     </div>
 
                     <button name="update" class="btn btn-primary w-100 py-2">
-                        Mettre à jour
+                        <span data-i18n="auth.updatePassword">Update password</span>
                     </button>
 
                 </form>
@@ -81,6 +88,36 @@ if (isset($_POST['update'])) {
         </div>
     </div>
 </div>
+<script src="../layout/front-translate.js"></script>
+<script>
+const cre8ResetTranslations = {
+    en: {
+        'auth.resetTitle': 'New password',
+        'auth.newPassword': 'New password',
+        'auth.updatePassword': 'Update password',
+        'auth.weak': 'Weak',
+        'auth.medium': 'Medium',
+        'auth.good': 'Good',
+        'auth.strong': 'Strong',
+        'auth.tooShort': 'Password is too short'
+    },
+    fr: {
+        'auth.resetTitle': 'Nouveau mot de passe',
+        'auth.newPassword': 'Nouveau mot de passe',
+        'auth.updatePassword': 'Mettre a jour',
+        'auth.weak': 'Faible',
+        'auth.medium': 'Moyen',
+        'auth.good': 'Bon',
+        'auth.strong': 'Fort',
+        'auth.tooShort': 'Mot de passe trop court'
+    }
+};
+function cre8ResetLang() { if (typeof cre8FrontReadLang === 'function') return cre8FrontReadLang(); try { return (localStorage.getItem('cre8_front_lang') || localStorage.getItem('cre8_lang')) === 'fr' ? 'fr' : 'en'; } catch(e) { return 'en'; } }
+function cre8ResetText(key) { const l = cre8ResetLang(); return (cre8ResetTranslations[l] && cre8ResetTranslations[l][key]) || cre8ResetTranslations.en[key] || key; }
+function cre8RegisterResetTranslations() { if (typeof cre8RegisterTranslations === 'function') cre8RegisterTranslations(cre8ResetTranslations); document.title = cre8ResetLang() === 'fr' ? 'Reinitialiser le mot de passe' : 'Reset Password'; }
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', cre8RegisterResetTranslations); else cre8RegisterResetTranslations();
+window.addEventListener('cre8:languagechange', cre8RegisterResetTranslations);
+</script>
 <script>
 const passwordInput = document.getElementById("password");
 const toggleBtn = document.getElementById("togglePassword");
@@ -124,32 +161,32 @@ password.addEventListener("input", function () {
         case 1:
             bar.style.width = "25%";
             bar.className = "progress-bar bg-danger";
-            text.textContent = "Faible";
+            text.textContent = cre8ResetText("auth.weak");
             break;
 
         case 2:
             bar.style.width = "50%";
             bar.className = "progress-bar bg-warning";
-            text.textContent = "Moyen";
+            text.textContent = cre8ResetText("auth.medium");
             break;
 
         case 3:
             bar.style.width = "75%";
             bar.className = "progress-bar bg-info";
-            text.textContent = "Bon";
+            text.textContent = cre8ResetText("auth.good");
             break;
 
         case 4:
             bar.style.width = "100%";
             bar.className = "progress-bar bg-success";
-            text.textContent = "Fort 🔥";
+            text.textContent = cre8ResetText("auth.strong");
             break;
     }
 });
 document.querySelector("form").addEventListener("submit", function(e) {
     if (password.value.length < 6) {
         e.preventDefault();
-        text.textContent = "Mot de passe trop court ❌";
+        text.textContent = cre8ResetText("auth.tooShort");
         bar.className = "progress-bar bg-danger";
         bar.style.width = "25%";
     }
@@ -157,3 +194,4 @@ document.querySelector("form").addEventListener("submit", function(e) {
 </script>
 </body>
 </html>
+

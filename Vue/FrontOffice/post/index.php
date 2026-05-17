@@ -405,6 +405,232 @@ $frontActive = 'myspace';
 window.creaChatbotPosts = <?= json_encode($creaAssistantPosts, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 </script>
 
+<script>
+(function () {
+    var translations = {
+        en: {
+            'post.feedTitle': 'Discover the latest creator actuality',
+            'post.feedSubtitle': 'Explore all posts, search by creator or subject, and discover the most trending publications through a clean and responsive social-media experience.',
+            'post.searchPlaceholder': 'Search by creator name or subject...',
+            'post.search': 'Search',
+            'post.trending': 'Trending',
+            'post.reset': 'Reset',
+            'post.noPostsFound': 'No posts found',
+            'post.noPostsFoundCopy': 'Try another search or go back to the full actuality feed.',
+            'post.readMore': 'Read More',
+            'post.views': 'views',
+            'post.comments': 'Comments',
+            'post.seeAllComments': 'See all comments',
+            'post.noCommentsLong': 'No comments yet. Be the first to comment!',
+            'post.noCommentsShort': 'No comments yet.',
+            'post.commentPlaceholder': 'Add a comment...',
+            'post.writeCommentPlaceholder': 'Write a comment...',
+            'post.replyPlaceholder': 'Reply to this comment...',
+            'post.editCommentPlaceholder': 'Edit your comment...',
+            'post.postButton': 'Post',
+            'post.reply': 'Reply',
+            'post.edit': 'Edit',
+            'post.delete': 'Delete',
+            'post.save': 'Save',
+            'post.cancel': 'Cancel',
+            'post.removeCurrentImage': 'Remove current image',
+            'post.emoji': 'Emoji',
+            'post.addImage': 'Add image',
+            'post.replaceImage': 'Replace image',
+            'post.voiceTranscription': 'Voice transcription',
+            'post.transcriptionLanguage': 'Transcription language',
+            'post.voiceIdle': 'Tap the microphone to dictate your comment',
+            'post.voiceRecording': 'Listening... speak now',
+            'post.openComments': 'Open comments',
+            'post.feedAssistant': 'Feed assistant',
+            'post.chatWelcome': 'Welcome to cre8connect, a platform that connects content creators with big brands. How can I assist you today? I can help you find specific posts, get who commented on one post, find the last post posted, filter the feed by creator or subject, and explain how to create or comment on a post.',
+            'post.latestPost': 'Latest post',
+            'post.postsBySubject': 'Posts by subject',
+            'post.howCreate': 'How to create',
+            'post.resetFeed': 'Reset feed',
+            'post.creaPlaceholder': 'Ask Crea to find or explain something...',
+            'post.closeChatbot': 'Close chatbot'
+        },
+        fr: {
+            'post.feedTitle': 'Decouvrez les dernieres actualites createur',
+            'post.feedSubtitle': 'Explorez tous les posts, recherchez par createur ou sujet, et decouvrez les publications les plus tendance dans une experience sociale claire et responsive.',
+            'post.searchPlaceholder': 'Rechercher par nom de createur ou sujet...',
+            'post.search': 'Rechercher',
+            'post.trending': 'Tendance',
+            'post.reset': 'Reinitialiser',
+            'post.noPostsFound': 'Aucun post trouve',
+            'post.noPostsFoundCopy': 'Essayez une autre recherche ou revenez au fil complet des actualites.',
+            'post.readMore': 'Lire plus',
+            'post.views': 'vues',
+            'post.comments': 'Commentaires',
+            'post.seeAllComments': 'Voir tous les commentaires',
+            'post.noCommentsLong': 'Aucun commentaire pour le moment. Soyez le premier a commenter !',
+            'post.noCommentsShort': 'Aucun commentaire pour le moment.',
+            'post.commentPlaceholder': 'Ajouter un commentaire...',
+            'post.writeCommentPlaceholder': 'Ecrire un commentaire...',
+            'post.replyPlaceholder': 'Repondre a ce commentaire...',
+            'post.editCommentPlaceholder': 'Modifier votre commentaire...',
+            'post.postButton': 'Publier',
+            'post.reply': 'Repondre',
+            'post.edit': 'Modifier',
+            'post.delete': 'Supprimer',
+            'post.save': 'Enregistrer',
+            'post.cancel': 'Annuler',
+            'post.removeCurrentImage': 'Supprimer l image actuelle',
+            'post.emoji': 'Emoji',
+            'post.addImage': 'Ajouter une image',
+            'post.replaceImage': 'Remplacer l image',
+            'post.voiceTranscription': 'Transcription vocale',
+            'post.transcriptionLanguage': 'Langue de transcription',
+            'post.voiceIdle': 'Appuyez sur le micro pour dicter votre commentaire',
+            'post.voiceRecording': 'Ecoute en cours... parlez maintenant',
+            'post.openComments': 'Ouvrir les commentaires',
+            'post.feedAssistant': 'Assistant du fil',
+            'post.chatWelcome': 'Bienvenue sur cre8connect, une plateforme qui connecte les createurs de contenu aux grandes marques. Comment puis-je vous aider aujourd hui ? Je peux vous aider a trouver des posts precis, voir qui a commente un post, trouver le dernier post publie, filtrer le fil par createur ou sujet, et expliquer comment creer ou commenter un post.',
+            'post.latestPost': 'Dernier post',
+            'post.postsBySubject': 'Posts par sujet',
+            'post.howCreate': 'Comment creer',
+            'post.resetFeed': 'Reinitialiser le fil',
+            'post.creaPlaceholder': 'Demandez a Crea de trouver ou expliquer quelque chose...',
+            'post.closeChatbot': 'Fermer le chatbot'
+        }
+    };
+    var aliases = {
+        'Discover the latest creator actuality': 'post.feedTitle',
+        'Explore all posts, search by creator or subject, and discover the most trending publications through a clean and responsive social-media experience.': 'post.feedSubtitle',
+        'Search by creator name or subject...': 'post.searchPlaceholder',
+        'Search': 'post.search',
+        'Trending': 'post.trending',
+        'Reset': 'post.reset',
+        'No posts found': 'post.noPostsFound',
+        'Try another search or go back to the full actuality feed.': 'post.noPostsFoundCopy',
+        'Read More': 'post.readMore',
+        'views': 'post.views',
+        'Comments': 'post.comments',
+        'See all comments': 'post.seeAllComments',
+        'No comments yet. Be the first to comment!': 'post.noCommentsLong',
+        'No comments yet.': 'post.noCommentsShort',
+        'Add a comment...': 'post.commentPlaceholder',
+        'Write a comment...': 'post.writeCommentPlaceholder',
+        'Reply to this comment...': 'post.replyPlaceholder',
+        'Edit your comment...': 'post.editCommentPlaceholder',
+        'Post': 'post.postButton',
+        'Reply': 'post.reply',
+        'Edit': 'post.edit',
+        'Delete': 'post.delete',
+        'Save': 'post.save',
+        'Cancel': 'post.cancel',
+        'Remove current image': 'post.removeCurrentImage',
+        'Emoji': 'post.emoji',
+        'Add image': 'post.addImage',
+        'Replace image': 'post.replaceImage',
+        'Voice transcription': 'post.voiceTranscription',
+        'Transcription language': 'post.transcriptionLanguage',
+        'Tap the microphone to dictate your comment': 'post.voiceIdle',
+        'Listening... speak now': 'post.voiceRecording',
+        'Open comments': 'post.openComments',
+        'Feed assistant': 'post.feedAssistant',
+        'Welcome to cre8connect, a platform that connects content creators with big brands. How can I assist you today? I can help you find specific posts, get who commented on one post, find the last post posted, filter the feed by creator or subject, and explain how to create or comment on a post.': 'post.chatWelcome',
+        'Latest post': 'post.latestPost',
+        'Posts by subject': 'post.postsBySubject',
+        'How to create': 'post.howCreate',
+        'Reset feed': 'post.resetFeed',
+        'Ask Crea to find or explain something...': 'post.creaPlaceholder',
+        'Close chatbot': 'post.closeChatbot'
+    };
+    function currentLang() {
+        if (typeof window.cre8FrontReadLang === 'function') {
+            return window.cre8FrontReadLang();
+        }
+        try {
+            return localStorage.getItem('cre8_front_lang') === 'fr' || localStorage.getItem('cre8_lang') === 'fr' ? 'fr' : 'en';
+        } catch (e) {
+            return 'en';
+        }
+    }
+    function keyFor(value) {
+        var text = String(value || '').replace(/\s+/g, ' ').trim();
+        if (!text) return null;
+        if (aliases[text]) return aliases[text];
+        var langs = ['en', 'fr'];
+        for (var i = 0; i < langs.length; i++) {
+            var dict = translations[langs[i]];
+            for (var key in dict) {
+                if (Object.prototype.hasOwnProperty.call(dict, key) && dict[key] === text) return key;
+            }
+        }
+        return null;
+    }
+    function translated(key) {
+        var dict = translations[currentLang()] || translations.en;
+        return dict[key] || translations.en[key] || null;
+    }
+    function applyAttr(selector, attr, keyAttr) {
+        Array.prototype.forEach.call(document.querySelectorAll(selector), function (el) {
+            var key = el.getAttribute(keyAttr) || keyFor(el.getAttribute(attr));
+            var value = translated(key);
+            if (value) {
+                el.setAttribute(keyAttr, key);
+                el.setAttribute(attr, value);
+            }
+        });
+    }
+    function skipText(parent) {
+        return !parent || parent.closest('script,style,textarea,.social-post-title,.social-post-text,.comment-text,.comment-author,.creator-name,.creator-handle,.social-post-author,.social-post-meta,.comment-sticker');
+    }
+    function applyPostTranslations(root) {
+        if (typeof window.cre8ApplyI18n === 'function') {
+            window.cre8ApplyI18n(translations);
+        }
+        applyAttr('[placeholder]', 'placeholder', 'data-i18n-placeholder');
+        applyAttr('[title]', 'title', 'data-i18n-title');
+        applyAttr('[aria-label]', 'aria-label', 'data-i18n-title');
+        Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-idle-label]'), function (el) {
+            var value = translated(el.getAttribute('data-i18n-idle-label'));
+            if (value) el.setAttribute('data-idle-label', value);
+        });
+        Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-recording-label]'), function (el) {
+            var value = translated(el.getAttribute('data-i18n-recording-label'));
+            if (value) el.setAttribute('data-recording-label', value);
+        });
+        var scope = root && root.nodeType === 1 ? root : document.body;
+        if (!scope) return;
+        var walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
+        var nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+        nodes.forEach(function (node) {
+            if (skipText(node.parentElement)) return;
+            var key = keyFor(node.nodeValue);
+            var value = translated(key);
+            if (value) node.nodeValue = node.nodeValue.replace(String(node.nodeValue).trim(), value);
+        });
+    }
+    function initPostTranslations() {
+        if (typeof window.cre8RegisterTranslations === 'function') {
+            window.cre8RegisterTranslations(translations);
+        }
+        applyPostTranslations(document.body);
+        var pending = false;
+        new MutationObserver(function () {
+            if (pending) return;
+            pending = true;
+            window.setTimeout(function () {
+                pending = false;
+                applyPostTranslations(document.body);
+            }, 0);
+        }).observe(document.body, { childList: true, subtree: true });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPostTranslations);
+    } else {
+        initPostTranslations();
+    }
+    window.addEventListener('cre8:languagechange', function () {
+        applyPostTranslations(document.body);
+    });
+})();
+</script>
+
 <script src="../assets/comment-front.js"></script>
 <script src="../layout/front-header.js"></script>
 
