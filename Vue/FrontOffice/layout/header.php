@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/session_bridge.php';
 require_once __DIR__ . '/../../../Controleur/profileC.php';
+require_once __DIR__ . '/../../../Controleur/notificationC.php';
 
 $currentFrontUser = cre8_front_session_user();
 
@@ -81,12 +82,13 @@ if (!empty($currentFrontUser['id'])) {
 
 if ($notificationUserId > 0 && in_array($sessionRole, ['createur', 'marque'], true)) {
     try {
+        $notificationController = new NotificationC();
         require_once __DIR__ . '/../../../Controleur/condidatureC.php';
-        $notificationController = new CondidatureC();
-        if ($sessionRole === 'createur' && method_exists($notificationController, 'generateCreatorDeadlineSoonNotifications')) {
-            $notificationController->generateCreatorDeadlineSoonNotifications($notificationUserId);
-        } elseif ($sessionRole === 'marque' && method_exists($notificationController, 'generateBrandDeadlineSoonNotifications')) {
-            $notificationController->generateBrandDeadlineSoonNotifications($notificationUserId);
+        $legacyNotificationGenerator = new CondidatureC();
+        if ($sessionRole === 'createur' && method_exists($legacyNotificationGenerator, 'generateCreatorDeadlineSoonNotifications')) {
+            $legacyNotificationGenerator->generateCreatorDeadlineSoonNotifications($notificationUserId);
+        } elseif ($sessionRole === 'marque' && method_exists($legacyNotificationGenerator, 'generateBrandDeadlineSoonNotifications')) {
+            $legacyNotificationGenerator->generateBrandDeadlineSoonNotifications($notificationUserId);
         }
     } catch (Throwable $e) {
         $notificationController = null;

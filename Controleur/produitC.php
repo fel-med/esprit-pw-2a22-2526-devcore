@@ -2,9 +2,30 @@
 
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../Modele/produit.php';
+require_once __DIR__ . '/notificationC.php';
+require_once __DIR__ . '/session_helper.php';
 
 class ProduitC
 {
+    private function buildModuleLink($path, array $query = []): string
+    {
+        $scriptName = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? ''));
+        if (($position = strpos($scriptName, '/Vue/')) !== false) {
+            $base = substr($scriptName, 0, $position);
+        } elseif (($position = strpos($scriptName, '/Controleur/')) !== false) {
+            $base = substr($scriptName, 0, $position);
+        } else {
+            $base = '/php/cre8connect';
+        }
+
+        $link = rtrim($base, '/') . '/' . ltrim((string) $path, '/');
+        if (!empty($query)) {
+            $link .= '?' . http_build_query($query);
+        }
+
+        return $link;
+    }
+
     // ─── UPLOAD ────────────────────────────────────────────────────────────────
     public function gererUploadImage($fichier, ?string $ancienneImage = null): ?string
     {
@@ -151,7 +172,29 @@ class ProduitC
             if (file_exists($f)) unlink($f);
         }
         $q = config::getConnexion()->prepare("DELETE FROM produit WHERE idProduit = :id");
-        $q->execute(['id' => $id]);
+        $deleted = $q->execute(['id' => $id]) && $q->rowCount() > 0;
+
+        $ownerId = (int) ($p['idMarque'] ?? 0);
+        $adminId = cc_current_user_id();
+        $adminRole = cc_current_user_role();
+        if ($deleted && $p && $ownerId > 0 && isBackOfficeRole($adminRole) && (!$adminId || $ownerId !== $adminId)) {
+            (new NotificationC(config::getConnexion()))->createNotification(
+                $ownerId,
+                'admin_product_removed',
+                'Product removed',
+                'An admin removed one of your products.',
+                $this->buildModuleLink('Vue/FrontOffice/produit/index.php'),
+                'produit',
+                $id,
+                $adminId,
+                $adminRole,
+                'admin_product_removed_' . $id . '_user_' . $ownerId,
+                [
+                    'product_id' => $id,
+                    'product_name' => (string) ($p['nomProduit'] ?? ''),
+                ]
+            );
+        }
     }
 
     // ─── ARCHIVER / DÉSARCHIVER ────────────────────────────────────────────────

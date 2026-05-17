@@ -3,6 +3,8 @@
 require_once __DIR__ . '/../Modele/post.php';
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/commentC.php';
+require_once __DIR__ . '/notificationC.php';
+require_once __DIR__ . '/session_helper.php';
 require_once __DIR__ . '/../config_ai.php';
 
 class PostC
@@ -14,6 +16,25 @@ class PostC
     {
         $this->db = config::getConnexion();
         $this->commentC = new CommentC();
+    }
+
+    private function buildModuleLink($path, array $query = []): string
+    {
+        $scriptName = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? ''));
+        if (($position = strpos($scriptName, '/Vue/')) !== false) {
+            $base = substr($scriptName, 0, $position);
+        } elseif (($position = strpos($scriptName, '/Controleur/')) !== false) {
+            $base = substr($scriptName, 0, $position);
+        } else {
+            $base = '/php/cre8connect';
+        }
+
+        $link = rtrim($base, '/') . '/' . ltrim((string) $path, '/');
+        if (!empty($query)) {
+            $link .= '?' . http_build_query($query);
+        }
+
+        return $link;
     }
 
     private function generateUuid()
@@ -148,10 +169,36 @@ class PostC
 
     public function deletePostAdmin(string $id): bool
     {
+        $post = $this->showPost($id);
         $sql = "DELETE FROM post WHERE id = :id";
         $query = $this->db->prepare($sql);
 
-        return $query->execute(['id' => $id]);
+        $deleted = $query->execute(['id' => $id]);
+        if ($deleted && $post) {
+            $ownerId = (int) ($post['idCreateur'] ?? 0);
+            $adminId = cc_current_user_id();
+            $adminRole = cc_current_user_role() ?: 'admin';
+            if ($ownerId > 0 && (!$adminId || $ownerId !== $adminId) && isBackOfficeRole($adminRole)) {
+                (new NotificationC($this->db))->createNotification(
+                    $ownerId,
+                    'admin_post_removed',
+                    'Post removed',
+                    'An admin removed one of your posts.',
+                    $this->buildModuleLink('Vue/FrontOffice/post/portfolio.php'),
+                    'post',
+                    $id,
+                    $adminId,
+                    $adminRole,
+                    'admin_post_removed_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $id) . '_user_' . $ownerId,
+                    [
+                        'post_id' => $id,
+                        'post_subject' => (string) ($post['subject'] ?? ''),
+                    ]
+                );
+            }
+        }
+
+        return $deleted;
     }
 
     public function incrementViews(string $id)

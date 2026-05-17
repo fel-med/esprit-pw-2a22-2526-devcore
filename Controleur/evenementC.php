@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../Modele/evenement.php';
+require_once __DIR__ . '/notificationC.php';
 
 // ── Base URL helper ──────────────────────────────────────────────────────────
 // Detects the project sub-path dynamically so no URL is ever hardcoded.
@@ -32,6 +33,51 @@ class EvenementControleur {
         if (isset($_SESSION['user_id'])) return (int)$_SESSION['user_id'];
         if (isset($_SESSION['utilisateur']['id'])) return (int)$_SESSION['utilisateur']['id'];
         return 0;
+    }
+
+    private function generateTodayEventNotificationsForUser(int $userId): void
+    {
+        if ($userId <= 0) {
+            return;
+        }
+
+        $stmt = $this->pdo->prepare("
+            SELECT e.idFormation, e.TitreFormation
+            FROM inscription_evenement i
+            INNER JOIN evenement e ON e.idFormation = i.id_evenement
+            WHERE i.id_utilisateur = :userId
+              AND DATE(e.DateFormation) = CURDATE()
+              AND e.statut = 'actif'
+        ");
+        $stmt->execute(['userId' => $userId]);
+
+        $today = date('Y-m-d');
+        $notificationC = new NotificationC($this->pdo);
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $event) {
+            $eventId = (int) ($event['idFormation'] ?? 0);
+            if ($eventId <= 0) {
+                continue;
+            }
+
+            $title = trim((string) ($event['TitreFormation'] ?? '')) ?: 'your event';
+            $notificationC->createNotification(
+                $userId,
+                'event_today',
+                'Event starts today',
+                'The event ' . $title . ' starts today.',
+                evenementBaseUrl() . '/Vue/FrontOffice/evenement/index.php',
+                'evenement',
+                $eventId,
+                null,
+                null,
+                'event_today_' . $eventId . '_user_' . $userId . '_' . $today,
+                [
+                    'event_id' => $eventId,
+                    'event_title' => $title,
+                    'date' => $today,
+                ]
+            );
+        }
     }
 
     private function normalizeDateForInput(string $date): string {
@@ -198,6 +244,7 @@ class EvenementControleur {
         $stmt = $this->pdo->prepare("SELECT * FROM evenement WHERE statut = 'actif' ORDER BY DateFormation ASC");
         $stmt->execute();
         $evenements = array_map([$this, 'hydrate'], $stmt->fetchAll(PDO::FETCH_ASSOC));
+        $this->generateTodayEventNotificationsForUser($this->currentUserId());
 
         $forumsData = [];
         $stmtForum  = $this->pdo->prepare("SELECT idFormation, idForum, est_actif FROM forum WHERE est_actif = 1");

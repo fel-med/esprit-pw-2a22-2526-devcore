@@ -29,9 +29,50 @@ if (!function_exists('event_front_url')) {
 if (!isset($evenements)) {
     require_once __DIR__ . '/../../../config.php';
     require_once __DIR__ . '/../../../Modele/evenement.php';
+    require_once __DIR__ . '/../../../Controleur/notificationC.php';
     
     try {
         $pdo = config::getConnexion();
+        $currentEventUserId = (int) ($_SESSION['id'] ?? ($_SESSION['user']['id'] ?? ($_SESSION['user_id'] ?? ($_SESSION['utilisateur']['id'] ?? 0))));
+        if ($currentEventUserId > 0) {
+            $todayEventStmt = $pdo->prepare("
+                SELECT e.idFormation, e.TitreFormation
+                FROM inscription_evenement i
+                INNER JOIN evenement e ON e.idFormation = i.id_evenement
+                WHERE i.id_utilisateur = :userId
+                  AND DATE(e.DateFormation) = CURDATE()
+                  AND e.statut = 'actif'
+            ");
+            $todayEventStmt->execute(['userId' => $currentEventUserId]);
+            $today = date('Y-m-d');
+            $notificationC = new NotificationC($pdo);
+            foreach ($todayEventStmt->fetchAll(PDO::FETCH_ASSOC) as $todayEvent) {
+                $todayEventId = (int) ($todayEvent['idFormation'] ?? 0);
+                if ($todayEventId <= 0) {
+                    continue;
+                }
+
+                $todayEventTitle = trim((string) ($todayEvent['TitreFormation'] ?? '')) ?: 'your event';
+                $notificationC->createNotification(
+                    $currentEventUserId,
+                    'event_today',
+                    'Event starts today',
+                    'The event ' . $todayEventTitle . ' starts today.',
+                    event_front_url('Vue/FrontOffice/evenement/index.php'),
+                    'evenement',
+                    $todayEventId,
+                    null,
+                    null,
+                    'event_today_' . $todayEventId . '_user_' . $currentEventUserId . '_' . $today,
+                    [
+                        'event_id' => $todayEventId,
+                        'event_title' => $todayEventTitle,
+                        'date' => $today,
+                    ]
+                );
+            }
+        }
+
         $stmt = $pdo->prepare("SELECT * FROM evenement WHERE statut = 'actif' ORDER BY DateFormation ASC");
         $stmt->execute();
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);

@@ -2,6 +2,8 @@
 require_once '../../../Controleur/session_helper.php';
 cc_start_session();
 require_once '../../../Controleur/commentC.php';
+require_once '../../../Controleur/postC.php';
+require_once '../../../Controleur/notificationC.php';
 require_once '../../../Modele/comment.php';
 
 // ── VÉRIFICATION SESSION ──────────────────────────────────────
@@ -17,6 +19,30 @@ function comment_json_response(array $payload): void
     header('Content-Type: application/json');
     echo json_encode($payload);
     exit;
+}
+
+function cre8_post_details_link_for_notification(string $postId): string
+{
+    $script = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+    $base = '';
+    if (($pos = strpos($script, '/Vue/')) !== false) {
+        $base = substr($script, 0, $pos);
+    }
+
+    return $base . '/Vue/FrontOffice/post/details.php?id=' . rawurlencode($postId);
+}
+
+function cre8_current_actor_name(): string
+{
+    $name = $_SESSION['nom']
+        ?? ($_SESSION['user']['nom'] ?? null)
+        ?? ($_SESSION['utilisateur']['nom'] ?? null)
+        ?? ($_SESSION['user']['name'] ?? null)
+        ?? ($_SESSION['utilisateur']['name'] ?? null)
+        ?? '';
+
+    $name = trim((string) $name);
+    return $name !== '' ? $name : 'Someone';
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -100,6 +126,40 @@ $comment->setNumberOfLike(0);
 $comment->setNumberOfDislike(0);
 
 $success = $commentC->addComment($comment);
+
+if ($success) {
+    try {
+        $postC = new PostC();
+        $post = $postC->showPost($postId);
+        $ownerId = isset($post['idCreateur']) ? (int) $post['idCreateur'] : 0;
+        $actorId = (int) $idUser;
+
+        if ($ownerId > 0 && $actorId > 0 && $ownerId !== $actorId) {
+            $commentId = (string) $comment->getId();
+            $actorName = cre8_current_actor_name();
+            $notificationC = new NotificationC();
+            $notificationC->createNotification(
+                $ownerId,
+                'post_comment',
+                'New comment on your post',
+                $actorName . ' commented on your post.',
+                cre8_post_details_link_for_notification($postId),
+                'post',
+                $postId,
+                $actorId,
+                cc_current_user_role(),
+                'post_comment_' . $commentId . '_post_' . $postId . '_user_' . $ownerId,
+                [
+                    'comment_id' => $commentId,
+                    'post_id' => $postId,
+                    'actor_name' => $actorName,
+                ]
+            );
+        }
+    } catch (Throwable $e) {
+        error_log('Post comment notification failed: ' . $e->getMessage());
+    }
+}
 
 if (is_ajax_request()) {
     comment_json_response([

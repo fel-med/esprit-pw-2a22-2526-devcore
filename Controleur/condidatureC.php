@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../Modele/condidature.php';
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/session_helper.php';
+require_once __DIR__ . '/notificationC.php';
 if (is_file(__DIR__ . '/../config/env.php')) {
     require_once __DIR__ . '/../config/env.php';
 }
@@ -24,6 +25,11 @@ class CondidatureC
     public function __construct()
     {
         $this->pdo = config::getConnexion();
+    }
+
+    private function notificationController(): NotificationC
+    {
+        return new NotificationC($this->pdo);
     }
 
     private function normalizeCre8PilotRoleValue($role): string
@@ -13134,6 +13140,22 @@ class CondidatureC
             return;
         }
 
+        $stmt = $this->pdo->prepare('
+            SELECT o.idOffre, o.idMarque, o.idCreateurCible, o.titre, u.nom AS brandName
+            FROM offre o
+            LEFT JOIN utilisateur u ON u.id = o.idMarque
+            WHERE o.idOffre = :idOffre
+            LIMIT 1
+        ');
+        $stmt->execute(['idOffre' => $idOffre]);
+        $offerRow = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+        $brandId = (int) ($offerRow['idMarque'] ?? 0);
+        $brandName = trim((string) ($offerRow['brandName'] ?? '')) ?: 'A brand';
+        $offerTitle = $offerTitle !== '' ? $offerTitle : (string) ($offerRow['titre'] ?? 'collaboration offer');
+        if ($brandId > 0 && $brandId === $idCreateurCible) {
+            return;
+        }
+
         $creatorLink = $this->buildModuleLink('Vue/FrontOffice/offre/creator_details.php', [
             'idOffre' => $idOffre,
         ]);
@@ -13141,15 +13163,22 @@ class CondidatureC
             'idOffre' => $idOffre,
         ]);
 
-        $this->createNotificationAction(
+        $this->notificationController()->createNotification(
             $idCreateurCible,
-            'offre_created',
-            'New invitation received',
-            'A brand sent you a new offer: "' . $offerTitle . '".',
+            'offer_invitation',
+            'New collaboration offer',
+            $brandName . ' sent you a collaboration offer.',
             $creatorLink,
             'offre',
             $idOffre,
-            'creator_' . $idCreateurCible . '_offer_' . $idOffre . '_created'
+            $brandId > 0 ? $brandId : null,
+            'marque',
+            'offer_invitation_' . $idOffre . '_creator_' . $idCreateurCible,
+            [
+                'offer_id' => $idOffre,
+                'offer_title' => $offerTitle,
+                'brand_name' => $brandName,
+            ]
         );
 
         foreach ($this->getUsersByRole('admin') as $admin) {
@@ -13171,7 +13200,7 @@ class CondidatureC
         }
     }
 
-    public function notifyCandidatureSubmitted($idCandidature)
+    public function notifyCandidatureSubmitted($idCandidature, $negotiationId = null)
     {
         $stmt = $this->pdo->prepare("
             SELECT
@@ -13182,10 +13211,15 @@ class CondidatureC
                 c.typeReponse,
                 c.statutCandidature,
                 c.noteDecision,
-                COALESCE(o.idMarque, cp.idMarque) AS brandId
+                COALESCE(o.idMarque, cp.idMarque) AS brandId,
+                cu.nom AS creatorName,
+                bu.nom AS brandName,
+                COALESCE(o.titre, cp.titreCampagne) AS sourceTitle
             FROM candidature c
+            LEFT JOIN utilisateur cu ON cu.id = c.idCreateur
             LEFT JOIN offre o ON c.origineCandidature = 'par_offre' AND o.idOffre = c.idSource
             LEFT JOIN campagne cp ON c.origineCandidature = 'par_campagne' AND cp.idCampagne = c.idSource
+            LEFT JOIN utilisateur bu ON bu.id = COALESCE(o.idMarque, cp.idMarque)
             WHERE c.idCandidature = :idCandidature
             " . $this->placeholderFilterSql('c') . "
             LIMIT 1
@@ -13201,7 +13235,16 @@ class CondidatureC
 
         $idCandidature = (int) $row['idCandidature'];
         $brandId = (int) $row['brandId'];
+        $creatorId = (int) $row['idCreateur'];
+        if ($creatorId <= 0 || $creatorId === $brandId) {
+            return;
+        }
+
         $typeReponse = (string) ($row['typeReponse'] ?? '');
+        $origin = (string) ($row['origineCandidature'] ?? '');
+        $sourceId = (int) ($row['idSource'] ?? 0);
+        $creatorName = trim((string) ($row['creatorName'] ?? '')) ?: 'A creator';
+        $sourceTitle = trim((string) ($row['sourceTitle'] ?? ''));
         $brandLink = $this->buildModuleLink('Vue/FrontOffice/condidature/brand_details.php', [
             'idCandidature' => $idCandidature,
         ]);
@@ -13209,43 +13252,66 @@ class CondidatureC
             'idCandidature' => $idCandidature,
         ]);
 
-        $map = [
-            'application' => [
-                'typeAction' => 'candidature_sent',
-                'titre' => 'New candidature received',
-                'message' => 'A creator sent a candidature.',
-                'cleSuffix' => 'sent',
-            ],
-            'acceptation' => [
-                'typeAction' => 'candidature_accepted_by_creator',
-                'titre' => 'Offer accepted',
-                'message' => 'A creator accepted your offer.',
-                'cleSuffix' => 'accepted_by_creator',
-            ],
-            'negociation' => [
-                'typeAction' => 'negociation_started',
-                'titre' => 'Negotiation started',
-                'message' => 'A creator proposed new collaboration terms.',
-                'cleSuffix' => 'negociation_started',
-            ],
-            'refus' => [
-                'typeAction' => 'candidature_refused_by_creator',
-                'titre' => 'Offer declined',
-                'message' => 'A creator declined your offer.',
-                'cleSuffix' => 'refused_by_creator',
-            ],
+        $notification = [
+            'typeAction' => 'candidature_received',
+            'titre' => 'New application received',
+            'message' => $creatorName . ' applied to your offer.',
+            'link' => $brandLink,
+            'sourceType' => 'candidature',
+            'idSource' => $idCandidature,
+            'cleAction' => 'candidature_received_' . $idCandidature . '_brand_' . $brandId,
         ];
 
-        $notification = $map[$typeReponse] ?? $map['application'];
-        $this->createNotificationAction(
+        if ($typeReponse === 'acceptation' && $origin === 'par_offre' && $sourceId > 0) {
+            $notification = [
+                'typeAction' => 'offer_accepted',
+                'titre' => 'Offer accepted',
+                'message' => $creatorName . ' accepted your offer.',
+                'link' => $this->buildModuleLink('Vue/FrontOffice/offre/brand_details.php', ['idOffre' => $sourceId]),
+                'sourceType' => 'offre',
+                'idSource' => $sourceId,
+                'cleAction' => 'offer_accepted_' . $sourceId . '_brand_' . $brandId . '_creator_' . $creatorId,
+            ];
+        } elseif ($typeReponse === 'refus' && $origin === 'par_offre' && $sourceId > 0) {
+            $notification = [
+                'typeAction' => 'offer_refused',
+                'titre' => 'Offer refused',
+                'message' => $creatorName . ' refused your offer.',
+                'link' => $this->buildModuleLink('Vue/FrontOffice/offre/brand_details.php', ['idOffre' => $sourceId]),
+                'sourceType' => 'offre',
+                'idSource' => $sourceId,
+                'cleAction' => 'offer_refused_' . $sourceId . '_brand_' . $brandId . '_creator_' . $creatorId,
+            ];
+        } elseif ($typeReponse === 'negociation') {
+            $uniqueNegotiationId = $negotiationId ?: $idCandidature;
+            $notification = [
+                'typeAction' => 'negotiation_message',
+                'titre' => 'New negotiation message',
+                'message' => $creatorName . ' sent you a negotiation message.',
+                'link' => $brandLink,
+                'sourceType' => 'negociation',
+                'idSource' => $uniqueNegotiationId,
+                'cleAction' => 'negotiation_message_' . preg_replace('/[^a-zA-Z0-9_]/', '_', (string) $uniqueNegotiationId) . '_receiver_' . $brandId,
+            ];
+        }
+
+        $this->notificationController()->createNotification(
             $brandId,
             $notification['typeAction'],
             $notification['titre'],
             $notification['message'],
-            $brandLink,
-            'condidature',
-            $idCandidature,
-            'brand_' . $brandId . '_candidature_' . $idCandidature . '_' . $notification['cleSuffix']
+            $notification['link'],
+            $notification['sourceType'],
+            $notification['idSource'],
+            $creatorId,
+            'createur',
+            $notification['cleAction'],
+            [
+                'candidature_id' => $idCandidature,
+                'source_id' => $sourceId,
+                'source_title' => $sourceTitle,
+                'creator_name' => $creatorName,
+            ]
         );
 
         foreach ($this->getUsersByRole('admin') as $admin) {
@@ -13270,8 +13336,15 @@ class CondidatureC
     public function notifyBrandDecisionToCreator($idCandidature, $decisionStatus)
     {
         $stmt = $this->pdo->prepare("
-            SELECT idCandidature, idCreateur
+            SELECT
+                c.idCandidature,
+                c.idCreateur,
+                COALESCE(o.idMarque, cp.idMarque) AS brandId,
+                bu.nom AS brandName
             FROM candidature c
+            LEFT JOIN offre o ON c.origineCandidature = 'par_offre' AND o.idOffre = c.idSource
+            LEFT JOIN campagne cp ON c.origineCandidature = 'par_campagne' AND cp.idCampagne = c.idSource
+            LEFT JOIN utilisateur bu ON bu.id = COALESCE(o.idMarque, cp.idMarque)
             WHERE c.idCandidature = :idCandidature
             " . $this->placeholderFilterSql('c') . "
             LIMIT 1
@@ -13287,28 +13360,47 @@ class CondidatureC
 
         $idCreateur = (int) $row['idCreateur'];
         $idCandidature = (int) $row['idCandidature'];
+        $brandId = (int) ($row['brandId'] ?? 0);
+        if ($brandId > 0 && $brandId === $idCreateur) {
+            return;
+        }
+
+        $brandName = trim((string) ($row['brandName'] ?? '')) ?: 'A brand';
         $accepted = (string) $decisionStatus === 'acceptee';
         $link = $this->buildModuleLink('Vue/FrontOffice/condidature/details.php', [
             'idCandidature' => $idCandidature,
         ]);
 
-        $this->createNotificationAction(
+        $this->notificationController()->createNotification(
             $idCreateur,
             $accepted ? 'candidature_accepted' : 'candidature_refused',
-            $accepted ? 'Candidature accepted' : 'Candidature refused',
-            $accepted ? 'Your candidature has been accepted.' : 'Your candidature has been refused.',
+            $accepted ? 'Application accepted' : 'Application refused',
+            $brandName . ($accepted ? ' accepted your application.' : ' refused your application.'),
             $link,
-            'condidature',
+            'candidature',
             $idCandidature,
-            'creator_' . $idCreateur . '_candidature_' . $idCandidature . '_' . ($accepted ? 'accepted' : 'refused')
+            $brandId > 0 ? $brandId : null,
+            'marque',
+            'candidature_' . ($accepted ? 'accepted' : 'refused') . '_' . $idCandidature . '_creator_' . $idCreateur,
+            [
+                'candidature_id' => $idCandidature,
+                'brand_name' => $brandName,
+            ]
         );
     }
 
     public function notifyBrandNegotiationReplyToCreator($idCandidature, $uniqueValue = null)
     {
         $stmt = $this->pdo->prepare("
-            SELECT idCandidature, idCreateur
+            SELECT
+                c.idCandidature,
+                c.idCreateur,
+                COALESCE(o.idMarque, cp.idMarque) AS brandId,
+                bu.nom AS brandName
             FROM candidature c
+            LEFT JOIN offre o ON c.origineCandidature = 'par_offre' AND o.idOffre = c.idSource
+            LEFT JOIN campagne cp ON c.origineCandidature = 'par_campagne' AND cp.idCampagne = c.idSource
+            LEFT JOIN utilisateur bu ON bu.id = COALESCE(o.idMarque, cp.idMarque)
             WHERE c.idCandidature = :idCandidature
             " . $this->placeholderFilterSql('c') . "
             LIMIT 1
@@ -13324,20 +13416,33 @@ class CondidatureC
 
         $idCreateur = (int) $row['idCreateur'];
         $idCandidature = (int) $row['idCandidature'];
+        $brandId = (int) ($row['brandId'] ?? 0);
+        if ($brandId > 0 && $brandId === $idCreateur) {
+            return;
+        }
+
+        $brandName = trim((string) ($row['brandName'] ?? '')) ?: 'A brand';
         $uniqueValue = trim((string) ($uniqueValue ?: $this->nowDateTime()));
         $link = $this->buildModuleLink('Vue/FrontOffice/condidature/details.php', [
             'idCandidature' => $idCandidature,
         ]);
 
-        $this->createNotificationAction(
+        $this->notificationController()->createNotification(
             $idCreateur,
-            'negociation_reply',
-            'Negotiation reply',
-            'The brand replied to your negotiation.',
+            'negotiation_message',
+            'New negotiation message',
+            $brandName . ' sent you a negotiation message.',
             $link,
-            'condidature',
-            $idCandidature,
-            'creator_' . $idCreateur . '_candidature_' . $idCandidature . '_negociation_reply_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $uniqueValue)
+            'negociation',
+            $uniqueValue,
+            $brandId > 0 ? $brandId : null,
+            'marque',
+            'negotiation_message_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $uniqueValue) . '_receiver_' . $idCreateur,
+            [
+                'candidature_id' => $idCandidature,
+                'negotiation_id' => $uniqueValue,
+                'brand_name' => $brandName,
+            ]
         );
     }
 
@@ -13561,6 +13666,8 @@ class CondidatureC
             'delaiPropose' => $delaiPropose !== null && $delaiPropose !== '' ? (int) $delaiPropose : null,
             'dateMessage' => $dateMessage ?: $this->nowDateTime(),
         ]);
+
+        return (int) $this->pdo->lastInsertId();
     }
 
     private function getLatestNegotiationMessage($idCandidature)
@@ -13617,12 +13724,10 @@ class CondidatureC
                 'idNegociation' => (int) $latest['idNegociation'],
             ]);
 
-            return 'updated';
+            return (int) $latest['idNegociation'];
         }
 
-        $this->insertNegotiationMessage($idCandidature, $author, $message, $budgetPropose, $delaiPropose, $dateMessage);
-
-        return 'inserted';
+        return $this->insertNegotiationMessage($idCandidature, $author, $message, $budgetPropose, $delaiPropose, $dateMessage);
     }
 
     public function getUsersByIds(array $ids, $role = null)
@@ -15123,6 +15228,7 @@ class CondidatureC
         $storedMessageMotivation = $record->getMessageMotivationForStorage();
         $storedNoteDecision = $record->getNoteDecisionForStorage();
         $candidatureId = null;
+        $lastNegotiationId = null;
 
         try {
             $this->pdo->beginTransaction();
@@ -15231,7 +15337,7 @@ class CondidatureC
             }
 
             if ($intent === 'send' && $responseMode === 'negotiate') {
-                $this->saveNegotiationMessageTurn($candidatureId, 'createur', $messageMotivation, $budgetValue, $delayValue, $now);
+                $lastNegotiationId = $this->saveNegotiationMessageTurn($candidatureId, 'createur', $messageMotivation, $budgetValue, $delayValue, $now);
             }
 
             $this->pdo->commit();
@@ -15249,7 +15355,7 @@ class CondidatureC
         }
 
         if ($intent === 'send') {
-            $this->notifyCandidatureSubmitted($candidatureId);
+            $this->notifyCandidatureSubmitted($candidatureId, $lastNegotiationId);
         }
 
         if ($origin === 'par_offre') {

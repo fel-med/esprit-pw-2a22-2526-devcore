@@ -7,9 +7,19 @@ $notificationUnreadCount = 0;
 $notificationActionUrl = $notificationActionUrl ?? '../layout/notification_actions.php';
 
 if ($notificationController && $notificationUserId > 0) {
-    $notificationItemsAll = $notificationController->getNotificationActionsByUser($notificationUserId, false, 10);
-    $notificationItemsUnread = $notificationController->getNotificationActionsByUser($notificationUserId, true, 10);
-    $notificationUnreadCount = $notificationController->countUnreadNotificationActions($notificationUserId);
+    if (method_exists($notificationController, 'getNotificationsForUser')) {
+        $notificationItemsAll = $notificationController->getNotificationsForUser($notificationUserId, 20, false);
+        $notificationItemsUnread = $notificationController->getNotificationsForUser($notificationUserId, 20, true);
+        $notificationUnreadCount = method_exists($notificationController, 'countUnread')
+            ? $notificationController->countUnread($notificationUserId)
+            : 0;
+    } elseif (method_exists($notificationController, 'getNotificationActionsByUser')) {
+        $notificationItemsAll = $notificationController->getNotificationActionsByUser($notificationUserId, false, 20);
+        $notificationItemsUnread = $notificationController->getNotificationActionsByUser($notificationUserId, true, 20);
+        $notificationUnreadCount = method_exists($notificationController, 'countUnreadNotificationActions')
+            ? $notificationController->countUnreadNotificationActions($notificationUserId)
+            : 0;
+    }
 }
 
 if (!function_exists('cre8NotificationDateLabel')) {
@@ -183,6 +193,52 @@ if (!function_exists('cre8RenderNotificationItems')) {
             ensureUnreadEmptyState();
         }
 
+        function markVisibleUnreadInUi(ids, nextUnreadCount) {
+            const idSet = new Set(ids.map(String));
+            widget.querySelectorAll('[data-notification-item]').forEach((item) => {
+                if (!idSet.has(String(item.dataset.notificationId))) {
+                    return;
+                }
+                item.classList.remove('is-unread');
+                const form = item.querySelector('[data-notification-read-form]');
+                if (form) {
+                    form.remove();
+                }
+            });
+            updateUnreadCount(Number.isFinite(nextUnreadCount) ? nextUnreadCount : Math.max(0, unreadCount - ids.length));
+            ensureUnreadEmptyState();
+        }
+
+        function markVisibleUnreadAsRead() {
+            const visibleUnreadItems = Array.from(widget.querySelectorAll('[data-notification-list]:not([hidden]) [data-notification-item].is-unread'));
+            const ids = visibleUnreadItems
+                .map((item) => Number.parseInt(item.dataset.notificationId || '0', 10))
+                .filter((id) => id > 0);
+
+            if (ids.length === 0) {
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('notificationAction', 'mark_visible');
+            ids.forEach((id) => formData.append('notificationIds[]', String(id)));
+
+            fetch(<?php echo json_encode((string) $notificationActionUrl); ?>, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+                .then((response) => response.json())
+                .then((response) => {
+                    if (!response || response.success !== true) {
+                        throw new Error('Notification update failed.');
+                    }
+                    markVisibleUnreadInUi(ids, Number.parseInt(response.unreadCount, 10));
+                })
+                .catch(() => {});
+        }
+
         function submitNotificationForm(form, onSuccess) {
             const submitButton = form.querySelector('button[type="submit"], button:not([type])');
             if (submitButton) {
@@ -214,7 +270,11 @@ if (!function_exists('cre8RenderNotificationItems')) {
 
         toggle.addEventListener('click', (event) => {
             event.stopPropagation();
+            const willOpen = panel.hidden;
             panel.hidden = !panel.hidden;
+            if (willOpen) {
+                markVisibleUnreadAsRead();
+            }
         });
 
         panel.addEventListener('click', (event) => {

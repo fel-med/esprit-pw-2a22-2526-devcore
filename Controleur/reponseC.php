@@ -3,8 +3,75 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../Modele/reclamation.php';
 require_once __DIR__ . '/../Modele/reponse.php';
 require_once __DIR__ . '/../Controleur/utilisateurC.php';
+require_once __DIR__ . '/../Controleur/notificationC.php';
+require_once __DIR__ . '/../Controleur/session_helper.php';
 
 class ReponseC {
+
+    private function buildModuleLink($path, array $query = []): string
+    {
+        $scriptName = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? ''));
+        if (($position = strpos($scriptName, '/Vue/')) !== false) {
+            $base = substr($scriptName, 0, $position);
+        } elseif (($position = strpos($scriptName, '/Controleur/')) !== false) {
+            $base = substr($scriptName, 0, $position);
+        } else {
+            $base = '/php/cre8connect';
+        }
+
+        $link = rtrim($base, '/') . '/' . ltrim((string) $path, '/');
+        if (!empty($query)) {
+            $link .= '?' . http_build_query($query);
+        }
+
+        return $link;
+    }
+
+    private function notifyComplaintAnswered(PDO $db, $idReclamation, $idAdmin): void
+    {
+        $idReclamation = (int) $idReclamation;
+        $idAdmin = (int) $idAdmin;
+        if ($idReclamation <= 0) {
+            return;
+        }
+
+        $stmt = $db->prepare("
+            SELECT r.id, r.idUtilisateur, admin.nom AS adminName, admin.role AS adminRole
+            FROM reclamation r
+            LEFT JOIN utilisateur admin ON admin.id = :idAdmin
+            WHERE r.id = :idReclamation
+            LIMIT 1
+        ");
+        $stmt->execute([
+            'idAdmin' => $idAdmin,
+            'idReclamation' => $idReclamation,
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+        $ownerId = (int) ($row['idUtilisateur'] ?? 0);
+        if ($ownerId <= 0 || ($idAdmin > 0 && $ownerId === $idAdmin)) {
+            return;
+        }
+
+        $adminName = trim((string) ($row['adminName'] ?? ''));
+        $adminRole = trim((string) ($row['adminRole'] ?? cc_current_user_role())) ?: 'admin';
+
+        (new NotificationC($db))->createNotification(
+            $ownerId,
+            'complaint_answered',
+            'Complaint answered',
+            $adminName !== '' ? $adminName . ' answered your complaint.' : 'Support answered your complaint.',
+            $this->buildModuleLink('Vue/FrontOffice/utilisateur/reclamation.php'),
+            'reclamation',
+            $idReclamation,
+            $idAdmin > 0 ? $idAdmin : null,
+            $adminRole,
+            'complaint_answered_' . $idReclamation . '_user_' . $ownerId,
+            [
+                'complaint_id' => $idReclamation,
+                'admin_name' => $adminName,
+            ]
+        );
+    }
 
     // ✔️ Ajouter une réponse (admin)
     public function ajouterReponse($reponse) {
@@ -42,6 +109,8 @@ class ReponseC {
                     $reponse->getContenu()
                 );
             }
+
+            $this->notifyComplaintAnswered($db, $reponse->getIdReclamation(), $reponse->getIdAdmin());
 
             // Retourner le statut de l'envoi d'email
             return [

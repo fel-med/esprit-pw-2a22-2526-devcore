@@ -1265,6 +1265,7 @@ class OffreC
 
             if ($saved) {
                 $this->removeSavedOffreWhenResponseExists($idCreateur, $idOffre);
+                (new CondidatureC())->notifyCandidatureSubmitted((int) $existing['idCandidature']);
             }
 
             return $saved;
@@ -1310,7 +1311,11 @@ class OffreC
         ]);
 
         if ($saved) {
+            $candidatureId = (int) $this->pdo->lastInsertId();
             $this->removeSavedOffreWhenResponseExists($idCreateur, $idOffre);
+            if ($candidatureId > 0) {
+                (new CondidatureC())->notifyCandidatureSubmitted($candidatureId);
+            }
         }
 
         return $saved;
