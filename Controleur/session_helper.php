@@ -47,7 +47,127 @@ if (!function_exists('cc_current_user_role')) {
 if (!function_exists('isBackOfficeRole')) {
     function isBackOfficeRole($role): bool
     {
-        return in_array(strtolower(trim((string)$role)), ['admin', 'super_admin', 'hyper_admin'], true);
+        return cc_is_backoffice_role($role);
+    }
+}
+
+if (!function_exists('cc_admin_role_power')) {
+    function cc_admin_role_power($role): int
+    {
+        return match (strtolower(trim((string)$role))) {
+            'hyper_admin' => 3,
+            'super_admin' => 2,
+            'admin' => 1,
+            default => 0,
+        };
+    }
+}
+
+if (!function_exists('cc_is_backoffice_role')) {
+    function cc_is_backoffice_role($role): bool
+    {
+        return cc_admin_role_power($role) > 0;
+    }
+}
+
+if (!function_exists('cc_can_manage_user_role')) {
+    function cc_can_manage_user_role($actorRole, $targetRole, $action): bool
+    {
+        $actorRole = strtolower(trim((string)$actorRole));
+        $targetRole = strtolower(trim((string)$targetRole));
+        $action = strtolower(trim((string)$action));
+
+        if (!in_array($action, ['suspend', 'reactivate', 'delete', 'edit_role'], true)) {
+            return false;
+        }
+
+        if ($targetRole === 'hyper_admin' || !cc_is_backoffice_role($actorRole)) {
+            return false;
+        }
+
+        if ($actorRole === 'admin') {
+            return in_array($targetRole, ['createur', 'marque'], true)
+                && in_array($action, ['suspend', 'reactivate', 'delete'], true);
+        }
+
+        if ($actorRole === 'super_admin') {
+            if ($action === 'delete') {
+                return in_array($targetRole, ['createur', 'marque'], true);
+            }
+
+            return in_array($targetRole, ['createur', 'marque', 'admin'], true);
+        }
+
+        if ($actorRole === 'hyper_admin') {
+            return in_array($targetRole, ['createur', 'marque', 'admin', 'super_admin'], true);
+        }
+
+        return false;
+    }
+}
+
+if (!function_exists('cc_can_manage_user')) {
+    function cc_can_manage_user($actorId, $actorRole, array $targetUser, $action): bool
+    {
+        $actorId = is_numeric($actorId) ? (int)$actorId : 0;
+        $targetId = $targetUser['id'] ?? null;
+        $targetRole = $targetUser['role'] ?? '';
+
+        if ($actorId <= 0 || !is_numeric($targetId) || (int)$targetId <= 0) {
+            return false;
+        }
+
+        if ((int)$targetId === $actorId) {
+            return false;
+        }
+
+        // Suspension ownership is enforced separately by cc_can_reactivate_suspension().
+        return cc_can_manage_user_role($actorRole, $targetRole, $action);
+    }
+}
+
+if (!function_exists('cc_can_reactivate_suspension')) {
+    function cc_can_reactivate_suspension($actorId, $actorRole, array $targetUser): bool
+    {
+        if (!cc_can_manage_user($actorId, $actorRole, $targetUser, 'reactivate')) {
+            return false;
+        }
+
+        $actorId = is_numeric($actorId) ? (int)$actorId : 0;
+        $actorRole = strtolower(trim((string)$actorRole));
+        $targetRole = strtolower(trim((string)($targetUser['role'] ?? '')));
+        $targetStatus = strtolower(trim((string)($targetUser['statut'] ?? '')));
+        $suspendedBy = $targetUser['suspended_by'] ?? null;
+        $suspendedByRole = strtolower(trim((string)($targetUser['suspended_by_role'] ?? '')));
+
+        if ($targetStatus !== 'suspendu' || $targetRole === 'hyper_admin') {
+            return false;
+        }
+
+        if ($suspendedByRole === 'hyper_admin') {
+            return $actorRole === 'hyper_admin';
+        }
+
+        if ($suspendedByRole === 'super_admin') {
+            return $actorRole === 'hyper_admin'
+                || ($actorRole === 'super_admin' && is_numeric($suspendedBy) && (int)$suspendedBy === $actorId);
+        }
+
+        if ($suspendedByRole === 'admin') {
+            return $actorRole === 'hyper_admin'
+                || $actorRole === 'super_admin'
+                || ($actorRole === 'admin' && is_numeric($suspendedBy) && (int)$suspendedBy === $actorId);
+        }
+
+        if ($suspendedByRole === '') {
+            if ($actorRole === 'hyper_admin' || $actorRole === 'super_admin') {
+                return true;
+            }
+
+            return $actorRole === 'admin' && in_array($targetRole, ['createur', 'marque'], true);
+        }
+
+        return false;
     }
 }
 

@@ -7,6 +7,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+require_once __DIR__ . '/Controleur/session_helper.php';
+
 function cre8_root_normalize_role($role)
 {
     $role = strtolower(trim((string) $role));
@@ -54,7 +56,7 @@ if (!$isLoggedIn) {
 
 $role = cre8_root_normalize_role($role);
 
-if ($role === 'admin') {
+if (isBackOfficeRole($role)) {
     header('Location: Vue/BackOffice/dashboard/index.php');
     exit;
 }

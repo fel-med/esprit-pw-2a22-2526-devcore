@@ -6,6 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once __DIR__ . '/../layout/early-theme.php';
 require_once __DIR__ . '/../../../Controleur/session_helper.php';
 require_once __DIR__ . '/../../../Controleur/utilisateurC.php';
+require_once __DIR__ . '/../../../Controleur/adminAuditC.php';
 
 $currentUserId = cc_require_admin('../../FrontOffice/utilisateur/login.php');
 $currentRole = cc_current_user_role();
@@ -46,22 +47,19 @@ function admin_management_role_label(string $role): string
 
 function admin_management_can_manage_target(string $actorRole, int $actorId, array $target, string $action): bool
 {
-    $targetId = (int)($target['id'] ?? 0);
     $targetRole = strtolower(trim((string)($target['role'] ?? '')));
-
-    if ($targetId <= 0 || $targetId === $actorId || $targetRole === 'hyper_admin') {
+    $allowedTargetRoles = $actorRole === 'hyper_admin' ? ['admin', 'super_admin'] : ['admin'];
+    if (!in_array($targetRole, $allowedTargetRoles, true)) {
         return false;
     }
 
-    if ($actorRole === 'super_admin') {
-        return $action !== 'delete' && $targetRole === 'admin';
-    }
+    $helperAction = match ($action) {
+        'block' => 'suspend',
+        'activate' => 'reactivate',
+        default => $action,
+    };
 
-    if ($actorRole === 'hyper_admin') {
-        return in_array($targetRole, ['admin', 'super_admin'], true);
-    }
-
-    return false;
+    return cc_can_manage_user($actorId, $actorRole, $target, $helperAction);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -107,18 +105,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($action === 'block') {
-            $userC->updateUserStatus($targetId, 'suspendu');
-            admin_management_flash('success', 'Account blocked successfully.');
-        } elseif ($action === 'activate') {
-            $userC->updateUserStatus($targetId, 'actif');
-            admin_management_flash('success', 'Account activated successfully.');
-        } elseif ($action === 'delete') {
-            if (!$isHyperAdmin) {
-                admin_management_flash('danger', 'Only a hyper admin can delete admin accounts.');
+            if (strtolower(trim((string)($target['statut'] ?? ''))) !== 'actif') {
+                admin_management_flash('danger', 'Only active accounts can be suspended.');
                 admin_management_redirect();
             }
 
+            $reason = 'Suspended from Admin Management';
+            $userC->suspendUserWithMetadata($targetId, $currentUserId, $currentRole, $reason);
+            cc_log_admin_action($currentUserId, $currentRole, 'suspend_user', $targetId, $target['role'] ?? null, $target['statut'] ?? null, 'suspendu', $reason);
+            admin_management_flash('success', 'Account blocked successfully.');
+        } elseif ($action === 'activate') {
+            if (!cc_can_reactivate_suspension($currentUserId, $currentRole, $target)) {
+                admin_management_flash('danger', 'You are not allowed to reactivate this suspension.');
+                admin_management_redirect();
+            }
+
+            $reason = 'Reactivated from Admin Management';
+            $userC->reactivateUserAndClearSuspension($targetId);
+            cc_log_admin_action($currentUserId, $currentRole, 'reactivate_user', $targetId, $target['role'] ?? null, $target['statut'] ?? null, 'actif', $reason);
+            admin_management_flash('success', 'Account activated successfully.');
+        } elseif ($action === 'delete') {
             $userC->deleteUserById($targetId);
+            cc_log_admin_action($currentUserId, $currentRole, 'delete_user', $targetId, $target['role'] ?? null, $target['statut'] ?? null, 'deleted', 'Deleted from Admin Management');
             admin_management_flash('success', 'Account deleted successfully.');
         }
 
@@ -289,8 +297,10 @@ unset($_SESSION['admin_management_flash']);
                             $targetRole = strtolower(trim((string)($account['role'] ?? '')));
                             $targetStatus = strtolower(trim((string)($account['statut'] ?? '')));
                             $isSelf = (int)$account['id'] === $currentUserId;
-                            $canBlock = admin_management_can_manage_target($currentRole, $currentUserId, $account, 'block');
-                            $canDelete = admin_management_can_manage_target($currentRole, $currentUserId, $account, 'delete') && $isHyperAdmin;
+                            $canBlock = $targetStatus === 'suspendu'
+                              ? admin_management_can_manage_target($currentRole, $currentUserId, $account, 'activate') && cc_can_reactivate_suspension($currentUserId, $currentRole, $account)
+                              : ($targetStatus === 'actif' && admin_management_can_manage_target($currentRole, $currentUserId, $account, 'block'));
+                            $canDelete = admin_management_can_manage_target($currentRole, $currentUserId, $account, 'delete');
                             $isSuspended = $targetStatus === 'suspendu';
                           ?>
                           <tr>

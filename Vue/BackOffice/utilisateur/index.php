@@ -22,6 +22,20 @@ $totalPages = is_array($usersResult) && isset($usersResult['totalPages']) ? max(
 $currentPage = is_array($usersResult) && isset($usersResult['page']) ? max(1, intval($usersResult['page'])) : 1;
 
 $stats = $userC->getStatistiquesUtilisateurs();
+$actorId = cc_current_user_id();
+$actorRole = cc_current_user_role();
+$assignableRoles = match ($actorRole) {
+    'super_admin' => ['createur', 'marque', 'admin'],
+    'hyper_admin' => ['createur', 'marque', 'admin', 'super_admin'],
+    default => ['createur', 'marque'],
+};
+$roleLabels = [
+    'createur' => 'Creator',
+    'marque' => 'Brand',
+    'admin' => 'Admin',
+    'super_admin' => 'Super Admin',
+    'hyper_admin' => 'Hyper Admin',
+];
 ?>
 
 <!DOCTYPE html>
@@ -517,6 +531,19 @@ $stats = $userC->getStatistiquesUtilisateurs();
                       <tbody>
 
                         <?php foreach ($users as $u): ?>
+                          <?php
+                            $rowUser = [
+                                'id' => (int)($u['id'] ?? 0),
+                                'role' => strtolower(trim((string)($u['role'] ?? ''))),
+                            ];
+                            $rowStatus = strtolower(trim((string)($u['statut'] ?? 'actif')));
+                            $rowUserForPermission = array_merge($u, $rowUser);
+                            $canToggleStatus = $rowStatus === 'suspendu'
+                                ? cc_can_reactivate_suspension($actorId, $actorRole, $rowUserForPermission)
+                                : ($rowStatus === 'actif' && cc_can_manage_user($actorId, $actorRole, $rowUserForPermission, 'suspend'));
+                            $canDeleteUser = cc_can_manage_user($actorId, $actorRole, $rowUser, 'delete');
+                            $canEditUser = !cc_is_backoffice_role($rowUser['role']) || cc_can_manage_user($actorId, $actorRole, $rowUser, 'edit_role');
+                          ?>
                           <tr>
                             <form method="POST" action="update.php" class="w-100">
                               <td><?= $u['id'] ?></td>
@@ -537,9 +564,15 @@ $stats = $userC->getStatistiquesUtilisateurs();
                               <td>
                                 <select name="role" class="form-select form-select-sm"
                                   style="background-color: #FDCFFA; border-color: #D78FEE;">
-                                  <option value="admin" <?= $u['role'] == 'admin' ? 'selected' : '' ?>>Admin</option>
-                                  <option value="createur" <?= $u['role'] == 'createur' ? 'selected' : '' ?>>Creator</option>
-                                  <option value="marque" <?= $u['role'] == 'marque' ? 'selected' : '' ?>>Brand</option>
+                                  <?php
+                                    $roleOptions = array_values(array_unique(array_merge([$rowUser['role']], $assignableRoles)));
+                                    foreach ($roleOptions as $roleOption):
+                                      if ($roleOption === 'hyper_admin') {
+                                          continue;
+                                      }
+                                  ?>
+                                    <option value="<?= htmlspecialchars($roleOption) ?>" <?= $rowUser['role'] == $roleOption ? 'selected' : '' ?>><?= htmlspecialchars($roleLabels[$roleOption] ?? ucfirst(str_replace('_', ' ', $roleOption))) ?></option>
+                                  <?php endforeach; ?>
                                 </select>
                               </td>
 
@@ -565,7 +598,7 @@ $color = ($statut == 'actif') ? '#9B5DE0' :
 $displayStatus = $statusLabels[$statut] ?? ucfirst(str_replace('_', ' ', $statut));
 ?>
 
-<span class="badge" style="background-color: <?= $color ?>; color:white;">
+<span class="badge" style="background-color: <?= $color ?>; color:white;" title="<?= htmlspecialchars($u['suspension_reason'] ?? '') ?>">
     <?= $displayStatus ?>
 </span>
 </td>
@@ -574,22 +607,28 @@ $displayStatus = $statusLabels[$statut] ?? ucfirst(str_replace('_', ' ', $statut
                                 <div class="d-flex gap-2 flex-wrap">
                                   <input type="hidden" name="id" value="<?= $u['id'] ?>">
 
+                                  <?php if ($canEditUser): ?>
                                   <button type="submit" class="btn table-action-btn text-white"
                                     style="background-color: #9B5DE0;">
                                     Edit
                                   </button>
+                                  <?php endif; ?>
 
+                                  <?php if ($canToggleStatus): ?>
                                   <button type="button" class="btn table-action-btn text-white"
                                     style="background-color: <?= ($u['statut'] ?? 'actif') == 'actif' ? '#E11D74' : '#28a745' ?>; border: none;"
                                     onclick="toggleUserStatus(<?= $u['id'] ?>, '<?= ($u['statut'] ?? 'actif') ?>');">
                                     <?= ($u['statut'] ?? 'actif') == 'actif' ? '🔒 Suspend' : '✅ Activate' ?>
                                   </button>
+                                  <?php endif; ?>
 
+                                  <?php if ($canDeleteUser): ?>
                                   <button type="button" class="btn table-action-btn text-white"
                                     onclick="if(confirm('Are you sure?')) window.location.href='delete.php?id=<?= $u['id'] ?>';"
                                     style="background-color: #D78FEE;">
                                     Delete
                                   </button>
+                                  <?php endif; ?>
                                 </div>
                               </td>
 

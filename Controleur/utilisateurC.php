@@ -52,7 +52,12 @@ public function afficherAdminAccounts(array $roles) {
     }
 
     $placeholders = implode(',', array_fill(0, count($roles), '?'));
-    $stmt = $db->prepare("SELECT id, nom, email, role, statut FROM utilisateur WHERE role IN ($placeholders) ORDER BY role DESC, id DESC");
+    $stmt = $db->prepare("
+        SELECT id, nom, email, role, statut, suspended_by, suspended_by_role, suspended_at, suspension_reason
+        FROM utilisateur
+        WHERE role IN ($placeholders)
+        ORDER BY role DESC, id DESC
+    ");
     $stmt->execute($roles);
 
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -60,7 +65,11 @@ public function afficherAdminAccounts(array $roles) {
 
 public function getUserById($id) {
     $db = config::getConnexion();
-    $stmt = $db->prepare("SELECT id, nom, email, role, statut FROM utilisateur WHERE id = ?");
+    $stmt = $db->prepare("
+        SELECT id, nom, email, role, statut, suspended_by, suspended_by_role, suspended_at, suspension_reason
+        FROM utilisateur
+        WHERE id = ?
+    ");
     $stmt->execute([(int)$id]);
 
     return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -93,6 +102,39 @@ public function updateUserStatus($id, $status) {
     $db = config::getConnexion();
     $stmt = $db->prepare("UPDATE utilisateur SET statut = ? WHERE id = ?");
     $stmt->execute([$status, (int)$id]);
+}
+
+public function suspendUserWithMetadata($targetId, $actorId, $actorRole, $reason) {
+    $db = config::getConnexion();
+    $stmt = $db->prepare("
+        UPDATE utilisateur
+        SET statut = 'suspendu',
+            suspended_by = ?,
+            suspended_by_role = ?,
+            suspended_at = NOW(),
+            suspension_reason = ?
+        WHERE id = ?
+    ");
+    $stmt->execute([
+        (int)$actorId,
+        strtolower(trim((string)$actorRole)),
+        trim((string)$reason),
+        (int)$targetId,
+    ]);
+}
+
+public function reactivateUserAndClearSuspension($targetId) {
+    $db = config::getConnexion();
+    $stmt = $db->prepare("
+        UPDATE utilisateur
+        SET statut = 'actif',
+            suspended_by = NULL,
+            suspended_by_role = NULL,
+            suspended_at = NULL,
+            suspension_reason = NULL
+        WHERE id = ?
+    ");
+    $stmt->execute([(int)$targetId]);
 }
 
 public function deleteUserById($id) {

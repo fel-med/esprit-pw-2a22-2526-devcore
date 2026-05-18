@@ -1,15 +1,17 @@
 <?php
 require_once '../../../Controleur/session_helper.php';
 require_once '../../../Controleur/utilisateurC.php';
+require_once '../../../Controleur/adminAuditC.php';
 
-cc_require_admin('../../FrontOffice/utilisateur/login.php');
+$actorId = cc_require_admin('../../FrontOffice/utilisateur/login.php');
+$actorRole = cc_current_user_role();
 
 $userC = new UtilisateurC();
 
 if (isset($_POST['id'])) {
     $targetId = (int)$_POST['id'];
     $role = strtolower(trim($_POST['role'] ?? ''));
-    if (!in_array($role, ['createur', 'marque', 'admin'], true)) {
+    if (!in_array($role, ['createur', 'marque', 'admin', 'super_admin'], true)) {
         header("Location: index.php");
         exit;
     }
@@ -20,13 +22,27 @@ if (isset($_POST['id'])) {
         exit;
     }
 
-    $currentRole = cc_current_user_role();
-    if ($targetId === cc_current_user_id() && $role !== strtolower(trim((string)($targetUser['role'] ?? '')))) {
+    $targetRole = strtolower(trim((string)($targetUser['role'] ?? '')));
+    $roleChanged = $role !== $targetRole;
+
+    if ($targetRole === 'hyper_admin' || $role === 'hyper_admin') {
         header("Location: index.php");
         exit;
     }
 
-    if ($role === 'admin' && !isSuperAdminRole($currentRole)) {
+    $targetIsBackOffice = cc_is_backoffice_role($targetRole);
+    if (($roleChanged || $targetIsBackOffice) && !cc_can_manage_user($actorId, $actorRole, $targetUser, 'edit_role')) {
+        header("Location: index.php");
+        exit;
+    }
+
+    $assignableRoles = match ($actorRole) {
+        'super_admin' => ['createur', 'marque', 'admin'],
+        'hyper_admin' => ['createur', 'marque', 'admin', 'super_admin'],
+        default => ['createur', 'marque'],
+    };
+
+    if ($roleChanged && !in_array($role, $assignableRoles, true)) {
         header("Location: index.php");
         exit;
     }
@@ -37,6 +53,19 @@ if (isset($_POST['id'])) {
         $_POST['email'],
         $role
     );
+
+    if ($roleChanged) {
+        cc_log_admin_action(
+            $actorId,
+            $actorRole,
+            'role_change',
+            $targetId,
+            $role,
+            $targetRole,
+            $role,
+            'Role changed from ' . $targetRole . ' to ' . $role
+        );
+    }
 }
 
 header("Location: index.php");
