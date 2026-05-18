@@ -365,6 +365,8 @@ $roleLabels = [
     }
 
 </style>
+  <link rel="stylesheet" href="user-center-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/user-center-admin.css')); ?>">
+  <link rel="stylesheet" href="../unified-table-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../unified-table-admin.css')); ?>">
 </head>
 
 <body class="cre8-admin-layout"><?php cre8_bo_early_theme_print_body_script(); ?>
@@ -379,335 +381,273 @@ $roleLabels = [
     require_once __DIR__ . '/../layout/header.php';
     ?>
       <div class="main-panel">
-        <div class="content-wrapper">
-          <div class="row">
+        <div class="content-wrapper user-center-shell">
+          <section class="uc-page-head">
+            <div>
+              <p class="uc-kicker">User Center</p>
+              <h1>User administration</h1>
+              <p>Manage creators, brands, and back-office accounts from one unified workspace.</p>
+            </div>
+          </section>
 
-          </div>
+          <nav class="uc-entity-tabs" aria-label="User Center sections">
+            <a href="index.php" class="uc-entity-tab is-active">
+              <span class="uc-tab-icon"><i class="mdi mdi-account-group"></i></span>
+              <span><strong>Users</strong><small>Accounts and roles</small></span>
+            </a>
+            <a href="reclamations.php" class="uc-entity-tab">
+              <span class="uc-tab-icon"><i class="mdi mdi-alert-decagram"></i></span>
+              <span><strong>Complaints</strong><small>Reports and appeals</small></span>
+            </a>
+          </nav>
 
-          <!-- ===================== ADVANCED STATISTICS ===================== -->
-        <div class="row mb-4 align-items-stretch">
+          <section class="uc-statistics-panel" data-uc-stats>
+            <div class="uc-section-head">
+              <div>
+                <h2>Workspace statistics</h2>
+                <p>Live indicators and charts for user activity.</p>
+              </div>
+              <button type="button" class="uc-secondary-btn" data-uc-stats-toggle>Hide statistics</button>
+            </div>
 
-  <!-- Total Users -->
-  <div class="col-md-3 mb-3 d-flex">
-    <div class="card shadow-sm text-center p-4 h-100 w-100" style="background: linear-gradient(135deg, #9B5DE0 0%, #B771E5 100%); color: white; border-radius: 10px;">
-      <i class="mdi mdi-account-multiple" style="font-size: 2rem; margin-bottom: 10px;"></i>
-      <h6 class="mb-2">Total Users</h6>
-      <h3 class="mb-0"><?php echo $stats['total']; ?></h3>
-      <small class="mt-2 opacity-75">All accounts</small>
-    </div>
-  </div>
+            <div class="uc-kpi-grid">
+              <article class="uc-kpi-card uc-kpi-purple">
+                <span>Total users</span>
+                <strong><?php echo intval($stats['total'] ?? $totalUsers); ?></strong>
+                <small>All platform accounts</small>
+              </article>
+              <article class="uc-kpi-card uc-kpi-pink">
+                <span>Administrators</span>
+                <strong><?php echo intval($stats['admin'] ?? 0); ?></strong>
+                <small>Back-office accounts</small>
+              </article>
+              <article class="uc-kpi-card uc-kpi-green">
+                <span>Creators</span>
+                <strong><?php echo intval($stats['createur'] ?? 0); ?></strong>
+                <small>Creator accounts</small>
+              </article>
+              <article class="uc-kpi-card uc-kpi-magenta">
+                <span>Brands</span>
+                <strong><?php echo intval($stats['marque'] ?? 0); ?></strong>
+                <small>Brand accounts</small>
+              </article>
+              <article class="uc-kpi-card uc-kpi-yellow">
+                <span>Suspended</span>
+                <strong><?php echo intval($stats['suspendu'] ?? 0); ?></strong>
+                <small>Accounts under restriction</small>
+              </article>
+            </div>
 
-  <!-- Admin -->
-  <div class="col-md-3 mb-3 d-flex">
-    <div class="card shadow-sm text-center p-4 h-100 w-100" style="background: linear-gradient(135deg, #D78FEE 0%, #C96FE8 100%); color: white; border-radius: 10px;">
-      <i class="mdi mdi-shield-admin" style="font-size: 2rem; margin-bottom: 10px;"></i>
-      <h6 class="mb-2">Administrators</h6>
-      <h3 class="mb-0"><?php echo $stats['admin']; ?></h3>
-      <small class="mt-2 opacity-75">Admin accounts</small>
-    </div>
-  </div>
-
-  <!-- Créateurs -->
-  <div class="col-md-3 mb-3 d-flex">
-    <div class="card shadow-sm text-center p-4 h-100 w-100" style="background: linear-gradient(135deg, #AEEA94 0%, #99D98E 100%); color: #2d5016; border-radius: 10px;">
-      <i class="mdi mdi-account-convert" style="font-size: 2rem; margin-bottom: 10px;"></i>
-      <h6 class="mb-2">Creators</h6>
-      <h3 class="mb-0"><?php echo $stats['createur']; ?></h3>
-      <small class="mt-2 opacity-75">Creator accounts</small>
-    </div>
-  </div>
-
-  <!-- Marques -->
-  <div class="col-md-3 mb-3 d-flex">
-    <div class="card shadow-sm text-center p-4 h-100 w-100" style="background: linear-gradient(135deg, #E11D74 0%, #D01565 100%); color: white; border-radius: 10px;">
-      <i class="mdi mdi-store" style="font-size: 2rem; margin-bottom: 10px;"></i>
-      <h6 class="mb-2">Brands</h6>
-      <h3 class="mb-0"><?php echo $stats['marque']; ?></h3>
-      <small class="mt-2 opacity-75">Brand accounts</small>
-    </div>
-  </div>
-
-</div>
-
-<!-- ===================== STATUS STATS ===================== -->
-<div class="row mb-4 align-items-stretch">
-
-  <!-- Active Users -->
-  <div class="col-md-6 mb-3 d-flex">
-    <div class="card shadow-sm text-center p-4 h-100 w-100" style="background: linear-gradient(135deg, #9B5DE0 0%, #B771E5 100%); color: white; border-radius: 10px;">
-      <i class="mdi mdi-account-check" style="font-size: 2.5rem; margin-bottom: 10px;"></i>
-      <h6 class="mb-2">Active Accounts</h6>
-      <h3 class="mb-0"><?php echo $stats['actif']; ?></h3>
-      <small class="mt-2 opacity-75">✅ Active users</small>
-    </div>
-  </div>
-
-  <!-- Suspended -->
-  <div class="col-md-6 mb-3 d-flex">
-    <div class="card shadow-sm text-center p-4 h-100 w-100" style="background: linear-gradient(135deg, #FFC107 0%, #FFB300 100%); color: #333; border-radius: 10px;">
-      <i class="mdi mdi-account-lock" style="font-size: 2.5rem; margin-bottom: 10px;"></i>
-      <h6 class="mb-2">Suspended Accounts</h6>
-      <h3 class="mb-0"><?php echo $stats['suspendu']; ?></h3>
-      <small class="mt-2 opacity-75">🔒 Suspended users</small>
-    </div>
-  </div>
-
-</div>
-          <!-- ===================== AREA CHARTS ===================== -->
-          <div class="row mb-4">
-
-            <!-- Area Chart - Role Distribution -->
-            <div class="col-lg-12 mb-3">
-              <div class="card shadow-sm">
-                <div class="card-body">
-                  <h5 class="card-title mb-4">📊 User Role Trends (Timeline)</h5>
-                  <div style="height: 350px;">
-                    <canvas id="chartAreaRole"></canvas>
-                  </div>
+            <div class="uc-stats-body">
+              <article class="uc-chart-card">
+                <div class="uc-chart-head">
+                  <h3>User role trends</h3>
+                  <p>Distribution across administrators, creators, and brands.</p>
                 </div>
+                <div class="uc-chart-canvas">
+                  <canvas id="chartAreaRole"></canvas>
+                </div>
+              </article>
+              <article class="uc-chart-card">
+                <div class="uc-chart-head">
+                  <h3>User status trends</h3>
+                  <p>Active and suspended account balance.</p>
+                </div>
+                <div class="uc-chart-canvas">
+                  <canvas id="chartAreaStatus"></canvas>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="uc-filter-card">
+            <div class="uc-filter-head">
+              <div>
+                <h2>Admin filters</h2>
+                <p>Search by user identity or isolate accounts by role.</p>
+              </div>
+            </div>
+            <form method="GET" action="index.php" class="uc-filter-grid">
+              <label class="uc-filter-field uc-filter-search">
+                <span>Search</span>
+                <input type="text" name="search" placeholder="Name or email..." value="<?php echo htmlspecialchars($search); ?>">
+              </label>
+              <label class="uc-filter-field">
+                <span>Role</span>
+                <select name="role">
+                  <option value="">All roles</option>
+                  <option value="admin" <?php echo $role === 'admin' ? 'selected' : ''; ?>>Admin</option>
+                  <option value="super_admin" <?php echo $role === 'super_admin' ? 'selected' : ''; ?>>Super Admin</option>
+                  <option value="createur" <?php echo $role === 'createur' ? 'selected' : ''; ?>>Creator</option>
+                  <option value="marque" <?php echo $role === 'marque' ? 'selected' : ''; ?>>Brand</option>
+                </select>
+              </label>
+              <div class="uc-filter-actions">
+                <button type="submit" class="uc-primary-btn">Apply filters</button>
+                <a href="index.php" class="uc-soft-btn">Reset</a>
+              </div>
+            </form>
+          </section>
+
+          <section class="uc-table-card">
+            <div class="uc-table-head">
+              <div>
+                <h2>User list</h2>
+                <p><?php echo intval($totalUsers); ?> accounts found</p>
               </div>
             </div>
 
-          </div>
+            <div id="ucResultsRegion" class="uc-results-region" aria-live="polite">
+              <div class="uc-table-wrap">
+                <table class="uc-table uc-users-table">
+                  <thead>
+                    <tr>
+                      <th class="uc-col-id">ID</th>
+                      <th>User</th>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <?php if (empty($users)): ?>
+                      <tr>
+                        <td colspan="6">
+                          <div class="uc-empty-state">
+                            <span><i class="mdi mdi-account-search"></i></span>
+                            <strong>No users found</strong>
+                            <small>Try changing the search or role filter.</small>
+                          </div>
+                        </td>
+                      </tr>
+                    <?php endif; ?>
 
-          <!-- ===================== ADDITIONAL CHART ===================== -->
-          <div class="row mb-4">
-
-            <!-- Area Chart - User Status -->
-            <div class="col-lg-12 mb-3">
-              <div class="card shadow-sm">
-                <div class="card-body">
-                  <h5 class="card-title mb-4">👥 User Status Trends (Timeline)</h5>
-                  <div style="height: 350px;">
-                    <canvas id="chartAreaStatus"></canvas>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-          <div class="row ">
-            <div class="col-12 grid-margin">
-              <div class="card">
-                <div class="card-body">
-                  <h4 class="card-title">User Management</h4>
-
-                  <!-- Search and Filter -->
-                  <div class="row mb-3">
-                    <div class="col-md-6">
-                      <form method="GET" action="index.php" class="d-flex gap-2">
-                        <input type="text" name="search" class="form-control"
-                          placeholder="Search by name or email..."
-                          value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
-                        <button type="submit" class="btn btn-sm"
-                          style="background-color: #9B5DE0; color: white; width: 90px;">Search</button>
-                      </form>
-                    </div>
-                    <div class="col-md-6">
-                      <form method="GET" action="index.php" class="d-flex gap-2">
-                        <select name="role" class="form-select form-select-sm" onchange="this.form.submit()"
-                          style="background-color: #FDCFFA; border-color: #D78FEE;">
-                          <option value="">Filter by role</option>
-                          <option value="admin" <?php echo isset($_GET['role']) && $_GET['role'] == 'admin' ? 'selected' : ''; ?>>Admin</option>
-                          <option value="createur" <?php echo isset($_GET['role']) && $_GET['role'] == 'createur' ? 'selected' : ''; ?>>Creator</option>
-                          <option value="marque" <?php echo isset($_GET['role']) && $_GET['role'] == 'marque' ? 'selected' : ''; ?>>Brand</option>
-                        </select>
-                      </form>
-                    </div>
-                  </div>
-
-                  <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                      <thead class="table-dark">
-                        <tr>
-                          <th>ID</th>
-                          <th>Name</th>
-                          <th>Email</th>
-                          <th>Role</th>
-                          <th>Status</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-
-                        <?php foreach ($users as $u): ?>
-                          <?php
-                            $rowRole = cc_normalize_role($u['role'] ?? '');
-                            $rowStatus = cc_normalize_status($u['statut'] ?? '');
-                            $rowUser = [
-                                'id' => (int)($u['id'] ?? 0),
-                                'role' => $rowRole,
-                                'statut' => $rowStatus,
-                                'suspended_by' => $u['suspended_by'] ?? null,
-                                'suspended_by_role' => cc_normalize_role($u['suspended_by_role'] ?? ''),
-                                'suspended_at' => $u['suspended_at'] ?? null,
-                                'suspension_reason' => $u['suspension_reason'] ?? null,
-                            ];
-                            $u['role'] = $rowRole;
-                            $u['statut'] = $rowStatus;
-                            $canSuspendUser = $rowStatus === 'actif' && cc_can_manage_user($actorId, $actorRole, $rowUser, 'suspend');
-                            $canReactivateUser = $rowStatus === 'suspendu' && cc_can_reactivate_suspension($actorId, $actorRole, $rowUser);
-                            $canToggleStatus = $canSuspendUser || $canReactivateUser;
-                            $canDeleteUser = cc_can_manage_user($actorId, $actorRole, $rowUser, 'delete');
-                            // Role editing is intentionally strict:
-                            // - creator/brand roles are locked forever from this table.
-                            // - only hyper_admin can switch admin <-> super_admin.
-                            // - nobody can edit hyper_admin rows or their own row.
-                            $canEditRole = $actorRole === 'hyper_admin'
-                                && (int)$actorId !== (int)($rowUser['id'] ?? 0)
-                                && in_array($rowRole, ['admin', 'super_admin'], true)
-                                && cc_can_manage_user($actorId, $actorRole, $rowUser, 'edit_role');
-                            $canEditUser = false;
-                          ?>
-                          <tr>
-                            <form method="POST" action="update.php" class="w-100">
-                              <td><?= $u['id'] ?></td>
-
-                              <td>
-                                <div class="cre8-bo-user-cell">
-                                  <?= cre8_render_avatar((int)($u['id'] ?? 0), (string)($u['nom'] ?? 'User'), 'cre8-avatar-sm cre8-bo-user-avatar') ?>
-                                  <input type="hidden" name="nom" value="<?= htmlspecialchars($u['nom']) ?>">
-                                  <input type="text" value="<?= htmlspecialchars($u['nom']) ?>"
-                                    class="form-control form-control-sm" readonly disabled>
-                                </div>
-                              </td>
-
-                              <td>
-                                <input type="hidden" name="email" value="<?= htmlspecialchars($u['email']) ?>">
-                                <input type="email" value="<?= htmlspecialchars($u['email']) ?>"
-                                  class="form-control form-control-sm" readonly disabled>
-                              </td>
-
-                              <td>
-                                <select name="role" class="form-select form-select-sm"
-                                  style="background-color: #FDCFFA; border-color: #D78FEE;"
-                                  data-current-role="<?= htmlspecialchars($rowRole) ?>"
-                                  <?= $canEditRole ? 'onchange="return confirmRoleChange(this);"' : 'disabled' ?>>
-                                  <?php
-                                    if ($canEditRole && $rowRole === 'admin') {
-                                        $roleOptions = ['admin', 'super_admin'];
-                                    } elseif ($canEditRole && $rowRole === 'super_admin') {
-                                        $roleOptions = ['super_admin', 'admin'];
-                                    } else {
-                                        $roleOptions = [$rowRole];
-                                    }
-                                    foreach ($roleOptions as $roleOption):
-                                  ?>
-                                    <option value="<?= htmlspecialchars($roleOption) ?>" <?= $rowRole == $roleOption ? 'selected' : '' ?>><?= htmlspecialchars($roleLabels[$roleOption] ?? ucfirst(str_replace('_', ' ', $roleOption))) ?></option>
-                                  <?php endforeach; ?>
-                                </select>
-                              </td>
-
-                             <td>
-<?php
-$statut = $rowStatus;
-
-if ($statut == '') {
-    $statut = 'inactif';
-}
-
-$statusLabels = [
-    'actif' => 'Active',
-    'suspendu' => 'Suspended',
-    'bloque' => 'Blocked',
-    'en_attente' => 'Pending',
-    'inactif' => 'Inactive'
-];
-
-$color = ($statut == 'actif') ? '#9B5DE0' :
-         (($statut == 'suspendu') ? '#dc3545' :
-         (($statut == 'en_attente') ? '#ffc107' : '#6c757d'));
-
-$displayStatus = $statusLabels[$statut] ?? ucfirst(str_replace('_', ' ', $statut));
-?>
-
-<span class="badge" style="background-color: <?= $color ?>; color:white;" title="<?= htmlspecialchars($u['suspension_reason'] ?? '') ?>">
-    <?= $displayStatus ?>
-</span>
-</td>
-
-                              <td>
-                                <div class="d-flex gap-2 flex-wrap">
-                                  <input type="hidden" name="id" value="<?= $u['id'] ?>">
-
-                                  <?php if ($canToggleStatus): ?>
-                                  <button type="button" class="btn table-action-btn text-white"
-                                    style="background-color: <?= $rowStatus === 'actif' ? '#E11D74' : '#28a745' ?>; border: none;"
-                                    onclick="toggleUserStatus(<?= $u['id'] ?>, '<?= htmlspecialchars($rowStatus) ?>');">
-                                    <?= ($u['statut'] ?? 'actif') == 'actif' ? '🔒 Suspend' : '✅ Activate' ?>
-                                  </button>
-                                  <?php endif; ?>
-
-                                  <?php if ($canDeleteUser): ?>
-                                  <button type="button" class="btn table-action-btn text-white"
-                                    onclick="if(confirm('Are you sure?')) window.location.href='delete.php?id=<?= $u['id'] ?>';"
-                                    style="background-color: #D78FEE;">
-                                    Delete
-                                  </button>
-                                  <?php endif; ?>
-                                </div>
-                              </td>
-
+                    <?php foreach ($users as $u): ?>
+                      <?php
+                        $rowRole = cc_normalize_role($u['role'] ?? '');
+                        $rowStatus = cc_normalize_status($u['statut'] ?? '');
+                        $rowUser = [
+                            'id' => (int)($u['id'] ?? 0),
+                            'role' => $rowRole,
+                            'statut' => $rowStatus,
+                            'suspended_by' => $u['suspended_by'] ?? null,
+                            'suspended_by_role' => cc_normalize_role($u['suspended_by_role'] ?? ''),
+                            'suspended_at' => $u['suspended_at'] ?? null,
+                            'suspension_reason' => $u['suspension_reason'] ?? null,
+                        ];
+                        $u['role'] = $rowRole;
+                        $u['statut'] = $rowStatus;
+                        $canSuspendUser = $rowStatus === 'actif' && cc_can_manage_user($actorId, $actorRole, $rowUser, 'suspend');
+                        $canReactivateUser = $rowStatus === 'suspendu' && cc_can_reactivate_suspension($actorId, $actorRole, $rowUser);
+                        $canToggleStatus = $canSuspendUser || $canReactivateUser;
+                        $canDeleteUser = cc_can_manage_user($actorId, $actorRole, $rowUser, 'delete');
+                        $canEditRole = $actorRole === 'hyper_admin'
+                            && (int)$actorId !== (int)($rowUser['id'] ?? 0)
+                            && in_array($rowRole, ['admin', 'super_admin'], true)
+                            && cc_can_manage_user($actorId, $actorRole, $rowUser, 'edit_role');
+                        $canEditUser = $canEditRole;
+                        $statusLabels = [
+                            'actif' => 'Active',
+                            'suspendu' => 'Suspended',
+                            'bloque' => 'Blocked',
+                            'en_attente' => 'Pending',
+                            'inactif' => 'Inactive'
+                        ];
+                        $displayStatus = $statusLabels[$rowStatus] ?? ucfirst(str_replace('_', ' ', $rowStatus !== '' ? $rowStatus : 'inactif'));
+                        $initial = strtoupper(substr(trim((string)($u['nom'] ?? 'U')) !== '' ? trim((string)$u['nom']) : 'U', 0, 1));
+                        $updateFormId = 'ucUpdateUser' . (int)($u['id'] ?? 0);
+                      ?>
+                      <tr>
+                        <td class="uc-col-id">#<?= (int)$u['id'] ?></td>
+                        <td>
+                          <div class="uc-user-cell">
+                            <span class="uc-user-avatar"><?= htmlspecialchars($initial) ?></span>
+                            <input form="<?= $updateFormId ?>" type="text" name="nom" value="<?= htmlspecialchars($u['nom'] ?? '') ?>" class="uc-inline-input" <?= $canEditUser ? '' : 'readonly disabled' ?>>
+                          </div>
+                        </td>
+                        <td>
+                          <input form="<?= $updateFormId ?>" type="email" name="email" value="<?= htmlspecialchars($u['email'] ?? '') ?>" class="uc-inline-input" <?= $canEditUser ? '' : 'readonly disabled' ?>>
+                        </td>
+                        <td>
+                          <select form="<?= $updateFormId ?>" name="role" class="uc-inline-select" <?= $canEditRole ? '' : 'disabled' ?>>
+                            <?php
+                              if ($canEditRole && $rowRole === 'admin') {
+                                  $roleOptions = ['admin', 'super_admin'];
+                              } elseif ($canEditRole && $rowRole === 'super_admin') {
+                                  $roleOptions = ['super_admin', 'admin'];
+                              } else {
+                                  $roleOptions = [$rowRole];
+                              }
+                              foreach ($roleOptions as $roleOption):
+                            ?>
+                              <option value="<?= htmlspecialchars($roleOption) ?>" <?= $rowRole == $roleOption ? 'selected' : '' ?>><?= htmlspecialchars($roleLabels[$roleOption] ?? ucfirst(str_replace('_', ' ', $roleOption))) ?></option>
+                            <?php endforeach; ?>
+                          </select>
+                        </td>
+                        <td>
+                          <span class="uc-badge uc-status-<?= htmlspecialchars($rowStatus !== '' ? $rowStatus : 'inactif') ?>" title="<?= htmlspecialchars($u['suspension_reason'] ?? '') ?>">
+                            <?= htmlspecialchars($displayStatus) ?>
+                          </span>
+                        </td>
+                        <td>
+                          <div class="uc-actions">
+                            <form id="<?= $updateFormId ?>" method="POST" action="update.php" class="m-0">
+                              <input type="hidden" name="id" value="<?= (int)$u['id'] ?>">
+                              <?php if ($canEditUser): ?>
+                                <button type="submit" class="uc-action-btn uc-action-primary">Save</button>
+                              <?php endif; ?>
                             </form>
-                          </tr>
-                        <?php endforeach; ?>
 
-                      </tbody>
-                    </table>
-                  </div>
+                            <?php if ($canToggleStatus): ?>
+                              <button type="button" class="uc-action-btn <?= $rowStatus === 'actif' ? 'uc-action-danger' : 'uc-action-success' ?>" onclick="toggleUserStatus(<?= (int)$u['id'] ?>, '<?= htmlspecialchars($rowStatus) ?>');">
+                                <?= $rowStatus === 'actif' ? 'Suspend' : 'Activate' ?>
+                              </button>
+                            <?php endif; ?>
 
-                  <?php if ($totalPages > 1): ?>
-                  <div class="d-flex justify-content-center mt-3">
-                    <nav aria-label="Users pagination">
-                      <ul class="pagination">
-                        <li class="page-item <?= $currentPage <= 1 ? 'disabled' : '' ?>">
-                          <a class="page-link" href="?search=<?= urlencode($search) ?>&role=<?= urlencode($role) ?>&page=<?= $currentPage - 1 ?>" aria-label="Previous">&laquo;</a>
-                        </li>
-                        <?php
-                        $startPage = max(1, $currentPage - 2);
-                        $endPage = min($totalPages, $currentPage + 2);
-                        if ($startPage > 1): ?>
-                          <li class="page-item"><a class="page-link" href="?search=<?= urlencode($search) ?>&role=<?= urlencode($role) ?>&page=1">1</a></li>
-                          <?php if ($startPage > 2): ?>
-                            <li class="page-item disabled"><span class="page-link">...</span></li>
-                          <?php endif; ?>
-                        <?php endif; ?>
-                        <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
-                          <li class="page-item <?= $i == $currentPage ? 'active' : '' ?>">
-                            <a class="page-link" href="?search=<?= urlencode($search) ?>&role=<?= urlencode($role) ?>&page=<?= $i ?>"><?= $i ?></a>
-                          </li>
-                        <?php endfor; ?>
-                        <?php if ($endPage < $totalPages): ?>
-                          <?php if ($endPage < $totalPages - 1): ?>
-                            <li class="page-item disabled"><span class="page-link">...</span></li>
-                          <?php endif; ?>
-                          <li class="page-item"><a class="page-link" href="?search=<?= urlencode($search) ?>&role=<?= urlencode($role) ?>&page=<?= $totalPages ?>"><?= $totalPages ?></a></li>
-                        <?php endif; ?>
-                        <li class="page-item <?= $currentPage >= $totalPages ? 'disabled' : '' ?>">
-                          <a class="page-link" href="?search=<?= urlencode($search) ?>&role=<?= urlencode($role) ?>&page=<?= $currentPage + 1 ?>" aria-label="Next">&raquo;</a>
-                        </li>
-                      </ul>
-                    </nav>
-                  </div>
-                  <div class="text-center text-muted">Page <?= $currentPage ?> of <?= $totalPages ?> (<?= $totalUsers ?> users)</div>
-                  <?php endif; ?>
-                </div>
+                            <?php if ($canDeleteUser): ?>
+                              <button type="button" class="uc-action-btn uc-action-soft-danger" onclick="if(confirm('Are you sure?')) window.location.href='delete.php?id=<?= (int)$u['id'] ?>';">
+                                Delete
+                              </button>
+                            <?php endif; ?>
+                          </div>
+                        </td>
+                      </tr>
+                    <?php endforeach; ?>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="uc-pagination">
+                <p>Page <?= $currentPage ?> of <?= $totalPages ?> · <?= $totalUsers ?> users</p>
+                <?php if ($totalPages > 1): ?>
+                  <nav aria-label="Users pagination">
+                    <a class="uc-page-btn <?= $currentPage <= 1 ? 'is-disabled' : '' ?>" href="?search=<?= urlencode($search) ?>&role=<?= urlencode($role) ?>&page=<?= max(1, $currentPage - 1) ?>">&laquo;</a>
+                    <?php
+                      $startPage = max(1, $currentPage - 2);
+                      $endPage = min($totalPages, $currentPage + 2);
+                      if ($startPage > 1):
+                    ?>
+                      <a class="uc-page-btn" href="?search=<?= urlencode($search) ?>&role=<?= urlencode($role) ?>&page=1">1</a>
+                      <?php if ($startPage > 2): ?><span class="uc-page-ellipsis">...</span><?php endif; ?>
+                    <?php endif; ?>
+
+                    <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+                      <a class="uc-page-btn <?= $i == $currentPage ? 'is-active' : '' ?>" href="?search=<?= urlencode($search) ?>&role=<?= urlencode($role) ?>&page=<?= $i ?>"><?= $i ?></a>
+                    <?php endfor; ?>
+
+                    <?php if ($endPage < $totalPages): ?>
+                      <?php if ($endPage < $totalPages - 1): ?><span class="uc-page-ellipsis">...</span><?php endif; ?>
+                      <a class="uc-page-btn" href="?search=<?= urlencode($search) ?>&role=<?= urlencode($role) ?>&page=<?= $totalPages ?>"><?= $totalPages ?></a>
+                    <?php endif; ?>
+                    <a class="uc-page-btn <?= $currentPage >= $totalPages ? 'is-disabled' : '' ?>" href="?search=<?= urlencode($search) ?>&role=<?= urlencode($role) ?>&page=<?= min($totalPages, $currentPage + 1) ?>">&raquo;</a>
+                  </nav>
+                <?php endif; ?>
               </div>
             </div>
-          </div>
+          </section>
         </div>
         <!-- content-wrapper ends -->
-        <!-- partial:partials/_footer.html -->
-        <footer class="footer">
-          <div class="d-sm-flex justify-content-center justify-content-sm-between">
-            <span class="text-muted d-block text-center text-sm-left d-sm-inline-block">Copyright © bootstrapdash.com
-              2020</span>
-            <span class="float-none float-sm-right d-block mt-1 mt-sm-0 text-center"> Free <a
-                href="https://www.bootstrapdash.com/bootstrap-admin-template/" target="_blank">Bootstrap admin
-                templates</a> from Bootstrapdash.com</span>
-          </div>
-        </footer>
-        <!-- partial -->
       </div>
       <!-- main-panel ends -->
     </div>
@@ -726,6 +666,7 @@ $displayStatus = $statusLabels[$statut] ?? ucfirst(str_replace('_', ' ', $statut
   <!-- End plugin js for this page -->
   <!-- inject:js -->
   <script src="../layout/back-layout.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/back-layout.js')); ?>"></script>
+  <script src="user-center-admin.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/user-center-admin.js')); ?>"></script>
   <script src="assets/js/off-canvas.js"></script>
   <script src="assets/js/hoverable-collapse.js"></script>
   <script src="assets/js/misc.js"></script>
@@ -922,30 +863,6 @@ $displayStatus = $statusLabels[$statut] ?? ucfirst(str_replace('_', ' ', $statut
   </script>
 
   <script>
-    function confirmRoleChange(select) {
-      const oldValue = select.getAttribute('data-current-role') || select.defaultValue;
-      const newValue = select.value;
-
-      if (newValue === oldValue) {
-        return false;
-      }
-
-      const labels = {
-        admin: 'Admin',
-        super_admin: 'Super Admin'
-      };
-
-      const ok = confirm('Change role from ' + (labels[oldValue] || oldValue) + ' to ' + (labels[newValue] || newValue) + '?');
-
-      if (!ok) {
-        select.value = oldValue;
-        return false;
-      }
-
-      select.closest('form').submit();
-      return true;
-    }
-
     // Function to toggle user status
     function toggleUserStatus(userId, currentStatus) {
       const newStatus = currentStatus === 'actif' ? 'suspendu' : 'actif';

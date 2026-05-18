@@ -10,11 +10,15 @@
   var notificationTranslations = {
     en: {
       'header.markAllRead': 'Mark all as read',
-      'header.noNotifications': 'No new notifications'
+      'header.notificationSubtitle': 'Latest admin updates',
+      'header.noNotifications': 'No new notifications',
+      'header.allCaughtUp': "You're all caught up."
     },
     fr: {
       'header.markAllRead': 'Tout marquer comme lu',
-      'header.noNotifications': 'Aucune nouvelle notification'
+      'header.notificationSubtitle': 'Dernieres mises a jour admin',
+      'header.noNotifications': 'Aucune notification',
+      'header.allCaughtUp': 'Vous etes a jour.'
     }
   };
 
@@ -84,10 +88,27 @@
 
   function renderEmpty() {
     clearList();
-    var empty = document.createElement('p');
-    empty.className = 'p-3 mb-0 text-center';
-    empty.setAttribute('data-i18n', 'header.noNotifications');
-    empty.textContent = t('header.noNotifications', 'No new notifications');
+
+    var empty = document.createElement('div');
+    empty.className = 'cre8-notification-empty';
+
+    var icon = document.createElement('span');
+    icon.className = 'cre8-notification-empty-icon';
+    var glyph = document.createElement('i');
+    glyph.className = 'mdi mdi-bell-check-outline';
+    icon.appendChild(glyph);
+
+    var title = document.createElement('strong');
+    title.setAttribute('data-i18n', 'header.noNotifications');
+    title.textContent = t('header.noNotifications', 'No new notifications');
+
+    var note = document.createElement('small');
+    note.setAttribute('data-i18n', 'header.allCaughtUp');
+    note.textContent = t('header.allCaughtUp', "You're all caught up.");
+
+    empty.appendChild(icon);
+    empty.appendChild(title);
+    empty.appendChild(note);
     listEl.appendChild(empty);
   }
 
@@ -102,36 +123,35 @@
     items.forEach(function (item, index) {
       var link = safeLink(item.link);
       var row = document.createElement(link ? 'a' : 'button');
-      row.className = 'dropdown-item preview-item';
+      row.className = 'cre8-notification-item';
+      if (!item.is_read) {
+        row.classList.add('is-unread');
+      }
       row.type = link ? undefined : 'button';
       if (link) {
         row.href = link;
       }
       row.dataset.notificationId = String(item.id || '');
 
-      var thumbnail = document.createElement('div');
-      thumbnail.className = 'preview-thumbnail';
-
-      var icon = document.createElement('div');
-      icon.className = 'preview-icon bg-dark rounded-circle';
+      var icon = document.createElement('span');
+      icon.className = 'cre8-notification-icon';
       var iconGlyph = document.createElement('i');
-      iconGlyph.className = item.is_read ? 'mdi mdi-bell-outline text-muted' : 'mdi mdi-bell-ring text-primary';
+      iconGlyph.className = item.is_read ? 'mdi mdi-bell-outline' : 'mdi mdi-bell-ring';
       icon.appendChild(iconGlyph);
-      thumbnail.appendChild(icon);
 
       var content = document.createElement('div');
-      content.className = 'preview-item-content';
+      content.className = 'cre8-notification-content';
 
       var title = document.createElement('p');
-      title.className = 'preview-subject mb-1';
+      title.className = 'cre8-notification-title';
       title.textContent = item.title || 'Notification';
 
       var message = document.createElement('p');
-      message.className = 'text-muted ellipsis mb-0';
+      message.className = 'cre8-notification-message';
       message.textContent = item.message || '';
 
       var date = document.createElement('p');
-      date.className = 'text-muted mb-0 small';
+      date.className = 'cre8-notification-date';
       date.textContent = item.created_at || '';
 
       content.appendChild(title);
@@ -142,7 +162,14 @@
         content.appendChild(date);
       }
 
-      row.appendChild(thumbnail);
+      if (!item.is_read) {
+        var unreadDot = document.createElement('span');
+        unreadDot.className = 'cre8-notification-dot';
+        unreadDot.setAttribute('aria-hidden', 'true');
+        content.appendChild(unreadDot);
+      }
+
+      row.appendChild(icon);
       row.appendChild(content);
 
       row.addEventListener('click', function (event) {
@@ -151,12 +178,6 @@
       });
 
       listEl.appendChild(row);
-
-      if (index < items.length - 1) {
-        var divider = document.createElement('div');
-        divider.className = 'dropdown-divider';
-        listEl.appendChild(divider);
-      }
     });
 
     if (window.cre8BackApplyTranslations) {
@@ -254,6 +275,10 @@
         var empty = listEl.querySelector('[data-i18n="header.noNotifications"]');
         if (empty) {
           empty.textContent = t('header.noNotifications', 'No new notifications');
+        }
+        var caughtUp = listEl.querySelector('[data-i18n="header.allCaughtUp"]');
+        if (caughtUp) {
+          caughtUp.textContent = t('header.allCaughtUp', "You're all caught up.");
         }
       }
     });

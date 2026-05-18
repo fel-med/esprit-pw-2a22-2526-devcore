@@ -46,7 +46,9 @@ $total_signales     = count($messages_signales);
   <link rel="stylesheet" href="<?= $backBoUtilisateurWeb ?? '../utilisateur' ?>/assets/vendors/css/vendor.bundle.base.css">
   <link rel="stylesheet" href="<?= $backBoUtilisateurWeb ?? '../utilisateur' ?>/assets/css/style.css">
   <link rel="stylesheet" href="<?= ($backBoRootWeb ?? '..') ?>/layout/back-layout.css?v=<?php echo urlencode((string)filemtime(__DIR__.'/../layout/back-layout.css')); ?>">
-  <link rel="icon" type="image/png" sizes="16x16" href="<?= htmlspecialchars(dirname($backBoRootWeb) . '/public/images/favicon-16.png') ?>">
+    <link rel="stylesheet" href="<?= $backBoRootWeb ?>/event-center-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../event-center-admin.css')); ?>">
+    <link rel="stylesheet" href="<?= $backBoRootWeb ?>/unified-table-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../unified-table-admin.css')); ?>">
+<link rel="icon" type="image/png" sizes="16x16" href="<?= htmlspecialchars(dirname($backBoRootWeb) . '/public/images/favicon-16.png') ?>">
   <link rel="icon" type="image/png" sizes="32x32" href="<?= htmlspecialchars(dirname($backBoRootWeb) . '/public/images/favicon-32.png') ?>">
   <link rel="shortcut icon" type="image/png" href="<?= htmlspecialchars(dirname($backBoRootWeb) . '/public/images/favicon-32.png') ?>">
   <link rel="apple-touch-icon" sizes="180x180" href="<?= htmlspecialchars(dirname($backBoRootWeb) . '/public/images/apple-touch-icon.png') ?>">
@@ -81,238 +83,186 @@ $total_signales     = count($messages_signales);
   <div class="container-fluid page-body-wrapper cre8-admin-main">
     <?php require_once __DIR__ . '/../layout/header.php'; ?>
     <div class="main-panel">
-      <div class="content-wrapper">
-        
-        <!-- Page header -->
-        <div class="row mb-3 align-items-center">
-          <div class="col">
-            <h4 class="page-title mb-0">Gestion des Forums</h4>
-            <p class="text-muted mb-0" style="font-size:.85rem;">Supervision, modération et statistiques de la communauté</p>
+      <div class="content-wrapper event-center-shell">
+
+
+
+        <?php
+          $ecActiveTab = 'forum';
+          $forumSearch = trim((string)($_GET['search'] ?? ''));
+          $forumStatusFilter = trim((string)($_GET['status'] ?? ''));
+          $forumPerPage = max(5, min(25, (int)($_GET['per_page'] ?? 10)));
+          $forumPage = max(1, (int)($_GET['page'] ?? 1));
+          $filteredForums = array_values(array_filter($forums, function($forumItem) use ($forumSearch, $forumStatusFilter) {
+              $title = (string)($forumItem['TitreForum'] ?? $forumItem['titreForum'] ?? '');
+              $eventName = (string)($forumItem['nom_evenement'] ?? '');
+              $author = (string)($forumItem['nom_utilisateur'] ?? '');
+              $active = (string)($forumItem['est_actif'] ?? '0');
+              $haystack = strtolower($title . ' ' . $eventName . ' ' . $author);
+              if ($forumSearch !== '' && strpos($haystack, strtolower($forumSearch)) === false) { return false; }
+              if ($forumStatusFilter !== '' && $active !== $forumStatusFilter) { return false; }
+              return true;
+          }));
+          $forumTotalRows = count($filteredForums);
+          $forumTotalPages = max(1, (int)ceil($forumTotalRows / $forumPerPage));
+          $forumPage = min($forumPage, $forumTotalPages);
+          $pagedForums = array_slice($filteredForums, ($forumPage - 1) * $forumPerPage, $forumPerPage);
+          $forumQueryBase = $_GET;
+          $forumQueryBase['action'] = $forumQueryBase['action'] ?? 'admin';
+          unset($forumQueryBase['page']);
+          $forumPageUrl = function($page) use ($forumQueryBase) {
+              $q = $forumQueryBase;
+              $q['page'] = $page;
+              return '?' . http_build_query($q);
+          };
+          $forums_inactive = max(0, $total_forums - $forums_actifs);
+        ?>
+
+        <section class="ec-page-head">
+          <div>
+            <p class="ec-kicker">Event Center</p>
+            <h1>Forum administration</h1>
+            <p>Supervise forum discussions, reported messages, and community activity.</p>
           </div>
-          <div class="col-auto">
-            <a href="<?= $BASE ?>/Controleur/forumC.php?action=creer_forums_auto"
-               class="btn text-white"
-               style="background:linear-gradient(135deg,#9B5DE0,#B771E5);border-radius:10px;">
-              <i class="mdi mdi-refresh me-1"></i> Créer les forums du jour
+          <div class="ec-page-actions">
+            <a href="<?= htmlspecialchars($BASE . '/Controleur/forumC.php?action=creer_forums_auto') ?>" class="ec-primary-btn">
+              <i class="mdi mdi-refresh me-1"></i> Create today's forums
             </a>
           </div>
-        </div>
+        </section>
 
-        <!-- KPI Cards -->
-        <div class="row mb-4 align-items-stretch">
-          <div class="col-md-3 mb-3 d-flex">
-            <div class="card shadow-sm text-center p-4 h-100 w-100" style="background:linear-gradient(135deg,#9B5DE0,#B771E5);color:white;border-radius:10px;">
-              <i class="mdi mdi-forum" style="font-size:2rem;margin-bottom:10px;"></i>
-              <h6 class="mb-2">Total Forums</h6>
-              <h3 class="mb-0"><?= $total_forums ?></h3>
-              <small class="mt-2 opacity-75">forums créés</small>
-            </div>
-          </div>
-          <div class="col-md-3 mb-3 d-flex">
-            <div class="card shadow-sm text-center p-4 h-100 w-100" style="background:linear-gradient(135deg,#E11D74,#D01565);color:white;border-radius:10px;">
-              <i class="mdi mdi-message-text" style="font-size:2rem;margin-bottom:10px;"></i>
-              <h6 class="mb-2">Messages</h6>
-              <h3 class="mb-0"><?= $total_messages ?></h3>
-              <small class="mt-2 opacity-75">total messages</small>
-            </div>
-          </div>
-          <div class="col-md-3 mb-3 d-flex">
-            <div class="card shadow-sm text-center p-4 h-100 w-100" style="background:linear-gradient(135deg,#AEEA94,#99D98E);color:#2d5016;border-radius:10px;">
-              <i class="mdi mdi-account-group" style="font-size:2rem;margin-bottom:10px;"></i>
-              <h6 class="mb-2">Participants</h6>
-              <h3 class="mb-0"><?= $total_participants ?></h3>
-              <small class="mt-2" style="opacity:.75;">membres actifs</small>
-            </div>
-          </div>
-          <div class="col-md-3 mb-3 d-flex">
-            <div class="card shadow-sm text-center p-4 h-100 w-100" style="background:linear-gradient(135deg,#D78FEE,#C96FE8);color:white;border-radius:10px;">
-              <i class="mdi mdi-flag" style="font-size:2rem;margin-bottom:10px;"></i>
-              <h6 class="mb-2">Signalés</h6>
-              <h3 class="mb-0"><?= $total_signales ?></h3>
-              <small class="mt-2 opacity-75">messages signalés</small>
-            </div>
-          </div>
-        </div>
+        <nav class="ec-entity-tabs" aria-label="Event Center sections">
+          <a class="ec-entity-tab" href="<?= htmlspecialchars($BASE . '/Controleur/evenementC.php?action=admin') ?>">
+            <span class="ec-tab-icon"><i class="mdi mdi-calendar-star"></i></span>
+            <span><strong>Events</strong><small>Planning and participation</small></span>
+          </a>
+          <a class="ec-entity-tab is-active" href="<?= htmlspecialchars($BASE . '/Controleur/forumC.php?action=admin') ?>">
+            <span class="ec-tab-icon"><i class="mdi mdi-forum"></i></span>
+            <span><strong>Forum</strong><small>Discussions and moderation</small></span>
+          </a>
+        </nav>
 
-        <!-- Tabs -->
-        <ul class="nav nav-tabs mb-3" id="forumTabs" role="tablist">
-          <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="tab-forums-btn" data-bs-toggle="tab" data-bs-target="#tab-forums" type="button" role="tab">
-              <i class="mdi mdi-forum me-1"></i> Forums (<?= $total_forums ?>)
-            </button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="tab-signales-btn" data-bs-toggle="tab" data-bs-target="#tab-signales" type="button" role="tab">
-              <i class="mdi mdi-flag me-1"></i> Messages signalés (<?= $total_signales ?>)
-            </button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="tab-stats-btn" data-bs-toggle="tab" data-bs-target="#tab-stats" type="button" role="tab">
-              <i class="mdi mdi-chart-bar me-1"></i> Statistiques
-            </button>
-          </li>
-        </ul>
+        <section class="ec-statistics-panel" data-ec-stats>
+          <div class="ec-section-head">
+            <div>
+              <h2>Workspace statistics</h2>
+              <p>Forum health, messages, activity, and moderation overview.</p>
+            </div>
+            <button type="button" class="ec-secondary-btn" data-ec-stats-toggle data-label-hide="Hide statistics" data-label-show="Show statistics">Hide statistics</button>
+          </div>
 
-        <div class="tab-content" id="forumTabsContent">
+          <div class="ec-kpi-grid">
+            <article class="ec-kpi-card ec-kpi-purple"><span>Total forums</span><strong><?= $total_forums ?></strong><small>forums created</small></article>
+            <article class="ec-kpi-card ec-kpi-pink"><span>Messages</span><strong><?= $total_messages ?></strong><small>total messages</small></article>
+            <article class="ec-kpi-card ec-kpi-green"><span>Participants</span><strong><?= $total_participants ?></strong><small>active members</small></article>
+            <article class="ec-kpi-card ec-kpi-magenta"><span>Reported</span><strong><?= $total_signales ?></strong><small>messages flagged</small></article>
+            <article class="ec-kpi-card ec-kpi-blue"><span>Active forums</span><strong><?= $forums_actifs ?></strong><small>currently open</small></article>
+            <article class="ec-kpi-card ec-kpi-yellow"><span>Closed</span><strong><?= $forums_inactive ?></strong><small>inactive forums</small></article>
+          </div>
 
-          <!-- TAB 1: FORUMS -->
-          <div class="tab-pane fade show active" id="tab-forums" role="tabpanel">
-            <div class="card">
-              <div class="card-body">
-                <div class="row mb-3 align-items-center">
-                  <div class="col-md-6">
-                    <div class="input-group">
-                      <span class="input-group-text"><i class="mdi mdi-magnify"></i></span>
-                      <input type="text" id="tableSearchInput" class="form-control" placeholder="Rechercher..." onkeyup="filterTable()">
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <span class="text-muted" style="font-size:.85rem;"><span id="tableCount"><?= $total_forums ?></span> forums</span>
-                  </div>
-                  <div class="col-md-2 text-end">
-                    <button class="btn btn-sm" style="background:rgba(155,93,224,.12);color:#9B5DE0;border:1px solid rgba(155,93,224,.3);" onclick="resetTable()">
-                      <i class="mdi mdi-refresh me-1"></i> Réinitialiser
-                    </button>
-                  </div>
-                </div>
-                <div class="table-responsive">
-                  <table class="table table-hover align-middle">
-                    <thead>
-                      <tr>
-                        <th onclick="sortTable(0)" style="cursor:pointer;">ID <span class="sort-icon" id="sort-icon-0"></span></th>
-                        <th onclick="sortTable(1)" style="cursor:pointer;">Titre <span class="sort-icon" id="sort-icon-1"></span></th>
-                        <th onclick="sortTable(2)" style="cursor:pointer;">Événement <span class="sort-icon" id="sort-icon-2"></span></th>
-                        <th onclick="sortTable(3)" style="cursor:pointer;">Auteur <span class="sort-icon" id="sort-icon-3"></span></th>
-                        <th onclick="sortTable(4)" style="cursor:pointer;">Messages <span class="sort-icon" id="sort-icon-4"></span></th>
-                        <th onclick="sortTable(5)" style="cursor:pointer;">Date <span class="sort-icon" id="sort-icon-5"></span></th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody id="forumsTableBody">
-                      <?php if (empty($forums)): ?>
-                        <tr><td colspan="7" class="text-center py-4">Aucun forum trouvé</td></tr>
-                      <?php else: ?>
-                        <?php foreach ($forums as $forum): ?>
-                        <tr>
-                          <td><?= $forum['idForum'] ?></td>
-                          <td><strong><?= htmlspecialchars($forum['TitreForum'] ?? $forum['titreForum'] ?? 'Discussion') ?></strong></td>
-                          <td><?= htmlspecialchars($forum['nom_evenement'] ?? '') ?></td>
-                          <td><?= htmlspecialchars($forum['nom_utilisateur'] ?? 'Admin') ?></td>
-                          <td><span class="badge" style="background:rgba(155,93,224,.15);color:#9B5DE0;"><?= $forum['nb_messages'] ?? 0 ?> messages</span></td>
-                          <td><?= date('d/m/Y', strtotime($forum['dateCreation'])) ?></td>
-                          <td>
-                            <div class="d-flex gap-2">
-                              <a href="<?= $BASE ?>/Controleur/forumC.php?action=voir&id=<?= $forum['idForum'] ?>"
-                                 class="btn table-action-btn text-white" style="background:#9B5DE0;">
-                                <i class="mdi mdi-eye me-1"></i> Voir
-                              </a>
-                              <button type="button" class="btn table-action-btn text-white" style="background:#D78FEE;"
-                                onclick="supprimerForum(<?= $forum['idForum'] ?>, '<?= htmlspecialchars(addslashes($forum['TitreForum'] ?? $forum['titreForum'] ?? '')) ?>')">
-                                <i class="mdi mdi-delete me-1"></i> Suppr
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                        <?php endforeach; ?>
-                      <?php endif; ?>
-                    </tbody>
-                  </table>
-                </div>
+          <div class="ec-stats-body ec-stats-body-forum">
+            <article class="ec-chart-card ec-chart-wide">
+              <div class="ec-chart-head"><h3>Messages evolution</h3><p>Forum messages over the last months.</p></div>
+              <div class="ec-chart-canvas"><canvas id="messagesChart"></canvas></div>
+            </article>
+            <article class="ec-chart-card">
+              <div class="ec-chart-head"><h3>Top forums</h3><p>Most active forum spaces.</p></div>
+              <div class="ec-mini-table-wrap">
+                <table class="ec-mini-table"><thead><tr><th>#</th><th>Forum</th><th>Messages</th><th>Activity</th></tr></thead><tbody>
+                  <?php foreach (($stats['top_forums'] ?? []) as $i => $f): ?>
+                    <tr><td><span class="ec-rank"><?= $i + 1 ?></span></td><td><strong><?= htmlspecialchars($f['TitreForum'] ?? 'Forum') ?></strong></td><td><?= (int)($f['nb_messages'] ?? 0) ?></td><td><span class="ec-chip"><?= ($f['nb_messages'] ?? 0) > 10 ? 'Active' : 'Calm' ?></span></td></tr>
+                  <?php endforeach; ?>
+                </tbody></table>
               </div>
-            </div>
+            </article>
+            <article class="ec-chart-card">
+              <div class="ec-chart-head"><h3>Top contributors</h3><p>Most involved users.</p></div>
+              <div class="ec-mini-table-wrap">
+                <table class="ec-mini-table"><thead><tr><th>#</th><th>User</th><th>Messages</th><th>Impact</th></tr></thead><tbody>
+                  <?php foreach (($stats['top_contributeurs'] ?? []) as $i => $u): ?>
+                    <tr><td><span class="ec-rank"><?= $i + 1 ?></span></td><td><strong><?= htmlspecialchars($u['nom'] ?? 'Anonymous') ?></strong></td><td><?= (int)($u['nb_messages'] ?? 0) ?></td><td><span class="ec-chip"><?= ($u['nb_messages'] ?? 0) > 20 ? 'Expert' : 'Active' ?></span></td></tr>
+                  <?php endforeach; ?>
+                </tbody></table>
+              </div>
+            </article>
           </div>
+        </section>
 
-          <!-- TAB 2: MESSAGES SIGNALÉS -->
-          <div class="tab-pane fade" id="tab-signales" role="tabpanel">
-            <?php if (empty($messages_signales)): ?>
-              <div class="alert alert-success d-flex align-items-center" role="alert">
-                <i class="mdi mdi-check-circle me-2" style="font-size:1.4rem;"></i>
-                <div>Aucun message signalé — tous les messages sont conformes.</div>
-              </div>
-            <?php else: ?>
-              <?php foreach ($messages_signales as $msg): ?>
-              <div class="card forum-message-card mb-3">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                  <span><i class="mdi mdi-pin me-1" style="color:#9B5DE0;"></i> Forum : <strong><?= htmlspecialchars($msg['titreForum'] ?? '') ?></strong></span>
-                  <button type="button" class="btn btn-sm text-white" style="background:#D78FEE;border-radius:10px;"
-                    onclick="supprimerMessage(<?= $msg['idMessage'] ?>)">
-                    <i class="mdi mdi-delete me-1"></i> Supprimer
-                  </button>
-                </div>
-                <div class="card-body">
-                  <p class="mb-1 text-muted" style="font-size:.82rem;">
-                    <i class="mdi mdi-account me-1"></i><?= htmlspecialchars($msg['nom_utilisateur'] ?? '') ?>
-                    &nbsp;·&nbsp;
-                    <i class="mdi mdi-calendar me-1"></i><?= date('d/m/Y H:i', strtotime($msg['dateMessage'])) ?>
-                  </p>
-                  <p class="mb-0"><?= nl2br(htmlspecialchars($msg['message'] ?? '')) ?></p>
-                </div>
-              </div>
+        <?php if (!empty($messages_signales)): ?>
+          <section class="ec-table-card ec-moderation-card">
+            <div class="ec-table-head"><div><h2>Reported messages</h2><p><?= count($messages_signales) ?> message(s) require moderation.</p></div></div>
+            <div class="ec-message-grid">
+              <?php foreach (array_slice($messages_signales, 0, 4) as $msg): ?>
+                <article class="ec-message-card"><div><strong><?= htmlspecialchars($msg['titreForum'] ?? '') ?></strong><span><?= htmlspecialchars($msg['nom_utilisateur'] ?? '') ?> · <?= htmlspecialchars(date('d/m/Y H:i', strtotime($msg['dateMessage']))) ?></span></div><p><?= nl2br(htmlspecialchars($msg['message'] ?? '')) ?></p><button type="button" class="ec-action-btn ec-action-danger" onclick="supprimerMessage(<?= (int)$msg['idMessage'] ?>)"><i class="mdi mdi-delete me-1"></i>Delete</button></article>
               <?php endforeach; ?>
-            <?php endif; ?>
-          </div>
-
-          <!-- TAB 3: STATISTIQUES -->
-          <div class="tab-pane fade" id="tab-stats" role="tabpanel">
-            <div class="row mb-4">
-              <div class="col-lg-12 mb-3">
-                <div class="card shadow-sm">
-                  <div class="card-body">
-                    <h5 class="card-title mb-3"><i class="mdi mdi-chart-line me-2" style="color:#9B5DE0;"></i>Évolution des messages (6 mois)</h5>
-                    <canvas id="messagesChart" style="max-height:280px;"></canvas>
-                  </div>
-                </div>
-              </div>
             </div>
-            <div class="row">
-              <div class="col-lg-6 mb-3">
-                <div class="card shadow-sm">
-                  <div class="card-body">
-                    <h5 class="card-title mb-3"><i class="mdi mdi-trophy me-2" style="color:#E11D74;"></i>Top 5 forums</h5>
-                    <div class="table-responsive">
-                      <table class="table table-hover align-middle mb-0">
-                        <thead><tr><th>#</th><th>Forum</th><th>Messages</th><th>Activité</th></tr></thead>
-                        <tbody>
-                          <?php foreach (($stats['top_forums'] ?? []) as $i => $f): ?>
-                          <tr>
-                            <td><span class="badge" style="background:<?= $i===0?'#fbbf24':($i===1?'#94a3b8':'#cd7f32') ?>;color:#0d1117;"><?= $i+1 ?></span></td>
-                            <td><strong><?= htmlspecialchars($f['TitreForum'] ?? 'Forum') ?></strong></td>
-                            <td><?= $f['nb_messages'] ?? 0 ?></td>
-                            <td><span class="badge" style="background:rgba(155,93,224,.15);color:#9B5DE0;"><?= ($f['nb_messages']??0)>10?'🔥 Actif':'🕰️ Calme' ?></span></td>
-                          </tr>
-                          <?php endforeach; ?>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-lg-6 mb-3">
-                <div class="card shadow-sm">
-                  <div class="card-body">
-                    <h5 class="card-title mb-3"><i class="mdi mdi-account-star me-2" style="color:#9B5DE0;"></i>Top contributeurs</h5>
-                    <div class="table-responsive">
-                      <table class="table table-hover align-middle mb-0">
-                        <thead><tr><th>#</th><th>Contributeur</th><th>Messages</th><th>Impact</th></tr></thead>
-                        <tbody>
-                          <?php foreach (($stats['top_contributeurs'] ?? []) as $i => $u): ?>
-                          <tr>
-                            <td><span class="badge" style="background:<?= $i===0?'#fbbf24':($i===1?'#94a3b8':'#cd7f32') ?>;color:#0d1117;"><?= $i+1 ?></span></td>
-                            <td><strong><?= htmlspecialchars($u['nom'] ?? 'Anonyme') ?></strong></td>
-                            <td><?= $u['nb_messages'] ?? 0 ?></td>
-                            <td><span class="badge" style="background:rgba(225,29,116,.15);color:#E11D74;"><?= ($u['nb_messages']??0)>20?'🏆 Expert':'🌱 Actif' ?></span></td>
-                          </tr>
-                          <?php endforeach; ?>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          </section>
+        <?php endif; ?>
+
+        <section class="ec-filter-card">
+          <div class="ec-filter-head"><div><h2>Admin filters</h2><p>Filter by forum title, event, author, or activity status.</p></div></div>
+          <form class="ec-filter-grid" method="get" action="<?= htmlspecialchars($_SERVER['PHP_SELF'] ?? '') ?>">
+            <?php if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/Controleur/') !== false): ?><input type="hidden" name="action" value="admin"><?php endif; ?>
+            <label class="ec-filter-field"><span>Search</span><input type="search" name="search" value="<?= htmlspecialchars($forumSearch) ?>" placeholder="Forum, event, author..."></label>
+            <label class="ec-filter-field"><span>Status</span><select name="status"><option value="">All statuses</option><option value="1" <?= $forumStatusFilter === '1' ? 'selected' : '' ?>>Active</option><option value="0" <?= $forumStatusFilter === '0' ? 'selected' : '' ?>>Closed</option></select></label>
+            <label class="ec-filter-field"><span>Per page</span><select name="per_page"><option value="10" <?= $forumPerPage === 10 ? 'selected' : '' ?>>10 / page</option><option value="15" <?= $forumPerPage === 15 ? 'selected' : '' ?>>15 / page</option><option value="25" <?= $forumPerPage === 25 ? 'selected' : '' ?>>25 / page</option></select></label>
+            <div class="ec-filter-actions"><button type="submit" class="ec-primary-btn">Apply filters</button><a href="?action=admin" class="ec-soft-btn">Reset</a></div>
+          </form>
+        </section>
+
+        <section class="ec-table-card">
+          <div class="ec-table-head"><div><h2>Forum List</h2><p><?= $forumTotalRows ?> forum(s) match the current filters.</p></div></div>
+          <div id="ecResultsRegion" class="ec-results-region">
+            <div class="ec-table-wrap">
+              <table class="ec-table ec-forum-table">
+                <thead>
+                  <tr>
+                    <th onclick="sortTable(0)" style="cursor:pointer;">ID <span class="sort-icon" id="sort-icon-0"></span></th>
+                    <th onclick="sortTable(1)" style="cursor:pointer;">Title <span class="sort-icon" id="sort-icon-1"></span></th>
+                    <th onclick="sortTable(2)" style="cursor:pointer;">Event <span class="sort-icon" id="sort-icon-2"></span></th>
+                    <th onclick="sortTable(3)" style="cursor:pointer;">Author <span class="sort-icon" id="sort-icon-3"></span></th>
+                    <th onclick="sortTable(4)" style="cursor:pointer;">Messages <span class="sort-icon" id="sort-icon-4"></span></th>
+                    <th onclick="sortTable(5)" style="cursor:pointer;">Date <span class="sort-icon" id="sort-icon-5"></span></th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="forumsTableBody">
+                  <?php if (empty($pagedForums)): ?>
+                    <tr><td colspan="7"><div class="ec-empty-state"><span><i class="mdi mdi-forum-remove"></i></span><strong>No forum found</strong><p>Try another filter or create forums from today's events.</p></div></td></tr>
+                  <?php else: ?>
+                    <?php foreach ($pagedForums as $forum): ?>
+                    <tr>
+                      <td>#<?= (int)$forum['idForum'] ?></td>
+                      <td><div class="ec-main-cell"><strong><?= htmlspecialchars($forum['TitreForum'] ?? $forum['titreForum'] ?? 'Discussion') ?></strong><span><?= ((int)($forum['est_actif'] ?? 0) === 1) ? 'Active' : 'Closed' ?></span></div></td>
+                      <td><?= htmlspecialchars($forum['nom_evenement'] ?? '') ?></td>
+                      <td><?= htmlspecialchars($forum['nom_utilisateur'] ?? 'Admin') ?></td>
+                      <td><span class="ec-chip"><?= (int)($forum['nb_messages'] ?? 0) ?> messages</span></td>
+                      <td class="ec-date-cell"><?= htmlspecialchars(date('Y-m-d', strtotime($forum['dateCreation']))) ?></td>
+                      <td><div class="ec-actions"><a href="<?= htmlspecialchars($BASE . '/Controleur/forumC.php?action=voir&id=' . (int)$forum['idForum']) ?>" class="ec-action-btn ec-action-primary"><i class="mdi mdi-eye me-1"></i>View</a><button type="button" class="ec-action-btn ec-action-danger" onclick="supprimerForum(<?= (int)$forum['idForum'] ?>, '<?= htmlspecialchars(addslashes($forum['TitreForum'] ?? $forum['titreForum'] ?? '')) ?>')"><i class="mdi mdi-delete me-1"></i>Delete</button></div></td>
+                    </tr>
+                    <?php endforeach; ?>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+            </div>
+            <div class="ec-pagination">
+              <p>Page <?= $forumPage ?> of <?= $forumTotalPages ?> (<?= $forumTotalRows ?> forums)</p>
+              <nav aria-label="Forum pagination">
+                <a class="ec-page-btn <?= $forumPage <= 1 ? 'is-disabled' : '' ?>" href="<?= htmlspecialchars($forumPageUrl(max(1, $forumPage - 1))) ?>">«</a>
+                <?php for ($p = 1; $p <= $forumTotalPages; $p++): ?>
+                  <?php if ($p === 1 || $p === $forumTotalPages || abs($p - $forumPage) <= 1): ?>
+                    <a class="ec-page-btn <?= $p === $forumPage ? 'is-active' : '' ?>" href="<?= htmlspecialchars($forumPageUrl($p)) ?>"><?= $p ?></a>
+                  <?php elseif (abs($p - $forumPage) === 2): ?>
+                    <span class="ec-page-ellipsis">…</span>
+                  <?php endif; ?>
+                <?php endfor; ?>
+                <a class="ec-page-btn <?= $forumPage >= $forumTotalPages ? 'is-disabled' : '' ?>" href="<?= htmlspecialchars($forumPageUrl(min($forumTotalPages, $forumPage + 1))) ?>">»</a>
+              </nav>
             </div>
           </div>
+        </section>
 
-        </div><!-- tab-content -->
+
 
       </div><!-- content-wrapper -->
       <footer class="footer">
@@ -328,6 +278,7 @@ $total_signales     = count($messages_signales);
 <script src="<?= $backBoUtilisateurWeb ?? '../utilisateur' ?>/assets/vendors/js/vendor.bundle.base.js"></script>
 <script src="<?= $backBoUtilisateurWeb ?? '../utilisateur' ?>/assets/vendors/chart.js/Chart.min.js"></script>
 <script src="<?= ($backBoRootWeb ?? '..') ?>/layout/back-layout.js?v=<?php echo urlencode((string)filemtime(__DIR__.'/../layout/back-layout.js')); ?>"></script>
+<script src="<?= $backBoRootWeb ?>/event-center-admin.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../event-center-admin.js')); ?>"></script>
 <script src="<?= $backBoUtilisateurWeb ?? '../utilisateur' ?>/assets/js/off-canvas.js"></script>
 <script src="<?= $backBoUtilisateurWeb ?? '../utilisateur' ?>/assets/js/hoverable-collapse.js"></script>
 <script src="<?= $backBoUtilisateurWeb ?? '../utilisateur' ?>/assets/js/misc.js"></script>

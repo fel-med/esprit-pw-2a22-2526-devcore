@@ -75,6 +75,19 @@ public function getUserById($id) {
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
+public function getUserByEmail($email) {
+    $db = config::getConnexion();
+    $stmt = $db->prepare("
+        SELECT id, nom, email, role, statut, suspended_by, suspended_by_role, suspended_at, suspension_reason
+        FROM utilisateur
+        WHERE email = ?
+        LIMIT 1
+    ");
+    $stmt->execute([trim((string)$email)]);
+
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
 public function ajouterAdminAccount($nom, $email, $password, $role) {
     $db = config::getConnexion();
 

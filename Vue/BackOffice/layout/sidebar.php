@@ -51,66 +51,125 @@ if ($backUserId !== null) {
     }
 }
 
-$backItems = [
-    ['key' => 'dashboard',      'label' => 'Dashboard',      'url' => $backBoRootWeb . '/dashboard/index.php',      'icon' => 'mdi-speedometer',            'iconClass' => 'text-primary'],
-    ['key' => 'users',          'label' => 'Users',          'url' => $backBoRootWeb . '/utilisateur/index.php',    'icon' => 'mdi-account-multiple',      'iconClass' => 'text-warning'],
-    ['key' => 'reclamations',   'label' => 'Complaints',   'url' => $backBoRootWeb . '/utilisateur/reclamations.php', 'icon' => 'mdi-playlist-play',      'iconClass' => 'text-danger'],
-    ['key' => 'collaborations', 'label' => 'Collaborations', 'url' => $backBoRootWeb . '/offre/index.php',          'icon' => 'mdi-briefcase-check',       'iconClass' => 'text-info'],
-    ['key' => 'campaigns',      'label' => 'Campaigns',      'url' => $backBoRootWeb . '/campagne/index.php',       'icon' => 'mdi-chart-bar',             'iconClass' => 'text-success'],
-    ['key' => 'products',       'label' => 'Products',       'url' => $backBoRootWeb . '/produit/index.php',        'icon' => 'mdi-cube-outline',          'iconClass' => 'text-primary'],
-    ['key' => 'contracts',      'label' => 'Contracts',      'url' => $backBoRootWeb . '/contrat/index.php',        'icon' => 'mdi-file-document-outline', 'iconClass' => 'text-warning'],
-    ['key' => 'posts',          'label' => 'Posts',          'url' => $backBoRootWeb . '/post/index.php',           'icon' => 'mdi-format-list-bulleted',  'iconClass' => 'text-danger'],
-    ['key' => 'comments',       'label' => 'Comments',       'url' => $backBoRootWeb . '/comment/index.php',        'icon' => 'mdi-comment-text-outline',  'iconClass' => 'text-info'],
-    ['key' => 'events',         'label' => 'Events',         'url' => $backBoControleurWeb . '/evenementC.php?action=admin', 'icon' => 'mdi-calendar-check',  'iconClass' => 'text-success'],
-    ['key' => 'forum',          'label' => 'Forum',          'url' => $backBoControleurWeb . '/forumC.php?action=admin',     'icon' => 'mdi-forum-outline',   'iconClass' => 'text-primary'],
-];
-
-if (cc_is_backoffice_role($backRole)) {
-    array_splice($backItems, 3, 0, [[
-        'key' => 'admin_requests',
-        'label' => 'Admin Requests',
-        'url' => $backBoRootWeb . '/utilisateur/admin_requests.php',
-        'icon' => 'mdi-message-alert-outline',
-        'iconClass' => 'text-info',
-    ]]);
-}
+$backTools = [];
 
 if (isSuperAdminRole(cc_current_user_role())) {
-    array_splice($backItems, 2, 0, [[
+    $backTools[] = [
         'key' => 'admin_management',
         'label' => 'Admin Management',
         'url' => $backBoRootWeb . '/utilisateur/admin_management.php',
         'icon' => 'mdi-shield-account',
         'iconClass' => 'text-success',
-    ]]);
+        'i18n' => 'nav.adminManagement',
+        'aliases' => 'admins super admin hyper admin roles permissions management',
+    ];
+}
+
+if (cc_is_backoffice_role($backRole)) {
+    $backTools[] = [
+        'key' => 'admin_requests',
+        'label' => 'Admin Requests',
+        'url' => $backBoRootWeb . '/utilisateur/admin_requests.php',
+        'icon' => 'mdi-message-alert-outline',
+        'iconClass' => 'text-info',
+        'i18n' => 'nav.adminRequests',
+        'aliases' => 'requests demands messages approval super hyper admin',
+    ];
 }
 
 if (isHyperAdmin($backRole)) {
-    array_splice($backItems, 3, 0, [[
+    $backTools[] = [
         'key' => 'server_center',
         'label' => 'Server Center',
         'url' => $backBoRootWeb . '/utilisateur/server_center.php',
         'icon' => 'mdi-server-security',
         'iconClass' => 'text-info',
-    ]]);
+        'i18n' => 'nav.serverCenter',
+        'aliases' => 'server system diagnostics disk database php health',
+    ];
 }
 
-$backNavI18nKeys = [
-    'dashboard' => 'nav.dashboard',
-    'users' => 'nav.users',
-    'admin_management' => 'nav.adminManagement',
-    'server_center' => 'nav.serverCenter',
-    'reclamations' => 'nav.complaints',
-    'admin_requests' => 'nav.adminRequests',
-    'collaborations' => 'nav.collaborations',
-    'campaigns' => 'nav.campaigns',
-    'products' => 'nav.products',
-    'contracts' => 'nav.contracts',
-    'posts' => 'nav.posts',
-    'comments' => 'nav.comments',
-    'events' => 'nav.events',
-    'forum' => 'nav.forum',
-];
+$backItems = array_merge([
+    [
+        'key' => 'dashboard',
+        'label' => 'Dashboard',
+        'url' => $backBoRootWeb . '/dashboard/index.php',
+        'icon' => 'mdi-speedometer',
+        'iconClass' => 'text-primary',
+        'i18n' => 'nav.dashboard',
+        'aliases' => 'home overview analytics statistics main',
+        'activeKeys' => ['dashboard'],
+    ],
+    [
+        'key' => 'user_center',
+        'label' => 'User Center',
+        'url' => $backBoRootWeb . '/utilisateur/index.php',
+        'icon' => 'mdi-account-group',
+        'iconClass' => 'text-warning',
+        'i18n' => 'nav.userCenter',
+        'aliases' => 'users user creator brand marque createur complaints reclamations suspension appeals accounts',
+        'activeKeys' => ['user_center', 'users', 'reclamations'],
+    ],
+    [
+        'key' => 'collaborations',
+        'label' => 'Collaborations',
+        'url' => $backBoRootWeb . '/offre/index.php',
+        'icon' => 'mdi-briefcase-check',
+        'iconClass' => 'text-info',
+        'i18n' => 'nav.collaborations',
+        'aliases' => 'offers offre candidatures applications invitations cre8shield collaboration',
+        'activeKeys' => ['collaborations', 'offers', 'offre', 'condidature', 'candidature', 'cre8shield'],
+    ],
+    [
+        'key' => 'business',
+        'label' => 'Business',
+        'url' => $backBoRootWeb . '/campagne/index.php',
+        'icon' => 'mdi-chart-bar',
+        'iconClass' => 'text-success',
+        'i18n' => 'nav.business',
+        'aliases' => 'campaigns campagnes products produits contracts contrats marketing business',
+        'activeKeys' => ['business', 'campaigns', 'campagne', 'products', 'produit', 'contracts', 'contrat'],
+    ],
+    [
+        'key' => 'community',
+        'label' => 'Community',
+        'url' => $backBoRootWeb . '/post/index.php',
+        'icon' => 'mdi-forum',
+        'iconClass' => 'text-danger',
+        'i18n' => 'nav.community',
+        'aliases' => 'posts publications comments commentaires community moderation content',
+        'activeKeys' => ['community', 'posts', 'post', 'comments', 'comment'],
+    ],
+    [
+        'key' => 'events_hub',
+        'label' => 'Events',
+        'url' => $backBoControleurWeb . '/evenementC.php?action=admin',
+        'icon' => 'mdi-calendar-star',
+        'iconClass' => 'text-success',
+        'i18n' => 'nav.eventsHub',
+        'aliases' => 'events evenement forum forums community events',
+        'activeKeys' => ['events_hub', 'events', 'evenement', 'forum'],
+    ],
+], $backTools);
+
+$renderBackSidebarItem = static function (array $item) use ($backActive): void {
+    $isDisabled = !empty($item['disabled']);
+    $activeKeys = $item['activeKeys'] ?? [$item['key']];
+    $isActive = in_array($backActive, $activeKeys, true);
+    $itemClass = 'nav-item menu-items cre8-domain-nav-item' . ($isActive ? ' active' : '') . ($isDisabled ? ' back-nav-disabled' : '');
+    $i18nKey = $item['i18n'] ?? ('nav.' . $item['key']);
+    $aliases = trim((string)($item['aliases'] ?? ''));
+    ?>
+      <li class="<?php echo htmlspecialchars($itemClass); ?>">
+        <a class="nav-link" href="<?php echo htmlspecialchars($item['url']); ?>" data-cre8-sidebar-link data-cre8-nav-key="<?php echo htmlspecialchars($item['key']); ?>" data-cre8-nav-aliases="<?php echo htmlspecialchars($aliases); ?>"<?php echo $isDisabled ? ' aria-disabled="true" tabindex="-1" onclick="return false;"' : ''; ?>>
+          <span class="menu-icon">
+            <i class="mdi <?php echo htmlspecialchars($item['icon'] . ' ' . $item['iconClass']); ?>"></i>
+          </span>
+          <span class="menu-title" data-i18n="<?php echo htmlspecialchars($i18nKey); ?>"><?php echo htmlspecialchars($item['label']); ?></span>
+        </a>
+      </li>
+    <?php
+};
 ?>
 <!-- partial:partials/_sidebar.html -->
 <nav class="sidebar sidebar-offcanvas" id="sidebar">
@@ -165,20 +224,8 @@ $backNavI18nKeys = [
       <span class="nav-link" data-i18n="nav.navigation">Navigation</span>
     </li>
 
-    <?php foreach ($backItems as $item): ?>
-      <?php
-        $isDisabled = !empty($item['disabled']);
-        $isActive = $backActive === $item['key'];
-        $itemClass = 'nav-item menu-items' . ($isActive ? ' active' : '') . ($isDisabled ? ' back-nav-disabled' : '');
-      ?>
-      <li class="<?php echo htmlspecialchars($itemClass); ?>">
-        <a class="nav-link" href="<?php echo htmlspecialchars($item['url']); ?>"<?php echo $isDisabled ? ' aria-disabled="true" tabindex="-1" onclick="return false;"' : ''; ?>>
-          <span class="menu-icon">
-            <i class="mdi <?php echo htmlspecialchars($item['icon'] . ' ' . $item['iconClass']); ?>"></i>
-          </span>
-          <span class="menu-title" data-i18n="<?php echo htmlspecialchars($backNavI18nKeys[$item['key']] ?? ('nav.' . $item['key'])); ?>"><?php echo htmlspecialchars($item['label']); ?></span>
-        </a>
-      </li>
+    <?php foreach ($backItems as $backItem): ?>
+      <?php $renderBackSidebarItem($backItem); ?>
     <?php endforeach; ?>
   </ul>
 </nav>

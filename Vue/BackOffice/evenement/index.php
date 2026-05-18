@@ -118,7 +118,9 @@ try {
   <link rel="stylesheet" href="<?= $backBoUtilisateurWeb ?>/assets/css/style.css">
   <!-- End layout styles -->
   <link rel="stylesheet" href="<?= $backBoRootWeb ?>/layout/back-layout.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/back-layout.css')); ?>">
-  <link rel="icon" type="image/png" sizes="16x16" href="<?= htmlspecialchars(dirname($backBoRootWeb) . '/public/images/favicon-16.png') ?>">
+    <link rel="stylesheet" href="<?= $backBoRootWeb ?>/event-center-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../event-center-admin.css')); ?>">
+    <link rel="stylesheet" href="<?= $backBoRootWeb ?>/unified-table-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../unified-table-admin.css')); ?>">
+<link rel="icon" type="image/png" sizes="16x16" href="<?= htmlspecialchars(dirname($backBoRootWeb) . '/public/images/favicon-16.png') ?>">
   <link rel="icon" type="image/png" sizes="32x32" href="<?= htmlspecialchars(dirname($backBoRootWeb) . '/public/images/favicon-32.png') ?>">
   <link rel="shortcut icon" type="image/png" href="<?= htmlspecialchars(dirname($backBoRootWeb) . '/public/images/favicon-32.png') ?>">
   <link rel="apple-touch-icon" sizes="180x180" href="<?= htmlspecialchars(dirname($backBoRootWeb) . '/public/images/apple-touch-icon.png') ?>">
@@ -324,7 +326,53 @@ try {
   <div class="container-fluid page-body-wrapper cre8-admin-main">
     <?php require_once __DIR__ . '/../layout/header.php'; ?>
     <div class="main-panel">
-      <div class="content-wrapper">
+      <div class="content-wrapper event-center-shell">
+
+
+
+        <?php
+          $ecActiveTab = 'events';
+          $eventSearch = trim((string)($_GET['search'] ?? ''));
+          $eventStatusFilter = trim((string)($_GET['status'] ?? ''));
+          $eventTypeFilter = trim((string)($_GET['type'] ?? ''));
+          $eventPerPage = max(5, min(25, (int)($_GET['per_page'] ?? 10)));
+          $eventPage = max(1, (int)($_GET['page'] ?? 1));
+          $eventTypes = [];
+          foreach ($evenements as $eventItem) {
+              $t = method_exists($eventItem, 'getType') ? (string)$eventItem->getType() : '';
+              if ($t !== '') { $eventTypes[$t] = $t; }
+          }
+          ksort($eventTypes);
+          $filteredEvents = array_values(array_filter($evenements, function($eventItem) use ($eventSearch, $eventStatusFilter, $eventTypeFilter) {
+              $title = method_exists($eventItem, 'getTitre') ? (string)$eventItem->getTitre() : '';
+              $type = method_exists($eventItem, 'getType') ? (string)$eventItem->getType() : '';
+              $status = method_exists($eventItem, 'getStatut') ? (string)$eventItem->getStatut() : '';
+              $place = method_exists($eventItem, 'getLieu') ? (string)$eventItem->getLieu() : '';
+              $haystack = strtolower($title . ' ' . $type . ' ' . $status . ' ' . $place);
+              if ($eventSearch !== '' && strpos($haystack, strtolower($eventSearch)) === false) { return false; }
+              if ($eventStatusFilter !== '' && $status !== $eventStatusFilter) { return false; }
+              if ($eventTypeFilter !== '' && $type !== $eventTypeFilter) { return false; }
+              return true;
+          }));
+          $eventTotalRows = count($filteredEvents);
+          $eventTotalPages = max(1, (int)ceil($eventTotalRows / $eventPerPage));
+          $eventPage = min($eventPage, $eventTotalPages);
+          $pagedEvents = array_slice($filteredEvents, ($eventPage - 1) * $eventPerPage, $eventPerPage);
+          $eventQueryBase = $_GET;
+          $eventQueryBase['action'] = $eventQueryBase['action'] ?? 'admin';
+          unset($eventQueryBase['page']);
+          $eventPageUrl = function($page) use ($eventQueryBase) {
+              $q = $eventQueryBase;
+              $q['page'] = $page;
+              return '?' . http_build_query($q);
+          };
+          $eventFinished = 0;
+          $today = date('Y-m-d');
+          foreach ($evenements as $eventItem) {
+              $d = method_exists($eventItem, 'getDateEvenement') ? substr((string)$eventItem->getDateEvenement(), 0, 10) : '';
+              if ($d !== '' && $d < $today) { $eventFinished++; }
+          }
+        ?>
 
         <?php if (isset($_GET['deleted'])): ?>
           <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -345,231 +393,152 @@ try {
           </div>
         <?php endif; ?>
 
-        <?php if ($pendingEvents > 0): ?>
-        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-          <i class="mdi mdi-alert me-2"></i>
-          <strong><?= $pendingEvents ?> evenement(s)</strong> en attente de validation.
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        <?php endif; ?>
-
-        <!-- Page header -->
-        <div class="row mb-3 align-items-center">
-          <div class="col">
-            <h4 class="page-title mb-0">Gestion des Evenements</h4>
-            <p class="text-muted mb-0" style="font-size:0.85rem;">Supervision, moderation et administration de tous les evenements</p>
+        <section class="ec-page-head">
+          <div>
+            <p class="ec-kicker">Event Center</p>
+            <h1>Event administration</h1>
+            <p>Track events, participation, forums, and moderation activity from one clean dashboard.</p>
           </div>
-          <div class="col-auto">
-            <button class="btn text-white" style="background: linear-gradient(135deg, #9B5DE0, #B771E5); border-radius: 10px;" onclick="openModal()">
-              <i class="mdi mdi-plus me-1"></i> Nouvel evenement
+          <div class="ec-page-actions">
+            <button type="button" class="ec-primary-btn" onclick="openModal()">
+              <i class="mdi mdi-plus me-1"></i> New event
             </button>
           </div>
-        </div>
+        </section>
 
-        <!-- ===================== KPI CARDS ===================== -->
-        <div class="row mb-4 align-items-stretch">
+        <nav class="ec-entity-tabs" aria-label="Event Center sections">
+          <a class="ec-entity-tab is-active" href="<?= htmlspecialchars($BASE . '/Controleur/evenementC.php?action=admin') ?>">
+            <span class="ec-tab-icon"><i class="mdi mdi-calendar-star"></i></span>
+            <span><strong>Events</strong><small>Planning and participation</small></span>
+          </a>
+          <a class="ec-entity-tab" href="<?= htmlspecialchars($BASE . '/Controleur/forumC.php?action=admin') ?>">
+            <span class="ec-tab-icon"><i class="mdi mdi-forum"></i></span>
+            <span><strong>Forum</strong><small>Discussions and moderation</small></span>
+          </a>
+        </nav>
 
-          <!-- Total Evenements -->
-          <div class="col-md-3 mb-3 d-flex">
-            <div class="card shadow-sm text-center p-4 h-100 w-100" style="background: linear-gradient(135deg, #9B5DE0 0%, #B771E5 100%); color: white; border-radius: 10px;">
-              <i class="mdi mdi-calendar-check" style="font-size: 2rem; margin-bottom: 10px;"></i>
-              <h6 class="mb-2">Total Evenements</h6>
-              <h3 class="mb-0"><?= $kpi_total ?></h3>
-              <small class="mt-2 opacity-75"><?= $kpi_actifs ?> actifs</small>
+        <section class="ec-statistics-panel" data-ec-stats>
+          <div class="ec-section-head">
+            <div>
+              <h2>Workspace statistics</h2>
+              <p>Live indicators and charts for event activity.</p>
             </div>
+            <button type="button" class="ec-secondary-btn" data-ec-stats-toggle data-label-hide="Hide statistics" data-label-show="Show statistics">Hide statistics</button>
           </div>
 
-          <!-- Inscriptions -->
-          <div class="col-md-3 mb-3 d-flex">
-            <div class="card shadow-sm text-center p-4 h-100 w-100" style="background: linear-gradient(135deg, #E11D74 0%, #D01565 100%); color: white; border-radius: 10px;">
-              <i class="mdi mdi-account-multiple" style="font-size: 2rem; margin-bottom: 10px;"></i>
-              <h6 class="mb-2">Inscriptions</h6>
-              <h3 class="mb-0"><?= $kpi_inscrits ?></h3>
-              <small class="mt-2 opacity-75">total participants</small>
-            </div>
+          <div class="ec-kpi-grid">
+            <article class="ec-kpi-card ec-kpi-purple"><span>Total events</span><strong><?= $kpi_total ?></strong><small><?= $kpi_actifs ?> active now</small></article>
+            <article class="ec-kpi-card ec-kpi-pink"><span>Registrations</span><strong><?= $kpi_inscrits ?></strong><small>Total participants</small></article>
+            <article class="ec-kpi-card ec-kpi-green"><span>Fill rate</span><strong><?= $kpi_taux ?>%</strong><small>Average capacity usage</small></article>
+            <article class="ec-kpi-card ec-kpi-blue"><span>Upcoming</span><strong><?= $kpi_upcoming ?></strong><small>Future events</small></article>
+            <article class="ec-kpi-card ec-kpi-magenta"><span>Pending</span><strong><?= $pendingEvents ?></strong><small>Need validation</small></article>
+            <article class="ec-kpi-card ec-kpi-yellow"><span>Finished</span><strong><?= $eventFinished ?></strong><small>Past events</small></article>
           </div>
 
-          <!-- Taux remplissage -->
-          <div class="col-md-3 mb-3 d-flex">
-            <div class="card shadow-sm text-center p-4 h-100 w-100" style="background: linear-gradient(135deg, #AEEA94 0%, #99D98E 100%); color: #2d5016; border-radius: 10px;">
-              <i class="mdi mdi-chart-donut" style="font-size: 2rem; margin-bottom: 10px;"></i>
-              <h6 class="mb-2">Taux remplissage</h6>
-              <h3 class="mb-0"><?= $kpi_taux ?>%</h3>
-              <small class="mt-2" style="opacity:0.75;">moyenne generale</small>
-            </div>
+          <div class="ec-stats-body ec-stats-body-events">
+            <article class="ec-chart-card">
+              <div class="ec-chart-head"><h3>Participants evolution</h3><p>Registration volume over the last months.</p></div>
+              <div class="ec-chart-canvas"><canvas id="participantsChart"></canvas></div>
+            </article>
+            <article class="ec-chart-card">
+              <div class="ec-chart-head"><h3>Events per month</h3><p>Scheduled event volume.</p></div>
+              <div class="ec-chart-canvas"><canvas id="eventsChart"></canvas></div>
+            </article>
+            <article class="ec-chart-card">
+              <div class="ec-chart-head"><h3>Type distribution</h3><p>Breakdown by event type.</p></div>
+              <div class="ec-chart-canvas"><canvas id="typeChart"></canvas></div>
+            </article>
           </div>
+        </section>
 
-          <!-- A venir -->
-          <div class="col-md-3 mb-3 d-flex">
-            <div class="card shadow-sm text-center p-4 h-100 w-100" style="background: linear-gradient(135deg, #D78FEE 0%, #C96FE8 100%); color: white; border-radius: 10px;">
-              <i class="mdi mdi-calendar-clock" style="font-size: 2rem; margin-bottom: 10px;"></i>
-              <h6 class="mb-2">A venir</h6>
-              <h3 class="mb-0"><?= $kpi_upcoming ?></h3>
-              <small class="mt-2 opacity-75">prochains evenements</small>
+        <section class="ec-filter-card">
+          <div class="ec-filter-head">
+            <div>
+              <h2>Admin filters</h2>
+              <p>Filter by title, type, status, or location before reviewing the list.</p>
             </div>
           </div>
+          <form class="ec-filter-grid" method="get" action="<?= htmlspecialchars($_SERVER['PHP_SELF'] ?? '') ?>">
+            <?php if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/Controleur/') !== false): ?><input type="hidden" name="action" value="admin"><?php endif; ?>
+            <label class="ec-filter-field"><span>Search</span><input type="search" name="search" value="<?= htmlspecialchars($eventSearch) ?>" placeholder="Title, type, status, place..."></label>
+            <label class="ec-filter-field"><span>Status</span><select name="status"><option value="">All statuses</option><?php foreach (['actif','en_attente','brouillon','archive','termine'] as $st): ?><option value="<?= htmlspecialchars($st) ?>" <?= $eventStatusFilter === $st ? 'selected' : '' ?>><?= htmlspecialchars(ucfirst(str_replace('_',' ', $st))) ?></option><?php endforeach; ?></select></label>
+            <label class="ec-filter-field"><span>Type</span><select name="type"><option value="">All types</option><?php foreach ($eventTypes as $t): ?><option value="<?= htmlspecialchars($t) ?>" <?= $eventTypeFilter === $t ? 'selected' : '' ?>><?= htmlspecialchars(ucfirst($t)) ?></option><?php endforeach; ?></select></label>
+            <label class="ec-filter-field"><span>Per page</span><select name="per_page"><option value="10" <?= $eventPerPage === 10 ? 'selected' : '' ?>>10 / page</option><option value="15" <?= $eventPerPage === 15 ? 'selected' : '' ?>>15 / page</option><option value="25" <?= $eventPerPage === 25 ? 'selected' : '' ?>>25 / page</option></select></label>
+            <div class="ec-filter-actions"><button class="ec-primary-btn" type="submit">Apply filters</button><a class="ec-soft-btn" href="?action=admin">Reset</a></div>
+          </form>
+        </section>
 
-        </div>
-
-        <!-- ===================== CHARTS ===================== -->
-        <div class="row mb-4">
-          <div class="col-lg-6 mb-3">
-            <div class="card shadow-sm">
-              <div class="card-body">
-                <h5 class="card-title mb-3">Evolution des participants</h5>
-                <canvas id="participantsChart" style="max-height:250px;"></canvas>
-              </div>
+        <section class="ec-table-card">
+          <div class="ec-table-head">
+            <div>
+              <h2>Event List</h2>
+              <p><?= $eventTotalRows ?> event(s) match the current filters.</p>
             </div>
           </div>
-          <div class="col-lg-6 mb-3">
-            <div class="card shadow-sm">
-              <div class="card-body">
-                <h5 class="card-title mb-3">Evenements par mois</h5>
-                <canvas id="eventsChart" style="max-height:250px;"></canvas>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="row mb-4">
-          <div class="col-lg-5 mb-3">
-            <div class="card shadow-sm">
-              <div class="card-body">
-                <h5 class="card-title mb-3">Repartition par type</h5>
-                <canvas id="typeChart" style="max-height:250px;"></canvas>
-              </div>
-            </div>
-          </div>
-          <div class="col-lg-7 mb-3">
-            <div class="card shadow-sm">
-              <div class="card-body">
-                <h5 class="card-title mb-3">Top 5 evenements</h5>
-                <div class="table-responsive">
-                  <table class="table table-hover align-middle mb-0">
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th>Evenement</th>
-                        <th>Type</th>
-                        <th>Participants</th>
-                        <th>Taux</th>
+          <div id="ecResultsRegion" class="ec-results-region">
+            <div class="ec-table-wrap">
+              <table class="ec-table ec-events-table">
+                <thead>
+                  <tr>
+                    <th class="ec-col-check"><input type="checkbox" aria-label="Select all events"></th>
+                    <th>Image</th>
+                    <th onclick="sortTable(2)" style="cursor:pointer;">Event <span class="sort-icon" id="sort-icon-2"></span></th>
+                    <th onclick="sortTable(3)" style="cursor:pointer;">Type <span class="sort-icon" id="sort-icon-3"></span></th>
+                    <th onclick="sortTable(4)" style="cursor:pointer;">Status <span class="sort-icon" id="sort-icon-4"></span></th>
+                    <th onclick="sortTable(5)" style="cursor:pointer;">Date <span class="sort-icon" id="sort-icon-5"></span></th>
+                    <th onclick="sortTable(6)" style="cursor:pointer;">Place <span class="sort-icon" id="sort-icon-6"></span></th>
+                    <th onclick="sortTable(7)" style="cursor:pointer;">Capacity <span class="sort-icon" id="sort-icon-7"></span></th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody">
+                  <?php if (empty($pagedEvents)): ?>
+                    <tr><td colspan="9"><div class="ec-empty-state"><span><i class="mdi mdi-calendar-remove"></i></span><strong>No event found</strong><p>Try another filter or create a new event.</p></div></td></tr>
+                  <?php else: ?>
+                    <?php foreach ($pagedEvents as $event): ?>
+                      <?php $percentage = ($event->getCapacite() > 0) ? ($event->getNbInscrits() / $event->getCapacite()) * 100 : 0; ?>
+                      <tr data-event-id="<?= $event->getId() ?>">
+                        <td><input type="checkbox" class="event-checkbox" aria-label="Select event"></td>
+                        <td>
+                          <?php if ($event->getImage()): ?>
+                            <img class="ec-event-thumb" src="<?= $BASE ?>/<?= htmlspecialchars($event->getImage()) ?>" alt="">
+                          <?php else: ?>
+                            <span class="ec-event-thumb ec-event-thumb-empty"><i class="mdi mdi-calendar"></i></span>
+                          <?php endif; ?>
+                        </td>
+                        <td><div class="ec-main-cell"><strong><?= htmlspecialchars($event->getTitre()) ?></strong><span>ID #<?= (int)$event->getId() ?></span></div></td>
+                        <td><span class="ec-chip"><?= htmlspecialchars(ucfirst($event->getType())) ?></span></td>
+                        <td><span class="ec-badge ec-status-<?= htmlspecialchars($event->getStatut()) ?>"><?= htmlspecialchars($event->getStatut()) ?></span></td>
+                        <td class="ec-date-cell"><?= htmlspecialchars(date('Y-m-d', strtotime($event->getDateEvenement()))) ?></td>
+                        <td><?= htmlspecialchars($event->getLieu() ?: 'En ligne') ?></td>
+                        <td>
+                          <div class="ec-progress-wrap"><div class="ec-progress-bar"><span style="width:<?= min(100, $percentage) ?>%"></span></div><small><?= (int)$event->getNbInscrits() ?>/<?= (int)$event->getCapacite() ?></small></div>
+                        </td>
+                        <td><div class="ec-actions"><button type="button" class="ec-action-btn ec-action-primary" onclick="editEvent(<?= (int)$event->getId() ?>)"><i class="mdi mdi-pencil me-1"></i>Edit</button><button type="button" class="ec-action-btn ec-action-danger" onclick="deleteEvent(<?= (int)$event->getId() ?>, '<?= htmlspecialchars(addslashes($event->getTitre())) ?>')"><i class="mdi mdi-delete me-1"></i>Delete</button></div></td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      <?php foreach ($topEvents as $index => $event): ?>
-                      <tr>
-                        <td><span class="rank-badge <?= $index == 0 ? 'rank-1' : ($index == 1 ? 'rank-2' : ($index == 2 ? 'rank-3' : '')) ?>"><?= $index + 1 ?></span></td>
-                        <td><strong><?= htmlspecialchars(mb_substr($event['titre'], 0, 28)) ?>...</strong></td>
-                        <td><span class="type-chip"><?= ucfirst($event['type']) ?></span></td>
-                        <td><?= $event['participants'] ?> / <?= $event['capacite'] ?></td>
-                        <td><span class="badge <?= $event['taux'] > 70 ? 'badge-actif' : ($event['taux'] > 30 ? 'badge-en_attente' : 'badge-brouillon') ?>"><?= $event['taux'] ?>%</span></td>
-                      </tr>
-                      <?php endforeach; ?>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                    <?php endforeach; ?>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+            </div>
+            <div class="ec-pagination">
+              <p>Page <?= $eventPage ?> of <?= $eventTotalPages ?> (<?= $eventTotalRows ?> events)</p>
+              <nav aria-label="Event pagination">
+                <a class="ec-page-btn <?= $eventPage <= 1 ? 'is-disabled' : '' ?>" href="<?= htmlspecialchars($eventPageUrl(max(1, $eventPage - 1))) ?>">«</a>
+                <?php for ($p = 1; $p <= $eventTotalPages; $p++): ?>
+                  <?php if ($p === 1 || $p === $eventTotalPages || abs($p - $eventPage) <= 1): ?>
+                    <a class="ec-page-btn <?= $p === $eventPage ? 'is-active' : '' ?>" href="<?= htmlspecialchars($eventPageUrl($p)) ?>"><?= $p ?></a>
+                  <?php elseif (abs($p - $eventPage) === 2): ?>
+                    <span class="ec-page-ellipsis">…</span>
+                  <?php endif; ?>
+                <?php endfor; ?>
+                <a class="ec-page-btn <?= $eventPage >= $eventTotalPages ? 'is-disabled' : '' ?>" href="<?= htmlspecialchars($eventPageUrl(min($eventTotalPages, $eventPage + 1))) ?>">»</a>
+              </nav>
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- ===================== TABLE ===================== -->
-        <div class="row">
-          <div class="col-12 grid-margin">
-            <div class="card">
-              <div class="card-body">
-                <h4 class="card-title">Gestion des Evenements</h4>
 
-                <!-- Toolbar -->
-                <div class="row mb-3 align-items-center">
-                  <div class="col-md-6">
-                    <div class="input-group">
-                      <span class="input-group-text"><i class="mdi mdi-magnify"></i></span>
-                      <input type="text" id="tableSearchInput" class="form-control" placeholder="Rechercher dans le tableau..." onkeyup="filterTable()">
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <span class="text-muted" style="font-size:0.85rem;">
-                      <span id="tableCount"><?= count($evenements) ?></span> evenements affiches
-                    </span>
-                  </div>
-                  <div class="col-md-2 text-end">
-                    <button id="resetTableBtn" class="btn btn-sm" style="background:rgba(155,93,224,0.12); color:#9B5DE0; border:1px solid rgba(155,93,224,0.3);" onclick="resetTable()">
-                      <i class="mdi mdi-refresh me-1"></i> Reinitialiser
-                    </button>
-                  </div>
-                </div>
-
-                <div class="table-responsive">
-                  <table class="table table-hover align-middle">
-                    <thead>
-                      <tr>
-                        <th><input type="checkbox"/></th>
-                        <th>Image</th>
-                        <th onclick="sortTable(2)" style="cursor:pointer;">Evenement <span class="sort-icon" id="sort-icon-2"></span></th>
-                        <th onclick="sortTable(3)" style="cursor:pointer;">Type <span class="sort-icon" id="sort-icon-3"></span></th>
-                        <th onclick="sortTable(4)" style="cursor:pointer;">Statut <span class="sort-icon" id="sort-icon-4"></span></th>
-                        <th onclick="sortTable(5)" style="cursor:pointer;">Date <span class="sort-icon" id="sort-icon-5"></span></th>
-                        <th onclick="sortTable(6)" style="cursor:pointer;">Lieu <span class="sort-icon" id="sort-icon-6"></span></th>
-                        <th onclick="sortTable(7)" style="cursor:pointer;">Inscriptions <span class="sort-icon" id="sort-icon-7"></span></th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                      <?php if (empty($evenements)): ?>
-                        <tr><td colspan="9" class="text-center py-5">Aucun evenement trouve</td></tr>
-                      <?php else: ?>
-                        <?php foreach ($evenements as $event): ?>
-                          <?php $percentage = ($event->getCapacite() > 0) ? ($event->getNbInscrits() / $event->getCapacite()) * 100 : 0; ?>
-                          <tr data-event-id="<?= $event->getId() ?>">
-                            <td><input type="checkbox" class="event-checkbox"/></td>
-                            <td>
-                              <?php if ($event->getImage()): ?>
-                                <img src="<?= $BASE ?>/<?= $event->getImage() ?>" style="width:40px;height:40px;object-fit:cover;border-radius:8px;" alt="">
-                              <?php else: ?>
-                                <div style="width:40px;height:40px;background:rgba(155,93,224,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;">
-                                  <i class="mdi mdi-calendar" style="color:#9B5DE0;"></i>
-                                </div>
-                              <?php endif; ?>
-                            </td>
-                            <td><strong><?= htmlspecialchars($event->getTitre()) ?></strong></td>
-                            <td><span class="type-chip"><?= ucfirst($event->getType()) ?></span></td>
-                            <td><span class="badge badge-<?= $event->getStatut() ?>"><?= $event->getStatut() ?></span></td>
-                            <td><?= date('d M Y', strtotime($event->getDateEvenement())) ?></td>
-                            <td><?= htmlspecialchars($event->getLieu() ?: 'En ligne') ?></td>
-                            <td>
-                              <div class="progress-wrap">
-                                <div class="progress-bar-thin">
-                                  <div class="progress-fill" style="width:<?= min(100, $percentage) ?>%"></div>
-                                </div>
-                                <span style="font-size:0.8rem;"><?= $event->getNbInscrits() ?>/<?= $event->getCapacite() ?></span>
-                              </div>
-                            </td>
-                            <td>
-                              <div class="d-flex gap-2 flex-wrap">
-                                <button type="button" class="btn table-action-btn text-white"
-                                  style="background-color: #9B5DE0;"
-                                  onclick="editEvent(<?= $event->getId() ?>)">
-                                  <i class="mdi mdi-pencil me-1"></i> Editer
-                                </button>
-                                <button type="button" class="btn table-action-btn text-white"
-                                  style="background-color: #D78FEE;"
-                                  onclick="deleteEvent(<?= $event->getId() ?>, '<?= htmlspecialchars(addslashes($event->getTitre())) ?>')">
-                                  <i class="mdi mdi-delete me-1"></i> Suppr
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        <?php endforeach; ?>
-                      <?php endif; ?>
-                    </tbody>
-                  </table>
-                </div>
-
-              </div>
-            </div>
-          </div>
-        </div>
 
       </div>
 
@@ -750,6 +719,7 @@ try {
 <script src="<?= $backBoUtilisateurWeb ?>/assets/vendors/chart.js/Chart.min.js"></script>
 <!-- End plugin js for this page -->
 <script src="<?= $backBoRootWeb ?>/layout/back-layout.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/back-layout.js')); ?>"></script>
+<script src="<?= $backBoRootWeb ?>/event-center-admin.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../event-center-admin.js')); ?>"></script>
 <script src="<?= $backBoUtilisateurWeb ?>/assets/js/off-canvas.js"></script>
 <script src="<?= $backBoUtilisateurWeb ?>/assets/js/hoverable-collapse.js"></script>
 <script src="<?= $backBoUtilisateurWeb ?>/assets/js/misc.js"></script>

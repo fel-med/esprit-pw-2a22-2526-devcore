@@ -30,6 +30,7 @@
         var safe = normalizeLang(lang);
         try {
             localStorage.setItem(STORAGE_KEY, safe);
+            localStorage.setItem(LEGACY_KEY, safe);
         } catch (e) {}
         return safe;
     }
@@ -124,6 +125,9 @@
         applyValue(document.querySelectorAll('[data-i18n-title]'), 'data-i18n-title', currentDict, lang, function (el, value) {
             el.setAttribute('title', value);
         });
+        applyValue(document.querySelectorAll('[data-i18n-aria-label]'), 'data-i18n-aria-label', currentDict, lang, function (el, value) {
+            el.setAttribute('aria-label', value);
+        });
         applyValue(document.querySelectorAll('[data-i18n-opt]'), 'data-i18n-opt', currentDict, lang, function (el, value) {
             el.textContent = value;
         });
@@ -162,6 +166,85 @@
     window.cre8ApplyI18n = applyI18n;
     window.cre8RegisterTranslations = registerTranslations;
     window.cre8SetLanguage = setLanguage;
+
+    mergeDict(currentDict, {
+        en: {
+            'header.navAria': 'FrontOffice navigation',
+            'header.homeAria': 'Cre8Connect home',
+            'header.profileMenuAria': 'Profile menu',
+            'header.home': 'Home',
+            'header.collaborations': 'Collaborations',
+            'header.offers': 'Offers',
+            'header.applications': 'Applications',
+            'header.campaigns': 'Campaigns',
+            'header.products': 'Products',
+            'header.contracts': 'Contracts',
+            'header.posts': 'Posts',
+            'header.mySpace': 'My Space',
+            'header.feeds': 'Feeds',
+            'header.createPost': 'Create Post',
+            'header.events': 'Events',
+            'header.forum': 'Forum',
+            'header.complaints': 'Complaints',
+            'header.profileSettings': 'Profile settings',
+            'header.language': 'Language',
+            'header.appearance': 'Appearance',
+            'header.themeLight': 'Light',
+            'header.themeDark': 'Dark',
+            'header.logout': 'Logout',
+            'header.switchLanguageTitle': 'Switch language',
+            'header.toggleThemeTitle': 'Toggle dark mode',
+            'notifications.title': 'Notifications',
+            'notifications.markAllRead': 'Mark all as read',
+            'notifications.unread': 'unread',
+            'notifications.all': 'All',
+            'notifications.unreadTab': 'Unread',
+            'notifications.open': 'Open',
+            'notifications.markRead': 'Mark read',
+            'notifications.viewAll': 'View all notifications',
+            'notifications.empty': 'No notifications yet.',
+            'notifications.loading': 'Loading notifications...',
+            'notifications.openNotifications': 'Open notifications'
+        },
+        fr: {
+            'header.navAria': 'Navigation FrontOffice',
+            'header.homeAria': 'Accueil Cre8Connect',
+            'header.profileMenuAria': 'Menu du profil',
+            'header.home': 'Accueil',
+            'header.collaborations': 'Collaborations',
+            'header.offers': 'Offres',
+            'header.applications': 'Candidatures',
+            'header.campaigns': 'Campagnes',
+            'header.products': 'Produits',
+            'header.contracts': 'Contrats',
+            'header.posts': 'Publications',
+            'header.mySpace': 'Mon espace',
+            'header.feeds': 'Fil d actualite',
+            'header.createPost': 'Creer une publication',
+            'header.events': 'Evenements',
+            'header.forum': 'Forum',
+            'header.complaints': 'Reclamations',
+            'header.profileSettings': 'Parametres du profil',
+            'header.language': 'Langue',
+            'header.appearance': 'Apparence',
+            'header.themeLight': 'Clair',
+            'header.themeDark': 'Sombre',
+            'header.logout': 'Deconnexion',
+            'header.switchLanguageTitle': 'Changer de langue',
+            'header.toggleThemeTitle': 'Changer le mode d affichage',
+            'notifications.title': 'Notifications',
+            'notifications.markAllRead': 'Tout marquer comme lu',
+            'notifications.unread': 'non lues',
+            'notifications.all': 'Toutes',
+            'notifications.unreadTab': 'Non lues',
+            'notifications.open': 'Ouvrir',
+            'notifications.markRead': 'Marquer comme lu',
+            'notifications.viewAll': 'Voir toutes les notifications',
+            'notifications.empty': 'Aucune notification pour le moment.',
+            'notifications.loading': 'Chargement des notifications...',
+            'notifications.openNotifications': 'Ouvrir les notifications'
+        }
+    });
 
     function processQueuedTranslations() {
         var queue = window.cre8TranslationQueue || [];

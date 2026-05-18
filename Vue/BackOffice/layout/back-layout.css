@@ -2439,3 +2439,909 @@ body.light-mode.cre8-admin-layout .cre8-profile-menu {
   color: #111827;
   border: 1px solid #e5e7eb;
 }
+
+/* Shared BackOffice segmented language toggle */
+body.cre8-admin-layout .cre8-lang-toggle {
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.18rem;
+  padding: 0.2rem;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.045);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body.cre8-admin-layout .cre8-lang-btn {
+  min-width: 34px;
+  height: 28px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #aeb8ce;
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+body.cre8-admin-layout .cre8-lang-btn:hover {
+  color: #ffffff;
+  background: rgba(124, 92, 255, 0.14);
+}
+
+body.cre8-admin-layout .cre8-lang-btn.active,
+body.cre8-admin-layout .cre8-lang-btn.btn-primary {
+  color: #ffffff;
+  background: linear-gradient(135deg, #5b4fff, #8b5cf6);
+  box-shadow: 0 8px 18px rgba(91, 79, 255, 0.28);
+}
+
+body.cre8-admin-layout .cre8-lang-btn.btn-outline-secondary {
+  border: 0;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8-lang-toggle,
+body.cre8-admin-layout.light-mode .cre8-lang-toggle,
+body.light-mode.cre8-admin-layout .cre8-lang-toggle {
+  border-color: #dbe2ef;
+  background: #f8fafc;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8-lang-btn,
+body.cre8-admin-layout.light-mode .cre8-lang-btn,
+body.light-mode.cre8-admin-layout .cre8-lang-btn {
+  color: #64748b;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8-lang-btn:hover,
+body.cre8-admin-layout.light-mode .cre8-lang-btn:hover,
+body.light-mode.cre8-admin-layout .cre8-lang-btn:hover {
+  color: #4f46e5;
+  background: #ece9ff;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8-lang-btn.active,
+html[data-theme="light"] body.cre8-admin-layout .cre8-lang-btn.btn-primary,
+body.cre8-admin-layout.light-mode .cre8-lang-btn.active,
+body.cre8-admin-layout.light-mode .cre8-lang-btn.btn-primary,
+body.light-mode.cre8-admin-layout .cre8-lang-btn.active,
+body.light-mode.cre8-admin-layout .cre8-lang-btn.btn-primary {
+  color: #ffffff;
+}
+
+/* Shared BackOffice notification dropdown */
+body.cre8-admin-layout .cre8-notification-menu {
+  width: min(380px, calc(100vw - 24px));
+  max-height: min(620px, calc(100vh - 96px));
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 16px;
+  background: #151821;
+  color: #eef2ff;
+  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.34);
+}
+
+body.cre8-admin-layout .cre8-notification-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.9rem;
+  padding: 1rem 1rem 0.85rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  background:
+    radial-gradient(circle at 88% 8%, rgba(124, 92, 255, 0.16), transparent 32%),
+    linear-gradient(135deg, rgba(124, 92, 255, 0.10), rgba(21, 24, 33, 0));
+}
+
+body.cre8-admin-layout .cre8-notification-head h6 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 0.96rem;
+  font-weight: 900;
+}
+
+body.cre8-admin-layout .cre8-notification-head small {
+  display: block;
+  margin-top: 0.18rem;
+  color: #9aa3b8;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+body.cre8-admin-layout .cre8-notification-mark-all {
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.38rem 0.62rem;
+  background: rgba(124, 92, 255, 0.14);
+  color: #a99bff;
+  font-size: 0.73rem;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+}
+
+body.cre8-admin-layout .cre8-notification-mark-all:hover {
+  background: rgba(124, 92, 255, 0.24);
+  color: #ffffff;
+}
+
+body.cre8-admin-layout .cre8-notification-list {
+  max-height: 430px;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+body.cre8-admin-layout .cre8-notification-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.72rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.76rem 0.72rem;
+  border: 1px solid transparent;
+  border-radius: 13px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+  white-space: normal;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+body.cre8-admin-layout .cre8-notification-item + .cre8-notification-item {
+  margin-top: 0.32rem;
+}
+
+body.cre8-admin-layout .cre8-notification-item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(124, 92, 255, 0.22);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+body.cre8-admin-layout .cre8-notification-item.is-unread {
+  border-color: rgba(124, 92, 255, 0.24);
+  background:
+    radial-gradient(circle at 0 0, rgba(124, 92, 255, 0.15), transparent 30%),
+    rgba(124, 92, 255, 0.07);
+}
+
+body.cre8-admin-layout .cre8-notification-icon {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.12);
+  color: #a5adbf;
+}
+
+body.cre8-admin-layout .cre8-notification-item.is-unread .cre8-notification-icon {
+  background: rgba(124, 92, 255, 0.18);
+  color: #a99bff;
+}
+
+body.cre8-admin-layout .cre8-notification-content {
+  position: relative;
+  min-width: 0;
+  flex: 1;
+  padding-right: 0.6rem;
+}
+
+body.cre8-admin-layout .cre8-notification-title,
+body.cre8-admin-layout .cre8-notification-message,
+body.cre8-admin-layout .cre8-notification-date {
+  margin: 0;
+}
+
+body.cre8-admin-layout .cre8-notification-title {
+  color: #f8fafc;
+  font-size: 0.84rem;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+body.cre8-admin-layout .cre8-notification-message {
+  margin-top: 0.22rem;
+  color: #a8b0c2;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+body.cre8-admin-layout .cre8-notification-date {
+  margin-top: 0.32rem;
+  color: #747d92;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+body.cre8-admin-layout .cre8-notification-dot {
+  position: absolute;
+  top: 0.14rem;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #7c5cff;
+  box-shadow: 0 0 0 4px rgba(124, 92, 255, 0.16);
+}
+
+body.cre8-admin-layout .cre8-notification-empty {
+  min-height: 190px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 1.65rem 1rem;
+  text-align: center;
+}
+
+body.cre8-admin-layout .cre8-notification-empty-icon {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.13);
+  color: #86efac;
+  font-size: 1.25rem;
+}
+
+body.cre8-admin-layout .cre8-notification-empty strong {
+  color: #f8fafc;
+  font-size: 0.92rem;
+  font-weight: 900;
+}
+
+body.cre8-admin-layout .cre8-notification-empty small {
+  color: #9aa3b8;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8-notification-menu,
+body.cre8-admin-layout.light-mode .cre8-notification-menu,
+body.light-mode.cre8-admin-layout .cre8-notification-menu {
+  background: #ffffff;
+  color: #111827;
+  border-color: #e5e7eb;
+  box-shadow: 0 22px 54px rgba(15, 23, 42, 0.14);
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8-notification-head,
+body.cre8-admin-layout.light-mode .cre8-notification-head,
+body.light-mode.cre8-admin-layout .cre8-notification-head {
+  border-bottom-color: #edf0f7;
+  background:
+    radial-gradient(circle at 88% 8%, rgba(124, 92, 255, 0.13), transparent 32%),
+    linear-gradient(135deg, #f7f5ff, #ffffff);
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8-notification-head h6,
+html[data-theme="light"] body.cre8-admin-layout .cre8-notification-title,
+html[data-theme="light"] body.cre8-admin-layout .cre8-notification-empty strong,
+body.cre8-admin-layout.light-mode .cre8-notification-head h6,
+body.cre8-admin-layout.light-mode .cre8-notification-title,
+body.cre8-admin-layout.light-mode .cre8-notification-empty strong,
+body.light-mode.cre8-admin-layout .cre8-notification-head h6,
+body.light-mode.cre8-admin-layout .cre8-notification-title,
+body.light-mode.cre8-admin-layout .cre8-notification-empty strong {
+  color: #111827;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8-notification-head small,
+html[data-theme="light"] body.cre8-admin-layout .cre8-notification-message,
+html[data-theme="light"] body.cre8-admin-layout .cre8-notification-empty small,
+body.cre8-admin-layout.light-mode .cre8-notification-head small,
+body.cre8-admin-layout.light-mode .cre8-notification-message,
+body.cre8-admin-layout.light-mode .cre8-notification-empty small,
+body.light-mode.cre8-admin-layout .cre8-notification-head small,
+body.light-mode.cre8-admin-layout .cre8-notification-message,
+body.light-mode.cre8-admin-layout .cre8-notification-empty small {
+  color: #64748b;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8-notification-date,
+body.cre8-admin-layout.light-mode .cre8-notification-date,
+body.light-mode.cre8-admin-layout .cre8-notification-date {
+  color: #94a3b8;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8-notification-item:hover,
+body.cre8-admin-layout.light-mode .cre8-notification-item:hover,
+body.light-mode.cre8-admin-layout .cre8-notification-item:hover {
+  background: #f8fafc;
+  border-color: rgba(124, 92, 255, 0.18);
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8-notification-item.is-unread,
+body.cre8-admin-layout.light-mode .cre8-notification-item.is-unread,
+body.light-mode.cre8-admin-layout .cre8-notification-item.is-unread {
+  background:
+    radial-gradient(circle at 0 0, rgba(124, 92, 255, 0.11), transparent 30%),
+    #f7f5ff;
+  border-color: rgba(124, 92, 255, 0.18);
+}
+
+@media (max-width: 480px) {
+  body.cre8-admin-layout .cre8-notification-menu {
+    width: calc(100vw - 24px);
+    right: 12px;
+  }
+}
+
+/* BackOffice sidebar classification */
+body.cre8-admin-layout #sidebar .cre8-sidebar-group {
+  margin: 0 0.85rem 0.35rem;
+}
+
+body.cre8-admin-layout #sidebar .cre8-sidebar-group-toggle {
+  width: 100%;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 0.52rem 0.7rem;
+  background: rgba(255, 255, 255, 0.025);
+  color: #8f98ad;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+body.cre8-admin-layout #sidebar .cre8-sidebar-group-toggle:hover,
+body.cre8-admin-layout #sidebar .cre8-sidebar-group.is-active .cre8-sidebar-group-toggle {
+  border-color: rgba(124, 92, 255, 0.24);
+  background: rgba(124, 92, 255, 0.10);
+  color: #d9d5ff;
+}
+
+body.cre8-admin-layout #sidebar .cre8-sidebar-group-caret {
+  transition: transform 0.18s ease;
+}
+
+body.cre8-admin-layout #sidebar .cre8-sidebar-group.is-open .cre8-sidebar-group-caret {
+  transform: rotate(180deg);
+}
+
+body.cre8-admin-layout #sidebar .cre8-sidebar-submenu {
+  display: none;
+  margin: 0.35rem 0 0;
+  padding: 0 0 0 0.42rem;
+  border-left: 1px solid rgba(148, 163, 184, 0.13);
+}
+
+body.cre8-admin-layout #sidebar .cre8-sidebar-group.is-open .cre8-sidebar-submenu {
+  display: flex;
+}
+
+body.cre8-admin-layout #sidebar .cre8-sidebar-subitem {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+body.cre8-admin-layout #sidebar .cre8-sidebar-subitem > .nav-link {
+  min-height: 40px;
+  padding-left: 0.68rem !important;
+}
+
+body.cre8-admin-layout #sidebar .cre8-sidebar-subitem .menu-icon {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout #sidebar .cre8-sidebar-group-toggle,
+body.light-mode.cre8-admin-layout #sidebar .cre8-sidebar-group-toggle,
+body.cre8-admin-layout.light-mode #sidebar .cre8-sidebar-group-toggle {
+  background: #f8fafc;
+  color: #64748b;
+}
+
+html[data-theme="light"] body.cre8-admin-layout #sidebar .cre8-sidebar-group-toggle:hover,
+html[data-theme="light"] body.cre8-admin-layout #sidebar .cre8-sidebar-group.is-active .cre8-sidebar-group-toggle,
+body.light-mode.cre8-admin-layout #sidebar .cre8-sidebar-group-toggle:hover,
+body.light-mode.cre8-admin-layout #sidebar .cre8-sidebar-group.is-active .cre8-sidebar-group-toggle,
+body.cre8-admin-layout.light-mode #sidebar .cre8-sidebar-group-toggle:hover,
+body.cre8-admin-layout.light-mode #sidebar .cre8-sidebar-group.is-active .cre8-sidebar-group-toggle {
+  background: #f2efff;
+  border-color: #d7d0ff;
+  color: #4f46e5;
+}
+
+html[data-theme="light"] body.cre8-admin-layout #sidebar .cre8-sidebar-submenu,
+body.light-mode.cre8-admin-layout #sidebar .cre8-sidebar-submenu,
+body.cre8-admin-layout.light-mode #sidebar .cre8-sidebar-submenu {
+  border-left-color: #e5e7eb;
+}
+
+/* BackOffice quick launcher search */
+body.cre8-admin-layout .cre8-workspace-search {
+  position: relative;
+}
+
+body.cre8-admin-layout .cre8-workspace-search-results {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  left: 0;
+  z-index: 1080;
+  width: min(430px, calc(100vw - 320px));
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 0.45rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 16px;
+  background: #151821;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.36);
+}
+
+body.cre8-admin-layout .cre8-workspace-search-item {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.16rem;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 0.72rem 0.78rem;
+  background: transparent;
+  color: #eef2ff;
+  text-align: left;
+  cursor: pointer;
+}
+
+body.cre8-admin-layout .cre8-workspace-search-item:hover,
+body.cre8-admin-layout .cre8-workspace-search-item.is-active {
+  border-color: rgba(124, 92, 255, 0.25);
+  background:
+    radial-gradient(circle at 0 0, rgba(124, 92, 255, 0.14), transparent 36%),
+    rgba(255, 255, 255, 0.045);
+}
+
+body.cre8-admin-layout .cre8-workspace-search-item span {
+  font-size: 0.86rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+body.cre8-admin-layout .cre8-workspace-search-item small {
+  color: #9aa3b8;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+body.cre8-admin-layout .cre8-workspace-search-empty {
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.28rem;
+  padding: 1rem;
+  color: #9aa3b8;
+  text-align: center;
+}
+
+body.cre8-admin-layout .cre8-workspace-search-empty strong {
+  color: #f8fafc;
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+body.cre8-admin-layout .cre8-workspace-search-empty span {
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8-workspace-search-results,
+body.light-mode.cre8-admin-layout .cre8-workspace-search-results,
+body.cre8-admin-layout.light-mode .cre8-workspace-search-results {
+  background: #ffffff;
+  border-color: #e5e7eb;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.14);
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8-workspace-search-item,
+body.light-mode.cre8-admin-layout .cre8-workspace-search-item,
+body.cre8-admin-layout.light-mode .cre8-workspace-search-item {
+  color: #111827;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8-workspace-search-item:hover,
+html[data-theme="light"] body.cre8-admin-layout .cre8-workspace-search-item.is-active,
+body.light-mode.cre8-admin-layout .cre8-workspace-search-item:hover,
+body.light-mode.cre8-admin-layout .cre8-workspace-search-item.is-active,
+body.cre8-admin-layout.light-mode .cre8-workspace-search-item:hover,
+body.cre8-admin-layout.light-mode .cre8-workspace-search-item.is-active {
+  background: #f7f5ff;
+  border-color: rgba(124, 92, 255, 0.2);
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8-workspace-search-item small,
+html[data-theme="light"] body.cre8-admin-layout .cre8-workspace-search-empty span,
+body.light-mode.cre8-admin-layout .cre8-workspace-search-item small,
+body.light-mode.cre8-admin-layout .cre8-workspace-search-empty span,
+body.cre8-admin-layout.light-mode .cre8-workspace-search-item small,
+body.cre8-admin-layout.light-mode .cre8-workspace-search-empty span {
+  color: #64748b;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8-workspace-search-empty strong,
+body.light-mode.cre8-admin-layout .cre8-workspace-search-empty strong,
+body.cre8-admin-layout.light-mode .cre8-workspace-search-empty strong {
+  color: #111827;
+}
+
+/* === Cre8Connect shared chrome hard lock V3 ==============================
+   Final override for BackOffice shell only.
+   This fixes the small header/sidebar drift caused by module CSS loading
+   after the shared layout (Collaboration + Business pages). It intentionally
+   targets only the shared chrome, not the page content. */
+body.cre8-admin-layout #sidebar,
+body.cre8-admin-layout #sidebar .nav,
+body.cre8-admin-layout #sidebar .nav .nav-link,
+body.cre8-admin-layout #sidebar .nav .menu-title,
+body.cre8-admin-layout #sidebar .nav .nav-category .nav-link,
+body.cre8-admin-layout #sidebar .profile-name h5,
+body.cre8-admin-layout #sidebar .profile-name span,
+body.cre8-admin-layout .navbar.fixed-top,
+body.cre8-admin-layout .navbar.fixed-top .navbar-menu-wrapper,
+body.cre8-admin-layout .navbar.fixed-top .nav-link,
+body.cre8-admin-layout .navbar.fixed-top .navbar-profile-name,
+body.cre8-admin-layout .navbar.fixed-top .cre8-profile-name,
+body.cre8-admin-layout .navbar.fixed-top .cre8-role-badge,
+body.cre8-admin-layout .navbar.fixed-top .cre8-lang-btn,
+body.cre8-admin-layout .navbar.fixed-top .cre8-workspace-search input {
+  font-family: "Segoe UI", Arial, sans-serif !important;
+}
+
+body.cre8-admin-layout #sidebar .nav {
+  padding: 0.85rem 0 1.2rem !important;
+  gap: 0 !important;
+}
+
+body.cre8-admin-layout #sidebar .nav .nav-category {
+  margin: 0.18rem 0 0.35rem !important;
+}
+
+body.cre8-admin-layout #sidebar .nav .nav-category .nav-link {
+  min-height: auto !important;
+  padding: 0.25rem 1.68rem 0.45rem !important;
+  background: transparent !important;
+  color: #e8eefc !important;
+  font-size: 0.78rem !important;
+  font-weight: 900 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0.045em !important;
+  text-transform: uppercase !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+body.cre8-admin-layout #sidebar .nav .nav-item.menu-items {
+  margin: 0.05rem 0 !important;
+}
+
+body.cre8-admin-layout #sidebar .nav .nav-item.menu-items > .nav-link {
+  min-height: 3.2rem !important;
+  height: 3.2rem !important;
+  padding: 0.28rem 1rem 0.28rem 1.35rem !important;
+  border-radius: 0 999px 999px 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.66rem !important;
+  box-shadow: none !important;
+}
+
+body.cre8-admin-layout #sidebar .nav .nav-item.menu-items .menu-icon {
+  width: 2.75rem !important;
+  height: 2.75rem !important;
+  min-width: 2.75rem !important;
+  flex: 0 0 2.75rem !important;
+  border-radius: 999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-right: 0 !important;
+}
+
+body.cre8-admin-layout #sidebar .nav .nav-item.menu-items .menu-icon i {
+  font-family: "Material Design Icons" !important;
+  font-size: 1.05rem !important;
+  line-height: 1 !important;
+}
+
+body.cre8-admin-layout #sidebar .nav .nav-item.menu-items .menu-title {
+  color: inherit !important;
+  font-size: 0.98rem !important;
+  font-weight: 900 !important;
+  line-height: 1.12 !important;
+  letter-spacing: -0.01em !important;
+  text-transform: none !important;
+  white-space: nowrap !important;
+}
+
+body.cre8-admin-layout #sidebar .nav .nav-item.menu-items.active > .nav-link {
+  background: #11131a !important;
+  color: #ffffff !important;
+}
+
+body.cre8-admin-layout #sidebar .nav .nav-item.menu-items.active > .nav-link::before {
+  content: "" !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 3px !important;
+  border-radius: 0 999px 999px 0 !important;
+  background: #0090e7 !important;
+}
+
+body.cre8-admin-layout .navbar.fixed-top,
+body.cre8-admin-layout .navbar.fixed-top .navbar-menu-wrapper {
+  min-height: 4.45rem !important;
+  height: 4.45rem !important;
+}
+
+body.cre8-admin-layout .navbar.fixed-top .navbar-profile-name,
+body.cre8-admin-layout .navbar.fixed-top .cre8-profile-name,
+body.cre8-admin-layout .navbar.fixed-top .nav-link,
+body.cre8-admin-layout .navbar.fixed-top .cre8-lang-btn,
+body.cre8-admin-layout .navbar.fixed-top .cre8-role-badge {
+  font-size: 0.94rem !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout #sidebar .nav .nav-category .nav-link,
+body.cre8-admin-layout.light-mode #sidebar .nav .nav-category .nav-link,
+body.light-mode.cre8-admin-layout #sidebar .nav .nav-category .nav-link {
+  color: #334155 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout #sidebar .nav .nav-item.menu-items.active > .nav-link,
+body.cre8-admin-layout.light-mode #sidebar .nav .nav-item.menu-items.active > .nav-link,
+body.light-mode.cre8-admin-layout #sidebar .nav .nav-item.menu-items.active > .nav-link {
+  background: #f8f9fa !important;
+  color: #0f172a !important;
+}
+/* === /Cre8Connect shared chrome hard lock V3 ============================= */
+
+
+/* =========================================================
+   CRE8 HEADER FINAL POLISH
+   Aligns Ctrl+K hint and removes harsh vertical separators
+   between dashboard/theme/language/notifications.
+   ========================================================= */
+body.cre8-admin-layout .navbar .navbar-menu-wrapper {
+  align-items: center !important;
+}
+
+body.cre8-admin-layout .navbar .navbar-nav.w-100 {
+  min-width: 0 !important;
+}
+
+body.cre8-admin-layout .navbar .cre8-workspace-search {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  width: min(620px, 100%) !important;
+  max-width: 620px !important;
+  height: 44px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.cre8-admin-layout .navbar .cre8-workspace-search input.form-control {
+  height: 44px !important;
+  min-height: 44px !important;
+  padding-right: 5.35rem !important;
+  border-radius: 0.65rem !important;
+  line-height: 1.2 !important;
+}
+
+body.cre8-admin-layout .cre8-workspace-search-kbd {
+  position: absolute !important;
+  right: 0.7rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 24px !important;
+  min-width: 54px !important;
+  padding: 0 0.55rem !important;
+  border: 1px solid rgba(148, 163, 184, 0.22) !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.055) !important;
+  color: #aeb8ce !important;
+  font-size: 0.68rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.02em !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+}
+
+body.cre8-admin-layout .navbar .cre8-header-actions,
+body.cre8-admin-layout .navbar .navbar-nav-right {
+  align-items: center !important;
+  gap: 0.5rem !important;
+  padding-right: 0.8rem !important;
+}
+
+body.cre8-admin-layout .navbar .navbar-nav-right > .nav-item,
+body.cre8-admin-layout .navbar .navbar-nav-right > .nav-item.border-left,
+body.cre8-admin-layout .navbar .navbar-nav-right > .nav-item.border-right {
+  display: flex !important;
+  align-items: center !important;
+  min-height: 70px !important;
+  margin: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+}
+
+body.cre8-admin-layout .navbar .navbar-nav-right > .nav-item::before,
+body.cre8-admin-layout .navbar .navbar-nav-right > .nav-item::after {
+  display: none !important;
+}
+
+body.cre8-admin-layout .navbar .nav-settings > .nav-link,
+body.cre8-admin-layout .navbar .back-theme-toggle,
+body.cre8-admin-layout .navbar a.back-theme-toggle,
+body.cre8-admin-layout .navbar #notificationDropdown {
+  width: 42px !important;
+  min-width: 42px !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 1px solid transparent !important;
+  border-radius: 14px !important;
+  background: transparent !important;
+  color: #f8fafc !important;
+  box-shadow: none !important;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease !important;
+}
+
+body.cre8-admin-layout .navbar .back-theme-toggle {
+  color: #b69cff !important;
+}
+
+body.cre8-admin-layout .navbar .nav-settings > .nav-link:hover,
+body.cre8-admin-layout .navbar .back-theme-toggle:hover,
+body.cre8-admin-layout .navbar #notificationDropdown:hover,
+body.cre8-admin-layout .navbar .dropdown.show > #notificationDropdown {
+  transform: translateY(-1px) !important;
+  border-color: rgba(124, 92, 255, 0.24) !important;
+  background: rgba(124, 92, 255, 0.12) !important;
+  color: #ffffff !important;
+}
+
+body.cre8-admin-layout .navbar .cre8-lang-toggle {
+  height: 40px !important;
+  min-height: 40px !important;
+  margin: 0 !important;
+  padding: 0.22rem !important;
+  border-radius: 999px !important;
+  border-color: rgba(148, 163, 184, 0.18) !important;
+  background: rgba(255, 255, 255, 0.045) !important;
+}
+
+body.cre8-admin-layout .navbar .cre8-lang-btn {
+  height: 32px !important;
+  min-width: 38px !important;
+}
+
+body.cre8-admin-layout .navbar #boNotifCount {
+  position: absolute !important;
+  top: 4px !important;
+  right: 4px !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8-workspace-search-kbd,
+body.cre8-admin-layout.light-mode .cre8-workspace-search-kbd,
+body.light-mode.cre8-admin-layout .cre8-workspace-search-kbd {
+  background: #f1f5f9 !important;
+  border-color: #dbe3ef !important;
+  color: #64748b !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .navbar .nav-settings > .nav-link,
+html[data-theme="light"] body.cre8-admin-layout .navbar .back-theme-toggle,
+html[data-theme="light"] body.cre8-admin-layout .navbar #notificationDropdown,
+body.cre8-admin-layout.light-mode .navbar .nav-settings > .nav-link,
+body.cre8-admin-layout.light-mode .navbar .back-theme-toggle,
+body.cre8-admin-layout.light-mode .navbar #notificationDropdown,
+body.light-mode.cre8-admin-layout .navbar .nav-settings > .nav-link,
+body.light-mode.cre8-admin-layout .navbar .back-theme-toggle,
+body.light-mode.cre8-admin-layout .navbar #notificationDropdown {
+  color: #334155 !important;
+  background: transparent !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .navbar .back-theme-toggle,
+body.cre8-admin-layout.light-mode .navbar .back-theme-toggle,
+body.light-mode.cre8-admin-layout .navbar .back-theme-toggle {
+  color: #7c5cff !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .navbar .nav-settings > .nav-link:hover,
+html[data-theme="light"] body.cre8-admin-layout .navbar .back-theme-toggle:hover,
+html[data-theme="light"] body.cre8-admin-layout .navbar #notificationDropdown:hover,
+html[data-theme="light"] body.cre8-admin-layout .navbar .dropdown.show > #notificationDropdown,
+body.cre8-admin-layout.light-mode .navbar .nav-settings > .nav-link:hover,
+body.cre8-admin-layout.light-mode .navbar .back-theme-toggle:hover,
+body.cre8-admin-layout.light-mode .navbar #notificationDropdown:hover,
+body.cre8-admin-layout.light-mode .navbar .dropdown.show > #notificationDropdown,
+body.light-mode.cre8-admin-layout .navbar .nav-settings > .nav-link:hover,
+body.light-mode.cre8-admin-layout .navbar .back-theme-toggle:hover,
+body.light-mode.cre8-admin-layout .navbar #notificationDropdown:hover,
+body.light-mode.cre8-admin-layout .navbar .dropdown.show > #notificationDropdown {
+  background: #f2efff !important;
+  border-color: #d7d0ff !important;
+  color: #4f46e5 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .navbar .cre8-lang-toggle,
+body.cre8-admin-layout.light-mode .navbar .cre8-lang-toggle,
+body.light-mode.cre8-admin-layout .navbar .cre8-lang-toggle {
+  background: #f8fafc !important;
+  border-color: #dbe3ef !important;
+}
+
+@media (max-width: 1200px) {
+  body.cre8-admin-layout .navbar .cre8-workspace-search {
+    max-width: 480px !important;
+  }
+}
+
+/* =========================================================
+   CRE8 HEADER MICRO ALIGNMENT FIX
+   Keep the Ctrl+K hint inside the search input instead of floating away
+   on pages where Bootstrap/New Style changes form-control width.
+   ========================================================= */
+body.cre8-admin-layout .navbar .cre8-workspace-search {
+  flex: 0 1 620px !important;
+  min-width: 320px !important;
+}
+
+body.cre8-admin-layout .navbar .cre8-workspace-search input.form-control {
+  display: block !important;
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+  padding-right: 5.25rem !important;
+}
+
+body.cre8-admin-layout .navbar .cre8-workspace-search-kbd {
+  right: 0.82rem !important;
+}
+
+@media (max-width: 1200px) {
+  body.cre8-admin-layout .navbar .cre8-workspace-search {
+    flex-basis: 480px !important;
+  }
+}

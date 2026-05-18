@@ -332,6 +332,8 @@ foreach ($liste as $rec) {
     }
 
   </style>
+  <link rel="stylesheet" href="user-center-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/user-center-admin.css')); ?>">
+  <link rel="stylesheet" href="../unified-table-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../unified-table-admin.css')); ?>">
 </head>
 
 <body class="cre8-admin-layout"><?php cre8_bo_early_theme_print_body_script(); ?>
@@ -361,413 +363,341 @@ foreach ($liste as $rec) {
     <div class="container-fluid page-body-wrapper cre8-admin-main">
       <?php require_once __DIR__ . '/../layout/header.php'; ?>
       <div class="main-panel">
-        <div class="content-wrapper">
-          <div class="row">
+        <div class="content-wrapper user-center-shell">
+          <section class="uc-page-head">
+            <div>
+              <p class="uc-kicker">User Center</p>
+              <h1>Complaint center</h1>
+              <p>Review user complaints, reply to reports, and react quickly to suspension appeals.</p>
+            </div>
+          </section>
 
-          </div>
-          <!-- ===================== ADVANCED STATISTICS ===================== -->
-          <div class="row mb-4">
+          <nav class="uc-entity-tabs" aria-label="User Center sections">
+            <a href="index.php" class="uc-entity-tab">
+              <span class="uc-tab-icon"><i class="mdi mdi-account-group"></i></span>
+              <span><strong>Users</strong><small>Accounts and roles</small></span>
+            </a>
+            <a href="reclamations.php" class="uc-entity-tab is-active">
+              <span class="uc-tab-icon"><i class="mdi mdi-alert-decagram"></i></span>
+              <span><strong>Complaints</strong><small>Reports and appeals</small></span>
+            </a>
+          </nav>
 
-            <!-- KPI Cards -->
-            <div class="col-md-3 mb-3">
-              <div class="card shadow-sm text-center p-4" style="background: linear-gradient(135deg, #9B5DE0 0%, #B771E5 100%); color: white; border-radius: 10px;">
-                <i class="mdi mdi-file-document-outline" style="font-size: 2rem; margin-bottom: 10px;"></i>
-                <h6 class="mb-2">Total Complaints</h6>
-                <h3 class="mb-0"><?php echo $stats['total']; ?></h3>
-                <small class="mt-2 opacity-75">All complaints</small>
+          <section class="uc-statistics-panel" data-uc-stats>
+            <div class="uc-section-head">
+              <div>
+                <h2>Workspace statistics</h2>
+                <p>Live indicators and charts for complaint activity.</p>
               </div>
+              <button type="button" class="uc-secondary-btn" data-uc-stats-toggle>Hide statistics</button>
             </div>
 
-            <div class="col-md-3 mb-3">
-              <div class="card shadow-sm text-center p-4" style="background: linear-gradient(135deg, #D78FEE 0%, #C96FE8 100%); color: white; border-radius: 10px;">
-                <i class="mdi mdi-clock-outline" style="font-size: 2rem; margin-bottom: 10px;"></i>
-                <h6 class="mb-2">Pending</h6>
-                <h3 class="mb-0"><?php echo $stats['en_attente']; ?></h3>
-                <small class="mt-2 opacity-75">To be processed</small>
-              </div>
+            <div class="uc-kpi-grid">
+              <article class="uc-kpi-card uc-kpi-purple">
+                <span>Total complaints</span>
+                <strong><?php echo intval($stats['total'] ?? $totalReclamations); ?></strong>
+                <small>All visible reports</small>
+              </article>
+              <article class="uc-kpi-card uc-kpi-pink">
+                <span>Pending</span>
+                <strong><?php echo intval($stats['en_attente'] ?? 0); ?></strong>
+                <small>Needs admin review</small>
+              </article>
+              <article class="uc-kpi-card uc-kpi-green">
+                <span>Processed</span>
+                <strong><?php echo intval($stats['traitee'] ?? 0); ?></strong>
+                <small>Resolved complaints</small>
+              </article>
+              <article class="uc-kpi-card uc-kpi-magenta">
+                <span>High priority</span>
+                <strong><?php echo intval($stats['haute'] ?? 0); ?></strong>
+                <small>Urgent or appeals</small>
+              </article>
+              <article class="uc-kpi-card uc-kpi-blue">
+                <span>Low priority</span>
+                <strong><?php echo intval($stats['faible'] ?? $stats['basse'] ?? 0); ?></strong>
+                <small>Normal queue pressure</small>
+              </article>
             </div>
 
-            <div class="col-md-3 mb-3">
-              <div class="card shadow-sm text-center p-4" style="background: linear-gradient(135deg, #AEEA94 0%, #99D98E 100%); color: #2d5016; border-radius: 10px;">
-                <i class="mdi mdi-check-circle-outline" style="font-size: 2rem; margin-bottom: 10px;"></i>
-                <h6 class="mb-2">Processed</h6>
-                <h3 class="mb-0"><?php echo $stats['traitee']; ?></h3>
-                <small class="mt-2 opacity-75">Resolved</small>
-              </div>
-            </div>
-
-            <div class="col-md-3 mb-3">
-              <div class="card shadow-sm text-center p-4" style="background: linear-gradient(135deg, #E11D74 0%, #D01565 100%); color: white; border-radius: 10px;">
-                <i class="mdi mdi-alert-circle-outline" style="font-size: 2rem; margin-bottom: 10px;"></i>
-                <h6 class="mb-2">High Priority</h6>
-                <h3 class="mb-0"><?php echo $stats['haute']; ?></h3>
-                <small class="mt-2 opacity-75">Urgent</small>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- ===================== GRAPHES AREA CHARTS ===================== -->
-          <div class="row mb-4">
-
-            <!-- Area Chart - Complaints by Status -->
-            <div class="col-lg-12 mb-3">
-              <div class="card shadow-sm">
-                <div class="card-body">
-                  <h5 class="card-title mb-4">📊 Complaint Status Trend (Timeline)</h5>
-                  <div style="height: 350px;">
-                    <canvas id="chartAreaStatut"></canvas>
-                  </div>
+            <div class="uc-stats-body">
+              <article class="uc-chart-card">
+                <div class="uc-chart-head">
+                  <h3>Complaint status trend</h3>
+                  <p>Pending versus processed complaints over time.</p>
                 </div>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- ===================== GRAPHE SUPPLÉMENTAIRE ===================== -->
-          <div class="row mb-4">
-
-            <!-- Area Chart - Priorités -->
-            <div class="col-lg-12 mb-3">
-              <div class="card shadow-sm">
-                <div class="card-body">
-                  <h5 class="card-title mb-4">⚡ Priority Distribution (Timeline)</h5>
-                  <div style="height: 350px;">
-                    <canvas id="chartAreaPriorite"></canvas>
-                  </div>
+                <div class="uc-chart-canvas">
+                  <canvas id="chartAreaStatut"></canvas>
                 </div>
+              </article>
+              <article class="uc-chart-card">
+                <div class="uc-chart-head">
+                  <h3>Priority distribution</h3>
+                  <p>High, normal, and low priority evolution.</p>
+                </div>
+                <div class="uc-chart-canvas">
+                  <canvas id="chartAreaPriorite"></canvas>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="uc-filter-card">
+            <div class="uc-filter-head">
+              <div>
+                <h2>Admin filters</h2>
+                <p>Filter by user, description, or priority.</p>
+              </div>
+            </div>
+            <form method="GET" action="reclamations.php" class="uc-filter-grid">
+              <label class="uc-filter-field uc-filter-search">
+                <span>Search</span>
+                <input type="text" name="search" placeholder="User or description..." value="<?php echo htmlspecialchars($search); ?>">
+              </label>
+              <label class="uc-filter-field">
+                <span>Priority</span>
+                <select name="priorite">
+                  <option value="">All priorities</option>
+                  <option value="haute" <?php echo $priorite === 'haute' ? 'selected' : ''; ?>>High</option>
+                  <option value="normale" <?php echo $priorite === 'normale' ? 'selected' : ''; ?>>Normal</option>
+                  <option value="faible" <?php echo $priorite === 'faible' ? 'selected' : ''; ?>>Low</option>
+                </select>
+              </label>
+              <div class="uc-filter-actions">
+                <button type="submit" class="uc-primary-btn">Apply filters</button>
+                <a href="reclamations.php" class="uc-soft-btn">Reset</a>
+              </div>
+            </form>
+          </section>
+
+          <section class="uc-table-card">
+            <div class="uc-table-head">
+              <div>
+                <h2>Complaint list</h2>
+                <p><?php echo intval($totalReclamations); ?> complaints found</p>
               </div>
             </div>
 
-          </div>
+            <div id="ucResultsRegion" class="uc-results-region" aria-live="polite">
+              <div class="uc-table-wrap">
+                <table class="uc-table uc-complaints-table">
+                  <thead>
+                    <tr>
+                      <th class="uc-col-id">ID</th>
+                      <th>User</th>
+                      <th>Complaint</th>
+                      <th>Date</th>
+                      <th>Priority</th>
+                      <th>Status</th>
+                      <th>Response</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <?php if (empty($liste)): ?>
+                      <tr>
+                        <td colspan="8">
+                          <div class="uc-empty-state">
+                            <span><i class="mdi mdi-alert-circle-outline"></i></span>
+                            <strong>No complaints found</strong>
+                            <small>Try changing the search or priority filter.</small>
+                          </div>
+                        </td>
+                      </tr>
+                    <?php endif; ?>
 
-          <!-- ===================== TABLEAU ===================== -->
-          <div class="row">
-            <div class="col-12">
-              <div class="card shadow-sm">
-                <div class="card-body">
-
-                  <h5 class="mb-3">Complaint Management</h5>
-
-                  <!-- Search and Filter -->
-                  <div class="row mb-3">
-                    <div class="col-md-6">
-                      <form method="GET" action="reclamations.php" class="d-flex gap-2">
-                        <input type="text" name="search" class="form-control" placeholder="Search by user or description..." value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
-                        <input type="hidden" name="priorite" value="<?php echo htmlspecialchars($priorite); ?>">
-                        <button type="submit" class="btn btn-sm" style="background-color: #9B5DE0; color: white; width: 90px;">Search</button>
-                      </form>
-                    </div>
-                    <div class="col-md-6">
-                      <form method="GET" action="reclamations.php" class="d-flex gap-2">
-                        <input type="hidden" name="search" value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
-                        <select name="priorite" class="form-select form-select-sm" onchange="this.form.submit()" style="background-color: #FDCFFA; border-color: #D78FEE;">
-                          <option value="">Filter by priority</option>
-                          <option value="haute" <?php echo $priorite === 'haute' ? 'selected' : ''; ?>>High</option>
-                          <option value="normale" <?php echo $priorite === 'normale' ? 'selected' : ''; ?>>Normal</option>
-                          <option value="faible" <?php echo $priorite === 'faible' ? 'selected' : ''; ?>>Low</option>
-                        </select>
-                      </form>
-                    </div>
-                  </div>
-
-                  <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                      <thead class="table-dark">
-                        <tr>
-                          <th>ID</th>
-                          <th>User</th>
-                          <th>Description</th>
-                          <th>Date</th>
-                          <th>Priority</th>
-                          <th>Status</th>
-                          <th>Response</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-
-                      <tbody>
-                        <?php foreach ($liste as $rec): ?>
-                          <?php
-                            $complainantRole = cc_normalize_role($rec['complainant_role'] ?? '');
-                            $complainantStatus = cc_normalize_status($rec['complainant_statut'] ?? '');
-                            $isSuspensionAppeal = stripos((string)($rec['description'] ?? ''), '[Suspension Appeal]') !== false
-                                || $complainantStatus === 'suspendu';
-                            $complainantUserRow = [
-                                'id' => (int)($rec['complainant_id'] ?? 0),
-                                'role' => $complainantRole,
-                                'statut' => $complainantStatus,
-                                'suspended_by' => $rec['suspended_by'] ?? null,
-                                'suspended_by_role' => cc_normalize_role($rec['suspended_by_role'] ?? ''),
-                                'suspended_at' => $rec['suspended_at'] ?? null,
-                                'suspension_reason' => $rec['suspension_reason'] ?? null,
-                            ];
-                            $canQuickReactivate = $complainantStatus === 'suspendu'
-                                && cc_can_view_reclamation_from_role($viewerRole, $complainantRole)
-                                && cc_can_reactivate_suspension($viewerId, $viewerRole, $complainantUserRow);
-                          ?>
-                          <tr>
-                            <td><?php echo $rec['id']; ?></td>
-                            <td>
-                              <?php echo htmlspecialchars($rec['nom']); ?>
-                              <?php if (!empty($rec['complainant_role'])): ?>
-                                <span class="badge bg-secondary ms-1"><?php echo htmlspecialchars($rec['complainant_role']); ?></span>
-                              <?php endif; ?>
-                            </td>
-                            <td>
-                              <?php if ($isSuspensionAppeal): ?>
-                                <span class="badge bg-danger mb-1">Suspension Appeal</span><br>
-                              <?php endif; ?>
-                              <?php echo nl2br(htmlspecialchars((string)($rec['description'] ?? ''))); ?>
-                              <?php if ($isSuspensionAppeal): ?>
-                                <div class="small text-muted mt-2">
-                                  Status: <?= htmlspecialchars($complainantStatus !== '' ? $complainantStatus : 'unknown') ?>
-                                  <?php if (!empty($rec['suspended_by_role'])): ?>
-                                    - Suspended by: <?= htmlspecialchars(cc_normalize_role($rec['suspended_by_role'])) ?>
-                                  <?php endif; ?>
-                                  <?php if (!empty($rec['suspended_at'])): ?>
-                                    - At: <?= htmlspecialchars((string)$rec['suspended_at']) ?>
-                                  <?php endif; ?>
-                                  <?php if (!empty($rec['suspension_reason'])): ?>
-                                    <br>Reason: <?= htmlspecialchars((string)$rec['suspension_reason']) ?>
-                                  <?php endif; ?>
-                                </div>
-                              <?php endif; ?>
-                            </td>
-                            <td><?php echo $rec['date_creation']; ?></td>
-                            <td><?php echo htmlspecialchars(cre8_bo_priority_label($rec['priorite'] ?? '')); ?></td>
-
-                            <td>
-                              <span class="badge bg-<?php echo ($rec['statut'] == 'traitee') ? 'success' : 'warning'; ?>">
-                                <?php echo ($rec['statut'] == 'traitee') ? 'Processed' : 'Pending'; ?>
-                              </span>
-                            </td>
-
-                            <td>
-                              <?php if ($rec['reponse']): ?>
-                                <button type="button" class="btn table-action-btn text-white" style="background-color: #9B5DE0;"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#replyViewModal<?php echo $rec['id']; ?>">
-                                  View
-                                </button>
-                              <?php else: ?>
-                                <span class="badge bg-secondary">None</span>
-                              <?php endif; ?>
-                            </td>
-
-                            <td>
-                              <div class="d-flex gap-2" style="flex-wrap: wrap;">
-                                <!-- Reply -->
-                                <button type="button" class="btn table-action-btn text-white" style="background-color: #9B5DE0;"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#modal<?php echo $rec['id']; ?>">
-                                  Reply
-                                </button>
-
-                                <!-- Delete -->
-                                <button type="button" class="btn table-action-btn text-white" style="background-color: #D78FEE;"
-                                  onclick="deleteReclamation(<?php echo $rec['id']; ?>)">
-                                  🗑
-                                </button>
-
-                                <!-- Edit -->
-                                <select class="form-select form-select-sm table-action-select"
-                                  onchange="updateStatus(<?php echo $rec['id']; ?>, this.value)">
-                                  <option value="">Status</option>
-                                  <option value="en_attente" <?php if ($rec['statut'] == 'en_attente')
-                                    echo 'selected'; ?>>Pending</option>
-                                  <option value="traitee" <?php if ($rec['statut'] == 'traitee')
-                                    echo 'selected'; ?>>Processed</option>
-                                </select>
-
-                                <?php if ($canQuickReactivate): ?>
-                                  <form method="POST" action="reclamation_reactivate_user.php" class="m-0"
-                                        onsubmit="return confirm('Reactivate this suspended account?');">
-                                    <input type="hidden" name="idReclamation" value="<?php echo (int)$rec['id']; ?>">
-                                    <button type="submit" class="btn table-action-btn text-white" style="background-color: #28a745;">
-                                      Reactivate account
-                                    </button>
-                                  </form>
+                    <?php foreach ($liste as $rec): ?>
+                      <?php
+                        $complainantRole = cc_normalize_role($rec['complainant_role'] ?? '');
+                        $complainantStatus = cc_normalize_status($rec['complainant_statut'] ?? '');
+                        $isSuspensionAppeal = stripos((string)($rec['description'] ?? ''), '[Suspension Appeal]') !== false
+                            || $complainantStatus === 'suspendu';
+                        $complainantUserRow = [
+                            'id' => (int)($rec['complainant_id'] ?? 0),
+                            'role' => $complainantRole,
+                            'statut' => $complainantStatus,
+                            'suspended_by' => $rec['suspended_by'] ?? null,
+                            'suspended_by_role' => cc_normalize_role($rec['suspended_by_role'] ?? ''),
+                            'suspended_at' => $rec['suspended_at'] ?? null,
+                            'suspension_reason' => $rec['suspension_reason'] ?? null,
+                        ];
+                        $canQuickReactivate = $complainantStatus === 'suspendu'
+                            && cc_can_view_reclamation_from_role($viewerRole, $complainantRole)
+                            && cc_can_reactivate_suspension($viewerId, $viewerRole, $complainantUserRow);
+                        $priorityLabel = cre8_bo_priority_label($rec['priorite'] ?? '');
+                        $priorityClass = strtolower($priorityLabel);
+                        $statusClass = ($rec['statut'] == 'traitee') ? 'traitee' : 'en_attente';
+                      ?>
+                      <tr>
+                        <td class="uc-col-id">#<?php echo (int)$rec['id']; ?></td>
+                        <td>
+                          <div class="uc-person-cell">
+                            <strong><?php echo htmlspecialchars($rec['nom'] ?? 'Unknown'); ?></strong>
+                            <?php if (!empty($rec['complainant_role'])): ?>
+                              <span><?php echo htmlspecialchars($rec['complainant_role']); ?></span>
+                            <?php endif; ?>
+                          </div>
+                        </td>
+                        <td>
+                          <div class="uc-complaint-text">
+                            <?php if ($isSuspensionAppeal): ?>
+                              <span class="uc-badge uc-status-suspendu">Suspension appeal</span>
+                            <?php endif; ?>
+                            <p><?php echo nl2br(htmlspecialchars((string)($rec['description'] ?? ''))); ?></p>
+                            <?php if ($isSuspensionAppeal): ?>
+                              <small>
+                                Status: <?= htmlspecialchars($complainantStatus !== '' ? $complainantStatus : 'unknown') ?>
+                                <?php if (!empty($rec['suspended_by_role'])): ?>
+                                  · Suspended by: <?= htmlspecialchars(cc_normalize_role($rec['suspended_by_role'])) ?>
                                 <?php endif; ?>
-                              </div>
-                            </td>
-                          </tr>
-                          <div class="modal fade" id="modal<?php echo $rec['id']; ?>" tabindex="-1">
+                                <?php if (!empty($rec['suspended_at'])): ?>
+                                  · At: <?= htmlspecialchars((string)$rec['suspended_at']) ?>
+                                <?php endif; ?>
+                                <?php if (!empty($rec['suspension_reason'])): ?>
+                                  <br>Reason: <?= htmlspecialchars((string)$rec['suspension_reason']) ?>
+                                <?php endif; ?>
+                              </small>
+                            <?php endif; ?>
+                          </div>
+                        </td>
+                        <td class="uc-date-cell"><?php echo htmlspecialchars((string)$rec['date_creation']); ?></td>
+                        <td><span class="uc-badge uc-priority-<?= htmlspecialchars($priorityClass) ?>"><?php echo htmlspecialchars($priorityLabel); ?></span></td>
+                        <td><span class="uc-badge uc-status-<?= htmlspecialchars($statusClass) ?>"><?php echo $rec['statut'] == 'traitee' ? 'Processed' : 'Pending'; ?></span></td>
+                        <td>
+                          <?php if ($rec['reponse']): ?>
+                            <button type="button" class="uc-action-btn uc-action-primary" data-bs-toggle="modal" data-bs-target="#replyViewModal<?php echo (int)$rec['id']; ?>">
+                              View
+                            </button>
+                          <?php else: ?>
+                            <span class="uc-badge uc-status-inactif">None</span>
+                          <?php endif; ?>
+                        </td>
+                        <td>
+                          <div class="uc-actions">
+                            <button type="button" class="uc-action-btn uc-action-primary" data-bs-toggle="modal" data-bs-target="#modal<?php echo (int)$rec['id']; ?>">
+                              Reply
+                            </button>
+                            <button type="button" class="uc-action-btn uc-action-soft-danger" onclick="deleteReclamation(<?php echo (int)$rec['id']; ?>)">
+                              Delete
+                            </button>
+                            <select class="uc-inline-select uc-status-select" onchange="updateStatus(<?php echo (int)$rec['id']; ?>, this.value)">
+                              <option value="">Status</option>
+                              <option value="en_attente" <?php if ($rec['statut'] == 'en_attente') echo 'selected'; ?>>Pending</option>
+                              <option value="traitee" <?php if ($rec['statut'] == 'traitee') echo 'selected'; ?>>Processed</option>
+                            </select>
+                            <?php if ($canQuickReactivate): ?>
+                              <form method="POST" action="reclamation_reactivate_user.php" class="m-0" onsubmit="return confirm('Reactivate this suspended account?');">
+                                <input type="hidden" name="idReclamation" value="<?php echo (int)$rec['id']; ?>">
+                                <button type="submit" class="uc-action-btn uc-action-success">Reactivate</button>
+                              </form>
+                            <?php endif; ?>
+                          </div>
+                        </td>
+                      </tr>
+                    <?php endforeach; ?>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="uc-pagination">
+                <p>Page <?= $currentPage ?> of <?= $totalPages ?> · <?= $totalReclamations ?> complaints</p>
+                <?php if ($totalPages > 1): ?>
+                  <nav aria-label="Complaints pagination">
+                    <a class="uc-page-btn <?= $currentPage <= 1 ? 'is-disabled' : '' ?>" href="?page=<?= max(1, $currentPage - 1) ?>&search=<?= urlencode($search) ?>&priorite=<?= urlencode($priorite) ?>">&laquo;</a>
+                    <?php
+                      $startPage = max(1, $currentPage - 2);
+                      $endPage = min($totalPages, $currentPage + 2);
+                      if ($startPage > 1):
+                    ?>
+                      <a class="uc-page-btn" href="?page=1&search=<?= urlencode($search) ?>&priorite=<?= urlencode($priorite) ?>">1</a>
+                      <?php if ($startPage > 2): ?><span class="uc-page-ellipsis">...</span><?php endif; ?>
+                    <?php endif; ?>
+
+                    <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+                      <a class="uc-page-btn <?= $i == $currentPage ? 'is-active' : '' ?>" href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&priorite=<?= urlencode($priorite) ?>"><?= $i ?></a>
+                    <?php endfor; ?>
+
+                    <?php if ($endPage < $totalPages): ?>
+                      <?php if ($endPage < $totalPages - 1): ?><span class="uc-page-ellipsis">...</span><?php endif; ?>
+                      <a class="uc-page-btn" href="?page=<?= $totalPages ?>&search=<?= urlencode($search) ?>&priorite=<?= urlencode($priorite) ?>"><?= $totalPages ?></a>
+                    <?php endif; ?>
+
+                    <a class="uc-page-btn <?= $currentPage >= $totalPages ? 'is-disabled' : '' ?>" href="?page=<?= min($totalPages, $currentPage + 1) ?>&search=<?= urlencode($search) ?>&priorite=<?= urlencode($priorite) ?>">&raquo;</a>
+                  </nav>
+                <?php endif; ?>
+              </div>
+
+              <?php foreach ($liste as $rec): ?>
+            <div class="modal fade uc-modal" id="modal<?php echo (int)$rec['id']; ?>" tabindex="-1">
               <div class="modal-dialog">
                 <div class="modal-content">
-
-                  <form method="POST" action="ajouterReponse.php" id="formReply<?php echo $rec['id']; ?>" onsubmit="return validateReply(this)">
-
+                  <form method="POST" action="ajouterReponse.php" id="formReply<?php echo (int)$rec['id']; ?>" onsubmit="return validateReply(this)">
                     <div class="modal-header">
                       <h5 class="modal-title">Reply</h5>
                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-
                     <div class="modal-body">
-                      <input type="hidden" name="idReclamation" value="<?php echo $rec['id']; ?>">
-
-                      <textarea name="contenu" class="form-control" id="replyContent<?php echo $rec['id']; ?>"
-                                placeholder="Your reply..."></textarea>
-                      <small class="text-danger d-none" id="replyError<?php echo $rec['id']; ?>">Please enter a reply.</small>
+                      <input type="hidden" name="idReclamation" value="<?php echo (int)$rec['id']; ?>">
+                      <textarea name="contenu" class="form-control" id="replyContent<?php echo (int)$rec['id']; ?>" placeholder="Your reply..."></textarea>
+                      <small class="text-danger d-none" id="replyError<?php echo (int)$rec['id']; ?>">Please enter a reply.</small>
                     </div>
-
-                    <div class="modal-footer d-flex justify-content-between">
-                      <button type="button" class="btn table-action-btn btn-secondary" style="width: 100px;" data-bs-dismiss="modal">Cancel</button>
-                      <button type="submit" class="btn table-action-btn btn-success" style="width: 100px;">Send</button>
+                    <div class="modal-footer">
+                      <button type="button" class="uc-action-btn uc-action-muted" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="uc-action-btn uc-action-success">Send</button>
                     </div>
-
                   </form>
-
                 </div>
               </div>
             </div>
 
-            <!-- Modal to view full response -->
-            <div class="modal fade" id="replyViewModal<?php echo $rec['id']; ?>" tabindex="-1">
+            <div class="modal fade uc-modal" id="replyViewModal<?php echo (int)$rec['id']; ?>" tabindex="-1">
               <div class="modal-dialog">
                 <div class="modal-content">
-
                   <div class="modal-header">
                     <h5 class="modal-title">Response</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                   </div>
-
                   <div class="modal-body">
                     <p><?php echo nl2br(htmlspecialchars($rec['reponse'] ?? '')); ?></p>
                     <?php if ($rec['date_reponse']): ?>
-                      <small class="text-muted">Date: <?php echo $rec['date_reponse']; ?></small>
+                      <small class="text-muted">Date: <?php echo htmlspecialchars((string)$rec['date_reponse']); ?></small>
                     <?php endif; ?>
                   </div>
-
-                  <div class="modal-footer d-flex justify-content-between gap-2">
-                    <!-- Edit response -->
-                    <button type="button" class="btn table-action-btn text-white" style="background-color: #9B5DE0;"
-                            data-bs-dismiss="modal"
-                            data-bs-toggle="modal"
-                            data-bs-target="#editReplyModal<?php echo $rec['id']; ?>">
-                      Edit
-                    </button>
-
-                    <!-- Delete response -->
-                    <button type="button" class="btn table-action-btn text-white" style="background-color: #D78FEE;"
-                            onclick="deleteReply(<?php echo $rec['id']; ?>)">
-                      Delete
-                    </button>
-
-                    <button type="button" class="btn table-action-btn btn-secondary" style="width: 100px;" data-bs-dismiss="modal">Close</button>
+                  <div class="modal-footer">
+                    <button type="button" class="uc-action-btn uc-action-primary" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#editReplyModal<?php echo (int)$rec['id']; ?>">Edit</button>
+                    <button type="button" class="uc-action-btn uc-action-soft-danger" onclick="deleteReply(<?php echo (int)$rec['id']; ?>)">Delete</button>
+                    <button type="button" class="uc-action-btn uc-action-muted" data-bs-dismiss="modal">Close</button>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- Modal to edit response -->
-            <div class="modal fade" id="editReplyModal<?php echo $rec['id']; ?>" tabindex="-1">
+            <div class="modal fade uc-modal" id="editReplyModal<?php echo (int)$rec['id']; ?>" tabindex="-1">
               <div class="modal-dialog">
                 <div class="modal-content">
-
-                  <form method="POST" action="modifierReponse.php" id="formEditReply<?php echo $rec['id']; ?>" onsubmit="return validateEditReply(this)">
-
+                  <form method="POST" action="modifierReponse.php" id="formEditReply<?php echo (int)$rec['id']; ?>" onsubmit="return validateEditReply(this)">
                     <div class="modal-header">
                       <h5 class="modal-title">Edit response</h5>
                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-
                     <div class="modal-body">
-                      <input type="hidden" name="idReclamation" value="<?php echo $rec['id']; ?>">
-                      <textarea name="contenu" class="form-control" id="editReplyContent<?php echo $rec['id']; ?>" placeholder="Edit your response..."><?php echo htmlspecialchars($rec['reponse'] ?? ''); ?></textarea>
-                      <small class="text-danger d-none" id="editReplyError<?php echo $rec['id']; ?>">Please enter a valid response.</small>
+                      <input type="hidden" name="idReclamation" value="<?php echo (int)$rec['id']; ?>">
+                      <textarea name="contenu" class="form-control" id="editReplyContent<?php echo (int)$rec['id']; ?>" placeholder="Edit your response..."><?php echo htmlspecialchars($rec['reponse'] ?? ''); ?></textarea>
+                      <small class="text-danger d-none" id="editReplyError<?php echo (int)$rec['id']; ?>">Please enter a valid response.</small>
                     </div>
-
-                    <div class="modal-footer d-flex justify-content-between">
-                      <button type="button" class="btn btn-secondary" style="width: 80px;" data-bs-dismiss="modal">Cancel</button>
-                      <button type="submit" class="btn btn-success" style="width: 80px;">Update</button>
+                    <div class="modal-footer">
+                      <button type="button" class="uc-action-btn uc-action-muted" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="uc-action-btn uc-action-success">Update</button>
                     </div>
-
                   </form>
-
                 </div>
               </div>
             </div>
-                        <?php endforeach; ?>
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <!-- Pagination -->
-                  <?php if ($totalPages > 1): ?>
-                  <div class="d-flex justify-content-center mt-4">
-                      <nav aria-label="Complaints pagination">
-                          <ul class="pagination">
-                              <!-- Previous button -->
-                              <li class="page-item <?= $currentPage <= 1 ? 'disabled' : '' ?>">
-                                  <a class="page-link" href="?page=<?= $currentPage - 1 ?>&search=<?= urlencode($search) ?>&priorite=<?= urlencode($priorite) ?>" aria-label="Previous">
-                                      <span aria-hidden="true">&laquo;</span>
-                                  </a>
-                              </li>
-
-                              <!-- Page numbers -->
-                              <?php
-                              $startPage = max(1, $currentPage - 2);
-                              $endPage = min($totalPages, $currentPage + 2);
-
-                              if ($startPage > 1): ?>
-                                  <li class="page-item">
-                                      <a class="page-link" href="?page=1&search=<?= urlencode($search) ?>&priorite=<?= urlencode($priorite) ?>">1</a>
-                                  </li>
-                                  <?php if ($startPage > 2): ?>
-                                      <li class="page-item disabled">
-                                          <span class="page-link">...</span>
-                                      </li>
-                                  <?php endif; ?>
-                              <?php endif; ?>
-
-                              <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
-                                  <li class="page-item <?= $i == $currentPage ? 'active' : '' ?>">
-                                      <a class="page-link" href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&priorite=<?= urlencode($priorite) ?>"><?= $i ?></a>
-                                  </li>
-                              <?php endfor; ?>
-
-                              <?php if ($endPage < $totalPages): ?>
-                                  <?php if ($endPage < $totalPages - 1): ?>
-                                      <li class="page-item disabled">
-                                          <span class="page-link">...</span>
-                                      </li>
-                                  <?php endif; ?>
-                                  <li class="page-item">
-                                      <a class="page-link" href="?page=<?= $totalPages ?>&search=<?= urlencode($search) ?>&priorite=<?= urlencode($priorite) ?>"><?= $totalPages ?></a>
-                                  </li>
-                              <?php endif; ?>
-
-                              <!-- Next button -->
-                              <li class="page-item <?= $currentPage >= $totalPages ? 'disabled' : '' ?>">
-                                  <a class="page-link" href="?page=<?= $currentPage + 1 ?>&search=<?= urlencode($search) ?>&priorite=<?= urlencode($priorite) ?>" aria-label="Next">
-                                      <span aria-hidden="true">&raquo;</span>
-                                  </a>
-                              </li>
-                          </ul>
-                      </nav>
-                  </div>
-                  <div class="text-center mt-2 text-muted">
-                      Page <?= $currentPage ?> of <?= $totalPages ?> (<?= $totalReclamations ?> total complaints)
-                  </div>
-                  <?php endif; ?>
-
-                </div>
-              </div>
+          <?php endforeach; ?>
             </div>
-          </div>
-
-          <!-- ===================== MODALS ===================== -->
-          
-        
-          <!-- content-wrapper ends -->
-          <!-- partial:partials/_footer.html -->
-          <footer class="footer">
-            <div class="d-sm-flex justify-content-center justify-content-sm-between">
-              <span class="text-muted d-block text-center text-sm-left d-sm-inline-block">Copyright © bootstrapdash.com
-                2020</span>
-            </div>
-          </footer>
-          <!-- partial -->
+          </section>
+        </div>
+        <!-- content-wrapper ends -->
         </div>
         <!-- main-panel ends -->
       </div>
@@ -791,6 +721,7 @@ foreach ($liste as $rec) {
     <script src="assets/js/settings.js"></script>
     <script src="assets/js/todolist.js"></script>
     <script src="../layout/back-layout.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/back-layout.js')); ?>"></script>
+  <script src="user-center-admin.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/user-center-admin.js')); ?>"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- endinject -->
@@ -952,7 +883,7 @@ foreach ($liste as $rec) {
             y: {
               beginAtZero: true,
               ticks: {
-                stepSize: Math.max(1, Math.ceil(Math.max(...priorityHaute, ...priorityMoyenne, ...priorityBasse) / 5))
+                stepSize: Math.max(1, Math.ceil(Math.max(...priorityHaute, ...priorityNormale, ...priorityFaible) / 5))
               },
               grid: { color: 'rgba(0,0,0,0.05)' }
             },

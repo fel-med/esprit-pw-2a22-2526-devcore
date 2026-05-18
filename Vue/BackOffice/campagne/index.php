@@ -665,7 +665,154 @@ body.light-mode.cre8-admin-layout .contrat-admin {
   background-color: #f6f7fb !important;
 }
 
+
+
+/* === Cre8Connect shared chrome hard lock V3 ==============================
+   Final override for BackOffice shell only.
+   This fixes the small header/sidebar drift caused by module CSS loading
+   after the shared layout (Collaboration + Business pages). It intentionally
+   targets only the shared chrome, not the page content. */
+body.cre8-admin-layout #sidebar,
+body.cre8-admin-layout #sidebar .nav,
+body.cre8-admin-layout #sidebar .nav .nav-link,
+body.cre8-admin-layout #sidebar .nav .menu-title,
+body.cre8-admin-layout #sidebar .nav .nav-category .nav-link,
+body.cre8-admin-layout #sidebar .profile-name h5,
+body.cre8-admin-layout #sidebar .profile-name span,
+body.cre8-admin-layout .navbar.fixed-top,
+body.cre8-admin-layout .navbar.fixed-top .navbar-menu-wrapper,
+body.cre8-admin-layout .navbar.fixed-top .nav-link,
+body.cre8-admin-layout .navbar.fixed-top .navbar-profile-name,
+body.cre8-admin-layout .navbar.fixed-top .cre8-profile-name,
+body.cre8-admin-layout .navbar.fixed-top .cre8-role-badge,
+body.cre8-admin-layout .navbar.fixed-top .cre8-lang-btn,
+body.cre8-admin-layout .navbar.fixed-top .cre8-workspace-search input {
+  font-family: "Segoe UI", Arial, sans-serif !important;
+}
+
+body.cre8-admin-layout #sidebar .nav {
+  padding: 0.85rem 0 1.2rem !important;
+  gap: 0 !important;
+}
+
+body.cre8-admin-layout #sidebar .nav .nav-category {
+  margin: 0.18rem 0 0.35rem !important;
+}
+
+body.cre8-admin-layout #sidebar .nav .nav-category .nav-link {
+  min-height: auto !important;
+  padding: 0.25rem 1.68rem 0.45rem !important;
+  background: transparent !important;
+  color: #e8eefc !important;
+  font-size: 0.78rem !important;
+  font-weight: 900 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0.045em !important;
+  text-transform: uppercase !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+body.cre8-admin-layout #sidebar .nav .nav-item.menu-items {
+  margin: 0.05rem 0 !important;
+}
+
+body.cre8-admin-layout #sidebar .nav .nav-item.menu-items > .nav-link {
+  min-height: 3.2rem !important;
+  height: 3.2rem !important;
+  padding: 0.28rem 1rem 0.28rem 1.35rem !important;
+  border-radius: 0 999px 999px 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.66rem !important;
+  box-shadow: none !important;
+}
+
+body.cre8-admin-layout #sidebar .nav .nav-item.menu-items .menu-icon {
+  width: 2.75rem !important;
+  height: 2.75rem !important;
+  min-width: 2.75rem !important;
+  flex: 0 0 2.75rem !important;
+  border-radius: 999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-right: 0 !important;
+}
+
+body.cre8-admin-layout #sidebar .nav .nav-item.menu-items .menu-icon i {
+  font-family: "Material Design Icons" !important;
+  font-size: 1.05rem !important;
+  line-height: 1 !important;
+}
+
+body.cre8-admin-layout #sidebar .nav .nav-item.menu-items .menu-title {
+  color: inherit !important;
+  font-size: 0.98rem !important;
+  font-weight: 900 !important;
+  line-height: 1.12 !important;
+  letter-spacing: -0.01em !important;
+  text-transform: none !important;
+  white-space: nowrap !important;
+}
+
+body.cre8-admin-layout #sidebar .nav .nav-item.menu-items.active > .nav-link {
+  background: #11131a !important;
+  color: #ffffff !important;
+}
+
+body.cre8-admin-layout #sidebar .nav .nav-item.menu-items.active > .nav-link::before {
+  content: "" !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 3px !important;
+  border-radius: 0 999px 999px 0 !important;
+  background: #0090e7 !important;
+}
+
+body.cre8-admin-layout .navbar.fixed-top,
+body.cre8-admin-layout .navbar.fixed-top .navbar-menu-wrapper {
+  min-height: 4.45rem !important;
+  height: 4.45rem !important;
+}
+
+body.cre8-admin-layout .navbar.fixed-top .navbar-profile-name,
+body.cre8-admin-layout .navbar.fixed-top .cre8-profile-name,
+body.cre8-admin-layout .navbar.fixed-top .nav-link,
+body.cre8-admin-layout .navbar.fixed-top .cre8-lang-btn,
+body.cre8-admin-layout .navbar.fixed-top .cre8-role-badge {
+  font-size: 0.94rem !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout #sidebar .nav .nav-category .nav-link,
+body.cre8-admin-layout.light-mode #sidebar .nav .nav-category .nav-link,
+body.light-mode.cre8-admin-layout #sidebar .nav .nav-category .nav-link {
+  color: #334155 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout #sidebar .nav .nav-item.menu-items.active > .nav-link,
+body.cre8-admin-layout.light-mode #sidebar .nav .nav-item.menu-items.active > .nav-link,
+body.light-mode.cre8-admin-layout #sidebar .nav .nav-item.menu-items.active > .nav-link {
+  background: #f8f9fa !important;
+  color: #0f172a !important;
+}
+/* === /Cre8Connect shared chrome hard lock V3 ============================= */
+
+
+
+/* Cre8 business sidebar vertical alignment micro-fix.
+   These pages have local reset CSS, so keep the shared sidebar list
+   visually aligned with the other BackOffice pages. */
+body.cre8-admin-layout #sidebar .nav {
+  padding-top: 1.08rem !important;
+}
 </style>
+<link rel="stylesheet" href="../business-center-admin.css<?= campagneAssetVersion(__DIR__ . '/../business-center-admin.css') ?>">
+<link rel="stylesheet" href="../unified-table-admin.css<?= campagneAssetVersion(__DIR__ . '/../unified-table-admin.css') ?>">
 <link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
 <link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
@@ -681,7 +828,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
 <div class="container-fluid page-body-wrapper cre8-admin-main">
 <?php require_once __DIR__ . '/../layout/header.php'; ?>
     <div class="main-panel">
-    <div class="content-wrapper">
+    <div class="content-wrapper business-center-shell">
         <div class="campagne-admin">
 
         <?php if ($message): ?>
@@ -690,12 +837,30 @@ require_once __DIR__ . '/../layout/sidebar.php';
         </div>
         <?php endif; ?>
 
-        <div class="translation-toolbar" aria-label="Language controls">
-            <div class="page-heading">
-                <h1 class="page-title" data-i18n="pageTitle">⚡ Gestion des Campagnes</h1>
-                <p class="page-subtitle" data-i18n="pageSubtitle">Supervision et modération des campagnes.</p>
+
+        <section class="bc-page-head">
+            <div>
+                <p class="bc-kicker">Business Center</p>
+                <h1>Campaign administration</h1>
+                <p>Create, analyze, archive and moderate brand campaigns.</p>
             </div>
-        </div>
+
+        </section>
+
+        <nav class="bc-entity-tabs" aria-label="Business Center sections">
+            <a class="bc-entity-tab is-active" href="../campagne/index.php" aria-current="page">
+                <span class="bc-tab-icon"><i class="mdi mdi-bullhorn-outline"></i></span>
+                <span><strong>Campaigns</strong><small>Campaign planning and moderation</small></span>
+            </a>
+            <a class="bc-entity-tab " href="../produit/index.php" >
+                <span class="bc-tab-icon"><i class="mdi mdi-package-variant-closed"></i></span>
+                <span><strong>Products</strong><small>Catalog, images and product data</small></span>
+            </a>
+            <a class="bc-entity-tab " href="../contrat/index.php" >
+                <span class="bc-tab-icon"><i class="mdi mdi-file-document-edit-outline"></i></span>
+                <span><strong>Contracts</strong><small>Contract status and value tracking</small></span>
+            </a>
+        </nav>
 
         <!-- KPI -->
         <div class="kpi-grid">
@@ -708,15 +873,16 @@ require_once __DIR__ . '/../layout/sidebar.php';
         </div>
 
         <!-- STATS CHARTS -->
-        <div class="card" id="statsSection">
-            <div class="card-header">
-                <div class="card-title" style="background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
-                    <i class="fas fa-chart-bar" style="-webkit-text-fill-color:var(--accent)"></i>
-                    <span data-i18n="statsTitle"> Statistiques dynamiques</span>
+        <section class="bc-statistics-panel" id="statsSection" data-bc-stats>
+            <div class="bc-section-head">
+                <div>
+                    <h2>
+                    <i class="fas fa-chart-bar"></i> <span data-i18n="statsTitle">Statistiques dynamiques</span></h2>
+                    <p>Campaign distribution, archive split and budget overview.</p>
                 </div>
-                <button class="stats-toggle-btn" onclick="toggleStats()" id="statsToggleBtn" data-i18n="statsHide">▲ Masquer</button>
+                <button type="button" class="bc-secondary-btn" data-bc-stats-toggle data-label-hide="Hide statistics" data-label-show="Show statistics" id="statsToggleBtn" data-i18n="statsHide">Hide statistics</button>
             </div>
-            <div class="card-body" id="statsBody">
+            <div class="bc-stats-body" id="statsBody">
                 <div class="charts-grid">
                     <div>
                         <div class="chart-card-title" data-i18n="chartStatusTitle">Répartition par statut</div>
@@ -732,7 +898,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- IA ANALYSE -->
         <div class="card">
@@ -806,7 +972,8 @@ require_once __DIR__ . '/../layout/sidebar.php';
                 </select>
             </div>
 
-            <div class="card">
+            <div id="bcResultsRegion" class="bc-results-region">
+            <div class="card bc-table-card">
                 <div class="card-header">
                     <div class="card-title" data-i18n="panelTitle">Toutes les campagnes</div>
                     <div class="card-meta" id="visibleBadge"><?= $totalCampagnes ?> <span data-i18n="campaignCount">campagne(s)</span></div>
@@ -815,7 +982,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
                     <?php if (empty($liste)): ?>
                     <div style="text-align:center;padding:40px;color:var(--muted)" data-i18n="noCampaign">Aucune campagne.</div>
                     <?php else: ?>
-                    <table class="table" id="campTable">
+                    <table class="table bc-table" id="campTable">
                         <thead>
                             <tr>
                                 <th data-i18n="colTitle">Titre</th>
@@ -871,6 +1038,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
                     <div class="pagination" id="paginationControls"></div>
                     <?php endif; ?>
                 </div>
+            </div>
             </div>
         </div>
 
@@ -1409,5 +1577,6 @@ window.addEventListener('cre8:languagechange', function(event) {
     if (typeof buildCharts === 'function') buildCharts();
 });
 </script>
+<script src="../business-center-admin.js<?= campagneAssetVersion(__DIR__ . '/../business-center-admin.js') ?>"></script>
 </body>
 </html>

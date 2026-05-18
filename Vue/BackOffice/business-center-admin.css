@@ -1,0 +1,1058 @@
+@import url("layout/back-layout.css");
+
+:root {
+  --bc-bg: #000000;
+  --bc-card: #191c24;
+  --bc-card-soft: #151820;
+  --bc-card-deep: #11151d;
+  --bc-border: rgba(148, 163, 184, 0.14);
+  --bc-border-strong: rgba(96, 165, 250, 0.28);
+  --bc-text: #f8fafc;
+  --bc-muted: #94a3b8;
+  --bc-muted-2: #64748b;
+  --bc-input: #2a3038;
+  --bc-table-head: #212529;
+  --bc-primary: #9b5de0;
+  --bc-pink: #e11d74;
+  --bc-soft-pink: #d78fee;
+  --bc-green: #55d36a;
+  --bc-yellow: #f59e0b;
+  --bc-blue: #0090e7;
+  --bc-red: #fc424a;
+  --bc-shadow: rgba(0, 0, 0, 0.24);
+}
+
+html[data-theme="light"] {
+  --bc-bg: #f6f7fb;
+  --bc-card: #ffffff;
+  --bc-card-soft: #f8f9ff;
+  --bc-card-deep: #ffffff;
+  --bc-border: rgba(15, 23, 42, 0.12);
+  --bc-border-strong: rgba(155, 93, 224, 0.3);
+  --bc-text: #111827;
+  --bc-muted: #64748b;
+  --bc-muted-2: #7c8497;
+  --bc-input: #ffffff;
+  --bc-table-head: #eef1f7;
+  --bc-shadow: rgba(17, 24, 39, 0.08);
+}
+
+body.cre8-admin-layout .content-wrapper.business-center-shell {
+  background: var(--bc-bg) !important;
+  color: var(--bc-text) !important;
+  padding: 1.65rem 1.8rem 2.25rem !important;
+}
+
+.business-center-shell,
+.business-center-shell input,
+.business-center-shell select,
+.business-center-shell textarea,
+.business-center-shell button {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+
+.business-center-shell .campagne-admin,
+.business-center-shell .produit-admin,
+.business-center-shell .contrat-admin {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  color: var(--bc-text);
+}
+
+.bc-page-head,
+.bc-entity-tabs,
+.bc-statistics-panel,
+.bc-filter-card,
+.bc-table-card,
+.business-center-shell .card,
+.business-center-shell .table-panel,
+.business-center-shell .form-panel {
+  border: 1px solid var(--bc-border) !important;
+  background: var(--bc-card) !important;
+  color: var(--bc-text) !important;
+  box-shadow: none !important;
+}
+
+.bc-page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin-bottom: 1.35rem;
+  padding: 1.55rem 1.75rem;
+  border-radius: 0.25rem;
+}
+
+.bc-page-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.bc-kicker {
+  margin: 0 0 0.38rem;
+  color: var(--bc-blue);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.bc-page-head h1,
+.business-center-shell .page-title {
+  margin: 0;
+  color: var(--bc-text) !important;
+  font-size: 1.72rem !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.03em;
+  -webkit-text-fill-color: currentColor !important;
+  background: none !important;
+}
+
+.bc-page-head p,
+.business-center-shell .page-subtitle {
+  margin: 0.58rem 0 0;
+  color: var(--bc-muted) !important;
+  max-width: 62rem;
+  font-size: 0.98rem;
+  line-height: 1.55;
+}
+
+.bc-entity-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.35rem;
+  padding: 0.85rem;
+  border-radius: 1.15rem;
+}
+
+.bc-entity-tab {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--bc-border);
+  border-radius: 0.85rem;
+  background: var(--bc-card-soft);
+  color: var(--bc-text);
+  text-decoration: none;
+  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+}
+
+.bc-entity-tab:hover {
+  color: var(--bc-text);
+  transform: translateY(-1px);
+  border-color: var(--bc-border-strong);
+  text-decoration: none;
+}
+
+.bc-entity-tab.is-active {
+  background: linear-gradient(135deg, var(--bc-primary), var(--bc-pink));
+  border-color: transparent;
+  color: #ffffff;
+}
+
+.bc-tab-icon {
+  flex: 0 0 3rem;
+  width: 3rem;
+  height: 3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.8rem;
+  background: rgba(2, 6, 23, 0.22);
+  font-size: 1.35rem;
+}
+
+.bc-entity-tab strong,
+.bc-entity-tab small { display: block; }
+.bc-entity-tab strong { font-size: 1rem; font-weight: 900; }
+.bc-entity-tab small { color: inherit; opacity: 0.82; margin-top: 0.16rem; }
+
+.business-center-shell .kpi-grid,
+.business-center-shell .kpi-strip,
+.business-center-shell .stats-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)) !important;
+  gap: 0.95rem !important;
+  margin: 0 0 1.1rem !important;
+}
+
+.business-center-shell .kpi-card,
+.business-center-shell .stat-card {
+  position: relative;
+  min-height: 9.2rem;
+  overflow: hidden;
+  border: 0 !important;
+  border-radius: 1rem !important;
+  padding: 1.15rem 1.25rem !important;
+  color: #ffffff !important;
+  box-shadow: 0 18px 36px var(--bc-shadow) !important;
+  background: linear-gradient(135deg, #8b5cf6, #a855f7) !important;
+  display: block !important;
+  text-align: left !important;
+}
+.business-center-shell .kpi-card:nth-child(2),
+.business-center-shell .stat-card:nth-child(2) { background: linear-gradient(135deg, #d78fee, #e11d74) !important; }
+.business-center-shell .kpi-card:nth-child(3),
+.business-center-shell .stat-card:nth-child(3) { background: linear-gradient(135deg, #55d36a, #22c55e) !important; }
+.business-center-shell .kpi-card:nth-child(4),
+.business-center-shell .stat-card:nth-child(4) { background: linear-gradient(135deg, #f59e0b, #fbbf24) !important; color: #172014 !important; }
+.business-center-shell .kpi-card:nth-child(5),
+.business-center-shell .stat-card:nth-child(5) { background: linear-gradient(135deg, #0090e7, #4f46e5) !important; }
+.business-center-shell .kpi-card:nth-child(6),
+.business-center-shell .stat-card:nth-child(6),
+.business-center-shell .kpi-card:nth-child(7) { background: linear-gradient(135deg, #e11d74, #db2777) !important; }
+.business-center-shell .kpi-card::after,
+.business-center-shell .stat-card::after {
+  content: "";
+  position: absolute;
+  right: -1.3rem;
+  bottom: -1.7rem;
+  width: 6rem;
+  height: 6rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+}
+.business-center-shell .kpi-label,
+.business-center-shell .stat-label {
+  display: block;
+  color: inherit !important;
+  opacity: 0.92;
+  font-size: 0.75rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.13em !important;
+  text-transform: uppercase !important;
+}
+.business-center-shell .kpi-value,
+.business-center-shell .stat-value {
+  display: block;
+  margin-top: 0.62rem !important;
+  color: inherit !important;
+  font-size: 2.25rem !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+}
+.business-center-shell .kpi-sub,
+.business-center-shell .stat-card small {
+  display: block;
+  margin-top: 0.72rem;
+  color: inherit !important;
+  opacity: 0.82;
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1.4;
+}
+.business-center-shell .stat-card .stat-icon { display: none !important; }
+
+.bc-statistics-panel,
+.bc-filter-card,
+.bc-table-card,
+.business-center-shell .card,
+.business-center-shell .table-panel,
+.business-center-shell .form-panel {
+  margin-bottom: 1.1rem !important;
+  border-radius: 0.25rem !important;
+  overflow: hidden !important;
+}
+.bc-section-head,
+.bc-filter-head,
+.bc-table-head,
+.business-center-shell .card-header,
+.business-center-shell .table-panel-header,
+.business-center-shell .form-panel-header {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 1rem !important;
+  padding: 1rem 1.15rem !important;
+  border-bottom: 1px solid var(--bc-border) !important;
+  background: var(--bc-card) !important;
+  color: var(--bc-text) !important;
+}
+.bc-section-head h2,
+.bc-filter-head h2,
+.bc-table-head h2,
+.business-center-shell .card-title,
+.business-center-shell .table-panel-title,
+.business-center-shell .form-section-title {
+  margin: 0 !important;
+  color: var(--bc-text) !important;
+  font-size: 1.02rem !important;
+  font-weight: 800 !important;
+  -webkit-text-fill-color: currentColor !important;
+  background: none !important;
+}
+.bc-section-head p,
+.bc-filter-head p,
+.bc-table-head p,
+.business-center-shell .card-meta,
+.business-center-shell .card-subtitle,
+.business-center-shell .count-badge {
+  margin: 0.25rem 0 0;
+  color: var(--bc-muted) !important;
+  font-size: 0.86rem;
+}
+.bc-secondary-btn,
+.bc-primary-btn,
+.bc-soft-btn,
+.business-center-shell .btn-export,
+.business-center-shell .btn-add,
+.business-center-shell .btn-reset-filter,
+.business-center-shell .btn-primary,
+.business-center-shell .btn-ia,
+.business-center-shell .stats-toggle-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 2.3rem !important;
+  border-radius: 0.25rem !important;
+  border: 1px solid transparent !important;
+  padding: 0.55rem 0.9rem !important;
+  font-size: 0.86rem !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+}
+.bc-primary-btn,
+.business-center-shell .btn-add,
+.business-center-shell .btn-primary,
+.business-center-shell .btn-ia { background: var(--bc-primary) !important; border-color: var(--bc-primary) !important; color: #fff !important; }
+.bc-secondary-btn,
+.bc-soft-btn,
+.business-center-shell .btn-export,
+.business-center-shell .btn-reset-filter,
+.business-center-shell .stats-toggle-btn { background: rgba(15, 23, 42, 0.36) !important; border-color: var(--bc-border-strong) !important; color: #bfdbfe !important; }
+html[data-theme="light"] .bc-secondary-btn,
+html[data-theme="light"] .bc-soft-btn,
+html[data-theme="light"] .business-center-shell .btn-export,
+html[data-theme="light"] .business-center-shell .btn-reset-filter,
+html[data-theme="light"] .business-center-shell .stats-toggle-btn { background: #ffffff !important; color: var(--bc-primary) !important; }
+
+.bc-stats-body,
+.business-center-shell .charts-grid,
+.business-center-shell .charts-row {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 1rem !important;
+  padding: 1rem 1.15rem 1.15rem !important;
+}
+.business-center-shell .charts-grid > div,
+.business-center-shell .chart-card,
+.business-center-shell .charts-row .card {
+  min-width: 0;
+  border: 1px solid var(--bc-border) !important;
+  border-radius: 0.25rem !important;
+  background: var(--bc-card-soft) !important;
+  padding: 1rem !important;
+}
+.business-center-shell .chart-card-title,
+.business-center-shell .chart-card .chart-card-title,
+.business-center-shell .charts-row .card-title {
+  margin: 0 0 0.75rem !important;
+  color: var(--bc-text) !important;
+  font-size: 1rem !important;
+  font-weight: 800 !important;
+}
+.business-center-shell .chart-inner,
+.business-center-shell .chart-wrap,
+.business-center-shell .chart-container { height: 310px !important; min-height: 280px; }
+.bc-statistics-panel.is-collapsed .bc-stats-body,
+.bc-statistics-panel.is-collapsed .charts-row,
+.bc-statistics-panel.is-collapsed #statsBody { display: none !important; }
+
+.business-center-shell .search-bar,
+.business-center-shell .filter-bar,
+.business-center-shell .filters-bar {
+  display: grid !important;
+  grid-template-columns: minmax(240px, 1.8fr) repeat(3, minmax(160px, 0.8fr)) auto !important;
+  gap: 0.8rem !important;
+  align-items: end !important;
+  margin: 0 0 1.1rem !important;
+  padding: 1rem 1.15rem 1.15rem !important;
+  border: 1px solid var(--bc-border) !important;
+  border-radius: 0.25rem !important;
+  background: var(--bc-card) !important;
+}
+.business-center-shell .filter-group,
+.business-center-shell .form-group { display: grid; gap: 0.42rem; margin: 0; }
+.business-center-shell .filter-label,
+.business-center-shell .filter-group label,
+.business-center-shell .form-label,
+.business-center-shell .form-group label { color: var(--bc-muted) !important; font-size: 0.78rem !important; font-weight: 700 !important; }
+.business-center-shell .form-control,
+.business-center-shell .search-input,
+.business-center-shell .filter-select,
+.business-center-shell .price-input,
+.business-center-shell .select-statut,
+.business-center-shell .statut-select,
+.business-center-shell .note-interne-ctrl {
+  min-height: 2.8rem !important;
+  width: 100% !important;
+  border: 1px solid var(--bc-border) !important;
+  border-radius: 0.25rem !important;
+  background: var(--bc-input) !important;
+  color: var(--bc-text) !important;
+  padding: 0.68rem 0.82rem !important;
+  font-size: 0.92rem !important;
+  outline: none !important;
+}
+.business-center-shell .search-wrap { display: contents !important; }
+.business-center-shell .search-icon { display: none !important; }
+.business-center-shell .price-range-wrap { display: flex; gap: 0.5rem; align-items: center; }
+
+.bc-results-region { position: relative; }
+.bc-results-region.is-loading { opacity: 0.62; pointer-events: none; }
+.business-center-shell .table-responsive,
+.business-center-shell .table-wrap {
+  width: 100% !important;
+  overflow-y: visible !important;
+  overflow-x: visible !important;
+  padding: 1.15rem !important;
+}
+.business-center-shell table,
+.business-center-shell .table,
+.business-center-shell #produitsTable,
+.business-center-shell #contratsTable,
+.business-center-shell #campTable {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  table-layout: fixed !important;
+  background: var(--bc-card) !important;
+  color: var(--bc-text) !important;
+}
+.business-center-shell table thead th,
+.business-center-shell .table thead th {
+  padding: 0.95rem 0.8rem !important;
+  background: var(--bc-table-head) !important;
+  color: var(--bc-text) !important;
+  border-bottom: 1px solid var(--bc-border) !important;
+  font-size: 0.76rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+}
+.business-center-shell table tbody td,
+.business-center-shell .table tbody td {
+  padding: 1rem 0.78rem !important;
+  border-bottom: 1px solid var(--bc-border) !important;
+  color: var(--bc-text) !important;
+  vertical-align: middle !important;
+  overflow-wrap: anywhere !important;
+  background: transparent !important;
+}
+.business-center-shell table tbody tr:hover,
+.business-center-shell .table tbody tr:hover td { background: rgba(96, 165, 250, 0.04) !important; }
+.business-center-shell td strong,
+.business-center-shell .camp-title { color: var(--bc-text) !important; }
+.business-center-shell .camp-obj,
+.business-center-shell .text-muted-id,
+.business-center-shell .td-desc,
+.business-center-shell td small { color: var(--bc-muted) !important; }
+.business-center-shell .badge,
+.business-center-shell .badge-status,
+.business-center-shell .status-badge,
+.business-center-shell .status-chip,
+.business-center-shell .select-statut,
+.business-center-shell .statut-select {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.8rem;
+  padding: 0.35rem 0.7rem !important;
+  border-radius: 0.25rem !important;
+  border: 1px solid transparent !important;
+  font-size: 0.72rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+.business-center-shell .badge,
+.business-center-shell .status-badge { background: rgba(96,165,250,.15) !important; color: #bfdbfe !important; border-color: rgba(96,165,250,.25) !important; }
+.business-center-shell .btn,
+.business-center-shell .btn-action,
+.business-center-shell .btn-sm,
+.business-center-shell .prod-count-badge {
+  min-height: 2.1rem !important;
+  border-radius: 0.25rem !important;
+  border: 1px solid var(--bc-border-strong) !important;
+  background: rgba(15, 23, 42, 0.36) !important;
+  color: #bfdbfe !important;
+  padding: 0.45rem 0.68rem !important;
+  font-weight: 900 !important;
+  text-decoration: none !important;
+}
+.business-center-shell .btn-delete,
+.business-center-shell .btn-danger { background: var(--bc-red) !important; border-color: var(--bc-red) !important; color: #fff !important; }
+.business-center-shell .btn-edit,
+.business-center-shell .btn-edit-a { background: var(--bc-primary) !important; border-color: var(--bc-primary) !important; color: #fff !important; }
+.business-center-shell .btn-archive,
+.business-center-shell .btn-restore { background: var(--bc-soft-pink) !important; border-color: var(--bc-soft-pink) !important; color: #fff !important; }
+.business-center-shell .actions-cell,
+.business-center-shell td:last-child { white-space: normal !important; }
+.business-center-shell .actions-stack { display: flex; flex-wrap: wrap; gap: .45rem; }
+.business-center-shell .pagination,
+.business-center-shell .pagination-buttons {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.55rem !important;
+  flex-wrap: wrap !important;
+  padding: 1rem 1.15rem !important;
+  border-top: 1px solid var(--bc-border) !important;
+  color: var(--bc-muted) !important;
+}
+.business-center-shell .pagination button,
+.business-center-shell .pagination a,
+.business-center-shell .page-btn,
+.business-center-shell .pagination-btn,
+.business-center-shell .bc-page-btn {
+  min-width: 2.45rem !important;
+  height: 2.45rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1px solid var(--bc-border) !important;
+  border-radius: 0.55rem !important;
+  background: var(--bc-card-soft) !important;
+  color: #93c5fd !important;
+  text-decoration: none !important;
+  font-weight: 900 !important;
+}
+.business-center-shell .pagination button.active,
+.business-center-shell .pagination button.is-active,
+.business-center-shell .pagination a.active,
+.business-center-shell .bc-page-btn.is-active {
+  background: #7c4dff !important;
+  border-color: #7c4dff !important;
+  color: #ffffff !important;
+}
+.business-center-shell .pagination button:disabled,
+.business-center-shell .bc-page-btn.is-disabled { opacity: .35; pointer-events: none; }
+.business-center-shell .pagination-info { color: var(--bc-muted) !important; font-weight: 800; }
+.business-center-shell .empty-state,
+.business-center-shell .bc-empty-state {
+  display: grid;
+  place-items: center;
+  gap: 0.4rem;
+  min-height: 9rem;
+  color: var(--bc-muted) !important;
+  text-align: center;
+  padding: 2rem;
+}
+.business-center-shell .tab-bar,
+.business-center-shell .tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-bottom: 1.1rem;
+}
+.business-center-shell .tab-btn {
+  border-radius: .25rem !important;
+  border: 1px solid var(--bc-border) !important;
+  background: var(--bc-card-soft) !important;
+  color: var(--bc-text) !important;
+  min-height: 2.4rem;
+  padding: .55rem .9rem;
+  font-weight: 900;
+}
+.business-center-shell .tab-btn.active,
+.business-center-shell .tab-btn.is-active { background: var(--bc-primary) !important; border-color: var(--bc-primary) !important; color:#fff !important; }
+.business-center-shell .form-body,
+.business-center-shell .card-body { padding: 1.15rem !important; }
+.business-center-shell .form-grid,
+.business-center-shell .form-grid-3 { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: .9rem; }
+.business-center-shell .form-actions,
+.business-center-shell .form-actions-row { display:flex; flex-wrap:wrap; gap:.65rem; align-items:center; margin-top: 1rem; }
+.business-center-shell .ia-header h2 { color: var(--bc-text) !important; font-size: 1.05rem; }
+.business-center-shell .ia-form-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap: .75rem; align-items:end; }
+
+@media (max-width: 1320px) {
+  .business-center-shell table,
+  .business-center-shell .table { table-layout: auto !important; }
+  .business-center-shell .table-responsive,
+  .business-center-shell .table-wrap { overflow-x: auto !important; }
+}
+@media (max-width: 980px) {
+  .bc-entity-tabs,
+  .bc-stats-body,
+  .business-center-shell .charts-grid,
+  .business-center-shell .charts-row,
+  .business-center-shell .search-bar,
+  .business-center-shell .filter-bar,
+  .business-center-shell .filters-bar { grid-template-columns: 1fr !important; }
+  .bc-page-head { flex-direction: column; align-items: flex-start; padding: 1.15rem; }
+  .bc-page-actions { width: 100%; justify-content: flex-start; }
+}
+
+/* =======================================================================
+   Business Center migration v2 hard lock
+   Purpose: make Campaign/Product/Contract use the same visual system as
+   User Center/Collaborations while preserving all existing PHP/JS logic.
+   ======================================================================= */
+body.cre8-admin-layout .content-wrapper.business-center-shell {
+  background: var(--bc-bg) !important;
+  color: var(--bc-text) !important;
+  padding: 1.65rem 1.8rem 2.25rem !important;
+}
+
+body.cre8-admin-layout .business-center-shell .campagne-admin,
+body.cre8-admin-layout .business-center-shell .produit-admin,
+body.cre8-admin-layout .business-center-shell .contrat-admin {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: var(--bc-text) !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+}
+
+.business-center-shell .bc-page-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 1.25rem !important;
+  margin: 0 0 1.35rem !important;
+  padding: 1.55rem 1.75rem !important;
+  border: 1px solid var(--bc-border) !important;
+  border-radius: 0.25rem !important;
+  background: var(--bc-card) !important;
+  color: var(--bc-text) !important;
+  box-shadow: none !important;
+}
+
+.business-center-shell .bc-page-head h1,
+.business-center-shell .page-title {
+  margin: 0 !important;
+  color: var(--bc-text) !important;
+  font-size: 1.72rem !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.03em !important;
+  background: none !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+.business-center-shell .bc-page-head p:not(.bc-kicker),
+.business-center-shell .page-subtitle {
+  margin: 0.58rem 0 0 !important;
+  color: var(--bc-muted) !important;
+  font-size: 0.98rem !important;
+  line-height: 1.55 !important;
+}
+
+.business-center-shell .bc-entity-tabs {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 0.85rem !important;
+  margin: 0 0 1.35rem !important;
+  padding: 0.85rem !important;
+  border: 1px solid var(--bc-border) !important;
+  border-radius: 1.15rem !important;
+  background: var(--bc-card) !important;
+}
+
+.business-center-shell .bc-entity-tab {
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  padding: 1rem 1.15rem !important;
+  border: 1px solid var(--bc-border) !important;
+  border-radius: 0.85rem !important;
+  background: var(--bc-card-soft) !important;
+  color: var(--bc-text) !important;
+  text-decoration: none !important;
+}
+
+.business-center-shell .bc-entity-tab.is-active {
+  background: linear-gradient(135deg, var(--bc-primary), var(--bc-pink)) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+
+.business-center-shell .bc-entity-tab strong,
+.business-center-shell .bc-entity-tab small {
+  display: block !important;
+  color: inherit !important;
+  line-height: 1.25 !important;
+}
+
+.business-center-shell .bc-entity-tab strong { font-size: 1rem !important; font-weight: 900 !important; }
+.business-center-shell .bc-entity-tab small { margin-top: .16rem !important; opacity: .82 !important; }
+
+.business-center-shell .bc-tab-icon {
+  flex: 0 0 3rem !important;
+  width: 3rem !important;
+  height: 3rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 0.8rem !important;
+  background: rgba(2, 6, 23, 0.22) !important;
+  color: inherit !important;
+  font-size: 1.35rem !important;
+}
+
+.business-center-shell .bc-page-actions {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  flex-wrap: wrap !important;
+  gap: .65rem !important;
+}
+
+.business-center-shell .bc-page-actions .btn-add,
+.business-center-shell .bc-page-actions .btn-export,
+.business-center-shell .bc-primary-btn,
+.business-center-shell .bc-secondary-btn,
+.business-center-shell .bc-soft-btn {
+  width: auto !important;
+  max-width: none !important;
+  flex: 0 0 auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 2.3rem !important;
+  padding: .55rem .9rem !important;
+  border-radius: .25rem !important;
+  font-size: .86rem !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+}
+
+.business-center-shell .bc-statistics-panel,
+.business-center-shell .bc-filter-card,
+.business-center-shell .bc-table-card,
+.business-center-shell .table-panel,
+.business-center-shell .card,
+.business-center-shell .form-panel {
+  border: 1px solid var(--bc-border) !important;
+  border-radius: 0.25rem !important;
+  background: var(--bc-card) !important;
+  color: var(--bc-text) !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+  margin-bottom: 1.1rem !important;
+}
+
+.business-center-shell .bc-section-head,
+.business-center-shell .bc-filter-head,
+.business-center-shell .bc-table-head,
+.business-center-shell .table-panel-header,
+.business-center-shell .card-header,
+.business-center-shell .form-panel-header {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 1rem !important;
+  padding: 1rem 1.15rem !important;
+  border-bottom: 1px solid var(--bc-border) !important;
+  background: var(--bc-card) !important;
+  color: var(--bc-text) !important;
+}
+
+.business-center-shell .bc-section-head h2,
+.business-center-shell .bc-filter-head h2,
+.business-center-shell .bc-table-head h2,
+.business-center-shell .table-panel-title,
+.business-center-shell .card-title,
+.business-center-shell .form-section-title {
+  margin: 0 !important;
+  color: var(--bc-text) !important;
+  font-size: 1.02rem !important;
+  font-weight: 800 !important;
+  line-height: 1.25 !important;
+}
+
+.business-center-shell .bc-section-head p,
+.business-center-shell .bc-filter-head p,
+.business-center-shell .bc-table-head p,
+.business-center-shell .card-meta,
+.business-center-shell .card-subtitle,
+.business-center-shell .count-badge {
+  color: var(--bc-muted) !important;
+  font-size: .86rem !important;
+  line-height: 1.45 !important;
+}
+
+.business-center-shell .kpi-grid,
+.business-center-shell .kpi-strip,
+.business-center-shell .stats-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)) !important;
+  gap: .95rem !important;
+  margin: 0 0 1.1rem !important;
+}
+
+.business-center-shell .kpi-card,
+.business-center-shell .stat-card {
+  min-height: 8.6rem !important;
+  border: 0 !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 18px 36px var(--bc-shadow) !important;
+}
+
+.business-center-shell .bc-stats-body,
+.business-center-shell .charts-grid,
+.business-center-shell .charts-row {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 1rem !important;
+  padding: 1rem 1.15rem 1.15rem !important;
+}
+
+.business-center-shell .chart-card,
+.business-center-shell .charts-grid > div,
+.business-center-shell .charts-row .card {
+  border: 1px solid var(--bc-border) !important;
+  border-radius: .25rem !important;
+  background: var(--bc-card-soft) !important;
+  padding: 1rem !important;
+}
+
+.business-center-shell .bc-filter-card .search-bar,
+.business-center-shell .bc-filter-card .filter-bar,
+.business-center-shell .bc-filter-card .filters-bar,
+.business-center-shell > .campagne-admin > .search-bar,
+.business-center-shell > .produit-admin > .filter-bar,
+.business-center-shell > .contrat-admin > .filters-bar {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+  gap: .8rem !important;
+  align-items: end !important;
+  margin: 0 0 1.1rem !important;
+  padding: 1rem 1.15rem !important;
+  border: 1px solid var(--bc-border) !important;
+  border-radius: .25rem !important;
+  background: var(--bc-card) !important;
+}
+
+.business-center-shell input,
+.business-center-shell select,
+.business-center-shell textarea,
+.business-center-shell .form-control,
+.business-center-shell .search-input,
+.business-center-shell .filter-select,
+.business-center-shell .price-input,
+.business-center-shell .select-statut,
+.business-center-shell .statut-select {
+  border: 1px solid var(--bc-border) !important;
+  border-radius: .25rem !important;
+  background: var(--bc-input) !important;
+  color: var(--bc-text) !important;
+  min-height: 2.55rem !important;
+}
+
+.business-center-shell .table-responsive,
+.business-center-shell .table-wrap,
+.business-center-shell .bc-table-wrap {
+  width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow-y: visible !important;
+  overflow-x: auto !important;
+  padding: 1.15rem !important;
+}
+
+.business-center-shell .bc-table-card table,
+.business-center-shell .bc-table,
+.business-center-shell table.table,
+.business-center-shell #campTable,
+.business-center-shell #produitsTable,
+.business-center-shell #contratsTable {
+  width: 100% !important;
+  min-width: 0 !important;
+  table-layout: fixed !important;
+  border-collapse: collapse !important;
+  background: var(--bc-card) !important;
+  color: var(--bc-text) !important;
+}
+
+.business-center-shell table thead th,
+.business-center-shell .table thead th {
+  background: var(--bc-table-head) !important;
+  color: var(--bc-text) !important;
+  padding: .9rem .72rem !important;
+  border-bottom: 1px solid var(--bc-border) !important;
+  font-size: .74rem !important;
+  font-weight: 900 !important;
+  letter-spacing: .05em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+}
+
+.business-center-shell table tbody td,
+.business-center-shell .table tbody td {
+  background: transparent !important;
+  color: var(--bc-text) !important;
+  padding: .95rem .72rem !important;
+  border-bottom: 1px solid var(--bc-border) !important;
+  vertical-align: middle !important;
+  overflow-wrap: anywhere !important;
+}
+
+.business-center-shell table tbody tr:hover td,
+.business-center-shell .table tbody tr:hover td {
+  background: rgba(96, 165, 250, 0.04) !important;
+}
+
+.business-center-shell .actions-cell,
+.business-center-shell .actions-cell *,
+.business-center-shell .btn-action,
+.business-center-shell .btn-edit,
+.business-center-shell .btn-delete,
+.business-center-shell .btn-archive,
+.business-center-shell .btn-restore,
+.business-center-shell .btn-sm,
+.business-center-shell .btn {
+  box-sizing: border-box !important;
+}
+
+.business-center-shell .actions-cell {
+  white-space: normal !important;
+}
+
+.business-center-shell .btn-action,
+.business-center-shell .btn-edit,
+.business-center-shell .btn-delete,
+.business-center-shell .btn-archive,
+.business-center-shell .btn-restore,
+.business-center-shell .btn-sm,
+.business-center-shell .prod-count-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: auto !important;
+  min-width: 2.25rem !important;
+  min-height: 2.1rem !important;
+  padding: .45rem .68rem !important;
+  border-radius: .25rem !important;
+  text-decoration: none !important;
+}
+
+.business-center-shell .bc-results-region.is-loading {
+  opacity: .62 !important;
+  pointer-events: none !important;
+}
+
+.business-center-shell .pagination,
+.business-center-shell .pagination-buttons,
+.business-center-shell #pagination,
+.business-center-shell #paginationControls,
+.business-center-shell #paginationButtons {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: .55rem !important;
+  flex-wrap: wrap !important;
+  padding: 1rem 1.15rem !important;
+  border-top: 1px solid var(--bc-border) !important;
+}
+
+.business-center-shell .pagination button,
+.business-center-shell .pagination a,
+.business-center-shell .page-btn,
+.business-center-shell .pagination-btn,
+.business-center-shell .bc-page-btn {
+  min-width: 2.45rem !important;
+  height: 2.45rem !important;
+  border-radius: .55rem !important;
+  border: 1px solid var(--bc-border) !important;
+  background: var(--bc-card-soft) !important;
+  color: #93c5fd !important;
+  font-weight: 900 !important;
+}
+
+.business-center-shell .pagination button.active,
+.business-center-shell .pagination a.active,
+.business-center-shell .page-btn.active,
+.business-center-shell .bc-page-btn.is-active {
+  background: #7c4dff !important;
+  border-color: #7c4dff !important;
+  color: #fff !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper.business-center-shell {
+  background: var(--bc-bg) !important;
+  color: var(--bc-text) !important;
+}
+
+html[data-theme="light"] .business-center-shell .bc-page-head,
+html[data-theme="light"] .business-center-shell .bc-entity-tabs,
+html[data-theme="light"] .business-center-shell .bc-statistics-panel,
+html[data-theme="light"] .business-center-shell .bc-filter-card,
+html[data-theme="light"] .business-center-shell .bc-table-card,
+html[data-theme="light"] .business-center-shell .card,
+html[data-theme="light"] .business-center-shell .table-panel,
+html[data-theme="light"] .business-center-shell .form-panel {
+  background: var(--bc-card) !important;
+  color: var(--bc-text) !important;
+  border-color: var(--bc-border) !important;
+}
+
+@media (max-width: 1320px) {
+  .business-center-shell .bc-stats-body,
+  .business-center-shell .charts-grid,
+  .business-center-shell .charts-row { grid-template-columns: 1fr !important; }
+  .business-center-shell table,
+  .business-center-shell .table { table-layout: auto !important; }
+}
+
+@media (max-width: 980px) {
+  .business-center-shell .bc-entity-tabs { grid-template-columns: 1fr !important; }
+  .business-center-shell .bc-page-head { align-items: flex-start !important; flex-direction: column !important; }
+}
+
+/* Business Center v3 — campaign statistics alignment polish.
+   Keep the statistics cards aligned in one clean row on desktop instead of
+   leaving the third campaign chart alone on a second row. */
+.business-center-shell .bc-statistics-panel .bc-stats-body,
+.business-center-shell .bc-statistics-panel .charts-grid,
+.business-center-shell .bc-statistics-panel .charts-row {
+  align-items: stretch !important;
+}
+
+.business-center-shell .bc-statistics-panel .charts-grid,
+.business-center-shell .bc-statistics-panel .bc-stats-body.charts-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.business-center-shell .bc-statistics-panel .charts-grid > div,
+.business-center-shell .bc-statistics-panel .chart-card,
+.business-center-shell .bc-statistics-panel .charts-row .card {
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+.business-center-shell .bc-statistics-panel .chart-inner,
+.business-center-shell .bc-statistics-panel .chart-wrap,
+.business-center-shell .bc-statistics-panel .chart-container {
+  height: 260px !important;
+  min-height: 240px !important;
+}
+
+@media (max-width: 1380px) {
+  .business-center-shell .bc-statistics-panel .charts-grid,
+  .business-center-shell .bc-statistics-panel .bc-stats-body.charts-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 780px) {
+  .business-center-shell .bc-statistics-panel .charts-grid,
+  .business-center-shell .bc-statistics-panel .bc-stats-body.charts-grid,
+  .business-center-shell .bc-statistics-panel .charts-row {
+    grid-template-columns: 1fr !important;
+  }
+}

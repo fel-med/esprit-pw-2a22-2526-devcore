@@ -1,0 +1,348 @@
+/*
+  Cre8Connect BackOffice unified table system.
+  Loaded last on migrated centers to normalize tables, actions, and badges only.
+*/
+
+:root {
+  --ut-card: #191c24;
+  --ut-head: #212529;
+  --ut-text: #f8fafc;
+  --ut-muted: #94a3b8;
+  --ut-border: rgba(148, 163, 184, 0.14);
+  --ut-primary: #9b5de0;
+  --ut-primary-hover: #8b4fd0;
+  --ut-secondary: #0090e7;
+  --ut-secondary-bg: #0f2748;
+  --ut-danger: #fc424a;
+  --ut-success: #00d25b;
+  --ut-warning: #ffab00;
+  --ut-archive: #d78fee;
+  --ut-neutral: #6b7280;
+}
+
+body.cre8-admin-layout .user-center-shell,
+body.cre8-admin-layout .business-center-shell,
+body.cre8-admin-layout .event-center-shell,
+body.cre8-admin-layout .community-center-shell,
+body.cre8-admin-layout .content-wrapper.admin-shell {
+  --table-card-bg: var(--ut-card);
+  --table-head-bg: var(--ut-head);
+  --table-text: var(--ut-text);
+  --table-muted: var(--ut-muted);
+  --table-border: var(--ut-border);
+}
+
+/* Cards and wrappers */
+body.cre8-admin-layout .user-center-shell .uc-table-card,
+body.cre8-admin-layout .content-wrapper.admin-shell .admin-table-panel,
+body.cre8-admin-layout .business-center-shell .bc-table-card,
+body.cre8-admin-layout .event-center-shell .ec-table-card,
+body.cre8-admin-layout .community-center-shell .cc-table-card {
+  background: var(--table-card-bg) !important;
+  border: 1px solid var(--table-border) !important;
+  color: var(--table-text) !important;
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.18);
+}
+
+body.cre8-admin-layout .user-center-shell .uc-table-wrap,
+body.cre8-admin-layout .content-wrapper.admin-shell .admin-table-wrapper,
+body.cre8-admin-layout .business-center-shell .bc-table-wrap,
+body.cre8-admin-layout .business-center-shell .table-responsive,
+body.cre8-admin-layout .event-center-shell .ec-table-wrap,
+body.cre8-admin-layout .community-center-shell .cc-table-wrap {
+  background: transparent !important;
+  border-color: var(--table-border) !important;
+  max-height: none !important;
+  overflow-y: visible !important;
+}
+
+/* Tables */
+body.cre8-admin-layout .user-center-shell .uc-table,
+body.cre8-admin-layout .content-wrapper.admin-shell .admin-table,
+body.cre8-admin-layout .business-center-shell .bc-table,
+body.cre8-admin-layout .business-center-shell table,
+body.cre8-admin-layout .event-center-shell .ec-table,
+body.cre8-admin-layout .community-center-shell .cc-table {
+  color: var(--table-text) !important;
+  border-color: var(--table-border) !important;
+}
+
+body.cre8-admin-layout .user-center-shell .uc-table thead th,
+body.cre8-admin-layout .content-wrapper.admin-shell .admin-table thead th,
+body.cre8-admin-layout .business-center-shell .bc-table thead th,
+body.cre8-admin-layout .business-center-shell table thead th,
+body.cre8-admin-layout .event-center-shell .ec-table thead th,
+body.cre8-admin-layout .community-center-shell .cc-table thead th {
+  background: var(--table-head-bg) !important;
+  color: var(--table-text) !important;
+  border-bottom: 1px solid var(--table-border) !important;
+  font-size: 0.72rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.03em !important;
+  line-height: 1.2 !important;
+  text-transform: uppercase !important;
+  vertical-align: middle !important;
+  white-space: nowrap;
+}
+
+body.cre8-admin-layout .user-center-shell .uc-table tbody td,
+body.cre8-admin-layout .content-wrapper.admin-shell .admin-table tbody td,
+body.cre8-admin-layout .business-center-shell .bc-table tbody td,
+body.cre8-admin-layout .business-center-shell table tbody td,
+body.cre8-admin-layout .event-center-shell .ec-table tbody td,
+body.cre8-admin-layout .community-center-shell .cc-table tbody td {
+  background: transparent !important;
+  color: var(--table-text) !important;
+  border-color: var(--table-border) !important;
+  vertical-align: middle !important;
+}
+
+body.cre8-admin-layout .user-center-shell .uc-table tbody tr,
+body.cre8-admin-layout .content-wrapper.admin-shell .admin-table tbody tr,
+body.cre8-admin-layout .business-center-shell .bc-table tbody tr,
+body.cre8-admin-layout .business-center-shell table tbody tr,
+body.cre8-admin-layout .event-center-shell .ec-table tbody tr,
+body.cre8-admin-layout .community-center-shell .cc-table tbody tr {
+  border-color: var(--table-border) !important;
+}
+
+body.cre8-admin-layout .user-center-shell .uc-table small,
+body.cre8-admin-layout .user-center-shell .uc-table .text-muted,
+body.cre8-admin-layout .content-wrapper.admin-shell .admin-table small,
+body.cre8-admin-layout .content-wrapper.admin-shell .admin-table .text-muted,
+body.cre8-admin-layout .business-center-shell table small,
+body.cre8-admin-layout .business-center-shell table .text-muted,
+body.cre8-admin-layout .event-center-shell .ec-table small,
+body.cre8-admin-layout .event-center-shell .ec-table .text-muted,
+body.cre8-admin-layout .community-center-shell .cc-table small,
+body.cre8-admin-layout .community-center-shell .cc-table .text-muted {
+  color: var(--table-muted) !important;
+}
+
+/* Compact action button base */
+body.cre8-admin-layout .user-center-shell .uc-table a,
+body.cre8-admin-layout .user-center-shell .uc-table button,
+body.cre8-admin-layout .content-wrapper.admin-shell .admin-table a,
+body.cre8-admin-layout .content-wrapper.admin-shell .admin-table button,
+body.cre8-admin-layout .business-center-shell table a,
+body.cre8-admin-layout .business-center-shell table button,
+body.cre8-admin-layout .event-center-shell .ec-table a,
+body.cre8-admin-layout .event-center-shell .ec-table button,
+body.cre8-admin-layout .community-center-shell .cc-table a,
+body.cre8-admin-layout .community-center-shell .cc-table button {
+  min-width: 0;
+}
+
+body.cre8-admin-layout .uc-action-primary,
+body.cre8-admin-layout .ec-action-primary,
+body.cre8-admin-layout .cc-action-primary,
+body.cre8-admin-layout .content-wrapper.admin-shell .inspect-link,
+body.cre8-admin-layout .content-wrapper.admin-shell .btn-info,
+body.cre8-admin-layout .content-wrapper.admin-shell .admin-actions a,
+body.cre8-admin-layout .business-center-shell .btn-edit,
+body.cre8-admin-layout .business-center-shell .btn-edit-a,
+body.cre8-admin-layout .business-center-shell .btn-action.btn-edit,
+body.cre8-admin-layout .business-center-shell .table-action-btn.edit,
+body.cre8-admin-layout .event-center-shell .table-action-btn.edit,
+body.cre8-admin-layout .community-center-shell .table-action-btn.edit,
+body.cre8-admin-layout .community-center-shell .btn-view,
+body.cre8-admin-layout .community-center-shell .btn-edit {
+  border: 1px solid rgba(155, 93, 224, 0.5) !important;
+  background: var(--ut-primary) !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 18px rgba(155, 93, 224, 0.18) !important;
+}
+
+body.cre8-admin-layout .uc-action-primary:hover,
+body.cre8-admin-layout .ec-action-primary:hover,
+body.cre8-admin-layout .cc-action-primary:hover,
+body.cre8-admin-layout .content-wrapper.admin-shell .inspect-link:hover,
+body.cre8-admin-layout .content-wrapper.admin-shell .btn-info:hover,
+body.cre8-admin-layout .content-wrapper.admin-shell .admin-actions a:hover,
+body.cre8-admin-layout .business-center-shell .btn-edit:hover,
+body.cre8-admin-layout .business-center-shell .btn-edit-a:hover,
+body.cre8-admin-layout .business-center-shell .btn-action.btn-edit:hover,
+body.cre8-admin-layout .business-center-shell .table-action-btn.edit:hover,
+body.cre8-admin-layout .event-center-shell .table-action-btn.edit:hover,
+body.cre8-admin-layout .community-center-shell .table-action-btn.edit:hover,
+body.cre8-admin-layout .community-center-shell .btn-view:hover,
+body.cre8-admin-layout .community-center-shell .btn-edit:hover {
+  background: var(--ut-primary-hover) !important;
+  color: #ffffff !important;
+}
+
+body.cre8-admin-layout .uc-action-muted,
+body.cre8-admin-layout .ec-action-muted,
+body.cre8-admin-layout .cc-action-muted,
+body.cre8-admin-layout .community-center-shell .comments-btn,
+body.cre8-admin-layout .community-center-shell .btn-comments,
+body.cre8-admin-layout .business-center-shell .prod-count-badge,
+body.cre8-admin-layout .content-wrapper.admin-shell .source-preview-trigger {
+  border: 1px solid var(--ut-secondary) !important;
+  background: var(--ut-secondary-bg) !important;
+  color: #bae6fd !important;
+  box-shadow: none !important;
+}
+
+body.cre8-admin-layout .delete-btn,
+body.cre8-admin-layout .btn-delete,
+body.cre8-admin-layout .btn-danger,
+body.cre8-admin-layout .uc-action-danger,
+body.cre8-admin-layout .ec-action-danger,
+body.cre8-admin-layout .cc-action-danger,
+body.cre8-admin-layout .table-action-btn.delete {
+  border: 1px solid rgba(252, 66, 74, 0.58) !important;
+  background: var(--ut-danger) !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 18px rgba(252, 66, 74, 0.16) !important;
+}
+
+body.cre8-admin-layout .btn-success,
+body.cre8-admin-layout .uc-action-success,
+body.cre8-admin-layout .ec-action-success,
+body.cre8-admin-layout .cc-action-success {
+  border-color: rgba(0, 210, 91, 0.55) !important;
+  background: #00a651 !important;
+  color: #ffffff !important;
+}
+
+body.cre8-admin-layout .admin-actions-stack,
+body.cre8-admin-layout .uc-action-stack,
+body.cre8-admin-layout .ec-action-stack,
+body.cre8-admin-layout .cc-action-stack {
+  gap: 0.4rem !important;
+}
+
+body.cre8-admin-layout .admin-actions-stack .btn,
+body.cre8-admin-layout .uc-action-stack a,
+body.cre8-admin-layout .uc-action-stack button,
+body.cre8-admin-layout .ec-action-stack a,
+body.cre8-admin-layout .ec-action-stack button,
+body.cre8-admin-layout .cc-action-stack a,
+body.cre8-admin-layout .cc-action-stack button,
+body.cre8-admin-layout .table-action-btn,
+body.cre8-admin-layout .btn-action {
+  border-radius: 10px !important;
+  padding: 0.42rem 0.64rem !important;
+  font-size: 0.76rem !important;
+  font-weight: 900 !important;
+  line-height: 1.1 !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+}
+
+/* Badges */
+body.cre8-admin-layout .uc-badge,
+body.cre8-admin-layout .badge-status,
+body.cre8-admin-layout .status-badge,
+body.cre8-admin-layout .status-chip,
+body.cre8-admin-layout .ec-badge,
+body.cre8-admin-layout .cc-badge,
+body.cre8-admin-layout .badge-success,
+body.cre8-admin-layout .badge-warning,
+body.cre8-admin-layout .badge-danger,
+body.cre8-admin-layout .badge-secondary {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  border: 1px solid transparent !important;
+  border-radius: 999px !important;
+  padding: 0.3rem 0.58rem !important;
+  font-size: 0.72rem !important;
+  font-weight: 900 !important;
+  line-height: 1.15 !important;
+  text-align: center;
+  white-space: normal;
+}
+
+body.cre8-admin-layout :is(.uc-badge, .badge-status, .status-badge, .status-chip, .ec-badge, .cc-badge):is(.actif, .active, .acceptee, .accepted, .signe, .signed, .live, .available, .disponible, .success),
+body.cre8-admin-layout .badge-success {
+  background: rgba(0, 210, 91, 0.16) !important;
+  border-color: rgba(0, 210, 91, 0.36) !important;
+  color: #86efac !important;
+}
+
+body.cre8-admin-layout :is(.uc-badge, .badge-status, .status-badge, .status-chip, .ec-badge, .cc-badge):is(.suspendu, .suspended, .refusee, .refused, .expire, .expired, .annule, .cancelled, .delete, .danger, .bloque, .blocked),
+body.cre8-admin-layout .badge-danger {
+  background: rgba(252, 66, 74, 0.16) !important;
+  border-color: rgba(252, 66, 74, 0.4) !important;
+  color: #fecaca !important;
+}
+
+body.cre8-admin-layout :is(.uc-badge, .badge-status, .status-badge, .status-chip, .ec-badge, .cc-badge):is(.pending, .attente, .en_attente, .en_etude, .review, .under_review, .negociation, .warning, .brouillon, .draft, .future),
+body.cre8-admin-layout .badge-warning {
+  background: rgba(255, 171, 0, 0.16) !important;
+  border-color: rgba(255, 171, 0, 0.4) !important;
+  color: #fde68a !important;
+}
+
+body.cre8-admin-layout :is(.uc-badge, .badge-status, .status-badge, .status-chip, .ec-badge, .cc-badge):is(.archived, .archive, .archivee, .inactive, .inactif, .neutral, .hidden, .retiree),
+body.cre8-admin-layout .badge-secondary {
+  background: rgba(107, 114, 128, 0.18) !important;
+  border-color: rgba(148, 163, 184, 0.3) !important;
+  color: #cbd5e1 !important;
+}
+
+/* Light mode */
+html[data-theme="light"] body.cre8-admin-layout .user-center-shell,
+html[data-theme="light"] body.cre8-admin-layout .business-center-shell,
+html[data-theme="light"] body.cre8-admin-layout .event-center-shell,
+html[data-theme="light"] body.cre8-admin-layout .community-center-shell,
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper.admin-shell,
+body.light-mode.cre8-admin-layout .user-center-shell,
+body.light-mode.cre8-admin-layout .business-center-shell,
+body.light-mode.cre8-admin-layout .event-center-shell,
+body.light-mode.cre8-admin-layout .community-center-shell,
+body.light-mode.cre8-admin-layout .content-wrapper.admin-shell {
+  --table-card-bg: #ffffff;
+  --table-head-bg: #eef1f7;
+  --table-text: #111827;
+  --table-muted: #64748b;
+  --table-border: rgba(15, 23, 42, 0.12);
+}
+
+html[data-theme="light"] body.cre8-admin-layout .user-center-shell .uc-table-card,
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper.admin-shell .admin-table-panel,
+html[data-theme="light"] body.cre8-admin-layout .business-center-shell .bc-table-card,
+html[data-theme="light"] body.cre8-admin-layout .event-center-shell .ec-table-card,
+html[data-theme="light"] body.cre8-admin-layout .community-center-shell .cc-table-card,
+body.light-mode.cre8-admin-layout .user-center-shell .uc-table-card,
+body.light-mode.cre8-admin-layout .content-wrapper.admin-shell .admin-table-panel,
+body.light-mode.cre8-admin-layout .business-center-shell .bc-table-card,
+body.light-mode.cre8-admin-layout .event-center-shell .ec-table-card,
+body.light-mode.cre8-admin-layout .community-center-shell .cc-table-card {
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+}
+
+html[data-theme="light"] body.cre8-admin-layout :is(.uc-badge, .badge-status, .status-badge, .status-chip, .ec-badge, .cc-badge):is(.actif, .active, .acceptee, .accepted, .signe, .signed, .live, .available, .disponible, .success),
+html[data-theme="light"] body.cre8-admin-layout .badge-success,
+body.light-mode.cre8-admin-layout :is(.uc-badge, .badge-status, .status-badge, .status-chip, .ec-badge, .cc-badge):is(.actif, .active, .acceptee, .accepted, .signe, .signed, .live, .available, .disponible, .success),
+body.light-mode.cre8-admin-layout .badge-success {
+  background: rgba(22, 163, 74, 0.12) !important;
+  color: #15803d !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout :is(.uc-badge, .badge-status, .status-badge, .status-chip, .ec-badge, .cc-badge):is(.suspendu, .suspended, .refusee, .refused, .expire, .expired, .annule, .cancelled, .delete, .danger, .bloque, .blocked),
+html[data-theme="light"] body.cre8-admin-layout .badge-danger,
+body.light-mode.cre8-admin-layout :is(.uc-badge, .badge-status, .status-badge, .status-chip, .ec-badge, .cc-badge):is(.suspendu, .suspended, .refusee, .refused, .expire, .expired, .annule, .cancelled, .delete, .danger, .bloque, .blocked),
+body.light-mode.cre8-admin-layout .badge-danger {
+  background: rgba(220, 38, 38, 0.12) !important;
+  color: #b91c1c !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout :is(.uc-badge, .badge-status, .status-badge, .status-chip, .ec-badge, .cc-badge):is(.pending, .attente, .en_attente, .en_etude, .review, .under_review, .negociation, .warning, .brouillon, .draft, .future),
+html[data-theme="light"] body.cre8-admin-layout .badge-warning,
+body.light-mode.cre8-admin-layout :is(.uc-badge, .badge-status, .status-badge, .status-chip, .ec-badge, .cc-badge):is(.pending, .attente, .en_attente, .en_etude, .review, .under_review, .negociation, .warning, .brouillon, .draft, .future),
+body.light-mode.cre8-admin-layout .badge-warning {
+  background: rgba(217, 119, 6, 0.12) !important;
+  color: #b45309 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout :is(.uc-badge, .badge-status, .status-badge, .status-chip, .ec-badge, .cc-badge):is(.archived, .archive, .archivee, .inactive, .inactif, .neutral, .hidden, .retiree),
+html[data-theme="light"] body.cre8-admin-layout .badge-secondary,
+body.light-mode.cre8-admin-layout :is(.uc-badge, .badge-status, .status-badge, .status-chip, .ec-badge, .cc-badge):is(.archived, .archive, .archivee, .inactive, .inactif, .neutral, .hidden, .retiree),
+body.light-mode.cre8-admin-layout .badge-secondary {
+  background: rgba(100, 116, 139, 0.12) !important;
+  color: #475569 !important;
+}

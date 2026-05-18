@@ -7,6 +7,7 @@ require_once __DIR__ . '/../layout/early-theme.php';
 require_once __DIR__ . '/../../../Controleur/session_helper.php';
 require_once __DIR__ . '/../../../Controleur/utilisateurC.php';
 require_once __DIR__ . '/../../../Controleur/adminAuditC.php';
+require_once __DIR__ . '/../../../Controleur/notificationC.php';
 
 $currentUserId = cc_require_admin('../../FrontOffice/utilisateur/login.php');
 $currentRole = cc_current_user_role();
@@ -81,6 +82,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             admin_management_flash('danger', 'You are not allowed to create this role.');
         } else {
             $result = $userC->ajouterAdminAccount($name, $email, $password, $role);
+            if ($result === 'success') {
+                $createdAdmin = $userC->getUserByEmail($email);
+                if ($createdAdmin && !empty($createdAdmin['id'])) {
+                    try {
+                        $notificationC = new NotificationC();
+                        $notificationC->notifyAdminCreated(
+                            $createdAdmin['id'],
+                            $createdAdmin['role'] ?? $role,
+                            $createdAdmin['nom'] ?? $name,
+                            $createdAdmin['email'] ?? $email,
+                            $currentUserId,
+                            $currentRole
+                        );
+                    } catch (Throwable $e) {
+                        error_log('Admin Management admin_created notification failed: ' . $e->getMessage());
+                    }
+                }
+            }
             admin_management_flash(
                 $result === 'success' ? 'success' : 'danger',
                 $result === 'success' ? 'Account created successfully.' : $result

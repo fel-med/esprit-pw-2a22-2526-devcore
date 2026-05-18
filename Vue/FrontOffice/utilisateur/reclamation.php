@@ -264,17 +264,101 @@ $frontActive = 'reclamation';
             color: var(--reclam-text);
         }
 
-        .appeal-topbar-actions {
+        .appeal-actions {
             display: flex;
             align-items: center;
-            gap: .5rem;
+            gap: .45rem;
             flex-wrap: wrap;
             justify-content: flex-end;
         }
 
-        .appeal-topbar .btn {
+        .appeal-lang-toggle {
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            gap: .18rem;
+            padding: .2rem;
+            border: 1px solid var(--reclam-border);
             border-radius: 999px;
+            background: color-mix(in srgb, var(--reclam-card) 82%, #ece9ff);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.34);
+        }
+
+        .appeal-lang-toggle button,
+        .appeal-theme-toggle,
+        .appeal-logout {
+            min-height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            font-size: .78rem;
             font-weight: 800;
+            line-height: 1;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease, border-color .18s ease;
+        }
+
+        .appeal-lang-toggle button {
+            min-width: 34px;
+            height: 28px;
+            padding: 0 .58rem;
+            border: 0;
+            background: transparent;
+            color: var(--reclam-muted);
+            cursor: pointer;
+        }
+
+        .appeal-lang-toggle button.active,
+        .appeal-lang-toggle button.btn-primary {
+            color: #fff;
+            background: linear-gradient(135deg, #5b4fff, #8b5cf6);
+            box-shadow: 0 8px 18px rgba(91, 79, 255, .24);
+        }
+
+        .appeal-theme-toggle,
+        .appeal-logout {
+            height: 36px;
+            padding: 0 .82rem;
+            border: 1px solid var(--reclam-border);
+            background: color-mix(in srgb, var(--reclam-card) 88%, #ece9ff);
+            color: var(--reclam-text);
+        }
+
+        .appeal-theme-toggle {
+            cursor: pointer;
+        }
+
+        .appeal-logout {
+            border-color: rgba(226, 30, 128, .24);
+            background: linear-gradient(135deg, #5b4fff, #e21e80);
+            color: #fff;
+            box-shadow: 0 10px 22px rgba(226, 30, 128, .16);
+        }
+
+        .appeal-lang-toggle button:hover,
+        .appeal-theme-toggle:hover,
+        .appeal-logout:hover {
+            transform: translateY(-1px);
+        }
+
+        html[data-theme="dark"] .appeal-lang-toggle,
+        html[data-theme="dark"] .appeal-theme-toggle {
+            background: color-mix(in srgb, var(--reclam-card) 84%, #5b4fff);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+        }
+
+        @media (max-width: 640px) {
+            .appeal-topbar {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .appeal-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
         }
     </style>
     <link href="reclamation-front.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/reclamation-front.css')); ?>" rel="stylesheet">
@@ -288,11 +372,13 @@ $frontActive = 'reclamation';
     <?php if ($isSuspendedAppeal): ?>
         <div class="appeal-topbar">
             <div class="appeal-topbar-title">Cre8Connect - <span data-i18n="account.suspensionAppealTitle">Suspension appeal</span></div>
-            <div class="appeal-topbar-actions">
-                <button type="button" class="btn btn-sm btn-outline-secondary" data-appeal-lang="en" data-i18n="account.langEn">EN</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" data-appeal-lang="fr" data-i18n="account.langFr">FR</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" data-appeal-theme-toggle data-i18n="account.themeToggle">Light/Dark</button>
-                <a class="btn btn-sm btn-primary" href="appeal_logout.php" data-i18n="account.logout">Logout</a>
+            <div class="appeal-actions">
+                <div class="appeal-lang-toggle" aria-label="Language">
+                    <button type="button" data-appeal-lang="en" data-i18n="account.langEn">EN</button>
+                    <button type="button" data-appeal-lang="fr" data-i18n="account.langFr">FR</button>
+                </div>
+                <button type="button" class="appeal-theme-toggle" data-appeal-theme-toggle data-i18n="account.themeToggle">Light/Dark</button>
+                <a class="appeal-logout" href="appeal_logout.php" data-i18n="account.logout">Logout</a>
             </div>
         </div>
     <?php endif; ?>
@@ -602,22 +688,38 @@ $frontActive = 'reclamation';
             const lang = cre8ComplaintLang();
             return (cre8ComplaintTranslations[lang] && cre8ComplaintTranslations[lang][key]) || cre8ComplaintTranslations.en[key] || key;
         }
+        function cre8HasComplaintText(key) {
+            return Object.prototype.hasOwnProperty.call(cre8ComplaintTranslations.en, key)
+                || Object.prototype.hasOwnProperty.call(cre8ComplaintTranslations.fr, key);
+        }
         function cre8ApplyComplaintTranslations() {
             document.querySelectorAll('[data-i18n]').forEach((node) => {
                 const key = node.getAttribute('data-i18n');
-                if (key) {
+                if (key && cre8HasComplaintText(key)) {
                     node.textContent = cre8ComplaintText(key);
                 }
             });
             document.querySelectorAll('[data-i18n-placeholder]').forEach((node) => {
                 const key = node.getAttribute('data-i18n-placeholder');
-                if (key) {
+                if (key && cre8HasComplaintText(key)) {
                     node.setAttribute('placeholder', cre8ComplaintText(key));
+                }
+            });
+            document.querySelectorAll('[data-i18n-title]').forEach((node) => {
+                const key = node.getAttribute('data-i18n-title');
+                if (key && cre8HasComplaintText(key)) {
+                    node.setAttribute('title', cre8ComplaintText(key));
+                }
+            });
+            document.querySelectorAll('[data-i18n-aria-label]').forEach((node) => {
+                const key = node.getAttribute('data-i18n-aria-label');
+                if (key && cre8HasComplaintText(key)) {
+                    node.setAttribute('aria-label', cre8ComplaintText(key));
                 }
             });
             document.querySelectorAll('[data-i18n-opt]').forEach((node) => {
                 const key = node.getAttribute('data-i18n-opt');
-                if (key) {
+                if (key && cre8HasComplaintText(key)) {
                     node.textContent = cre8ComplaintText(key);
                 }
             });
@@ -634,6 +736,8 @@ $frontActive = 'reclamation';
         function cre8RegisterComplaintTranslations() {
             if (typeof window.cre8RegisterTranslations === 'function') {
                 window.cre8RegisterTranslations(cre8ComplaintTranslations);
+            } else if (typeof window.cre8ApplyI18n === 'function') {
+                window.cre8ApplyI18n();
             }
             cre8ApplyComplaintTranslations();
             cre8UpdateAppealLangButtons();
@@ -657,7 +761,11 @@ $frontActive = 'reclamation';
                     localStorage.setItem('cre8_front_lang', nextLang);
                     localStorage.setItem('cre8_lang', nextLang);
                 } catch (e) {}
-                window.dispatchEvent(new CustomEvent('cre8:languagechange', { detail: { lang: nextLang } }));
+                if (typeof window.cre8SetLanguage === 'function') {
+                    window.cre8SetLanguage(nextLang);
+                } else {
+                    window.dispatchEvent(new CustomEvent('cre8:languagechange', { detail: { lang: nextLang } }));
+                }
                 cre8RegisterComplaintTranslations();
             });
         });

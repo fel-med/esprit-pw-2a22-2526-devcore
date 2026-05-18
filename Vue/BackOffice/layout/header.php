@@ -49,77 +49,54 @@ if ($adminId !== null) {
           </button>
           <ul class="navbar-nav w-100">
             <li class="nav-item w-100">
-              <form class="nav-link mt-2 mt-md-0 d-none d-lg-flex search" action="#" method="get">
-                <input type="text" class="form-control" placeholder="Search admin workspace" data-i18n-placeholder="header.search">
+              <form class="nav-link mt-2 mt-md-0 d-none d-lg-flex search cre8-workspace-search" action="#" method="get" role="search" autocomplete="off" data-cre8-workspace-search>
+                <input id="cre8WorkspaceSearchInput" type="text" class="form-control" placeholder="Quick open a BackOffice area..." data-i18n-placeholder="header.searchPlaceholder" aria-controls="cre8WorkspaceSearchResults" aria-expanded="false">
+                <span class="cre8-workspace-search-kbd" aria-hidden="true">Ctrl&nbsp;K</span>
+                <div id="cre8WorkspaceSearchResults" class="cre8-workspace-search-results" hidden>
+                  <div class="cre8-workspace-search-empty">
+                    <strong data-i18n="header.searchNoResults">No page found</strong>
+                    <span data-i18n="header.searchHint">Press Enter to open</span>
+                  </div>
+                </div>
               </form>
             </li>
           </ul>
-          <ul class="navbar-nav navbar-nav-right">
-            <li class="nav-item dropdown d-none d-lg-block">
-              <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list" aria-labelledby="createbuttonDropdown">
-                <h6 class="p-3 mb-0">Projects</h6>
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item preview-item" href="<?php echo htmlspecialchars($backBoRootWeb . '/campagne/index.php'); ?>">
-                  <div class="preview-thumbnail"><div class="preview-icon bg-dark rounded-circle"><i class="mdi mdi-bullhorn text-primary"></i></div></div>
-                  <div class="preview-item-content"><p class="preview-subject ellipsis mb-1">Campaigns</p></div>
-                </a>
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item preview-item" href="<?php echo htmlspecialchars($backBoRootWeb . '/produit/index.php'); ?>">
-                  <div class="preview-thumbnail"><div class="preview-icon bg-dark rounded-circle"><i class="mdi mdi-package-variant-closed text-info"></i></div></div>
-                  <div class="preview-item-content"><p class="preview-subject ellipsis mb-1">Products</p></div>
-                </a>
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item preview-item" href="<?php echo htmlspecialchars($backBoRootWeb . '/offre/index.php'); ?>">
-                  <div class="preview-thumbnail"><div class="preview-icon bg-dark rounded-circle"><i class="mdi mdi-briefcase-check text-danger"></i></div></div>
-                  <div class="preview-item-content"><p class="preview-subject ellipsis mb-1">Collaborations</p></div>
-                </a>
-                <div class="dropdown-divider"></div>
-                <p class="p-3 mb-0 text-center">Admin shortcuts</p>
-              </div>
-            </li>
+          <ul class="navbar-nav navbar-nav-right cre8-header-actions">
             <li class="nav-item nav-settings d-none d-lg-block">
               <a class="nav-link" href="<?php echo htmlspecialchars($backBoRootWeb . '/dashboard/index.php'); ?>" title="Dashboard" data-i18n-title="nav.dashboard" data-i18n-aria-label="nav.dashboard">
                 <i class="mdi mdi-view-grid"></i>
               </a>
             </li>
-            <li class="nav-item border-left">
+            <li class="nav-item cre8-header-action-item">
               <a class="nav-link count-indicator back-theme-toggle" href="#" onclick="toggleDarkMode(); return false;" title="Mode jour / nuit" aria-label="Toggle light or dark mode">
                 <i id="themeIcon" class="mdi mdi-weather-night"></i>
               </a>
             </li>
-            <li class="nav-item border-left d-flex align-items-center px-2" title="Language" data-i18n-title="common.language">
-              <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2 mr-1" data-cre8-back-lang="en" data-i18n-title="common.english">EN</button>
-              <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" data-cre8-back-lang="fr" data-i18n-title="common.french">FR</button>
-            </li>
-            <li class="nav-item dropdown border-left">
-              <a class="nav-link count-indicator dropdown-toggle" id="messageDropdown" href="#" data-toggle="dropdown" aria-expanded="false" title="Messages" data-i18n-title="header.messages" data-i18n-aria-label="header.messages">
-                <i class="mdi mdi-email"></i>
-                <span class="count bg-success"></span>
-              </a>
-              <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list" aria-labelledby="messageDropdown">
-                <h6 class="p-3 mb-0" data-i18n="header.messages">Messages</h6>
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item preview-item">
-                  <div class="preview-thumbnail"><img src="<?php echo htmlspecialchars($backBoUtilisateurWeb . '/assets/images/faces/face4.jpg'); ?>" alt="image" class="rounded-circle profile-pic"></div>
-                  <div class="preview-item-content"><p class="preview-subject ellipsis mb-1">Admin message center</p><p class="text-muted mb-0"> Ready for team updates </p></div>
-                </a>
-                <div class="dropdown-divider"></div>
-                <p class="p-3 mb-0 text-center" data-i18n="header.noMessages">No new messages</p>
+            <li class="nav-item cre8-header-action-item d-flex align-items-center" title="Language" data-i18n-title="common.language">
+              <div class="cre8-lang-toggle" aria-label="Language" data-i18n-aria-label="common.language">
+                <button type="button" class="cre8-lang-btn" data-cre8-back-lang="en" data-i18n-title="common.english">EN</button>
+                <button type="button" class="cre8-lang-btn" data-cre8-back-lang="fr" data-i18n-title="common.french">FR</button>
               </div>
             </li>
-            <li class="nav-item dropdown border-left">
+            <li class="nav-item dropdown cre8-header-action-item">
               <a class="nav-link count-indicator dropdown-toggle" id="notificationDropdown" href="#" data-toggle="dropdown" title="Notifications" data-i18n-title="header.notifications" data-i18n-aria-label="header.notifications" data-bo-notification-toggle>
                 <i class="mdi mdi-bell"></i>
                 <span class="count bg-danger d-none" id="boNotifCount" aria-live="polite" style="min-width:18px;height:18px;line-height:18px;font-size:.65rem;text-align:center;border-radius:999px;"></span>
               </a>
-              <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list" aria-labelledby="notificationDropdown" data-bo-notification-dropdown>
-                <div class="d-flex align-items-center justify-content-between px-3 py-2">
-                  <h6 class="mb-0" data-i18n="header.notifications">Notifications</h6>
-                  <button type="button" class="btn btn-link btn-sm p-0 text-primary" id="boNotifMarkAll" data-i18n="header.markAllRead">Mark all as read</button>
+              <div class="dropdown-menu dropdown-menu-right navbar-dropdown cre8-notification-menu" aria-labelledby="notificationDropdown" data-bo-notification-dropdown>
+                <div class="cre8-notification-head">
+                  <div>
+                    <h6 data-i18n="header.notifications">Notifications</h6>
+                    <small data-i18n="header.notificationSubtitle">Latest admin updates</small>
+                  </div>
+                  <button type="button" class="cre8-notification-mark-all" id="boNotifMarkAll" data-i18n="header.markAllRead">Mark all as read</button>
                 </div>
-                <div class="dropdown-divider"></div>
-                <div id="boNotifList" data-bo-notification-list>
-                  <p class="p-3 mb-0 text-center" data-i18n="header.noNotifications">No new notifications</p>
+                <div id="boNotifList" class="cre8-notification-list" data-bo-notification-list>
+                  <div class="cre8-notification-empty">
+                    <span class="cre8-notification-empty-icon"><i class="mdi mdi-bell-check-outline"></i></span>
+                    <strong data-i18n="header.noNotifications">No new notifications</strong>
+                    <small data-i18n="header.allCaughtUp">You're all caught up.</small>
+                  </div>
                 </div>
               </div>
             </li>
@@ -163,3 +140,4 @@ if ($adminId !== null) {
         };
       </script>
       <script src="<?php echo htmlspecialchars($backBoRootWeb . '/layout/back-notifications.js?v=' . filemtime(__DIR__ . '/back-notifications.js')); ?>"></script>
+      <script src="<?php echo htmlspecialchars($backBoRootWeb . '/layout/back-workspace-search.js?v=' . filemtime(__DIR__ . '/back-workspace-search.js')); ?>"></script>

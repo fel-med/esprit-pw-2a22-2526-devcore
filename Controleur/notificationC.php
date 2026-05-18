@@ -507,6 +507,56 @@ class NotificationC
         }
     }
 
+    public function notifyAdminCreated($newAdminId, $newAdminRole, $newAdminName, $newAdminEmail, $actorId, $actorRole): void
+    {
+        try {
+            $newAdminId = (int) $newAdminId;
+            $actorId = (int) $actorId;
+            $newAdminRole = cc_normalize_role($newAdminRole);
+            $actorRole = cc_normalize_role($actorRole);
+
+            if ($newAdminId <= 0 || $actorId <= 0 || !in_array($newAdminRole, ['admin', 'super_admin'], true)) {
+                return;
+            }
+
+            $recipients = array_values(array_diff(
+                $this->getBackOfficeUserIdsByRoles(['hyper_admin'], $actorId),
+                [$newAdminId]
+            ));
+
+            if (empty($recipients)) {
+                return;
+            }
+
+            $name = trim((string) $newAdminName);
+            $email = trim((string) $newAdminEmail);
+            $message = trim($actorRole . ' created ' . $newAdminRole . ': ' . $name . ($email !== '' ? ' (' . $email . ')' : ''));
+            $link = function_exists('cc_app_url')
+                ? cc_app_url('Vue/BackOffice/utilisateur/admin_management.php')
+                : 'Vue/BackOffice/utilisateur/admin_management.php';
+
+            $this->notifyUsers(
+                $recipients,
+                'admin_created',
+                'New admin account created',
+                $message,
+                $link,
+                'utilisateur',
+                $newAdminId,
+                $actorId,
+                $actorRole,
+                'admin_created_' . $newAdminId,
+                [
+                    'new_admin_id' => $newAdminId,
+                    'new_admin_role' => $newAdminRole,
+                    'actor_role' => $actorRole,
+                ]
+            );
+        } catch (Throwable $e) {
+            error_log('Admin created notification failed: ' . $e->getMessage());
+        }
+    }
+
     private function notificationExcerpt(string $description, int $limit = 140): string
     {
         $text = trim(preg_replace('/\s+/', ' ', strip_tags($description)) ?? '');

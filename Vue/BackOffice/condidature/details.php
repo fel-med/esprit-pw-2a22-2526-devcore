@@ -591,17 +591,5 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
         </main>
     </div>
     <script src="../layout/back-layout.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/back-layout.js')); ?>"></script>
-<?php
-$cre8PilotContext = [
-    'page' => 'admin_candidature_workspace',
-    'mode' => 'details',
-    'role' => 'admin',
-    'allowedActions' => ['normal_chat', 'summarize_page', 'analyze_page', 'prepare_negotiation_reply'],
-    'formTarget' => null,
-    'visibleEntityType' => 'candidature',
-    'visibleEntityId' => $idCandidature ?? null,
-];
-require __DIR__ . '/../../FrontOffice/condidature/cre8pilot_widget.php';
-?>
 </body>
 </html>

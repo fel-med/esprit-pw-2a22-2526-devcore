@@ -17,14 +17,23 @@ $comments   = ($searchType !== '' || $keyword !== '')
 
 $stats = $commentC->getAdminStats();
 
-/* ── Global stats ── */
 $totalComments = (int)($stats['totalComments'] ?? 0);
 $totalLikes    = (int)($stats['totalLikes']    ?? 0);
 $totalDislikes = (int)($stats['totalDislikes'] ?? 0);
 $approvalPct   = ($totalLikes + $totalDislikes) > 0
     ? round($totalLikes / ($totalLikes + $totalDislikes) * 100) : 0;
 
-/* ── JSON for JS ── */
+$perPageOptions = [5, 10, 25, 50];
+$perPage = (int)($_GET['per_page'] ?? 10);
+if (!in_array($perPage, $perPageOptions, true)) {
+    $perPage = 10;
+}
+$totalFiltered = count($comments);
+$totalPages = max(1, (int)ceil($totalFiltered / $perPage));
+$page = max(1, min($totalPages, (int)($_GET['page'] ?? 1)));
+$offset = ($page - 1) * $perPage;
+$visibleComments = array_slice($comments, $offset, $perPage);
+
 $commentsJson = json_encode(array_map(fn($c) => [
     'user'       => $c['userName'] ?? ('User #' . $c['idUser']),
     'type'       => $c['commentedItem'] ?? 'post',
@@ -36,104 +45,56 @@ $commentsJson = json_encode(array_map(fn($c) => [
     'text'       => mb_strimwidth((string)($c['text'] ?? ''), 0, 40, '…'),
 ], $comments), JSON_UNESCAPED_UNICODE);
 
-function commentAssetVersion($path) {
+function community_comment_asset_version($path) {
     return is_file($path) ? '?v=' . urlencode((string) filemtime($path)) : '';
 }
+
+function community_comment_page_items($current, $total) {
+    if ($total <= 7) {
+        return range(1, $total);
+    }
+
+    $pages = [1, $total, $current, $current - 1, $current + 1];
+    $pages = array_values(array_unique(array_filter($pages, fn($p) => $p >= 1 && $p <= $total)));
+    sort($pages);
+
+    $result = [];
+    $previous = null;
+    foreach ($pages as $p) {
+        if ($previous !== null && $p - $previous > 1) {
+            $result[] = '…';
+        }
+        $result[] = $p;
+        $previous = $p;
+    }
+    return $result;
+}
+
+$pageUrl = function ($targetPage) use ($perPage) {
+    $params = $_GET;
+    $params['page'] = $targetPage;
+    $params['per_page'] = $perPage;
+    return './index.php?' . http_build_query($params);
+};
+
 if (!headers_sent()) header('Content-Type: text/html; charset=UTF-8');
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<?php cre8_bo_early_theme_print_head_script(); ?>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Comments Dashboard — Admin · Cre8Connect</title>
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="../css/backoffice.css<?= commentAssetVersion(__DIR__ . '/../css/backoffice.css') ?>">
-<link rel="stylesheet" href="../layout/back-layout.css<?= commentAssetVersion(__DIR__ . '/../layout/back-layout.css') ?>">
-<link rel="stylesheet" href="../utilisateur/assets/vendors/mdi/css/materialdesignicons.min.css<?= commentAssetVersion(__DIR__ . '/../utilisateur/assets/vendors/mdi/css/materialdesignicons.min.css') ?>">
-<link rel="stylesheet" href="../css/new_style_backoffice.css<?= commentAssetVersion(__DIR__ . '/../css/new_style_backoffice.css') ?>">
+<link rel="stylesheet" href="../css/backoffice.css<?= community_comment_asset_version(__DIR__ . '/../css/backoffice.css') ?>">
+<link rel="stylesheet" href="../layout/back-layout.css<?= community_comment_asset_version(__DIR__ . '/../layout/back-layout.css') ?>">
+<link rel="stylesheet" href="../utilisateur/assets/vendors/mdi/css/materialdesignicons.min.css<?= community_comment_asset_version(__DIR__ . '/../utilisateur/assets/vendors/mdi/css/materialdesignicons.min.css') ?>">
+<link rel="stylesheet" href="../css/new_style_backoffice.css<?= community_comment_asset_version(__DIR__ . '/../css/new_style_backoffice.css') ?>">
+<link rel="stylesheet" href="../community-center-admin.css<?= community_comment_asset_version(__DIR__ . '/../community-center-admin.css') ?>">
+<link rel="stylesheet" href="../unified-table-admin.css<?= community_comment_asset_version(__DIR__ . '/../unified-table-admin.css') ?>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<style>
-.comment-admin {
-    --comment-bg-card: #16213e;
-    --comment-bg-card-2: #0f3460;
-    --comment-border: rgba(139, 92, 246, 0.22);
-    --comment-border-light: rgba(255, 255, 255, 0.08);
-    --comment-text: #e2e8f0;
-    --comment-muted: #94a3b8;
-    --comment-label: #a78bfa;
-    --comment-primary: #8b5cf6;
-    --comment-accent: #ec4899;
-    --comment-accent-light: #f9a8d4;
-    --comment-shadow: 0 4px 24px rgba(139, 92, 246, 0.12);
-    color: var(--comment-text);
-}
-body.light-mode .comment-admin {
-    --comment-bg-card: #ffffff;
-    --comment-bg-card-2: #f8f5ff;
-    --comment-border: rgba(139, 92, 246, 0.18);
-    --comment-border-light: rgba(139, 92, 246, 0.10);
-    --comment-text: #1e1b4b;
-    --comment-muted: #6b7280;
-    --comment-label: #7c3aed;
-    --comment-shadow: 0 2px 16px rgba(139, 92, 246, 0.10);
-}
-.comment-admin .card {
-    background: var(--comment-bg-card) !important;
-    border: 1px solid var(--comment-border) !important;
-    border-radius: 16px !important;
-    box-shadow: var(--comment-shadow);
-    color: var(--comment-text) !important;
-}
-.comment-admin .text-muted { color: var(--comment-muted) !important; }
-.comment-admin .stat-card-mini .card-body { min-height: 90px; position:relative; overflow:hidden; }
-.comment-admin .stat-card-mini .card-body::after { content:""; position:absolute; right:-20px; bottom:-20px; width:80px; height:80px; border-radius:50%; background:rgba(255,255,255,.12); }
-.comment-admin .stat-card-mini h6 { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; opacity:.65; margin-bottom:8px; }
-.comment-admin .stat-card-mini h2 { font-size:30px; font-weight:800; margin:0; }
-.comment-admin .stat-card-custom1 { border-top:4px solid #8b5cf6 !important; }
-.comment-admin .stat-card-custom2 { border-top:4px solid #ec4899 !important; }
-.comment-admin .stat-card-custom3 { border-top:4px solid #98D882 !important; }
-.comment-admin .stat-card-custom4 { border-top:4px solid #a855f7 !important; }
-.comment-admin .chart-card .card-body { padding:1.4rem; }
-.comment-admin .chart-title { font-size:14px; font-weight:700; margin-bottom:2px; color:var(--comment-text); }
-.comment-admin .chart-sub { font-size:12px; color:var(--comment-muted); margin-bottom:14px; }
-.comment-admin .chart-legend { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; font-size:12px; font-weight:600; color:var(--comment-text); }
-.comment-admin .chart-legend span { display:flex; align-items:center; gap:6px; }
-.comment-admin .chart-legend i { width:11px; height:11px; border-radius:3px; display:inline-block; flex-shrink:0; }
-.comment-admin .table-dark,
-.comment-admin .admin-table { background-color:var(--comment-bg-card) !important; color:var(--comment-text) !important; border-color:var(--comment-border) !important; }
-.comment-admin .table-dark thead th,
-.comment-admin .admin-table thead th { background:var(--comment-bg-card-2) !important; color:var(--comment-label) !important; border-color:var(--comment-border) !important; font-weight:700; font-size:11px; letter-spacing:.06em; text-transform:uppercase; }
-.comment-admin .table-dark td,
-.comment-admin .table-dark th,
-.comment-admin .admin-table td,
-.comment-admin .admin-table th { border-color:var(--comment-border-light) !important; color:var(--comment-text) !important; vertical-align:middle; }
-.comment-admin .form-control,
-.comment-admin select.form-control { background:var(--comment-bg-card-2) !important; border:1px solid var(--comment-border) !important; border-radius:10px !important; color:var(--comment-text) !important; }
-.comment-admin .form-control:focus { border-color:var(--comment-primary) !important; box-shadow:0 0 0 3px rgba(139,92,246,.15) !important; }
-.comment-admin .form-label,
-.comment-admin label { color:var(--comment-muted) !important; font-weight:700; font-size:12px; letter-spacing:.04em; text-transform:uppercase; }
-.comment-admin .btn { border-radius:999px; font-weight:700; }
-.comment-admin .btn-info { background:linear-gradient(135deg,#0ea5e9,#0284c7) !important; border-color:transparent !important; color:#fff !important; }
-.comment-admin .btn-outline-light { border-color:var(--comment-border) !important; color:var(--comment-muted) !important; }
-.comment-admin .admin-action-btn { display:inline-flex; align-items:center; gap:5px; border-radius:999px; padding:.45rem .9rem; font-weight:700; font-size:12px; text-decoration:none; margin-right:5px; margin-bottom:5px; transition:all .18s ease; }
-.comment-admin .admin-action-btn:hover { transform:translateY(-2px); text-decoration:none; }
-.comment-admin .admin-view-btn { background:rgba(139,92,246,.15); color:var(--comment-label) !important; border:1.5px solid rgba(139,92,246,.35); }
-.comment-admin .admin-delete-btn { background:rgba(236,72,153,.12); color:var(--comment-accent-light) !important; border:1.5px solid rgba(236,72,153,.28); }
-.comment-admin .badge-secondary { background:rgba(139,92,246,.18) !important; color:var(--comment-label) !important; border:1px solid var(--comment-border); }
-.comment-admin .empty-state-admin { padding:60px 20px; text-align:center; border:2px dashed var(--comment-border); border-radius:20px; background:rgba(139,92,246,.03); }
-#commentPaginationControls { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-top:18px; padding-top:14px; border-top:1px solid var(--comment-border); }
-#commentPaginationControls .pag-info { font-size:13px; color:var(--comment-muted); }
-.comment-admin .pag-buttons { display:flex; align-items:center; gap:4px; }
-.comment-admin .pag-btn { display:inline-flex; align-items:center; justify-content:center; min-width:34px; height:34px; padding:0 8px; border-radius:8px; border:1.5px solid var(--comment-border); background:transparent; color:var(--comment-text); font-size:13px; font-weight:600; cursor:pointer; transition:background .15s,border-color .15s,color .15s; }
-.comment-admin .pag-btn:hover:not(:disabled) { background:rgba(139,92,246,.12); }
-.comment-admin .pag-btn.active { background:#e91e8c; border-color:#e91e8c; color:#fff; }
-.comment-admin .pag-btn:disabled { opacity:.3; cursor:default; }
-.comment-admin .pag-select { display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--comment-muted); }
-.comment-admin .pag-select select { background:var(--comment-bg-card-2); border:1.5px solid var(--comment-border); border-radius:7px; color:var(--comment-text); padding:4px 8px; font-size:13px; cursor:pointer; outline:none; }
-.comment-admin .post-creator-badge { color:var(--comment-label); font-weight:700; }
-</style>
 <link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
 <link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
@@ -149,101 +110,259 @@ require_once __DIR__ . '/../layout/sidebar.php';
 <div class="container-fluid page-body-wrapper cre8-admin-main">
 <?php require_once __DIR__ . '/../layout/header.php'; ?>
     <div class="main-panel">
-    <div class="content-wrapper">
-        <div class="comment-admin">
-
-<!-- ══ Header ════════════════════════════════════════════════════ -->
-<div class="row">
-    <div class="col-12 grid-margin stretch-card">
-        <div class="card">
-            <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="content-wrapper community-center-shell">
+            <section class="cc-page-head">
                 <div>
-                    <h3 class="mb-1">Comments Dashboard</h3>
-                    <p class="text-muted mb-0">Search comments by post ID, comment ID to inspect replies, or by creator.</p>
+                    <p class="cc-kicker">Community Center</p>
+                    <h1>Comments Dashboard</h1>
+                    <p>Search replies, inspect comment targets, and moderate conversation activity.</p>
                 </div>
-                <div class="d-flex gap-2 flex-wrap align-items-center">
-                    <a href="../post/index.php" class="btn btn-outline-light">
-                        <i class="mdi mdi-arrow-left"></i> Back to Posts
-                    </a>
+            </section>
+
+            <nav class="cc-entity-tabs" aria-label="Community Center sections">
+                <a class="cc-entity-tab" href="../post/index.php">
+                    <span class="cc-tab-icon"><i class="mdi mdi-newspaper-variant-outline"></i></span>
+                    <span><strong>Posts</strong><small>Content moderation and performance</small></span>
+                </a>
+                <a class="cc-entity-tab is-active" href="../comment/index.php" aria-current="page">
+                    <span class="cc-tab-icon"><i class="mdi mdi-comment-multiple-outline"></i></span>
+                    <span><strong>Comments</strong><small>Replies, reactions, and links</small></span>
+                </a>
+            </nav>
+
+            <section class="cc-statistics-panel" data-cc-stats>
+                <div class="cc-section-head">
+                    <div>
+                        <h2>Comment indicators</h2>
+                        <p>Conversation volume, reactions, and format breakdown.</p>
+                    </div>
+                    <button type="button" class="cc-secondary-btn" data-cc-stats-toggle data-label-hide="Hide statistics" data-label-show="Show statistics">Hide statistics</button>
                 </div>
-            </div>
+
+                <div class="cc-kpi-grid">
+                    <article class="cc-kpi-card cc-kpi-purple">
+                        <span>Total comments</span>
+                        <strong><?= number_format($totalComments, 0, ',', ' ') ?></strong>
+                        <small>Comments and replies</small>
+                    </article>
+                    <article class="cc-kpi-card cc-kpi-pink">
+                        <span>Total likes</span>
+                        <strong><?= number_format($totalLikes, 0, ',', ' ') ?></strong>
+                        <small>Positive reactions</small>
+                    </article>
+                    <article class="cc-kpi-card cc-kpi-yellow">
+                        <span>Total dislikes</span>
+                        <strong><?= number_format($totalDislikes, 0, ',', ' ') ?></strong>
+                        <small>Negative reactions</small>
+                    </article>
+                    <article class="cc-kpi-card cc-kpi-green">
+                        <span>Approval rate</span>
+                        <strong><?= $approvalPct ?>%</strong>
+                        <small>Likes vs reactions</small>
+                    </article>
+                </div>
+
+                <div class="cc-stats-body cc-charts-grid">
+                    <article class="cc-chart-card">
+                        <div class="cc-chart-head"><h3>Engagement Breakdown</h3><p>Likes, dislikes, and neutral comments.</p></div>
+                        <div class="cc-chart-legend" id="leg-engagement"></div>
+                        <div class="cc-chart-canvas"><canvas id="chartEngagement"></canvas></div>
+                    </article>
+                    <article class="cc-chart-card">
+                        <div class="cc-chart-head"><h3>Comment Target</h3><p>Comments on posts vs replies.</p></div>
+                        <div class="cc-chart-legend" id="leg-target"></div>
+                        <div class="cc-chart-canvas"><canvas id="chartTarget"></canvas></div>
+                    </article>
+                    <article class="cc-chart-card">
+                        <div class="cc-chart-head"><h3>Comment Format</h3><p>Text, stickers, and images.</p></div>
+                        <div class="cc-chart-legend" id="leg-format"></div>
+                        <div class="cc-chart-canvas"><canvas id="chartFormat"></canvas></div>
+                    </article>
+                    <article class="cc-chart-card">
+                        <div class="cc-chart-head"><h3>User Activity</h3><p>Top users by comment volume.</p></div>
+                        <div class="cc-chart-canvas"><canvas id="chartUsers"></canvas></div>
+                    </article>
+                    <article class="cc-chart-card cc-chart-wide">
+                        <div class="cc-chart-head"><h3>Top Comments by Likes</h3><p>Most liked comments and dislikes.</p></div>
+                        <div class="cc-chart-canvas"><canvas id="chartTopComments"></canvas></div>
+                    </article>
+                    <article class="cc-chart-card">
+                        <div class="cc-chart-head"><h3>Cumulative Likes by User</h3><p>Popularity distribution.</p></div>
+                        <div class="cc-chart-legend" id="leg-polar"></div>
+                        <div class="cc-chart-canvas"><canvas id="chartPolar"></canvas></div>
+                    </article>
+                </div>
+            </section>
+
+            <section class="cc-filter-card">
+                <div class="cc-filter-head">
+                    <div>
+                        <h2>Filter comments</h2>
+                        <p>Search by post ID, comment ID, creator name, or creator ID.</p>
+                    </div>
+                </div>
+                <form method="GET" class="cc-filter-grid">
+                    <label class="cc-filter-field">
+                        <span>Search by</span>
+                        <select name="searchType">
+                            <option value="">All comments</option>
+                            <option value="postId" <?= $searchType === 'postId' ? 'selected' : '' ?>>Post ID</option>
+                            <option value="commentId" <?= $searchType === 'commentId' ? 'selected' : '' ?>>Comment ID (show replies)</option>
+                            <option value="creator" <?= $searchType === 'creator' ? 'selected' : '' ?>>Creator</option>
+                        </select>
+                    </label>
+                    <label class="cc-filter-field cc-filter-wide">
+                        <span>Keyword</span>
+                        <input type="text" name="keyword" value="<?= htmlspecialchars($keyword) ?>" placeholder="Enter post id, comment id, creator name, or creator id">
+                    </label>
+                    <label class="cc-filter-field">
+                        <span>Rows</span>
+                        <select name="per_page">
+                            <?php foreach ($perPageOptions as $option) : ?>
+                                <option value="<?= $option ?>" <?= $perPage === $option ? 'selected' : '' ?>><?= $option ?> per page</option>
+                            <?php endforeach; ?>
+                        </select>
+                    </label>
+                    <div class="cc-filter-actions">
+                        <button type="submit" class="cc-primary-btn"><i class="mdi mdi-magnify"></i> Search</button>
+                        <a href="./index.php" class="cc-secondary-btn">Reset</a>
+                    </div>
+                </form>
+            </section>
+
+            <section class="cc-table-card">
+                <div class="cc-table-head">
+                    <div>
+                        <h2>Comments moderation list</h2>
+                        <p><?= number_format($totalFiltered, 0, ',', ' ') ?> comment<?= $totalFiltered === 1 ? '' : 's' ?> found.</p>
+                    </div>
+                </div>
+
+                <div id="ccResultsRegion" class="cc-results-region">
+                    <?php if ($searchType === 'postId' && $keyword !== '') : ?>
+                        <div class="cc-alert">
+                            Showing comments linked to post <strong>#<?= htmlspecialchars($keyword) ?></strong>.
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if (empty($visibleComments)) : ?>
+                        <div class="cc-empty-state">
+                            <span><i class="mdi mdi-comment-alert-outline"></i></span>
+                            <strong>No comments found</strong>
+                            <p>Try another search or reset the filters.</p>
+                        </div>
+                    <?php else : ?>
+                        <div class="cc-table-wrap">
+                            <table class="cc-table cc-comments-table" id="commentsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Comment ID</th>
+                                        <th>Target</th>
+                                        <th>Creator</th>
+                                        <th>Text</th>
+                                        <th>Sticker</th>
+                                        <th>Image</th>
+                                        <th>Likes</th>
+                                        <th>Dislikes</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="commentsTableBody">
+                                <?php foreach ($visibleComments as $comment) : ?>
+                                    <tr>
+                                        <td><?= htmlspecialchars((string)$comment['id']) ?></td>
+                                        <td>
+                                            <div class="cc-person-cell">
+                                                <strong><?= htmlspecialchars((string)$comment['commentedItem']) ?> #<?= htmlspecialchars((string)$comment['idCommentedElement']) ?></strong>
+                                                <span><?= ($comment['commentedItem'] ?? '') === 'post' ? 'Post discussion' : 'Reply thread' ?></span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="cc-person-cell">
+                                                <strong><?= htmlspecialchars($comment['userName'] ?? ('User #' . $comment['idUser'])) ?></strong>
+                                                <span>#<?= htmlspecialchars((string)$comment['idUser']) ?></span>
+                                            </div>
+                                        </td>
+                                        <td><div class="cc-excerpt"><?= htmlspecialchars(mb_strimwidth((string)($comment['text'] ?? ''), 0, 120, '...')) ?></div></td>
+                                        <td><?= !empty($comment['Sticker'] ?? $comment['sticker'] ?? '') ? htmlspecialchars($comment['Sticker'] ?? $comment['sticker']) : '<span class="cc-badge cc-badge-muted">None</span>' ?></td>
+                                        <td>
+                                            <?php if (!empty($comment['image'])) : ?>
+                                                <img src="../../public/<?= htmlspecialchars($comment['image']) ?>" alt="comment image" class="cc-media-thumb">
+                                            <?php else : ?>
+                                                <span class="cc-badge cc-badge-muted">No image</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td><?= number_format((int)($comment['numberOfLike'] ?? 0), 0, ',', ' ') ?></td>
+                                        <td><?= number_format((int)($comment['numberOfDislike'] ?? 0), 0, ',', ' ') ?></td>
+                                        <td>
+                                            <div class="cc-actions-stack">
+                                                <?php if (($comment['commentedItem'] ?? '') === 'post') : ?>
+                                                    <a href="../post/details.php?id=<?= urlencode($comment['idCommentedElement']) ?>" class="cc-action-btn cc-action-primary">
+                                                        <i class="mdi mdi-eye-outline"></i> Post
+                                                    </a>
+                                                <?php endif; ?>
+                                                <a href="./index.php?searchType=commentId&keyword=<?= urlencode($comment['id']) ?>" class="cc-action-btn cc-action-muted">
+                                                    <i class="mdi mdi-source-branch"></i> Replies
+                                                </a>
+                                                <a href="./delete.php?id=<?= urlencode($comment['id']) ?>&searchType=<?= urlencode($searchType) ?>&keyword=<?= urlencode($keyword) ?>" class="cc-action-btn cc-action-danger js-admin-delete">
+                                                    <i class="mdi mdi-delete-outline"></i> Delete
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="cc-pagination">
+                            <p>
+                                Showing <?= $totalFiltered === 0 ? 0 : number_format($offset + 1, 0, ',', ' ') ?>–<?= number_format(min($offset + $perPage, $totalFiltered), 0, ',', ' ') ?>
+                                of <?= number_format($totalFiltered, 0, ',', ' ') ?> comments · Page <?= $page ?> of <?= $totalPages ?>
+                            </p>
+                            <nav aria-label="Comments pagination">
+                                <a class="cc-page-btn <?= $page <= 1 ? 'is-disabled' : '' ?>" href="<?= $page <= 1 ? '#' : htmlspecialchars($pageUrl($page - 1)) ?>">‹</a>
+                                <?php foreach (community_comment_page_items($page, $totalPages) as $item) : ?>
+                                    <?php if ($item === '…') : ?>
+                                        <span class="cc-page-ellipsis">…</span>
+                                    <?php else : ?>
+                                        <a class="cc-page-btn <?= $item === $page ? 'is-active' : '' ?>" href="<?= htmlspecialchars($pageUrl((int)$item)) ?>"><?= $item ?></a>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                                <a class="cc-page-btn <?= $page >= $totalPages ? 'is-disabled' : '' ?>" href="<?= $page >= $totalPages ? '#' : htmlspecialchars($pageUrl($page + 1)) ?>">›</a>
+                            </nav>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </section>
         </div>
     </div>
 </div>
-
-<!-- ══ Metric cards ══════════════════════════════════════════════ -->
-<div class="row">
-    <div class="col-6 col-md-3 grid-margin stretch-card">
-        <div class="card stat-card-mini stat-card-custom1"><div class="card-body"><h6>Total Comments</h6><h2><?= $totalComments ?></h2></div></div>
-    </div>
-    <div class="col-6 col-md-3 grid-margin stretch-card">
-        <div class="card stat-card-mini stat-card-custom2"><div class="card-body"><h6>Total Likes</h6><h2><?= number_format($totalLikes, 0, ',', ' ') ?></h2></div></div>
-    </div>
-    <div class="col-6 col-md-3 grid-margin stretch-card">
-        <div class="card stat-card-mini stat-card-custom3"><div class="card-body"><h6>Total Dislikes</h6><h2><?= number_format($totalDislikes, 0, ',', ' ') ?></h2></div></div>
-    </div>
-    <div class="col-6 col-md-3 grid-margin stretch-card">
-        <div class="card stat-card-mini stat-card-custom4"><div class="card-body"><h6>Approval Rate</h6><h2><?= $approvalPct ?>%</h2></div></div>
-    </div>
-</div>
-
-<!-- ══ Row 1 : Engagement pie + Target pie ═══════════════════════ -->
-<div class="row">
-    <div class="col-md-6 grid-margin stretch-card">
-        <div class="card chart-card"><div class="card-body"><p class="chart-title">Engagement Breakdown</p><p class="chart-sub">Likes · Dislikes · No reaction</p><div class="chart-legend" id="leg-engagement"></div><div style="position:relative;height:240px;"><canvas id="chartEngagement"></canvas></div></div></div>
-    </div>
-    <div class="col-md-6 grid-margin stretch-card">
-        <div class="card chart-card"><div class="card-body"><p class="chart-title">Comment Target</p><p class="chart-sub">Comments on a post vs replies to a comment</p><div class="chart-legend" id="leg-target"></div><div style="position:relative;height:240px;"><canvas id="chartTarget"></canvas></div></div></div>
-    </div>
-</div>
-
-<!-- ══ Row 2 : Format pie + User activity bar ════════════════════ -->
-<div class="row">
-    <div class="col-md-4 grid-margin stretch-card">
-        <div class="card chart-card"><div class="card-body"><p class="chart-title">Comment Format</p><p class="chart-sub">Text · Sticker · Image</p><div class="chart-legend" id="leg-format"></div><div style="position:relative;height:240px;"><canvas id="chartFormat"></canvas></div></div></div>
-    </div>
-    <div class="col-md-8 grid-margin stretch-card">
-        <div class="card chart-card"><div class="card-body"><p class="chart-title">User Activity</p><p class="chart-sub">Top 6 — number of comments published</p><div style="position:relative;height:240px;"><canvas id="chartUsers"></canvas></div></div></div>
-    </div>
-</div>
-
-<!-- ══ Row 3 : Top comments grouped bar + PolarArea ══════════════ -->
-<div class="row">
-    <div class="col-md-7 grid-margin stretch-card">
-        <div class="card chart-card"><div class="card-body"><p class="chart-title">Top Comments by Likes</p><p class="chart-sub">Top 8 — likes and dislikes</p><div class="chart-legend"><span><i style="background:#e91e8c"></i>Likes</span><span><i style="background:#7c3aed"></i>Dislikes</span></div><div style="position:relative;height:260px;"><canvas id="chartTopComments"></canvas></div></div></div>
-    </div>
-    <div class="col-md-5 grid-margin stretch-card">
-        <div class="card chart-card"><div class="card-body"><p class="chart-title">Cumulative Likes by User</p><p class="chart-sub">PolarArea — comment popularity</p><div class="chart-legend" id="leg-polar"></div><div style="position:relative;height:260px;"><canvas id="chartPolar"></canvas></div></div></div>
-    </div>
 </div>
 
 <script>
 (function () {
-
-    const P = ['#e91e8c', '#c026d3', '#9c27b0', '#7c3aed', '#f472b6', '#6a008a'];
+    const P = ['#9b5de0', '#e11d74', '#0090e7', '#55d36a', '#f59e0b', '#d78fee'];
     const raw = <?= $commentsJson ?>;
-
-    const totalLikes    = raw.reduce((a, c) => a + c.likes,    0);
-    const totalDislikes = raw.reduce((a, c) => a + c.dislikes,  0);
-    const totalAll      = raw.length;
-    const neutrals      = Math.max(0, totalAll - raw.filter(c => c.likes > 0 || c.dislikes > 0).length);
 
     function buildLegend(id, items) {
         const el = document.getElementById(id);
         if (!el) return;
         el.innerHTML = items.map(([label, color]) => `<span><i style="background:${color}"></i>${label}</span>`).join('');
     }
-    function gridColor() { return document.body.classList.contains('light-mode') ? 'rgba(156,39,176,.12)' : 'rgba(233,30,140,.10)'; }
-    function tickColor() { return document.body.classList.contains('light-mode') ? '#9c27b0' : '#c084fc'; }
 
-    buildLegend('leg-engagement', [
-        [`Likes (${totalLikes.toLocaleString('en-US')})`, P[0]],
-        [`Dislikes (${totalDislikes.toLocaleString('en-US')})`, P[3]],
-        [`Neutral (${neutrals.toLocaleString('en-US')})`, P[5]],
-    ]);
+    function tickColor() {
+        return document.documentElement.getAttribute('data-theme') === 'light' ? '#475569' : '#cbd5e1';
+    }
+
+    const totalLikes = raw.reduce((a, c) => a + c.likes, 0);
+    const totalDislikes = raw.reduce((a, c) => a + c.dislikes, 0);
+    const neutrals = Math.max(0, raw.length - raw.filter(c => c.likes > 0 || c.dislikes > 0).length);
+
+    buildLegend('leg-engagement', [[`Likes (${totalLikes.toLocaleString()})`, P[0]], [`Dislikes (${totalDislikes.toLocaleString()})`, P[3]], [`Neutral (${neutrals.toLocaleString()})`, P[5]]]);
     new Chart(document.getElementById('chartEngagement'), {
-        type: 'pie',
-        data: { labels: ['Likes', 'Dislikes', 'Neutral'], datasets: [{ data: [totalLikes, totalDislikes, neutrals], backgroundColor: [P[0], P[3], P[5]], borderWidth: 3, borderColor: 'transparent', hoverOffset: 10 }] },
+        type: 'doughnut',
+        data: { labels: ['Likes', 'Dislikes', 'Neutral'], datasets: [{ data: [totalLikes, totalDislikes, neutrals], backgroundColor: [P[0], P[3], P[5]], borderWidth: 0 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     });
 
@@ -252,7 +371,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
     buildLegend('leg-target', [[`On post (${onPost})`, P[0]], [`Reply (${onComment})`, P[2]]]);
     new Chart(document.getElementById('chartTarget'), {
         type: 'pie',
-        data: { labels: ['On post', 'Reply to a comment'], datasets: [{ data: [onPost, onComment], backgroundColor: [P[0], P[2]], borderWidth: 3, borderColor: 'transparent', hoverOffset: 10 }] },
+        data: { labels: ['On post', 'Reply to a comment'], datasets: [{ data: [onPost, onComment], backgroundColor: [P[0], P[2]], borderWidth: 0 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     });
 
@@ -262,199 +381,44 @@ require_once __DIR__ . '/../layout/sidebar.php';
     buildLegend('leg-format', [[`Text (${withText})`, P[0]], [`Sticker (${withSticker})`, P[4]], [`Image (${withImage})`, P[2]]]);
     new Chart(document.getElementById('chartFormat'), {
         type: 'pie',
-        data: { labels: ['Text', 'Sticker', 'Image'], datasets: [{ data: [withText, withSticker, withImage], backgroundColor: [P[0], P[4], P[2]], borderWidth: 3, borderColor: 'transparent', hoverOffset: 10 }] },
+        data: { labels: ['Text', 'Sticker', 'Image'], datasets: [{ data: [withText, withSticker, withImage], backgroundColor: [P[0], P[4], P[2]], borderWidth: 0 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     });
 
-    const umap = {};
+    const usersMap = {};
     raw.forEach(c => {
-        if (!umap[c.user]) umap[c.user] = { comments: 0, likes: 0 };
-        umap[c.user].comments++;
-        umap[c.user].likes += c.likes;
+        if (!usersMap[c.user]) usersMap[c.user] = { comments: 0, likes: 0 };
+        usersMap[c.user].comments++;
+        usersMap[c.user].likes += c.likes;
     });
-    const users = Object.entries(umap).sort((a,b) => b[1].comments - a[1].comments).slice(0, 6);
+    const users = Object.entries(usersMap).sort((a, b) => b[1].comments - a[1].comments).slice(0, 6);
+
     new Chart(document.getElementById('chartUsers'), {
         type: 'bar',
-        data: { labels: users.map(u => u[0]), datasets: [{ label: 'Comments', data: users.map(u => u[1].comments), backgroundColor: users.map((_, i) => P[i % P.length]), borderRadius: 7, borderSkipped: false }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: tickColor(), font: { size: 12 } }, grid: { display: false } }, y: { ticks: { color: tickColor(), stepSize: 1 }, grid: { color: gridColor() }, beginAtZero: true } } }
+        data: { labels: users.map(u => u[0]), datasets: [{ label: 'Comments', data: users.map(u => u[1].comments), backgroundColor: users.map((_, i) => P[i % P.length]), borderRadius: 7 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: tickColor() }, grid: { display: false } }, y: { ticks: { color: tickColor() }, grid: { color: 'rgba(148,163,184,.14)' } } } }
     });
 
-    const top8 = [...raw].sort((a,b) => b.likes - a.likes).slice(0, 8);
+    const top8 = [...raw].sort((a, b) => b.likes - a.likes).slice(0, 8);
     new Chart(document.getElementById('chartTopComments'), {
         type: 'bar',
-        data: { labels: top8.map(c => c.text || '(empty)'), datasets: [ { label: 'Likes', data: top8.map(c => c.likes), backgroundColor: P[0], borderRadius: 5, borderSkipped: false }, { label: 'Dislikes', data: top8.map(c => c.dislikes), backgroundColor: P[3], borderRadius: 5, borderSkipped: false } ] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: tickColor(), font: { size: 11 }, autoSkip: false, maxRotation: 35 }, grid: { display: false } }, y: { ticks: { color: tickColor() }, grid: { color: gridColor() }, beginAtZero: true } } }
+        data: { labels: top8.map(c => c.text || '(empty)'), datasets: [
+            { label: 'Likes', data: top8.map(c => c.likes), backgroundColor: P[0], borderRadius: 5 },
+            { label: 'Dislikes', data: top8.map(c => c.dislikes), backgroundColor: P[3], borderRadius: 5 }
+        ] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: tickColor() } } }, scales: { x: { ticks: { color: tickColor(), maxRotation: 45 }, grid: { display: false } }, y: { ticks: { color: tickColor() }, grid: { color: 'rgba(148,163,184,.14)' } } } }
     });
 
-    buildLegend('leg-polar', users.map((u, i) => [`${u[0]} (${u[1].likes.toLocaleString('en-US')} likes)`, P[i % P.length]]));
+    buildLegend('leg-polar', users.map((u, i) => [`${u[0]} (${u[1].likes.toLocaleString()} likes)`, P[i % P.length]]));
     new Chart(document.getElementById('chartPolar'), {
         type: 'polarArea',
-        data: { labels: users.map(u => u[0]), datasets: [{ data: users.map(u => u[1].likes), backgroundColor: users.map((_, i) => P[i % P.length] + 'cc'), borderColor: users.map((_, i) => P[i % P.length]), borderWidth: 2 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { r: { ticks: { color: tickColor(), font: { size: 10 }, backdropColor: 'transparent' }, grid: { color: gridColor() } } } }
+        data: { labels: users.map(u => u[0]), datasets: [{ data: users.map(u => u[1].likes), backgroundColor: users.map((_, i) => P[i % P.length] + 'cc') }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { r: { ticks: { color: tickColor(), backdropColor: 'transparent' }, grid: { color: 'rgba(148,163,184,.14)' } } } }
     });
 })();
 </script>
-
-<!-- ══ Search + Table ════════════════════════════════════════════ -->
-<div class="row">
-    <div class="col-12 grid-margin stretch-card">
-        <div class="card">
-            <div class="card-body">
-                <form method="GET" class="row g-3 mb-4">
-                    <div class="col-md-3">
-                        <label class="form-label">Search by</label>
-                        <select name="searchType" class="form-control">
-                            <option value="">All comments</option>
-                            <option value="postId"    <?= $searchType === 'postId'    ? 'selected' : '' ?>>Post ID</option>
-                            <option value="commentId" <?= $searchType === 'commentId' ? 'selected' : '' ?>>Comment ID (show replies)</option>
-                            <option value="creator"   <?= $searchType === 'creator'   ? 'selected' : '' ?>>Creator</option>
-                        </select>
-                    </div>
-                    <div class="col-md-7">
-                        <label class="form-label">Keyword</label>
-                        <input type="text" name="keyword" class="form-control" value="<?= htmlspecialchars($keyword) ?>" placeholder="Enter post id, comment id, creator name, or creator id">
-                    </div>
-                    <div class="col-md-2 d-flex align-items-end gap-2">
-                        <button type="submit" class="btn btn-info w-100"><i class="mdi mdi-magnify"></i> Search</button>
-                        <a href="./index.php" class="btn btn-outline-light">Reset</a>
-                    </div>
-                </form>
-
-                <?php if ($searchType === 'postId' && $keyword !== '') : ?>
-                    <div class="alert alert-info mb-4" role="alert" style="border:1px solid rgba(139,92,246,.25);background:rgba(243,240,255,.9);color:#4c1d95;">
-                        Affichage des commentaires liés au post <strong>#<?= htmlspecialchars($keyword) ?></strong>.
-                    </div>
-                <?php endif; ?>
-
-                <?php if (empty($comments)) : ?>
-                    <div class="empty-state-admin">
-                        <h5>No comments found</h5>
-                        <p class="text-muted mb-0">Try another search or reset the filters.</p>
-                    </div>
-                <?php else : ?>
-                    <div class="table-responsive">
-                        <table class="table table-dark admin-table" id="commentsTable">
-                            <thead>
-                                <tr>
-                                    <th>Comment ID</th>
-                                    <th>Target Type</th>
-                                    <th>Target ID</th>
-                                    <th>Creator</th>
-                                    <th>Text</th>
-                                    <th>Sticker</th>
-                                    <th>Image</th>
-                                    <th>Likes</th>
-                                    <th>Dislikes</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="commentsTableBody">
-                            <?php foreach ($comments as $comment) : ?>
-                                <tr>
-                                    <td><?= htmlspecialchars($comment['id']) ?></td>
-                                    <td><?= htmlspecialchars($comment['commentedItem']) ?></td>
-                                    <td><?= htmlspecialchars($comment['idCommentedElement']) ?></td>
-                                    <td><?= htmlspecialchars($comment['userName'] ?? ('User #' . $comment['idUser'])) ?></td>
-                                    <td><?= htmlspecialchars(mb_strimwidth((string)($comment['text'] ?? ''), 0, 120, '...')) ?></td>
-                                    <td><?= htmlspecialchars($comment['Sticker'] ?? $comment['sticker'] ?? '') ?></td>
-                                    <td>
-                                        <?php if (!empty($comment['image'])) : ?>
-                                            <img src="../../public/<?= htmlspecialchars($comment['image']) ?>" alt="comment image" style="width:64px;height:64px;object-fit:cover;border-radius:8px;">
-                                        <?php else : ?>
-                                            <span class="badge badge-secondary">No image</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td><?= (int)($comment['numberOfLike']    ?? 0) ?></td>
-                                    <td><?= (int)($comment['numberOfDislike'] ?? 0) ?></td>
-                                    <td>
-                                        <?php if (($comment['commentedItem'] ?? '') === 'post') : ?>
-                                            <a href="../post/details.php?id=<?= urlencode($comment['idCommentedElement']) ?>" class="admin-action-btn admin-view-btn"><i class="mdi mdi-eye-outline"></i> Post</a>
-                                        <?php endif; ?>
-                                        <a href="./index.php?searchType=commentId&keyword=<?= urlencode($comment['id']) ?>" class="admin-action-btn admin-view-btn"><i class="mdi mdi-source-branch"></i> Replies</a>
-                                        <a href="./delete.php?id=<?= urlencode($comment['id']) ?>&searchType=<?= urlencode($searchType) ?>&keyword=<?= urlencode($keyword) ?>" class="admin-action-btn admin-delete-btn js-admin-delete"><i class="mdi mdi-delete-outline"></i> Delete</a>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div id="commentPaginationControls">
-                        <span class="pag-info" id="commentPagInfo"></span>
-                        <div class="d-flex align-items-center gap-3 flex-wrap">
-                            <div class="pag-select">
-                                <label for="commentPerPage">Rows per page:</label>
-                                <select id="commentPerPage"><option value="5">5</option><option value="10" selected>10</option><option value="25">25</option><option value="50">50</option></select>
-                            </div>
-                            <div class="pag-buttons" id="commentPagButtons"></div>
-                        </div>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-(function () {
-    const tbody = document.getElementById('commentsTableBody');
-    if (!tbody) return;
-    const allRows = Array.from(tbody.querySelectorAll('tr'));
-    const info = document.getElementById('commentPagInfo');
-    const buttons = document.getElementById('commentPagButtons');
-    const perSel = document.getElementById('commentPerPage');
-    let currentPage = 1;
-    let perPage = parseInt(perSel.value, 10);
-    function totalPages() { return Math.max(1, Math.ceil(allRows.length / perPage)); }
-    function render() {
-        const total = totalPages();
-        const start = (currentPage - 1) * perPage;
-        const end = Math.min(start + perPage, allRows.length);
-        allRows.forEach((row, i) => { row.style.display = (i >= start && i < end) ? '' : 'none'; });
-        info.textContent = `Showing ${allRows.length === 0 ? 0 : start + 1}–${end} of ${allRows.length} comments`;
-        buttons.innerHTML = '';
-        buttons.appendChild(makeBtn('‹', currentPage === 1, () => { currentPage--; render(); }));
-        pageRange(currentPage, total).forEach(p => {
-            if (p === '…') {
-                const el = document.createElement('span');
-                el.textContent = '…';
-                el.style.cssText = 'padding:0 4px;opacity:.4;font-size:13px;';
-                buttons.appendChild(el);
-            } else {
-                const btn = makeBtn(p, false, () => { currentPage = p; render(); });
-                if (p === currentPage) btn.classList.add('active');
-                buttons.appendChild(btn);
-            }
-        });
-        buttons.appendChild(makeBtn('›', currentPage === total, () => { currentPage++; render(); }));
-    }
-    function makeBtn(label, disabled, onClick) {
-        const btn = document.createElement('button');
-        btn.className = 'pag-btn';
-        btn.textContent = label;
-        btn.disabled = disabled;
-        btn.addEventListener('click', onClick);
-        return btn;
-    }
-    function pageRange(current, total) {
-        if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-        const pages = new Set([1, total, current, current - 1, current + 1]);
-        const sorted = [...pages].filter(p => p >= 1 && p <= total).sort((a, b) => a - b);
-        const result = [];
-        sorted.forEach((p, i) => { if (i > 0 && p - sorted[i - 1] > 1) result.push('…'); result.push(p); });
-        return result;
-    }
-    perSel.addEventListener('change', () => { perPage = parseInt(perSel.value, 10); currentPage = 1; render(); });
-    render();
-})();
-</script>
-
-        </div>
-    </div>
-    </div>
-</div>
-</div>
-<script src="../layout/back-layout.js<?= commentAssetVersion(__DIR__ . '/../layout/back-layout.js') ?>"></script>
+<script src="../layout/back-layout.js<?= community_comment_asset_version(__DIR__ . '/../layout/back-layout.js') ?>"></script>
+<script src="../community-center-admin.js<?= community_comment_asset_version(__DIR__ . '/../community-center-admin.js') ?>"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.js-admin-delete').forEach(function (button) {

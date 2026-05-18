@@ -17,25 +17,6 @@ if (!isset($sessionUser['id']) || !isBackOfficeRole(cc_current_user_role())) {
     exit;
 }
 
-$notificationController = $candidatureController;
-$notificationUserId = isset($sessionUser['id']) ? (int) $sessionUser['id'] : 0;
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['notificationAction'])) {
-    $notificationAction = (string) $_POST['notificationAction'];
-    if ($notificationAction === 'mark_one') {
-        $notificationController->markNotificationActionAsRead((int) ($_POST['idNotificationAction'] ?? 0), $notificationUserId);
-    } elseif ($notificationAction === 'mark_all') {
-        $notificationController->markAllNotificationActionsAsRead($notificationUserId);
-    }
-
-    $redirect = basename((string) ($_SERVER['SCRIPT_NAME'] ?? 'index.php'));
-    if (!empty($_SERVER['QUERY_STRING'])) {
-        $redirect .= '?' . $_SERVER['QUERY_STRING'];
-    }
-    header('Location: ' . $redirect);
-    exit;
-}
-
 $message = '';
 $searchKeyword = trim($_GET['keyword'] ?? '');
 $searchStatut = trim($_GET['statut'] ?? '');
@@ -129,6 +110,11 @@ function buildInspectUrl($offerId, array $filters)
     $query['idOffre'] = (int) $offerId;
 
     return 'index.php?' . http_build_query($query);
+}
+
+function adminPageUrl(array $base, int $page): string
+{
+    return 'index.php?' . http_build_query($base + ['page' => max(1, $page)]);
 }
 
 function renderOfferResponsesPanelHtml($offer, array $responses)
@@ -590,6 +576,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
     <link rel="stylesheet" href="../utilisateur/assets/vendors/mdi/css/materialdesignicons.min.css?v=<?php echo urlencode((string) (@filemtime(__DIR__ . '/../utilisateur/assets/vendors/mdi/css/materialdesignicons.min.css') ?: 0)); ?>">
     <link rel="stylesheet" href="../css/new_style_backoffice.css">
     <link rel="stylesheet" href="offre-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre-admin.css')); ?>">
+    <link rel="stylesheet" href="../unified-table-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../unified-table-admin.css')); ?>">
 
     <style>
         .collaboration-subnav {
@@ -727,7 +714,6 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                     <h1>Offer administration</h1>
                     <p>Track targeted offers, understand creator response behavior, and keep the collaboration pipeline visible for admins.</p>
                 </div>
-                <?php require __DIR__ . '/../condidature/notification_widget.php'; ?>
             </div>
         </header>
 
@@ -738,6 +724,51 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
         <?php elseif (isset($_GET['deleted'])): ?>
             <div class="admin-flash success">Offer deleted successfully.</div>
         <?php endif; ?>
+
+        <div class="admin-stats-toolbar">
+            <div>
+                <strong>Workspace statistics</strong>
+                <span>Live indicators and charts for collaboration activity.</span>
+            </div>
+            <button type="button" class="admin-stats-toggle" data-stats-toggle aria-expanded="true">Hide statistics</button>
+        </div>
+
+        <section class="admin-stats-region" data-stats-region>
+            <section class="admin-summary">
+                <article class="admin-card card card-body bo-kpi-card bo-kpi-card-1">
+                    <h3>Real offers</h3>
+                    <p><?php echo (int) ($adminOfferMetrics['realOffers'] ?? 0); ?></p>
+                    <small>Total targeted invitations</small>
+                </article>
+                <article class="admin-card card card-body bo-kpi-card bo-kpi-card-2">
+                    <h3>Real candidatures</h3>
+                    <p><?php echo (int) ($platformMetrics['realCandidatures'] ?? 0); ?></p>
+                    <small>Placeholders excluded</small>
+                </article>
+                <article class="admin-card card card-body bo-kpi-card bo-kpi-card-3">
+                    <h3>Pending reviews</h3>
+                    <p><?php echo (int) ($platformMetrics['pendingReviews'] ?? 0); ?></p>
+                    <small>Sent or under review</small>
+                </article>
+                <article class="admin-card card card-body bo-kpi-card bo-kpi-card-4">
+                    <h3>Open negotiations</h3>
+                    <p><?php echo (int) ($platformMetrics['openNegotiations'] ?? 0); ?></p>
+                    <small>Active negotiation candidatures</small>
+                </article>
+                <article class="admin-card card card-body bo-kpi-card bo-kpi-card-5">
+                    <h3>Expired offers</h3>
+                    <p><?php echo (int) ($adminOfferMetrics['expiredOffers'] ?? 0); ?></p>
+                    <small>Past deadline and not archived</small>
+                </article>
+                <article class="admin-card card card-body bo-kpi-card bo-kpi-card-6">
+                    <h3>Activity this week</h3>
+                    <p><?php echo (int) ($platformMetrics['activityThisWeek'] ?? 0); ?></p>
+                    <small><?php echo htmlspecialchars((string) ($platformMetrics['acceptanceRate'] ?? 0)); ?>% acceptance rate</small>
+                </article>
+            </section>
+
+            <?php require __DIR__ . '/../condidature/statistics_charts.php'; ?>
+        </section>
 
         <section class="card grid-margin search-panel search-panel-simple">
             <div class="search-panel-head">
@@ -812,43 +843,9 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
             </form>
         </section>
 
-        <section class="admin-summary">
-            <article class="admin-card card card-body bo-kpi-card bo-kpi-card-1">
-                <h3>Real offers</h3>
-                <p><?php echo (int) ($adminOfferMetrics['realOffers'] ?? 0); ?></p>
-                <small>Total targeted invitations</small>
-            </article>
-            <article class="admin-card card card-body bo-kpi-card bo-kpi-card-2">
-                <h3>Real candidatures</h3>
-                <p><?php echo (int) ($platformMetrics['realCandidatures'] ?? 0); ?></p>
-                <small>Placeholders excluded</small>
-            </article>
-            <article class="admin-card card card-body bo-kpi-card bo-kpi-card-3">
-                <h3>Pending reviews</h3>
-                <p><?php echo (int) ($platformMetrics['pendingReviews'] ?? 0); ?></p>
-                <small>Sent or under review</small>
-            </article>
-            <article class="admin-card card card-body bo-kpi-card bo-kpi-card-4">
-                <h3>Open negotiations</h3>
-                <p><?php echo (int) ($platformMetrics['openNegotiations'] ?? 0); ?></p>
-                <small>Active negotiation candidatures</small>
-            </article>
-            <article class="admin-card card card-body bo-kpi-card bo-kpi-card-5">
-                <h3>Expired offers</h3>
-                <p><?php echo (int) ($adminOfferMetrics['expiredOffers'] ?? 0); ?></p>
-                <small>Past deadline and not archived</small>
-            </article>
-            <article class="admin-card card card-body bo-kpi-card bo-kpi-card-6">
-                <h3>Activity this week</h3>
-                <p><?php echo (int) ($platformMetrics['activityThisWeek'] ?? 0); ?></p>
-                <small><?php echo htmlspecialchars((string) ($platformMetrics['acceptanceRate'] ?? 0)); ?>% acceptance rate</small>
-            </article>
-        </section>
-
-        <?php require __DIR__ . '/../condidature/statistics_charts.php'; ?>
-
-        <div class="admin-layout">
-            <section class="admin-panel admin-table-panel card grid-margin">
+        <div id="admin-results-region" class="admin-results-region">
+            <div class="admin-layout">
+                <section class="admin-panel admin-table-panel card grid-margin">
                 <div class="admin-panel-header">
                     <h2 class="card-title">Offer list</h2>
                 </div>
@@ -880,7 +877,13 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                             <tbody>
                                 <?php if (empty($offres)): ?>
                                     <tr>
-                                        <td colspan="8" style="padding: 1.5rem; text-align: center; color: #94a3b8;">No offers match the current filters.</td>
+                                        <td colspan="8">
+                                            <div class="admin-empty-state">
+                                                <div class="admin-empty-icon">i</div>
+                                                <strong>No records found</strong>
+                                                <span>Try changing filters or search terms.</span>
+                                            </div>
+                                        </td>
                                     </tr>
                                 <?php endif; ?>
 
@@ -954,40 +957,40 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                         <?php endforeach; ?>
                     </div>
                     <nav class="admin-pagination" aria-label="Offer pages">
-                        <span>Page <?php echo $page; ?> · Showing up to <?php echo $perPage; ?> offers</span>
-                        <div>
+                        <span class="admin-pagination-info">Page <?php echo $page; ?> of <?php echo $hasNextPage ? ($page + 1) . '+' : $page; ?></span>
+                        <div class="admin-page-list">
                             <?php if ($prevPageUrl !== ''): ?>
-                                <a class="btn btn-secondary btn-sm clear-link" href="<?php echo htmlspecialchars($prevPageUrl); ?>">Previous</a>
+                                <a class="admin-page-btn" href="<?php echo htmlspecialchars($prevPageUrl); ?>">&laquo;</a>
                             <?php else: ?>
-                                <span class="btn btn-secondary btn-sm clear-link is-disabled">Previous</span>
+                                <span class="admin-page-btn is-disabled">&laquo;</span>
                             <?php endif; ?>
+                            <?php
+                            $lastKnownPage = $hasNextPage ? $page + 1 : $page;
+                            $startPage = max(1, $page - 2);
+                            $endPage = max($lastKnownPage, min($lastKnownPage, $page + 2));
+                            if ($startPage > 1): ?>
+                                <a class="admin-page-btn" href="<?php echo htmlspecialchars(adminPageUrl($paginationBase, 1)); ?>">1</a>
+                                <?php if ($startPage > 2): ?><span class="admin-page-ellipsis">...</span><?php endif; ?>
+                            <?php endif; ?>
+                            <?php for ($pageNumber = $startPage; $pageNumber <= $endPage; $pageNumber++): ?>
+                                <?php if ($pageNumber === $page): ?>
+                                    <span class="admin-page-btn active"><?php echo $pageNumber; ?></span>
+                                <?php else: ?>
+                                    <a class="admin-page-btn" href="<?php echo htmlspecialchars(adminPageUrl($paginationBase, $pageNumber)); ?>"><?php echo $pageNumber; ?></a>
+                                <?php endif; ?>
+                            <?php endfor; ?>
+                            <?php if ($hasNextPage): ?><span class="admin-page-ellipsis">...</span><?php endif; ?>
                             <?php if ($nextPageUrl !== ''): ?>
-                                <a class="btn btn-primary btn-sm clear-link" href="<?php echo htmlspecialchars($nextPageUrl); ?>">Next</a>
+                                <a class="admin-page-btn" href="<?php echo htmlspecialchars($nextPageUrl); ?>">&raquo;</a>
                             <?php else: ?>
-                                <span class="btn btn-secondary btn-sm clear-link is-disabled">Next</span>
+                                <span class="admin-page-btn is-disabled">&raquo;</span>
                             <?php endif; ?>
                         </div>
                     </nav>
                 </div>
-            </section>
-
-            <aside class="admin-panel admin-details-panel card grid-margin">
-                <div class="admin-panel-header">
-                    <h2 class="card-title">Offer insights</h2>
-                </div>
-                <div class="admin-panel-body card-body admin-insights-body" id="offerInsightsBody">
-                    <?php echo renderOfferInsightsHtml(
-                        $selectedOffer,
-                        $selectedBrand,
-                        $selectedCreator,
-                        $selectedResponses,
-                        $selectedBreakdown,
-                        $selectedOfferOutsideFilters
-                    ); ?>
-                </div>
-            </aside>
+                </section>
+            </div>
         </div>
-    </div>
     </div>
     <dialog class="inspect-dialog" id="offerInspectDialog" aria-labelledby="offerInspectDialogTitle">
         <div class="inspect-dialog-card">
@@ -1200,7 +1203,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
             }
 
             async function loadInsights(url, row, options = {}) {
-                if (!insightsBody || !window.fetch) {
+                if (!window.fetch || (!insightsBody && !options.openModal)) {
                     window.location.href = url;
                     return;
                 }
@@ -1211,7 +1214,9 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
 
                 const ajaxUrl = new URL(url, window.location.href);
                 ajaxUrl.searchParams.set('ajax', 'insights');
-                insightsBody.classList.add('is-loading');
+                if (insightsBody) {
+                    insightsBody.classList.add('is-loading');
+                }
 
                 try {
                     const response = await fetch(ajaxUrl.toString(), {
@@ -1225,7 +1230,9 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                     }
 
                     const payload = await response.json();
-                    insightsBody.innerHTML = payload.html || '';
+                    if (insightsBody) {
+                        insightsBody.innerHTML = payload.html || '';
+                    }
                     if (payload.selectedId !== null && payload.selectedId !== undefined) {
                         setSelectedRow(payload.selectedId);
                     } else if (row) {
@@ -1254,7 +1261,9 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                     }
                     window.location.href = url;
                 } finally {
-                    insightsBody.classList.remove('is-loading');
+                    if (insightsBody) {
+                        insightsBody.classList.remove('is-loading');
+                    }
                 }
             }
 
@@ -1298,6 +1307,17 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                 });
             });
 
+            document.addEventListener('click', (event) => {
+                const trigger = event.target.closest('[data-offer-responses-trigger]');
+                if (!trigger || Array.prototype.includes.call(responseTriggers, trigger)) {
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+                openResponsesDialog(trigger);
+            });
+
             if (inspectDialog) {
                 inspectDialog.addEventListener('click', (event) => {
                     if (event.target === inspectDialog || event.target.closest('[data-close-inspect-dialog]')) {
@@ -1332,17 +1352,109 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                 dashboardObserver.observe(detailsPanel);
             }
         })();
+
+        (() => {
+            const selector = '#admin-results-region';
+            const getRegion = () => document.querySelector(selector);
+
+            if (!window.fetch || !window.DOMParser || !window.history || !getRegion()) {
+                return;
+            }
+
+            const replaceRegion = async (url, pushState = true) => {
+                const currentRegion = getRegion();
+                if (!currentRegion) {
+                    window.location.href = url;
+                    return;
+                }
+
+                currentRegion.classList.add('is-loading');
+
+                try {
+                    const response = await fetch(url, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Unable to load results.');
+                    }
+
+                    const html = await response.text();
+                    const doc = new DOMParser().parseFromString(html, 'text/html');
+                    const nextRegion = doc.querySelector(selector);
+
+                    if (!nextRegion) {
+                        throw new Error('Results region missing.');
+                    }
+
+                    currentRegion.replaceWith(nextRegion);
+                    if (pushState) {
+                        window.history.pushState({ adminResultsUrl: url }, '', url);
+                    }
+                    window.dispatchEvent(new Event('resize'));
+                } catch (error) {
+                    window.location.href = url;
+                } finally {
+                    const activeRegion = getRegion();
+                    if (activeRegion) {
+                        activeRegion.classList.remove('is-loading');
+                    }
+                }
+            };
+
+            document.addEventListener('click', (event) => {
+                const link = event.target.closest(`${selector} .admin-pagination a.admin-page-btn`);
+                if (!link || event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                    return;
+                }
+
+                const url = link.href;
+                if (!url) {
+                    return;
+                }
+
+                event.preventDefault();
+                replaceRegion(url);
+            });
+
+            window.addEventListener('popstate', () => {
+                replaceRegion(window.location.href, false);
+            });
+        })();
+
+        (() => {
+            const region = document.querySelector('[data-stats-region]');
+            const toggle = document.querySelector('[data-stats-toggle]');
+            if (!region || !toggle) {
+                return;
+            }
+
+            const key = 'cre8_bo_stats_visible';
+            const setVisible = (visible) => {
+                region.hidden = !visible;
+                toggle.textContent = visible ? 'Hide statistics' : 'Show statistics';
+                toggle.setAttribute('aria-expanded', visible ? 'true' : 'false');
+                if (visible) {
+                    window.dispatchEvent(new Event('resize'));
+                }
+            };
+
+            let visible = true;
+            try {
+                visible = localStorage.getItem(key) !== '0';
+            } catch (error) {}
+
+            setVisible(visible);
+            toggle.addEventListener('click', () => {
+                visible = region.hidden;
+                try {
+                    localStorage.setItem(key, visible ? '1' : '0');
+                } catch (error) {}
+                setVisible(visible);
+            });
+        })();
     </script>
-<?php
-$cre8PilotContext = [
-    'page' => 'admin_offer_workspace',
-    'mode' => 'table',
-    'role' => 'admin',
-    'allowedActions' => ['normal_chat', 'summarize_page', 'analyze_page', 'explain_statistics', 'detect_risky_items', 'explain_statuses', 'recommend_next_action', 'apply_filters', 'apply_search', 'sort_results'],
-    'formTarget' => 'filter_form',
-    'visibleEntityType' => 'offre',
-];
-require __DIR__ . '/../../FrontOffice/condidature/cre8pilot_widget.php';
-?>
 </body>
 </html>
