@@ -90,6 +90,27 @@ foreach ($users as $user) {
 // ✅ utilisateur reconnu
 if ($bestUser && $bestDist < 0.75) {
 
+    $normalizedRole = cre8_normalize_login_role($bestUser['role'] ?? '');
+    $bestUser['role'] = $normalizedRole;
+
+    if ($bestUser['statut'] === 'suspendu') {
+        unset($_SESSION['connected'], $_SESSION['id'], $_SESSION['nom'], $_SESSION['email'], $_SESSION['role'], $_SESSION['user'], $_SESSION['utilisateur']);
+        $_SESSION['suspended_appeal'] = [
+            'id' => (int) $bestUser['id'],
+            'role' => $normalizedRole,
+            'nom' => $bestUser['nom'] ?? '',
+            'email' => $bestUser['email'] ?? '',
+            'statut' => 'suspendu',
+        ];
+
+        echo json_encode([
+            "success" => true,
+            "redirect" => cre8_login_url('Vue/FrontOffice/utilisateur/reclamation.php?appeal=1'),
+            "distance" => $bestDist
+        ]);
+        exit();
+    }
+
     if ($bestUser['statut'] !== 'actif') {
         echo json_encode([
             "success" => false,
@@ -99,9 +120,7 @@ if ($bestUser && $bestDist < 0.75) {
     }
 
     // Real login session: keep the same shape as the normal form login.
-    $normalizedRole = cre8_normalize_login_role($bestUser['role'] ?? '');
-    $bestUser['role'] = $normalizedRole;
-
+    unset($_SESSION['suspended_appeal']);
     $_SESSION['connected'] = true;
     $_SESSION['id'] = (int) $bestUser['id'];
     $_SESSION['role'] = $normalizedRole;

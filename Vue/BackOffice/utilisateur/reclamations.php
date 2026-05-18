@@ -1,8 +1,11 @@
 <?php
 session_start();
 require_once __DIR__ . '/../layout/early-theme.php';
+require_once '../../../Controleur/session_helper.php';
 require_once '../../../Controleur/reclamationC.php';
 
+cc_require_admin('../../FrontOffice/utilisateur/login.php');
+$viewerRole = cc_current_user_role();
 $reclamationC = new ReclamationC();
 
 // Récupérer les paramètres de recherche et tri
@@ -40,20 +43,16 @@ if (!function_exists('cre8_bo_priority_label')) {
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $limit = 4; // Records per page
 
-$result = $reclamationC->afficherReclamationsAdmin($search, $priorite, $page, $limit);
+$result = $reclamationC->afficherReclamationsAdmin($search, $priorite, $page, $limit, $viewerRole);
 $stmt = is_array($result) && isset($result['stmt']) ? $result['stmt'] : false;
 $liste = $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
 $totalReclamations = is_array($result) && isset($result['total']) ? intval($result['total']) : 0;
 $totalPages = is_array($result) && isset($result['totalPages']) ? max(1, intval($result['totalPages'])) : 1;
 $currentPage = is_array($result) && isset($result['page']) ? max(1, intval($result['page'])) : 1;
 
-$stats = $reclamationC->statistiques();
-$statusTimeline = $reclamationC->getReclamationStatusTimeline(14);
-$priorityTimeline = $reclamationC->getReclamationPriorityTimeline(14);
-$statusTimeline = $reclamationC->getReclamationStatusTimeline(14);
-$priorityTimeline = $reclamationC->getReclamationPriorityTimeline(14);
-$statusTimeline = $reclamationC->getReclamationStatusTimeline(14);
-$priorityTimeline = $reclamationC->getReclamationPriorityTimeline(14);
+$stats = $reclamationC->statistiques($viewerRole);
+$statusTimeline = $reclamationC->getReclamationStatusTimeline(14, $viewerRole);
+$priorityTimeline = $reclamationC->getReclamationPriorityTimeline(14, $viewerRole);
 
 // Calculate priority statistics
 $haute = 0;
@@ -489,7 +488,12 @@ foreach ($liste as $rec) {
                         <?php foreach ($liste as $rec): ?>
                           <tr>
                             <td><?php echo $rec['id']; ?></td>
-                            <td><?php echo $rec['nom']; ?></td>
+                            <td>
+                              <?php echo htmlspecialchars($rec['nom']); ?>
+                              <?php if (!empty($rec['complainant_role'])): ?>
+                                <span class="badge bg-secondary ms-1"><?php echo htmlspecialchars($rec['complainant_role']); ?></span>
+                              <?php endif; ?>
+                            </td>
                             <td><?php echo $rec['description']; ?></td>
                             <td><?php echo $rec['date_creation']; ?></td>
                             <td><?php echo htmlspecialchars(cre8_bo_priority_label($rec['priorite'] ?? '')); ?></td>

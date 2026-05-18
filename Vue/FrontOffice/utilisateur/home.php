@@ -7,6 +7,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+cc_enforce_active_normal_session('login.php');
+
 function cre8_home_normalize_role_compat($role)
 {
     $role = strtolower(trim((string) $role));

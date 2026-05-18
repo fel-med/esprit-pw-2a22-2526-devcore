@@ -171,6 +171,194 @@ if (!function_exists('cc_can_reactivate_suspension')) {
     }
 }
 
+if (!function_exists('cc_can_view_reclamation_from_role')) {
+    function cc_can_view_reclamation_from_role($viewerRole, $complainantRole): bool
+    {
+        $viewerRole = strtolower(trim((string)$viewerRole));
+        $complainantRole = strtolower(trim((string)$complainantRole));
+
+        if (in_array($complainantRole, ['createur', 'marque'], true)) {
+            return in_array($viewerRole, ['admin', 'super_admin', 'hyper_admin'], true);
+        }
+
+        if ($complainantRole === 'admin') {
+            return in_array($viewerRole, ['super_admin', 'hyper_admin'], true);
+        }
+
+        if ($complainantRole === 'super_admin') {
+            return $viewerRole === 'hyper_admin';
+        }
+
+        if ($complainantRole === 'hyper_admin') {
+            return $viewerRole === 'hyper_admin';
+        }
+
+        return false;
+    }
+}
+
+if (!function_exists('cc_is_suspended_appeal_session')) {
+    function cc_is_suspended_appeal_session(): bool
+    {
+        cc_start_session();
+        $appealUser = $_SESSION['suspended_appeal'] ?? null;
+
+        return is_array($appealUser)
+            && strtolower(trim((string)($appealUser['statut'] ?? ''))) === 'suspendu'
+            && isset($appealUser['id'])
+            && is_numeric($appealUser['id'])
+            && (int)$appealUser['id'] > 0;
+    }
+}
+
+if (!function_exists('cc_suspended_appeal_user')) {
+    function cc_suspended_appeal_user(): ?array
+    {
+        return cc_is_suspended_appeal_session() ? $_SESSION['suspended_appeal'] : null;
+    }
+}
+
+if (!function_exists('cc_current_reclamation_user_id')) {
+    function cc_current_reclamation_user_id(): ?int
+    {
+        if (cc_is_suspended_appeal_session()) {
+            return (int)$_SESSION['suspended_appeal']['id'];
+        }
+
+        return cc_current_user_id();
+    }
+}
+
+if (!function_exists('cc_current_reclamation_user_role')) {
+    function cc_current_reclamation_user_role(): ?string
+    {
+        if (cc_is_suspended_appeal_session()) {
+            return strtolower(trim((string)($_SESSION['suspended_appeal']['role'] ?? '')));
+        }
+
+        $role = cc_current_user_role();
+        return $role !== '' ? $role : null;
+    }
+}
+
+if (!function_exists('cc_project_base_url')) {
+    function cc_project_base_url(): string
+    {
+        $script = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
+
+        foreach (['/Vue/FrontOffice/', '/Vue/BackOffice/', '/Controleur/'] as $marker) {
+            $pos = strpos($script, $marker);
+            if ($pos !== false) {
+                return substr($script, 0, $pos);
+            }
+        }
+
+        return '';
+    }
+}
+
+if (!function_exists('cc_app_url')) {
+    function cc_app_url(string $path): string
+    {
+        return rtrim(cc_project_base_url(), '/') . '/' . ltrim($path, '/');
+    }
+}
+
+if (!function_exists('cc_clear_normal_auth_session')) {
+    function cc_clear_normal_auth_session(bool $clearAppeal = false): void
+    {
+        unset(
+            $_SESSION['connected'],
+            $_SESSION['id'],
+            $_SESSION['nom'],
+            $_SESSION['email'],
+            $_SESSION['role'],
+            $_SESSION['user'],
+            $_SESSION['utilisateur']
+        );
+
+        if ($clearAppeal) {
+            unset($_SESSION['suspended_appeal']);
+        }
+    }
+}
+
+if (!function_exists('cc_fetch_session_user')) {
+    function cc_fetch_session_user(int $userId): ?array
+    {
+        if ($userId <= 0) {
+            return null;
+        }
+
+        require_once __DIR__ . '/../config.php';
+
+        try {
+            $db = config::getConnexion();
+            $stmt = $db->prepare("
+                SELECT id, nom, email, role, statut
+                FROM utilisateur
+                WHERE id = ?
+                LIMIT 1
+            ");
+            $stmt->execute([$userId]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            return $user ?: null;
+        } catch (Throwable $e) {
+            return null;
+        }
+    }
+}
+
+if (!function_exists('cc_enforce_active_normal_session')) {
+    function cc_enforce_active_normal_session(string $loginRedirectPath = '../utilisateur/login.php'): void
+    {
+        cc_start_session();
+
+        if (cc_is_suspended_appeal_session()) {
+            return;
+        }
+
+        $sessionId = $_SESSION['id']
+            ?? ($_SESSION['user']['id'] ?? null)
+            ?? ($_SESSION['utilisateur']['id'] ?? null);
+
+        if (!is_numeric($sessionId) || (int)$sessionId <= 0) {
+            return;
+        }
+
+        $user = cc_fetch_session_user((int)$sessionId);
+        if (!$user) {
+            cc_clear_normal_auth_session(true);
+            header('Location: ' . $loginRedirectPath);
+            exit;
+        }
+
+        $status = strtolower(trim((string)($user['statut'] ?? '')));
+        if ($status === 'actif') {
+            return;
+        }
+
+        if ($status === 'suspendu') {
+            cc_clear_normal_auth_session(false);
+            $_SESSION['suspended_appeal'] = [
+                'id' => (int)$user['id'],
+                'role' => strtolower(trim((string)($user['role'] ?? ''))),
+                'nom' => $user['nom'] ?? '',
+                'email' => $user['email'] ?? '',
+                'statut' => 'suspendu',
+            ];
+
+            header('Location: ' . cc_app_url('Vue/FrontOffice/utilisateur/reclamation.php?appeal=1'));
+            exit;
+        }
+
+        cc_clear_normal_auth_session(true);
+        header('Location: ' . $loginRedirectPath . (str_contains($loginRedirectPath, '?') ? '&' : '?') . 'error=account_inactive');
+        exit;
+    }
+}
+
 if (!function_exists('isSuperAdminRole')) {
     function isSuperAdminRole($role): bool
     {
@@ -224,6 +412,12 @@ if (!function_exists('cc_require_login')) {
 
         $userId = cc_current_user_id();
         if ($userId !== null) {
+            cc_enforce_active_normal_session($redirectPath);
+            $userId = cc_current_user_id();
+            if ($userId === null) {
+                header('Location: ' . $redirectPath);
+                exit;
+            }
             // Normalise older sessions created before this integration.
             $_SESSION['connected'] = true;
             return $userId;

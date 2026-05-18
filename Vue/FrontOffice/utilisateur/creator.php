@@ -3,6 +3,8 @@ require_once __DIR__ . '/../layout/session_bridge.php';
 require_once __DIR__ . '/../../../Controleur/session_helper.php';
 require_once __DIR__ . '/../../../Controleur/profileC.php';
 
+cc_enforce_active_normal_session('login.php');
+
 $currentFrontUser = cre8_front_session_user();
 
 if (empty($currentFrontUser['isLoggedIn'])) {

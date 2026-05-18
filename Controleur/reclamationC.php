@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../Modele/reclamation.php';
+require_once __DIR__ . '/session_helper.php';
 
 
 class ReclamationC {
@@ -60,18 +61,27 @@ public function modifierReclamation($id, $description, $priorite) {
         'priorite' => $priorite
     ]);
 }
-public function statistiques() {
+public function statistiques($viewerRole = null) {
     $sql = "SELECT 
                 COUNT(*) AS total,
-                SUM(statut = 'en_attente') AS en_attente,
-                SUM(statut = 'traitee') AS traitee,
-                SUM(priorite IN ('haute', 'high')) AS haute,
-                SUM(priorite IN ('normale', 'normal', 'moyenne', 'medium')) AS normale,
-                SUM(priorite IN ('faible', 'low', 'basse')) AS faible
-            FROM reclamation";
+                SUM(r.statut = 'en_attente') AS en_attente,
+                SUM(r.statut = 'traitee') AS traitee,
+                SUM(r.priorite IN ('haute', 'high')) AS haute,
+                SUM(r.priorite IN ('normale', 'normal', 'moyenne', 'medium')) AS normale,
+                SUM(r.priorite IN ('faible', 'low', 'basse')) AS faible
+            FROM reclamation r";
+
+    $roleParams = [];
+    if ($viewerRole !== null && $viewerRole !== '') {
+        $sql .= " JOIN utilisateur u ON r.idUtilisateur = u.id WHERE 1=1";
+        $roleParams = $this->appendViewerRoleFilter($sql, $viewerRole);
+    }
 
     $db = config::getConnexion();
-    $stats = $db->query($sql)->fetch(PDO::FETCH_ASSOC);
+    $stmt = $db->prepare($sql);
+    $this->bindNamedParams($stmt, $roleParams);
+    $stmt->execute();
+    $stats = $stmt->fetch(PDO::FETCH_ASSOC);
     $stats['moyenne'] = $stats['normale'] ?? 0; // backward-compatible key for old views
     $stats['basse'] = $stats['faible'] ?? 0;    // backward-compatible key for old views
     return $stats;
@@ -85,18 +95,30 @@ private function generateTimelineDates(int $days): array {
     return $dates;
 }
 
-public function getReclamationStatusTimeline(int $days = 14): array {
-    $sql = "SELECT DATE(date_creation) AS day,
-                   SUM(statut = 'en_attente') AS en_attente,
-                   SUM(statut = 'traitee') AS traitee
-            FROM reclamation
-            WHERE date_creation >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
-            GROUP BY DATE(date_creation)
-            ORDER BY DATE(date_creation)";
+public function getReclamationStatusTimeline(int $days = 14, $viewerRole = null): array {
+    $sql = "SELECT DATE(r.date_creation) AS day,
+                   SUM(r.statut = 'en_attente') AS en_attente,
+                   SUM(r.statut = 'traitee') AS traitee
+            FROM reclamation r";
+
+    $roleParams = [];
+    if ($viewerRole !== null && $viewerRole !== '') {
+        $sql .= " JOIN utilisateur u ON r.idUtilisateur = u.id";
+    }
+
+    $sql .= " WHERE r.date_creation >= DATE_SUB(CURDATE(), INTERVAL :days DAY)";
+    if ($viewerRole !== null && $viewerRole !== '') {
+        $roleParams = $this->appendViewerRoleFilter($sql, $viewerRole);
+    }
+
+    $sql .= "
+            GROUP BY DATE(r.date_creation)
+            ORDER BY DATE(r.date_creation)";
 
     $db = config::getConnexion();
     $stmt = $db->prepare($sql);
     $stmt->bindValue(':days', $days - 1, PDO::PARAM_INT);
+    $this->bindNamedParams($stmt, $roleParams);
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -123,19 +145,31 @@ public function getReclamationStatusTimeline(int $days = 14): array {
     return $timeline;
 }
 
-public function getReclamationPriorityTimeline(int $days = 14): array {
-    $sql = "SELECT DATE(date_creation) AS day,
-                   SUM(priorite IN ('haute', 'high')) AS haute,
-                   SUM(priorite IN ('normale', 'normal', 'moyenne', 'medium')) AS normale,
-                   SUM(priorite IN ('faible', 'low', 'basse')) AS faible
-            FROM reclamation
-            WHERE date_creation >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
-            GROUP BY DATE(date_creation)
-            ORDER BY DATE(date_creation)";
+public function getReclamationPriorityTimeline(int $days = 14, $viewerRole = null): array {
+    $sql = "SELECT DATE(r.date_creation) AS day,
+                   SUM(r.priorite IN ('haute', 'high')) AS haute,
+                   SUM(r.priorite IN ('normale', 'normal', 'moyenne', 'medium')) AS normale,
+                   SUM(r.priorite IN ('faible', 'low', 'basse')) AS faible
+            FROM reclamation r";
+
+    $roleParams = [];
+    if ($viewerRole !== null && $viewerRole !== '') {
+        $sql .= " JOIN utilisateur u ON r.idUtilisateur = u.id";
+    }
+
+    $sql .= " WHERE r.date_creation >= DATE_SUB(CURDATE(), INTERVAL :days DAY)";
+    if ($viewerRole !== null && $viewerRole !== '') {
+        $roleParams = $this->appendViewerRoleFilter($sql, $viewerRole);
+    }
+
+    $sql .= "
+            GROUP BY DATE(r.date_creation)
+            ORDER BY DATE(r.date_creation)";
 
     $db = config::getConnexion();
     $stmt = $db->prepare($sql);
     $stmt->bindValue(':days', $days - 1, PDO::PARAM_INT);
+    $this->bindNamedParams($stmt, $roleParams);
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -215,7 +249,77 @@ private function bindPriorityParams(PDOStatement $stmt, array $priorityParams): 
     }
 }
 
-public function afficherReclamationsAdmin($search = '', $priorite = '', $page = 1, $limit = 10) {
+private function bindNamedParams(PDOStatement $stmt, array $params): void {
+    foreach ($params as $paramName => $value) {
+        $stmt->bindValue($paramName, $value);
+    }
+}
+
+private function allowedComplainantRoles($viewerRole): ?array {
+    $viewerRole = strtolower(trim((string) $viewerRole));
+
+    if ($viewerRole === '') {
+        return null;
+    }
+
+    if ($viewerRole === 'admin') {
+        return ['createur', 'marque'];
+    }
+
+    if ($viewerRole === 'super_admin') {
+        return ['createur', 'marque', 'admin'];
+    }
+
+    if ($viewerRole === 'hyper_admin') {
+        return ['createur', 'marque', 'admin', 'super_admin'];
+    }
+
+    return [];
+}
+
+private function appendViewerRoleFilter(string &$sql, $viewerRole, string $alias = 'u'): array {
+    $roles = $this->allowedComplainantRoles($viewerRole);
+
+    if ($roles === null) {
+        return [];
+    }
+
+    if (empty($roles)) {
+        $sql .= " AND 1=0";
+        return [];
+    }
+
+    $params = [];
+    $placeholders = [];
+    foreach ($roles as $index => $role) {
+        $paramName = ':viewer_role_' . $index;
+        $placeholders[] = $paramName;
+        $params[$paramName] = $role;
+    }
+
+    $sql .= " AND {$alias}.role IN (" . implode(', ', $placeholders) . ")";
+    return $params;
+}
+
+public function getReclamationWithUserById($id) {
+    $sql = "SELECT
+                r.*,
+                u.id AS complainant_id,
+                u.role AS complainant_role,
+                u.nom AS complainant_nom,
+                u.email AS complainant_email
+            FROM reclamation r
+            JOIN utilisateur u ON r.idUtilisateur = u.id
+            WHERE r.id = :id
+            LIMIT 1";
+
+    $db = config::getConnexion();
+    $req = $db->prepare($sql);
+    $req->execute(['id' => (int) $id]);
+    return $req->fetch(PDO::FETCH_ASSOC);
+}
+
+public function afficherReclamationsAdmin($search = '', $priorite = '', $page = 1, $limit = 10, $viewerRole = null) {
     $priorityValues = $this->normalizePriorityValues($priorite);
 
     $sql = "SELECT 
@@ -225,6 +329,9 @@ public function afficherReclamationsAdmin($search = '', $priorite = '', $page = 
                 r.date_creation,
                 r.statut,
                 r.priorite,
+                u.id AS complainant_id,
+                u.role AS complainant_role,
+                u.email AS complainant_email,
                 rep.contenu AS reponse,
                 rep.date_reponse
             FROM reclamation r
@@ -237,6 +344,7 @@ public function afficherReclamationsAdmin($search = '', $priorite = '', $page = 
     }
 
     $priorityParams = $this->appendPriorityFilter($sql, $priorityValues);
+    $roleParams = $this->appendViewerRoleFilter($sql, $viewerRole);
 
     $sql .= " ORDER BY r.date_creation DESC";
 
@@ -250,6 +358,7 @@ public function afficherReclamationsAdmin($search = '', $priorite = '', $page = 
             $stmt->bindValue(':search', $searchTerm);
         }
         $this->bindPriorityParams($stmt, $priorityParams);
+        $this->bindNamedParams($stmt, $roleParams);
         $stmt->execute();
         return $stmt;
     }
@@ -265,6 +374,7 @@ public function afficherReclamationsAdmin($search = '', $priorite = '', $page = 
     }
 
     $countPriorityParams = $this->appendPriorityFilter($countSql, $priorityValues);
+    $countRoleParams = $this->appendViewerRoleFilter($countSql, $viewerRole);
 
     $countStmt = $db->prepare($countSql);
 
@@ -274,6 +384,7 @@ public function afficherReclamationsAdmin($search = '', $priorite = '', $page = 
     }
 
     $this->bindPriorityParams($countStmt, $countPriorityParams);
+    $this->bindNamedParams($countStmt, $countRoleParams);
 
     $countStmt->execute();
     $totalRecords = intval($countStmt->fetchColumn());
@@ -289,6 +400,7 @@ public function afficherReclamationsAdmin($search = '', $priorite = '', $page = 
     }
 
     $this->bindPriorityParams($stmt, $priorityParams);
+    $this->bindNamedParams($stmt, $roleParams);
 
     $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
     $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);

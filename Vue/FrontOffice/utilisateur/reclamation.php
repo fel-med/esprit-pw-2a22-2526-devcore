@@ -1,14 +1,18 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['id'])) {
+require_once '../../../Controleur/session_helper.php';
+require_once '../../../Controleur/reclamationC.php';
+
+$isSuspendedAppeal = cc_is_suspended_appeal_session();
+$currentReclamationUserId = cc_current_reclamation_user_id();
+
+if ($currentReclamationUserId === null) {
     die("User not connected");
 }
 
-require_once '../../../Controleur/reclamationC.php';
-
 $reclamationC = new ReclamationC();
-$liste = $reclamationC->afficherReclamationsAvecReponsesUser($_SESSION['id']);
+$liste = $reclamationC->afficherReclamationsAvecReponsesUser($currentReclamationUserId);
 $frontActive = 'reclamation';
 ?>
 <html lang="en">
@@ -249,16 +253,20 @@ $frontActive = 'reclamation';
 
 <body class="d-flex flex-column h-100 bg-light">
     <main class="flex-shrink-0">
-        <?php require_once __DIR__ . '/../layout/header.php'; ?>
+        <?php if (!$isSuspendedAppeal) { require_once __DIR__ . '/../layout/header.php'; } ?>
         <div class="front-reclamation-page">
         <!-- Projects Section-->
         <section class="py-5 reclamation-form-section">
             <div class="container px-5 mb-5 front-reclamation-shell">
                 <div class="text-center mb-5 reclamation-hero">
                     <h1 class="display-5 fw-bolder mb-0">
-                        <span class="text-gradient d-inline" data-i18n="account.submitComplaint">Submit a complaint</span>
+                        <span class="text-gradient d-inline" data-i18n="<?php echo $isSuspendedAppeal ? 'account.suspensionAppealTitle' : 'account.submitComplaint'; ?>">
+                            <?php echo $isSuspendedAppeal ? 'Suspension appeal' : 'Submit a complaint'; ?>
+                        </span>
                     </h1>
-                    <p class="reclamation-hero-copy" data-i18n="account.complaintHeroCopy">Tell us what happened so the Cre8Connect team can help you clearly.</p>
+                    <p class="reclamation-hero-copy" data-i18n="<?php echo $isSuspendedAppeal ? 'account.suspensionAppealCopy' : 'account.complaintHeroCopy'; ?>">
+                        <?php echo $isSuspendedAppeal ? 'Your account is suspended. You can submit a complaint to request a review.' : 'Tell us what happened so the Cre8Connect team can help you clearly.'; ?>
+                    </p>
                 </div>
 
                 <div class="row justify-content-center">
@@ -469,6 +477,8 @@ $frontActive = 'reclamation';
         const cre8ComplaintTranslations = {
             en: {
                 'account.submitComplaint': 'Submit a complaint',
+                'account.suspensionAppealTitle': 'Suspension appeal',
+                'account.suspensionAppealCopy': 'Your account is suspended. You can submit a complaint to request a review.',
                 'account.description': 'Description',
                 'account.descriptionPlaceholder': 'Describe your problem...',
                 'account.priority': 'Priority',
@@ -493,6 +503,8 @@ $frontActive = 'reclamation';
             },
             fr: {
                 'account.submitComplaint': 'Envoyer une reclamation',
+                'account.suspensionAppealTitle': 'Recours de suspension',
+                'account.suspensionAppealCopy': 'Votre compte est suspendu. Vous pouvez envoyer une reclamation pour demander une revue.',
                 'account.description': 'Description',
                 'account.descriptionPlaceholder': 'Decrivez votre probleme...',
                 'account.priority': 'Priorite',

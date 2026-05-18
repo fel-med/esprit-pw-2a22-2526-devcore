@@ -583,23 +583,38 @@ public function login($email, $password) {
            ->execute([$hashed, $user['id']]);
     }
 
-    if ($user['statut'] != 'actif') {
-
-        return "Compte non actif";
-    }
-
     // SESSION
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
 
+    $normalizedRole = $this->normalizeRole($user['role'] ?? '');
+    $user['role'] = $normalizedRole;
+
+    if ($user['statut'] === 'suspendu') {
+        unset($_SESSION['connected'], $_SESSION['id'], $_SESSION['nom'], $_SESSION['email'], $_SESSION['role'], $_SESSION['user'], $_SESSION['utilisateur']);
+        $_SESSION['suspended_appeal'] = [
+            'id' => (int) $user['id'],
+            'role' => $normalizedRole,
+            'nom' => $user['nom'] ?? '',
+            'email' => $user['email'] ?? '',
+            'statut' => 'suspendu',
+        ];
+
+        session_write_close();
+        header('Location: ' . $this->appUrl('Vue/FrontOffice/utilisateur/reclamation.php?appeal=1'));
+        exit();
+    }
+
+    if ($user['statut'] != 'actif') {
+        return "Compte non actif";
+    }
+
+    unset($_SESSION['suspended_appeal']);
     $_SESSION['connected'] = true;
     $_SESSION['id'] = $user['id'];
     $_SESSION['nom'] = $user['nom'];
     $_SESSION['email'] = $user['email'] ?? '';
-    $normalizedRole = $this->normalizeRole($user['role'] ?? '');
-    $user['role'] = $normalizedRole;
-
     $_SESSION['role'] = $normalizedRole;
     $_SESSION['user'] = $user;
 
