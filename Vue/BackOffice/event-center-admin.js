@@ -9,9 +9,12 @@
     const button = panel.querySelector("[data-ec-stats-toggle]");
     panel.classList.toggle("is-collapsed", !visible);
     if (button) {
-      const hide = button.getAttribute("data-label-hide") || "Hide statistics";
-      const show = button.getAttribute("data-label-show") || "Show statistics";
-      button.textContent = visible ? hide : show;
+      button.setAttribute("data-i18n", visible ? "common.hideStatistics" : "common.showStatistics");
+      if (window.cre8BackApplyTranslations) {
+        window.cre8BackApplyTranslations();
+      } else {
+        button.textContent = visible ? "Hide statistics" : "Show statistics";
+      }
     }
   }
 
@@ -52,11 +55,15 @@
         if (!nextRegion) throw new Error("Missing result region");
         region.replaceWith(nextRegion);
         if (push) history.pushState({ ecAjax: true }, "", url);
+        setupStatsToggle();
+        if (window.cre8BackApplyTranslations) window.cre8BackApplyTranslations();
+        window.dispatchEvent(new Event("resize"));
       })
       .catch(() => { window.location.href = url; })
       .finally(() => {
         const next = getRegion();
         if (next) next.classList.remove("is-loading");
+        if (window.cre8BackApplyTranslations) window.cre8BackApplyTranslations();
       });
   }
 
@@ -71,6 +78,11 @@
 
   window.addEventListener("popstate", () => {
     if (getRegion()) replaceResultsFromUrl(window.location.href, false);
+  });
+
+  window.addEventListener("cre8:languagechange", () => {
+    document.querySelectorAll("[data-ec-stats]").forEach(applyStatsState);
+    if (window.cre8BackApplyTranslations) window.cre8BackApplyTranslations();
   });
 
   if (document.readyState === "loading") {

@@ -46,6 +46,37 @@ function admin_management_role_label(string $role): string
     };
 }
 
+
+function admin_management_role_i18n_key(string $role): string
+{
+    return match (strtolower(trim($role))) {
+        'hyper_admin' => 'adminManagement.role.hyperAdmin',
+        'super_admin' => 'adminManagement.role.superAdmin',
+        'admin' => 'adminManagement.role.admin',
+        default => 'adminManagement.role.other',
+    };
+}
+
+function admin_management_flash_key(string $message): ?string
+{
+    return match ($message) {
+        'Name is required.' => 'adminManagement.flash.nameRequired',
+        'A valid email is required.' => 'adminManagement.flash.emailRequired',
+        'Password must contain at least 6 characters.' => 'adminManagement.flash.passwordRequired',
+        'You are not allowed to create this role.' => 'adminManagement.flash.createRoleDenied',
+        'Account created successfully.' => 'adminManagement.flash.created',
+        'Target account was not found.' => 'adminManagement.flash.targetNotFound',
+        'You are not allowed to perform this action.' => 'adminManagement.flash.actionDenied',
+        'Only active accounts can be suspended.' => 'adminManagement.flash.activeOnly',
+        'You are not allowed to reactivate this suspension.' => 'adminManagement.flash.reactivateDenied',
+        'Account blocked successfully.' => 'adminManagement.flash.blocked',
+        'Account activated successfully.' => 'adminManagement.flash.activated',
+        'Account deleted successfully.' => 'adminManagement.flash.deleted',
+        'Invalid action.' => 'adminManagement.flash.invalidAction',
+        default => null,
+    };
+}
+
 function admin_management_can_manage_target(string $actorRole, int $actorId, array $target, string $action): bool
 {
     $targetRole = strtolower(trim((string)($target['role'] ?? '')));
@@ -231,17 +262,22 @@ unset($_SESSION['admin_management_flash']);
             <div class="col-12">
               <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
                 <div>
-                  <h2 class="page-title mb-1">Admin Management</h2>
-                  <p class="admin-management-muted mb-0">Create and manage BackOffice administrator accounts.</p>
+                  <h2 class="page-title mb-1" data-i18n="adminManagement.title">Admin Management</h2>
+                  <p class="admin-management-muted mb-0" data-i18n="adminManagement.subtitle">Create and manage BackOffice administrator accounts.</p>
                 </div>
                 <span class="badge bg-primary admin-management-badge">
-                  <?php echo htmlspecialchars(admin_management_role_label($currentRole)); ?>
+                  <span data-i18n="<?php echo htmlspecialchars(admin_management_role_i18n_key($currentRole)); ?>"><?php echo htmlspecialchars(admin_management_role_label($currentRole)); ?></span>
                 </span>
               </div>
 
               <?php if ($flash): ?>
                 <div class="alert alert-<?php echo htmlspecialchars($flash['type']); ?> alert-dismissible fade show" role="alert">
-                  <?php echo htmlspecialchars($flash['message']); ?>
+                  <?php $flashKey = admin_management_flash_key((string)($flash['message'] ?? '')); ?>
+                  <?php if ($flashKey): ?>
+                    <span data-i18n="<?php echo htmlspecialchars($flashKey); ?>"><?php echo htmlspecialchars($flash['message']); ?></span>
+                  <?php else: ?>
+                    <?php echo htmlspecialchars($flash['message']); ?>
+                  <?php endif; ?>
                   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
               <?php endif; ?>
@@ -252,36 +288,36 @@ unset($_SESSION['admin_management_flash']);
             <div class="col-lg-4">
               <div class="card admin-management-card">
                 <div class="card-body">
-                  <h4 class="card-title mb-3">Add Account</h4>
+                  <h4 class="card-title mb-3" data-i18n="adminManagement.form.title">Add Account</h4>
                   <form method="POST" autocomplete="off">
                     <input type="hidden" name="action" value="create">
 
                     <div class="mb-3">
-                      <label class="form-label" for="adminName">Name</label>
+                      <label class="form-label" for="adminName" data-i18n="adminManagement.form.name">Name</label>
                       <input type="text" class="form-control" id="adminName" name="nom" required>
                     </div>
 
                     <div class="mb-3">
-                      <label class="form-label" for="adminEmail">Email</label>
+                      <label class="form-label" for="adminEmail" data-i18n="adminManagement.form.email">Email</label>
                       <input type="email" class="form-control" id="adminEmail" name="email" required>
                     </div>
 
                     <div class="mb-3">
-                      <label class="form-label" for="adminPassword">Password</label>
+                      <label class="form-label" for="adminPassword" data-i18n="adminManagement.form.password">Password</label>
                       <input type="password" class="form-control" id="adminPassword" name="password" minlength="6" required>
                     </div>
 
                     <div class="mb-4">
-                      <label class="form-label" for="adminRole">Role</label>
+                      <label class="form-label" for="adminRole" data-i18n="adminManagement.form.role">Role</label>
                       <select class="form-select" id="adminRole" name="role" required>
                         <?php foreach ($createRoles as $role): ?>
-                          <option value="<?php echo htmlspecialchars($role); ?>"><?php echo htmlspecialchars(admin_management_role_label($role)); ?></option>
+                          <option value="<?php echo htmlspecialchars($role); ?>" data-i18n-opt="<?php echo htmlspecialchars(admin_management_role_i18n_key($role)); ?>"><?php echo htmlspecialchars(admin_management_role_label($role)); ?></option>
                         <?php endforeach; ?>
                       </select>
                     </div>
 
                     <button type="submit" class="btn btn-primary w-100">
-                      <i class="mdi mdi-account-plus"></i> Create Account
+                      <i class="mdi mdi-account-plus"></i> <span data-i18n="adminManagement.action.create">Create Account</span>
                     </button>
                   </form>
                 </div>
@@ -291,23 +327,23 @@ unset($_SESSION['admin_management_flash']);
             <div class="col-lg-8">
               <div class="card admin-management-card">
                 <div class="card-body">
-                  <h4 class="card-title mb-3">Managed Accounts</h4>
+                  <h4 class="card-title mb-3" data-i18n="adminManagement.table.title">Managed Accounts</h4>
                   <div class="table-responsive">
                     <table class="table table-hover align-middle">
                       <thead>
                         <tr>
                           <th>ID</th>
-                          <th>Name</th>
-                          <th>Email</th>
-                          <th>Role</th>
-                          <th>Status</th>
-                          <th>Actions</th>
+                          <th data-i18n="adminManagement.table.name">Name</th>
+                          <th data-i18n="adminManagement.table.email">Email</th>
+                          <th data-i18n="adminManagement.table.role">Role</th>
+                          <th data-i18n="common.status">Status</th>
+                          <th data-i18n="common.actions">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
                         <?php if (empty($adminAccounts)): ?>
                           <tr>
-                            <td colspan="6" class="text-center admin-management-muted py-4">No accounts found.</td>
+                            <td colspan="6" class="text-center admin-management-muted py-4" data-i18n="adminManagement.table.empty">No accounts found.</td>
                           </tr>
                         <?php endif; ?>
 
@@ -327,11 +363,11 @@ unset($_SESSION['admin_management_flash']);
                             <td><?php echo htmlspecialchars($account['nom'] ?? ''); ?></td>
                             <td><?php echo htmlspecialchars($account['email'] ?? ''); ?></td>
                             <td>
-                              <span class="badge bg-info admin-management-badge"><?php echo htmlspecialchars(admin_management_role_label($targetRole)); ?></span>
+                              <span class="badge bg-info admin-management-badge"><span data-i18n="<?php echo htmlspecialchars(admin_management_role_i18n_key($targetRole)); ?>"><?php echo htmlspecialchars(admin_management_role_label($targetRole)); ?></span></span>
                             </td>
                             <td>
                               <span class="badge <?php echo $isSuspended ? 'bg-warning text-dark' : 'bg-success'; ?> admin-management-badge">
-                                <?php echo $isSuspended ? 'Blocked' : 'Active'; ?>
+                                <span data-i18n="<?php echo $isSuspended ? 'adminManagement.status.blocked' : 'adminManagement.status.active'; ?>"><?php echo $isSuspended ? 'Blocked' : 'Active'; ?></span>
                               </span>
                             </td>
                             <td>
@@ -341,21 +377,21 @@ unset($_SESSION['admin_management_flash']);
                                     <input type="hidden" name="id" value="<?php echo (int)$account['id']; ?>">
                                     <input type="hidden" name="action" value="<?php echo $isSuspended ? 'activate' : 'block'; ?>">
                                     <button type="submit" class="btn btn-sm <?php echo $isSuspended ? 'btn-success' : 'btn-warning'; ?>">
-                                      <?php echo $isSuspended ? 'Activate' : 'Block'; ?>
+                                      <span data-i18n="<?php echo $isSuspended ? 'common.activate' : 'adminManagement.action.block'; ?>"><?php echo $isSuspended ? 'Activate' : 'Block'; ?></span>
                                     </button>
                                   </form>
                                 <?php endif; ?>
 
                                 <?php if ($canDelete): ?>
-                                  <form method="POST" class="m-0" onsubmit="return confirm('Delete this administrator account permanently?');">
+                                  <form method="POST" class="m-0" onsubmit="return confirm(window.cre8BackText ? window.cre8BackText('adminManagement.confirm.delete') : 'Delete this administrator account permanently?');">
                                     <input type="hidden" name="id" value="<?php echo (int)$account['id']; ?>">
                                     <input type="hidden" name="action" value="delete">
-                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                    <button type="submit" class="btn btn-sm btn-danger" data-i18n="common.delete">Delete</button>
                                   </form>
                                 <?php endif; ?>
 
                                 <?php if (!$canBlock && !$canDelete): ?>
-                                  <span class="admin-management-muted small"><?php echo $isSelf ? 'Current account' : 'No actions'; ?></span>
+                                  <span class="admin-management-muted small"><span data-i18n="<?php echo $isSelf ? 'adminManagement.action.currentAccount' : 'adminManagement.action.noActions'; ?>"><?php echo $isSelf ? 'Current account' : 'No actions'; ?></span></span>
                                 <?php endif; ?>
                               </div>
                             </td>
@@ -379,6 +415,87 @@ unset($_SESSION['admin_management_flash']);
     </div>
   </div>
 
+
+<script>
+window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
+  en: {
+    'adminManagement.title': 'Admin Management',
+    'adminManagement.subtitle': 'Create and manage BackOffice administrator accounts.',
+    'adminManagement.role.hyperAdmin': 'Hyper Admin',
+    'adminManagement.role.superAdmin': 'Super Admin',
+    'adminManagement.role.admin': 'Admin',
+    'adminManagement.role.other': 'Other',
+    'adminManagement.form.title': 'Add Account',
+    'adminManagement.form.name': 'Name',
+    'adminManagement.form.email': 'Email',
+    'adminManagement.form.password': 'Password',
+    'adminManagement.form.role': 'Role',
+    'adminManagement.action.create': 'Create Account',
+    'adminManagement.action.block': 'Block',
+    'adminManagement.action.currentAccount': 'Current account',
+    'adminManagement.action.noActions': 'No actions',
+    'adminManagement.table.title': 'Managed Accounts',
+    'adminManagement.table.name': 'Name',
+    'adminManagement.table.email': 'Email',
+    'adminManagement.table.role': 'Role',
+    'adminManagement.table.empty': 'No accounts found.',
+    'adminManagement.status.active': 'Active',
+    'adminManagement.status.blocked': 'Blocked',
+    'adminManagement.confirm.delete': 'Delete this administrator account permanently?',
+    'adminManagement.flash.nameRequired': 'Name is required.',
+    'adminManagement.flash.emailRequired': 'A valid email is required.',
+    'adminManagement.flash.passwordRequired': 'Password must contain at least 6 characters.',
+    'adminManagement.flash.createRoleDenied': 'You are not allowed to create this role.',
+    'adminManagement.flash.created': 'Account created successfully.',
+    'adminManagement.flash.targetNotFound': 'Target account was not found.',
+    'adminManagement.flash.actionDenied': 'You are not allowed to perform this action.',
+    'adminManagement.flash.activeOnly': 'Only active accounts can be suspended.',
+    'adminManagement.flash.reactivateDenied': 'You are not allowed to reactivate this suspension.',
+    'adminManagement.flash.blocked': 'Account blocked successfully.',
+    'adminManagement.flash.activated': 'Account activated successfully.',
+    'adminManagement.flash.deleted': 'Account deleted successfully.',
+    'adminManagement.flash.invalidAction': 'Invalid action.'
+  },
+  fr: {
+    'adminManagement.title': 'Gestion des admins',
+    'adminManagement.subtitle': 'Creez et gerez les comptes administrateurs du BackOffice.',
+    'adminManagement.role.hyperAdmin': 'Hyper admin',
+    'adminManagement.role.superAdmin': 'Super admin',
+    'adminManagement.role.admin': 'Admin',
+    'adminManagement.role.other': 'Autre',
+    'adminManagement.form.title': 'Ajouter un compte',
+    'adminManagement.form.name': 'Nom',
+    'adminManagement.form.email': 'Email',
+    'adminManagement.form.password': 'Mot de passe',
+    'adminManagement.form.role': 'Role',
+    'adminManagement.action.create': 'Creer le compte',
+    'adminManagement.action.block': 'Bloquer',
+    'adminManagement.action.currentAccount': 'Compte actuel',
+    'adminManagement.action.noActions': 'Aucune action',
+    'adminManagement.table.title': 'Comptes geres',
+    'adminManagement.table.name': 'Nom',
+    'adminManagement.table.email': 'Email',
+    'adminManagement.table.role': 'Role',
+    'adminManagement.table.empty': 'Aucun compte trouve.',
+    'adminManagement.status.active': 'Actif',
+    'adminManagement.status.blocked': 'Bloque',
+    'adminManagement.confirm.delete': 'Supprimer definitivement ce compte administrateur ?',
+    'adminManagement.flash.nameRequired': 'Le nom est obligatoire.',
+    'adminManagement.flash.emailRequired': 'Un email valide est obligatoire.',
+    'adminManagement.flash.passwordRequired': 'Le mot de passe doit contenir au moins 6 caracteres.',
+    'adminManagement.flash.createRoleDenied': 'Vous n etes pas autorise a creer ce role.',
+    'adminManagement.flash.created': 'Compte cree avec succes.',
+    'adminManagement.flash.targetNotFound': 'Le compte cible est introuvable.',
+    'adminManagement.flash.actionDenied': 'Vous n etes pas autorise a effectuer cette action.',
+    'adminManagement.flash.activeOnly': 'Seuls les comptes actifs peuvent etre suspendus.',
+    'adminManagement.flash.reactivateDenied': 'Vous n etes pas autorise a reactiver cette suspension.',
+    'adminManagement.flash.blocked': 'Compte bloque avec succes.',
+    'adminManagement.flash.activated': 'Compte active avec succes.',
+    'adminManagement.flash.deleted': 'Compte supprime avec succes.',
+    'adminManagement.flash.invalidAction': 'Action invalide.'
+  }
+});
+</script>
   <script src="assets/vendors/js/vendor.bundle.base.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../layout/back-layout.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/back-layout.js')); ?>"></script>

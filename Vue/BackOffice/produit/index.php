@@ -461,8 +461,6 @@ textarea.note-interne-ctrl{background:transparent;border:none;outline:none;width
 }
 
 </style>
-<link rel="stylesheet" href="../business-center-admin.css<?= produitAssetVersion(__DIR__ . '/../business-center-admin.css') ?>">
-<link rel="stylesheet" href="../unified-table-admin.css<?= produitAssetVersion(__DIR__ . '/../unified-table-admin.css') ?>">
 <link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
 <link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
@@ -479,37 +477,36 @@ require_once __DIR__ . '/../layout/sidebar.php';
 <div class="container-fluid page-body-wrapper cre8-admin-main">
 <?php require_once __DIR__ . '/../layout/header.php'; ?>
     <div class="main-panel">
-    <div class="content-wrapper business-center-shell">
+    <div class="content-wrapper">
         <div class="produit-admin">
 
-
-        <section class="bc-page-head">
-            <div>
-                <p class="bc-kicker">Business Center</p>
-                <h1>Product administration</h1>
-                <p>Supervise, add, edit and analyze all platform products.</p>
+    <div style="margin-bottom:22px;">
+        <div class="translation-toolbar" aria-label="Language controls">
+            <div class="page-heading">
+                <div class="page-title" data-i18n="pageTitle">Product Management</div>
+                <div class="page-subtitle" data-i18n="pageSubtitle">Supervise, add, edit and analyze all platform products.</div>
             </div>
-            <div class="bc-page-actions">
-                <button class="btn-export" onclick="window.print()"><i class="mdi mdi-printer"></i><span data-i18n="btnPrint">Print / PDF</span></button>
-                <a href="?export_csv=1" class="btn-export"><i class="mdi mdi-download"></i> CSV</a>
-                <a href="?add=1" class="btn-add"><i class="mdi mdi-plus"></i><span data-i18n="btnNewProduct">New Product</span></a>
+        </div>
+        <div class="bo-content-actions">
+            <div class="search-wrap">
+                <svg class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                <input type="text" class="search-input" id="searchInput" data-i18n-placeholder="searchPlaceholder" placeholder="Search products...">
             </div>
-        </section>
+            <button class="btn-export" onclick="window.print()">
+                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                <span data-i18n="btnPrint">Print / PDF</span>
+            </button>
+            <a href="?export_csv=1" class="btn-export">
+                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                <span data-i18n="btnCsv">CSV</span>
+            </a>
+            <a href="?add=1" class="btn-add">
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                <span data-i18n="btnNewProduct">New Product</span>
+            </a>
+        </div>
+    </div>
 
-        <nav class="bc-entity-tabs" aria-label="Business Center sections">
-            <a class="bc-entity-tab" href="../campagne/index.php">
-                <span class="bc-tab-icon"><i class="mdi mdi-bullhorn-outline"></i></span>
-                <span><strong>Campaigns</strong><small>Campaign planning and moderation</small></span>
-            </a>
-            <a class="bc-entity-tab is-active" href="../produit/index.php" aria-current="page">
-                <span class="bc-tab-icon"><i class="mdi mdi-package-variant-closed"></i></span>
-                <span><strong>Products</strong><small>Catalog, images and product data</small></span>
-            </a>
-            <a class="bc-entity-tab" href="../contrat/index.php">
-                <span class="bc-tab-icon"><i class="mdi mdi-file-document-edit-outline"></i></span>
-                <span><strong>Contracts</strong><small>Contract status and value tracking</small></span>
-            </a>
-        </nav>
     <?php if ($message): ?>
     <div class="alert alert-<?= $messageType ?>" id="alertMsg"><?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?></div>
     <?php endif; ?>
@@ -526,15 +523,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
     </div>
 
     <!-- CHARTS -->
-    <section class="bc-statistics-panel" data-bc-stats>
-        <div class="bc-section-head">
-            <div>
-                <h2>Product statistics</h2>
-                <p>Category distribution and price ranges.</p>
-            </div>
-            <button type="button" class="bc-secondary-btn" data-bc-stats-toggle data-label-hide="Hide statistics" data-label-show="Show statistics">Hide statistics</button>
-        </div>
-    <div class="charts-row bc-stats-body">
+    <div class="charts-row">
         <div class="chart-card">
             <div class="chart-card-title" data-i18n="chartCatTitle">📊 Products by Category (Top 5)</div>
             <div class="chart-wrap"><canvas id="chartCategories"></canvas></div>
@@ -544,7 +533,6 @@ require_once __DIR__ . '/../layout/sidebar.php';
             <div class="chart-wrap"><canvas id="chartPrices"></canvas></div>
         </div>
     </div>
-    </section>
 
     <!-- FORM -->
     <?php if (isset($_GET['add']) || $produitUpdate): ?>
@@ -669,10 +657,6 @@ require_once __DIR__ . '/../layout/sidebar.php';
     <!-- FILTER BAR -->
     <div class="filter-bar">
         <div class="filter-group">
-            <div class="filter-label" data-i18n="filterSearch">Search</div>
-            <input type="text" class="search-input" id="searchInput" data-i18n-placeholder="searchPlaceholder" placeholder="Search products...">
-        </div>
-        <div class="filter-group">
             <div class="filter-label" data-i18n="filterSortBy">Sort by</div>
             <select class="filter-select" id="sortColSelect" onchange="applySortSelect()">
                 <option value="" data-i18n="filterDefault">Default</option>
@@ -714,8 +698,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
 
     <!-- ACTIVE TAB -->
     <div class="tab-content active" id="content-actifs">
-        <div id="bcResultsRegion" class="bc-results-region">
-        <div class="table-panel bc-table-card">
+        <div class="table-panel">
             <div class="table-panel-header">
                 <span class="table-panel-title" data-i18n="tablePanelTitle">Product list</span>
                 <span class="count-badge" id="visibleCount"><?= $totalProduits ?></span>
@@ -723,7 +706,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
             <?php if (empty($liste)): ?>
             <div class="empty-state"><div class="empty-icon">📦</div><p data-i18n="noProducts">No products found.</p></div>
             <?php else: ?>
-            <table id="produitsTable" class="bc-table">
+            <table id="produitsTable">
                 <thead>
                     <tr>
                         <th class="no-sort" style="width:46px" data-i18n="colImg">Img</th>
@@ -824,7 +807,6 @@ require_once __DIR__ . '/../layout/sidebar.php';
             </table>
             <?php endif; ?>
         </div>
-        </div>
     </div>
         </div><!-- /produit-admin -->
     </div><!-- /content-wrapper -->
@@ -864,6 +846,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
 </div>
 
 <script src="../layout/back-layout.js<?= produitAssetVersion(__DIR__ . '/../layout/back-layout.js') ?>"></script>
+<script src="../business-center-admin.js<?= produitAssetVersion(__DIR__ . '/../business-center-admin.js') ?>"></script>
 <script>
 const BASE_URL = <?= json_encode($baseUrl, JSON_UNESCAPED_SLASHES) ?>;
 const DEVISE_JS='<?= DEVISE ?>';
@@ -1219,6 +1202,7 @@ const translations = {
         pageSubtitle: 'Supervise, add, edit and analyze all platform products.',
         // Topbar buttons
         btnPrint: 'Print / PDF',
+        btnCsv: 'CSV',
         btnNewProduct: 'New Product',
         searchPlaceholder: 'Search products…',
         // Theme toggle
@@ -1504,6 +1488,8 @@ function applyTranslations() {
         if (T[key] !== undefined) el.setAttribute('placeholder', T[key]);
     });
 
+    if (window.cre8BackApplyTranslations) window.cre8BackApplyTranslations();
+
     // Theme label (must stay in sync with current theme)
     syncThemeLabel();
 }
@@ -1562,6 +1548,5 @@ window.addEventListener('cre8:languagechange', function(event) {
     renderPage(currentPage);
 });
 </script>
-<script src="../business-center-admin.js<?= produitAssetVersion(__DIR__ . '/../business-center-admin.js') ?>"></script>
 </body>
 </html>

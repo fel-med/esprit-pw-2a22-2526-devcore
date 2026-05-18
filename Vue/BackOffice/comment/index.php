@@ -113,81 +113,81 @@ require_once __DIR__ . '/../layout/sidebar.php';
         <div class="content-wrapper community-center-shell">
             <section class="cc-page-head">
                 <div>
-                    <p class="cc-kicker">Community Center</p>
-                    <h1>Comments Dashboard</h1>
-                    <p>Search replies, inspect comment targets, and moderate conversation activity.</p>
+                    <p class="cc-kicker" data-i18n="community.kicker">Community Center</p>
+                    <h1 data-i18n="comments.title">Comments Dashboard</h1>
+                    <p data-i18n="comments.subtitle">Search replies, inspect comment targets, and moderate conversation activity.</p>
                 </div>
             </section>
 
-            <nav class="cc-entity-tabs" aria-label="Community Center sections">
+            <nav class="cc-entity-tabs" aria-label="Community Center sections" data-i18n-aria-label="community.tabsAria">
                 <a class="cc-entity-tab" href="../post/index.php">
                     <span class="cc-tab-icon"><i class="mdi mdi-newspaper-variant-outline"></i></span>
-                    <span><strong>Posts</strong><small>Content moderation and performance</small></span>
+                    <span><strong data-i18n="community.tab.posts">Posts</strong><small data-i18n="community.tab.postsSub">Content moderation and performance</small></span>
                 </a>
                 <a class="cc-entity-tab is-active" href="../comment/index.php" aria-current="page">
                     <span class="cc-tab-icon"><i class="mdi mdi-comment-multiple-outline"></i></span>
-                    <span><strong>Comments</strong><small>Replies, reactions, and links</small></span>
+                    <span><strong data-i18n="community.tab.comments">Comments</strong><small data-i18n="community.tab.commentsSub">Replies, reactions, and links</small></span>
                 </a>
             </nav>
 
             <section class="cc-statistics-panel" data-cc-stats>
                 <div class="cc-section-head">
                     <div>
-                        <h2>Comment indicators</h2>
-                        <p>Conversation volume, reactions, and format breakdown.</p>
+                        <h2 data-i18n="comments.stats.title">Comment indicators</h2>
+                        <p data-i18n="comments.stats.subtitle">Conversation volume, reactions, and format breakdown.</p>
                     </div>
-                    <button type="button" class="cc-secondary-btn" data-cc-stats-toggle data-label-hide="Hide statistics" data-label-show="Show statistics">Hide statistics</button>
+                    <button type="button" class="cc-secondary-btn" data-cc-stats-toggle data-label-hide="Hide statistics" data-label-show="Show statistics" data-i18n="common.hideStatistics">Hide statistics</button>
                 </div>
 
                 <div class="cc-kpi-grid">
                     <article class="cc-kpi-card cc-kpi-purple">
-                        <span>Total comments</span>
+                        <span data-i18n="comments.kpi.total">Total comments</span>
                         <strong><?= number_format($totalComments, 0, ',', ' ') ?></strong>
-                        <small>Comments and replies</small>
+                        <small data-i18n="comments.kpi.totalSub">Comments and replies</small>
                     </article>
                     <article class="cc-kpi-card cc-kpi-pink">
-                        <span>Total likes</span>
+                        <span data-i18n="comments.kpi.likes">Total likes</span>
                         <strong><?= number_format($totalLikes, 0, ',', ' ') ?></strong>
-                        <small>Positive reactions</small>
+                        <small data-i18n="comments.kpi.likesSub">Positive reactions</small>
                     </article>
                     <article class="cc-kpi-card cc-kpi-yellow">
-                        <span>Total dislikes</span>
+                        <span data-i18n="comments.kpi.dislikes">Total dislikes</span>
                         <strong><?= number_format($totalDislikes, 0, ',', ' ') ?></strong>
-                        <small>Negative reactions</small>
+                        <small data-i18n="comments.kpi.dislikesSub">Negative reactions</small>
                     </article>
                     <article class="cc-kpi-card cc-kpi-green">
-                        <span>Approval rate</span>
+                        <span data-i18n="comments.kpi.approval">Approval rate</span>
                         <strong><?= $approvalPct ?>%</strong>
-                        <small>Likes vs reactions</small>
+                        <small data-i18n="comments.kpi.approvalSub">Likes vs reactions</small>
                     </article>
                 </div>
 
                 <div class="cc-stats-body cc-charts-grid">
                     <article class="cc-chart-card">
-                        <div class="cc-chart-head"><h3>Engagement Breakdown</h3><p>Likes, dislikes, and neutral comments.</p></div>
+                        <div class="cc-chart-head"><h3 data-i18n="comments.chart.engagement">Engagement Breakdown</h3><p data-i18n="comments.chart.engagementSub">Likes, dislikes, and neutral comments.</p></div>
                         <div class="cc-chart-legend" id="leg-engagement"></div>
                         <div class="cc-chart-canvas"><canvas id="chartEngagement"></canvas></div>
                     </article>
                     <article class="cc-chart-card">
-                        <div class="cc-chart-head"><h3>Comment Target</h3><p>Comments on posts vs replies.</p></div>
+                        <div class="cc-chart-head"><h3 data-i18n="comments.chart.target">Comment Target</h3><p data-i18n="comments.chart.targetSub">Comments on posts vs replies.</p></div>
                         <div class="cc-chart-legend" id="leg-target"></div>
                         <div class="cc-chart-canvas"><canvas id="chartTarget"></canvas></div>
                     </article>
                     <article class="cc-chart-card">
-                        <div class="cc-chart-head"><h3>Comment Format</h3><p>Text, stickers, and images.</p></div>
+                        <div class="cc-chart-head"><h3 data-i18n="comments.chart.format">Comment Format</h3><p data-i18n="comments.chart.formatSub">Text, stickers, and images.</p></div>
                         <div class="cc-chart-legend" id="leg-format"></div>
                         <div class="cc-chart-canvas"><canvas id="chartFormat"></canvas></div>
                     </article>
                     <article class="cc-chart-card">
-                        <div class="cc-chart-head"><h3>User Activity</h3><p>Top users by comment volume.</p></div>
+                        <div class="cc-chart-head"><h3 data-i18n="comments.chart.users">User Activity</h3><p data-i18n="comments.chart.usersSub">Top users by comment volume.</p></div>
                         <div class="cc-chart-canvas"><canvas id="chartUsers"></canvas></div>
                     </article>
                     <article class="cc-chart-card cc-chart-wide">
-                        <div class="cc-chart-head"><h3>Top Comments by Likes</h3><p>Most liked comments and dislikes.</p></div>
+                        <div class="cc-chart-head"><h3 data-i18n="comments.chart.topLikes">Top Comments by Likes</h3><p data-i18n="comments.chart.topLikesSub">Most liked comments and dislikes.</p></div>
                         <div class="cc-chart-canvas"><canvas id="chartTopComments"></canvas></div>
                     </article>
                     <article class="cc-chart-card">
-                        <div class="cc-chart-head"><h3>Cumulative Likes by User</h3><p>Popularity distribution.</p></div>
+                        <div class="cc-chart-head"><h3 data-i18n="comments.chart.polar">Cumulative Likes by User</h3><p data-i18n="comments.chart.polarSub">Popularity distribution.</p></div>
                         <div class="cc-chart-legend" id="leg-polar"></div>
                         <div class="cc-chart-canvas"><canvas id="chartPolar"></canvas></div>
                     </article>
@@ -197,35 +197,35 @@ require_once __DIR__ . '/../layout/sidebar.php';
             <section class="cc-filter-card">
                 <div class="cc-filter-head">
                     <div>
-                        <h2>Filter comments</h2>
-                        <p>Search by post ID, comment ID, creator name, or creator ID.</p>
+                        <h2 data-i18n="comments.filter.title">Filter comments</h2>
+                        <p data-i18n="comments.filter.subtitle">Search by post ID, comment ID, creator name, or creator ID.</p>
                     </div>
                 </div>
                 <form method="GET" class="cc-filter-grid">
                     <label class="cc-filter-field">
-                        <span>Search by</span>
+                        <span data-i18n="comments.filter.searchBy">Search by</span>
                         <select name="searchType">
-                            <option value="">All comments</option>
-                            <option value="postId" <?= $searchType === 'postId' ? 'selected' : '' ?>>Post ID</option>
-                            <option value="commentId" <?= $searchType === 'commentId' ? 'selected' : '' ?>>Comment ID (show replies)</option>
-                            <option value="creator" <?= $searchType === 'creator' ? 'selected' : '' ?>>Creator</option>
+                            <option value="" data-i18n-opt="comments.filter.all">All comments</option>
+                            <option value="postId" <?= $searchType === 'postId' ? 'selected' : '' ?> data-i18n-opt="comments.filter.postId">Post ID</option>
+                            <option value="commentId" <?= $searchType === 'commentId' ? 'selected' : '' ?> data-i18n-opt="comments.filter.commentId">Comment ID (show replies)</option>
+                            <option value="creator" <?= $searchType === 'creator' ? 'selected' : '' ?> data-i18n-opt="comments.filter.creator">Creator</option>
                         </select>
                     </label>
                     <label class="cc-filter-field cc-filter-wide">
-                        <span>Keyword</span>
-                        <input type="text" name="keyword" value="<?= htmlspecialchars($keyword) ?>" placeholder="Enter post id, comment id, creator name, or creator id">
+                        <span data-i18n="common.keyword">Keyword</span>
+                        <input type="text" name="keyword" value="<?= htmlspecialchars($keyword) ?>" placeholder="Enter post id, comment id, creator name, or creator id" data-i18n-placeholder="comments.filter.placeholder">
                     </label>
                     <label class="cc-filter-field">
-                        <span>Rows</span>
+                        <span data-i18n="common.rows">Rows</span>
                         <select name="per_page">
                             <?php foreach ($perPageOptions as $option) : ?>
-                                <option value="<?= $option ?>" <?= $perPage === $option ? 'selected' : '' ?>><?= $option ?> per page</option>
+                                <option value="<?= $option ?>" <?= $perPage === $option ? 'selected' : '' ?>><?= $option ?></option>
                             <?php endforeach; ?>
                         </select>
                     </label>
                     <div class="cc-filter-actions">
-                        <button type="submit" class="cc-primary-btn"><i class="mdi mdi-magnify"></i> Search</button>
-                        <a href="./index.php" class="cc-secondary-btn">Reset</a>
+                        <button type="submit" class="cc-primary-btn"><i class="mdi mdi-magnify"></i> <span data-i18n="common.search">Search</span></button>
+                        <a href="./index.php" class="cc-secondary-btn" data-i18n="common.reset">Reset</a>
                     </div>
                 </form>
             </section>
@@ -233,8 +233,8 @@ require_once __DIR__ . '/../layout/sidebar.php';
             <section class="cc-table-card">
                 <div class="cc-table-head">
                     <div>
-                        <h2>Comments moderation list</h2>
-                        <p><?= number_format($totalFiltered, 0, ',', ' ') ?> comment<?= $totalFiltered === 1 ? '' : 's' ?> found.</p>
+                        <h2 data-i18n="comments.table.title">Comments moderation list</h2>
+                        <p><span><?= number_format($totalFiltered, 0, ',', ' ') ?></span> <span data-i18n="comments.table.found">comments found</span></p>
                     </div>
                 </div>
 
@@ -248,23 +248,23 @@ require_once __DIR__ . '/../layout/sidebar.php';
                     <?php if (empty($visibleComments)) : ?>
                         <div class="cc-empty-state">
                             <span><i class="mdi mdi-comment-alert-outline"></i></span>
-                            <strong>No comments found</strong>
-                            <p>Try another search or reset the filters.</p>
+                            <strong data-i18n="comments.empty.title">No comments found</strong>
+                            <p data-i18n="comments.empty.subtitle">Try another search or reset the filters.</p>
                         </div>
                     <?php else : ?>
                         <div class="cc-table-wrap">
                             <table class="cc-table cc-comments-table" id="commentsTable">
                                 <thead>
                                     <tr>
-                                        <th>Comment ID</th>
-                                        <th>Target</th>
-                                        <th>Creator</th>
-                                        <th>Text</th>
-                                        <th>Sticker</th>
-                                        <th>Image</th>
-                                        <th>Likes</th>
-                                        <th>Dislikes</th>
-                                        <th>Actions</th>
+                                        <th data-i18n="comments.table.id">Comment ID</th>
+                                        <th data-i18n="comments.table.target">Target</th>
+                                        <th data-i18n="comments.table.creator">Creator</th>
+                                        <th data-i18n="comments.table.text">Text</th>
+                                        <th data-i18n="comments.table.sticker">Sticker</th>
+                                        <th data-i18n="comments.table.image">Image</th>
+                                        <th data-i18n="comments.table.likes">Likes</th>
+                                        <th data-i18n="comments.table.dislikes">Dislikes</th>
+                                        <th data-i18n="common.actions">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="commentsTableBody">
@@ -274,7 +274,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
                                         <td>
                                             <div class="cc-person-cell">
                                                 <strong><?= htmlspecialchars((string)$comment['commentedItem']) ?> #<?= htmlspecialchars((string)$comment['idCommentedElement']) ?></strong>
-                                                <span><?= ($comment['commentedItem'] ?? '') === 'post' ? 'Post discussion' : 'Reply thread' ?></span>
+                                                <span data-i18n="<?= ($comment['commentedItem'] ?? '') === 'post' ? 'comments.target.postDiscussion' : 'comments.target.replyThread' ?>"><?= ($comment['commentedItem'] ?? '') === 'post' ? 'Post discussion' : 'Reply thread' ?></span>
                                             </div>
                                         </td>
                                         <td>
@@ -284,12 +284,12 @@ require_once __DIR__ . '/../layout/sidebar.php';
                                             </div>
                                         </td>
                                         <td><div class="cc-excerpt"><?= htmlspecialchars(mb_strimwidth((string)($comment['text'] ?? ''), 0, 120, '...')) ?></div></td>
-                                        <td><?= !empty($comment['Sticker'] ?? $comment['sticker'] ?? '') ? htmlspecialchars($comment['Sticker'] ?? $comment['sticker']) : '<span class="cc-badge cc-badge-muted">None</span>' ?></td>
+                                        <td><?= !empty($comment['Sticker'] ?? $comment['sticker'] ?? '') ? htmlspecialchars($comment['Sticker'] ?? $comment['sticker']) : '<span class="cc-badge cc-badge-muted" data-i18n="comments.table.none">None</span>' ?></td>
                                         <td>
                                             <?php if (!empty($comment['image'])) : ?>
-                                                <img src="../../public/<?= htmlspecialchars($comment['image']) ?>" alt="comment image" class="cc-media-thumb">
+                                                <img src="../../public/<?= htmlspecialchars($comment['image']) ?>" alt="comment image" data-i18n-title="comments.table.commentImage" class="cc-media-thumb">
                                             <?php else : ?>
-                                                <span class="cc-badge cc-badge-muted">No image</span>
+                                                <span class="cc-badge cc-badge-muted" data-i18n="comments.table.noImage">No image</span>
                                             <?php endif; ?>
                                         </td>
                                         <td><?= number_format((int)($comment['numberOfLike'] ?? 0), 0, ',', ' ') ?></td>
@@ -298,14 +298,14 @@ require_once __DIR__ . '/../layout/sidebar.php';
                                             <div class="cc-actions-stack">
                                                 <?php if (($comment['commentedItem'] ?? '') === 'post') : ?>
                                                     <a href="../post/details.php?id=<?= urlencode($comment['idCommentedElement']) ?>" class="cc-action-btn cc-action-primary">
-                                                        <i class="mdi mdi-eye-outline"></i> Post
+                                                        <i class="mdi mdi-eye-outline"></i> <span data-i18n="community.tab.posts">Post</span>
                                                     </a>
                                                 <?php endif; ?>
                                                 <a href="./index.php?searchType=commentId&keyword=<?= urlencode($comment['id']) ?>" class="cc-action-btn cc-action-muted">
-                                                    <i class="mdi mdi-source-branch"></i> Replies
+                                                    <i class="mdi mdi-source-branch"></i> <span data-i18n="comments.action.replies">Replies</span>
                                                 </a>
                                                 <a href="./delete.php?id=<?= urlencode($comment['id']) ?>&searchType=<?= urlencode($searchType) ?>&keyword=<?= urlencode($keyword) ?>" class="cc-action-btn cc-action-danger js-admin-delete">
-                                                    <i class="mdi mdi-delete-outline"></i> Delete
+                                                    <i class="mdi mdi-delete-outline"></i> <span data-i18n="common.delete">Delete</span>
                                                 </a>
                                             </div>
                                         </td>
@@ -317,10 +317,10 @@ require_once __DIR__ . '/../layout/sidebar.php';
 
                         <div class="cc-pagination">
                             <p>
-                                Showing <?= $totalFiltered === 0 ? 0 : number_format($offset + 1, 0, ',', ' ') ?>–<?= number_format(min($offset + $perPage, $totalFiltered), 0, ',', ' ') ?>
-                                of <?= number_format($totalFiltered, 0, ',', ' ') ?> comments · Page <?= $page ?> of <?= $totalPages ?>
+                                <span data-i18n="comments.pagination.showing">Showing</span> <?= $totalFiltered === 0 ? 0 : number_format($offset + 1, 0, ',', ' ') ?>–<?= number_format(min($offset + $perPage, $totalFiltered), 0, ',', ' ') ?>
+                                <span data-i18n="common.of">of</span> <?= number_format($totalFiltered, 0, ',', ' ') ?> <span data-i18n="community.tab.comments">comments</span> · <span data-i18n="common.page">Page</span> <?= $page ?> <span data-i18n="common.of">of</span> <?= $totalPages ?>
                             </p>
-                            <nav aria-label="Comments pagination">
+                            <nav aria-label="Comments pagination" data-i18n-aria-label="comments.pagination.aria">
                                 <a class="cc-page-btn <?= $page <= 1 ? 'is-disabled' : '' ?>" href="<?= $page <= 1 ? '#' : htmlspecialchars($pageUrl($page - 1)) ?>">‹</a>
                                 <?php foreach (community_comment_page_items($page, $totalPages) as $item) : ?>
                                     <?php if ($item === '…') : ?>
@@ -339,6 +339,138 @@ require_once __DIR__ . '/../layout/sidebar.php';
     </div>
 </div>
 </div>
+
+
+<script>
+window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
+  en: {
+    'community.kicker': 'Community Center',
+    'community.tabsAria': 'Community Center sections',
+    'community.tab.posts': 'Posts',
+    'community.tab.postsSub': 'Content moderation and performance',
+    'community.tab.comments': 'Comments',
+    'community.tab.commentsSub': 'Replies, reactions, and links',
+    'comments.title': 'Comments Dashboard',
+    'comments.subtitle': 'Search replies, inspect comment targets, and moderate conversation activity.',
+    'comments.stats.title': 'Comment indicators',
+    'comments.stats.subtitle': 'Conversation volume, reactions, and format breakdown.',
+    'comments.kpi.total': 'Total comments',
+    'comments.kpi.totalSub': 'Comments and replies',
+    'comments.kpi.likes': 'Total likes',
+    'comments.kpi.likesSub': 'Positive reactions',
+    'comments.kpi.dislikes': 'Total dislikes',
+    'comments.kpi.dislikesSub': 'Negative reactions',
+    'comments.kpi.approval': 'Approval rate',
+    'comments.kpi.approvalSub': 'Likes vs reactions',
+    'comments.chart.engagement': 'Engagement Breakdown',
+    'comments.chart.engagementSub': 'Likes, dislikes, and neutral comments.',
+    'comments.chart.target': 'Comment Target',
+    'comments.chart.targetSub': 'Comments on posts vs replies.',
+    'comments.chart.format': 'Comment Format',
+    'comments.chart.formatSub': 'Text, stickers, and images.',
+    'comments.chart.users': 'User Activity',
+    'comments.chart.usersSub': 'Top users by comment volume.',
+    'comments.chart.topLikes': 'Top Comments by Likes',
+    'comments.chart.topLikesSub': 'Most liked comments and dislikes.',
+    'comments.chart.polar': 'Cumulative Likes by User',
+    'comments.chart.polarSub': 'Popularity distribution.',
+    'comments.filter.title': 'Filter comments',
+    'comments.filter.subtitle': 'Search by post ID, comment ID, creator name, or creator ID.',
+    'comments.filter.searchBy': 'Search by',
+    'comments.filter.all': 'All comments',
+    'comments.filter.postId': 'Post ID',
+    'comments.filter.commentId': 'Comment ID (show replies)',
+    'comments.filter.creator': 'Creator',
+    'comments.filter.placeholder': 'Enter post id, comment id, creator name, or creator id',
+    'comments.table.title': 'Comments moderation list',
+    'comments.table.found': 'comments found',
+    'comments.table.id': 'Comment ID',
+    'comments.table.target': 'Target',
+    'comments.table.creator': 'Creator',
+    'comments.table.text': 'Text',
+    'comments.table.sticker': 'Sticker',
+    'comments.table.image': 'Image',
+    'comments.table.likes': 'Likes',
+    'comments.table.dislikes': 'Dislikes',
+    'comments.table.noImage': 'No image',
+    'comments.table.commentImage': 'Comment image',
+    'comments.empty.title': 'No comments found',
+    'comments.empty.subtitle': 'Try another search or reset the filters.',
+    'comments.pagination.showing': 'Showing',
+    'comments.pagination.aria': 'Comments pagination',
+    'comments.action.openTarget': 'Open target',
+    'comments.action.viewTarget': 'View target',
+    'comments.action.replies': 'Replies',
+    'comments.table.none': 'None',
+    'comments.target.postDiscussion': 'Post discussion',
+    'comments.target.replyThread': 'Reply thread',
+    'comments.confirmDelete': 'Are you sure you want to delete this comment?'
+  },
+  fr: {
+    'community.kicker': 'Centre communauté',
+    'community.tabsAria': 'Sections du centre communauté',
+    'community.tab.posts': 'Publications',
+    'community.tab.postsSub': 'Modération et performance du contenu',
+    'community.tab.comments': 'Commentaires',
+    'community.tab.commentsSub': 'Réponses, réactions et liens',
+    'comments.title': 'Tableau des commentaires',
+    'comments.subtitle': 'Recherchez les réponses, inspectez les cibles et modérez l’activité des conversations.',
+    'comments.stats.title': 'Indicateurs des commentaires',
+    'comments.stats.subtitle': 'Volume des conversations, réactions et formats.',
+    'comments.kpi.total': 'Total commentaires',
+    'comments.kpi.totalSub': 'Commentaires et réponses',
+    'comments.kpi.likes': 'Total likes',
+    'comments.kpi.likesSub': 'Réactions positives',
+    'comments.kpi.dislikes': 'Total dislikes',
+    'comments.kpi.dislikesSub': 'Réactions négatives',
+    'comments.kpi.approval': 'Taux d’approbation',
+    'comments.kpi.approvalSub': 'Likes vs réactions',
+    'comments.chart.engagement': 'Répartition de l’engagement',
+    'comments.chart.engagementSub': 'Likes, dislikes et commentaires neutres.',
+    'comments.chart.target': 'Cible du commentaire',
+    'comments.chart.targetSub': 'Commentaires sur publications vs réponses.',
+    'comments.chart.format': 'Format des commentaires',
+    'comments.chart.formatSub': 'Texte, stickers et images.',
+    'comments.chart.users': 'Activité des utilisateurs',
+    'comments.chart.usersSub': 'Utilisateurs les plus actifs.',
+    'comments.chart.topLikes': 'Commentaires les plus aimés',
+    'comments.chart.topLikesSub': 'Commentaires avec le plus de likes et dislikes.',
+    'comments.chart.polar': 'Likes cumulés par utilisateur',
+    'comments.chart.polarSub': 'Distribution de popularité.',
+    'comments.filter.title': 'Filtrer les commentaires',
+    'comments.filter.subtitle': 'Rechercher par ID publication, ID commentaire, nom ou ID créateur.',
+    'comments.filter.searchBy': 'Rechercher par',
+    'comments.filter.all': 'Tous les commentaires',
+    'comments.filter.postId': 'ID publication',
+    'comments.filter.commentId': 'ID commentaire (afficher réponses)',
+    'comments.filter.creator': 'Créateur',
+    'comments.filter.placeholder': 'Entrer ID publication, ID commentaire, nom ou ID créateur',
+    'comments.table.title': 'Liste de modération des commentaires',
+    'comments.table.found': 'commentaires trouvés',
+    'comments.table.id': 'ID commentaire',
+    'comments.table.target': 'Cible',
+    'comments.table.creator': 'Créateur',
+    'comments.table.text': 'Texte',
+    'comments.table.sticker': 'Sticker',
+    'comments.table.image': 'Image',
+    'comments.table.likes': 'Likes',
+    'comments.table.dislikes': 'Dislikes',
+    'comments.table.noImage': 'Aucune image',
+    'comments.table.commentImage': 'Image du commentaire',
+    'comments.empty.title': 'Aucun commentaire trouvé',
+    'comments.empty.subtitle': 'Essayez une autre recherche ou réinitialisez les filtres.',
+    'comments.pagination.showing': 'Affichage',
+    'comments.pagination.aria': 'Pagination des commentaires',
+    'comments.action.openTarget': 'Ouvrir la cible',
+    'comments.action.viewTarget': 'Voir la cible',
+    'comments.action.replies': 'Réponses',
+    'comments.table.none': 'Aucun',
+    'comments.target.postDiscussion': 'Discussion de publication',
+    'comments.target.replyThread': 'Fil de réponse',
+    'comments.confirmDelete': 'Voulez-vous vraiment supprimer ce commentaire ?'
+  }
+});
+</script>
 
 <script>
 (function () {
@@ -423,7 +555,8 @@ require_once __DIR__ . '/../layout/sidebar.php';
 document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.js-admin-delete').forEach(function (button) {
         button.addEventListener('click', function (e) {
-            if (!confirm('Are you sure you want to delete this comment?')) {
+            const message = window.cre8BackText ? window.cre8BackText('comments.confirmDelete') : 'Are you sure you want to delete this comment?';
+            if (!confirm(message)) {
                 e.preventDefault();
             }
         });

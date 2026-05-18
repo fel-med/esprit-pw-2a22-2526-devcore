@@ -3,15 +3,23 @@
 
   const STORAGE_KEY = "cre8_community_center_stats_visible";
 
+  function applyBackTranslations() {
+    if (window.cre8BackApplyTranslations) {
+      window.cre8BackApplyTranslations();
+    }
+  }
+
   function applyStatsState(panel) {
     if (!panel) return;
     const visible = localStorage.getItem(STORAGE_KEY) !== "0";
     const button = panel.querySelector("[data-cc-stats-toggle]");
     panel.classList.toggle("is-collapsed", !visible);
     if (button) {
-      const hide = button.getAttribute("data-label-hide") || "Hide statistics";
-      const show = button.getAttribute("data-label-show") || "Show statistics";
-      button.textContent = visible ? hide : show;
+      button.setAttribute("data-i18n", visible ? "common.hideStatistics" : "common.showStatistics");
+      button.textContent = visible
+        ? (button.getAttribute("data-label-hide") || "Hide statistics")
+        : (button.getAttribute("data-label-show") || "Show statistics");
+      applyBackTranslations();
     }
   }
 
@@ -58,6 +66,7 @@
         region.replaceWith(nextRegion);
         if (push) history.pushState({ ccAjax: true }, "", url);
         setupStatsToggle();
+        applyBackTranslations();
         window.dispatchEvent(new Event("resize"));
       })
       .catch(() => {
@@ -66,6 +75,7 @@
       .finally(() => {
         const next = getRegion();
         if (next) next.classList.remove("is-loading");
+        applyBackTranslations();
       });
   }
 
@@ -84,8 +94,9 @@
   });
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", setupStatsToggle);
+    document.addEventListener("DOMContentLoaded", () => { setupStatsToggle(); applyBackTranslations(); });
   } else {
     setupStatsToggle();
+    applyBackTranslations();
   }
 })();

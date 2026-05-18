@@ -840,9 +840,9 @@ require_once __DIR__ . '/../layout/sidebar.php';
 
         <section class="bc-page-head">
             <div>
-                <p class="bc-kicker">Business Center</p>
-                <h1>Campaign administration</h1>
-                <p>Create, analyze, archive and moderate brand campaigns.</p>
+                <p class="bc-kicker" data-i18n="businessKicker">Business Center</p>
+                <h1 data-i18n="pageTitle">Campaign administration</h1>
+                <p data-i18n="pageSubtitle">Create, analyze, archive and moderate brand campaigns.</p>
             </div>
 
         </section>
@@ -850,15 +850,15 @@ require_once __DIR__ . '/../layout/sidebar.php';
         <nav class="bc-entity-tabs" aria-label="Business Center sections">
             <a class="bc-entity-tab is-active" href="../campagne/index.php" aria-current="page">
                 <span class="bc-tab-icon"><i class="mdi mdi-bullhorn-outline"></i></span>
-                <span><strong>Campaigns</strong><small>Campaign planning and moderation</small></span>
+                <span><strong data-i18n="businessTabCampaigns">Campaigns</strong><small data-i18n="businessSubCampaigns">Campaign planning and moderation</small></span>
             </a>
             <a class="bc-entity-tab " href="../produit/index.php" >
                 <span class="bc-tab-icon"><i class="mdi mdi-package-variant-closed"></i></span>
-                <span><strong>Products</strong><small>Catalog, images and product data</small></span>
+                <span><strong data-i18n="businessTabProducts">Products</strong><small data-i18n="businessSubProducts">Catalog, images and product data</small></span>
             </a>
             <a class="bc-entity-tab " href="../contrat/index.php" >
                 <span class="bc-tab-icon"><i class="mdi mdi-file-document-edit-outline"></i></span>
-                <span><strong>Contracts</strong><small>Contract status and value tracking</small></span>
+                <span><strong data-i18n="businessTabContracts">Contracts</strong><small data-i18n="businessSubContracts">Contract status and value tracking</small></span>
             </a>
         </nav>
 
@@ -878,7 +878,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
                 <div>
                     <h2>
                     <i class="fas fa-chart-bar"></i> <span data-i18n="statsTitle">Statistiques dynamiques</span></h2>
-                    <p>Campaign distribution, archive split and budget overview.</p>
+                    <p data-i18n="statsSubtitle">Campaign distribution, archive split and budget overview.</p>
                 </div>
                 <button type="button" class="bc-secondary-btn" data-bc-stats-toggle data-label-hide="Hide statistics" data-label-show="Show statistics" id="statsToggleBtn" data-i18n="statsHide">Hide statistics</button>
             </div>
@@ -1284,8 +1284,16 @@ function cre8BoWriteLang(lang) {
 // ── TRANSLATIONS ──────────────────────────────────────────────────
 const translations = {
     fr: {
-        pageTitle:'⚡ Gestion des Campagnes',
-        pageSubtitle:'Supervision et modération des campagnes.',
+        pageTitle:'Administration des campagnes',
+        pageSubtitle:'Creer, analyser, archiver et moderer les campagnes des marques.',
+        businessKicker:'Business Center',
+        businessTabCampaigns:'Campagnes',
+        businessSubCampaigns:'Planification et moderation des campagnes',
+        businessTabProducts:'Produits',
+        businessSubProducts:'Catalogue, images et donnees produits',
+        businessTabContracts:'Contrats',
+        businessSubContracts:'Statuts et valeur des contrats',
+        statsSubtitle:'Repartition des campagnes, archives et vue budgetaire.',
         exportCsv:'Export CSV', adminLabel:'Admin',
         kpiTotal:'Total actives', kpiActive:'Actives', kpiDraft:'Brouillons', kpiEnded:'Terminées', kpiBudget:'Budget total', kpiArchived:'Archivées',
         statsTitle:'Statistiques dynamiques', statsHide:'▲ Masquer', statsShow:'▼ Afficher',
@@ -1304,8 +1312,16 @@ const translations = {
         perPageSuffix:' par page',
     },
     en: {
-        pageTitle:'⚡ Campaign Management',
-        pageSubtitle:'Supervise and moderate platform campaigns.',
+        pageTitle:'Campaign administration',
+        pageSubtitle:'Create, analyze, archive and moderate brand campaigns.',
+        businessKicker:'Business Center',
+        businessTabCampaigns:'Campaigns',
+        businessSubCampaigns:'Campaign planning and moderation',
+        businessTabProducts:'Products',
+        businessSubProducts:'Catalog, images and product data',
+        businessTabContracts:'Contracts',
+        businessSubContracts:'Contract status and value tracking',
+        statsSubtitle:'Campaign distribution, archive split and budget overview.',
         exportCsv:'Export CSV', adminLabel:'Admin',
         kpiTotal:'Total active', kpiActive:'Active', kpiDraft:'Drafts', kpiEnded:'Completed', kpiBudget:'Total budget', kpiArchived:'Archived',
         statsTitle:'Dynamic Statistics', statsHide:'▲ Hide', statsShow:'▼ Show',
@@ -1344,6 +1360,7 @@ function applyTranslations() {
     const T = translations[currentLang];
     document.querySelectorAll('[data-i18n]').forEach(el => { if (T[el.getAttribute('data-i18n')]) el.textContent = T[el.getAttribute('data-i18n')]; });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { const k = el.getAttribute('data-i18n-placeholder'); if (T[k]) el.setAttribute('placeholder', T[k]); });
+    if (window.cre8BackApplyTranslations) window.cre8BackApplyTranslations();
     const isDark = !document.body.classList.contains('light-mode');
     const themeLabel = document.getElementById('themeLabel');
     if (themeLabel) themeLabel.textContent = isDark ? T.themeLabel : T.themeLabelDark;

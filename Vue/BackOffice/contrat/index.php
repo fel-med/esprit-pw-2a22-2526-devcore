@@ -453,8 +453,6 @@ body.light-mode.cre8-admin-layout .contrat-admin {
 }
 
 </style>
-<link rel="stylesheet" href="../business-center-admin.css<?= contratAssetVersion(__DIR__ . '/../business-center-admin.css') ?>">
-<link rel="stylesheet" href="../unified-table-admin.css<?= contratAssetVersion(__DIR__ . '/../unified-table-admin.css') ?>">
 <link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
 <link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
@@ -470,33 +468,35 @@ require_once __DIR__ . '/../layout/sidebar.php';
 <div class="container-fluid page-body-wrapper cre8-admin-main">
 <?php require_once __DIR__ . '/../layout/header.php'; ?>
     <div class="main-panel">
-    <div class="content-wrapper business-center-shell">
+    <div class="content-wrapper">
         <div class="contrat-admin">
 
-
-        <section class="bc-page-head">
-            <div>
-                <p class="bc-kicker">Business Center</p>
-                <h1>Contract administration</h1>
-                <p>Track business contracts, value, status and lifecycle.</p>
+            <div class="translation-toolbar" aria-label="Language controls">
+                <div class="page-heading">
+                    <h1 class="page-title" data-tr="title_main">Gestion des Contrats</h1>
+                    <p class="page-subtitle" data-tr="subtitle_main">Supervision et modération</p>
+                </div>
             </div>
 
-        </section>
-
-        <nav class="bc-entity-tabs" aria-label="Business Center sections">
-            <a class="bc-entity-tab " href="../campagne/index.php" >
-                <span class="bc-tab-icon"><i class="mdi mdi-bullhorn-outline"></i></span>
-                <span><strong>Campaigns</strong><small>Campaign planning and moderation</small></span>
-            </a>
-            <a class="bc-entity-tab " href="../produit/index.php" >
-                <span class="bc-tab-icon"><i class="mdi mdi-package-variant-closed"></i></span>
-                <span><strong>Products</strong><small>Catalog, images and product data</small></span>
-            </a>
-            <a class="bc-entity-tab is-active" href="../contrat/index.php" aria-current="page">
-                <span class="bc-tab-icon"><i class="mdi mdi-file-document-edit-outline"></i></span>
-                <span><strong>Contracts</strong><small>Contract status and value tracking</small></span>
-            </a>
-        </nav>
+            <!-- CHARTS -->
+            <div class="charts-row">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="card-title" style="margin-bottom:12px" data-tr="chart_volume">Volume par statut</div>
+                        <div class="chart-container">
+                            <canvas id="contractsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="card-title" style="margin-bottom:12px" data-tr="chart_active_split">Actifs vs Inactifs</div>
+                        <div class="chart-container">
+                            <canvas id="statusPieChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- KPI STATS -->
             <div class="stats-grid">
@@ -530,35 +530,6 @@ require_once __DIR__ . '/../layout/sidebar.php';
                 </div>
             </div>
 
-
-            <!-- CHARTS -->
-            <section class="bc-statistics-panel" data-bc-stats>
-                <div class="bc-section-head">
-                    <div>
-                        <h2>Contract statistics</h2>
-                        <p>Volume by status and active split.</p>
-                    </div>
-                    <button type="button" class="bc-secondary-btn" data-bc-stats-toggle data-label-hide="Hide statistics" data-label-show="Show statistics">Hide statistics</button>
-                </div>
-                <div class="charts-row bc-stats-body">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="card-title" style="margin-bottom:12px" data-tr="chart_volume">Volume par statut</div>
-                        <div class="chart-container">
-                            <canvas id="contractsChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-body">
-                        <div class="card-title" style="margin-bottom:12px" data-tr="chart_active_split">Actifs vs Inactifs</div>
-                        <div class="chart-container">
-                            <canvas id="statusPieChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            </section>
             <!-- FILTERS -->
             <div class="filters-bar">
                 <div class="filter-group">
@@ -582,8 +553,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
             </div>
 
             <!-- TABLE PANEL -->
-            <div id="bcResultsRegion" class="bc-results-region">
-            <div class="card bc-table-card">
+            <div class="card">
                 <div class="card-header">
                     <h5 class="card-title">
                         <i class="fas fa-file-signature" style="color:var(--accent);margin-right:8px"></i>
@@ -602,7 +572,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
                             <span data-tr="empty_state">Aucun contrat enregistré pour le moment.</span>
                         </div>
                     <?php else: ?>
-                    <table class="table bc-table" id="contratsTable">
+                    <table class="table" id="contratsTable">
                         <thead>
                             <tr>
                                 <th onclick="sortTable(0)" data-tr="th_hash"># <i class="fas fa-sort"></i></th>
@@ -656,7 +626,6 @@ require_once __DIR__ . '/../layout/sidebar.php';
                     <?php endif; ?>
                 </div>
             </div>
-            </div>
         </div><!-- /contrat-admin -->
     </div><!-- /content-wrapper -->
     </div><!-- /main-panel -->
@@ -685,6 +654,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
 </div>
 
 <script src="../layout/back-layout.js<?= contratAssetVersion(__DIR__ . '/../layout/back-layout.js') ?>"></script>
+<script src="../business-center-admin.js<?= contratAssetVersion(__DIR__ . '/../business-center-admin.js') ?>"></script>
 <script>
 function cre8BoReadLang() {
     if (window.cre8BackGetLang) return window.cre8BackGetLang();
@@ -763,6 +733,7 @@ function translatePage(lang) {
         const key = el.getAttribute('data-tr-placeholder');
         if (T[key]) el.setAttribute('placeholder', T[key]);
     });
+    if (window.cre8BackApplyTranslations) window.cre8BackApplyTranslations();
     document.getElementById('langFR')?.classList.toggle('active', lang === 'fr');
     document.getElementById('langEN')?.classList.toggle('active', lang === 'en');
 }
@@ -941,6 +912,5 @@ window.onload = () => {
     initCharts();
 };
 </script>
-<script src="../business-center-admin.js<?= contratAssetVersion(__DIR__ . '/../business-center-admin.js') ?>"></script>
 </body>
 </html>

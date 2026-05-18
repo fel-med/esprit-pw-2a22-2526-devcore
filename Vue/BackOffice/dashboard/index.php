@@ -48,7 +48,9 @@ $adminName = trim((string) $adminName) ?: 'Admin';
 $modules = [
     [
         'label' => 'Users',
+        'label_key' => 'dashboard.modules.users.title',
         'description' => 'Manage admins, creators and brands.',
+        'description_key' => 'dashboard.modules.users.description',
         'href' => '../utilisateur/index.php',
         'icon' => 'mdi-account-multiple',
         'accent' => 'violet',
@@ -56,7 +58,9 @@ $modules = [
     ],
     [
         'label' => 'Reclamations',
+        'label_key' => 'dashboard.modules.complaints.title',
         'description' => 'Review user reports and support requests.',
+        'description_key' => 'dashboard.modules.complaints.description',
         'href' => '../utilisateur/reclamations.php',
         'icon' => 'mdi-playlist-play',
         'accent' => 'rose',
@@ -64,7 +68,9 @@ $modules = [
     ],
     [
         'label' => 'Collaborations',
+        'label_key' => 'dashboard.modules.collaborations.title',
         'description' => 'Control offers and candidatures workflow.',
+        'description_key' => 'dashboard.modules.collaborations.description',
         'href' => '../offre/index.php',
         'icon' => 'mdi-briefcase-check',
         'accent' => 'blue',
@@ -72,7 +78,9 @@ $modules = [
     ],
     [
         'label' => 'Campaigns',
+        'label_key' => 'dashboard.modules.campaigns.title',
         'description' => 'Follow campaign content and brand activity.',
+        'description_key' => 'dashboard.modules.campaigns.description',
         'href' => '../campagne/index.php',
         'icon' => 'mdi-chart-bar',
         'accent' => 'green',
@@ -80,7 +88,9 @@ $modules = [
     ],
     [
         'label' => 'Products',
+        'label_key' => 'dashboard.modules.products.title',
         'description' => 'Monitor product catalog and availability.',
+        'description_key' => 'dashboard.modules.products.description',
         'href' => '../produit/index.php',
         'icon' => 'mdi-cube-outline',
         'accent' => 'cyan',
@@ -88,7 +98,9 @@ $modules = [
     ],
     [
         'label' => 'Contracts',
+        'label_key' => 'dashboard.modules.contracts.title',
         'description' => 'Track agreements between brands and creators.',
+        'description_key' => 'dashboard.modules.contracts.description',
         'href' => '../contrat/index.php',
         'icon' => 'mdi-file-document-outline',
         'accent' => 'amber',
@@ -96,7 +108,9 @@ $modules = [
     ],
     [
         'label' => 'Posts',
+        'label_key' => 'dashboard.modules.posts.title',
         'description' => 'Moderate creator publications.',
+        'description_key' => 'dashboard.modules.posts.description',
         'href' => '../post/index.php',
         'icon' => 'mdi-format-list-bulleted',
         'accent' => 'red',
@@ -104,7 +118,9 @@ $modules = [
     ],
     [
         'label' => 'Comments',
+        'label_key' => 'dashboard.modules.comments.title',
         'description' => 'Review community comments and interactions.',
+        'description_key' => 'dashboard.modules.comments.description',
         'href' => '../comment/index.php',
         'icon' => 'mdi-comment-text-outline',
         'accent' => 'indigo',
@@ -112,7 +128,9 @@ $modules = [
     ],
     [
         'label' => 'Events',
+        'label_key' => 'dashboard.modules.events.title',
         'description' => 'Prepare event administration after merge.',
+        'description_key' => 'dashboard.modules.events.description',
         'href' => '../evenement/index.php',
         'icon' => 'mdi-calendar-check',
         'accent' => 'emerald',
@@ -437,31 +455,31 @@ $modules = [
         <div class="content-wrapper admin-dashboard-shell">
           <section class="admin-dashboard-hero">
             <div>
-              <span class="admin-dashboard-kicker"><i class="mdi mdi-view-dashboard-outline"></i> Admin dashboard</span>
-              <h1>Welcome, <?php echo htmlspecialchars($adminName); ?>.</h1>
-              <p>Manage Cre8connect from one place. Use this page as the neutral BackOffice home for users, collaborations, campaigns, products, contracts, posts, comments, events and reports.</p>
+              <span class="admin-dashboard-kicker"><i class="mdi mdi-view-dashboard-outline"></i> <span data-i18n="dashboard.kicker">Admin dashboard</span></span>
+              <h1><span data-i18n="dashboard.welcome">Welcome</span>, <?php echo htmlspecialchars($adminName); ?>.</h1>
+              <p data-i18n="dashboard.subtitle">Manage Cre8connect from one place. Use this page as the neutral BackOffice home for users, collaborations, campaigns, products, contracts, posts, comments, events and reports.</p>
             </div>
             <div class="admin-dashboard-hero-badge">
               <strong><?php echo (int) ($stats['total'] ?? 0); ?></strong>
-              <span>Total accounts</span>
+              <span data-i18n="dashboard.stats.totalAccounts">Total accounts</span>
             </div>
           </section>
 
           <section class="admin-dashboard-stats" aria-label="BackOffice statistics">
             <div class="admin-dashboard-stat">
-              <span>Administrators</span>
+              <span data-i18n="dashboard.stats.administrators">Administrators</span>
               <strong><?php echo (int) ($stats['admin'] ?? 0); ?></strong>
             </div>
             <div class="admin-dashboard-stat">
-              <span>Creators</span>
+              <span data-i18n="dashboard.stats.creators">Creators</span>
               <strong><?php echo (int) ($stats['createur'] ?? 0); ?></strong>
             </div>
             <div class="admin-dashboard-stat">
-              <span>Brands</span>
+              <span data-i18n="dashboard.stats.brands">Brands</span>
               <strong><?php echo (int) ($stats['marque'] ?? 0); ?></strong>
             </div>
             <div class="admin-dashboard-stat">
-              <span>Suspended</span>
+              <span data-i18n="dashboard.stats.suspended">Suspended</span>
               <strong><?php echo (int) ($stats['suspendu'] ?? 0); ?></strong>
             </div>
           </section>
@@ -473,10 +491,10 @@ $modules = [
                   <i class="mdi <?php echo htmlspecialchars($module['icon']); ?>"></i>
                 </span>
                 <span>
-                  <h2><?php echo htmlspecialchars($module['label']); ?></h2>
-                  <p><?php echo htmlspecialchars($module['description']); ?></p>
+                  <h2 data-i18n="<?php echo htmlspecialchars($module['label_key'] ?? ''); ?>"><?php echo htmlspecialchars($module['label']); ?></h2>
+                  <p data-i18n="<?php echo htmlspecialchars($module['description_key'] ?? ''); ?>"><?php echo htmlspecialchars($module['description']); ?></p>
                   <?php if ($module['count'] !== null): ?>
-                    <span class="admin-dashboard-card-count"><?php echo (int) $module['count']; ?> records</span>
+                    <span class="admin-dashboard-card-count" data-i18n-template="dashboard.modules.records" data-i18n-count="<?php echo (int) $module['count']; ?>"><?php echo (int) $module['count']; ?> records</span>
                   <?php endif; ?>
                 </span>
               </a>
@@ -484,13 +502,95 @@ $modules = [
           </section>
 
           <section class="admin-dashboard-panel">
-            <h2>BackOffice migration status</h2>
-            <p>This dashboard uses the shared BackOffice sidebar and header. Keep migrating the remaining BackOffice modules batch by batch, then test each module in both dark mode and light mode.</p>
+            <h2 data-i18n="dashboard.migration.title">BackOffice migration status</h2>
+            <p data-i18n="dashboard.migration.text">This dashboard uses the shared BackOffice sidebar and header. Keep migrating the remaining BackOffice modules batch by batch, then test each module in both dark mode and light mode.</p>
           </section>
         </div>
       </div>
     </div>
   </div>
+
+
+  <script>
+    (function () {
+      var dictionary = {
+        en: {
+          'dashboard.title': 'Cre8connect Admin Dashboard',
+          'dashboard.kicker': 'Admin dashboard',
+          'dashboard.welcome': 'Welcome',
+          'dashboard.subtitle': 'Manage Cre8connect from one place. Use this page as the neutral BackOffice home for users, collaborations, campaigns, products, contracts, posts, comments, events and reports.',
+          'dashboard.stats.totalAccounts': 'Total accounts',
+          'dashboard.stats.administrators': 'Administrators',
+          'dashboard.stats.creators': 'Creators',
+          'dashboard.stats.brands': 'Brands',
+          'dashboard.stats.suspended': 'Suspended',
+          'dashboard.modules.users.title': 'Users',
+          'dashboard.modules.users.description': 'Manage admins, creators and brands.',
+          'dashboard.modules.complaints.title': 'Complaints',
+          'dashboard.modules.complaints.description': 'Review user reports and support requests.',
+          'dashboard.modules.collaborations.title': 'Collaborations',
+          'dashboard.modules.collaborations.description': 'Control offers and candidatures workflow.',
+          'dashboard.modules.campaigns.title': 'Campaigns',
+          'dashboard.modules.campaigns.description': 'Follow campaign content and brand activity.',
+          'dashboard.modules.products.title': 'Products',
+          'dashboard.modules.products.description': 'Monitor product catalog and availability.',
+          'dashboard.modules.contracts.title': 'Contracts',
+          'dashboard.modules.contracts.description': 'Track agreements between brands and creators.',
+          'dashboard.modules.posts.title': 'Posts',
+          'dashboard.modules.posts.description': 'Moderate creator publications.',
+          'dashboard.modules.comments.title': 'Comments',
+          'dashboard.modules.comments.description': 'Review community comments and interactions.',
+          'dashboard.modules.events.title': 'Events',
+          'dashboard.modules.events.description': 'Prepare event administration after merge.',
+          'dashboard.modules.records': '{count} records',
+          'dashboard.migration.title': 'BackOffice migration status',
+          'dashboard.migration.text': 'This dashboard uses the shared BackOffice sidebar and header. Keep migrating the remaining BackOffice modules batch by batch, then test each module in both dark mode and light mode.'
+        },
+        fr: {
+          'dashboard.title': 'Tableau de bord admin Cre8connect',
+          'dashboard.kicker': 'Tableau de bord admin',
+          'dashboard.welcome': 'Bienvenue',
+          'dashboard.subtitle': 'Gerez Cre8connect depuis un seul endroit. Cette page est l accueil neutre du BackOffice pour les utilisateurs, collaborations, campagnes, produits, contrats, publications, commentaires, evenements et signalements.',
+          'dashboard.stats.totalAccounts': 'Comptes au total',
+          'dashboard.stats.administrators': 'Administrateurs',
+          'dashboard.stats.creators': 'Createurs',
+          'dashboard.stats.brands': 'Marques',
+          'dashboard.stats.suspended': 'Suspendus',
+          'dashboard.modules.users.title': 'Utilisateurs',
+          'dashboard.modules.users.description': 'Gerer les admins, createurs et marques.',
+          'dashboard.modules.complaints.title': 'Reclamations',
+          'dashboard.modules.complaints.description': 'Examiner les signalements et demandes de support.',
+          'dashboard.modules.collaborations.title': 'Collaborations',
+          'dashboard.modules.collaborations.description': 'Controler le flux des offres et candidatures.',
+          'dashboard.modules.campaigns.title': 'Campagnes',
+          'dashboard.modules.campaigns.description': 'Suivre le contenu des campagnes et l activite des marques.',
+          'dashboard.modules.products.title': 'Produits',
+          'dashboard.modules.products.description': 'Surveiller le catalogue produit et la disponibilite.',
+          'dashboard.modules.contracts.title': 'Contrats',
+          'dashboard.modules.contracts.description': 'Suivre les accords entre marques et createurs.',
+          'dashboard.modules.posts.title': 'Publications',
+          'dashboard.modules.posts.description': 'Moderer les publications des createurs.',
+          'dashboard.modules.comments.title': 'Commentaires',
+          'dashboard.modules.comments.description': 'Examiner les commentaires et interactions.',
+          'dashboard.modules.events.title': 'Evenements',
+          'dashboard.modules.events.description': 'Preparer l administration des evenements apres integration.',
+          'dashboard.modules.records': '{count} enregistrements',
+          'dashboard.migration.title': 'Statut de migration BackOffice',
+          'dashboard.migration.text': 'Ce tableau de bord utilise la barre laterale et l entete BackOffice partages. Continuez la migration des modules par lots, puis testez chaque module en mode sombre et clair.'
+        }
+      };
+      if (window.cre8BackRegisterTranslations) {
+        window.cre8BackRegisterTranslations(dictionary);
+      }
+      function syncTitle() {
+        if (window.cre8BackText) {
+          document.title = window.cre8BackText('dashboard.title');
+        }
+      }
+      window.addEventListener('cre8:languagechange', syncTitle);
+      syncTitle();
+    })();
+  </script>
 
   <script src="../utilisateur/assets/vendors/js/vendor.bundle.base.js<?php echo backAssetVersion(__DIR__ . '/../utilisateur/assets/vendors/js/vendor.bundle.base.js'); ?>"></script>
   <script src="../layout/back-layout.js<?php echo backAssetVersion(__DIR__ . '/../layout/back-layout.js'); ?>"></script>

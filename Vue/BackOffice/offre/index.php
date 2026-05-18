@@ -56,6 +56,21 @@ function translateOfferStatus($status)
     };
 }
 
+function offerStatusI18nKey($status)
+{
+    $key = strtolower((string) $status);
+    $key = str_replace(['-', ' '], '_', $key);
+    return match ($key) {
+        'brouillon' => 'offers.status.draft',
+        'pending' => 'offers.status.pending',
+        'publiee', 'active' => 'offers.status.live',
+        'cloturee', 'fermee', 'closed' => 'offers.status.closed',
+        'expiree' => 'offers.status.expired',
+        'archivee' => 'offers.status.archived',
+        default => '',
+    };
+}
+
 function responseStatusLabel(array $response)
 {
     return (string) ($response['displayStatusLabel'] ?? ucwords(str_replace('_', ' ', (string) ($response['statutCandidature'] ?? ''))));
@@ -131,7 +146,7 @@ function renderOfferResponsesPanelHtml($offer, array $responses)
         <?php if (empty($responses)): ?>
             <div class="detail-empty-state">
                 <span class="detail-empty-icon">i</span>
-                <h4>No creator responses yet for this offer.</h4>
+                <h4 data-i18n="offers.dialog.noResponses">No creator responses yet for this offer.</h4>
                 <p>This panel only shows creator responses attached to this offer invitation.</p>
             </div>
         <?php else: ?>
@@ -524,19 +539,25 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
         $tabs = [
             'offers' => [
                 'label' => 'Offers',
+                'labelKey' => 'collaboration.tab.offers',
                 'hint' => 'Targeted invitations',
+                'hintKey' => 'collaboration.tab.offersHint',
                 'href' => '../offre/index.php',
                 'icon' => 'mdi-briefcase-check',
             ],
             'candidatures' => [
                 'label' => 'Candidatures',
+                'labelKey' => 'collaboration.tab.candidatures',
                 'hint' => 'Creator responses',
+                'hintKey' => 'collaboration.tab.candidaturesHint',
                 'href' => '../condidature/index.php',
                 'icon' => 'mdi-account-check',
             ],
             'cre8shield' => [
                 'label' => 'Cre8Shield',
+                'labelKey' => 'collaboration.tab.cre8shield',
                 'hint' => 'Risk monitoring',
+                'hintKey' => 'collaboration.tab.cre8shieldHint',
                 'href' => '../cre8shield/index.php',
                 'icon' => 'mdi-shield-check',
             ],
@@ -552,8 +573,8 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                                 <i class="mdi <?php echo htmlspecialchars($tab['icon']); ?>"></i>
                             </span>
                             <span class="collaboration-subnav__text">
-                                <span class="collaboration-subnav__title"><?php echo htmlspecialchars($tab['label']); ?></span>
-                                <span class="collaboration-subnav__hint"><?php echo htmlspecialchars($tab['hint']); ?></span>
+                                <span class="collaboration-subnav__title" data-i18n="<?php echo htmlspecialchars($tab['labelKey']); ?>"><?php echo htmlspecialchars($tab['label']); ?></span>
+                                <span class="collaboration-subnav__hint" data-i18n="<?php echo htmlspecialchars($tab['hintKey']); ?>"><?php echo htmlspecialchars($tab['hint']); ?></span>
                             </span>
                         </a>
                     </li>
@@ -576,7 +597,6 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
     <link rel="stylesheet" href="../utilisateur/assets/vendors/mdi/css/materialdesignicons.min.css?v=<?php echo urlencode((string) (@filemtime(__DIR__ . '/../utilisateur/assets/vendors/mdi/css/materialdesignicons.min.css') ?: 0)); ?>">
     <link rel="stylesheet" href="../css/new_style_backoffice.css">
     <link rel="stylesheet" href="offre-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre-admin.css')); ?>">
-    <link rel="stylesheet" href="../unified-table-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../unified-table-admin.css')); ?>">
 
     <style>
         .collaboration-subnav {
@@ -711,8 +731,8 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
         <header class="admin-header card grid-margin">
             <div class="admin-header-main card-body">
                 <div>
-                    <h1>Offer administration</h1>
-                    <p>Track targeted offers, understand creator response behavior, and keep the collaboration pipeline visible for admins.</p>
+                    <h1 data-i18n="offers.title">Offer administration</h1>
+                    <p data-i18n="offers.subtitle">Track targeted offers, understand creator response behavior, and keep the collaboration pipeline visible for admins.</p>
                 </div>
             </div>
         </header>
@@ -722,46 +742,46 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
         <?php if (!empty($message)): ?>
             <div class="admin-flash success"><?php echo htmlspecialchars($message); ?></div>
         <?php elseif (isset($_GET['deleted'])): ?>
-            <div class="admin-flash success">Offer deleted successfully.</div>
+            <div class="admin-flash success" data-i18n="offers.flash.deleted">Offer deleted successfully.</div>
         <?php endif; ?>
 
         <div class="admin-stats-toolbar">
             <div>
-                <strong>Workspace statistics</strong>
-                <span>Live indicators and charts for collaboration activity.</span>
+                <strong data-i18n="collaboration.statistics.title">Workspace statistics</strong>
+                <span data-i18n="collaboration.statistics.subtitle">Live indicators and charts for collaboration activity.</span>
             </div>
-            <button type="button" class="admin-stats-toggle" data-stats-toggle aria-expanded="true">Hide statistics</button>
+            <button type="button" class="admin-stats-toggle" data-stats-toggle data-i18n="common.hideStatistics" aria-expanded="true">Hide statistics</button>
         </div>
 
         <section class="admin-stats-region" data-stats-region>
             <section class="admin-summary">
                 <article class="admin-card card card-body bo-kpi-card bo-kpi-card-1">
-                    <h3>Real offers</h3>
+                    <h3 data-i18n="offers.kpi.realOffers">Real offers</h3>
                     <p><?php echo (int) ($adminOfferMetrics['realOffers'] ?? 0); ?></p>
-                    <small>Total targeted invitations</small>
+                    <small data-i18n="offers.kpi.realOffersSub">Total targeted invitations</small>
                 </article>
                 <article class="admin-card card card-body bo-kpi-card bo-kpi-card-2">
-                    <h3>Real candidatures</h3>
+                    <h3 data-i18n="collaboration.kpi.realCandidatures">Real candidatures</h3>
                     <p><?php echo (int) ($platformMetrics['realCandidatures'] ?? 0); ?></p>
-                    <small>Placeholders excluded</small>
+                    <small data-i18n="collaboration.kpi.placeholdersExcluded">Placeholders excluded</small>
                 </article>
                 <article class="admin-card card card-body bo-kpi-card bo-kpi-card-3">
-                    <h3>Pending reviews</h3>
+                    <h3 data-i18n="collaboration.kpi.pendingReviews">Pending reviews</h3>
                     <p><?php echo (int) ($platformMetrics['pendingReviews'] ?? 0); ?></p>
-                    <small>Sent or under review</small>
+                    <small data-i18n="collaboration.kpi.sentOrReview">Sent or under review</small>
                 </article>
                 <article class="admin-card card card-body bo-kpi-card bo-kpi-card-4">
-                    <h3>Open negotiations</h3>
+                    <h3 data-i18n="collaboration.kpi.openNegotiations">Open negotiations</h3>
                     <p><?php echo (int) ($platformMetrics['openNegotiations'] ?? 0); ?></p>
-                    <small>Active negotiation candidatures</small>
+                    <small data-i18n="collaboration.kpi.activeNegotiations">Active negotiation candidatures</small>
                 </article>
                 <article class="admin-card card card-body bo-kpi-card bo-kpi-card-5">
-                    <h3>Expired offers</h3>
+                    <h3 data-i18n="offers.kpi.expiredOffers">Expired offers</h3>
                     <p><?php echo (int) ($adminOfferMetrics['expiredOffers'] ?? 0); ?></p>
-                    <small>Past deadline and not archived</small>
+                    <small data-i18n="offers.kpi.expiredOffersSub">Past deadline and not archived</small>
                 </article>
                 <article class="admin-card card card-body bo-kpi-card bo-kpi-card-6">
-                    <h3>Activity this week</h3>
+                    <h3 data-i18n="collaboration.kpi.activityThisWeek">Activity this week</h3>
                     <p><?php echo (int) ($platformMetrics['activityThisWeek'] ?? 0); ?></p>
                     <small><?php echo htmlspecialchars((string) ($platformMetrics['acceptanceRate'] ?? 0)); ?>% acceptance rate</small>
                 </article>
@@ -773,9 +793,9 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
         <section class="card grid-margin search-panel search-panel-simple">
             <div class="search-panel-head">
                 <div class="search-panel-copy">
-                    <span class="search-panel-title">Filter the offer list</span>
+                    <span class="search-panel-title" data-i18n="offers.filter.title">Filter the offer list</span>
                     <span class="search-panel-subtitle">
-                        Search by offer, brand, creator, budget, or deadline without opening extra controls.
+                        <span data-i18n="offers.filter.subtitle">Search by offer, brand, creator, budget, or deadline without opening extra controls.</span>
                     </span>
                 </div>
                 <?php if ($hasActiveFilters): ?>
@@ -786,59 +806,59 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
             <form method="get" class="search-form" data-module-validation="admin-filters" novalidate>
                 <div class="search-grid">
                     <div class="search-group">
-                        <label for="keyword">Keyword</label>
-                        <input id="keyword" name="keyword" type="search" class="form-control" value="<?php echo htmlspecialchars($searchKeyword); ?>" placeholder="Offer, brand, creator, or ID...">
+                        <label for="keyword" data-i18n="offers.filter.keyword">Keyword</label>
+                        <input id="keyword" name="keyword" type="search" class="form-control" value="<?php echo htmlspecialchars($searchKeyword); ?>" placeholder="Offer, brand, creator, or ID..." data-i18n-placeholder="offers.filter.keywordPlaceholder">
                     </div>
 
                     <div class="search-group">
-                        <label for="statut">Status</label>
+                        <label for="statut" data-i18n="common.status">Status</label>
                         <select id="statut" name="statut" class="form-control">
-                            <option value="">All</option>
-                            <option value="brouillon"<?php echo $searchStatut === 'brouillon' ? ' selected' : ''; ?>>Draft</option>
-                            <option value="publiee"<?php echo $searchStatut === 'publiee' ? ' selected' : ''; ?>>Live now</option>
-                            <option value="pending"<?php echo $searchStatut === 'pending' ? ' selected' : ''; ?>>Pending launch</option>
-                            <option value="cloturee"<?php echo $searchStatut === 'cloturee' ? ' selected' : ''; ?>>Closed</option>
-                            <option value="expiree"<?php echo $searchStatut === 'expiree' ? ' selected' : ''; ?>>Expired</option>
-                            <option value="archivee"<?php echo $searchStatut === 'archivee' ? ' selected' : ''; ?>>Archived</option>
+                            <option value="" data-i18n-opt="common.all">All</option>
+                            <option value="brouillon"<?php echo $searchStatut === 'brouillon' ? ' selected' : ''; ?> data-i18n-opt="offers.status.draft">Draft</option>
+                            <option value="publiee"<?php echo $searchStatut === 'publiee' ? ' selected' : ''; ?> data-i18n-opt="offers.status.live">Live now</option>
+                            <option value="pending"<?php echo $searchStatut === 'pending' ? ' selected' : ''; ?> data-i18n-opt="offers.status.pending">Pending launch</option>
+                            <option value="cloturee"<?php echo $searchStatut === 'cloturee' ? ' selected' : ''; ?> data-i18n-opt="offers.status.closed">Closed</option>
+                            <option value="expiree"<?php echo $searchStatut === 'expiree' ? ' selected' : ''; ?> data-i18n-opt="offers.status.expired">Expired</option>
+                            <option value="archivee"<?php echo $searchStatut === 'archivee' ? ' selected' : ''; ?> data-i18n-opt="offers.status.archived">Archived</option>
                         </select>
                     </div>
 
                     <div class="search-group">
-                        <label for="budgetFrom">Budget from</label>
+                        <label for="budgetFrom" data-i18n="offers.filter.budgetFrom">Budget from</label>
                         <input id="budgetFrom" name="budgetFrom" type="number" step="0.01" class="form-control" value="<?php echo htmlspecialchars($searchBudgetFrom); ?>" placeholder="0">
                     </div>
 
                     <div class="search-group">
-                        <label for="budgetTo">Budget to</label>
+                        <label for="budgetTo" data-i18n="offers.filter.budgetTo">Budget to</label>
                         <input id="budgetTo" name="budgetTo" type="number" step="0.01" class="form-control" value="<?php echo htmlspecialchars($searchBudgetTo); ?>" placeholder="0">
                     </div>
 
                     <div class="search-group">
-                        <label for="dateLimite">Deadline from</label>
+                        <label for="dateLimite" data-i18n="offers.filter.deadlineFrom">Deadline from</label>
                         <input id="dateLimite" name="dateLimite" type="date" class="form-control" value="<?php echo htmlspecialchars($searchDateLimite); ?>">
                     </div>
 
                     <div class="search-group">
-                        <label for="dateLimiteTo">Deadline to</label>
+                        <label for="dateLimiteTo" data-i18n="offers.filter.deadlineTo">Deadline to</label>
                         <input id="dateLimiteTo" name="dateLimiteTo" type="date" class="form-control" value="<?php echo htmlspecialchars($searchDateLimiteTo); ?>">
                     </div>
 
                     <div class="search-group">
-                        <label for="sort">Sort</label>
+                        <label for="sort" data-i18n="offers.filter.sort">Sort</label>
                         <select id="sort" name="sort" class="form-control">
-                            <option value=""<?php echo $searchSort === '' ? ' selected' : ''; ?>>Newest</option>
-                            <option value="oldest"<?php echo $searchSort === 'oldest' ? ' selected' : ''; ?>>Oldest</option>
-                            <option value="deadline_soon"<?php echo $searchSort === 'deadline_soon' ? ' selected' : ''; ?>>Deadline soon</option>
-                            <option value="budget_high"<?php echo $searchSort === 'budget_high' ? ' selected' : ''; ?>>Budget high to low</option>
-                            <option value="budget_low"<?php echo $searchSort === 'budget_low' ? ' selected' : ''; ?>>Budget low to high</option>
-                            <option value="status"<?php echo $searchSort === 'status' ? ' selected' : ''; ?>>Status</option>
+                            <option value=""<?php echo $searchSort === '' ? ' selected' : ''; ?> data-i18n-opt="offers.sort.newest">Newest</option>
+                            <option value="oldest"<?php echo $searchSort === 'oldest' ? ' selected' : ''; ?> data-i18n-opt="offers.sort.oldest">Oldest</option>
+                            <option value="deadline_soon"<?php echo $searchSort === 'deadline_soon' ? ' selected' : ''; ?> data-i18n-opt="offers.sort.deadlineSoon">Deadline soon</option>
+                            <option value="budget_high"<?php echo $searchSort === 'budget_high' ? ' selected' : ''; ?> data-i18n-opt="offers.sort.budgetHigh">Budget high to low</option>
+                            <option value="budget_low"<?php echo $searchSort === 'budget_low' ? ' selected' : ''; ?> data-i18n-opt="offers.sort.budgetLow">Budget low to high</option>
+                            <option value="status"<?php echo $searchSort === 'status' ? ' selected' : ''; ?> data-i18n-opt="common.status">Status</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="search-actions">
-                    <button type="submit" class="btn btn-primary">Apply filters</button>
-                    <a class="btn btn-secondary clear-link" href="index.php">Reset</a>
+                    <button type="submit" class="btn btn-primary"><span data-i18n="common.applyFilters">Apply filters</span></button>
+                    <a class="btn btn-secondary clear-link" href="index.php"><span data-i18n="common.reset">Reset</span></a>
                 </div>
             </form>
         </section>
@@ -847,7 +867,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
             <div class="admin-layout">
                 <section class="admin-panel admin-table-panel card grid-margin">
                 <div class="admin-panel-header">
-                    <h2 class="card-title">Offer list</h2>
+                    <h2 class="card-title" data-i18n="offers.table.title">Offer list</h2>
                 </div>
                 <div class="admin-panel-body card-body">
                     <div class="admin-table-wrapper">
@@ -864,14 +884,14 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                             </colgroup>
                             <thead>
                                 <tr>
-                                    <th>Offer</th>
-                                    <th>Brand</th>
-                                    <th>Target creator</th>
-                                    <th>Budget</th>
-                                    <th>Deadline</th>
-                                    <th>Status</th>
-                                    <th>Responses</th>
-                                    <th>Actions</th>
+                                    <th data-i18n="common.offer">Offer</th>
+                                    <th data-i18n="common.brand">Brand</th>
+                                    <th data-i18n="offers.table.targetCreator">Target creator</th>
+                                    <th data-i18n="common.budget">Budget</th>
+                                    <th data-i18n="common.deadline">Deadline</th>
+                                    <th data-i18n="common.status">Status</th>
+                                    <th data-i18n="common.responses">Responses</th>
+                                    <th data-i18n="common.actions">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -880,8 +900,8 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                                         <td colspan="8">
                                             <div class="admin-empty-state">
                                                 <div class="admin-empty-icon">i</div>
-                                                <strong>No records found</strong>
-                                                <span>Try changing filters or search terms.</span>
+                                                <strong data-i18n="common.empty">No records found</strong>
+                                                <span data-i18n="common.emptyHint">Try changing filters or search terms.</span>
                                             </div>
                                         </td>
                                     </tr>
@@ -915,7 +935,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                                         </td>
                                         <td class="money-cell"><?php echo htmlspecialchars(formatMoney($offre->getBudgetPropose())); ?></td>
                                         <td><?php echo htmlspecialchars($offre->getDateLimite()); ?></td>
-                                        <td><span class="badge badge-status <?php echo htmlspecialchars($displayStatus); ?>"><?php echo htmlspecialchars(translateOfferStatus($displayStatus)); ?></span></td>
+                                        <td><span class="badge badge-status <?php echo htmlspecialchars($displayStatus); ?>" data-i18n="<?php echo htmlspecialchars(offerStatusI18nKey($displayStatus)); ?>"><?php echo htmlspecialchars(translateOfferStatus($displayStatus)); ?></span></td>
                                         <td class="responses-cell">
                                             <button
                                                 type="button"
@@ -925,12 +945,12 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                                                 data-offer-title="<?php echo htmlspecialchars($offerTitle, ENT_QUOTES); ?>"
                                             >
                                                 <strong><?php echo count($responses); ?></strong>
-                                                <span>Responses</span>
+                                                <span data-i18n="common.responses">Responses</span>
                                             </button>
                                         </td>
                                         <td class="admin-actions">
                                             <div class="admin-actions-stack">
-                                                <a class="btn btn-info btn-sm inspect-link" href="<?php echo htmlspecialchars($inspectUrl); ?>">Inspect</a>
+                                                <a class="btn btn-info btn-sm inspect-link" href="<?php echo htmlspecialchars($inspectUrl); ?>"><span data-i18n="common.inspect">Inspect</span></a>
                                                 <form
                                                     method="post"
                                                     class="inline-delete-form"
@@ -939,7 +959,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                                                     data-delete-creator="<?php echo htmlspecialchars($creatorName, ENT_QUOTES); ?>"
                                                 >
                                                     <input type="hidden" name="idOffreToDelete" value="<?php echo (int) $offre->getIdOffre(); ?>">
-                                                    <button type="submit" name="deleteOffre" class="btn btn-danger btn-sm delete-btn">Delete</button>
+                                                    <button type="submit" name="deleteOffre" class="btn btn-danger btn-sm delete-btn"><span data-i18n="common.delete">Delete</span></button>
                                                 </form>
                                             </div>
                                         </td>
@@ -996,11 +1016,11 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
         <div class="inspect-dialog-card">
             <div class="inspect-dialog-header">
                 <div>
-                    <span class="inspect-dialog-kicker">Admin preview</span>
-                    <h2 id="offerInspectDialogTitle">Offer preview</h2>
-                    <p>Open a compact offer card without leaving the dashboard list.</p>
+                    <span class="inspect-dialog-kicker" data-i18n="offers.dialog.adminPreview">Admin preview</span>
+                    <h2 id="offerInspectDialogTitle" data-i18n="offers.dialog.previewTitle">Offer preview</h2>
+                    <p data-i18n="offers.dialog.previewSubtitle">Open a compact offer card without leaving the dashboard list.</p>
                 </div>
-                <button type="button" class="inspect-dialog-close" data-close-inspect-dialog aria-label="Close offer preview">Close</button>
+                <button type="button" class="inspect-dialog-close" data-close-inspect-dialog aria-label="Close offer preview" data-i18n-aria-label="offers.dialog.closePreview"><span data-i18n="common.close">Close</span></button>
             </div>
             <div class="inspect-dialog-body" id="offerInspectDialogBody">
                 <?php echo renderOfferInspectCardHtml(
@@ -1018,17 +1038,17 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
         <div class="responses-dialog-card">
             <div class="responses-dialog-header">
                 <div>
-                    <span class="inspect-dialog-kicker">Related candidatures</span>
-                    <h2 id="offerResponsesDialogTitle">Offer responses</h2>
-                    <p>Creator responses linked to this offer invitation only.</p>
+                    <span class="inspect-dialog-kicker" data-i18n="offers.dialog.relatedCandidatures">Related candidatures</span>
+                    <h2 id="offerResponsesDialogTitle" data-i18n="offers.dialog.responsesTitle">Offer responses</h2>
+                    <p data-i18n="offers.dialog.responsesSubtitle">Creator responses linked to this offer invitation only.</p>
                 </div>
-                <button type="button" class="inspect-dialog-close" data-close-responses-dialog aria-label="Close offer responses">Close</button>
+                <button type="button" class="inspect-dialog-close" data-close-responses-dialog aria-label="Close offer responses" data-i18n-aria-label="offers.dialog.closeResponses"><span data-i18n="common.close">Close</span></button>
             </div>
             <div class="responses-dialog-body" id="offerResponsesDialogBody">
                 <div class="detail-empty-state">
                     <span class="detail-empty-icon">i</span>
-                    <h4>No creator responses yet for this offer.</h4>
-                    <p>Select an offer response button from the table to load related candidatures.</p>
+                    <h4 data-i18n="offers.dialog.noResponses">No creator responses yet for this offer.</h4>
+                    <p data-i18n="offers.dialog.selectResponseHint">Select an offer response button from the table to load related candidatures.</p>
                 </div>
             </div>
         </div>
@@ -1037,28 +1057,222 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
         <div class="delete-dialog-card">
             <div class="delete-dialog-header">
                 <div>
-                    <span class="delete-dialog-kicker">Delete offer</span>
-                    <h2 id="offerDeleteDialogTitle">Remove this offer?</h2>
-                    <p>This action permanently removes the selected offer from the admin pipeline.</p>
+                    <span class="delete-dialog-kicker" data-i18n="offers.delete.kicker">Delete offer</span>
+                    <h2 id="offerDeleteDialogTitle" data-i18n="offers.delete.title">Remove this offer?</h2>
+                    <p data-i18n="offers.delete.subtitle">This action permanently removes the selected offer from the admin pipeline.</p>
                 </div>
-                <button type="button" class="delete-dialog-close" data-delete-close aria-label="Cancel offer deletion">Cancel</button>
+                <button type="button" class="delete-dialog-close" data-delete-close aria-label="Cancel offer deletion" data-i18n-aria-label="offers.delete.cancelLabel"><span data-i18n="common.cancel">Cancel</span></button>
             </div>
             <div class="delete-dialog-body">
                 <div class="delete-dialog-preview">
-                    <span class="delete-dialog-preview-label">Selected offer</span>
+                    <span class="delete-dialog-preview-label" data-i18n="offers.delete.selectedOffer">Selected offer</span>
                     <strong id="offerDeleteDialogOffer">This targeted offer</strong>
                     <span id="offerDeleteDialogCreator">Creator context will appear here.</span>
                 </div>
-                <p class="delete-dialog-warning">This action cannot be undone.</p>
+                <p class="delete-dialog-warning" data-i18n="common.cannotUndo">This action cannot be undone.</p>
                 <div class="delete-dialog-actions">
-                    <button type="button" class="delete-dialog-secondary" data-delete-close>Keep offer</button>
-                    <button type="button" class="delete-dialog-danger" id="offerDeleteDialogConfirm">Delete permanently</button>
+                    <button type="button" class="delete-dialog-secondary" data-delete-close><span data-i18n="offers.delete.keep">Keep offer</span></button>
+                    <button type="button" class="delete-dialog-danger" id="offerDeleteDialogConfirm"><span data-i18n="common.deletePermanently">Delete permanently</span></button>
                 </div>
             </div>
         </div>
     </dialog>
         </main>
     </div>
+    <script>
+        window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
+            en: {
+                'common.search': 'Search',
+                'common.applyFilters': 'Apply filters',
+                'common.reset': 'Reset',
+                'common.hideStatistics': 'Hide statistics',
+                'common.showStatistics': 'Show statistics',
+                'common.actions': 'Actions',
+                'common.status': 'Status',
+                'common.page': 'Page',
+                'common.of': 'of',
+                'common.empty': 'No records found',
+                'common.delete': 'Delete',
+                'common.inspect': 'Inspect',
+                'common.review': 'Review',
+                'common.source': 'Source',
+                'common.responses': 'Responses',
+                'common.close': 'Close',
+                'common.cancel': 'Cancel',
+                'common.all': 'All',
+                'common.brand': 'Brand',
+                'common.creator': 'Creator',
+                'common.deadline': 'Deadline',
+                'common.budget': 'Budget',
+                'common.description': 'Description',
+                'common.start': 'Start',
+                'common.end': 'End',
+                'common.published': 'Published',
+                'common.offer': 'Offer',
+                'common.campaign': 'Campaign',
+                'common.notAvailable': 'Not available',
+                'common.notShared': 'Not shared',
+                'collaboration.tab.offers': 'Offers',
+                'collaboration.tab.offersHint': 'Targeted invitations',
+                'collaboration.tab.candidatures': 'Candidatures',
+                'collaboration.tab.candidaturesHint': 'Creator responses',
+                'collaboration.tab.cre8shield': 'Cre8Shield',
+                'collaboration.tab.cre8shieldHint': 'Risk monitoring',
+                'collaboration.statistics.title': 'Workspace statistics',
+                'collaboration.statistics.subtitle': 'Live indicators and charts for collaboration activity.',
+                'collaboration.kpi.realCandidatures': 'Real candidatures',
+                'collaboration.kpi.placeholdersExcluded': 'Placeholders excluded',
+                'collaboration.kpi.pendingReviews': 'Pending reviews',
+                'collaboration.kpi.sentOrReview': 'Sent or under review',
+                'collaboration.kpi.openNegotiations': 'Open negotiations',
+                'collaboration.kpi.activeNegotiations': 'Active negotiation candidatures',
+                'collaboration.kpi.activityThisWeek': 'Activity this week',
+                'offers.kpi.expiredOffers': 'Expired offers',
+                'offers.kpi.expiredOffersSub': 'Past deadline and not archived',
+                'offers.filter.sort': 'Sort',
+                'offers.sort.newest': 'Newest',
+                'offers.sort.oldest': 'Oldest',
+                'offers.sort.budgetHigh': 'Budget high to low',
+                'offers.sort.budgetLow': 'Budget low to high',
+                'offers.title': 'Offer administration',
+                'offers.subtitle': 'Track targeted offers, understand creator response behavior, and keep the collaboration pipeline visible for admins.',
+                'offers.flash.deleted': 'Offer deleted successfully.',
+                'offers.kpi.realOffers': 'Real offers',
+                'offers.kpi.realOffersSub': 'Total targeted invitations',
+                'offers.filter.title': 'Filter the offer list',
+                'offers.filter.subtitle': 'Search by offer, brand, creator, budget, or deadline without opening extra controls.',
+                'offers.filter.keyword': 'Keyword',
+                'offers.filter.keywordPlaceholder': 'Offer, brand, creator, or ID...',
+                'offers.filter.budgetFrom': 'Budget from',
+                'offers.filter.budgetTo': 'Budget to',
+                'offers.filter.deadlineFrom': 'Deadline from',
+                'offers.filter.deadlineTo': 'Deadline to',
+                'offers.table.title': 'Offer list',
+                'offers.table.targetCreator': 'Target creator',
+                'offers.status.draft': 'Draft',
+                'offers.status.live': 'Live now',
+                'offers.status.pending': 'Pending launch',
+                'offers.status.closed': 'Closed',
+                'offers.status.expired': 'Expired',
+                'offers.status.archived': 'Archived',
+                'offers.sort.deadlineSoon': 'Deadline soon',
+                'offers.dialog.adminPreview': 'Admin preview',
+                'offers.dialog.previewTitle': 'Offer preview',
+                'offers.dialog.previewSubtitle': 'Open a compact offer card without leaving the dashboard list.',
+                'offers.dialog.closePreview': 'Close offer preview',
+                'offers.dialog.relatedCandidatures': 'Related candidatures',
+                'offers.dialog.responsesTitle': 'Offer responses',
+                'offers.dialog.responsesSubtitle': 'Creator responses linked to this offer invitation only.',
+                'offers.dialog.closeResponses': 'Close offer responses',
+                'offers.dialog.noResponses': 'No creator responses yet for this offer.',
+                'offers.dialog.selectResponseHint': 'Select an offer response button from the table to load related candidatures.',
+                'offers.delete.kicker': 'Delete offer',
+                'offers.delete.title': 'Remove this offer?',
+                'offers.delete.subtitle': 'This action permanently removes the selected offer from the admin pipeline.',
+                'offers.delete.cancelLabel': 'Cancel offer deletion',
+                'offers.delete.selectedOffer': 'Selected offer',
+                'offers.delete.keep': 'Keep offer',
+                'common.emptyHint': 'Try changing filters or search terms.',
+                'common.cannotUndo': 'This action cannot be undone.',
+                'common.deletePermanently': 'Delete permanently'
+            },
+            fr: {
+                'common.search': 'Rechercher',
+                'common.applyFilters': 'Appliquer les filtres',
+                'common.reset': 'Reinitialiser',
+                'common.hideStatistics': 'Masquer les statistiques',
+                'common.showStatistics': 'Afficher les statistiques',
+                'common.actions': 'Actions',
+                'common.status': 'Statut',
+                'common.page': 'Page',
+                'common.of': 'sur',
+                'common.empty': 'Aucun enregistrement trouve',
+                'common.delete': 'Supprimer',
+                'common.inspect': 'Inspecter',
+                'common.review': 'Examiner',
+                'common.source': 'Source',
+                'common.responses': 'Reponses',
+                'common.close': 'Fermer',
+                'common.cancel': 'Annuler',
+                'common.all': 'Tous',
+                'common.brand': 'Marque',
+                'common.creator': 'Createur',
+                'common.deadline': 'Date limite',
+                'common.budget': 'Budget',
+                'common.description': 'Description',
+                'common.start': 'Debut',
+                'common.end': 'Fin',
+                'common.published': 'Publie',
+                'common.offer': 'Offre',
+                'common.campaign': 'Campagne',
+                'common.notAvailable': 'Non disponible',
+                'common.notShared': 'Non partage',
+                'collaboration.tab.offers': 'Offres',
+                'collaboration.tab.offersHint': 'Invitations ciblees',
+                'collaboration.tab.candidatures': 'Candidatures',
+                'collaboration.tab.candidaturesHint': 'Reponses des createurs',
+                'collaboration.tab.cre8shield': 'Cre8Shield',
+                'collaboration.tab.cre8shieldHint': 'Surveillance des risques',
+                'collaboration.statistics.title': 'Statistiques de l espace',
+                'collaboration.statistics.subtitle': 'Indicateurs et graphiques en direct pour les collaborations.',
+                'collaboration.kpi.realCandidatures': 'Candidatures reelles',
+                'collaboration.kpi.placeholdersExcluded': 'Elements techniques exclus',
+                'collaboration.kpi.pendingReviews': 'Revues en attente',
+                'collaboration.kpi.sentOrReview': 'Envoyees ou en cours de revue',
+                'collaboration.kpi.openNegotiations': 'Negociations ouvertes',
+                'collaboration.kpi.activeNegotiations': 'Candidatures en negociation active',
+                'collaboration.kpi.activityThisWeek': 'Activite cette semaine',
+                'offers.kpi.expiredOffers': 'Offres expirees',
+                'offers.kpi.expiredOffersSub': 'Date limite depassee et non archivee',
+                'offers.filter.sort': 'Tri',
+                'offers.sort.newest': 'Plus recentes',
+                'offers.sort.oldest': 'Plus anciennes',
+                'offers.sort.budgetHigh': 'Budget decroissant',
+                'offers.sort.budgetLow': 'Budget croissant',
+                'offers.title': 'Administration des offres',
+                'offers.subtitle': 'Suivez les offres ciblees, les reponses des createurs et le pipeline de collaboration.',
+                'offers.flash.deleted': 'Offre supprimee avec succes.',
+                'offers.kpi.realOffers': 'Offres reelles',
+                'offers.kpi.realOffersSub': 'Total des invitations ciblees',
+                'offers.filter.title': 'Filtrer la liste des offres',
+                'offers.filter.subtitle': 'Recherchez par offre, marque, createur, budget ou date limite.',
+                'offers.filter.keyword': 'Mot-cle',
+                'offers.filter.keywordPlaceholder': 'Offre, marque, createur ou ID...',
+                'offers.filter.budgetFrom': 'Budget min',
+                'offers.filter.budgetTo': 'Budget max',
+                'offers.filter.deadlineFrom': 'Date limite depuis',
+                'offers.filter.deadlineTo': 'Date limite jusqu a',
+                'offers.table.title': 'Liste des offres',
+                'offers.table.targetCreator': 'Createur cible',
+                'offers.status.draft': 'Brouillon',
+                'offers.status.live': 'En ligne',
+                'offers.status.pending': 'Lancement en attente',
+                'offers.status.closed': 'Cloturee',
+                'offers.status.expired': 'Expiree',
+                'offers.status.archived': 'Archivee',
+                'offers.sort.deadlineSoon': 'Date limite proche',
+                'offers.dialog.adminPreview': 'Apercu admin',
+                'offers.dialog.previewTitle': 'Apercu de l offre',
+                'offers.dialog.previewSubtitle': 'Ouvrir une carte compacte sans quitter la liste.',
+                'offers.dialog.closePreview': 'Fermer l apercu',
+                'offers.dialog.relatedCandidatures': 'Candidatures liees',
+                'offers.dialog.responsesTitle': 'Reponses a l offre',
+                'offers.dialog.responsesSubtitle': 'Reponses des createurs liees uniquement a cette invitation.',
+                'offers.dialog.closeResponses': 'Fermer les reponses',
+                'offers.dialog.noResponses': 'Aucune reponse de createur pour cette offre.',
+                'offers.dialog.selectResponseHint': 'Selectionnez le bouton reponses dans le tableau pour charger les candidatures.',
+                'offers.delete.kicker': 'Supprimer l offre',
+                'offers.delete.title': 'Supprimer cette offre ?',
+                'offers.delete.subtitle': 'Cette action retire definitivement l offre du pipeline admin.',
+                'offers.delete.cancelLabel': 'Annuler la suppression',
+                'offers.delete.selectedOffer': 'Offre selectionnee',
+                'offers.delete.keep': 'Garder l offre',
+                'common.emptyHint': 'Essayez de modifier les filtres ou la recherche.',
+                'common.cannotUndo': 'Cette action est irreversible.',
+                'common.deletePermanently': 'Supprimer definitivement'
+            }
+        });
+    </script>
     <script src="../layout/back-layout.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/back-layout.js')); ?>"></script>
     <script src="offre-admin-validation.js"></script>
     <script src="offre-admin-delete.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/offre-admin-delete.js')); ?>"></script>
@@ -1129,6 +1343,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                 }
 
                 inspectDialogBody.innerHTML = html || '';
+                if (window.cre8BackApplyTranslations) { window.cre8BackApplyTranslations(); }
 
                 if (typeof inspectDialog.showModal === 'function') {
                     if (!inspectDialog.open) {
@@ -1162,7 +1377,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                 responsesDialogBody.innerHTML = template ? template.innerHTML : `
                     <div class="detail-empty-state">
                         <span class="detail-empty-icon">i</span>
-                        <h4>No creator responses yet for this offer.</h4>
+                        <h4 data-i18n="offers.dialog.noResponses">No creator responses yet for this offer.</h4>
                         <p>This panel only shows creator responses attached to this offer invitation.</p>
                     </div>
                 `;
@@ -1394,6 +1609,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                         window.history.pushState({ adminResultsUrl: url }, '', url);
                     }
                     window.dispatchEvent(new Event('resize'));
+                    if (window.cre8BackApplyTranslations) { window.cre8BackApplyTranslations(); }
                 } catch (error) {
                     window.location.href = url;
                 } finally {
@@ -1434,7 +1650,9 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
             const key = 'cre8_bo_stats_visible';
             const setVisible = (visible) => {
                 region.hidden = !visible;
+                toggle.setAttribute('data-i18n', visible ? 'common.hideStatistics' : 'common.showStatistics');
                 toggle.textContent = visible ? 'Hide statistics' : 'Show statistics';
+                if (window.cre8BackApplyTranslations) { window.cre8BackApplyTranslations(); }
                 toggle.setAttribute('aria-expanded', visible ? 'true' : 'false');
                 if (visible) {
                     window.dispatchEvent(new Event('resize'));

@@ -199,6 +199,21 @@ $userInitial = function_exists('mb_substr') ? mb_substr($userName, 0, 1, 'UTF-8'
 $userInitial = strtoupper((string)$userInitial) ?: 'A';
 $hasFaceDescriptor = trim((string)($userRow['face_descriptor'] ?? '')) !== '';
 $profileImageUrl = $profileC->getProfileImageUrl($currentUserId, '../../public/uploads/profile');
+$profileFlashKeyByMessage = [
+    'Name is required.' => 'profile.validation.nameRequired',
+    'Email address is required.' => 'profile.validation.emailRequired',
+    'Please enter a valid email address.' => 'profile.validation.emailInvalid',
+    'This email address is already used by another account.' => 'profile.validation.emailUsed',
+    'Invalid face scan data. Please scan your face again.' => 'profile.validation.faceInvalid',
+    'Face ID storage is not available in the utilisateur table.' => 'profile.validation.faceUnavailable',
+    'Invalid profile photo.' => 'profile.validation.photoInvalid',
+    'Could not update your display name.' => 'profile.validation.nameUpdateFailed',
+    'Could not update your email address.' => 'profile.validation.emailUpdateFailed',
+    'Could not save your profile details.' => 'profile.validation.detailsUpdateFailed',
+    'Could not update your Face ID.' => 'profile.validation.faceUpdateFailed',
+    'Could not update your profile.' => 'profile.validation.profileUpdateFailed',
+    'Profile updated successfully.' => 'profile.flash.updated',
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -670,16 +685,16 @@ $profileImageUrl = $profileC->getProfileImageUrl($currentUserId, '../../public/u
             <div class="admin-profile-card">
               <div class="admin-profile-hero">
                 <?php if ($profileImageUrl): ?>
-                  <img class="admin-profile-avatar" src="<?php echo htmlspecialchars($profileImageUrl); ?>" alt="Profile photo">
+                  <img class="admin-profile-avatar" src="<?php echo htmlspecialchars($profileImageUrl); ?>" alt="Profile photo" data-i18n-title="profile.photo.current" data-i18n-aria-label="profile.photo.current">
                 <?php else: ?>
                   <div class="admin-profile-avatar"><?php echo htmlspecialchars($userInitial); ?></div>
                 <?php endif; ?>
 
                 <div>
-                  <span class="admin-profile-eyebrow"><i class="mdi mdi-shield-account"></i> BackOffice profile</span>
-                  <h2 class="admin-profile-title">Profile Settings</h2>
-                  <p class="admin-profile-subtitle">Update your name, profile photo, and Face ID.</p>
-                  <div class="admin-profile-meta" aria-label="Account metadata">
+                  <span class="admin-profile-eyebrow"><i class="mdi mdi-shield-account"></i> <span data-i18n="profile.kicker">BackOffice profile</span></span>
+                  <h2 class="admin-profile-title" data-i18n="profile.title">Profile Settings</h2>
+                  <p class="admin-profile-subtitle" data-i18n="profile.subtitle">Update your name, profile photo, and Face ID.</p>
+                  <div class="admin-profile-meta" aria-label="Account metadata" data-i18n-aria-label="profile.meta.aria">
                     <span class="admin-profile-pill"><i class="mdi mdi-account-key"></i> <?php echo htmlspecialchars($userRole ?: 'admin'); ?></span>
                     <?php if ($userEmail !== ''): ?>
                       <span class="admin-profile-pill"><i class="mdi mdi-email-outline"></i> <?php echo htmlspecialchars($userEmail); ?></span>
@@ -691,7 +706,8 @@ $profileImageUrl = $profileC->getProfileImageUrl($currentUserId, '../../public/u
               <div class="admin-profile-body">
 
                 <?php if ($flash): ?>
-                  <div class="alert alert-<?php echo htmlspecialchars($flash['type']); ?>" role="alert">
+                  <?php $flashKey = $profileFlashKeyByMessage[(string)($flash['message'] ?? '')] ?? ''; ?>
+                  <div class="alert alert-<?php echo htmlspecialchars($flash['type']); ?>" role="alert" <?php echo $flashKey !== '' ? 'data-i18n="' . htmlspecialchars($flashKey) . '"' : ''; ?>>
                     <?php echo htmlspecialchars($flash['message']); ?>
                   </div>
                 <?php endif; ?>
@@ -701,37 +717,37 @@ $profileImageUrl = $profileC->getProfileImageUrl($currentUserId, '../../public/u
                     <section class="admin-profile-section">
                       <div class="admin-section-title">
                         <i class="bi bi-person-gear"></i>
-                        Basic profile
+                        <span data-i18n="profile.section.basic">Basic profile</span>
                       </div>
 
                       <div class="mb-3">
-                        <label class="form-label" for="profileName">Display name</label>
+                        <label class="form-label" for="profileName" data-i18n="profile.field.name">Display name</label>
                         <input type="text" class="form-control" id="profileName" name="nom" value="<?php echo htmlspecialchars($userName); ?>" required>
                       </div>
 
                       <div class="mb-3">
-                        <label class="form-label" for="profileEmail">Email address</label>
+                        <label class="form-label" for="profileEmail" data-i18n="profile.field.email">Email address</label>
                         <input type="email" class="form-control" id="profileEmail" name="email" value="<?php echo htmlspecialchars($userEmail); ?>" required>
-                        <div class="form-text">Use this email to log in and receive account messages.</div>
+                        <div class="form-text" data-i18n="profile.help.email">Use this email to log in and receive account messages.</div>
                       </div>
                     </section>
 
                     <section class="admin-profile-section">
                       <div class="admin-section-title">
                         <i class="bi bi-image"></i>
-                        Profile photo
+                        <span data-i18n="profile.section.photo">Profile photo</span>
                       </div>
 
                       <div class="admin-profile-photo-row">
                         <?php if ($profileImageUrl): ?>
-                          <img class="admin-profile-photo-preview" src="<?php echo htmlspecialchars($profileImageUrl); ?>" alt="Current profile photo">
+                          <img class="admin-profile-photo-preview" src="<?php echo htmlspecialchars($profileImageUrl); ?>" alt="Current profile photo" data-i18n-title="profile.photo.current" data-i18n-aria-label="profile.photo.current">
                         <?php else: ?>
                           <div class="admin-profile-photo-preview"><?php echo htmlspecialchars($userInitial); ?></div>
                         <?php endif; ?>
                         <div>
-                          <label class="form-label" for="profileImage">Upload a new photo</label>
+                          <label class="form-label" for="profileImage" data-i18n="profile.field.photoUpload">Upload a new photo</label>
                           <input type="file" class="form-control" id="profileImage" name="profile_image" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
-                          <div class="form-text">JPG, PNG, or WEBP. Max 2MB.</div>
+                          <div class="form-text" data-i18n="profile.help.photo">JPG, PNG, or WEBP. Max 2MB.</div>
                         </div>
                       </div>
                     </section>
@@ -739,27 +755,27 @@ $profileImageUrl = $profileC->getProfileImageUrl($currentUserId, '../../public/u
                     <section class="admin-profile-section is-face-section">
                       <div class="admin-section-title">
                         <i class="bi bi-person-bounding-box"></i>
-                        Face ID
+                        <span data-i18n="profile.section.face">Face ID</span>
                       </div>
 
                       <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
                         <span id="faceSavedStatus" class="face-status-pill <?php echo $hasFaceDescriptor ? '' : 'is-missing'; ?>">
                           <i class="mdi <?php echo $hasFaceDescriptor ? 'mdi-check-circle' : 'mdi-alert-circle-outline'; ?>"></i>
-                          <?php echo $hasFaceDescriptor ? 'Face ID saved' : 'No Face ID saved'; ?>
+                          <span data-i18n="<?php echo $hasFaceDescriptor ? 'profile.face.saved' : 'profile.face.missing'; ?>"><?php echo $hasFaceDescriptor ? 'Face ID saved' : 'No Face ID saved'; ?></span>
                         </span>
                         <button type="button" id="scanFaceBtn" class="btn btn-outline-primary btn-sm">
                           <i class="mdi mdi-video-account"></i>
-                          <?php echo $hasFaceDescriptor ? 'Rescan Face ID' : 'Scan Face ID'; ?>
+                          <span data-i18n="<?php echo $hasFaceDescriptor ? 'profile.face.rescan' : 'profile.face.scan'; ?>"><?php echo $hasFaceDescriptor ? 'Rescan Face ID' : 'Scan Face ID'; ?></span>
                         </button>
                         <?php if ($hasFaceDescriptor): ?>
                           <button type="button" id="removeFaceBtn" class="btn btn-outline-danger btn-sm">
                             <i class="mdi mdi-delete-outline"></i>
-                            Remove Face ID
+                            <span data-i18n="profile.face.remove">Remove Face ID</span>
                           </button>
                         <?php endif; ?>
                       </div>
 
-                      <p class="text-muted small mb-0">Face ID is optional. Use it if you want to log in with your face later.</p>
+                      <p class="text-muted small mb-0" data-i18n="profile.face.help">Face ID is optional. Use it if you want to log in with your face later.</p>
 
                       <input type="hidden" name="faceDescriptor" id="faceDescriptor">
                       <input type="hidden" name="removeFaceDescriptor" id="removeFaceDescriptor" value="0">
@@ -768,16 +784,16 @@ $profileImageUrl = $profileC->getProfileImageUrl($currentUserId, '../../public/u
                         <div class="face-video-wrap">
                           <video id="faceVideo" autoplay muted playsinline></video>
                           <canvas id="faceCanvas"></canvas>
-                          <div id="faceBox" class="face-detection-box" hidden><span>Face detected</span></div>
+                          <div id="faceBox" class="face-detection-box" hidden><span data-i18n="profile.face.detectedShort">Face detected</span></div>
                         </div>
-                        <p id="faceLiveMessage" class="face-live-message">Camera ready. Put your face inside the frame.</p>
+                        <p id="faceLiveMessage" class="face-live-message" data-i18n="profile.face.cameraReady">Camera ready. Put your face inside the frame.</p>
                         <div class="d-flex flex-wrap gap-2 mt-3">
                           <button type="button" id="captureFaceBtn" class="btn btn-primary btn-sm">
                             <i class="mdi mdi-crosshairs-gps"></i>
-                            Capture / Retry
+                            <span data-i18n="profile.face.captureRetry">Capture / Retry</span>
                           </button>
                           <button type="button" id="cancelFaceBtn" class="btn btn-outline-secondary btn-sm">
-                            Cancel
+                            <span data-i18n="common.cancel">Cancel</span>
                           </button>
                         </div>
                       </div>
@@ -785,9 +801,9 @@ $profileImageUrl = $profileC->getProfileImageUrl($currentUserId, '../../public/u
                   </div>
 
                   <div class="profile-save-bar">
-                    <a href="../dashboard/index.php" class="btn btn-outline-secondary">Back to dashboard</a>
+                    <a href="../dashboard/index.php" class="btn btn-outline-secondary" data-i18n="profile.action.backDashboard">Back to dashboard</a>
                     <button type="submit" class="btn btn-primary">
-                      <i class="mdi mdi-content-save"></i> Save changes
+                      <i class="mdi mdi-content-save"></i> <span data-i18n="profile.action.saveChanges">Save changes</span>
                     </button>
                   </div>
                 </form>
@@ -807,6 +823,120 @@ $profileImageUrl = $profileC->getProfileImageUrl($currentUserId, '../../public/u
   <script src="assets/js/settings.js<?php echo cre8_back_profile_asset_version(__DIR__ . '/assets/js/settings.js'); ?>"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/face-api.js/dist/face-api.min.js"></script>
+
+  <script>
+    (function () {
+      var dictionary = {
+        en: {
+          'profile.documentTitle': 'Profile Settings - cre8connect',
+          'profile.kicker': 'BackOffice profile',
+          'profile.title': 'Profile Settings',
+          'profile.subtitle': 'Update your name, profile photo, and Face ID.',
+          'profile.meta.aria': 'Account metadata',
+          'profile.section.basic': 'Basic profile',
+          'profile.field.name': 'Display name',
+          'profile.field.email': 'Email address',
+          'profile.help.email': 'Use this email to log in and receive account messages.',
+          'profile.section.photo': 'Profile photo',
+          'profile.photo.current': 'Current profile photo',
+          'profile.field.photoUpload': 'Upload a new photo',
+          'profile.help.photo': 'JPG, PNG, or WEBP. Max 2MB.',
+          'profile.section.face': 'Face ID',
+          'profile.face.saved': 'Face ID saved',
+          'profile.face.missing': 'No Face ID saved',
+          'profile.face.scan': 'Scan Face ID',
+          'profile.face.rescan': 'Rescan Face ID',
+          'profile.face.remove': 'Remove Face ID',
+          'profile.face.help': 'Face ID is optional. Use it if you want to log in with your face later.',
+          'profile.face.detectedShort': 'Face detected',
+          'profile.face.cameraReady': 'Camera ready. Put your face inside the frame.',
+          'profile.face.captureRetry': 'Capture / Retry',
+          'profile.action.backDashboard': 'Back to dashboard',
+          'profile.action.saveChanges': 'Save changes',
+          'profile.face.detectedReady': 'Face detected. You can capture it now.',
+          'profile.face.notDetected': 'No face detected. Move closer and face the camera.',
+          'profile.face.scanError': 'Face scan error. Please retry.',
+          'profile.face.loadingModels': 'Loading face models...',
+          'profile.face.cameraError': 'Could not open camera or load face models. Check permissions/models.',
+          'profile.face.noFaceYet': 'No face detected yet. Please retry.',
+          'profile.face.captured': 'New Face ID captured — save changes to apply it',
+          'profile.face.removePending': 'Face ID will be removed after saving',
+          'profile.flash.updated': 'Profile updated successfully.',
+          'profile.validation.nameRequired': 'Name is required.',
+          'profile.validation.emailRequired': 'Email address is required.',
+          'profile.validation.emailInvalid': 'Please enter a valid email address.',
+          'profile.validation.emailUsed': 'This email address is already used by another account.',
+          'profile.validation.faceInvalid': 'Invalid face scan data. Please scan your face again.',
+          'profile.validation.faceUnavailable': 'Face ID storage is not available in the utilisateur table.',
+          'profile.validation.photoInvalid': 'Invalid profile photo.',
+          'profile.validation.nameUpdateFailed': 'Could not update your display name.',
+          'profile.validation.emailUpdateFailed': 'Could not update your email address.',
+          'profile.validation.detailsUpdateFailed': 'Could not save your profile details.',
+          'profile.validation.faceUpdateFailed': 'Could not update your Face ID.',
+          'profile.validation.profileUpdateFailed': 'Could not update your profile.'
+        },
+        fr: {
+          'profile.documentTitle': 'Parametres du profil - cre8connect',
+          'profile.kicker': 'Profil BackOffice',
+          'profile.title': 'Parametres du profil',
+          'profile.subtitle': 'Mettez a jour votre nom, photo de profil et Face ID.',
+          'profile.meta.aria': 'Metadonnees du compte',
+          'profile.section.basic': 'Profil de base',
+          'profile.field.name': 'Nom affiche',
+          'profile.field.email': 'Adresse email',
+          'profile.help.email': 'Utilisez cet email pour vous connecter et recevoir les messages du compte.',
+          'profile.section.photo': 'Photo de profil',
+          'profile.photo.current': 'Photo de profil actuelle',
+          'profile.field.photoUpload': 'Importer une nouvelle photo',
+          'profile.help.photo': 'JPG, PNG ou WEBP. Max 2 Mo.',
+          'profile.section.face': 'Face ID',
+          'profile.face.saved': 'Face ID enregistre',
+          'profile.face.missing': 'Aucun Face ID enregistre',
+          'profile.face.scan': 'Scanner Face ID',
+          'profile.face.rescan': 'Rescanner Face ID',
+          'profile.face.remove': 'Supprimer Face ID',
+          'profile.face.help': 'Face ID est optionnel. Utilisez-le si vous voulez vous connecter avec votre visage plus tard.',
+          'profile.face.detectedShort': 'Visage detecte',
+          'profile.face.cameraReady': 'Camera prete. Placez votre visage dans le cadre.',
+          'profile.face.captureRetry': 'Capturer / Reessayer',
+          'profile.action.backDashboard': 'Retour au tableau de bord',
+          'profile.action.saveChanges': 'Enregistrer les modifications',
+          'profile.face.detectedReady': 'Visage detecte. Vous pouvez le capturer maintenant.',
+          'profile.face.notDetected': 'Aucun visage detecte. Rapprochez-vous et regardez la camera.',
+          'profile.face.scanError': 'Erreur de scan du visage. Veuillez reessayer.',
+          'profile.face.loadingModels': 'Chargement des modeles faciaux...',
+          'profile.face.cameraError': 'Impossible d ouvrir la camera ou de charger les modeles. Verifiez les autorisations/modeles.',
+          'profile.face.noFaceYet': 'Aucun visage detecte pour le moment. Veuillez reessayer.',
+          'profile.face.captured': 'Nouveau Face ID capture — enregistrez les modifications pour l appliquer',
+          'profile.face.removePending': 'Face ID sera supprime apres enregistrement',
+          'profile.flash.updated': 'Profil mis a jour avec succes.',
+          'profile.validation.nameRequired': 'Le nom est obligatoire.',
+          'profile.validation.emailRequired': 'L adresse email est obligatoire.',
+          'profile.validation.emailInvalid': 'Veuillez saisir une adresse email valide.',
+          'profile.validation.emailUsed': 'Cette adresse email est deja utilisee par un autre compte.',
+          'profile.validation.faceInvalid': 'Donnees de scan facial invalides. Veuillez scanner votre visage a nouveau.',
+          'profile.validation.faceUnavailable': 'Le stockage Face ID n est pas disponible dans la table utilisateur.',
+          'profile.validation.photoInvalid': 'Photo de profil invalide.',
+          'profile.validation.nameUpdateFailed': 'Impossible de mettre a jour votre nom affiche.',
+          'profile.validation.emailUpdateFailed': 'Impossible de mettre a jour votre adresse email.',
+          'profile.validation.detailsUpdateFailed': 'Impossible d enregistrer les details du profil.',
+          'profile.validation.faceUpdateFailed': 'Impossible de mettre a jour votre Face ID.',
+          'profile.validation.profileUpdateFailed': 'Impossible de mettre a jour votre profil.'
+        }
+      };
+      if (window.cre8BackRegisterTranslations) {
+        window.cre8BackRegisterTranslations(dictionary);
+      }
+      function syncProfileTitle() {
+        if (window.cre8BackText) {
+          document.title = window.cre8BackText('profile.documentTitle');
+        }
+      }
+      window.addEventListener('cre8:languagechange', syncProfileTitle);
+      syncProfileTitle();
+    })();
+  </script>
+
   <script>
   document.addEventListener('DOMContentLoaded', () => {
       const scanFaceBtn = document.getElementById('scanFaceBtn');
@@ -827,6 +957,10 @@ $profileImageUrl = $profileC->getProfileImageUrl($currentUserId, '../../public/u
       let lastDescriptor = null;
       let detectLoop = null;
       let liveDetecting = false;
+
+      function translateProfile(key) {
+          return window.cre8BackText ? window.cre8BackText(key) : key;
+      }
 
       function getModelBasePath() {
           const currentPath = window.location.pathname.replace(/\/[^\/]*$/, '');
@@ -853,10 +987,13 @@ $profileImageUrl = $profileC->getProfileImageUrl($currentUserId, '../../public/u
           message.classList.toggle('ok', ok);
       }
 
-      function updateStatus(text, ok = true) {
+      function updateStatus(text, ok = true, key = '') {
           if (!faceSavedStatus) return;
-          faceSavedStatus.innerHTML = `<i class="mdi ${ok ? 'mdi-check-circle' : 'mdi-alert-circle-outline'}"></i> ${text}`;
+          const icon = ok ? 'mdi-check-circle' : 'mdi-alert-circle-outline';
+          const labelKey = key || (ok ? 'profile.face.saved' : 'profile.face.missing');
+          faceSavedStatus.innerHTML = `<i class="mdi ${icon}"></i> <span data-i18n="${labelKey}">${text}</span>`;
           faceSavedStatus.classList.toggle('is-missing', !ok);
+          if (window.cre8BackApplyTranslations) window.cre8BackApplyTranslations();
       }
 
       async function startCamera() {
@@ -957,7 +1094,7 @@ $profileImageUrl = $profileC->getProfileImageUrl($currentUserId, '../../public/u
           ctx.shadowBlur = 0;
           ctx.fillStyle = 'rgba(34, 197, 94, 0.95)';
           ctx.font = '700 13px Arial, sans-serif';
-          const label = 'Face detected';
+          const label = translateProfile('profile.face.detectedShort');
           const labelWidth = ctx.measureText(label).width + 16;
           const labelY = y > 30 ? y - 28 : y + 8;
           ctx.fillRect(x, labelY, labelWidth, 22);
@@ -984,17 +1121,17 @@ $profileImageUrl = $profileC->getProfileImageUrl($currentUserId, '../../public/u
                   if (detection) {
                       lastDescriptor = Array.from(detection.descriptor);
                       drawFaceBox(ctx, detection);
-                      setMessage('Face detected ✅ You can capture it now.', true);
+                      setMessage(translateProfile('profile.face.detectedReady'), true);
                   } else {
                       lastDescriptor = null;
                       clearFaceCanvas(ctx);
-                      setMessage('No face detected ❌ Move closer and face the camera.', false);
+                      setMessage(translateProfile('profile.face.notDetected'), false);
                   }
               } catch (error) {
                   console.error(error);
                   lastDescriptor = null;
                   clearFaceCanvas(ctx);
-                  setMessage('Face scan error. Please retry.', false);
+                  setMessage(translateProfile('profile.face.scanError'), false);
               } finally {
                   liveDetecting = false;
               }
@@ -1016,11 +1153,11 @@ $profileImageUrl = $profileC->getProfileImageUrl($currentUserId, '../../public/u
       scanFaceBtn?.addEventListener('click', async () => {
           try {
               scanFaceBtn.disabled = true;
-              setMessage('Loading face models...', true);
+              setMessage(translateProfile('profile.face.loadingModels'), true);
               await startCamera();
           } catch (error) {
               console.error(error);
-              setMessage('Could not open camera or load face models. Check permissions/models.', false);
+              setMessage(translateProfile('profile.face.cameraError'), false);
               facePanel?.classList.add('is-open');
           } finally {
               scanFaceBtn.disabled = false;
@@ -1029,13 +1166,13 @@ $profileImageUrl = $profileC->getProfileImageUrl($currentUserId, '../../public/u
 
       captureFaceBtn?.addEventListener('click', () => {
           if (!lastDescriptor) {
-              setMessage('No face detected yet ❌ Please retry.', false);
+              setMessage(translateProfile('profile.face.noFaceYet'), false);
               return;
           }
 
           faceDescriptorInput.value = JSON.stringify(lastDescriptor);
           removeFaceInput.value = '0';
-          updateStatus('New Face ID captured — save changes to apply it', true);
+          updateStatus(translateProfile('profile.face.captured'), true, 'profile.face.captured');
           stopCamera();
       });
 
@@ -1046,7 +1183,7 @@ $profileImageUrl = $profileC->getProfileImageUrl($currentUserId, '../../public/u
       removeFaceBtn?.addEventListener('click', () => {
           faceDescriptorInput.value = '';
           removeFaceInput.value = '1';
-          updateStatus('Face ID will be removed after saving', false);
+          updateStatus(translateProfile('profile.face.removePending'), false, 'profile.face.removePending');
           stopCamera();
       });
 

@@ -35,6 +35,20 @@ $roleLabels = [
     'super_admin' => 'Super Admin',
     'hyper_admin' => 'Hyper Admin',
 ];
+$roleI18nKeys = [
+    'createur' => 'users.role.creator',
+    'marque' => 'users.role.brand',
+    'admin' => 'users.role.admin',
+    'super_admin' => 'users.role.superAdmin',
+    'hyper_admin' => 'users.role.hyperAdmin',
+];
+$statusI18nKeys = [
+    'actif' => 'users.status.active',
+    'suspendu' => 'users.status.suspended',
+    'bloque' => 'users.status.blocked',
+    'en_attente' => 'users.status.pending',
+    'inactif' => 'users.status.inactive',
+];
 ?>
 
 <!DOCTYPE html>
@@ -342,65 +356,65 @@ $roleLabels = [
         <div class="content-wrapper user-center-shell">
           <section class="uc-page-head">
             <div>
-              <p class="uc-kicker">User Center</p>
-              <h1>User administration</h1>
-              <p>Manage creators, brands, and back-office accounts from one unified workspace.</p>
+              <p class="uc-kicker" data-i18n="userCenter.kicker">User Center</p>
+              <h1 data-i18n="users.title">User administration</h1>
+              <p data-i18n="users.subtitle">Manage accounts, roles, statuses, and security actions.</p>
             </div>
           </section>
 
           <nav class="uc-entity-tabs" aria-label="User Center sections">
             <a href="index.php" class="uc-entity-tab is-active">
               <span class="uc-tab-icon"><i class="mdi mdi-account-group"></i></span>
-              <span><strong>Users</strong><small>Accounts and roles</small></span>
+              <span><strong data-i18n="userCenter.tabs.users">Users</strong><small data-i18n="userCenter.tabs.usersHint">Accounts and roles</small></span>
             </a>
             <a href="reclamations.php" class="uc-entity-tab">
               <span class="uc-tab-icon"><i class="mdi mdi-alert-decagram"></i></span>
-              <span><strong>Complaints</strong><small>Reports and appeals</small></span>
+              <span><strong data-i18n="userCenter.tabs.complaints">Complaints</strong><small data-i18n="userCenter.tabs.complaintsHint">Reports and appeals</small></span>
             </a>
           </nav>
 
           <section class="uc-statistics-panel" data-uc-stats>
             <div class="uc-section-head">
               <div>
-                <h2>Workspace statistics</h2>
-                <p>Live indicators and charts for user activity.</p>
+                <h2 data-i18n="userCenter.statistics.title">Workspace statistics</h2>
+                <p data-i18n="users.statistics.subtitle">Live indicators and charts for user activity.</p>
               </div>
-              <button type="button" class="uc-secondary-btn" data-uc-stats-toggle>Hide statistics</button>
+              <button type="button" class="uc-secondary-btn" data-uc-stats-toggle data-i18n="common.hideStatistics">Hide statistics</button>
             </div>
 
             <div class="uc-kpi-grid">
               <article class="uc-kpi-card uc-kpi-purple">
-                <span>Total users</span>
+                <span data-i18n="users.kpi.total">Total users</span>
                 <strong><?php echo intval($stats['total'] ?? $totalUsers); ?></strong>
-                <small>All platform accounts</small>
+                <small data-i18n="users.kpi.totalHint">All platform accounts</small>
               </article>
               <article class="uc-kpi-card uc-kpi-pink">
-                <span>Administrators</span>
+                <span data-i18n="users.kpi.admins">Admin accounts</span>
                 <strong><?php echo intval($stats['admin'] ?? 0); ?></strong>
-                <small>Back-office accounts</small>
+                <small data-i18n="users.kpi.adminsHint">Back-office accounts</small>
               </article>
               <article class="uc-kpi-card uc-kpi-green">
-                <span>Creators</span>
+                <span data-i18n="users.kpi.creators">Creator accounts</span>
                 <strong><?php echo intval($stats['createur'] ?? 0); ?></strong>
-                <small>Creator accounts</small>
+                <small data-i18n="users.kpi.creatorsHint">Creator accounts</small>
               </article>
               <article class="uc-kpi-card uc-kpi-magenta">
-                <span>Brands</span>
+                <span data-i18n="users.kpi.brands">Brand accounts</span>
                 <strong><?php echo intval($stats['marque'] ?? 0); ?></strong>
-                <small>Brand accounts</small>
+                <small data-i18n="users.kpi.brandsHint">Brand accounts</small>
               </article>
               <article class="uc-kpi-card uc-kpi-yellow">
-                <span>Suspended</span>
+                <span data-i18n="users.kpi.suspended">Suspended users</span>
                 <strong><?php echo intval($stats['suspendu'] ?? 0); ?></strong>
-                <small>Accounts under restriction</small>
+                <small data-i18n="users.kpi.suspendedHint">Accounts under restriction</small>
               </article>
             </div>
 
             <div class="uc-stats-body">
               <article class="uc-chart-card">
                 <div class="uc-chart-head">
-                  <h3>User role trends</h3>
-                  <p>Distribution across administrators, creators, and brands.</p>
+                  <h3 data-i18n="users.charts.rolesTitle">User role trends</h3>
+                  <p data-i18n="users.charts.rolesSubtitle">Distribution across administrators, creators, and brands.</p>
                 </div>
                 <div class="uc-chart-canvas">
                   <canvas id="chartAreaRole"></canvas>
@@ -408,8 +422,8 @@ $roleLabels = [
               </article>
               <article class="uc-chart-card">
                 <div class="uc-chart-head">
-                  <h3>User status trends</h3>
-                  <p>Active and suspended account balance.</p>
+                  <h3 data-i18n="users.charts.statusTitle">User status trends</h3>
+                  <p data-i18n="users.charts.statusSubtitle">Active and suspended account balance.</p>
                 </div>
                 <div class="uc-chart-canvas">
                   <canvas id="chartAreaStatus"></canvas>
@@ -421,28 +435,28 @@ $roleLabels = [
           <section class="uc-filter-card">
             <div class="uc-filter-head">
               <div>
-                <h2>Admin filters</h2>
-                <p>Search by user identity or isolate accounts by role.</p>
+                <h2 data-i18n="users.filters.title">User filters</h2>
+                <p data-i18n="users.filters.subtitle">Search by user identity or isolate accounts by role.</p>
               </div>
             </div>
             <form method="GET" action="index.php" class="uc-filter-grid">
               <label class="uc-filter-field uc-filter-search">
-                <span>Search</span>
-                <input type="text" name="search" placeholder="Name or email..." value="<?php echo htmlspecialchars($search); ?>">
+                <span data-i18n="common.search">Search</span>
+                <input type="text" name="search" placeholder="Search by name or email..." data-i18n-placeholder="users.filters.searchPlaceholder" value="<?php echo htmlspecialchars($search); ?>">
               </label>
               <label class="uc-filter-field">
-                <span>Role</span>
+                <span data-i18n="common.role">Role</span>
                 <select name="role">
-                  <option value="">All roles</option>
-                  <option value="admin" <?php echo $role === 'admin' ? 'selected' : ''; ?>>Admin</option>
-                  <option value="super_admin" <?php echo $role === 'super_admin' ? 'selected' : ''; ?>>Super Admin</option>
-                  <option value="createur" <?php echo $role === 'createur' ? 'selected' : ''; ?>>Creator</option>
-                  <option value="marque" <?php echo $role === 'marque' ? 'selected' : ''; ?>>Brand</option>
+                  <option value="" data-i18n-opt="users.filters.allRoles">All roles</option>
+                  <option value="admin" data-i18n-opt="users.role.admin" <?php echo $role === 'admin' ? 'selected' : ''; ?>>Admin</option>
+                  <option value="super_admin" data-i18n-opt="users.role.superAdmin" <?php echo $role === 'super_admin' ? 'selected' : ''; ?>>Super Admin</option>
+                  <option value="createur" data-i18n-opt="users.role.creator" <?php echo $role === 'createur' ? 'selected' : ''; ?>>Creator</option>
+                  <option value="marque" data-i18n-opt="users.role.brand" <?php echo $role === 'marque' ? 'selected' : ''; ?>>Brand</option>
                 </select>
               </label>
               <div class="uc-filter-actions">
-                <button type="submit" class="uc-primary-btn">Apply filters</button>
-                <a href="index.php" class="uc-soft-btn">Reset</a>
+                <button type="submit" class="uc-primary-btn"><span data-i18n="common.applyFilters">Apply filters</span></button>
+                <a href="index.php" class="uc-soft-btn"><span data-i18n="common.reset">Reset</span></a>
               </div>
             </form>
           </section>
@@ -450,8 +464,8 @@ $roleLabels = [
           <section class="uc-table-card">
             <div class="uc-table-head">
               <div>
-                <h2>User list</h2>
-                <p><?php echo intval($totalUsers); ?> accounts found</p>
+                <h2 data-i18n="users.table.title">User list</h2>
+                <p><?php echo intval($totalUsers); ?> <span data-i18n="users.table.accountsFound">accounts found</span></p>
               </div>
             </div>
 
@@ -461,11 +475,11 @@ $roleLabels = [
                   <thead>
                     <tr>
                       <th class="uc-col-id">ID</th>
-                      <th>User</th>
-                      <th>Email</th>
-                      <th>Role</th>
-                      <th>Status</th>
-                      <th>Actions</th>
+                      <th data-i18n="users.table.user">User</th>
+                      <th data-i18n="users.table.email">Email</th>
+                      <th data-i18n="common.role">Role</th>
+                      <th data-i18n="common.status">Status</th>
+                      <th data-i18n="common.actions">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -474,8 +488,8 @@ $roleLabels = [
                         <td colspan="6">
                           <div class="uc-empty-state">
                             <span><i class="mdi mdi-account-search"></i></span>
-                            <strong>No users found</strong>
-                            <small>Try changing the search or role filter.</small>
+                            <strong data-i18n="users.empty.title">No users found</strong>
+                            <small data-i18n="users.empty.subtitle">Try changing the search or role filter.</small>
                           </div>
                         </td>
                       </tr>
@@ -539,12 +553,12 @@ $roleLabels = [
                               }
                               foreach ($roleOptions as $roleOption):
                             ?>
-                              <option value="<?= htmlspecialchars($roleOption) ?>" <?= $rowRole == $roleOption ? 'selected' : '' ?>><?= htmlspecialchars($roleLabels[$roleOption] ?? ucfirst(str_replace('_', ' ', $roleOption))) ?></option>
+                              <option value="<?= htmlspecialchars($roleOption) ?>" data-i18n-opt="<?= htmlspecialchars($roleI18nKeys[$roleOption] ?? '') ?>" <?= $rowRole == $roleOption ? 'selected' : '' ?>><?= htmlspecialchars($roleLabels[$roleOption] ?? ucfirst(str_replace('_', ' ', $roleOption))) ?></option>
                             <?php endforeach; ?>
                           </select>
                         </td>
                         <td>
-                          <span class="uc-badge uc-status-<?= htmlspecialchars($rowStatus !== '' ? $rowStatus : 'inactif') ?>" title="<?= htmlspecialchars($u['suspension_reason'] ?? '') ?>">
+                          <span class="uc-badge uc-status-<?= htmlspecialchars($rowStatus !== '' ? $rowStatus : 'inactif') ?>" data-i18n="<?= htmlspecialchars($statusI18nKeys[$rowStatus] ?? '') ?>" title="<?= htmlspecialchars($u['suspension_reason'] ?? '') ?>">
                             <?= htmlspecialchars($displayStatus) ?>
                           </span>
                         </td>
@@ -553,19 +567,19 @@ $roleLabels = [
                             <form id="<?= $updateFormId ?>" method="POST" action="update.php" class="m-0">
                               <input type="hidden" name="id" value="<?= (int)$u['id'] ?>">
                               <?php if ($canEditUser): ?>
-                                <button type="submit" class="uc-action-btn uc-action-primary">Save</button>
+                                <button type="submit" class="uc-action-btn uc-action-primary"><span data-i18n="common.save">Save</span></button>
                               <?php endif; ?>
                             </form>
 
                             <?php if ($canToggleStatus): ?>
                               <button type="button" class="uc-action-btn <?= $rowStatus === 'actif' ? 'uc-action-danger' : 'uc-action-success' ?>" onclick="toggleUserStatus(<?= (int)$u['id'] ?>, '<?= htmlspecialchars($rowStatus) ?>');">
-                                <?= $rowStatus === 'actif' ? 'Suspend' : 'Activate' ?>
+                                <span data-i18n="<?= $rowStatus === 'actif' ? 'common.suspend' : 'common.activate' ?>"><?= $rowStatus === 'actif' ? 'Suspend' : 'Activate' ?></span>
                               </button>
                             <?php endif; ?>
 
                             <?php if ($canDeleteUser): ?>
                               <button type="button" class="uc-action-btn uc-action-soft-danger" onclick="if(confirm('Are you sure?')) window.location.href='delete.php?id=<?= (int)$u['id'] ?>';">
-                                Delete
+                                <span data-i18n="common.delete">Delete</span>
                               </button>
                             <?php endif; ?>
                           </div>
@@ -577,7 +591,7 @@ $roleLabels = [
               </div>
 
               <div class="uc-pagination">
-                <p>Page <?= $currentPage ?> of <?= $totalPages ?> · <?= $totalUsers ?> users</p>
+                <p><span data-i18n="common.page">Page</span> <?= $currentPage ?> <span data-i18n="common.of">of</span> <?= $totalPages ?> · <?= $totalUsers ?> <span data-i18n="userCenter.pagination.users">users</span></p>
                 <?php if ($totalPages > 1): ?>
                   <nav aria-label="Users pagination">
                     <a class="uc-page-btn <?= $currentPage <= 1 ? 'is-disabled' : '' ?>" href="?search=<?= urlencode($search) ?>&role=<?= urlencode($role) ?>&page=<?= max(1, $currentPage - 1) ?>">&laquo;</a>
@@ -645,6 +659,103 @@ $roleLabels = [
   <!-- End custom js for this page -->
 
   <div class="jvectormap-tip" style="display: none; left: 605.948px; top: 2089px;">United States</div>
+
+  <script>
+    window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
+      en: {
+        'userCenter.kicker': 'User Center',
+        'userCenter.tabs.users': 'Users',
+        'userCenter.tabs.usersHint': 'Accounts and roles',
+        'userCenter.tabs.complaints': 'Complaints',
+        'userCenter.tabs.complaintsHint': 'Reports and appeals',
+        'userCenter.statistics.title': 'Workspace statistics',
+        'userCenter.pagination.users': 'users',
+        'users.title': 'User administration',
+        'users.subtitle': 'Manage accounts, roles, statuses, and security actions.',
+        'users.statistics.subtitle': 'Live indicators and charts for user activity.',
+        'users.kpi.total': 'Total users',
+        'users.kpi.totalHint': 'All platform accounts',
+        'users.kpi.admins': 'Admin accounts',
+        'users.kpi.adminsHint': 'Back-office accounts',
+        'users.kpi.creators': 'Creator accounts',
+        'users.kpi.creatorsHint': 'Creator accounts',
+        'users.kpi.brands': 'Brand accounts',
+        'users.kpi.brandsHint': 'Brand accounts',
+        'users.kpi.suspended': 'Suspended users',
+        'users.kpi.suspendedHint': 'Accounts under restriction',
+        'users.charts.rolesTitle': 'User role trends',
+        'users.charts.rolesSubtitle': 'Distribution across administrators, creators, and brands.',
+        'users.charts.statusTitle': 'User status trends',
+        'users.charts.statusSubtitle': 'Active and suspended account balance.',
+        'users.filters.title': 'User filters',
+        'users.filters.subtitle': 'Search by user identity or isolate accounts by role.',
+        'users.filters.searchPlaceholder': 'Search by name or email...',
+        'users.filters.allRoles': 'All roles',
+        'users.table.title': 'User list',
+        'users.table.accountsFound': 'accounts found',
+        'users.table.user': 'User',
+        'users.table.email': 'Email',
+        'users.empty.title': 'No users found',
+        'users.empty.subtitle': 'Try changing the search or role filter.',
+        'users.role.admin': 'Admin',
+        'users.role.superAdmin': 'Super Admin',
+        'users.role.hyperAdmin': 'Hyper Admin',
+        'users.role.creator': 'Creator',
+        'users.role.brand': 'Brand',
+        'users.status.active': 'Active',
+        'users.status.suspended': 'Suspended',
+        'users.status.blocked': 'Blocked',
+        'users.status.pending': 'Pending',
+        'users.status.inactive': 'Inactive'
+      },
+      fr: {
+        'userCenter.kicker': 'Centre utilisateurs',
+        'userCenter.tabs.users': 'Utilisateurs',
+        'userCenter.tabs.usersHint': 'Comptes et roles',
+        'userCenter.tabs.complaints': 'Reclamations',
+        'userCenter.tabs.complaintsHint': 'Signalements et appels',
+        'userCenter.statistics.title': 'Statistiques du workspace',
+        'userCenter.pagination.users': 'utilisateurs',
+        'users.title': 'Administration des utilisateurs',
+        'users.subtitle': 'Gerer les comptes, roles, statuts et actions de securite.',
+        'users.statistics.subtitle': 'Indicateurs et graphiques en direct pour l activite utilisateur.',
+        'users.kpi.total': 'Total utilisateurs',
+        'users.kpi.totalHint': 'Tous les comptes de la plateforme',
+        'users.kpi.admins': 'Comptes admin',
+        'users.kpi.adminsHint': 'Comptes BackOffice',
+        'users.kpi.creators': 'Comptes createur',
+        'users.kpi.creatorsHint': 'Comptes createur',
+        'users.kpi.brands': 'Comptes marque',
+        'users.kpi.brandsHint': 'Comptes marque',
+        'users.kpi.suspended': 'Utilisateurs suspendus',
+        'users.kpi.suspendedHint': 'Comptes sous restriction',
+        'users.charts.rolesTitle': 'Tendances des roles',
+        'users.charts.rolesSubtitle': 'Repartition entre admins, createurs et marques.',
+        'users.charts.statusTitle': 'Tendances des statuts',
+        'users.charts.statusSubtitle': 'Equilibre entre comptes actifs et suspendus.',
+        'users.filters.title': 'Filtres utilisateurs',
+        'users.filters.subtitle': 'Rechercher par identite ou isoler les comptes par role.',
+        'users.filters.searchPlaceholder': 'Rechercher par nom ou email...',
+        'users.filters.allRoles': 'Tous les roles',
+        'users.table.title': 'Liste des utilisateurs',
+        'users.table.accountsFound': 'comptes trouves',
+        'users.table.user': 'Utilisateur',
+        'users.table.email': 'Email',
+        'users.empty.title': 'Aucun utilisateur trouve',
+        'users.empty.subtitle': 'Essayez de modifier la recherche ou le filtre de role.',
+        'users.role.admin': 'Admin',
+        'users.role.superAdmin': 'Super admin',
+        'users.role.hyperAdmin': 'Hyper admin',
+        'users.role.creator': 'Createur',
+        'users.role.brand': 'Marque',
+        'users.status.active': 'Actif',
+        'users.status.suspended': 'Suspendu',
+        'users.status.blocked': 'Bloque',
+        'users.status.pending': 'En attente',
+        'users.status.inactive': 'Inactif'
+      }
+    });
+  </script>
 
   <script>
     // Consistent color palette

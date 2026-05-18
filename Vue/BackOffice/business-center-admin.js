@@ -3,15 +3,23 @@
 
   const STORAGE_KEY = "cre8_business_center_stats_visible";
 
+  function applyBusinessTranslations() {
+    if (typeof window.cre8BackApplyTranslations === "function") {
+      window.cre8BackApplyTranslations();
+    }
+  }
+
   function applyStatsState(panel) {
     if (!panel) return;
     const visible = localStorage.getItem(STORAGE_KEY) !== "0";
     const button = panel.querySelector("[data-bc-stats-toggle]");
     panel.classList.toggle("is-collapsed", !visible);
     if (button) {
+      button.setAttribute("data-i18n", visible ? "common.hideStatistics" : "common.showStatistics");
       const hide = button.getAttribute("data-label-hide") || "Hide statistics";
       const show = button.getAttribute("data-label-show") || "Show statistics";
       button.textContent = visible ? hide : show;
+      applyBusinessTranslations();
     }
   }
 
@@ -58,12 +66,14 @@
         region.replaceWith(nextRegion);
         if (push) history.pushState({ bcAjax: true }, "", url);
         setupStatsToggle();
+        applyBusinessTranslations();
         window.dispatchEvent(new Event("resize"));
       })
       .catch(() => { window.location.href = url; })
       .finally(() => {
         const next = getRegion();
         if (next) next.classList.remove("is-loading");
+        applyBusinessTranslations();
       });
   }
 
@@ -81,9 +91,18 @@
     if (region) replaceResultsFromUrl(window.location.href, false);
   });
 
+  window.addEventListener("cre8:languagechange", () => {
+    setupStatsToggle();
+    applyBusinessTranslations();
+  });
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", setupStatsToggle);
+    document.addEventListener("DOMContentLoaded", () => {
+      setupStatsToggle();
+      applyBusinessTranslations();
+    });
   } else {
     setupStatsToggle();
+    applyBusinessTranslations();
   }
 })();

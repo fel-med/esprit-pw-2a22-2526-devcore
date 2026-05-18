@@ -42,6 +42,29 @@ if (!function_exists('cre8_bo_priority_label')) {
         return $value !== '' ? ucfirst($value) : 'Normal';
     }
 }
+$roleI18nKeys = [
+    'createur' => 'users.role.creator',
+    'marque' => 'users.role.brand',
+    'admin' => 'users.role.admin',
+    'super_admin' => 'users.role.superAdmin',
+    'hyper_admin' => 'users.role.hyperAdmin',
+];
+$priorityI18nKeys = [
+    'High' => 'complaints.priority.high',
+    'Normal' => 'complaints.priority.medium',
+    'Low' => 'complaints.priority.low',
+];
+$complaintStatusI18nKeys = [
+    'traitee' => 'complaints.status.treated',
+    'en_attente' => 'complaints.status.pending',
+];
+$userStatusI18nKeys = [
+    'actif' => 'users.status.active',
+    'suspendu' => 'users.status.suspended',
+    'bloque' => 'users.status.blocked',
+    'en_attente' => 'users.status.pending',
+    'inactif' => 'users.status.inactive',
+];
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $limit = 4; // Records per page
 
@@ -366,65 +389,65 @@ foreach ($liste as $rec) {
         <div class="content-wrapper user-center-shell">
           <section class="uc-page-head">
             <div>
-              <p class="uc-kicker">User Center</p>
-              <h1>Complaint center</h1>
-              <p>Review user complaints, reply to reports, and react quickly to suspension appeals.</p>
+              <p class="uc-kicker" data-i18n="userCenter.kicker">User Center</p>
+              <h1 data-i18n="complaints.title">Complaints administration</h1>
+              <p data-i18n="complaints.subtitle">Review user complaints, suspension appeals, and quick moderation actions.</p>
             </div>
           </section>
 
           <nav class="uc-entity-tabs" aria-label="User Center sections">
             <a href="index.php" class="uc-entity-tab">
               <span class="uc-tab-icon"><i class="mdi mdi-account-group"></i></span>
-              <span><strong>Users</strong><small>Accounts and roles</small></span>
+              <span><strong data-i18n="userCenter.tabs.users">Users</strong><small data-i18n="userCenter.tabs.usersHint">Accounts and roles</small></span>
             </a>
             <a href="reclamations.php" class="uc-entity-tab is-active">
               <span class="uc-tab-icon"><i class="mdi mdi-alert-decagram"></i></span>
-              <span><strong>Complaints</strong><small>Reports and appeals</small></span>
+              <span><strong data-i18n="userCenter.tabs.complaints">Complaints</strong><small data-i18n="userCenter.tabs.complaintsHint">Reports and appeals</small></span>
             </a>
           </nav>
 
           <section class="uc-statistics-panel" data-uc-stats>
             <div class="uc-section-head">
               <div>
-                <h2>Workspace statistics</h2>
-                <p>Live indicators and charts for complaint activity.</p>
+                <h2 data-i18n="complaints.statistics.title">Complaint statistics</h2>
+                <p data-i18n="complaints.statistics.subtitle">Live indicators and charts for complaint activity.</p>
               </div>
-              <button type="button" class="uc-secondary-btn" data-uc-stats-toggle>Hide statistics</button>
+              <button type="button" class="uc-secondary-btn" data-uc-stats-toggle data-i18n="common.hideStatistics">Hide statistics</button>
             </div>
 
             <div class="uc-kpi-grid">
               <article class="uc-kpi-card uc-kpi-purple">
-                <span>Total complaints</span>
+                <span data-i18n="complaints.kpi.total">Total complaints</span>
                 <strong><?php echo intval($stats['total'] ?? $totalReclamations); ?></strong>
-                <small>All visible reports</small>
+                <small data-i18n="complaints.kpi.totalHint">All visible reports</small>
               </article>
               <article class="uc-kpi-card uc-kpi-pink">
-                <span>Pending</span>
+                <span data-i18n="complaints.kpi.pending">Pending complaints</span>
                 <strong><?php echo intval($stats['en_attente'] ?? 0); ?></strong>
-                <small>Needs admin review</small>
+                <small data-i18n="complaints.kpi.pendingHint">Needs admin review</small>
               </article>
               <article class="uc-kpi-card uc-kpi-green">
-                <span>Processed</span>
+                <span data-i18n="complaints.kpi.treated">Treated complaints</span>
                 <strong><?php echo intval($stats['traitee'] ?? 0); ?></strong>
-                <small>Resolved complaints</small>
+                <small data-i18n="complaints.kpi.treatedHint">Resolved complaints</small>
               </article>
               <article class="uc-kpi-card uc-kpi-magenta">
-                <span>High priority</span>
+                <span data-i18n="complaints.kpi.appeals">Suspension appeals</span>
                 <strong><?php echo intval($stats['haute'] ?? 0); ?></strong>
-                <small>Urgent or appeals</small>
+                <small data-i18n="complaints.kpi.appealsHint">Urgent or appeal cases</small>
               </article>
               <article class="uc-kpi-card uc-kpi-blue">
-                <span>Low priority</span>
+                <span data-i18n="complaints.kpi.low">Low priority</span>
                 <strong><?php echo intval($stats['faible'] ?? $stats['basse'] ?? 0); ?></strong>
-                <small>Normal queue pressure</small>
+                <small data-i18n="complaints.kpi.lowHint">Normal queue pressure</small>
               </article>
             </div>
 
             <div class="uc-stats-body">
               <article class="uc-chart-card">
                 <div class="uc-chart-head">
-                  <h3>Complaint status trend</h3>
-                  <p>Pending versus processed complaints over time.</p>
+                  <h3 data-i18n="complaints.charts.statusTitle">Complaint status trend</h3>
+                  <p data-i18n="complaints.charts.statusSubtitle">Pending versus treated complaints over time.</p>
                 </div>
                 <div class="uc-chart-canvas">
                   <canvas id="chartAreaStatut"></canvas>
@@ -432,8 +455,8 @@ foreach ($liste as $rec) {
               </article>
               <article class="uc-chart-card">
                 <div class="uc-chart-head">
-                  <h3>Priority distribution</h3>
-                  <p>High, normal, and low priority evolution.</p>
+                  <h3 data-i18n="complaints.charts.priorityTitle">Priority distribution</h3>
+                  <p data-i18n="complaints.charts.prioritySubtitle">High, medium, and low priority evolution.</p>
                 </div>
                 <div class="uc-chart-canvas">
                   <canvas id="chartAreaPriorite"></canvas>
@@ -445,27 +468,27 @@ foreach ($liste as $rec) {
           <section class="uc-filter-card">
             <div class="uc-filter-head">
               <div>
-                <h2>Admin filters</h2>
-                <p>Filter by user, description, or priority.</p>
+                <h2 data-i18n="complaints.filters.title">Complaint filters</h2>
+                <p data-i18n="complaints.filters.subtitle">Filter by subject, message, user, or priority.</p>
               </div>
             </div>
             <form method="GET" action="reclamations.php" class="uc-filter-grid">
               <label class="uc-filter-field uc-filter-search">
-                <span>Search</span>
-                <input type="text" name="search" placeholder="User or description..." value="<?php echo htmlspecialchars($search); ?>">
+                <span data-i18n="common.search">Search</span>
+                <input type="text" name="search" placeholder="Search by subject, message, or user..." data-i18n-placeholder="complaints.filters.searchPlaceholder" value="<?php echo htmlspecialchars($search); ?>">
               </label>
               <label class="uc-filter-field">
-                <span>Priority</span>
+                <span data-i18n="complaints.table.priority">Priority</span>
                 <select name="priorite">
-                  <option value="">All priorities</option>
-                  <option value="haute" <?php echo $priorite === 'haute' ? 'selected' : ''; ?>>High</option>
-                  <option value="normale" <?php echo $priorite === 'normale' ? 'selected' : ''; ?>>Normal</option>
-                  <option value="faible" <?php echo $priorite === 'faible' ? 'selected' : ''; ?>>Low</option>
+                  <option value="" data-i18n-opt="complaints.filters.allPriorities">All priorities</option>
+                  <option value="haute" data-i18n-opt="complaints.priority.high" <?php echo $priorite === 'haute' ? 'selected' : ''; ?>>High</option>
+                  <option value="normale" data-i18n-opt="complaints.priority.medium" <?php echo $priorite === 'normale' ? 'selected' : ''; ?>>Medium</option>
+                  <option value="faible" data-i18n-opt="complaints.priority.low" <?php echo $priorite === 'faible' ? 'selected' : ''; ?>>Low</option>
                 </select>
               </label>
               <div class="uc-filter-actions">
-                <button type="submit" class="uc-primary-btn">Apply filters</button>
-                <a href="reclamations.php" class="uc-soft-btn">Reset</a>
+                <button type="submit" class="uc-primary-btn"><span data-i18n="common.applyFilters">Apply filters</span></button>
+                <a href="reclamations.php" class="uc-soft-btn"><span data-i18n="common.reset">Reset</span></a>
               </div>
             </form>
           </section>
@@ -473,8 +496,8 @@ foreach ($liste as $rec) {
           <section class="uc-table-card">
             <div class="uc-table-head">
               <div>
-                <h2>Complaint list</h2>
-                <p><?php echo intval($totalReclamations); ?> complaints found</p>
+                <h2 data-i18n="complaints.table.title">Complaint list</h2>
+                <p><?php echo intval($totalReclamations); ?> <span data-i18n="complaints.table.found">complaints found</span></p>
               </div>
             </div>
 
@@ -484,13 +507,13 @@ foreach ($liste as $rec) {
                   <thead>
                     <tr>
                       <th class="uc-col-id">ID</th>
-                      <th>User</th>
-                      <th>Complaint</th>
-                      <th>Date</th>
-                      <th>Priority</th>
-                      <th>Status</th>
-                      <th>Response</th>
-                      <th>Actions</th>
+                      <th data-i18n="complaints.table.user">User</th>
+                      <th data-i18n="complaints.table.complaint">Complaint</th>
+                      <th data-i18n="complaints.table.date">Date</th>
+                      <th data-i18n="complaints.table.priority">Priority</th>
+                      <th data-i18n="common.status">Status</th>
+                      <th data-i18n="complaints.table.response">Response</th>
+                      <th data-i18n="common.actions">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -499,8 +522,8 @@ foreach ($liste as $rec) {
                         <td colspan="8">
                           <div class="uc-empty-state">
                             <span><i class="mdi mdi-alert-circle-outline"></i></span>
-                            <strong>No complaints found</strong>
-                            <small>Try changing the search or priority filter.</small>
+                            <strong data-i18n="complaints.empty.title">No complaints found</strong>
+                            <small data-i18n="complaints.empty.subtitle">Try changing the search or priority filter.</small>
                           </div>
                         </td>
                       </tr>
@@ -534,61 +557,61 @@ foreach ($liste as $rec) {
                           <div class="uc-person-cell">
                             <strong><?php echo htmlspecialchars($rec['nom'] ?? 'Unknown'); ?></strong>
                             <?php if (!empty($rec['complainant_role'])): ?>
-                              <span><?php echo htmlspecialchars($rec['complainant_role']); ?></span>
+                              <span data-i18n="<?= htmlspecialchars($roleI18nKeys[$complainantRole] ?? '') ?>"><?php echo htmlspecialchars($rec['complainant_role']); ?></span>
                             <?php endif; ?>
                           </div>
                         </td>
                         <td>
                           <div class="uc-complaint-text">
                             <?php if ($isSuspensionAppeal): ?>
-                              <span class="uc-badge uc-status-suspendu">Suspension appeal</span>
+                              <span class="uc-badge uc-status-suspendu" data-i18n="complaints.appeal.badge">Suspension appeal</span>
                             <?php endif; ?>
                             <p><?php echo nl2br(htmlspecialchars((string)($rec['description'] ?? ''))); ?></p>
                             <?php if ($isSuspensionAppeal): ?>
                               <small>
-                                Status: <?= htmlspecialchars($complainantStatus !== '' ? $complainantStatus : 'unknown') ?>
+                                <span data-i18n="common.status">Status</span>: <span data-i18n="<?= htmlspecialchars($userStatusI18nKeys[$complainantStatus] ?? '') ?>"><?= htmlspecialchars($complainantStatus !== '' ? $complainantStatus : 'unknown') ?></span>
                                 <?php if (!empty($rec['suspended_by_role'])): ?>
-                                  · Suspended by: <?= htmlspecialchars(cc_normalize_role($rec['suspended_by_role'])) ?>
+                                  · <span data-i18n="complaints.appeal.suspendedBy">Suspended by</span>: <span data-i18n="<?= htmlspecialchars($roleI18nKeys[cc_normalize_role($rec['suspended_by_role'])] ?? '') ?>"><?= htmlspecialchars(cc_normalize_role($rec['suspended_by_role'])) ?></span>
                                 <?php endif; ?>
                                 <?php if (!empty($rec['suspended_at'])): ?>
-                                  · At: <?= htmlspecialchars((string)$rec['suspended_at']) ?>
+                                  · <span data-i18n="complaints.appeal.at">At</span>: <?= htmlspecialchars((string)$rec['suspended_at']) ?>
                                 <?php endif; ?>
                                 <?php if (!empty($rec['suspension_reason'])): ?>
-                                  <br>Reason: <?= htmlspecialchars((string)$rec['suspension_reason']) ?>
+                                  <br><span data-i18n="complaints.appeal.reason">Reason</span>: <?= htmlspecialchars((string)$rec['suspension_reason']) ?>
                                 <?php endif; ?>
                               </small>
                             <?php endif; ?>
                           </div>
                         </td>
                         <td class="uc-date-cell"><?php echo htmlspecialchars((string)$rec['date_creation']); ?></td>
-                        <td><span class="uc-badge uc-priority-<?= htmlspecialchars($priorityClass) ?>"><?php echo htmlspecialchars($priorityLabel); ?></span></td>
-                        <td><span class="uc-badge uc-status-<?= htmlspecialchars($statusClass) ?>"><?php echo $rec['statut'] == 'traitee' ? 'Processed' : 'Pending'; ?></span></td>
+                        <td><span class="uc-badge uc-priority-<?= htmlspecialchars($priorityClass) ?>" data-i18n="<?= htmlspecialchars($priorityI18nKeys[$priorityLabel] ?? '') ?>"><?php echo htmlspecialchars($priorityLabel); ?></span></td>
+                        <td><span class="uc-badge uc-status-<?= htmlspecialchars($statusClass) ?>" data-i18n="<?= htmlspecialchars($complaintStatusI18nKeys[$statusClass] ?? '') ?>"><?php echo $rec['statut'] == 'traitee' ? 'Processed' : 'Pending'; ?></span></td>
                         <td>
                           <?php if ($rec['reponse']): ?>
                             <button type="button" class="uc-action-btn uc-action-primary" data-bs-toggle="modal" data-bs-target="#replyViewModal<?php echo (int)$rec['id']; ?>">
-                              View
+                              <span data-i18n="common.view">View</span>
                             </button>
                           <?php else: ?>
-                            <span class="uc-badge uc-status-inactif">None</span>
+                            <span class="uc-badge uc-status-inactif" data-i18n="complaints.response.none">None</span>
                           <?php endif; ?>
                         </td>
                         <td>
                           <div class="uc-actions">
                             <button type="button" class="uc-action-btn uc-action-primary" data-bs-toggle="modal" data-bs-target="#modal<?php echo (int)$rec['id']; ?>">
-                              Reply
+                              <span data-i18n="common.reply">Reply</span>
                             </button>
                             <button type="button" class="uc-action-btn uc-action-soft-danger" onclick="deleteReclamation(<?php echo (int)$rec['id']; ?>)">
-                              Delete
+                              <span data-i18n="common.delete">Delete</span>
                             </button>
                             <select class="uc-inline-select uc-status-select" onchange="updateStatus(<?php echo (int)$rec['id']; ?>, this.value)">
-                              <option value="">Status</option>
-                              <option value="en_attente" <?php if ($rec['statut'] == 'en_attente') echo 'selected'; ?>>Pending</option>
-                              <option value="traitee" <?php if ($rec['statut'] == 'traitee') echo 'selected'; ?>>Processed</option>
+                              <option value="" data-i18n-opt="common.status">Status</option>
+                              <option value="en_attente" data-i18n-opt="complaints.status.pending" <?php if ($rec['statut'] == 'en_attente') echo 'selected'; ?>>Pending</option>
+                              <option value="traitee" data-i18n-opt="complaints.status.treated" <?php if ($rec['statut'] == 'traitee') echo 'selected'; ?>>Processed</option>
                             </select>
                             <?php if ($canQuickReactivate): ?>
                               <form method="POST" action="reclamation_reactivate_user.php" class="m-0" onsubmit="return confirm('Reactivate this suspended account?');">
                                 <input type="hidden" name="idReclamation" value="<?php echo (int)$rec['id']; ?>">
-                                <button type="submit" class="uc-action-btn uc-action-success">Reactivate</button>
+                                <button type="submit" class="uc-action-btn uc-action-success"><span data-i18n="complaints.actions.reactivateAccount">Reactivate account</span></button>
                               </form>
                             <?php endif; ?>
                           </div>
@@ -600,7 +623,7 @@ foreach ($liste as $rec) {
               </div>
 
               <div class="uc-pagination">
-                <p>Page <?= $currentPage ?> of <?= $totalPages ?> · <?= $totalReclamations ?> complaints</p>
+                <p><span data-i18n="common.page">Page</span> <?= $currentPage ?> <span data-i18n="common.of">of</span> <?= $totalPages ?> · <?= $totalReclamations ?> <span data-i18n="userCenter.pagination.complaints">complaints</span></p>
                 <?php if ($totalPages > 1): ?>
                   <nav aria-label="Complaints pagination">
                     <a class="uc-page-btn <?= $currentPage <= 1 ? 'is-disabled' : '' ?>" href="?page=<?= max(1, $currentPage - 1) ?>&search=<?= urlencode($search) ?>&priorite=<?= urlencode($priorite) ?>">&laquo;</a>
@@ -633,17 +656,17 @@ foreach ($liste as $rec) {
                 <div class="modal-content">
                   <form method="POST" action="ajouterReponse.php" id="formReply<?php echo (int)$rec['id']; ?>" onsubmit="return validateReply(this)">
                     <div class="modal-header">
-                      <h5 class="modal-title">Reply</h5>
+                      <h5 class="modal-title" data-i18n="common.reply">Reply</h5>
                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                       <input type="hidden" name="idReclamation" value="<?php echo (int)$rec['id']; ?>">
-                      <textarea name="contenu" class="form-control" id="replyContent<?php echo (int)$rec['id']; ?>" placeholder="Your reply..."></textarea>
-                      <small class="text-danger d-none" id="replyError<?php echo (int)$rec['id']; ?>">Please enter a reply.</small>
+                      <textarea name="contenu" class="form-control" id="replyContent<?php echo (int)$rec['id']; ?>" placeholder="Your reply..." data-i18n-placeholder="complaints.modal.replyPlaceholder"></textarea>
+                      <small class="text-danger d-none" id="replyError<?php echo (int)$rec['id']; ?>" data-i18n="complaints.modal.replyError">Please enter a reply.</small>
                     </div>
                     <div class="modal-footer">
-                      <button type="button" class="uc-action-btn uc-action-muted" data-bs-dismiss="modal">Cancel</button>
-                      <button type="submit" class="uc-action-btn uc-action-success">Send</button>
+                      <button type="button" class="uc-action-btn uc-action-muted" data-bs-dismiss="modal"><span data-i18n="complaints.modal.cancel">Cancel</span></button>
+                      <button type="submit" class="uc-action-btn uc-action-success"><span data-i18n="complaints.modal.send">Send</span></button>
                     </div>
                   </form>
                 </div>
@@ -654,19 +677,19 @@ foreach ($liste as $rec) {
               <div class="modal-dialog">
                 <div class="modal-content">
                   <div class="modal-header">
-                    <h5 class="modal-title">Response</h5>
+                    <h5 class="modal-title" data-i18n="complaints.table.response">Response</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                   </div>
                   <div class="modal-body">
                     <p><?php echo nl2br(htmlspecialchars($rec['reponse'] ?? '')); ?></p>
                     <?php if ($rec['date_reponse']): ?>
-                      <small class="text-muted">Date: <?php echo htmlspecialchars((string)$rec['date_reponse']); ?></small>
+                      <small class="text-muted"><span data-i18n="complaints.table.date">Date</span>: <?php echo htmlspecialchars((string)$rec['date_reponse']); ?></small>
                     <?php endif; ?>
                   </div>
                   <div class="modal-footer">
-                    <button type="button" class="uc-action-btn uc-action-primary" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#editReplyModal<?php echo (int)$rec['id']; ?>">Edit</button>
-                    <button type="button" class="uc-action-btn uc-action-soft-danger" onclick="deleteReply(<?php echo (int)$rec['id']; ?>)">Delete</button>
-                    <button type="button" class="uc-action-btn uc-action-muted" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="uc-action-btn uc-action-primary" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#editReplyModal<?php echo (int)$rec['id']; ?>"><span data-i18n="common.edit">Edit</span></button>
+                    <button type="button" class="uc-action-btn uc-action-soft-danger" onclick="deleteReply(<?php echo (int)$rec['id']; ?>)"><span data-i18n="common.delete">Delete</span></button>
+                    <button type="button" class="uc-action-btn uc-action-muted" data-bs-dismiss="modal"><span data-i18n="complaints.modal.close">Close</span></button>
                   </div>
                 </div>
               </div>
@@ -677,17 +700,17 @@ foreach ($liste as $rec) {
                 <div class="modal-content">
                   <form method="POST" action="modifierReponse.php" id="formEditReply<?php echo (int)$rec['id']; ?>" onsubmit="return validateEditReply(this)">
                     <div class="modal-header">
-                      <h5 class="modal-title">Edit response</h5>
+                      <h5 class="modal-title" data-i18n="complaints.modal.editResponse">Edit response</h5>
                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                       <input type="hidden" name="idReclamation" value="<?php echo (int)$rec['id']; ?>">
-                      <textarea name="contenu" class="form-control" id="editReplyContent<?php echo (int)$rec['id']; ?>" placeholder="Edit your response..."><?php echo htmlspecialchars($rec['reponse'] ?? ''); ?></textarea>
-                      <small class="text-danger d-none" id="editReplyError<?php echo (int)$rec['id']; ?>">Please enter a valid response.</small>
+                      <textarea name="contenu" class="form-control" id="editReplyContent<?php echo (int)$rec['id']; ?>" placeholder="Edit your response..." data-i18n-placeholder="complaints.modal.editPlaceholder"><?php echo htmlspecialchars($rec['reponse'] ?? ''); ?></textarea>
+                      <small class="text-danger d-none" id="editReplyError<?php echo (int)$rec['id']; ?>" data-i18n="complaints.modal.editError">Please enter a valid response.</small>
                     </div>
                     <div class="modal-footer">
-                      <button type="button" class="uc-action-btn uc-action-muted" data-bs-dismiss="modal">Cancel</button>
-                      <button type="submit" class="uc-action-btn uc-action-success">Update</button>
+                      <button type="button" class="uc-action-btn uc-action-muted" data-bs-dismiss="modal"><span data-i18n="complaints.modal.cancel">Cancel</span></button>
+                      <button type="submit" class="uc-action-btn uc-action-success"><span data-i18n="complaints.modal.update">Update</span></button>
                     </div>
                   </form>
                 </div>
@@ -728,6 +751,149 @@ foreach ($liste as $rec) {
     <!-- Custom js for this page -->
     <script src="assets/js/dashboard.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+      window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
+        en: {
+          'userCenter.kicker': 'User Center',
+          'userCenter.tabs.users': 'Users',
+          'userCenter.tabs.usersHint': 'Accounts and roles',
+          'userCenter.tabs.complaints': 'Complaints',
+          'userCenter.tabs.complaintsHint': 'Reports and appeals',
+          'userCenter.pagination.complaints': 'complaints',
+          'complaints.title': 'Complaints administration',
+          'complaints.subtitle': 'Review user complaints, suspension appeals, and quick moderation actions.',
+          'complaints.statistics.title': 'Complaint statistics',
+          'complaints.statistics.subtitle': 'Live indicators and charts for complaint activity.',
+          'complaints.kpi.total': 'Total complaints',
+          'complaints.kpi.totalHint': 'All visible reports',
+          'complaints.kpi.pending': 'Pending complaints',
+          'complaints.kpi.pendingHint': 'Needs admin review',
+          'complaints.kpi.treated': 'Treated complaints',
+          'complaints.kpi.treatedHint': 'Resolved complaints',
+          'complaints.kpi.appeals': 'Suspension appeals',
+          'complaints.kpi.appealsHint': 'Urgent or appeal cases',
+          'complaints.kpi.low': 'Low priority',
+          'complaints.kpi.lowHint': 'Normal queue pressure',
+          'complaints.charts.statusTitle': 'Complaint status trend',
+          'complaints.charts.statusSubtitle': 'Pending versus treated complaints over time.',
+          'complaints.charts.priorityTitle': 'Priority distribution',
+          'complaints.charts.prioritySubtitle': 'High, medium, and low priority evolution.',
+          'complaints.filters.title': 'Complaint filters',
+          'complaints.filters.subtitle': 'Filter by subject, message, user, or priority.',
+          'complaints.filters.searchPlaceholder': 'Search by subject, message, or user...',
+          'complaints.filters.allPriorities': 'All priorities',
+          'complaints.table.title': 'Complaint list',
+          'complaints.table.found': 'complaints found',
+          'complaints.table.user': 'User',
+          'complaints.table.complaint': 'Complaint',
+          'complaints.table.date': 'Date',
+          'complaints.table.priority': 'Priority',
+          'complaints.table.response': 'Response',
+          'complaints.empty.title': 'No complaints found',
+          'complaints.empty.subtitle': 'Try changing the search or priority filter.',
+          'complaints.priority.high': 'High',
+          'complaints.priority.medium': 'Medium',
+          'complaints.priority.low': 'Low',
+          'complaints.status.pending': 'Pending',
+          'complaints.status.treated': 'Treated',
+          'complaints.appeal.badge': 'Suspension appeal',
+          'complaints.appeal.suspendedBy': 'Suspended by',
+          'complaints.appeal.at': 'At',
+          'complaints.appeal.reason': 'Reason',
+          'complaints.response.none': 'None',
+          'complaints.actions.reactivateAccount': 'Reactivate account',
+          'complaints.modal.replyPlaceholder': 'Your reply...',
+          'complaints.modal.editPlaceholder': 'Edit your response...',
+          'complaints.modal.replyError': 'Please enter a reply.',
+          'complaints.modal.editError': 'Please enter a valid response.',
+          'complaints.modal.cancel': 'Cancel',
+          'complaints.modal.send': 'Send',
+          'complaints.modal.close': 'Close',
+          'complaints.modal.editResponse': 'Edit response',
+          'complaints.modal.update': 'Update',
+          'users.role.admin': 'Admin',
+          'users.role.superAdmin': 'Super Admin',
+          'users.role.hyperAdmin': 'Hyper Admin',
+          'users.role.creator': 'Creator',
+          'users.role.brand': 'Brand',
+          'users.status.active': 'Active',
+          'users.status.suspended': 'Suspended',
+          'users.status.blocked': 'Blocked',
+          'users.status.pending': 'Pending',
+          'users.status.inactive': 'Inactive'
+        },
+        fr: {
+          'userCenter.kicker': 'Centre utilisateurs',
+          'userCenter.tabs.users': 'Utilisateurs',
+          'userCenter.tabs.usersHint': 'Comptes et roles',
+          'userCenter.tabs.complaints': 'Reclamations',
+          'userCenter.tabs.complaintsHint': 'Signalements et appels',
+          'userCenter.pagination.complaints': 'reclamations',
+          'complaints.title': 'Administration des reclamations',
+          'complaints.subtitle': 'Examiner les reclamations, appels de suspension et actions rapides.',
+          'complaints.statistics.title': 'Statistiques des reclamations',
+          'complaints.statistics.subtitle': 'Indicateurs et graphiques en direct pour les reclamations.',
+          'complaints.kpi.total': 'Total reclamations',
+          'complaints.kpi.totalHint': 'Tous les signalements visibles',
+          'complaints.kpi.pending': 'Reclamations en attente',
+          'complaints.kpi.pendingHint': 'Necessite une revue admin',
+          'complaints.kpi.treated': 'Reclamations traitees',
+          'complaints.kpi.treatedHint': 'Reclamations resolues',
+          'complaints.kpi.appeals': 'Appels de suspension',
+          'complaints.kpi.appealsHint': 'Cas urgents ou appels',
+          'complaints.kpi.low': 'Priorite basse',
+          'complaints.kpi.lowHint': 'Pression normale de file',
+          'complaints.charts.statusTitle': 'Tendance des statuts',
+          'complaints.charts.statusSubtitle': 'Reclamations en attente et traitees dans le temps.',
+          'complaints.charts.priorityTitle': 'Distribution des priorites',
+          'complaints.charts.prioritySubtitle': 'Evolution des priorites haute, moyenne et basse.',
+          'complaints.filters.title': 'Filtres reclamations',
+          'complaints.filters.subtitle': 'Filtrer par sujet, message, utilisateur ou priorite.',
+          'complaints.filters.searchPlaceholder': 'Rechercher par sujet, message ou utilisateur...',
+          'complaints.filters.allPriorities': 'Toutes les priorites',
+          'complaints.table.title': 'Liste des reclamations',
+          'complaints.table.found': 'reclamations trouvees',
+          'complaints.table.user': 'Utilisateur',
+          'complaints.table.complaint': 'Reclamation',
+          'complaints.table.date': 'Date',
+          'complaints.table.priority': 'Priorite',
+          'complaints.table.response': 'Reponse',
+          'complaints.empty.title': 'Aucune reclamation trouvee',
+          'complaints.empty.subtitle': 'Essayez de modifier la recherche ou le filtre de priorite.',
+          'complaints.priority.high': 'Haute',
+          'complaints.priority.medium': 'Moyenne',
+          'complaints.priority.low': 'Basse',
+          'complaints.status.pending': 'En attente',
+          'complaints.status.treated': 'Traitee',
+          'complaints.appeal.badge': 'Appel de suspension',
+          'complaints.appeal.suspendedBy': 'Suspendu par',
+          'complaints.appeal.at': 'Le',
+          'complaints.appeal.reason': 'Raison',
+          'complaints.response.none': 'Aucune',
+          'complaints.actions.reactivateAccount': 'Reactiver le compte',
+          'complaints.modal.replyPlaceholder': 'Votre reponse...',
+          'complaints.modal.editPlaceholder': 'Modifier votre reponse...',
+          'complaints.modal.replyError': 'Veuillez saisir une reponse.',
+          'complaints.modal.editError': 'Veuillez saisir une reponse valide.',
+          'complaints.modal.cancel': 'Annuler',
+          'complaints.modal.send': 'Envoyer',
+          'complaints.modal.close': 'Fermer',
+          'complaints.modal.editResponse': 'Modifier la reponse',
+          'complaints.modal.update': 'Mettre a jour',
+          'users.role.admin': 'Admin',
+          'users.role.superAdmin': 'Super admin',
+          'users.role.hyperAdmin': 'Hyper admin',
+          'users.role.creator': 'Createur',
+          'users.role.brand': 'Marque',
+          'users.status.active': 'Actif',
+          'users.status.suspended': 'Suspendu',
+          'users.status.blocked': 'Bloque',
+          'users.status.pending': 'En attente',
+          'users.status.inactive': 'Inactif'
+        }
+      });
+    </script>
 
     <script>
       // Palette de couleurs cohérente

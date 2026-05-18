@@ -3,13 +3,21 @@
 
   const STORAGE_KEY = "cre8_user_center_stats_visible";
 
+  function applyBackTranslations() {
+    if (window.cre8BackApplyTranslations) {
+      window.cre8BackApplyTranslations();
+    }
+  }
+
   function applyStatsState(panel) {
     if (!panel) return;
     const visible = localStorage.getItem(STORAGE_KEY) !== "0";
     const button = panel.querySelector("[data-uc-stats-toggle]");
     panel.classList.toggle("is-collapsed", !visible);
     if (button) {
+      button.setAttribute("data-i18n", visible ? "common.hideStatistics" : "common.showStatistics");
       button.textContent = visible ? "Hide statistics" : "Show statistics";
+      applyBackTranslations();
     }
   }
 
@@ -54,6 +62,7 @@
         const nextRegion = doc.getElementById("ucResultsRegion");
         if (!nextRegion) throw new Error("Missing result region");
         region.replaceWith(nextRegion);
+        applyBackTranslations();
         if (push) {
           history.pushState({ ucAjax: true }, "", url);
         }
@@ -64,6 +73,7 @@
       .finally(() => {
         const next = getRegion();
         if (next) next.classList.remove("is-loading");
+        applyBackTranslations();
       });
   }
 
@@ -79,6 +89,8 @@
   window.addEventListener("popstate", () => {
     replaceResultsFromUrl(window.location.href, false);
   });
+
+  window.addEventListener("cre8:languagechange", applyBackTranslations);
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", setupStatsToggle);

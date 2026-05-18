@@ -119,7 +119,9 @@ try {
   <!-- End layout styles -->
   <link rel="stylesheet" href="<?= $backBoRootWeb ?>/layout/back-layout.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/back-layout.css')); ?>">
     <link rel="stylesheet" href="<?= $backBoRootWeb ?>/event-center-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../event-center-admin.css')); ?>">
-    <link rel="stylesheet" href="<?= $backBoRootWeb ?>/unified-table-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../unified-table-admin.css')); ?>">
+  <?php if (file_exists(__DIR__ . '/../unified-table-admin.css')): ?>
+  <link rel="stylesheet" href="<?= $backBoRootWeb ?>/unified-table-admin.css?v=<?= urlencode((string) filemtime(__DIR__ . '/../unified-table-admin.css')) ?>">
+  <?php endif; ?>
 <link rel="icon" type="image/png" sizes="16x16" href="<?= htmlspecialchars(dirname($backBoRootWeb) . '/public/images/favicon-16.png') ?>">
   <link rel="icon" type="image/png" sizes="32x32" href="<?= htmlspecialchars(dirname($backBoRootWeb) . '/public/images/favicon-32.png') ?>">
   <link rel="shortcut icon" type="image/png" href="<?= htmlspecialchars(dirname($backBoRootWeb) . '/public/images/favicon-32.png') ?>">
@@ -328,7 +330,7 @@ try {
     <div class="main-panel">
       <div class="content-wrapper event-center-shell">
 
-
+        
 
         <?php
           $ecActiveTab = 'events';
@@ -376,32 +378,32 @@ try {
 
         <?php if (isset($_GET['deleted'])): ?>
           <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="mdi mdi-check-circle me-2"></i> Evenement supprime avec succes.
+            <i class="mdi mdi-check-circle me-2"></i> <span data-i18n="events.alert.deleted">Event deleted successfully.</span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
           </div>
         <?php endif; ?>
         <?php if (isset($_GET['created'])): ?>
           <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="mdi mdi-check-circle me-2"></i> Evenement cree avec succes.
+            <i class="mdi mdi-check-circle me-2"></i> <span data-i18n="events.alert.created">Event created successfully.</span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
           </div>
         <?php endif; ?>
         <?php if (isset($_GET['updated'])): ?>
           <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="mdi mdi-check-circle me-2"></i> Evenement mis a jour avec succes.
+            <i class="mdi mdi-check-circle me-2"></i> <span data-i18n="events.alert.updated">Event updated successfully.</span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
           </div>
         <?php endif; ?>
 
         <section class="ec-page-head">
           <div>
-            <p class="ec-kicker">Event Center</p>
-            <h1>Event administration</h1>
-            <p>Track events, participation, forums, and moderation activity from one clean dashboard.</p>
+            <p class="ec-kicker" data-i18n="eventCenter.kicker">Event Center</p>
+            <h1 data-i18n="events.title">Event administration</h1>
+            <p data-i18n="events.subtitle">Track events, participation, forums, and moderation activity from one clean dashboard.</p>
           </div>
           <div class="ec-page-actions">
             <button type="button" class="ec-primary-btn" onclick="openModal()">
-              <i class="mdi mdi-plus me-1"></i> New event
+              <i class="mdi mdi-plus me-1"></i> <span data-i18n="events.action.new">New event</span>
             </button>
           </div>
         </section>
@@ -409,43 +411,43 @@ try {
         <nav class="ec-entity-tabs" aria-label="Event Center sections">
           <a class="ec-entity-tab is-active" href="<?= htmlspecialchars($BASE . '/Controleur/evenementC.php?action=admin') ?>">
             <span class="ec-tab-icon"><i class="mdi mdi-calendar-star"></i></span>
-            <span><strong>Events</strong><small>Planning and participation</small></span>
+            <span><strong data-i18n="eventCenter.tab.events">Events</strong><small data-i18n="eventCenter.tab.eventsSub">Planning and participation</small></span>
           </a>
           <a class="ec-entity-tab" href="<?= htmlspecialchars($BASE . '/Controleur/forumC.php?action=admin') ?>">
             <span class="ec-tab-icon"><i class="mdi mdi-forum"></i></span>
-            <span><strong>Forum</strong><small>Discussions and moderation</small></span>
+            <span><strong data-i18n="eventCenter.tab.forum">Forum</strong><small data-i18n="eventCenter.tab.forumSub">Discussions and moderation</small></span>
           </a>
         </nav>
 
         <section class="ec-statistics-panel" data-ec-stats>
           <div class="ec-section-head">
             <div>
-              <h2>Workspace statistics</h2>
-              <p>Live indicators and charts for event activity.</p>
+              <h2 data-i18n="events.stats.title">Workspace statistics</h2>
+              <p data-i18n="events.stats.subtitle">Live indicators and charts for event activity.</p>
             </div>
-            <button type="button" class="ec-secondary-btn" data-ec-stats-toggle data-label-hide="Hide statistics" data-label-show="Show statistics">Hide statistics</button>
+            <button type="button" class="ec-secondary-btn" data-ec-stats-toggle data-i18n="common.hideStatistics">Hide statistics</button>
           </div>
 
           <div class="ec-kpi-grid">
-            <article class="ec-kpi-card ec-kpi-purple"><span>Total events</span><strong><?= $kpi_total ?></strong><small><?= $kpi_actifs ?> active now</small></article>
-            <article class="ec-kpi-card ec-kpi-pink"><span>Registrations</span><strong><?= $kpi_inscrits ?></strong><small>Total participants</small></article>
-            <article class="ec-kpi-card ec-kpi-green"><span>Fill rate</span><strong><?= $kpi_taux ?>%</strong><small>Average capacity usage</small></article>
-            <article class="ec-kpi-card ec-kpi-blue"><span>Upcoming</span><strong><?= $kpi_upcoming ?></strong><small>Future events</small></article>
-            <article class="ec-kpi-card ec-kpi-magenta"><span>Pending</span><strong><?= $pendingEvents ?></strong><small>Need validation</small></article>
-            <article class="ec-kpi-card ec-kpi-yellow"><span>Finished</span><strong><?= $eventFinished ?></strong><small>Past events</small></article>
+            <article class="ec-kpi-card ec-kpi-purple"><span data-i18n="events.kpi.total">Total events</span><strong><?= $kpi_total ?></strong><small><?= $kpi_actifs ?> <span data-i18n="events.kpi.activeNow">active now</span></small></article>
+            <article class="ec-kpi-card ec-kpi-pink"><span data-i18n="events.kpi.registrations">Registrations</span><strong><?= $kpi_inscrits ?></strong><small data-i18n="events.kpi.totalParticipants">Total participants</small></article>
+            <article class="ec-kpi-card ec-kpi-green"><span data-i18n="events.kpi.fillRate">Fill rate</span><strong><?= $kpi_taux ?>%</strong><small data-i18n="events.kpi.averageCapacity">Average capacity usage</small></article>
+            <article class="ec-kpi-card ec-kpi-blue"><span data-i18n="events.kpi.upcoming">Upcoming</span><strong><?= $kpi_upcoming ?></strong><small data-i18n="events.kpi.futureEvents">Future events</small></article>
+            <article class="ec-kpi-card ec-kpi-magenta"><span data-i18n="events.kpi.pending">Pending</span><strong><?= $pendingEvents ?></strong><small data-i18n="events.kpi.needValidation">Need validation</small></article>
+            <article class="ec-kpi-card ec-kpi-yellow"><span data-i18n="events.kpi.finished">Finished</span><strong><?= $eventFinished ?></strong><small data-i18n="events.kpi.pastEvents">Past events</small></article>
           </div>
 
           <div class="ec-stats-body ec-stats-body-events">
             <article class="ec-chart-card">
-              <div class="ec-chart-head"><h3>Participants evolution</h3><p>Registration volume over the last months.</p></div>
+              <div class="ec-chart-head"><h3 data-i18n="events.chart.participants">Participants evolution</h3><p data-i18n="events.chart.participantsSub">Registration volume over the last months.</p></div>
               <div class="ec-chart-canvas"><canvas id="participantsChart"></canvas></div>
             </article>
             <article class="ec-chart-card">
-              <div class="ec-chart-head"><h3>Events per month</h3><p>Scheduled event volume.</p></div>
+              <div class="ec-chart-head"><h3 data-i18n="events.chart.perMonth">Events per month</h3><p data-i18n="events.chart.perMonthSub">Scheduled event volume.</p></div>
               <div class="ec-chart-canvas"><canvas id="eventsChart"></canvas></div>
             </article>
             <article class="ec-chart-card">
-              <div class="ec-chart-head"><h3>Type distribution</h3><p>Breakdown by event type.</p></div>
+              <div class="ec-chart-head"><h3 data-i18n="events.chart.typeDistribution">Type distribution</h3><p data-i18n="events.chart.typeDistributionSub">Breakdown by event type.</p></div>
               <div class="ec-chart-canvas"><canvas id="typeChart"></canvas></div>
             </article>
           </div>
@@ -454,25 +456,25 @@ try {
         <section class="ec-filter-card">
           <div class="ec-filter-head">
             <div>
-              <h2>Admin filters</h2>
-              <p>Filter by title, type, status, or location before reviewing the list.</p>
+              <h2 data-i18n="events.filter.title">Admin filters</h2>
+              <p data-i18n="events.filter.subtitle">Filter by title, type, status, or location before reviewing the list.</p>
             </div>
           </div>
           <form class="ec-filter-grid" method="get" action="<?= htmlspecialchars($_SERVER['PHP_SELF'] ?? '') ?>">
             <?php if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/Controleur/') !== false): ?><input type="hidden" name="action" value="admin"><?php endif; ?>
-            <label class="ec-filter-field"><span>Search</span><input type="search" name="search" value="<?= htmlspecialchars($eventSearch) ?>" placeholder="Title, type, status, place..."></label>
-            <label class="ec-filter-field"><span>Status</span><select name="status"><option value="">All statuses</option><?php foreach (['actif','en_attente','brouillon','archive','termine'] as $st): ?><option value="<?= htmlspecialchars($st) ?>" <?= $eventStatusFilter === $st ? 'selected' : '' ?>><?= htmlspecialchars(ucfirst(str_replace('_',' ', $st))) ?></option><?php endforeach; ?></select></label>
-            <label class="ec-filter-field"><span>Type</span><select name="type"><option value="">All types</option><?php foreach ($eventTypes as $t): ?><option value="<?= htmlspecialchars($t) ?>" <?= $eventTypeFilter === $t ? 'selected' : '' ?>><?= htmlspecialchars(ucfirst($t)) ?></option><?php endforeach; ?></select></label>
-            <label class="ec-filter-field"><span>Per page</span><select name="per_page"><option value="10" <?= $eventPerPage === 10 ? 'selected' : '' ?>>10 / page</option><option value="15" <?= $eventPerPage === 15 ? 'selected' : '' ?>>15 / page</option><option value="25" <?= $eventPerPage === 25 ? 'selected' : '' ?>>25 / page</option></select></label>
-            <div class="ec-filter-actions"><button class="ec-primary-btn" type="submit">Apply filters</button><a class="ec-soft-btn" href="?action=admin">Reset</a></div>
+            <label class="ec-filter-field"><span data-i18n="common.search">Search</span><input type="search" name="search" value="<?= htmlspecialchars($eventSearch) ?>" placeholder="Title, type, status, place..." data-i18n-placeholder="events.filter.searchPlaceholder"></label>
+            <label class="ec-filter-field"><span data-i18n="common.status">Status</span><select name="status"><option value="" data-i18n-opt="common.allStatuses">All statuses</option><?php foreach (['actif','en_attente','brouillon','archive','termine'] as $st): ?><option value="<?= htmlspecialchars($st) ?>" <?= $eventStatusFilter === $st ? 'selected' : '' ?> data-i18n-opt="events.status.<?= htmlspecialchars($st) ?>"><?= htmlspecialchars(ucfirst(str_replace('_',' ', $st))) ?></option><?php endforeach; ?></select></label>
+            <label class="ec-filter-field"><span data-i18n="events.table.type">Type</span><select name="type"><option value="" data-i18n-opt="events.filter.allTypes">All types</option><?php foreach ($eventTypes as $t): ?><option value="<?= htmlspecialchars($t) ?>" <?= $eventTypeFilter === $t ? 'selected' : '' ?> data-i18n-opt="events.type.<?= htmlspecialchars($t) ?>"><?= htmlspecialchars(ucfirst($t)) ?></option><?php endforeach; ?></select></label>
+            <label class="ec-filter-field"><span data-i18n="common.perPage">Per page</span><select name="per_page"><option value="10" <?= $eventPerPage === 10 ? 'selected' : '' ?>>10 / page</option><option value="15" <?= $eventPerPage === 15 ? 'selected' : '' ?>>15 / page</option><option value="25" <?= $eventPerPage === 25 ? 'selected' : '' ?>>25 / page</option></select></label>
+            <div class="ec-filter-actions"><button class="ec-primary-btn" type="submit" data-i18n="common.applyFilters">Apply filters</button><a class="ec-soft-btn" href="?action=admin" data-i18n="common.reset">Reset</a></div>
           </form>
         </section>
 
         <section class="ec-table-card">
           <div class="ec-table-head">
             <div>
-              <h2>Event List</h2>
-              <p><?= $eventTotalRows ?> event(s) match the current filters.</p>
+              <h2 data-i18n="events.table.title">Event List</h2>
+              <p><?= $eventTotalRows ?> <span data-i18n="events.table.matchCount">event(s) match the current filters.</span></p>
             </div>
           </div>
           <div id="ecResultsRegion" class="ec-results-region">
@@ -480,20 +482,20 @@ try {
               <table class="ec-table ec-events-table">
                 <thead>
                   <tr>
-                    <th class="ec-col-check"><input type="checkbox" aria-label="Select all events"></th>
-                    <th>Image</th>
-                    <th onclick="sortTable(2)" style="cursor:pointer;">Event <span class="sort-icon" id="sort-icon-2"></span></th>
-                    <th onclick="sortTable(3)" style="cursor:pointer;">Type <span class="sort-icon" id="sort-icon-3"></span></th>
-                    <th onclick="sortTable(4)" style="cursor:pointer;">Status <span class="sort-icon" id="sort-icon-4"></span></th>
-                    <th onclick="sortTable(5)" style="cursor:pointer;">Date <span class="sort-icon" id="sort-icon-5"></span></th>
-                    <th onclick="sortTable(6)" style="cursor:pointer;">Place <span class="sort-icon" id="sort-icon-6"></span></th>
-                    <th onclick="sortTable(7)" style="cursor:pointer;">Capacity <span class="sort-icon" id="sort-icon-7"></span></th>
-                    <th>Actions</th>
+                    <th class="ec-col-check"><input type="checkbox" aria-label="Select all events" data-i18n-aria-label="events.table.selectAll"></th>
+                    <th data-i18n="events.table.image">Image</th>
+                    <th onclick="sortTable(2)" style="cursor:pointer;"><span data-i18n="events.table.event">Event</span> <span class="sort-icon" id="sort-icon-2"></span></th>
+                    <th onclick="sortTable(3)" style="cursor:pointer;"><span data-i18n="events.table.type">Type</span> <span class="sort-icon" id="sort-icon-3"></span></th>
+                    <th onclick="sortTable(4)" style="cursor:pointer;"><span data-i18n="common.status">Status</span> <span class="sort-icon" id="sort-icon-4"></span></th>
+                    <th onclick="sortTable(5)" style="cursor:pointer;"><span data-i18n="events.table.date">Date</span> <span class="sort-icon" id="sort-icon-5"></span></th>
+                    <th onclick="sortTable(6)" style="cursor:pointer;"><span data-i18n="events.table.place">Place</span> <span class="sort-icon" id="sort-icon-6"></span></th>
+                    <th onclick="sortTable(7)" style="cursor:pointer;"><span data-i18n="events.table.capacity">Capacity</span> <span class="sort-icon" id="sort-icon-7"></span></th>
+                    <th data-i18n="common.actions">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="tableBody">
                   <?php if (empty($pagedEvents)): ?>
-                    <tr><td colspan="9"><div class="ec-empty-state"><span><i class="mdi mdi-calendar-remove"></i></span><strong>No event found</strong><p>Try another filter or create a new event.</p></div></td></tr>
+                    <tr><td colspan="9"><div class="ec-empty-state"><span><i class="mdi mdi-calendar-remove"></i></span><strong data-i18n="events.empty.title">No event found</strong><p data-i18n="events.empty.subtitle">Try another filter or create a new event.</p></div></td></tr>
                   <?php else: ?>
                     <?php foreach ($pagedEvents as $event): ?>
                       <?php $percentage = ($event->getCapacite() > 0) ? ($event->getNbInscrits() / $event->getCapacite()) * 100 : 0; ?>
@@ -507,14 +509,14 @@ try {
                           <?php endif; ?>
                         </td>
                         <td><div class="ec-main-cell"><strong><?= htmlspecialchars($event->getTitre()) ?></strong><span>ID #<?= (int)$event->getId() ?></span></div></td>
-                        <td><span class="ec-chip"><?= htmlspecialchars(ucfirst($event->getType())) ?></span></td>
-                        <td><span class="ec-badge ec-status-<?= htmlspecialchars($event->getStatut()) ?>"><?= htmlspecialchars($event->getStatut()) ?></span></td>
+                        <td><span class="ec-chip" data-i18n="events.type.<?= htmlspecialchars($event->getType()) ?>"><?= htmlspecialchars(ucfirst($event->getType())) ?></span></td>
+                        <td><span class="ec-badge ec-status-<?= htmlspecialchars($event->getStatut()) ?>" data-i18n="events.status.<?= htmlspecialchars($event->getStatut()) ?>"><?= htmlspecialchars($event->getStatut()) ?></span></td>
                         <td class="ec-date-cell"><?= htmlspecialchars(date('Y-m-d', strtotime($event->getDateEvenement()))) ?></td>
-                        <td><?= htmlspecialchars($event->getLieu() ?: 'En ligne') ?></td>
+                        <td><?php if ($event->getLieu()): ?><?= htmlspecialchars($event->getLieu()) ?><?php else: ?><span data-i18n="events.place.online">Online</span><?php endif; ?></td>
                         <td>
                           <div class="ec-progress-wrap"><div class="ec-progress-bar"><span style="width:<?= min(100, $percentage) ?>%"></span></div><small><?= (int)$event->getNbInscrits() ?>/<?= (int)$event->getCapacite() ?></small></div>
                         </td>
-                        <td><div class="ec-actions"><button type="button" class="ec-action-btn ec-action-primary" onclick="editEvent(<?= (int)$event->getId() ?>)"><i class="mdi mdi-pencil me-1"></i>Edit</button><button type="button" class="ec-action-btn ec-action-danger" onclick="deleteEvent(<?= (int)$event->getId() ?>, '<?= htmlspecialchars(addslashes($event->getTitre())) ?>')"><i class="mdi mdi-delete me-1"></i>Delete</button></div></td>
+                        <td><div class="ec-actions"><button type="button" class="ec-action-btn ec-action-primary" onclick="editEvent(<?= (int)$event->getId() ?>)"><i class="mdi mdi-pencil me-1"></i><span data-i18n="common.edit">Edit</span></button><button type="button" class="ec-action-btn ec-action-danger" onclick="deleteEvent(<?= (int)$event->getId() ?>, '<?= htmlspecialchars(addslashes($event->getTitre())) ?>')"><i class="mdi mdi-delete me-1"></i><span data-i18n="common.delete">Delete</span></button></div></td>
                       </tr>
                     <?php endforeach; ?>
                   <?php endif; ?>
@@ -522,7 +524,7 @@ try {
               </table>
             </div>
             <div class="ec-pagination">
-              <p>Page <?= $eventPage ?> of <?= $eventTotalPages ?> (<?= $eventTotalRows ?> events)</p>
+              <p><span data-i18n="common.page">Page</span> <?= $eventPage ?> <span data-i18n="common.of">of</span> <?= $eventTotalPages ?> (<?= $eventTotalRows ?> <span data-i18n="events.pagination.events">events</span>)</p>
               <nav aria-label="Event pagination">
                 <a class="ec-page-btn <?= $eventPage <= 1 ? 'is-disabled' : '' ?>" href="<?= htmlspecialchars($eventPageUrl(max(1, $eventPage - 1))) ?>">«</a>
                 <?php for ($p = 1; $p <= $eventTotalPages; $p++): ?>
@@ -538,7 +540,7 @@ try {
           </div>
         </section>
 
-
+      
 
       </div>
 
@@ -548,7 +550,7 @@ try {
       <footer class="footer">
         <div class="d-sm-flex justify-content-center justify-content-sm-between">
           <span class="text-muted d-block text-center text-sm-left d-sm-inline-block">Copyright &copy; cre8connect 2024</span>
-          <span class="float-none float-sm-right d-block mt-1 mt-sm-0 text-center">Gestion des Evenements</span>
+          <span class="float-none float-sm-right d-block mt-1 mt-sm-0 text-center" data-i18n="events.footer">Event management</span>
         </div>
       </footer>
     </div>
@@ -564,70 +566,70 @@ try {
     <div class="modal-content">
       <form method="POST" action="<?= $BASE ?>/Controleur/evenementC.php?action=create" enctype="multipart/form-data">
         <div class="modal-header">
-          <h5 class="modal-title" id="createModalLabel"><i class="mdi mdi-plus-circle me-2"></i>Nouvel Evenement</h5>
+          <h5 class="modal-title" id="createModalLabel"><i class="mdi mdi-plus-circle me-2"></i><span data-i18n="events.modal.createTitle">New event</span></h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           <div class="mb-3">
-            <label class="form-label fw-semibold">Titre *</label>
+            <label class="form-label fw-semibold" data-i18n="events.form.titleRequired">Title *</label>
             <input type="text" name="titre" class="form-control" required/>
           </div>
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label class="form-label fw-semibold">Type *</label>
+              <label class="form-label fw-semibold" data-i18n="events.form.typeRequired">Type *</label>
               <select name="type" class="form-select">
-                <option value="formation">Formation</option>
-                <option value="webinaire">Webinaire</option>
-                <option value="meetup">Meetup</option>
-                <option value="atelier">Atelier</option>
+                <option value="formation" data-i18n-opt="events.type.formation">Training</option>
+                <option value="webinaire" data-i18n-opt="events.type.webinaire">Webinar</option>
+                <option value="meetup" data-i18n-opt="events.type.meetup">Meetup</option>
+                <option value="atelier" data-i18n-opt="events.type.atelier">Workshop</option>
               </select>
             </div>
             <div class="col-md-6 mb-3">
-              <label class="form-label fw-semibold">Statut *</label>
+              <label class="form-label fw-semibold" data-i18n="events.form.statusRequired">Status *</label>
               <select name="statut" class="form-select">
-                <option value="brouillon">Brouillon</option>
-                <option value="en_attente">En attente</option>
-                <option value="actif">Actif</option>
+                <option value="brouillon" data-i18n-opt="events.status.brouillon">Draft</option>
+                <option value="en_attente" data-i18n-opt="events.status.en_attente">Pending</option>
+                <option value="actif" data-i18n-opt="events.status.actif">Active</option>
               </select>
             </div>
           </div>
           <div class="mb-3">
-            <label class="form-label fw-semibold">Description</label>
+            <label class="form-label fw-semibold" data-i18n="events.form.description">Description</label>
             <textarea name="description" class="form-control" rows="3"></textarea>
           </div>
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label class="form-label fw-semibold">Date *</label>
+              <label class="form-label fw-semibold" data-i18n="events.form.dateRequired">Date *</label>
               <input type="date" name="date_evenement" class="form-control" required/>
             </div>
             <div class="col-md-6 mb-3">
-              <label class="form-label fw-semibold">Duree (heures)</label>
+              <label class="form-label fw-semibold" data-i18n="events.form.durationHours">Duration (hours)</label>
               <input type="number" name="duree" class="form-control"/>
             </div>
           </div>
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label class="form-label fw-semibold">Lieu (ville)</label>
+              <label class="form-label fw-semibold" data-i18n="events.form.placeCity">Place (city)</label>
               <input type="text" name="lieu" class="form-control"/>
             </div>
             <div class="col-md-6 mb-3">
-              <label class="form-label fw-semibold">Capacite</label>
+              <label class="form-label fw-semibold" data-i18n="events.form.capacity">Capacity</label>
               <input type="number" name="capacite" class="form-control" value="50"/>
             </div>
           </div>
           <div class="mb-3">
-            <label class="form-label fw-semibold">Adresse complete</label>
-            <input type="text" name="adresse_complete" class="form-control" placeholder="Ex: 45 Avenue Ahmed Tlili, Ariana"/>
+            <label class="form-label fw-semibold" data-i18n="events.form.fullAddress">Full address</label>
+            <input type="text" name="adresse_complete" class="form-control" placeholder="Ex: 45 Avenue Ahmed Tlili, Ariana" data-i18n-placeholder="events.form.addressPlaceholder"/>
           </div>
           <div class="mb-3">
-            <label class="form-label fw-semibold">Affiche</label>
+            <label class="form-label fw-semibold" data-i18n="events.form.poster">Poster</label>
             <input type="file" name="image" class="form-control" accept="image/jpeg,image/png,image/jpg,image/webp" onchange="previewImage(this, 'createPreview')"/>
             <div id="createPreview" class="mt-2"></div>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-          <button type="submit" class="btn text-white" style="background: linear-gradient(135deg, #9B5DE0, #B771E5);">Creer</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="common.cancel">Cancel</button>
+          <button type="submit" class="btn text-white" style="background: linear-gradient(135deg, #9B5DE0, #B771E5);" data-i18n="common.create">Create</button>
         </div>
       </form>
     </div>
@@ -640,7 +642,7 @@ try {
     <div class="modal-content">
       <form method="POST" id="editForm" enctype="multipart/form-data">
         <div class="modal-header">
-          <h5 class="modal-title" id="editModalLabel"><i class="mdi mdi-pencil me-2"></i>Modifier l'Evenement</h5>
+          <h5 class="modal-title" id="editModalLabel"><i class="mdi mdi-pencil me-2"></i><span data-i18n="events.modal.editTitle">Edit event</span></h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
@@ -653,23 +655,23 @@ try {
             <div class="col-md-6 mb-3">
               <label class="form-label fw-semibold">Type</label>
               <select name="type" id="edit_type" class="form-select">
-                <option value="formation">Formation</option>
-                <option value="webinaire">Webinaire</option>
-                <option value="meetup">Meetup</option>
-                <option value="atelier">Atelier</option>
+                <option value="formation" data-i18n-opt="events.type.formation">Training</option>
+                <option value="webinaire" data-i18n-opt="events.type.webinaire">Webinar</option>
+                <option value="meetup" data-i18n-opt="events.type.meetup">Meetup</option>
+                <option value="atelier" data-i18n-opt="events.type.atelier">Workshop</option>
               </select>
             </div>
             <div class="col-md-6 mb-3">
               <label class="form-label fw-semibold">Statut</label>
               <select name="statut" id="edit_statut" class="form-select">
-                <option value="brouillon">Brouillon</option>
-                <option value="en_attente">En attente</option>
-                <option value="actif">Actif</option>
+                <option value="brouillon" data-i18n-opt="events.status.brouillon">Draft</option>
+                <option value="en_attente" data-i18n-opt="events.status.en_attente">Pending</option>
+                <option value="actif" data-i18n-opt="events.status.actif">Active</option>
               </select>
             </div>
           </div>
           <div class="mb-3">
-            <label class="form-label fw-semibold">Description</label>
+            <label class="form-label fw-semibold" data-i18n="events.form.description">Description</label>
             <textarea name="description" id="edit_description" class="form-control" rows="3"></textarea>
           </div>
           <div class="row">
@@ -688,24 +690,24 @@ try {
               <input type="text" name="lieu" id="edit_lieu" class="form-control"/>
             </div>
             <div class="col-md-6 mb-3">
-              <label class="form-label fw-semibold">Capacite</label>
+              <label class="form-label fw-semibold" data-i18n="events.form.capacity">Capacity</label>
               <input type="number" name="capacite" id="edit_capacite" class="form-control"/>
             </div>
           </div>
           <div class="mb-3">
-            <label class="form-label fw-semibold">Adresse complete</label>
+            <label class="form-label fw-semibold" data-i18n="events.form.fullAddress">Full address</label>
             <input type="text" name="adresse_complete" id="edit_adresse" class="form-control"/>
           </div>
           <div class="mb-3">
-            <label class="form-label fw-semibold">Affiche</label>
+            <label class="form-label fw-semibold" data-i18n="events.form.poster">Poster</label>
             <input type="file" name="image" class="form-control" accept="image/jpeg,image/png,image/jpg,image/webp" onchange="previewImage(this, 'editPreview')"/>
             <div id="editPreview" class="mt-2"></div>
             <div id="currentImageInfo" class="mt-2 text-muted" style="font-size:0.8rem;"></div>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-          <button type="submit" class="btn text-white" style="background: linear-gradient(135deg, #9B5DE0, #B771E5);">Mettre a jour</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="common.cancel">Cancel</button>
+          <button type="submit" class="btn text-white" style="background: linear-gradient(135deg, #9B5DE0, #B771E5);" data-i18n="common.update">Update</button>
         </div>
       </form>
     </div>
@@ -719,6 +721,176 @@ try {
 <script src="<?= $backBoUtilisateurWeb ?>/assets/vendors/chart.js/Chart.min.js"></script>
 <!-- End plugin js for this page -->
 <script src="<?= $backBoRootWeb ?>/layout/back-layout.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/back-layout.js')); ?>"></script>
+
+<script>
+window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
+  en: {
+    "eventCenter.kicker": "Event Center",
+    "eventCenter.tab.events": "Events",
+    "eventCenter.tab.eventsSub": "Planning and participation",
+    "eventCenter.tab.forum": "Forum",
+    "eventCenter.tab.forumSub": "Discussions and moderation",
+    "events.title": "Event administration",
+    "events.subtitle": "Track events, participation, forums, and moderation activity from one clean dashboard.",
+    "events.action.new": "New event",
+    "events.alert.deleted": "Event deleted successfully.",
+    "events.alert.created": "Event created successfully.",
+    "events.alert.updated": "Event updated successfully.",
+    "events.alert.eventCount": "event(s)",
+    "events.alert.pendingValidation": "need validation.",
+    "events.stats.title": "Workspace statistics",
+    "events.stats.subtitle": "Live indicators and charts for event activity.",
+    "events.kpi.total": "Total events",
+    "events.kpi.activeNow": "active now",
+    "events.kpi.registrations": "Registrations",
+    "events.kpi.totalParticipants": "Total participants",
+    "events.kpi.fillRate": "Fill rate",
+    "events.kpi.averageCapacity": "Average capacity usage",
+    "events.kpi.upcoming": "Upcoming",
+    "events.kpi.futureEvents": "Future events",
+    "events.kpi.pending": "Pending",
+    "events.kpi.needValidation": "Need validation",
+    "events.kpi.finished": "Finished",
+    "events.kpi.pastEvents": "Past events",
+    "events.chart.participants": "Participants evolution",
+    "events.chart.participantsSub": "Registration volume over the last months.",
+    "events.chart.perMonth": "Events per month",
+    "events.chart.perMonthSub": "Scheduled event volume.",
+    "events.chart.typeDistribution": "Type distribution",
+    "events.chart.typeDistributionSub": "Breakdown by event type.",
+    "events.filter.title": "Admin filters",
+    "events.filter.subtitle": "Filter by title, type, status, or location before reviewing the list.",
+    "events.filter.searchPlaceholder": "Title, type, status, place...",
+    "events.filter.allTypes": "All types",
+    "events.table.title": "Event List",
+    "events.table.matchCount": "event(s) match the current filters.",
+    "events.table.selectAll": "Select all events",
+    "events.table.image": "Image",
+    "events.table.event": "Event",
+    "events.table.type": "Type",
+    "events.table.date": "Date",
+    "events.table.place": "Place",
+    "events.table.capacity": "Capacity",
+    "events.empty.title": "No event found",
+    "events.empty.subtitle": "Try another filter or create a new event.",
+    "events.place.online": "Online",
+    "events.pagination.events": "events",
+    "events.modal.createTitle": "New event",
+    "events.modal.editTitle": "Edit event",
+    "events.form.titleRequired": "Title *",
+    "events.form.typeRequired": "Type *",
+    "events.form.statusRequired": "Status *",
+    "events.form.description": "Description",
+    "events.form.dateRequired": "Date *",
+    "events.form.durationHours": "Duration (hours)",
+    "events.form.placeCity": "Place (city)",
+    "events.form.capacity": "Capacity",
+    "events.form.fullAddress": "Full address",
+    "events.form.addressPlaceholder": "Ex: 45 Avenue Ahmed Tlili, Ariana",
+    "events.form.poster": "Poster",
+    "events.footer": "Event management",
+    "events.js.loadError": "Error while loading event details",
+    "events.js.deleteConfirm": "Delete event",
+    "events.status.actif": "Active",
+    "events.status.en_attente": "Pending",
+    "events.status.brouillon": "Draft",
+    "events.status.archive": "Archived",
+    "events.status.termine": "Finished",
+    "events.type.formation": "Training",
+    "events.type.webinaire": "Webinar",
+    "events.type.meetup": "Meetup",
+    "events.type.atelier": "Workshop",
+    "common.allStatuses": "All statuses",
+    "common.perPage": "Per page",
+    "common.cancel": "Cancel",
+    "common.create": "Create",
+    "common.update": "Update"
+  },
+  fr: {
+    "eventCenter.kicker": "Centre événements",
+    "eventCenter.tab.events": "Événements",
+    "eventCenter.tab.eventsSub": "Planification et participation",
+    "eventCenter.tab.forum": "Forum",
+    "eventCenter.tab.forumSub": "Discussions et modération",
+    "events.title": "Administration des événements",
+    "events.subtitle": "Suivez les événements, la participation, les forums et la modération depuis un seul tableau de bord.",
+    "events.action.new": "Nouvel événement",
+    "events.alert.deleted": "Événement supprimé avec succès.",
+    "events.alert.created": "Événement créé avec succès.",
+    "events.alert.updated": "Événement mis à jour avec succès.",
+    "events.alert.eventCount": "événement(s)",
+    "events.alert.pendingValidation": "en attente de validation.",
+    "events.stats.title": "Statistiques de l'espace",
+    "events.stats.subtitle": "Indicateurs et graphiques en direct pour l'activité des événements.",
+    "events.kpi.total": "Total événements",
+    "events.kpi.activeNow": "actifs maintenant",
+    "events.kpi.registrations": "Inscriptions",
+    "events.kpi.totalParticipants": "Total participants",
+    "events.kpi.fillRate": "Taux de remplissage",
+    "events.kpi.averageCapacity": "Utilisation moyenne de la capacité",
+    "events.kpi.upcoming": "À venir",
+    "events.kpi.futureEvents": "Événements futurs",
+    "events.kpi.pending": "En attente",
+    "events.kpi.needValidation": "À valider",
+    "events.kpi.finished": "Terminés",
+    "events.kpi.pastEvents": "Événements passés",
+    "events.chart.participants": "Évolution des participants",
+    "events.chart.participantsSub": "Volume des inscriptions sur les derniers mois.",
+    "events.chart.perMonth": "Événements par mois",
+    "events.chart.perMonthSub": "Volume des événements planifiés.",
+    "events.chart.typeDistribution": "Répartition par type",
+    "events.chart.typeDistributionSub": "Répartition selon le type d'événement.",
+    "events.filter.title": "Filtres admin",
+    "events.filter.subtitle": "Filtrez par titre, type, statut ou lieu avant de consulter la liste.",
+    "events.filter.searchPlaceholder": "Titre, type, statut, lieu...",
+    "events.filter.allTypes": "Tous les types",
+    "events.table.title": "Liste des événements",
+    "events.table.matchCount": "événement(s) correspondent aux filtres actuels.",
+    "events.table.selectAll": "Sélectionner tous les événements",
+    "events.table.image": "Image",
+    "events.table.event": "Événement",
+    "events.table.type": "Type",
+    "events.table.date": "Date",
+    "events.table.place": "Lieu",
+    "events.table.capacity": "Capacité",
+    "events.empty.title": "Aucun événement trouvé",
+    "events.empty.subtitle": "Essayez un autre filtre ou créez un nouvel événement.",
+    "events.place.online": "En ligne",
+    "events.pagination.events": "événements",
+    "events.modal.createTitle": "Nouvel événement",
+    "events.modal.editTitle": "Modifier l'événement",
+    "events.form.titleRequired": "Titre *",
+    "events.form.typeRequired": "Type *",
+    "events.form.statusRequired": "Statut *",
+    "events.form.description": "Description",
+    "events.form.dateRequired": "Date *",
+    "events.form.durationHours": "Durée (heures)",
+    "events.form.placeCity": "Lieu (ville)",
+    "events.form.capacity": "Capacité",
+    "events.form.fullAddress": "Adresse complète",
+    "events.form.addressPlaceholder": "Ex: 45 Avenue Ahmed Tlili, Ariana",
+    "events.form.poster": "Affiche",
+    "events.footer": "Gestion des événements",
+    "events.js.loadError": "Erreur lors du chargement des détails de l'événement",
+    "events.js.deleteConfirm": "Supprimer l'événement",
+    "events.status.actif": "Actif",
+    "events.status.en_attente": "En attente",
+    "events.status.brouillon": "Brouillon",
+    "events.status.archive": "Archivé",
+    "events.status.termine": "Terminé",
+    "events.type.formation": "Formation",
+    "events.type.webinaire": "Webinaire",
+    "events.type.meetup": "Meetup",
+    "events.type.atelier": "Atelier",
+    "common.allStatuses": "Tous les statuts",
+    "common.perPage": "Par page",
+    "common.cancel": "Annuler",
+    "common.create": "Créer",
+    "common.update": "Mettre à jour"
+  }
+});
+</script>
+
 <script src="<?= $backBoRootWeb ?>/event-center-admin.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../event-center-admin.js')); ?>"></script>
 <script src="<?= $backBoUtilisateurWeb ?>/assets/js/off-canvas.js"></script>
 <script src="<?= $backBoUtilisateurWeb ?>/assets/js/hoverable-collapse.js"></script>
@@ -810,11 +982,12 @@ try {
         const m = new bootstrap.Modal(document.getElementById('editModal'));
         m.show();
       })
-      .catch(() => alert('Error while loading event details'));
+      .catch(() => alert((window.cre8BackText && window.cre8BackText('events.js.loadError')) || 'Error while loading event details'));
   }
 
   function deleteEvent(id, titre) {
-    if (confirm('Supprimer l\'evenement "' + titre + '" ?')) {
+    const message = ((window.cre8BackText && window.cre8BackText('events.js.deleteConfirm')) || 'Delete event') + ' "' + titre + '" ?';
+    if (confirm(message)) {
       window.location.href = eventAppUrl('Controleur/evenementC.php?action=delete&id=' + encodeURIComponent(id));
     }
   }

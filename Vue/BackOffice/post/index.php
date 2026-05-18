@@ -155,81 +155,81 @@ require_once __DIR__ . '/../layout/sidebar.php';
         <div class="content-wrapper community-center-shell">
             <section class="cc-page-head">
                 <div>
-                    <p class="cc-kicker">Community Center</p>
-                    <h1>Posts Dashboard</h1>
-                    <p>Moderate creator posts, inspect engagement, and jump quickly to linked comments.</p>
+                    <p class="cc-kicker" data-i18n="community.kicker">Community Center</p>
+                    <h1 data-i18n="posts.title">Posts Dashboard</h1>
+                    <p data-i18n="posts.subtitle">Moderate creator posts, inspect engagement, and jump quickly to linked comments.</p>
                 </div>
             </section>
 
-            <nav class="cc-entity-tabs" aria-label="Community Center sections">
+            <nav class="cc-entity-tabs" aria-label="Community Center sections" data-i18n-aria-label="community.tabsAria">
                 <a class="cc-entity-tab is-active" href="../post/index.php" aria-current="page">
                     <span class="cc-tab-icon"><i class="mdi mdi-format-list-bulleted"></i></span>
-                    <span><strong>Posts</strong><small>Content moderation and performance</small></span>
+                    <span><strong data-i18n="community.tab.posts">Posts</strong><small data-i18n="community.tab.postsSub">Content moderation and performance</small></span>
                 </a>
                 <a class="cc-entity-tab" href="../comment/index.php">
                     <span class="cc-tab-icon"><i class="mdi mdi-comment-multiple-outline"></i></span>
-                    <span><strong>Comments</strong><small>Replies, reactions, and links</small></span>
+                    <span><strong data-i18n="community.tab.comments">Comments</strong><small data-i18n="community.tab.commentsSub">Replies, reactions, and links</small></span>
                 </a>
             </nav>
 
             <section class="cc-statistics-panel" data-cc-stats>
                 <div class="cc-section-head">
                     <div>
-                        <h2>Post indicators</h2>
-                        <p>Global content activity and engagement health.</p>
+                        <h2 data-i18n="posts.stats.title">Post indicators</h2>
+                        <p data-i18n="posts.stats.subtitle">Global content activity and engagement health.</p>
                     </div>
-                    <button type="button" class="cc-secondary-btn" data-cc-stats-toggle data-label-hide="Hide statistics" data-label-show="Show statistics">Hide statistics</button>
+                    <button type="button" class="cc-secondary-btn" data-cc-stats-toggle data-label-hide="Hide statistics" data-label-show="Show statistics" data-i18n="common.hideStatistics">Hide statistics</button>
                 </div>
 
                 <div class="cc-kpi-grid">
                     <article class="cc-kpi-card cc-kpi-purple">
-                        <span>Total posts</span>
+                        <span data-i18n="posts.kpi.total">Total posts</span>
                         <strong><?= number_format($totalPosts, 0, ',', ' ') ?></strong>
-                        <small>Creator publications</small>
+                        <small data-i18n="posts.kpi.totalSub">Creator publications</small>
                     </article>
                     <article class="cc-kpi-card cc-kpi-pink">
-                        <span>Total views</span>
+                        <span data-i18n="posts.kpi.views">Total views</span>
                         <strong><?= number_format($totalViews, 0, ',', ' ') ?></strong>
-                        <small>All-time visibility</small>
+                        <small data-i18n="posts.kpi.viewsSub">All-time visibility</small>
                     </article>
                     <article class="cc-kpi-card cc-kpi-green">
-                        <span>Approval rate</span>
+                        <span data-i18n="posts.kpi.approval">Approval rate</span>
                         <strong><?= $approvalPct ?>%</strong>
-                        <small>Likes vs reactions</small>
+                        <small data-i18n="posts.kpi.approvalSub">Likes vs reactions</small>
                     </article>
                     <article class="cc-kpi-card cc-kpi-blue">
-                        <span>Avg. views</span>
+                        <span data-i18n="posts.kpi.avgViews">Avg. views</span>
                         <strong><?= number_format($avgViews, 0, ',', ' ') ?></strong>
-                        <small>Views per post</small>
+                        <small data-i18n="posts.kpi.avgViewsSub">Views per post</small>
                     </article>
                 </div>
 
                 <div class="cc-stats-body cc-charts-grid">
                     <article class="cc-chart-card">
-                        <div class="cc-chart-head"><h3>Engagement Breakdown</h3><p>Likes, dislikes, and neutral posts.</p></div>
+                        <div class="cc-chart-head"><h3 data-i18n="posts.chart.engagement">Engagement Breakdown</h3><p data-i18n="posts.chart.engagementSub">Likes, dislikes, and neutral posts.</p></div>
                         <div class="cc-chart-legend" id="leg-engagement"></div>
                         <div class="cc-chart-canvas"><canvas id="chartEngagement"></canvas></div>
                     </article>
                     <article class="cc-chart-card">
-                        <div class="cc-chart-head"><h3>Media Mix</h3><p>Image, video, and text-only content.</p></div>
+                        <div class="cc-chart-head"><h3 data-i18n="posts.chart.media">Media Mix</h3><p data-i18n="posts.chart.mediaSub">Image, video, and text-only content.</p></div>
                         <div class="cc-chart-legend" id="leg-media"></div>
                         <div class="cc-chart-canvas"><canvas id="chartMedia"></canvas></div>
                     </article>
                     <article class="cc-chart-card">
-                        <div class="cc-chart-head"><h3>Creator Activity</h3><p>Top creators by published posts.</p></div>
+                        <div class="cc-chart-head"><h3 data-i18n="posts.chart.creators">Creator Activity</h3><p data-i18n="posts.chart.creatorsSub">Top creators by published posts.</p></div>
                         <div class="cc-chart-canvas"><canvas id="chartCreators"></canvas></div>
                     </article>
                     <article class="cc-chart-card cc-chart-wide">
-                        <div class="cc-chart-head"><h3>Top Posts by Views</h3><p>Most visible posts in the community.</p></div>
+                        <div class="cc-chart-head"><h3 data-i18n="posts.chart.topViews">Top Posts by Views</h3><p data-i18n="posts.chart.topViewsSub">Most visible posts in the community.</p></div>
                         <div class="cc-chart-canvas"><canvas id="chartTopViews"></canvas></div>
                     </article>
                     <article class="cc-chart-card">
-                        <div class="cc-chart-head"><h3>Engagement Share</h3><p>Likes per top creator.</p></div>
+                        <div class="cc-chart-head"><h3 data-i18n="posts.chart.share">Engagement Share</h3><p data-i18n="posts.chart.shareSub">Likes per top creator.</p></div>
                         <div class="cc-chart-legend" id="leg-polar"></div>
                         <div class="cc-chart-canvas"><canvas id="chartPolar"></canvas></div>
                     </article>
                     <article class="cc-chart-card">
-                        <div class="cc-chart-head"><h3>Performance Radar</h3><p>Top post views, likes, and dislikes.</p></div>
+                        <div class="cc-chart-head"><h3 data-i18n="posts.chart.radar">Performance Radar</h3><p data-i18n="posts.chart.radarSub">Top post views, likes, and dislikes.</p></div>
                         <div class="cc-chart-canvas"><canvas id="chartRadar"></canvas></div>
                     </article>
                 </div>
@@ -238,44 +238,44 @@ require_once __DIR__ . '/../layout/sidebar.php';
             <section class="cc-filter-card">
                 <div class="cc-filter-head">
                     <div>
-                        <h2>Filter posts</h2>
-                        <p>Search by subject, creator, ID, or content.</p>
+                        <h2 data-i18n="posts.filter.title">Filter posts</h2>
+                        <p data-i18n="posts.filter.subtitle">Search by subject, creator, ID, or content.</p>
                     </div>
                 </div>
                 <form method="GET" class="cc-filter-grid">
                     <label class="cc-filter-field">
-                        <span>Keyword</span>
-                        <input type="text" name="q" value="<?= htmlspecialchars($postSearch) ?>" placeholder="Search posts, creators, or content">
+                        <span data-i18n="common.keyword">Keyword</span>
+                        <input type="text" name="q" value="<?= htmlspecialchars($postSearch) ?>" placeholder="Search posts, creators, or content" data-i18n-placeholder="posts.filter.placeholder">
                     </label>
                     <label class="cc-filter-field">
-                        <span>Media</span>
+                        <span data-i18n="common.media">Media</span>
                         <select name="media">
-                            <option value="">All media</option>
-                            <option value="image" <?= $mediaFilter === 'image' ? 'selected' : '' ?>>Images</option>
-                            <option value="video" <?= $mediaFilter === 'video' ? 'selected' : '' ?>>Videos</option>
-                            <option value="text" <?= $mediaFilter === 'text' ? 'selected' : '' ?>>Text only</option>
+                            <option value="" data-i18n-opt="posts.filter.allMedia">All media</option>
+                            <option value="image" <?= $mediaFilter === 'image' ? 'selected' : '' ?> data-i18n-opt="posts.filter.images">Images</option>
+                            <option value="video" <?= $mediaFilter === 'video' ? 'selected' : '' ?> data-i18n-opt="posts.filter.videos">Videos</option>
+                            <option value="text" <?= $mediaFilter === 'text' ? 'selected' : '' ?> data-i18n-opt="posts.filter.textOnly">Text only</option>
                         </select>
                     </label>
                     <label class="cc-filter-field">
-                        <span>Sort</span>
+                        <span data-i18n="common.sort">Sort</span>
                         <select name="sort">
-                            <option value="newest" <?= $sortBy === 'newest' ? 'selected' : '' ?>>Newest first</option>
-                            <option value="views" <?= $sortBy === 'views' ? 'selected' : '' ?>>Most viewed</option>
-                            <option value="likes" <?= $sortBy === 'likes' ? 'selected' : '' ?>>Most liked</option>
-                            <option value="dislikes" <?= $sortBy === 'dislikes' ? 'selected' : '' ?>>Most disliked</option>
+                            <option value="newest" <?= $sortBy === 'newest' ? 'selected' : '' ?> data-i18n-opt="posts.sort.newest">Newest first</option>
+                            <option value="views" <?= $sortBy === 'views' ? 'selected' : '' ?> data-i18n-opt="posts.sort.views">Most viewed</option>
+                            <option value="likes" <?= $sortBy === 'likes' ? 'selected' : '' ?> data-i18n-opt="posts.sort.likes">Most liked</option>
+                            <option value="dislikes" <?= $sortBy === 'dislikes' ? 'selected' : '' ?> data-i18n-opt="posts.sort.dislikes">Most disliked</option>
                         </select>
                     </label>
                     <label class="cc-filter-field">
-                        <span>Rows</span>
+                        <span data-i18n="common.rows">Rows</span>
                         <select name="per_page">
                             <?php foreach ($perPageOptions as $option) : ?>
-                                <option value="<?= $option ?>" <?= $perPage === $option ? 'selected' : '' ?>><?= $option ?> per page</option>
+                                <option value="<?= $option ?>" <?= $perPage === $option ? 'selected' : '' ?>><?= $option ?></option>
                             <?php endforeach; ?>
                         </select>
                     </label>
                     <div class="cc-filter-actions">
-                        <button type="submit" class="cc-primary-btn"><i class="mdi mdi-magnify"></i> Apply</button>
-                        <a href="./index.php" class="cc-secondary-btn">Reset</a>
+                        <button type="submit" class="cc-primary-btn"><i class="mdi mdi-magnify"></i> <span data-i18n="common.applyFilters">Apply filters</span></button>
+                        <a href="./index.php" class="cc-secondary-btn" data-i18n="common.reset">Reset</a>
                     </div>
                 </form>
             </section>
@@ -283,8 +283,8 @@ require_once __DIR__ . '/../layout/sidebar.php';
             <section class="cc-table-card">
                 <div class="cc-table-head">
                     <div>
-                        <h2>Posts moderation list</h2>
-                        <p><?= number_format($totalFiltered, 0, ',', ' ') ?> post<?= $totalFiltered === 1 ? '' : 's' ?> found.</p>
+                        <h2 data-i18n="posts.table.title">Posts moderation list</h2>
+                        <p><span><?= number_format($totalFiltered, 0, ',', ' ') ?></span> <span data-i18n="posts.table.found">posts found</span></p>
                     </div>
                 </div>
 
@@ -292,23 +292,23 @@ require_once __DIR__ . '/../layout/sidebar.php';
                     <?php if (empty($visiblePosts)) : ?>
                         <div class="cc-empty-state">
                             <span><i class="mdi mdi-format-list-bulleted"></i></span>
-                            <strong>No posts found</strong>
-                            <p>Try changing the filters or reset the search.</p>
+                            <strong data-i18n="posts.empty.title">No posts found</strong>
+                            <p data-i18n="posts.empty.subtitle">Try changing the filters or reset the search.</p>
                         </div>
                     <?php else : ?>
                         <div class="cc-table-wrap">
                             <table class="cc-table cc-posts-table" id="postsTable">
                                 <thead>
                                     <tr>
-                                        <th>Media</th>
-                                        <th>Creator</th>
-                                        <th>Subject</th>
-                                        <th>Content</th>
-                                        <th>Date</th>
-                                        <th>Views</th>
-                                        <th>Likes</th>
-                                        <th>Dislikes</th>
-                                        <th>Actions</th>
+                                        <th data-i18n="posts.table.media">Media</th>
+                                        <th data-i18n="posts.table.creator">Creator</th>
+                                        <th data-i18n="posts.table.subject">Subject</th>
+                                        <th data-i18n="posts.table.content">Content</th>
+                                        <th data-i18n="posts.table.date">Date</th>
+                                        <th data-i18n="posts.table.views">Views</th>
+                                        <th data-i18n="posts.table.likes">Likes</th>
+                                        <th data-i18n="posts.table.dislikes">Dislikes</th>
+                                        <th data-i18n="common.actions">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="postsTableBody">
@@ -316,11 +316,11 @@ require_once __DIR__ . '/../layout/sidebar.php';
                                     <tr>
                                         <td>
                                             <?php if (!empty($post['imageContent'])) : ?>
-                                                <img src="../../public/<?= htmlspecialchars($post['imageContent']) ?>" alt="Post image" class="cc-media-thumb">
+                                                <img src="../../public/<?= htmlspecialchars($post['imageContent']) ?>" alt="Post image" data-i18n-title="posts.table.postImage" class="cc-media-thumb">
                                             <?php elseif (!empty($post['VideoContent'])) : ?>
                                                 <video class="cc-media-thumb cc-video-thumb" muted><source src="../../public/<?= htmlspecialchars($post['VideoContent']) ?>"></video>
                                             <?php else : ?>
-                                                <span class="cc-badge cc-badge-muted">No media</span>
+                                                <span class="cc-badge cc-badge-muted" data-i18n="posts.table.noMedia">No media</span>
                                             <?php endif; ?>
                                         </td>
                                         <td>
@@ -338,13 +338,13 @@ require_once __DIR__ . '/../layout/sidebar.php';
                                         <td>
                                             <div class="cc-actions-stack">
                                                 <a href="./details.php?id=<?= urlencode($post['id']) ?>" class="cc-action-btn cc-action-primary">
-                                                    <i class="mdi mdi-eye-outline"></i> View
+                                                    <i class="mdi mdi-eye-outline"></i> <span data-i18n="common.view">View</span>
                                                 </a>
                                                 <a href="../comment/index.php?searchType=postId&keyword=<?= urlencode($post['id']) ?>" class="cc-action-btn cc-action-muted">
-                                                    <i class="mdi mdi-comment-outline"></i> Comments
+                                                    <i class="mdi mdi-comment-outline"></i> <span data-i18n="common.comments">Comments</span>
                                                 </a>
                                                 <a href="./delete.php?id=<?= urlencode($post['id']) ?>" class="cc-action-btn cc-action-danger js-admin-delete">
-                                                    <i class="mdi mdi-delete-outline"></i> Delete
+                                                    <i class="mdi mdi-delete-outline"></i> <span data-i18n="common.delete">Delete</span>
                                                 </a>
                                             </div>
                                         </td>
@@ -356,10 +356,10 @@ require_once __DIR__ . '/../layout/sidebar.php';
 
                         <div class="cc-pagination">
                             <p>
-                                Showing <?= $totalFiltered === 0 ? 0 : number_format($offset + 1, 0, ',', ' ') ?>–<?= number_format(min($offset + $perPage, $totalFiltered), 0, ',', ' ') ?>
-                                of <?= number_format($totalFiltered, 0, ',', ' ') ?> posts · Page <?= $page ?> of <?= $totalPages ?>
+                                <span data-i18n="posts.pagination.showing">Showing</span> <?= $totalFiltered === 0 ? 0 : number_format($offset + 1, 0, ',', ' ') ?>–<?= number_format(min($offset + $perPage, $totalFiltered), 0, ',', ' ') ?>
+                                <span data-i18n="common.of">of</span> <?= number_format($totalFiltered, 0, ',', ' ') ?> <span data-i18n="community.tab.posts">posts</span> · <span data-i18n="common.page">Page</span> <?= $page ?> <span data-i18n="common.of">of</span> <?= $totalPages ?>
                             </p>
-                            <nav aria-label="Posts pagination">
+                            <nav aria-label="Posts pagination" data-i18n-aria-label="posts.pagination.aria">
                                 <a class="cc-page-btn <?= $page <= 1 ? 'is-disabled' : '' ?>" href="<?= $page <= 1 ? '#' : htmlspecialchars($pageUrl($page - 1)) ?>">‹</a>
                                 <?php foreach (community_page_items($page, $totalPages) as $item) : ?>
                                     <?php if ($item === '…') : ?>
@@ -378,6 +378,132 @@ require_once __DIR__ . '/../layout/sidebar.php';
     </div>
 </div>
 </div>
+
+
+<script>
+window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
+  en: {
+    'community.kicker': 'Community Center',
+    'community.tabsAria': 'Community Center sections',
+    'community.tab.posts': 'Posts',
+    'community.tab.postsSub': 'Content moderation and performance',
+    'community.tab.comments': 'Comments',
+    'community.tab.commentsSub': 'Replies, reactions, and links',
+    'posts.title': 'Posts Dashboard',
+    'posts.subtitle': 'Moderate creator posts, inspect engagement, and jump quickly to linked comments.',
+    'posts.stats.title': 'Post indicators',
+    'posts.stats.subtitle': 'Global content activity and engagement health.',
+    'posts.kpi.total': 'Total posts',
+    'posts.kpi.totalSub': 'Creator publications',
+    'posts.kpi.views': 'Total views',
+    'posts.kpi.viewsSub': 'All-time visibility',
+    'posts.kpi.approval': 'Approval rate',
+    'posts.kpi.approvalSub': 'Likes vs reactions',
+    'posts.kpi.avgViews': 'Avg. views',
+    'posts.kpi.avgViewsSub': 'Views per post',
+    'posts.chart.engagement': 'Engagement Breakdown',
+    'posts.chart.engagementSub': 'Likes, dislikes, and neutral posts.',
+    'posts.chart.media': 'Media Mix',
+    'posts.chart.mediaSub': 'Image, video, and text-only content.',
+    'posts.chart.creators': 'Creator Activity',
+    'posts.chart.creatorsSub': 'Top creators by published posts.',
+    'posts.chart.topViews': 'Top Posts by Views',
+    'posts.chart.topViewsSub': 'Most visible posts in the community.',
+    'posts.chart.share': 'Engagement Share',
+    'posts.chart.shareSub': 'Likes per top creator.',
+    'posts.chart.radar': 'Performance Radar',
+    'posts.chart.radarSub': 'Top post views, likes, and dislikes.',
+    'posts.filter.title': 'Filter posts',
+    'posts.filter.subtitle': 'Search by subject, creator, ID, or content.',
+    'posts.filter.placeholder': 'Search posts, creators, or content',
+    'posts.filter.allMedia': 'All media',
+    'posts.filter.images': 'Images',
+    'posts.filter.videos': 'Videos',
+    'posts.filter.textOnly': 'Text only',
+    'posts.sort.newest': 'Newest first',
+    'posts.sort.views': 'Most viewed',
+    'posts.sort.likes': 'Most liked',
+    'posts.sort.dislikes': 'Most disliked',
+    'posts.table.title': 'Posts moderation list',
+    'posts.table.found': 'posts found',
+    'posts.table.media': 'Media',
+    'posts.table.creator': 'Creator',
+    'posts.table.subject': 'Subject',
+    'posts.table.content': 'Content',
+    'posts.table.date': 'Date',
+    'posts.table.views': 'Views',
+    'posts.table.likes': 'Likes',
+    'posts.table.dislikes': 'Dislikes',
+    'posts.table.noMedia': 'No media',
+    'posts.table.postImage': 'Post image',
+    'posts.empty.title': 'No posts found',
+    'posts.empty.subtitle': 'Try changing the filters or reset the search.',
+    'posts.pagination.showing': 'Showing',
+    'posts.pagination.aria': 'Posts pagination',
+    'posts.confirmDelete': 'Are you sure you want to delete this post?'
+  },
+  fr: {
+    'community.kicker': 'Centre communauté',
+    'community.tabsAria': 'Sections du centre communauté',
+    'community.tab.posts': 'Publications',
+    'community.tab.postsSub': 'Modération et performance du contenu',
+    'community.tab.comments': 'Commentaires',
+    'community.tab.commentsSub': 'Réponses, réactions et liens',
+    'posts.title': 'Tableau des publications',
+    'posts.subtitle': 'Modérez les publications des créateurs, suivez l’engagement et accédez rapidement aux commentaires liés.',
+    'posts.stats.title': 'Indicateurs des publications',
+    'posts.stats.subtitle': 'Activité globale du contenu et santé de l’engagement.',
+    'posts.kpi.total': 'Total publications',
+    'posts.kpi.totalSub': 'Publications des créateurs',
+    'posts.kpi.views': 'Total vues',
+    'posts.kpi.viewsSub': 'Visibilité totale',
+    'posts.kpi.approval': 'Taux d’approbation',
+    'posts.kpi.approvalSub': 'Likes vs réactions',
+    'posts.kpi.avgViews': 'Vues moyennes',
+    'posts.kpi.avgViewsSub': 'Vues par publication',
+    'posts.chart.engagement': 'Répartition de l’engagement',
+    'posts.chart.engagementSub': 'Likes, dislikes et publications neutres.',
+    'posts.chart.media': 'Répartition des médias',
+    'posts.chart.mediaSub': 'Images, vidéos et contenu texte.',
+    'posts.chart.creators': 'Activité des créateurs',
+    'posts.chart.creatorsSub': 'Créateurs les plus actifs.',
+    'posts.chart.topViews': 'Publications les plus vues',
+    'posts.chart.topViewsSub': 'Publications les plus visibles dans la communauté.',
+    'posts.chart.share': 'Part d’engagement',
+    'posts.chart.shareSub': 'Likes par créateur principal.',
+    'posts.chart.radar': 'Radar de performance',
+    'posts.chart.radarSub': 'Vues, likes et dislikes des meilleures publications.',
+    'posts.filter.title': 'Filtrer les publications',
+    'posts.filter.subtitle': 'Rechercher par sujet, créateur, ID ou contenu.',
+    'posts.filter.placeholder': 'Rechercher publications, créateurs ou contenu',
+    'posts.filter.allMedia': 'Tous les médias',
+    'posts.filter.images': 'Images',
+    'posts.filter.videos': 'Vidéos',
+    'posts.filter.textOnly': 'Texte uniquement',
+    'posts.sort.newest': 'Plus récentes',
+    'posts.sort.views': 'Plus vues',
+    'posts.sort.likes': 'Plus aimées',
+    'posts.sort.dislikes': 'Plus dislikées',
+    'posts.table.title': 'Liste de modération des publications',
+    'posts.table.found': 'publications trouvées',
+    'posts.table.media': 'Média',
+    'posts.table.creator': 'Créateur',
+    'posts.table.subject': 'Sujet',
+    'posts.table.content': 'Contenu',
+    'posts.table.date': 'Date',
+    'posts.table.views': 'Vues',
+    'posts.table.likes': 'Likes',
+    'posts.table.dislikes': 'Dislikes',
+    'posts.table.noMedia': 'Aucun média',
+    'posts.table.postImage': 'Image de publication',
+    'posts.empty.title': 'Aucune publication trouvée',
+    'posts.empty.subtitle': 'Modifiez les filtres ou réinitialisez la recherche.',
+    'posts.pagination.showing': 'Affichage',
+    'posts.pagination.aria': 'Pagination des publications',
+    'posts.confirmDelete': 'Voulez-vous vraiment supprimer cette publication ?'
+  }
+});
+</script>
 
 <script>
 (function () {
@@ -459,7 +585,8 @@ require_once __DIR__ . '/../layout/sidebar.php';
 document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.js-admin-delete').forEach(function (button) {
         button.addEventListener('click', function (e) {
-            if (!confirm('Are you sure you want to delete this post?')) {
+            const message = window.cre8BackText ? window.cre8BackText('posts.confirmDelete') : 'Are you sure you want to delete this post?';
+            if (!confirm(message)) {
                 e.preventDefault();
             }
         });

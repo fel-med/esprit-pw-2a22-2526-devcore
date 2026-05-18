@@ -31,12 +31,37 @@ function translateCandidatureStatus($status)
     };
 }
 
+function candidatureStatusI18nKey($status)
+{
+    $key = strtolower((string) $status);
+    $key = str_replace(['-', ' '], '_', $key);
+    return match ($key) {
+        'brouillon' => 'candidatures.status.draft',
+        'envoyee' => 'candidatures.status.sent',
+        'en_etude' => 'candidatures.status.underReview',
+        'negociation' => 'candidatures.status.negotiation',
+        'acceptee' => 'candidatures.status.accepted',
+        'refusee' => 'candidatures.status.refused',
+        'retiree' => 'candidatures.status.withdrawn',
+        default => '',
+    };
+}
+
 function translateOrigin($origin)
 {
     return match ((string) $origin) {
         'par_offre' => 'Offer invitation',
         'par_campagne' => 'Campaign application',
         default => ucwords(str_replace('_', ' ', (string) $origin)),
+    };
+}
+
+function originI18nKey($origin)
+{
+    return match ((string) $origin) {
+        'par_offre' => 'candidatures.origin.offer',
+        'par_campagne' => 'candidatures.origin.campaign',
+        default => '',
     };
 }
 
@@ -180,19 +205,25 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
         $tabs = [
             'offers' => [
                 'label' => 'Offers',
+                'labelKey' => 'collaboration.tab.offers',
                 'hint' => 'Targeted invitations',
+                'hintKey' => 'collaboration.tab.offersHint',
                 'href' => '../offre/index.php',
                 'icon' => 'mdi-briefcase-check',
             ],
             'candidatures' => [
                 'label' => 'Candidatures',
+                'labelKey' => 'collaboration.tab.candidatures',
                 'hint' => 'Creator responses',
+                'hintKey' => 'collaboration.tab.candidaturesHint',
                 'href' => '../condidature/index.php',
                 'icon' => 'mdi-account-check',
             ],
             'cre8shield' => [
                 'label' => 'Cre8Shield',
+                'labelKey' => 'collaboration.tab.cre8shield',
                 'hint' => 'Risk monitoring',
+                'hintKey' => 'collaboration.tab.cre8shieldHint',
                 'href' => '../cre8shield/index.php',
                 'icon' => 'mdi-shield-check',
             ],
@@ -208,8 +239,8 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                                 <i class="mdi <?php echo htmlspecialchars($tab['icon']); ?>"></i>
                             </span>
                             <span class="collaboration-subnav__text">
-                                <span class="collaboration-subnav__title"><?php echo htmlspecialchars($tab['label']); ?></span>
-                                <span class="collaboration-subnav__hint"><?php echo htmlspecialchars($tab['hint']); ?></span>
+                                <span class="collaboration-subnav__title" data-i18n="<?php echo htmlspecialchars($tab['labelKey']); ?>"><?php echo htmlspecialchars($tab['label']); ?></span>
+                                <span class="collaboration-subnav__hint" data-i18n="<?php echo htmlspecialchars($tab['hintKey']); ?>"><?php echo htmlspecialchars($tab['hint']); ?></span>
                             </span>
                         </a>
                     </li>
@@ -368,8 +399,8 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
         <header class="admin-header card grid-margin">
             <div class="admin-header-main card-body">
                 <div>
-                    <h1>Candidature administration</h1>
-                    <p>Inspect creator responses, follow review stages, and keep every targeted candidature visible from the same dashboard.</p>
+                    <h1 data-i18n="candidatures.title">Candidature administration</h1>
+                    <p data-i18n="candidatures.subtitle">Inspect creator responses, follow review stages, and keep every targeted candidature visible from the same dashboard.</p>
                 </div>
             </div>
         </header>
@@ -386,41 +417,41 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
 
         <div class="admin-stats-toolbar">
             <div>
-                <strong>Workspace statistics</strong>
-                <span>Live indicators and charts for collaboration activity.</span>
+                <strong data-i18n="collaboration.statistics.title">Workspace statistics</strong>
+                <span data-i18n="collaboration.statistics.subtitle">Live indicators and charts for collaboration activity.</span>
             </div>
-            <button type="button" class="admin-stats-toggle" data-stats-toggle aria-expanded="true">Hide statistics</button>
+            <button type="button" class="admin-stats-toggle" data-stats-toggle data-i18n="common.hideStatistics" aria-expanded="true">Hide statistics</button>
         </div>
 
         <section class="admin-stats-region" data-stats-region>
             <section class="admin-summary">
                 <article class="admin-card card card-body bo-kpi-card bo-kpi-card-1">
-                    <h3>Real candidatures</h3>
+                    <h3 data-i18n="collaboration.kpi.realCandidatures">Real candidatures</h3>
                     <p><?php echo (int) ($platformMetrics['realCandidatures'] ?? 0); ?></p>
-                    <small>Technical campaign placeholders excluded</small>
+                    <small data-i18n="candidatures.kpi.technicalExcluded">Technical campaign placeholders excluded</small>
                 </article>
                 <article class="admin-card card card-body bo-kpi-card bo-kpi-card-2">
-                    <h3>Pending reviews</h3>
+                    <h3 data-i18n="collaboration.kpi.pendingReviews">Pending reviews</h3>
                     <p><?php echo (int) ($platformMetrics['pendingReviews'] ?? 0); ?></p>
-                    <small>Sent or under review</small>
+                    <small data-i18n="collaboration.kpi.sentOrReview">Sent or under review</small>
                 </article>
                 <article class="admin-card card card-body bo-kpi-card bo-kpi-card-3">
-                    <h3>Open negotiations</h3>
+                    <h3 data-i18n="collaboration.kpi.openNegotiations">Open negotiations</h3>
                     <p><?php echo (int) ($platformMetrics['openNegotiations'] ?? 0); ?></p>
-                    <small>Active negotiation candidatures</small>
+                    <small data-i18n="collaboration.kpi.activeNegotiations">Active negotiation candidatures</small>
                 </article>
                 <article class="admin-card card card-body bo-kpi-card bo-kpi-card-4">
-                    <h3>Expired offers</h3>
+                    <h3 data-i18n="offers.kpi.expiredOffers">Expired offers</h3>
                     <p><?php echo (int) ($platformMetrics['expiredOffers'] ?? 0); ?></p>
-                    <small>Past deadline and not archived</small>
+                    <small data-i18n="offers.kpi.expiredOffersSub">Past deadline and not archived</small>
                 </article>
                 <article class="admin-card card card-body bo-kpi-card bo-kpi-card-5">
-                    <h3>Acceptance rate</h3>
+                    <h3 data-i18n="candidatures.kpi.acceptanceRate">Acceptance rate</h3>
                     <p><?php echo htmlspecialchars((string) ($platformMetrics['acceptanceRate'] ?? 0)); ?>%</p>
-                    <small>Accepted over accepted + refused</small>
+                    <small data-i18n="candidatures.kpi.acceptanceRateSub">Accepted over accepted + refused</small>
                 </article>
                 <article class="admin-card card card-body bo-kpi-card bo-kpi-card-6">
-                    <h3>Activity this week</h3>
+                    <h3 data-i18n="collaboration.kpi.activityThisWeek">Activity this week</h3>
                     <p><?php echo (int) ($platformMetrics['activityThisWeek'] ?? 0); ?></p>
                     <small><?php echo (int) ($platformMetrics['offersThisWeek'] ?? 0); ?> offers + <?php echo (int) ($platformMetrics['candidaturesThisWeek'] ?? 0); ?> candidatures</small>
                 </article>
@@ -432,9 +463,9 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
         <section class="card grid-margin search-panel search-panel-simple">
             <div class="search-panel-head">
                 <div class="search-panel-copy">
-                    <span class="search-panel-title">Admin filters</span>
+                    <span class="search-panel-title" data-i18n="candidatures.filter.title">Admin filters</span>
                     <span class="search-panel-subtitle">
-                        <?php echo $activeFilterCount > 0 ? $activeFilterCount . ' filter' . ($activeFilterCount > 1 ? 's' : '') . ' applied to this candidature view.' : 'Filter by source, creator, brand, date, or workflow state.'; ?>
+                        <?php echo $activeFilterCount > 0 ? $activeFilterCount . ' filter' . ($activeFilterCount > 1 ? 's' : '') . ' applied to this candidature view.' : '<span data-i18n="candidatures.filter.subtitle">Filter by source, creator, brand, date, or workflow state.</span>'; ?>
                     </span>
                 </div>
                 <span class="search-panel-status">
@@ -447,48 +478,48 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
             <form method="get" class="search-form">
                 <div class="search-grid">
                     <div class="search-group">
-                        <label for="keyword">Search</label>
-                        <input id="keyword" name="keyword" type="search" class="form-control" value="<?php echo htmlspecialchars($filters['keyword']); ?>" placeholder="Source, creator, brand, message...">
+                        <label for="keyword" data-i18n="common.search">Search</label>
+                        <input id="keyword" name="keyword" type="search" class="form-control" value="<?php echo htmlspecialchars($filters['keyword']); ?>" placeholder="Source, creator, brand, message..." data-i18n-placeholder="candidatures.filter.searchPlaceholder">
                     </div>
 
                     <div class="search-group">
-                        <label for="status">Status</label>
+                        <label for="status" data-i18n="common.status">Status</label>
                         <select id="status" name="status" class="form-control">
-                            <option value="">All</option>
-                            <option value="brouillon"<?php echo $filters['status'] === 'brouillon' ? ' selected' : ''; ?>>Draft</option>
-                            <option value="envoyee"<?php echo $filters['status'] === 'envoyee' ? ' selected' : ''; ?>>Sent</option>
-                            <option value="en_etude"<?php echo $filters['status'] === 'en_etude' ? ' selected' : ''; ?>>Under review</option>
-                            <option value="negociation"<?php echo $filters['status'] === 'negociation' ? ' selected' : ''; ?>>Negotiation</option>
-                            <option value="acceptee"<?php echo $filters['status'] === 'acceptee' ? ' selected' : ''; ?>>Accepted</option>
-                            <option value="refusee"<?php echo $filters['status'] === 'refusee' ? ' selected' : ''; ?>>Refused</option>
-                            <option value="retiree"<?php echo $filters['status'] === 'retiree' ? ' selected' : ''; ?>>Withdrawn</option>
+                            <option value="" data-i18n-opt="common.all">All</option>
+                            <option value="brouillon"<?php echo $filters['status'] === 'brouillon' ? ' selected' : ''; ?> data-i18n-opt="candidatures.status.draft">Draft</option>
+                            <option value="envoyee"<?php echo $filters['status'] === 'envoyee' ? ' selected' : ''; ?> data-i18n-opt="candidatures.status.sent">Sent</option>
+                            <option value="en_etude"<?php echo $filters['status'] === 'en_etude' ? ' selected' : ''; ?> data-i18n-opt="candidatures.status.underReview">Under review</option>
+                            <option value="negociation"<?php echo $filters['status'] === 'negociation' ? ' selected' : ''; ?> data-i18n-opt="candidatures.status.negotiation">Negotiation</option>
+                            <option value="acceptee"<?php echo $filters['status'] === 'acceptee' ? ' selected' : ''; ?> data-i18n-opt="candidatures.status.accepted">Accepted</option>
+                            <option value="refusee"<?php echo $filters['status'] === 'refusee' ? ' selected' : ''; ?> data-i18n-opt="candidatures.status.refused">Refused</option>
+                            <option value="retiree"<?php echo $filters['status'] === 'retiree' ? ' selected' : ''; ?> data-i18n-opt="candidatures.status.withdrawn">Withdrawn</option>
                         </select>
                     </div>
 
                     <div class="search-group">
-                        <label for="origin">Origin</label>
+                        <label for="origin" data-i18n="candidatures.filter.origin">Origin</label>
                         <select id="origin" name="origin" class="form-control">
-                            <option value="">All</option>
-                            <option value="par_offre"<?php echo $filters['origin'] === 'par_offre' ? ' selected' : ''; ?>>Offer invitation</option>
-                            <option value="par_campagne"<?php echo $filters['origin'] === 'par_campagne' ? ' selected' : ''; ?>>Campaign application</option>
+                            <option value="" data-i18n-opt="common.all">All</option>
+                            <option value="par_offre"<?php echo $filters['origin'] === 'par_offre' ? ' selected' : ''; ?> data-i18n-opt="candidatures.origin.offer">Offer invitation</option>
+                            <option value="par_campagne"<?php echo $filters['origin'] === 'par_campagne' ? ' selected' : ''; ?> data-i18n-opt="candidatures.origin.campaign">Campaign application</option>
                         </select>
                     </div>
 
                     <div class="search-group">
-                        <label for="typeReponse">Response type</label>
+                        <label for="typeReponse" data-i18n="candidatures.filter.responseType">Response type</label>
                         <select id="typeReponse" name="typeReponse" class="form-control">
-                            <option value="">All</option>
-                            <option value="application"<?php echo $filters['typeReponse'] === 'application' ? ' selected' : ''; ?>>Application</option>
-                            <option value="acceptation"<?php echo $filters['typeReponse'] === 'acceptation' ? ' selected' : ''; ?>>Acceptance</option>
-                            <option value="negociation"<?php echo $filters['typeReponse'] === 'negociation' ? ' selected' : ''; ?>>Negotiation</option>
-                            <option value="refus"<?php echo $filters['typeReponse'] === 'refus' ? ' selected' : ''; ?>>Refusal</option>
+                            <option value="" data-i18n-opt="common.all">All</option>
+                            <option value="application"<?php echo $filters['typeReponse'] === 'application' ? ' selected' : ''; ?> data-i18n-opt="candidatures.response.application">Application</option>
+                            <option value="acceptation"<?php echo $filters['typeReponse'] === 'acceptation' ? ' selected' : ''; ?> data-i18n-opt="candidatures.response.acceptance">Acceptance</option>
+                            <option value="negociation"<?php echo $filters['typeReponse'] === 'negociation' ? ' selected' : ''; ?> data-i18n-opt="candidatures.response.negotiation">Negotiation</option>
+                            <option value="refus"<?php echo $filters['typeReponse'] === 'refus' ? ' selected' : ''; ?> data-i18n-opt="candidatures.response.refusal">Refusal</option>
                         </select>
                     </div>
 
                     <div class="search-group">
-                        <label for="creatorId">Creator</label>
+                        <label for="creatorId" data-i18n="common.creator">Creator</label>
                         <select id="creatorId" name="creatorId" class="form-control">
-                            <option value="">All</option>
+                            <option value="" data-i18n-opt="common.all">All</option>
                             <?php foreach ($creatorOptions as $creator): ?>
                                 <option value="<?php echo (int) $creator['id']; ?>"<?php echo $filters['creatorId'] === (string) $creator['id'] ? ' selected' : ''; ?>>
                                     <?php echo htmlspecialchars($creator['nom'] . ' (#' . $creator['id'] . ')'); ?>
@@ -498,9 +529,9 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                     </div>
 
                     <div class="search-group">
-                        <label for="brandId">Brand</label>
+                        <label for="brandId" data-i18n="common.brand">Brand</label>
                         <select id="brandId" name="brandId" class="form-control">
-                            <option value="">All</option>
+                            <option value="" data-i18n-opt="common.all">All</option>
                             <?php foreach ($brandOptions as $brand): ?>
                                 <option value="<?php echo (int) $brand['id']; ?>"<?php echo $filters['brandId'] === (string) $brand['id'] ? ' selected' : ''; ?>>
                                     <?php echo htmlspecialchars($brand['nom'] . ' (#' . $brand['id'] . ')'); ?>
@@ -510,51 +541,51 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                     </div>
 
                     <div class="search-group">
-                        <label for="dateFrom">Submitted from</label>
+                        <label for="dateFrom" data-i18n="candidatures.filter.submittedFrom">Submitted from</label>
                         <input id="dateFrom" name="dateFrom" type="date" class="form-control" value="<?php echo htmlspecialchars($filters['dateFrom']); ?>">
                     </div>
 
                     <div class="search-group">
-                        <label for="dateTo">Submitted to</label>
+                        <label for="dateTo" data-i18n="candidatures.filter.submittedTo">Submitted to</label>
                         <input id="dateTo" name="dateTo" type="date" class="form-control" value="<?php echo htmlspecialchars($filters['dateTo']); ?>">
                     </div>
 
                     <div class="search-group">
-                        <label for="hasCv">CV file</label>
+                        <label for="hasCv" data-i18n="candidatures.filter.cv">CV file</label>
                         <select id="hasCv" name="hasCv" class="form-control">
-                            <option value="">All</option>
-                            <option value="1"<?php echo $filters['hasCv'] === '1' ? ' selected' : ''; ?>>Has CV</option>
-                            <option value="0"<?php echo $filters['hasCv'] === '0' ? ' selected' : ''; ?>>No CV</option>
+                            <option value="" data-i18n-opt="common.all">All</option>
+                            <option value="1"<?php echo $filters['hasCv'] === '1' ? ' selected' : ''; ?> data-i18n-opt="candidatures.filter.hasCv">Has CV</option>
+                            <option value="0"<?php echo $filters['hasCv'] === '0' ? ' selected' : ''; ?> data-i18n-opt="candidatures.filter.noCv">No CV</option>
                         </select>
                     </div>
 
                     <div class="search-group">
-                        <label for="hasPortfolio">Portfolio</label>
+                        <label for="hasPortfolio" data-i18n="candidatures.filter.portfolio">Portfolio</label>
                         <select id="hasPortfolio" name="hasPortfolio" class="form-control">
-                            <option value="">All</option>
-                            <option value="1"<?php echo $filters['hasPortfolio'] === '1' ? ' selected' : ''; ?>>Has portfolio</option>
-                            <option value="0"<?php echo $filters['hasPortfolio'] === '0' ? ' selected' : ''; ?>>No portfolio</option>
+                            <option value="" data-i18n-opt="common.all">All</option>
+                            <option value="1"<?php echo $filters['hasPortfolio'] === '1' ? ' selected' : ''; ?> data-i18n-opt="candidatures.filter.hasPortfolio">Has portfolio</option>
+                            <option value="0"<?php echo $filters['hasPortfolio'] === '0' ? ' selected' : ''; ?> data-i18n-opt="candidatures.filter.noPortfolio">No portfolio</option>
                         </select>
                     </div>
 
                     <div class="search-group">
-                        <label for="sort">Sort</label>
+                        <label for="sort" data-i18n="offers.filter.sort">Sort</label>
                         <select id="sort" name="sort" class="form-control">
-                            <option value=""<?php echo $filters['sort'] === '' ? ' selected' : ''; ?>>Workflow priority</option>
-                            <option value="newest"<?php echo $filters['sort'] === 'newest' ? ' selected' : ''; ?>>Newest</option>
-                            <option value="oldest"<?php echo $filters['sort'] === 'oldest' ? ' selected' : ''; ?>>Oldest</option>
-                            <option value="budget_high"<?php echo $filters['sort'] === 'budget_high' ? ' selected' : ''; ?>>Budget high to low</option>
-                            <option value="budget_low"<?php echo $filters['sort'] === 'budget_low' ? ' selected' : ''; ?>>Budget low to high</option>
-                            <option value="proposed_delay"<?php echo $filters['sort'] === 'proposed_delay' ? ' selected' : ''; ?>>Proposed delay</option>
-                            <option value="decision_date"<?php echo $filters['sort'] === 'decision_date' ? ' selected' : ''; ?>>Decision date</option>
-                            <option value="status"<?php echo $filters['sort'] === 'status' ? ' selected' : ''; ?>>Status</option>
+                            <option value=""<?php echo $filters['sort'] === '' ? ' selected' : ''; ?> data-i18n-opt="candidatures.sort.workflow">Workflow priority</option>
+                            <option value="newest"<?php echo $filters['sort'] === 'newest' ? ' selected' : ''; ?> data-i18n-opt="offers.sort.newest">Newest</option>
+                            <option value="oldest"<?php echo $filters['sort'] === 'oldest' ? ' selected' : ''; ?> data-i18n-opt="offers.sort.oldest">Oldest</option>
+                            <option value="budget_high"<?php echo $filters['sort'] === 'budget_high' ? ' selected' : ''; ?> data-i18n-opt="offers.sort.budgetHigh">Budget high to low</option>
+                            <option value="budget_low"<?php echo $filters['sort'] === 'budget_low' ? ' selected' : ''; ?> data-i18n-opt="offers.sort.budgetLow">Budget low to high</option>
+                            <option value="proposed_delay"<?php echo $filters['sort'] === 'proposed_delay' ? ' selected' : ''; ?> data-i18n-opt="candidatures.sort.proposedDelay">Proposed delay</option>
+                            <option value="decision_date"<?php echo $filters['sort'] === 'decision_date' ? ' selected' : ''; ?> data-i18n-opt="candidatures.sort.decisionDate">Decision date</option>
+                            <option value="status"<?php echo $filters['sort'] === 'status' ? ' selected' : ''; ?> data-i18n-opt="common.status">Status</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="search-actions">
-                    <button type="submit" class="btn btn-primary">Apply filters</button>
-                    <a class="btn btn-secondary clear-link" href="index.php">Reset</a>
+                    <button type="submit" class="btn btn-primary"><span data-i18n="common.applyFilters">Apply filters</span></button>
+                    <a class="btn btn-secondary clear-link" href="index.php"><span data-i18n="common.reset">Reset</span></a>
                 </div>
             </form>
         </section>
@@ -563,7 +594,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
             <div class="admin-layout">
                 <section class="admin-panel admin-table-panel card grid-margin">
                 <div class="admin-panel-header">
-                    <h2 class="card-title">Candidature list</h2>
+                    <h2 class="card-title" data-i18n="candidatures.table.title">Candidature list</h2>
                 </div>
                 <div class="admin-panel-body card-body">
                     <div class="admin-table-wrapper">
@@ -581,15 +612,15 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                             </colgroup>
                             <thead>
                                 <tr>
-                                    <th>Creator</th>
-                                    <th>Source</th>
-                                    <th>Origin</th>
-                                    <th>Creator action</th>
-                                    <th>Status</th>
-                                    <th>Submitted</th>
-                                    <th>Budget</th>
-                                    <th>Updated</th>
-                                    <th>Actions</th>
+                                    <th data-i18n="common.creator">Creator</th>
+                                    <th data-i18n="common.source">Source</th>
+                                    <th data-i18n="candidatures.table.origin">Origin</th>
+                                    <th data-i18n="candidatures.table.creatorAction">Creator action</th>
+                                    <th data-i18n="common.status">Status</th>
+                                    <th data-i18n="candidatures.table.submitted">Submitted</th>
+                                    <th data-i18n="common.budget">Budget</th>
+                                    <th data-i18n="candidatures.table.updated">Updated</th>
+                                    <th data-i18n="common.actions">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -598,8 +629,8 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                                         <td colspan="9">
                                             <div class="admin-empty-state">
                                                 <div class="admin-empty-icon">i</div>
-                                                <strong>No records found</strong>
-                                                <span>Try changing filters or search terms.</span>
+                                                <strong data-i18n="common.empty">No records found</strong>
+                                                <span data-i18n="common.emptyHint">Try changing filters or search terms.</span>
                                             </div>
                                         </td>
                                     </tr>
@@ -625,12 +656,12 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                                             <span><?php echo htmlspecialchars($creator['email']); ?></span>
                                         </td>
                                         <td class="candidature-table-source">
-                                            <span class="source-kind"><?php echo htmlspecialchars($originLabel); ?></span>
+                                            <span class="source-kind" data-i18n="<?php echo htmlspecialchars(originI18nKey($source['origin'])); ?>"><?php echo htmlspecialchars($originLabel); ?></span>
                                             <strong title="<?php echo htmlspecialchars($source['title']); ?>"><?php echo htmlspecialchars(excerptText($source['title'], 40)); ?></strong>
                                             <span><?php echo htmlspecialchars(($source['origin'] === 'par_campagne' ? 'Campaign' : 'Offer') . ' #' . (int) $source['id']); ?></span>
                                             <span><?php echo htmlspecialchars($brand['nom'] ?: 'Unknown brand'); ?></span>
                                         </td>
-                                        <td><span class="candidature-origin-pill"><?php echo htmlspecialchars($originLabel); ?></span></td>
+                                        <td><span class="candidature-origin-pill" data-i18n="<?php echo htmlspecialchars(originI18nKey($source['origin'])); ?>"><?php echo htmlspecialchars($originLabel); ?></span></td>
                                         <td class="candidature-table-response">
                                             <span class="candidature-detail-pill"><?php echo htmlspecialchars($condidature->getResponseTypeLabel()); ?></span>
                                             <?php if (trim($primaryPreview) !== ''): ?>
@@ -645,7 +676,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                                                 <small><?php echo (int) $context['negotiation']['count']; ?> negotiation message<?php echo (int) $context['negotiation']['count'] === 1 ? '' : 's'; ?></small>
                                             <?php endif; ?>
                                         </td>
-                                        <td><span class="badge badge-status <?php echo htmlspecialchars($condidature->getStatutCandidature()); ?>"><?php echo htmlspecialchars($condidature->getDisplayStatusLabel()); ?></span></td>
+                                        <td><span class="badge badge-status <?php echo htmlspecialchars($condidature->getStatutCandidature()); ?>" data-i18n="<?php echo htmlspecialchars(candidatureStatusI18nKey($condidature->getStatutCandidature())); ?>"><?php echo htmlspecialchars($condidature->getDisplayStatusLabel()); ?></span></td>
                                         <td class="date-cell"><?php echo htmlspecialchars(formatShortDate($condidature->getDateCandidature())); ?></td>
                                         <td class="money-cell"><?php echo htmlspecialchars(formatMoney($condidature->getBudgetPropose())); ?></td>
                                         <td class="date-cell"><?php echo htmlspecialchars(formatDateLabel($condidature->getDateDerniereModification())); ?></td>
@@ -667,8 +698,8 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                                                     data-source-start="<?php echo htmlspecialchars(formatShortDate($source['datePublication'] ?? null)); ?>"
                                                     data-source-end="<?php echo htmlspecialchars(formatShortDate($source['dateLimite'] ?? null)); ?>"
                                                     data-source-status="<?php echo htmlspecialchars(trim((string) ($source['status'] ?? '')) !== '' ? ucwords(str_replace('_', ' ', (string) $source['status'])) : 'Not set'); ?>"
-                                                >Source</button>
-                                                <a class="btn btn-info btn-sm inspect-link" href="details.php?idCandidature=<?php echo (int) $condidature->getIdCandidature(); ?>">Review</a>
+                                                ><span data-i18n="common.source">Source</span></button>
+                                                <a class="btn btn-info btn-sm inspect-link" href="details.php?idCandidature=<?php echo (int) $condidature->getIdCandidature(); ?>"><span data-i18n="common.review">Review</span></a>
                                             </div>
                                         </td>
                                     </tr>
@@ -723,7 +754,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                     <h2 id="sourcePreviewTitle" data-source-preview-title>Source details</h2>
                     <p data-source-preview-brand>Brand</p>
                 </div>
-                <button type="button" class="source-preview-close" data-source-preview-close aria-label="Close source preview">&times;</button>
+                <button type="button" class="source-preview-close" data-source-preview-close aria-label="Close source preview" data-i18n-aria-label="candidatures.preview.close">&times;</button>
             </div>
 
             <div class="source-preview-meta">
@@ -740,13 +771,225 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                     <p data-source-preview-objective>No objective was joined for this source.</p>
                 </article>
                 <article>
-                    <strong>Description</strong>
-                    <p data-source-preview-description>No description was joined for this source.</p>
+                    <strong data-i18n="common.description">Description</strong>
+                    <p data-source-preview-description data-i18n="candidatures.preview.noDescription">No description was joined for this source.</p>
                 </article>
             </div>
         </section>
     </div>
 
+    <script>
+        window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
+            en: {
+                'common.search': 'Search',
+                'common.applyFilters': 'Apply filters',
+                'common.reset': 'Reset',
+                'common.hideStatistics': 'Hide statistics',
+                'common.showStatistics': 'Show statistics',
+                'common.actions': 'Actions',
+                'common.status': 'Status',
+                'common.page': 'Page',
+                'common.of': 'of',
+                'common.empty': 'No records found',
+                'common.delete': 'Delete',
+                'common.inspect': 'Inspect',
+                'common.review': 'Review',
+                'common.source': 'Source',
+                'common.responses': 'Responses',
+                'common.close': 'Close',
+                'common.cancel': 'Cancel',
+                'common.all': 'All',
+                'common.brand': 'Brand',
+                'common.creator': 'Creator',
+                'common.deadline': 'Deadline',
+                'common.budget': 'Budget',
+                'common.description': 'Description',
+                'common.start': 'Start',
+                'common.end': 'End',
+                'common.published': 'Published',
+                'common.offer': 'Offer',
+                'common.campaign': 'Campaign',
+                'common.notAvailable': 'Not available',
+                'common.notShared': 'Not shared',
+                'collaboration.tab.offers': 'Offers',
+                'collaboration.tab.offersHint': 'Targeted invitations',
+                'collaboration.tab.candidatures': 'Candidatures',
+                'collaboration.tab.candidaturesHint': 'Creator responses',
+                'collaboration.tab.cre8shield': 'Cre8Shield',
+                'collaboration.tab.cre8shieldHint': 'Risk monitoring',
+                'collaboration.statistics.title': 'Workspace statistics',
+                'collaboration.statistics.subtitle': 'Live indicators and charts for collaboration activity.',
+                'collaboration.kpi.realCandidatures': 'Real candidatures',
+                'collaboration.kpi.placeholdersExcluded': 'Placeholders excluded',
+                'collaboration.kpi.pendingReviews': 'Pending reviews',
+                'collaboration.kpi.sentOrReview': 'Sent or under review',
+                'collaboration.kpi.openNegotiations': 'Open negotiations',
+                'collaboration.kpi.activeNegotiations': 'Active negotiation candidatures',
+                'collaboration.kpi.activityThisWeek': 'Activity this week',
+                'offers.kpi.expiredOffers': 'Expired offers',
+                'offers.kpi.expiredOffersSub': 'Past deadline and not archived',
+                'offers.filter.sort': 'Sort',
+                'offers.sort.newest': 'Newest',
+                'offers.sort.oldest': 'Oldest',
+                'offers.sort.budgetHigh': 'Budget high to low',
+                'offers.sort.budgetLow': 'Budget low to high',
+                'candidatures.title': 'Candidature administration',
+                'candidatures.subtitle': 'Inspect creator responses, follow review stages, and keep every targeted candidature visible from the same dashboard.',
+                'candidatures.kpi.technicalExcluded': 'Technical campaign placeholders excluded',
+                'candidatures.kpi.acceptanceRate': 'Acceptance rate',
+                'candidatures.kpi.acceptanceRateSub': 'Accepted over accepted + refused',
+                'candidatures.filter.title': 'Admin filters',
+                'candidatures.filter.subtitle': 'Filter by source, creator, brand, date, or workflow state.',
+                'candidatures.filter.searchPlaceholder': 'Source, creator, brand, message...',
+                'candidatures.filter.origin': 'Origin',
+                'candidatures.filter.responseType': 'Response type',
+                'candidatures.filter.submittedFrom': 'Submitted from',
+                'candidatures.filter.submittedTo': 'Submitted to',
+                'candidatures.filter.cv': 'CV file',
+                'candidatures.filter.portfolio': 'Portfolio',
+                'candidatures.filter.hasCv': 'Has CV',
+                'candidatures.filter.noCv': 'No CV',
+                'candidatures.filter.hasPortfolio': 'Has portfolio',
+                'candidatures.filter.noPortfolio': 'No portfolio',
+                'candidatures.table.title': 'Candidature list',
+                'candidatures.table.origin': 'Origin',
+                'candidatures.table.creatorAction': 'Creator action',
+                'candidatures.table.submitted': 'Submitted',
+                'candidatures.table.updated': 'Updated',
+                'candidatures.status.draft': 'Draft response',
+                'candidatures.status.sent': 'Accepted invitation',
+                'candidatures.status.underReview': 'Response under review',
+                'candidatures.status.negotiation': 'Negotiation requested',
+                'candidatures.status.accepted': 'Accepted terms',
+                'candidatures.status.refused': 'Refused by brand',
+                'candidatures.status.withdrawn': 'Declined invitation',
+                'candidatures.origin.offer': 'Offer invitation',
+                'candidatures.origin.campaign': 'Campaign application',
+                'candidatures.response.application': 'Application',
+                'candidatures.response.acceptance': 'Acceptance',
+                'candidatures.response.negotiation': 'Negotiation',
+                'candidatures.response.refusal': 'Refusal',
+                'candidatures.sort.workflow': 'Workflow priority',
+                'candidatures.sort.proposedDelay': 'Proposed delay',
+                'candidatures.sort.decisionDate': 'Decision date',
+                'candidatures.preview.close': 'Close source preview',
+                'candidatures.preview.campaignSource': 'Campaign source',
+                'candidatures.preview.offerSource': 'Offer source',
+                'candidatures.preview.unknownBrand': 'Unknown brand',
+                'candidatures.preview.notSet': 'Not set',
+                'candidatures.preview.campaignBrief': 'Campaign brief',
+                'candidatures.preview.offerObjective': 'Offer objective',
+                'candidatures.preview.noCampaignBrief': 'No campaign brief was joined for this source.',
+                'candidatures.preview.noOfferObjective': 'No offer objective was joined for this source.',
+                'candidatures.preview.noDescription': 'No description was joined for this source.',
+                'common.emptyHint': 'Try changing filters or search terms.'
+            },
+            fr: {
+                'common.search': 'Rechercher',
+                'common.applyFilters': 'Appliquer les filtres',
+                'common.reset': 'Reinitialiser',
+                'common.hideStatistics': 'Masquer les statistiques',
+                'common.showStatistics': 'Afficher les statistiques',
+                'common.actions': 'Actions',
+                'common.status': 'Statut',
+                'common.page': 'Page',
+                'common.of': 'sur',
+                'common.empty': 'Aucun enregistrement trouve',
+                'common.delete': 'Supprimer',
+                'common.inspect': 'Inspecter',
+                'common.review': 'Examiner',
+                'common.source': 'Source',
+                'common.responses': 'Reponses',
+                'common.close': 'Fermer',
+                'common.cancel': 'Annuler',
+                'common.all': 'Tous',
+                'common.brand': 'Marque',
+                'common.creator': 'Createur',
+                'common.deadline': 'Date limite',
+                'common.budget': 'Budget',
+                'common.description': 'Description',
+                'common.start': 'Debut',
+                'common.end': 'Fin',
+                'common.published': 'Publie',
+                'common.offer': 'Offre',
+                'common.campaign': 'Campagne',
+                'common.notAvailable': 'Non disponible',
+                'common.notShared': 'Non partage',
+                'collaboration.tab.offers': 'Offres',
+                'collaboration.tab.offersHint': 'Invitations ciblees',
+                'collaboration.tab.candidatures': 'Candidatures',
+                'collaboration.tab.candidaturesHint': 'Reponses des createurs',
+                'collaboration.tab.cre8shield': 'Cre8Shield',
+                'collaboration.tab.cre8shieldHint': 'Surveillance des risques',
+                'collaboration.statistics.title': 'Statistiques de l espace',
+                'collaboration.statistics.subtitle': 'Indicateurs et graphiques en direct pour les collaborations.',
+                'collaboration.kpi.realCandidatures': 'Candidatures reelles',
+                'collaboration.kpi.placeholdersExcluded': 'Elements techniques exclus',
+                'collaboration.kpi.pendingReviews': 'Revues en attente',
+                'collaboration.kpi.sentOrReview': 'Envoyees ou en cours de revue',
+                'collaboration.kpi.openNegotiations': 'Negociations ouvertes',
+                'collaboration.kpi.activeNegotiations': 'Candidatures en negociation active',
+                'collaboration.kpi.activityThisWeek': 'Activite cette semaine',
+                'offers.kpi.expiredOffers': 'Offres expirees',
+                'offers.kpi.expiredOffersSub': 'Date limite depassee et non archivee',
+                'offers.filter.sort': 'Tri',
+                'offers.sort.newest': 'Plus recentes',
+                'offers.sort.oldest': 'Plus anciennes',
+                'offers.sort.budgetHigh': 'Budget decroissant',
+                'offers.sort.budgetLow': 'Budget croissant',
+                'candidatures.title': 'Administration des candidatures',
+                'candidatures.subtitle': 'Inspectez les reponses des createurs, suivez les etapes de revue et gardez chaque candidature visible.',
+                'candidatures.kpi.technicalExcluded': 'Elements techniques de campagne exclus',
+                'candidatures.kpi.acceptanceRate': 'Taux d acceptation',
+                'candidatures.kpi.acceptanceRateSub': 'Acceptees sur acceptees + refusees',
+                'candidatures.filter.title': 'Filtres admin',
+                'candidatures.filter.subtitle': 'Filtrer par source, createur, marque, date ou etat du workflow.',
+                'candidatures.filter.searchPlaceholder': 'Source, createur, marque, message...',
+                'candidatures.filter.origin': 'Origine',
+                'candidatures.filter.responseType': 'Type de reponse',
+                'candidatures.filter.submittedFrom': 'Soumise depuis',
+                'candidatures.filter.submittedTo': 'Soumise jusqu a',
+                'candidatures.filter.cv': 'Fichier CV',
+                'candidatures.filter.portfolio': 'Portfolio',
+                'candidatures.filter.hasCv': 'Avec CV',
+                'candidatures.filter.noCv': 'Sans CV',
+                'candidatures.filter.hasPortfolio': 'Avec portfolio',
+                'candidatures.filter.noPortfolio': 'Sans portfolio',
+                'candidatures.table.title': 'Liste des candidatures',
+                'candidatures.table.origin': 'Origine',
+                'candidatures.table.creatorAction': 'Action createur',
+                'candidatures.table.submitted': 'Soumise',
+                'candidatures.table.updated': 'Mise a jour',
+                'candidatures.status.draft': 'Reponse brouillon',
+                'candidatures.status.sent': 'Invitation acceptee',
+                'candidatures.status.underReview': 'Reponse en cours de revue',
+                'candidatures.status.negotiation': 'Negociation demandee',
+                'candidatures.status.accepted': 'Conditions acceptees',
+                'candidatures.status.refused': 'Refusee par la marque',
+                'candidatures.status.withdrawn': 'Invitation declinee',
+                'candidatures.origin.offer': 'Invitation d offre',
+                'candidatures.origin.campaign': 'Candidature campagne',
+                'candidatures.response.application': 'Candidature',
+                'candidatures.response.acceptance': 'Acceptation',
+                'candidatures.response.negotiation': 'Negociation',
+                'candidatures.response.refusal': 'Refus',
+                'candidatures.sort.workflow': 'Priorite workflow',
+                'candidatures.sort.proposedDelay': 'Delai propose',
+                'candidatures.sort.decisionDate': 'Date de decision',
+                'candidatures.preview.close': 'Fermer l apercu source',
+                'candidatures.preview.campaignSource': 'Source campagne',
+                'candidatures.preview.offerSource': 'Source offre',
+                'candidatures.preview.unknownBrand': 'Marque inconnue',
+                'candidatures.preview.notSet': 'Non defini',
+                'candidatures.preview.campaignBrief': 'Brief campagne',
+                'candidatures.preview.offerObjective': 'Objectif de l offre',
+                'candidatures.preview.noCampaignBrief': 'Aucun brief campagne n est joint a cette source.',
+                'candidatures.preview.noOfferObjective': 'Aucun objectif d offre n est joint a cette source.',
+                'candidatures.preview.noDescription': 'Aucune description n est jointe a cette source.',
+                'common.emptyHint': 'Essayez de modifier les filtres ou la recherche.'
+            }
+        });
+    </script>
     <script src="../layout/back-layout.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/back-layout.js')); ?>"></script>
     <script>
         (() => {
@@ -757,7 +1000,56 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
 
             const dialog = overlay.querySelector('.source-preview-dialog');
             const closeButton = overlay.querySelector('[data-source-preview-close]');
-            const setText = (selector, value, fallback = '') => {
+            const t = (key, fallback) => {
+                    const lang = window.cre8BackGetLang ? window.cre8BackGetLang() : 'en';
+                    const dict = {
+                        en: {
+                            'common.source': 'Source',
+                            'common.status': 'Status',
+                            'common.budget': 'Budget',
+                            'common.start': 'Start',
+                            'common.end': 'End',
+                            'common.published': 'Published',
+                            'common.offer': 'Offer',
+                            'common.campaign': 'Campaign',
+                            'common.notAvailable': 'Not available',
+                            'common.notShared': 'Not shared',
+                            'candidatures.preview.campaignSource': 'Campaign source',
+                            'candidatures.preview.offerSource': 'Offer source',
+                            'candidatures.preview.unknownBrand': 'Unknown brand',
+                            'candidatures.preview.notSet': 'Not set',
+                            'candidatures.preview.campaignBrief': 'Campaign brief',
+                            'candidatures.preview.offerObjective': 'Offer objective',
+                            'candidatures.preview.noCampaignBrief': 'No campaign brief was joined for this source.',
+                            'candidatures.preview.noOfferObjective': 'No offer objective was joined for this source.',
+                            'candidatures.preview.noDescription': 'No description was joined for this source.'
+                        },
+                        fr: {
+                            'common.source': 'Source',
+                            'common.status': 'Statut',
+                            'common.budget': 'Budget',
+                            'common.start': 'Debut',
+                            'common.end': 'Fin',
+                            'common.published': 'Publie',
+                            'common.offer': 'Offre',
+                            'common.campaign': 'Campagne',
+                            'common.notAvailable': 'Non disponible',
+                            'common.notShared': 'Non partage',
+                            'candidatures.preview.campaignSource': 'Source campagne',
+                            'candidatures.preview.offerSource': 'Source offre',
+                            'candidatures.preview.unknownBrand': 'Marque inconnue',
+                            'candidatures.preview.notSet': 'Non defini',
+                            'candidatures.preview.campaignBrief': 'Brief campagne',
+                            'candidatures.preview.offerObjective': 'Objectif de l offre',
+                            'candidatures.preview.noCampaignBrief': 'Aucun brief campagne n est joint a cette source.',
+                            'candidatures.preview.noOfferObjective': 'Aucun objectif d offre n est joint a cette source.',
+                            'candidatures.preview.noDescription': 'Aucune description n est jointe a cette source.'
+                        }
+                    };
+                    return (dict[lang] && dict[lang][key]) || (dict.en && dict.en[key]) || fallback || key;
+                };
+
+                const setText = (selector, value, fallback = '') => {
                 const node = overlay.querySelector(selector);
                 if (node) {
                     node.textContent = value || fallback;
@@ -768,17 +1060,17 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                 const data = button.dataset;
                 const isCampaign = data.sourceOrigin === 'par_campagne';
 
-                setText('[data-source-preview-origin]', data.sourceOriginLabel, 'Source');
-                setText('[data-source-preview-title]', data.sourceTitle, isCampaign ? 'Campaign source' : 'Offer source');
-                setText('[data-source-preview-brand]', `${data.sourceBrand || 'Unknown brand'}${data.sourceBrandEmail ? ` - ${data.sourceBrandEmail}` : ''}`);
-                setText('[data-source-preview-id]', `${isCampaign ? 'Campaign' : 'Offer'} #${data.sourceId || ''}`);
-                setText('[data-source-preview-status]', `Status: ${data.sourceStatus || 'Not set'}`);
-                setText('[data-source-preview-budget]', `Budget: ${data.sourceBudget || 'Not shared'}`);
-                setText('[data-source-preview-start]', `${isCampaign ? 'Start' : 'Published'}: ${data.sourceStart || 'Not available'}`);
-                setText('[data-source-preview-end]', `${isCampaign ? 'End' : 'Deadline'}: ${data.sourceEnd || 'Not available'}`);
-                setText('[data-source-preview-objective-label]', isCampaign ? 'Campaign brief' : 'Offer objective');
-                setText('[data-source-preview-objective]', data.sourceObjective, isCampaign ? 'No campaign brief was joined for this source.' : 'No offer objective was joined for this source.');
-                setText('[data-source-preview-description]', data.sourceDescription, 'No description was joined for this source.');
+                setText('[data-source-preview-origin]', data.sourceOriginLabel, t('common.source', 'Source'));
+                setText('[data-source-preview-title]', data.sourceTitle, isCampaign ? t('candidatures.preview.campaignSource', 'Campaign source') : t('candidatures.preview.offerSource', 'Offer source'));
+                setText('[data-source-preview-brand]', `${data.sourceBrand || t('candidatures.preview.unknownBrand', 'Unknown brand')}${data.sourceBrandEmail ? ` - ${data.sourceBrandEmail}` : ''}`);
+                setText('[data-source-preview-id]', `${isCampaign ? t('common.campaign', 'Campaign') : t('common.offer', 'Offer')} #${data.sourceId || ''}`);
+                setText('[data-source-preview-status]', `${t('common.status', 'Status')}: ${data.sourceStatus || t('candidatures.preview.notSet', 'Not set')}`);
+                setText('[data-source-preview-budget]', `${t('common.budget', 'Budget')}: ${data.sourceBudget || t('common.notShared', 'Not shared')}`);
+                setText('[data-source-preview-start]', `${isCampaign ? t('common.start', 'Start') : t('common.published', 'Published')}: ${data.sourceStart || t('common.notAvailable', 'Not available')}`);
+                setText('[data-source-preview-end]', `${isCampaign ? t('common.end', 'End') : t('common.deadline', 'Deadline')}: ${data.sourceEnd || t('common.notAvailable', 'Not available')}`);
+                setText('[data-source-preview-objective-label]', isCampaign ? t('candidatures.preview.campaignBrief', 'Campaign brief') : t('candidatures.preview.offerObjective', 'Offer objective'));
+                setText('[data-source-preview-objective]', data.sourceObjective, isCampaign ? t('candidatures.preview.noCampaignBrief', 'No campaign brief was joined for this source.') : t('candidatures.preview.noOfferObjective', 'No offer objective was joined for this source.'));
+                setText('[data-source-preview-description]', data.sourceDescription, t('candidatures.preview.noDescription', 'No description was joined for this source.'));
 
                 overlay.hidden = false;
                 document.body.classList.add('source-preview-open');
@@ -856,6 +1148,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                         window.history.pushState({ adminResultsUrl: url }, '', url);
                     }
                     window.dispatchEvent(new Event('resize'));
+                    if (window.cre8BackApplyTranslations) { window.cre8BackApplyTranslations(); }
                 } catch (error) {
                     window.location.href = url;
                 } finally {
@@ -896,7 +1189,9 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
             const key = 'cre8_bo_stats_visible';
             const setVisible = (visible) => {
                 region.hidden = !visible;
+                toggle.setAttribute('data-i18n', visible ? 'common.hideStatistics' : 'common.showStatistics');
                 toggle.textContent = visible ? 'Hide statistics' : 'Show statistics';
+                if (window.cre8BackApplyTranslations) { window.cre8BackApplyTranslations(); }
                 toggle.setAttribute('aria-expanded', visible ? 'true' : 'false');
                 if (visible) {
                     window.dispatchEvent(new Event('resize'));
