@@ -14,9 +14,9 @@ if ($idUtilisateur === null) {
     exit();
 }
 
-if (isset($_POST['description']) && isset($_POST['priorite'])) {
+if (isset($_POST['description']) && ($isSuspendedAppeal || isset($_POST['priorite']))) {
     $description = trim((string) $_POST['description']);
-    $priorite = $_POST['priorite'];
+    $priorite = $_POST['priorite'] ?? 'normale';
 
     if ($isSuspendedAppeal) {
         if (!str_starts_with($description, '[Suspension Appeal]')) {

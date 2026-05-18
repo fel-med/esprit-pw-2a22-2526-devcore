@@ -307,7 +307,12 @@ public function getReclamationWithUserById($id) {
                 u.id AS complainant_id,
                 u.role AS complainant_role,
                 u.nom AS complainant_nom,
-                u.email AS complainant_email
+                u.email AS complainant_email,
+                u.statut AS complainant_statut,
+                u.suspended_by,
+                u.suspended_by_role,
+                u.suspended_at,
+                u.suspension_reason
             FROM reclamation r
             JOIN utilisateur u ON r.idUtilisateur = u.id
             WHERE r.id = :id
@@ -332,6 +337,11 @@ public function afficherReclamationsAdmin($search = '', $priorite = '', $page = 
                 u.id AS complainant_id,
                 u.role AS complainant_role,
                 u.email AS complainant_email,
+                u.statut AS complainant_statut,
+                u.suspended_by,
+                u.suspended_by_role,
+                u.suspended_at,
+                u.suspension_reason,
                 rep.contenu AS reponse,
                 rep.date_reponse
             FROM reclamation r

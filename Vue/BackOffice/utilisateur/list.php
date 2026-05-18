@@ -23,6 +23,7 @@ $totalPages = is_array($usersResult) && isset($usersResult['totalPages']) ? max(
 $currentPage = is_array($usersResult) && isset($usersResult['page']) ? max(1, intval($usersResult['page'])) : 1;
 
 $stats = $userC->getStatistiquesUtilisateurs();
+$actorRole = cc_normalize_role(cc_current_user_role());
 ?>
 
 <!DOCTYPE html>
@@ -130,6 +131,10 @@ $stats = $userC->getStatistiquesUtilisateurs();
         .btn-edit:hover {
             background: #5568d3;
             color: white;
+        }
+
+        .admin-no-edit .btn-edit {
+            display: none !important;
         }
 
         .btn-delete {
@@ -282,7 +287,7 @@ $stats = $userC->getStatistiquesUtilisateurs();
 <link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
 </head>
-<body>
+<body class="<?= $actorRole === 'admin' ? 'admin-no-edit' : '' ?>">
 
     <!-- Navigation -->
     <div class="navbar-custom">

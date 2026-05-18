@@ -12,13 +12,13 @@ if ($currentUserId === null) {
     die("Utilisateur non connecte");
 }
 
-if (isset($_POST['id'], $_POST['description'], $_POST['priorite'])) {
+if (isset($_POST['id'], $_POST['description']) && ($isSuspendedAppeal || isset($_POST['priorite']))) {
     $reclamationC = new ReclamationC();
     $rec = $reclamationC->recupererReclamation($_POST['id']);
 
     if ($rec && (int)$rec['idUtilisateur'] === (int)$currentUserId) {
         $description = trim((string) $_POST['description']);
-        $priorite = $_POST['priorite'];
+        $priorite = $_POST['priorite'] ?? 'normale';
 
         if ($isSuspendedAppeal) {
             if (!str_starts_with($description, '[Suspension Appeal]')) {

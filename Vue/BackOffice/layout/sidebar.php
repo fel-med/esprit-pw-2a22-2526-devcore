@@ -65,6 +65,16 @@ $backItems = [
     ['key' => 'forum',          'label' => 'Forum',          'url' => $backBoControleurWeb . '/forumC.php?action=admin',     'icon' => 'mdi-forum-outline',   'iconClass' => 'text-primary'],
 ];
 
+if (cc_is_backoffice_role($backRole)) {
+    array_splice($backItems, 3, 0, [[
+        'key' => 'admin_requests',
+        'label' => 'Admin Requests',
+        'url' => $backBoRootWeb . '/utilisateur/admin_requests.php',
+        'icon' => 'mdi-message-alert-outline',
+        'iconClass' => 'text-info',
+    ]]);
+}
+
 if (isSuperAdminRole(cc_current_user_role())) {
     array_splice($backItems, 2, 0, [[
         'key' => 'admin_management',
@@ -72,6 +82,16 @@ if (isSuperAdminRole(cc_current_user_role())) {
         'url' => $backBoRootWeb . '/utilisateur/admin_management.php',
         'icon' => 'mdi-shield-account',
         'iconClass' => 'text-success',
+    ]]);
+}
+
+if (isHyperAdmin($backRole)) {
+    array_splice($backItems, 3, 0, [[
+        'key' => 'server_center',
+        'label' => 'Server Center',
+        'url' => $backBoRootWeb . '/utilisateur/server_center.php',
+        'icon' => 'mdi-server-security',
+        'iconClass' => 'text-info',
     ]]);
 }
 ?>

@@ -3,8 +3,10 @@ session_start();
 require_once __DIR__ . '/../layout/early-theme.php';
 require_once '../../../Controleur/session_helper.php';
 require_once '../../../Controleur/reclamationC.php';
+require_once '../../../Controleur/utilisateurC.php';
 
 cc_require_admin('../../FrontOffice/utilisateur/login.php');
+$viewerId = cc_current_user_id();
 $viewerRole = cc_current_user_role();
 $reclamationC = new ReclamationC();
 
@@ -486,6 +488,24 @@ foreach ($liste as $rec) {
 
                       <tbody>
                         <?php foreach ($liste as $rec): ?>
+                          <?php
+                            $complainantRole = cc_normalize_role($rec['complainant_role'] ?? '');
+                            $complainantStatus = cc_normalize_status($rec['complainant_statut'] ?? '');
+                            $isSuspensionAppeal = stripos((string)($rec['description'] ?? ''), '[Suspension Appeal]') !== false
+                                || $complainantStatus === 'suspendu';
+                            $complainantUserRow = [
+                                'id' => (int)($rec['complainant_id'] ?? 0),
+                                'role' => $complainantRole,
+                                'statut' => $complainantStatus,
+                                'suspended_by' => $rec['suspended_by'] ?? null,
+                                'suspended_by_role' => cc_normalize_role($rec['suspended_by_role'] ?? ''),
+                                'suspended_at' => $rec['suspended_at'] ?? null,
+                                'suspension_reason' => $rec['suspension_reason'] ?? null,
+                            ];
+                            $canQuickReactivate = $complainantStatus === 'suspendu'
+                                && cc_can_view_reclamation_from_role($viewerRole, $complainantRole)
+                                && cc_can_reactivate_suspension($viewerId, $viewerRole, $complainantUserRow);
+                          ?>
                           <tr>
                             <td><?php echo $rec['id']; ?></td>
                             <td>
@@ -494,7 +514,26 @@ foreach ($liste as $rec) {
                                 <span class="badge bg-secondary ms-1"><?php echo htmlspecialchars($rec['complainant_role']); ?></span>
                               <?php endif; ?>
                             </td>
-                            <td><?php echo $rec['description']; ?></td>
+                            <td>
+                              <?php if ($isSuspensionAppeal): ?>
+                                <span class="badge bg-danger mb-1">Suspension Appeal</span><br>
+                              <?php endif; ?>
+                              <?php echo nl2br(htmlspecialchars((string)($rec['description'] ?? ''))); ?>
+                              <?php if ($isSuspensionAppeal): ?>
+                                <div class="small text-muted mt-2">
+                                  Status: <?= htmlspecialchars($complainantStatus !== '' ? $complainantStatus : 'unknown') ?>
+                                  <?php if (!empty($rec['suspended_by_role'])): ?>
+                                    - Suspended by: <?= htmlspecialchars(cc_normalize_role($rec['suspended_by_role'])) ?>
+                                  <?php endif; ?>
+                                  <?php if (!empty($rec['suspended_at'])): ?>
+                                    - At: <?= htmlspecialchars((string)$rec['suspended_at']) ?>
+                                  <?php endif; ?>
+                                  <?php if (!empty($rec['suspension_reason'])): ?>
+                                    <br>Reason: <?= htmlspecialchars((string)$rec['suspension_reason']) ?>
+                                  <?php endif; ?>
+                                </div>
+                              <?php endif; ?>
+                            </td>
                             <td><?php echo $rec['date_creation']; ?></td>
                             <td><?php echo htmlspecialchars(cre8_bo_priority_label($rec['priorite'] ?? '')); ?></td>
 
@@ -540,6 +579,16 @@ foreach ($liste as $rec) {
                                   <option value="traitee" <?php if ($rec['statut'] == 'traitee')
                                     echo 'selected'; ?>>Processed</option>
                                 </select>
+
+                                <?php if ($canQuickReactivate): ?>
+                                  <form method="POST" action="reclamation_reactivate_user.php" class="m-0"
+                                        onsubmit="return confirm('Reactivate this suspended account?');">
+                                    <input type="hidden" name="idReclamation" value="<?php echo (int)$rec['id']; ?>">
+                                    <button type="submit" class="btn table-action-btn text-white" style="background-color: #28a745;">
+                                      Reactivate account
+                                    </button>
+                                  </form>
+                                <?php endif; ?>
                               </div>
                             </td>
                           </tr>

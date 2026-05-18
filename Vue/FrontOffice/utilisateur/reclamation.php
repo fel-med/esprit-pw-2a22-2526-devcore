@@ -243,6 +243,39 @@ $frontActive = 'reclamation';
         .front-reclamation-page * {
             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
+
+        .appeal-topbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: .8rem clamp(1rem, 4vw, 2rem);
+            background: color-mix(in srgb, var(--reclam-card) 92%, #ece9ff);
+            border-bottom: 1px solid var(--reclam-border);
+            box-shadow: 0 12px 28px rgba(91, 79, 255, .08);
+        }
+
+        .appeal-topbar-title {
+            font-family: 'Fraunces', serif;
+            font-weight: 800;
+            color: var(--reclam-text);
+        }
+
+        .appeal-topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .appeal-topbar .btn {
+            border-radius: 999px;
+            font-weight: 800;
+        }
     </style>
     <link href="reclamation-front.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/reclamation-front.css')); ?>" rel="stylesheet">
 <link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
@@ -252,6 +285,17 @@ $frontActive = 'reclamation';
 </head>
 
 <body class="d-flex flex-column h-100 bg-light">
+    <?php if ($isSuspendedAppeal): ?>
+        <div class="appeal-topbar">
+            <div class="appeal-topbar-title">Cre8Connect - <span data-i18n="account.suspensionAppealTitle">Suspension appeal</span></div>
+            <div class="appeal-topbar-actions">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-appeal-lang="en" data-i18n="account.langEn">EN</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-appeal-lang="fr" data-i18n="account.langFr">FR</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-appeal-theme-toggle data-i18n="account.themeToggle">Light/Dark</button>
+                <a class="btn btn-sm btn-primary" href="appeal_logout.php" data-i18n="account.logout">Logout</a>
+            </div>
+        </div>
+    <?php endif; ?>
     <main class="flex-shrink-0">
         <?php if (!$isSuspendedAppeal) { require_once __DIR__ . '/../layout/header.php'; } ?>
         <div class="front-reclamation-page">
@@ -285,15 +329,19 @@ $frontActive = 'reclamation';
                                         <small class="text-danger d-none" id="descriptionError"></small>
                                     </div>
 
-                                    <!-- Priority -->
-                                    <div class="mb-4">
-                                        <label class="form-label fw-bold" data-i18n="account.priority">Priority</label>
-                                        <select name="priorite" id="prioriteInput" class="form-select">
-                                            <option value="faible" data-i18n-opt="account.low">Low</option>
-                                            <option value="normale" selected data-i18n-opt="account.normal">Normal</option>
-                                            <option value="haute" data-i18n-opt="account.high">High</option>
-                                        </select>
-                                    </div>
+                                    <?php if ($isSuspendedAppeal): ?>
+                                        <input type="hidden" name="priorite" value="haute">
+                                    <?php else: ?>
+                                        <!-- Priority -->
+                                        <div class="mb-4">
+                                            <label class="form-label fw-bold" data-i18n="account.priority">Priority</label>
+                                            <select name="priorite" id="prioriteInput" class="form-select">
+                                                <option value="faible" data-i18n-opt="account.low">Low</option>
+                                                <option value="normale" selected data-i18n-opt="account.normal">Normal</option>
+                                                <option value="haute" data-i18n-opt="account.high">High</option>
+                                            </select>
+                                        </div>
+                                    <?php endif; ?>
 
                                     <!-- Button -->
                                     <div class="d-grid">
@@ -419,21 +467,25 @@ $frontActive = 'reclamation';
                                         required><?php echo $rec['description']; ?></textarea>
                                 </div>
 
-                                <!-- Priority -->
-                                <div class="mb-3">
-                                    <label data-i18n="account.priority">Priority</label>
-                                    <select name="priorite" class="form-select">
-                                        <option value="faible" data-i18n-opt="account.low" <?php if ($rec['priorite'] == 'faible')
-                                            echo 'selected'; ?>>
-                                            Low</option>
-                                        <option value="normale" data-i18n-opt="account.normal" <?php if ($rec['priorite'] == 'normale')
-                                            echo 'selected'; ?>>
-                                            Normal</option>
-                                        <option value="haute" data-i18n-opt="account.high" <?php if ($rec['priorite'] == 'haute')
-                                            echo 'selected'; ?>>High
-                                        </option>
-                                    </select>
-                                </div>
+                                <?php if ($isSuspendedAppeal): ?>
+                                    <input type="hidden" name="priorite" value="haute">
+                                <?php else: ?>
+                                    <!-- Priority -->
+                                    <div class="mb-3">
+                                        <label data-i18n="account.priority">Priority</label>
+                                        <select name="priorite" class="form-select">
+                                            <option value="faible" data-i18n-opt="account.low" <?php if ($rec['priorite'] == 'faible')
+                                                echo 'selected'; ?>>
+                                                Low</option>
+                                            <option value="normale" data-i18n-opt="account.normal" <?php if ($rec['priorite'] == 'normale')
+                                                echo 'selected'; ?>>
+                                                Normal</option>
+                                            <option value="haute" data-i18n-opt="account.high" <?php if ($rec['priorite'] == 'haute')
+                                                echo 'selected'; ?>>High
+                                            </option>
+                                        </select>
+                                    </div>
+                                <?php endif; ?>
 
                             </div>
 
@@ -492,6 +544,10 @@ $frontActive = 'reclamation';
                 'account.complaintHeroCopy': 'Tell us what happened so the Cre8Connect team can help you clearly.',
                 'account.adminResponse': 'Admin response:',
                 'account.waitingResponse': 'Waiting for a response...',
+                'account.langEn': 'EN',
+                'account.langFr': 'FR',
+                'account.themeToggle': 'Light/Dark',
+                'account.logout': 'Logout',
                 'account.deleteConfirm': 'Do you really want to delete this complaint?',
                 'account.editComplaint': 'Edit complaint',
                 'account.save': 'Save',
@@ -518,6 +574,10 @@ $frontActive = 'reclamation';
                 'account.complaintHeroCopy': 'Expliquez-nous ce qui s est passe afin que l equipe Cre8Connect puisse vous aider clairement.',
                 'account.adminResponse': 'Reponse admin :',
                 'account.waitingResponse': 'En attente de reponse...',
+                'account.langEn': 'EN',
+                'account.langFr': 'FR',
+                'account.themeToggle': 'Clair/Sombre',
+                'account.logout': 'Se deconnecter',
                 'account.deleteConfirm': 'Voulez-vous vraiment supprimer cette reclamation ?',
                 'account.editComplaint': 'Modifier la reclamation',
                 'account.save': 'Enregistrer',
@@ -542,10 +602,41 @@ $frontActive = 'reclamation';
             const lang = cre8ComplaintLang();
             return (cre8ComplaintTranslations[lang] && cre8ComplaintTranslations[lang][key]) || cre8ComplaintTranslations.en[key] || key;
         }
+        function cre8ApplyComplaintTranslations() {
+            document.querySelectorAll('[data-i18n]').forEach((node) => {
+                const key = node.getAttribute('data-i18n');
+                if (key) {
+                    node.textContent = cre8ComplaintText(key);
+                }
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach((node) => {
+                const key = node.getAttribute('data-i18n-placeholder');
+                if (key) {
+                    node.setAttribute('placeholder', cre8ComplaintText(key));
+                }
+            });
+            document.querySelectorAll('[data-i18n-opt]').forEach((node) => {
+                const key = node.getAttribute('data-i18n-opt');
+                if (key) {
+                    node.textContent = cre8ComplaintText(key);
+                }
+            });
+        }
+        function cre8UpdateAppealLangButtons() {
+            const lang = cre8ComplaintLang();
+            document.querySelectorAll('[data-appeal-lang]').forEach((button) => {
+                const active = button.getAttribute('data-appeal-lang') === lang;
+                button.classList.toggle('btn-primary', active);
+                button.classList.toggle('btn-outline-secondary', !active);
+                button.setAttribute('aria-pressed', active ? 'true' : 'false');
+            });
+        }
         function cre8RegisterComplaintTranslations() {
             if (typeof window.cre8RegisterTranslations === 'function') {
                 window.cre8RegisterTranslations(cre8ComplaintTranslations);
             }
+            cre8ApplyComplaintTranslations();
+            cre8UpdateAppealLangButtons();
             const counter = document.getElementById('charCounter');
             const input = document.getElementById('descriptionInput');
             if (counter && input) {
@@ -558,6 +649,31 @@ $frontActive = 'reclamation';
             cre8RegisterComplaintTranslations();
         }
         window.addEventListener('cre8:languagechange', cre8RegisterComplaintTranslations);
+
+        document.querySelectorAll('[data-appeal-lang]').forEach((button) => {
+            button.addEventListener('click', function () {
+                const nextLang = this.getAttribute('data-appeal-lang') === 'fr' ? 'fr' : 'en';
+                try {
+                    localStorage.setItem('cre8_front_lang', nextLang);
+                    localStorage.setItem('cre8_lang', nextLang);
+                } catch (e) {}
+                window.dispatchEvent(new CustomEvent('cre8:languagechange', { detail: { lang: nextLang } }));
+                cre8RegisterComplaintTranslations();
+            });
+        });
+
+        const appealThemeToggle = document.querySelector('[data-appeal-theme-toggle]');
+        if (appealThemeToggle) {
+            appealThemeToggle.addEventListener('click', function () {
+                const currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+                const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', nextTheme);
+                document.body.classList.toggle('light-mode', nextTheme === 'light');
+                try {
+                    localStorage.setItem('cre8_theme', nextTheme);
+                } catch (e) {}
+            });
+        }
 
         // ===== COMPLAINT FORM VALIDATION =====
         function validateReclamation(form) {

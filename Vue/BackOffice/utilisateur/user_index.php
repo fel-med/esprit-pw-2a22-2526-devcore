@@ -10,7 +10,7 @@ $userC = new UtilisateurC();
 
 // Récupérer les paramètres de recherche et tri
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
-$role = isset($_GET['role']) ? trim($_GET['role']) : '';
+$role = isset($_GET['role']) ? cc_normalize_role($_GET['role']) : '';
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $limit = 4;
 
@@ -22,7 +22,7 @@ $currentPage = is_array($usersResult) && isset($usersResult['page']) ? max(1, in
 
 $stats = $userC->getStatistiquesUtilisateurs();
 $actorId = cc_current_user_id();
-$actorRole = cc_current_user_role();
+$actorRole = cc_normalize_role(cc_current_user_role());
 $assignableRoles = match ($actorRole) {
     'super_admin' => ['createur', 'marque', 'admin'],
     'hyper_admin' => ['createur', 'marque', 'admin', 'super_admin'],
@@ -490,17 +490,26 @@ $roleLabels = [
 
                         <?php foreach ($users as $u): ?>
                           <?php
+                            $rowRole = cc_normalize_role($u['role'] ?? '');
+                            $rowStatus = cc_normalize_status($u['statut'] ?? '');
                             $rowUser = [
                                 'id' => (int)($u['id'] ?? 0),
-                                'role' => strtolower(trim((string)($u['role'] ?? ''))),
+                                'role' => $rowRole,
+                                'statut' => $rowStatus,
+                                'suspended_by' => $u['suspended_by'] ?? null,
+                                'suspended_by_role' => cc_normalize_role($u['suspended_by_role'] ?? ''),
+                                'suspended_at' => $u['suspended_at'] ?? null,
+                                'suspension_reason' => $u['suspension_reason'] ?? null,
                             ];
-                            $rowStatus = strtolower(trim((string)($u['statut'] ?? 'actif')));
-                            $rowUserForPermission = array_merge($u, $rowUser);
-                            $canToggleStatus = $rowStatus === 'suspendu'
-                                ? cc_can_reactivate_suspension($actorId, $actorRole, $rowUserForPermission)
-                                : ($rowStatus === 'actif' && cc_can_manage_user($actorId, $actorRole, $rowUserForPermission, 'suspend'));
+                            $u['role'] = $rowRole;
+                            $u['statut'] = $rowStatus;
+                            $canSuspendUser = $rowStatus === 'actif' && cc_can_manage_user($actorId, $actorRole, $rowUser, 'suspend');
+                            $canReactivateUser = $rowStatus === 'suspendu' && cc_can_reactivate_suspension($actorId, $actorRole, $rowUser);
+                            $canToggleStatus = $canSuspendUser || $canReactivateUser;
                             $canDeleteUser = cc_can_manage_user($actorId, $actorRole, $rowUser, 'delete');
-                            $canEditUser = !cc_is_backoffice_role($rowUser['role']) || cc_can_manage_user($actorId, $actorRole, $rowUser, 'edit_role');
+                            $canEditRole = ($actorRole !== 'admin')
+                                && cc_can_manage_user($actorId, $actorRole, $rowUser, 'edit_role');
+                            $canEditUser = $canEditRole;
                           ?>
                           <tr>
                             <form method="POST" action="update.php" class="w-100">
@@ -508,32 +517,32 @@ $roleLabels = [
 
                               <td>
                                 <input type="text" name="nom" value="<?= htmlspecialchars($u['nom']) ?>"
-                                  class="form-control form-control-sm">
+                                  class="form-control form-control-sm" <?= $canEditUser ? '' : 'readonly disabled' ?>>
                               </td>
 
                               <td>
                                 <input type="email" name="email" value="<?= htmlspecialchars($u['email']) ?>"
-                                  class="form-control form-control-sm">
+                                  class="form-control form-control-sm" <?= $canEditUser ? '' : 'readonly disabled' ?>>
                               </td>
 
                               <td>
                                 <select name="role" class="form-select form-select-sm"
-                                  style="background-color: #FDCFFA; border-color: #D78FEE;">
+                                  style="background-color: #FDCFFA; border-color: #D78FEE;" <?= $canEditRole ? '' : 'disabled' ?>>
                                   <?php
-                                    $roleOptions = array_values(array_unique(array_merge([$rowUser['role']], $assignableRoles)));
+                                    $roleOptions = $canEditRole ? array_values(array_unique(array_merge([$rowRole], $assignableRoles))) : [$rowRole];
                                     foreach ($roleOptions as $roleOption):
-                                      if ($roleOption === 'hyper_admin') {
+                                      if ($roleOption === 'hyper_admin' && $rowRole !== 'hyper_admin') {
                                           continue;
                                       }
                                   ?>
-                                    <option value="<?= htmlspecialchars($roleOption) ?>" <?= $rowUser['role'] == $roleOption ? 'selected' : '' ?>><?= htmlspecialchars($roleLabels[$roleOption] ?? ucfirst(str_replace('_', ' ', $roleOption))) ?></option>
+                                    <option value="<?= htmlspecialchars($roleOption) ?>" <?= $rowRole == $roleOption ? 'selected' : '' ?>><?= htmlspecialchars($roleLabels[$roleOption] ?? ucfirst(str_replace('_', ' ', $roleOption))) ?></option>
                                   <?php endforeach; ?>
                                 </select>
                               </td>
 
                              <td>
 <?php
-$statut = strtolower(trim($u['statut'] ?? ''));
+$statut = $rowStatus;
 
 if ($statut == '') {
     $statut = 'inactif';
@@ -542,6 +551,7 @@ if ($statut == '') {
 $statusLabels = [
     'actif' => 'Active',
     'suspendu' => 'Suspended',
+    'bloque' => 'Blocked',
     'en_attente' => 'Pending',
     'inactif' => 'Inactive'
 ];
@@ -571,8 +581,8 @@ $displayStatus = $statusLabels[$statut] ?? ucfirst(str_replace('_', ' ', $statut
 
                                   <?php if ($canToggleStatus): ?>
                                   <button type="button" class="btn table-action-btn text-white"
-                                    style="background-color: <?= ($u['statut'] ?? 'actif') == 'actif' ? '#E11D74' : '#28a745' ?>; border: none;"
-                                    onclick="toggleUserStatus(<?= $u['id'] ?>, '<?= ($u['statut'] ?? 'actif') ?>');">
+                                    style="background-color: <?= $rowStatus === 'actif' ? '#E11D74' : '#28a745' ?>; border: none;"
+                                    onclick="toggleUserStatus(<?= $u['id'] ?>, '<?= htmlspecialchars($rowStatus) ?>');">
                                     <?= ($u['statut'] ?? 'actif') == 'actif' ? '🔒 Suspend' : '✅ Activate' ?>
                                   </button>
                                   <?php endif; ?>
