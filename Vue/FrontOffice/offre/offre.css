@@ -5874,3 +5874,334 @@ html[data-theme="dark"] .offer-status {
   border-color: color-mix(in srgb, var(--primary, #7c6fff) 20%, var(--border, #2a2840)) !important;
   color: #ddd6fe !important;
 }
+
+/* Hide legacy bottom page summary/footer block on offer lists. */
+.offre-page-shell .front-pagination {
+  display: none !important;
+}
+
+/* Final offer/candidature polish layer: indicators, filters, and Cre8Pilot FAB. */
+.stats-grid,
+.brand-stats-grid,
+.candidature-stats-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+  gap: 0.7rem !important;
+  align-items: stretch !important;
+}
+
+.stats-grid .stat-card,
+.brand-stats-grid .stat-card,
+.candidature-stats-grid .stat-card,
+.stat-card {
+  min-width: 0 !important;
+  min-height: auto !important;
+  padding: 0.78rem 0.92rem !important;
+  border-radius: 16px !important;
+  border: 1px solid color-mix(in srgb, var(--primary, #5b4fff) 13%, var(--border, #ebebf2)) !important;
+  background:
+    radial-gradient(circle at 92% 0%, rgba(226,30,128,0.08), transparent 34%),
+    linear-gradient(135deg, color-mix(in srgb, var(--white) 90%, var(--primary-light, #ece9ff)), var(--white)) !important;
+  box-shadow: 0 9px 22px rgba(91,79,255,0.07) !important;
+  overflow: hidden !important;
+}
+
+.stats-grid .stat-card::before,
+.stats-grid .stat-card::after,
+.brand-stats-grid .stat-card::before,
+.brand-stats-grid .stat-card::after,
+.candidature-stats-grid .stat-card::before,
+.candidature-stats-grid .stat-card::after,
+.stat-card::before,
+.stat-card::after {
+  display: none !important;
+  content: none !important;
+}
+
+.stat-label,
+.brand-stats-grid .stat-label,
+.candidature-stats-grid .stat-label {
+  color: var(--text-sub) !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.stat-value,
+.brand-stats-grid .stat-value,
+.candidature-stats-grid .stat-value {
+  display: block !important;
+  max-width: 100% !important;
+  margin-top: 0.24rem !important;
+  background: none !important;
+  color: var(--primary, #5b4fff) !important;
+  -webkit-text-fill-color: currentColor !important;
+  font-family: 'Fraunces', serif !important;
+  font-size: clamp(1.18rem, 1.6vw, 1.48rem) !important;
+  font-weight: 900 !important;
+  line-height: 1.05 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.stat-note,
+.brand-stats-grid .stat-note,
+.candidature-stats-grid .stat-note {
+  display: block !important;
+  margin-top: 0.28rem !important;
+  color: var(--text-sub) !important;
+  font-size: 0.76rem !important;
+  line-height: 1.35 !important;
+  overflow-wrap: normal !important;
+}
+
+.offer-tab-badge,
+.offer-section-count,
+.offer-chip {
+  white-space: nowrap !important;
+  max-width: 100% !important;
+}
+
+.offer-chip {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.filter-card {
+  padding: 1rem !important;
+  border-radius: 18px !important;
+  border: 1px solid color-mix(in srgb, var(--primary, #5b4fff) 11%, var(--border, #ebebf2)) !important;
+  background:
+    radial-gradient(circle at 96% 0%, rgba(91,79,255,0.06), transparent 28%),
+    color-mix(in srgb, var(--white) 96%, var(--primary-light, #ece9ff)) !important;
+  box-shadow: 0 12px 28px rgba(91,79,255,0.07) !important;
+}
+
+.filter-stack {
+  margin-top: 0.85rem !important;
+  display: grid !important;
+  gap: 0.85rem !important;
+}
+
+.filter-grid {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: end !important;
+  gap: 0.75rem !important;
+}
+
+.filter-grid > * {
+  flex: 1 1 180px !important;
+  max-width: 220px !important;
+  min-width: 150px !important;
+}
+
+.filter-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 0.55rem !important;
+  align-items: center !important;
+}
+
+.filter-card label,
+.filter-card .form-label {
+  margin-bottom: 0.32rem !important;
+  color: var(--text-sub) !important;
+  font-size: 0.76rem !important;
+  font-weight: 800 !important;
+}
+
+.filter-card input,
+.filter-card select,
+.filter-card textarea,
+.filter-card .form-control,
+.filter-card .form-select {
+  min-height: 38px !important;
+  border-radius: 11px !important;
+  border: 1px solid color-mix(in srgb, var(--primary, #5b4fff) 10%, var(--border, #ebebf2)) !important;
+  background: color-mix(in srgb, var(--bg, #f6f6fc) 72%, var(--white)) !important;
+  color: var(--text) !important;
+  font-size: 0.88rem !important;
+  box-shadow: none !important;
+}
+
+.filter-card input:focus,
+.filter-card select:focus,
+.filter-card textarea:focus,
+.filter-card .form-control:focus,
+.filter-card .form-select:focus {
+  border-color: var(--primary, #5b4fff) !important;
+  box-shadow: 0 0 0 4px rgba(91,79,255,0.13) !important;
+  outline: none !important;
+}
+
+.filter-actions .btn-primary,
+.filter-card .btn-primary {
+  border: 0 !important;
+  background: linear-gradient(135deg, var(--primary, #5b4fff), #e21e80) !important;
+  color: #fff !important;
+  box-shadow: 0 12px 24px rgba(91,79,255,0.18) !important;
+}
+
+.filter-actions .btn-outline-secondary,
+.filter-card .btn-outline-secondary {
+  border-color: color-mix(in srgb, var(--primary, #5b4fff) 14%, var(--border, #ebebf2)) !important;
+  background: color-mix(in srgb, var(--white) 78%, var(--primary-light, #ece9ff)) !important;
+  color: var(--text-sub) !important;
+}
+
+.cre8pilot-fab {
+  min-height: 58px !important;
+  padding: 0.78rem 1.15rem 0.84rem 0.8rem !important;
+  border: 1px solid rgba(255,255,255,0.38) !important;
+  border-radius: 999px !important;
+  background:
+    radial-gradient(circle at 18% 16%, rgba(255,255,255,0.55), transparent 28%),
+    linear-gradient(135deg, #5b4fff 0%, #8b5cf6 48%, #e21e80 100%) !important;
+  color: #fff !important;
+  box-shadow:
+    0 18px 34px rgba(91,79,255,0.3),
+    0 8px 0 rgba(69,56,224,0.38),
+    inset 0 1px 0 rgba(255,255,255,0.42),
+    inset 0 -10px 18px rgba(15,14,26,0.16) !important;
+  transform: translateY(0) translateZ(0) !important;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease !important;
+}
+
+.cre8pilot-fab span[aria-hidden="true"] {
+  width: 38px !important;
+  height: 38px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 999px !important;
+  background: rgba(255,255,255,0.18) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.38), 0 7px 18px rgba(15,14,26,0.18) !important;
+}
+
+.cre8pilot-fab:hover,
+.cre8pilot-fab:focus-visible {
+  transform: translateY(-2px) translateZ(0) !important;
+  filter: brightness(1.04) !important;
+  box-shadow:
+    0 22px 42px rgba(91,79,255,0.34),
+    0 10px 0 rgba(69,56,224,0.34),
+    inset 0 1px 0 rgba(255,255,255,0.48),
+    inset 0 -10px 18px rgba(15,14,26,0.14) !important;
+}
+
+.cre8pilot-fab:active,
+.cre8pilot-widget.is-open .cre8pilot-fab {
+  transform: translateY(1px) translateZ(0) !important;
+  box-shadow:
+    0 12px 24px rgba(91,79,255,0.26),
+    0 4px 0 rgba(69,56,224,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.38),
+    inset 0 -8px 16px rgba(15,14,26,0.18) !important;
+}
+
+html[data-theme="dark"] .stats-grid .stat-card,
+html[data-theme="dark"] .brand-stats-grid .stat-card,
+html[data-theme="dark"] .candidature-stats-grid .stat-card,
+html[data-theme="dark"] .stat-card,
+html[data-theme="dark"] .filter-card {
+  background:
+    radial-gradient(circle at 92% 0%, rgba(226,30,128,0.1), transparent 34%),
+    linear-gradient(135deg, color-mix(in srgb, var(--white) 88%, var(--primary-light, #1e1a3a)), var(--white)) !important;
+  border-color: color-mix(in srgb, var(--primary, #7c6fff) 18%, var(--border, #2a2840)) !important;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.22) !important;
+}
+
+html[data-theme="dark"] .filter-card input,
+html[data-theme="dark"] .filter-card select,
+html[data-theme="dark"] .filter-card textarea,
+html[data-theme="dark"] .filter-card .form-control,
+html[data-theme="dark"] .filter-card .form-select {
+  background: color-mix(in srgb, var(--bg, #13121f) 82%, var(--white)) !important;
+  border-color: color-mix(in srgb, var(--primary, #7c6fff) 14%, var(--border, #2a2840)) !important;
+  color: var(--text) !important;
+}
+
+html[data-theme="dark"] .cre8pilot-fab {
+  box-shadow:
+    0 18px 34px rgba(0,0,0,0.34),
+    0 8px 0 rgba(44,35,126,0.58),
+    0 0 26px rgba(124,111,255,0.22),
+    inset 0 1px 0 rgba(255,255,255,0.22),
+    inset 0 -10px 18px rgba(0,0,0,0.22) !important;
+}
+
+@media (max-width: 640px) {
+  .filter-grid > * {
+    max-width: none !important;
+    flex-basis: 100% !important;
+  }
+
+  .cre8pilot-fab strong {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cre8pilot-fab {
+    transition: none !important;
+  }
+}
+
+/* Final Cre8Pilot panel placement: keep the assistant in the page body, below the shared header. */
+.cre8pilot-panel {
+  position: fixed !important;
+  right: 28px !important;
+  left: auto !important;
+  top: calc(50% + 35px) !important;
+  bottom: auto !important;
+  width: min(520px, calc(100vw - 40px)) !important;
+  height: min(660px, calc(100vh - 140px)) !important;
+  max-height: calc(100vh - 140px) !important;
+  min-height: min(420px, calc(100vh - 140px)) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  transform: translateY(-50%) !important;
+  border-radius: 22px !important;
+  z-index: 100210 !important;
+}
+
+.cre8pilot-panel[hidden] {
+  display: none !important;
+}
+
+.cre8pilot-header,
+.cre8pilot-quick-actions,
+.cre8pilot-attach-panel,
+.cre8pilot-attach-status,
+.cre8pilot-composer {
+  flex: 0 0 auto !important;
+}
+
+.cre8pilot-messages {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+}
+
+.cre8pilot-composer-meta:empty {
+  display: none !important;
+}
+
+@media (max-width: 640px) {
+  .cre8pilot-panel {
+    left: 12px !important;
+    right: 12px !important;
+    top: auto !important;
+    bottom: 88px !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: calc(100vh - 120px) !important;
+    transform: none !important;
+  }
+}

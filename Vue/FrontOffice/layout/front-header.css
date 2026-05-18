@@ -2323,3 +2323,287 @@
         max-height: calc(100vh - 96px) !important;
     }
 }
+
+/* Fixed-footer notification dropdown polish. */
+.notification-widget-front .notification-panel {
+    width: min(420px, calc(100vw - 24px)) !important;
+    max-height: min(70vh, 620px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    border-color: color-mix(in srgb, var(--primary) 14%, var(--border)) !important;
+    border-radius: 18px !important;
+    background:
+        radial-gradient(circle at 94% 0%, rgba(226, 30, 128, 0.1), transparent 34%),
+        linear-gradient(180deg, color-mix(in srgb, var(--white) 96%, var(--primary-light)), var(--white)) !important;
+    box-shadow: 0 22px 54px rgba(15, 14, 26, 0.18), 0 8px 22px rgba(91, 79, 255, 0.1) !important;
+}
+
+.notification-widget-front .notification-panel::before {
+    background: color-mix(in srgb, var(--white) 96%, var(--primary-light)) !important;
+    border-color: color-mix(in srgb, var(--primary) 14%, var(--border)) !important;
+}
+
+.notification-widget-front .notification-panel-head {
+    flex: 0 0 auto !important;
+    padding: 14px 14px 10px !important;
+    border-bottom: 1px solid color-mix(in srgb, var(--primary) 10%, var(--border)) !important;
+    background: color-mix(in srgb, var(--white) 92%, var(--primary-light)) !important;
+}
+
+.notification-widget-front .notification-panel-head strong {
+    font-size: 14px !important;
+    letter-spacing: 0 !important;
+}
+
+.notification-widget-front .notification-panel-head span {
+    font-size: 11.5px !important;
+}
+
+.notification-widget-front .notification-panel-head button,
+.notification-widget-front .notification-inline-form button {
+    border: 1px solid color-mix(in srgb, var(--primary) 12%, transparent) !important;
+    box-shadow: none !important;
+}
+
+.notification-widget-front .notification-tabs {
+    flex: 0 0 auto !important;
+    gap: 6px !important;
+    padding: 10px 14px !important;
+    border-bottom: 1px solid color-mix(in srgb, var(--primary) 10%, var(--border)) !important;
+    background: color-mix(in srgb, var(--white) 94%, var(--primary-light)) !important;
+}
+
+.notification-widget-front .notification-tabs button {
+    padding: 6px 11px !important;
+    border-color: var(--border) !important;
+    background: var(--white) !important;
+    color: var(--text-sub) !important;
+}
+
+.notification-widget-front .notification-tabs button.is-active {
+    border-color: color-mix(in srgb, var(--primary) 28%, var(--border)) !important;
+    background: var(--primary-light) !important;
+    color: var(--primary) !important;
+}
+
+.notification-widget-front .notification-list,
+.notification-widget-front .front-notification-list {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+    padding: 8px !important;
+    background: transparent !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: color-mix(in srgb, var(--primary) 32%, var(--border)) transparent !important;
+}
+
+.notification-widget-front .notification-list::-webkit-scrollbar {
+    width: 8px !important;
+}
+
+.notification-widget-front .notification-list::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.notification-widget-front .notification-list::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--primary) 28%, var(--border)) !important;
+    border: 2px solid transparent !important;
+    border-radius: 999px !important;
+    background-clip: padding-box !important;
+}
+
+.notification-widget-front .notification-item {
+    grid-template-columns: 36px minmax(0, 1fr) !important;
+    gap: 10px !important;
+    margin-bottom: 7px !important;
+    padding: 10px !important;
+    border: 1px solid transparent !important;
+    border-left: 3px solid transparent !important;
+    border-radius: 14px !important;
+    background: color-mix(in srgb, var(--white) 92%, var(--notification-accent-soft, var(--primary-light))) !important;
+}
+
+.notification-widget-front .notification-item:last-child {
+    margin-bottom: 0 !important;
+}
+
+.notification-widget-front .notification-item:hover {
+    border-color: color-mix(in srgb, var(--notification-accent, var(--primary)) 18%, transparent) !important;
+    background: color-mix(in srgb, var(--notification-accent, var(--primary)) 8%, var(--white)) !important;
+}
+
+.notification-widget-front .notification-item.is-unread {
+    border-left-color: var(--notification-accent, var(--primary)) !important;
+    background: color-mix(in srgb, var(--notification-accent, var(--primary)) 10%, var(--white)) !important;
+}
+
+.notification-widget-front .notification-type-icon {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 15px !important;
+}
+
+.notification-widget-front .notification-item-body strong {
+    font-size: 13px !important;
+    line-height: 1.25 !important;
+}
+
+.notification-widget-front .notification-item-body p {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+}
+
+.notification-widget-front .notification-item-body time {
+    font-size: 10.5px !important;
+}
+
+.notification-widget-front .notification-item-actions {
+    gap: 6px !important;
+    margin-top: 8px !important;
+}
+
+.notification-widget-front .notification-open-link {
+    min-height: 24px !important;
+    padding: 5px 10px !important;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--notification-accent, var(--primary)) 14%, transparent) !important;
+}
+
+.notification-widget-front .notification-empty {
+    margin: 4px !important;
+    padding: 18px 14px !important;
+    border: 1px dashed color-mix(in srgb, var(--primary) 18%, var(--border)) !important;
+    border-radius: 14px !important;
+    background: color-mix(in srgb, var(--white) 88%, var(--primary-light)) !important;
+    text-align: center !important;
+}
+
+.notification-widget-front .notification-panel-foot,
+.notification-widget-front .front-notification-footer {
+    flex: 0 0 auto !important;
+    padding: 10px 12px 12px !important;
+    border-top: 1px solid color-mix(in srgb, var(--primary) 10%, var(--border)) !important;
+    background: color-mix(in srgb, var(--white) 92%, var(--primary-light)) !important;
+}
+
+.notification-widget-front .notification-view-all {
+    min-height: 36px !important;
+    gap: 4px !important;
+    border: 1px solid color-mix(in srgb, var(--primary) 14%, transparent) !important;
+    background: linear-gradient(135deg, var(--primary-light), color-mix(in srgb, var(--white) 78%, var(--primary-light))) !important;
+}
+
+.notification-widget-front .notification-view-all:hover,
+.notification-widget-front .notification-view-all:focus {
+    color: #fff !important;
+    background: linear-gradient(135deg, var(--primary), var(--primary-hover, #4b3ff0)) !important;
+    outline: none !important;
+}
+
+.notification-widget-front .notification-panel[hidden],
+.notification-widget-front .notification-list[hidden],
+.notification-widget-front .front-notification-list[hidden] {
+    display: none !important;
+}
+
+[data-theme="dark"] .notification-widget-front .notification-panel {
+    background:
+        radial-gradient(circle at 94% 0%, rgba(226, 30, 128, 0.13), transparent 36%),
+        linear-gradient(180deg, color-mix(in srgb, var(--white) 88%, var(--primary-light)), var(--white)) !important;
+    border-color: color-mix(in srgb, var(--primary) 22%, var(--border)) !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.34), 0 10px 26px rgba(91, 79, 255, 0.12) !important;
+}
+
+[data-theme="dark"] .notification-widget-front .notification-panel::before,
+[data-theme="dark"] .notification-widget-front .notification-panel-head,
+[data-theme="dark"] .notification-widget-front .notification-tabs,
+[data-theme="dark"] .notification-widget-front .notification-panel-foot {
+    background: color-mix(in srgb, var(--white) 88%, var(--primary-light)) !important;
+    border-color: color-mix(in srgb, var(--primary) 20%, var(--border)) !important;
+}
+
+[data-theme="dark"] .notification-widget-front .notification-tabs button {
+    background: color-mix(in srgb, var(--white) 92%, var(--bg)) !important;
+}
+
+[data-theme="dark"] .notification-widget-front .notification-item {
+    background: color-mix(in srgb, var(--white) 88%, var(--notification-accent-soft, var(--primary-light))) !important;
+}
+
+[data-theme="dark"] .notification-widget-front .notification-item:hover,
+[data-theme="dark"] .notification-widget-front .notification-item.is-unread {
+    background: color-mix(in srgb, var(--notification-accent, var(--primary)) 14%, var(--white)) !important;
+}
+
+[data-theme="dark"] .notification-widget-front .notification-empty {
+    background: color-mix(in srgb, var(--white) 84%, var(--primary-light)) !important;
+}
+
+@media (max-width: 768px) {
+    .notification-widget-front .notification-panel {
+        right: 12px !important;
+        left: 12px !important;
+        width: auto !important;
+        max-height: calc(100vh - 96px) !important;
+    }
+}
+
+/* Authoritative layout for the active PHP notification widget. */
+.notification-widget-front .front-notification-dropdown {
+    display: flex !important;
+    flex-direction: column !important;
+    width: min(420px, calc(100vw - 24px)) !important;
+    max-height: min(620px, calc(100vh - 110px)) !important;
+    overflow: hidden !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    transform: none !important;
+}
+
+.notification-widget-front .front-notification-dropdown[hidden],
+.notification-widget-front .front-notification-list[hidden] {
+    display: none !important;
+}
+
+.notification-widget-front .front-notification-head,
+.notification-widget-front .front-notification-tabs {
+    flex: 0 0 auto !important;
+}
+
+.notification-widget-front .front-notification-list {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    padding-right: 10px !important;
+}
+
+.notification-widget-front .front-notification-footer {
+    flex: 0 0 auto !important;
+    display: block !important;
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 2 !important;
+    border-top: 1px solid var(--border) !important;
+    padding: 12px 14px !important;
+    background: var(--white) !important;
+}
+
+[data-theme="dark"] .notification-widget-front .front-notification-footer {
+    background: var(--white) !important;
+    border-color: var(--border) !important;
+}
+
+@media (max-width: 768px) {
+    .notification-widget-front .front-notification-dropdown {
+        width: calc(100vw - 24px) !important;
+        max-height: calc(100vh - 110px) !important;
+    }
+}

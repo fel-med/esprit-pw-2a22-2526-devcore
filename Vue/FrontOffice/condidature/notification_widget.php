@@ -142,14 +142,65 @@ if (!function_exists('cre8RenderNotificationItems')) {
     }
 }
 ?>
+<?php if (!defined('CRE8_NOTIFICATION_DROPDOWN_LAYOUT_STYLE')): ?>
+    <?php define('CRE8_NOTIFICATION_DROPDOWN_LAYOUT_STYLE', true); ?>
+    <style>
+        .notification-widget-front .front-notification-dropdown {
+            display: flex !important;
+            flex-direction: column !important;
+            width: min(420px, calc(100vw - 24px)) !important;
+            max-height: min(620px, calc(100vh - 110px)) !important;
+            overflow: hidden !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+            transform: none !important;
+        }
+
+        .notification-widget-front .front-notification-dropdown[hidden],
+        .notification-widget-front .front-notification-list[hidden] {
+            display: none !important;
+        }
+
+        .notification-widget-front .front-notification-head,
+        .notification-widget-front .front-notification-tabs,
+        .notification-widget-front .front-notification-footer {
+            flex-shrink: 0 !important;
+        }
+
+        .notification-widget-front .front-notification-list {
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            overflow-y: auto !important;
+        }
+
+        .notification-widget-front .front-notification-footer {
+            display: block !important;
+            position: sticky !important;
+            bottom: 0 !important;
+            z-index: 2 !important;
+            border-top: 1px solid var(--border) !important;
+            padding: 12px 14px !important;
+            background: var(--white) !important;
+        }
+
+        @media (max-width: 768px) {
+            .notification-widget-front .front-notification-dropdown {
+                width: calc(100vw - 24px) !important;
+                max-height: calc(100vh - 110px) !important;
+            }
+        }
+    </style>
+<?php endif; ?>
 <div class="notification-widget notification-widget-front" data-notification-widget>
     <button type="button" class="notification-bell" data-notification-toggle aria-label="Open notifications" title="Open notifications" data-i18n-title="notifications.openNotifications">
         <span class="notification-bell-glyph" aria-hidden="true"><i class="bi bi-bell"></i></span>
         <span class="notification-count" data-notification-count<?php echo $notificationUnreadCount > 0 ? '' : ' hidden'; ?>><?php echo $notificationUnreadCount > 99 ? '99+' : (int) $notificationUnreadCount; ?></span>
     </button>
 
-    <section class="notification-panel" data-notification-panel hidden>
-        <div class="notification-panel-head">
+    <section class="notification-panel front-notification-dropdown" data-notification-panel hidden>
+        <div class="notification-panel-head front-notification-head">
             <div>
                 <strong data-i18n="notifications.title">Notifications</strong>
                 <span data-notification-unread-label><span data-notification-unread-number><?php echo (int) $notificationUnreadCount; ?></span> <span data-i18n="notifications.unread">unread</span></span>
@@ -160,19 +211,19 @@ if (!function_exists('cre8RenderNotificationItems')) {
             </form>
         </div>
 
-        <div class="notification-tabs" role="tablist" aria-label="Notification filters">
+        <div class="notification-tabs front-notification-tabs" role="tablist" aria-label="Notification filters">
             <button type="button" class="is-active" data-notification-tab="all" data-i18n="notifications.all">All</button>
             <button type="button" data-notification-tab="unread" data-i18n="notifications.unreadTab">Unread</button>
         </div>
 
-        <div class="notification-list" data-notification-list="all">
+        <div class="notification-list front-notification-list" data-notification-list="all">
             <?php cre8RenderNotificationItems($notificationItemsAll); ?>
         </div>
-        <div class="notification-list" data-notification-list="unread" hidden>
+        <div class="notification-list front-notification-list" data-notification-list="unread" hidden>
             <?php cre8RenderNotificationItems($notificationItemsUnread); ?>
         </div>
 
-        <div class="notification-panel-foot">
+        <div class="notification-panel-foot front-notification-footer">
             <a class="notification-view-all" href="<?php echo htmlspecialchars((string) $notificationPageUrl); ?>">
                 <span data-i18n="notifications.viewAll">View all notifications</span> <i class="bi bi-arrow-right-short" aria-hidden="true"></i>
             </a>

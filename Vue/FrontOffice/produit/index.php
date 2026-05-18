@@ -1112,6 +1112,191 @@ $frontActive = 'campaigns';
         }
         /* ===== END PAGINATION ===== */
 
+        /* Unified FrontOffice indicator polish */
+        .product-front .page-header-stat {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            padding: 8px 12px;
+            border: 1px solid var(--primary-border);
+            border-radius: 999px;
+            background: rgba(255,255,255,0.72);
+            box-shadow: 0 8px 22px rgba(91,79,255,0.08);
+        }
+
+        .product-front .page-header-stat .stat-icon {
+            min-width: 30px;
+            width: 30px;
+            height: 30px;
+            border: 1px solid var(--primary-border);
+            border-radius: 999px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-family: 'Fraunces', serif;
+            font-size: 0.95rem;
+            font-weight: 900;
+            box-shadow: none;
+        }
+
+        .product-front .page-header-stat .stat-text {
+            color: var(--text-sub);
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .product-front .kpi-strip {
+            gap: 12px;
+        }
+
+        .product-front .kpi-card {
+            min-height: auto;
+            padding: 14px 16px;
+            border: 1px solid color-mix(in srgb, var(--primary) 14%, var(--border));
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(236,233,255,0.70), rgba(255,255,255,0.92));
+            box-shadow: 0 8px 22px rgba(91,79,255,0.08);
+        }
+
+        .product-front .kpi-card:hover {
+            border-color: var(--primary-border);
+            box-shadow: 0 12px 26px rgba(91,79,255,0.12);
+        }
+
+        .product-front .kpi-card::before {
+            display: none;
+        }
+
+        .product-front .kpi-icon {
+            width: 30px;
+            height: 30px;
+            margin-bottom: 9px;
+            border: 1px solid color-mix(in srgb, var(--primary) 14%, var(--border));
+            border-radius: 999px;
+            background: var(--primary-light) !important;
+            color: var(--primary);
+            font-size: 14px;
+            box-shadow: none;
+        }
+
+        .product-front .kpi-value {
+            color: var(--primary);
+            font-family: 'Fraunces', serif;
+            font-size: clamp(1.3rem, 2vw, 1.65rem);
+            font-weight: 900;
+            letter-spacing: 0;
+        }
+
+        .product-front .kpi-label {
+            margin-top: 5px;
+            color: var(--text-sub);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0;
+            line-height: 1.35;
+            text-transform: none;
+        }
+
+        .product-front .kpi-alert,
+        .product-front .kpi-link {
+            display: inline-flex;
+            margin-top: 7px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        html[data-theme="dark"] .product-front .page-header-stat,
+        body.dark-mode .product-front .page-header-stat,
+        html[data-theme="dark"] .product-front .kpi-card,
+        body.dark-mode .product-front .kpi-card {
+            background: linear-gradient(135deg, rgba(42,38,96,0.66), rgba(28,26,46,0.92));
+            border-color: color-mix(in srgb, var(--primary) 22%, var(--border));
+            box-shadow: 0 8px 22px rgba(0,0,0,0.24);
+        }
+
+        html[data-theme="dark"] .product-front .page-header-stat .stat-icon,
+        body.dark-mode .product-front .page-header-stat .stat-icon,
+        html[data-theme="dark"] .product-front .kpi-icon,
+        body.dark-mode .product-front .kpi-icon {
+            background: var(--primary-light) !important;
+            border-color: color-mix(in srgb, var(--primary) 24%, var(--border));
+            color: #ddd6fe;
+        }
+
+        /* Compact FrontOffice indicator row */
+        .product-front .page-header-stat {
+            padding: 8px 12px;
+            background: linear-gradient(135deg, rgba(236,233,255,0.84), rgba(255,255,255,0.94));
+        }
+
+        .product-front .page-header-stat .stat-icon {
+            display: none;
+        }
+
+        .product-front .kpi-strip {
+            display: flex !important;
+            flex-wrap: wrap;
+            align-items: stretch;
+            grid-template-columns: none !important;
+            gap: 10px;
+            margin-bottom: 28px;
+        }
+
+        .product-front .kpi-card {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            flex: 0 1 auto;
+            min-width: 0;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, rgba(236,233,255,0.84), rgba(255,255,255,0.94));
+        }
+
+        .product-front .kpi-icon {
+            display: none !important;
+        }
+
+        .product-front .kpi-value {
+            flex: 0 0 auto;
+            font-size: 1.12rem;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .product-front .kpi-label {
+            margin-top: 0;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .product-front .kpi-alert,
+        .product-front .kpi-link {
+            margin-top: 0;
+            margin-left: 2px;
+            white-space: nowrap;
+        }
+
+        html[data-theme="dark"] .product-front .page-header-stat,
+        body.dark-mode .product-front .page-header-stat,
+        html[data-theme="dark"] .product-front .kpi-card,
+        body.dark-mode .product-front .kpi-card {
+            background: linear-gradient(135deg, rgba(42,38,96,0.58), rgba(28,26,46,0.9));
+        }
+
+        .product-front > .kpi-strip {
+            display: none !important;
+        }
+
+        .product-front .page-header .kpi-strip {
+            display: flex !important;
+            width: 100%;
+            margin: 16px 0 0;
+        }
+
         @media (max-width: 1000px) { .kpi-strip { grid-template-columns: repeat(3, 1fr); } .top-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 900px) { .form-layout { grid-template-columns: 1fr; } .kpi-strip { grid-template-columns: 1fr 1fr; } .recent-grid { grid-template-columns: 1fr; } nav { padding: 0 20px; } .nav-links { display: none; } .qv-box { flex-direction: column; } .qv-img { width: 100%; height: 200px; } .top-grid { grid-template-columns: repeat(2, 1fr); } }
     </style>
@@ -1153,6 +1338,39 @@ $frontActive = 'campaigns';
                     <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                     <span data-i18n="btn_add_product">Add a product</span>
                 </a>
+            </div>
+            <div class="kpi-strip">
+                <div class="kpi-card">
+                    <div class="kpi-icon">📦</div>
+                    <div class="kpi-value"><?= $totalProduits ?></div>
+                    <div class="kpi-label" data-i18n="kpi_active">Active products</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon">💶</div>
+                    <div class="kpi-value"><?= number_format($prixMoyen, 0, '.', ' ') ?> €</div>
+                    <div class="kpi-label" data-i18n="kpi_avg_price">Avg. price</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon">📌</div>
+                    <div class="kpi-value"><?= count($epingles) ?></div>
+                    <div class="kpi-label" data-i18n="kpi_pinned">Pinned</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon">🖼️</div>
+                    <div class="kpi-value"><?= $sanImage ?></div>
+                    <div class="kpi-label" data-i18n="kpi_no_image">Without image</div>
+                    <?php if ($sanImage > 0): ?>
+                        <div class="kpi-alert" data-i18n="kpi_complete_listings">⚠️ Complete these listings</div>
+                    <?php endif; ?>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon">🗄️</div>
+                    <div class="kpi-value"><?= $totalArchives ?></div>
+                    <div class="kpi-label" data-i18n="kpi_archived">Archived</div>
+                    <?php if ($totalArchives > 0): ?>
+                        <div class="kpi-link" data-i18n="kpi_view_archives">View archives →</div>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
         <div class="page-header-aside">

@@ -1,0 +1,207 @@
+.front-reclamation-page {
+    --reclam-bg: var(--bg, #f6f6fc);
+    --reclam-card: var(--white, #ffffff);
+    --reclam-text: var(--text, #0f0e1a);
+    --reclam-muted: var(--text-sub, #6b6f80);
+    --reclam-border: var(--border, #ebebf2);
+    --reclam-primary: var(--primary, #5b4fff);
+    --reclam-primary-light: var(--primary-light, #ece9ff);
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at 85% 8%, rgba(226,30,128,0.08), transparent 28%),
+        var(--reclam-bg);
+    color: var(--reclam-text);
+    font-family: 'DM Sans', sans-serif;
+}
+
+.front-reclamation-page .front-reclamation-shell {
+    max-width: 1120px;
+    margin-inline: auto;
+}
+
+.front-reclamation-page .reclamation-form-section {
+    padding-bottom: 1.4rem !important;
+}
+
+.front-reclamation-page .reclamation-list-section {
+    padding-top: 1.4rem !important;
+}
+
+.front-reclamation-page .reclamation-hero {
+    position: relative;
+    overflow: hidden;
+    text-align: left !important;
+    padding: 2.1rem;
+    border: 1px solid rgba(91,79,255,0.14);
+    border-radius: 22px;
+    background:
+        radial-gradient(circle at 92% 12%, rgba(226,30,128,0.12), transparent 30%),
+        linear-gradient(135deg, rgba(236,233,255,0.92), rgba(255,255,255,0.94));
+    box-shadow: 0 18px 44px rgba(91,79,255,0.11);
+}
+
+.front-reclamation-page .reclamation-hero h1,
+.front-reclamation-page .reclamation-section-heading h2 {
+    font-family: 'Fraunces', serif;
+    color: var(--reclam-text) !important;
+    letter-spacing: 0;
+}
+
+.front-reclamation-page .reclamation-hero .text-gradient {
+    background: none !important;
+    -webkit-text-fill-color: currentColor !important;
+    color: var(--reclam-text) !important;
+}
+
+.front-reclamation-page .reclamation-hero-copy {
+    max-width: 620px;
+    margin: .65rem 0 0;
+    color: var(--reclam-muted);
+    font-size: 1rem;
+    line-height: 1.65;
+}
+
+.front-reclamation-page .reclamation-form-card,
+.front-reclamation-page .reclamation-card {
+    border: 1px solid var(--reclam-border) !important;
+    border-radius: 16px !important;
+    background: var(--reclam-card) !important;
+    box-shadow: 0 12px 30px rgba(91,79,255,0.08) !important;
+}
+
+.front-reclamation-page .reclamation-form-card .card-body {
+    padding: 2rem !important;
+}
+
+.front-reclamation-page .form-label {
+    color: var(--reclam-text) !important;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .9rem;
+}
+
+.front-reclamation-page .form-control,
+.front-reclamation-page .form-select {
+    min-height: 46px;
+    border: 1px solid var(--reclam-border) !important;
+    border-radius: 12px !important;
+    background: var(--reclam-bg) !important;
+    color: var(--reclam-text) !important;
+    font-family: 'DM Sans', sans-serif;
+}
+
+.front-reclamation-page textarea.form-control {
+    min-height: 126px;
+}
+
+.front-reclamation-page .form-control:focus,
+.front-reclamation-page .form-select:focus {
+    border-color: var(--reclam-primary) !important;
+    box-shadow: 0 0 0 4px rgba(91,79,255,0.14) !important;
+}
+
+.front-reclamation-page .btn-primary {
+    border: 0 !important;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, var(--reclam-primary), #e21e80) !important;
+    color: #fff !important;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 800;
+    box-shadow: 0 14px 28px rgba(91,79,255,0.22);
+}
+
+.front-reclamation-page .reclamation-section-heading {
+    text-align: left !important;
+    margin-bottom: 1.4rem !important;
+}
+
+.front-reclamation-page .reclamation-card h5 {
+    color: var(--reclam-text);
+    font-family: 'Fraunces', serif;
+    font-size: 1.05rem;
+    line-height: 1.35;
+}
+
+.front-reclamation-page .reclamation-card .alert {
+    border-radius: 14px;
+    border-width: 1px;
+}
+
+.front-reclamation-page .reclamation-icon-btn {
+    border-radius: 999px !important;
+    box-shadow: none !important;
+}
+
+.front-reclamation-page .reclamation-edit-btn {
+    background: var(--reclam-primary-light) !important;
+    color: var(--reclam-primary) !important;
+}
+
+.front-reclamation-page .reclamation-delete-btn {
+    background: #fff1f3 !important;
+    color: #f43f5e !important;
+}
+
+.front-reclamation-page .reclamation-empty-state {
+    display: grid;
+    justify-items: center;
+    gap: .8rem;
+    padding: 2.4rem 1.5rem;
+    border: 1.5px dashed rgba(91,79,255,0.18);
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(236,233,255,0.58), rgba(255,255,255,0.84));
+    color: var(--reclam-muted);
+    text-align: center;
+}
+
+.front-reclamation-page .reclamation-empty-state p {
+    margin: 0;
+    font-weight: 700;
+}
+
+.front-reclamation-page .reclamation-empty-icon {
+    display: inline-flex;
+    width: 48px;
+    height: 48px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: var(--reclam-primary-light);
+    color: var(--reclam-primary);
+    font-size: 1.25rem;
+}
+
+html[data-theme="dark"] .front-reclamation-page {
+    --reclam-bg: var(--bg, #13121f);
+    --reclam-card: var(--white, #1c1a2e);
+    --reclam-text: var(--text, #e8e6f5);
+    --reclam-muted: var(--text-sub, #9b9db8);
+    --reclam-border: var(--border, #2a2840);
+}
+
+html[data-theme="dark"] .front-reclamation-page .reclamation-hero {
+    background:
+        radial-gradient(circle at 90% 14%, rgba(226,30,128,0.16), transparent 30%),
+        linear-gradient(135deg, rgba(42,38,96,0.75), rgba(28,26,46,0.94));
+    border-color: rgba(124,111,255,0.26);
+    box-shadow: 0 18px 44px rgba(0,0,0,0.26);
+}
+
+html[data-theme="dark"] .front-reclamation-page .reclamation-empty-state {
+    background: linear-gradient(135deg, rgba(42,38,96,0.58), rgba(28,26,46,0.84));
+    border-color: rgba(124,111,255,0.24);
+}
+
+html[data-theme="dark"] .front-reclamation-page .reclamation-delete-btn {
+    background: rgba(248,113,145,0.12) !important;
+    color: #f87191 !important;
+}
+
+@media (max-width: 768px) {
+    .front-reclamation-page .reclamation-hero {
+        padding: 1.45rem;
+    }
+
+    .front-reclamation-page .reclamation-form-card .card-body {
+        padding: 1.35rem !important;
+    }
+}

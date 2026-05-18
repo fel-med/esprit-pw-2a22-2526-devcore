@@ -481,6 +481,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-main
     font-size: 12px !important;
     font-weight: 900;
 }
+.hero-stat .hero-stat-icon {
+    display: none !important;
+}
 .hero-stat-val {
     color: var(--primary);
     font-family: 'Fraunces', serif;
@@ -563,6 +566,124 @@ body.dark-mode .s-chip.active {
 html[data-theme="dark"] .camp-badge,
 body.dark-mode .camp-badge {
     border-color: rgba(255,255,255,0.08);
+}
+
+/* AI suggestions spotlight: creator campaign page */
+.campaign-front .ia-panel,
+.page-wrapper > .ia-panel {
+    position: relative;
+    overflow: hidden;
+    border-radius: 22px;
+    border: 1px solid rgba(14, 163, 112, 0.28);
+    background:
+        radial-gradient(circle at 10% 8%, rgba(14, 163, 112, 0.2), transparent 34%),
+        radial-gradient(circle at 88% 18%, rgba(91, 79, 255, 0.16), transparent 30%),
+        linear-gradient(135deg, rgba(255,255,255,0.94), rgba(220,252,231,0.52));
+    box-shadow:
+        0 18px 45px rgba(14, 163, 112, 0.13),
+        0 0 0 1px rgba(255,255,255,0.45) inset;
+}
+
+.campaign-front .ia-panel::before,
+.page-wrapper > .ia-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(120deg, rgba(14,163,112,.7), rgba(91,79,255,.55), rgba(34,211,238,.45), rgba(14,163,112,.7));
+    opacity: .46;
+    pointer-events: none;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    animation: aiBorderPulse 7s ease-in-out infinite;
+}
+
+.campaign-front .ia-panel::after,
+.page-wrapper > .ia-panel::after {
+    content: "";
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    right: -72px;
+    top: -78px;
+    border-radius: 999px;
+    background: rgba(14, 163, 112, 0.18);
+    filter: blur(12px);
+    pointer-events: none;
+}
+
+.campaign-front .ia-panel > *,
+.page-wrapper > .ia-panel > * {
+    position: relative;
+    z-index: 1;
+}
+
+.campaign-front .ia-panel-header > span,
+.page-wrapper > .ia-panel .ia-panel-header > span {
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(14,163,112,.95), rgba(91,79,255,.86));
+    box-shadow: 0 10px 24px rgba(14,163,112,.22);
+}
+
+.campaign-front .ia-panel-header h2,
+.page-wrapper > .ia-panel .ia-panel-header h2 {
+    color: #0f9f84;
+}
+
+.campaign-front .ia-form-group input,
+.page-wrapper > .ia-panel .ia-form-group input {
+    background: color-mix(in srgb, var(--white) 88%, #dcfce7) !important;
+}
+
+.campaign-front .ia-form-group input:focus,
+.page-wrapper > .ia-panel .ia-form-group input:focus {
+    border-color: #0ea370 !important;
+    box-shadow: 0 0 0 4px rgba(14,163,112,.14);
+}
+
+.campaign-front .btn-ia,
+.page-wrapper > .ia-panel .btn-ia {
+    background: linear-gradient(135deg, #0ea370, #5b4fff) !important;
+    box-shadow: 0 14px 30px rgba(14,163,112,.24), 0 0 20px rgba(91,79,255,.14);
+    transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+}
+
+.campaign-front .btn-ia:hover,
+.page-wrapper > .ia-panel .btn-ia:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.04);
+}
+
+html[data-theme="dark"] .campaign-front .ia-panel,
+body.dark-mode .campaign-front .ia-panel,
+html[data-theme="dark"] .page-wrapper > .ia-panel,
+body.dark-mode .page-wrapper > .ia-panel {
+    background:
+        radial-gradient(circle at 10% 8%, rgba(14,163,112,.22), transparent 34%),
+        radial-gradient(circle at 88% 18%, rgba(124,111,255,.2), transparent 30%),
+        linear-gradient(135deg, rgba(16,68,56,.62), rgba(28,26,46,.94));
+    border-color: rgba(52,211,153,.26);
+    box-shadow: 0 18px 45px rgba(0,0,0,.28), 0 0 0 1px rgba(52,211,153,.08) inset;
+}
+
+@keyframes aiBorderPulse {
+    0%, 100% { opacity: .36; }
+    50% { opacity: .62; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .campaign-front .ia-panel::before,
+    .page-wrapper > .ia-panel::before {
+        animation: none;
+    }
 }
 </style>
     <!-- Shared FrontOffice header assets (after page CSS so front-header wins on shared tokens) -->

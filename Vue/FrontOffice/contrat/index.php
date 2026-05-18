@@ -355,6 +355,7 @@ nav{background:var(--bg-white);border-bottom:1px solid var(--border);padding:0 4
     <!-- Shared FrontOffice header assets -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="../layout/front-header.css">
+    <link rel="stylesheet" href="contrat-front.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/contrat-front.css')); ?>">
 <link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
 <link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
@@ -462,6 +463,13 @@ nav{background:var(--bg-white);border-bottom:1px solid var(--border);padding:0 4
     </div>
 
     <div class="cards-grid" id="contractsGrid">
+    <?php if (empty($contrats)): ?>
+        <div class="contract-list-empty">
+            <span class="contract-empty-icon"><i class="bi bi-file-earmark-text"></i></span>
+            <h3 data-i18n="empty_contracts_title">No contracts yet</h3>
+            <p data-i18n="empty_contracts_desc">Accepted collaborations will appear here when you create their contracts.</p>
+        </div>
+    <?php else: ?>
     <?php foreach ($contrats as $c):
         $statut = $c['statut'];
         $badgeClass = ($statut === 'signe') ? 'badge-signed' : 'badge-pending';
@@ -488,6 +496,7 @@ nav{background:var(--bg-white);border-bottom:1px solid var(--border);padding:0 4
         </div>
     </div>
     <?php endforeach; ?>
+    <?php endif; ?>
     </div>
 
     <div class="pagination-container" id="paginationControls"></div>
@@ -625,6 +634,8 @@ const langData = {
         opt_amount: "Montant",
         opt_title: "Titre",
         list_contracts: "📄 Tous mes contrats",
+        empty_contracts_title: "Aucun contrat pour le moment",
+        empty_contracts_desc: "Les collaborations acceptees apparaitront ici lorsque vous creerez leurs contrats.",
         l_amount: "Montant",
         l_creator: "Créateur",
         my_brand: "Ma Marque",
@@ -665,6 +676,8 @@ const langData = {
         opt_amount: "Amount",
         opt_title: "Title",
         list_contracts: "📄 All my contracts",
+        empty_contracts_title: "No contracts yet",
+        empty_contracts_desc: "Accepted collaborations will appear here when you create their contracts.",
         l_amount: "Amount",
         l_creator: "Creator",
         my_brand: "My brand",

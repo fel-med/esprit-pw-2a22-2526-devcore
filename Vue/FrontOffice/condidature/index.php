@@ -187,6 +187,196 @@ function statusFilterToCandidatureTab($status)
     return candidatureTabKey($status);
 }
 
+function emptyCreatorWorkflowBuckets()
+{
+    return [
+        'waiting' => [],
+        'accepted' => [],
+        'refused' => [],
+        'outdated' => [],
+        'saved' => [],
+    ];
+}
+
+function bucketContextsByWorkflow(array $contexts)
+{
+    $buckets = emptyCreatorWorkflowBuckets();
+
+    foreach ($contexts as $context) {
+        $statusKey = (string) $context['condidature']->getStatutCandidature();
+        $workflowKey = candidatureTabKey($statusKey, $context);
+        $buckets[$workflowKey][] = $context;
+    }
+
+    return $buckets;
+}
+
+function filterContextsByOrigin(array $contexts, $origin)
+{
+    return array_values(array_filter($contexts, static function ($context) use ($origin) {
+        return ($context['source']['origin'] ?? '') === $origin;
+    }));
+}
+
+function countWorkflowBuckets(array $buckets)
+{
+    return array_sum(array_map('count', $buckets));
+}
+
+function resolveWorkflowDefaultTab(array $workflowSections, array $buckets, $requestedTab = '')
+{
+    if ($requestedTab !== '' && isset($buckets[$requestedTab])) {
+        return $requestedTab;
+    }
+
+    foreach ($workflowSections as $section) {
+        if (!empty($buckets[$section['key']] ?? [])) {
+            return $section['key'];
+        }
+    }
+
+    return 'waiting';
+}
+
+function renderCreatorCandidatureCard(array $context, array $savedCandidatureIds, $creatorId)
+{
+    $condidature = $context['condidature'];
+    $source = $context['source'];
+    $brand = $context['brand'];
+    $isEditable = $condidature->canCreatorEdit();
+    $isSavedForLater = in_array((int) $condidature->getIdCandidature(), $savedCandidatureIds, true);
+    $statusKey = (string) $condidature->getStatutCandidature();
+    $isOutdated = isContextOutdated($context);
+    $latestBrandSignal = $context['negotiation']['latestBrand'] ?? null;
+    $brandSignalMessage = trim((string) ($latestBrandSignal['message'] ?? ''));
+    $decisionNotePreview = trim((string) $condidature->getNoteDecision());
+    $availabilityLabel = formatDateLabel($condidature->getDateDisponibilite(), 'Not shared yet');
+    $termsPreview = excerptText($condidature->getConditionsCreateur(), 110);
+    $portfolioPreview = trim((string) $condidature->getPortfolioUrl());
+    $refusalPreview = excerptText($condidature->getMotifRefus(), 110);
+    $notePreview = excerptText($condidature->getMessageMotivation(), 90);
+    $responsePreview = $condidature->getResponseMode() === 'decline'
+        ? excerptText($condidature->getMotifRefus(), 145)
+        : excerptText($condidature->getMessageMotivation(), 145);
+    ?>
+    <article
+        class="candidature-card<?php echo htmlspecialchars(candidatureCardToneClass($statusKey, $isOutdated)); ?>"
+        data-candidature-id="<?php echo (int) $condidature->getIdCandidature(); ?>"
+        data-card-href="details.php?idCandidature=<?php echo (int) $condidature->getIdCandidature(); ?>"
+        data-source-origin="<?php echo htmlspecialchars((string) ($source['origin'] ?? '')); ?>"
+    >
+        <div class="candidature-card-top">
+            <div>
+                <div class="offer-flag-row">
+                    <span class="origin-badge"><?php echo htmlspecialchars(translateOrigin($source['origin'])); ?></span>
+                    <span class="candidature-badge <?php echo htmlspecialchars($isOutdated ? 'status-outdated' : candidatureBadgeClass($condidature->getStatutCandidature())); ?>">
+                        <?php echo htmlspecialchars($isOutdated ? 'Outdated' : $condidature->getDisplayStatusLabel()); ?>
+                    </span>
+                    <?php if ($isSavedForLater): ?>
+                        <span class="saved-badge">Saved</span>
+                    <?php endif; ?>
+                </div>
+                <h2 class="candidature-card-title"><?php echo htmlspecialchars($source['title']); ?></h2>
+                <p class="candidature-card-copy">
+                    <?php echo htmlspecialchars($responsePreview !== '' ? $responsePreview : 'No creator response note has been added yet.'); ?>
+                </p>
+            </div>
+            <form method="post" action="index.php<?php echo !empty($_SERVER['QUERY_STRING']) ? '?' . htmlspecialchars($_SERVER['QUERY_STRING']) : ''; ?>" class="m-0" data-candidature-save-toggle-form>
+                <input type="hidden" name="idCandidature" value="<?php echo (int) $condidature->getIdCandidature(); ?>">
+                <button type="submit" name="toggleSaved" class="saved-toggle <?php echo $isSavedForLater ? 'saved' : ''; ?>">
+                    <?php echo $isSavedForLater ? 'Saved' : 'Save for later'; ?>
+                </button>
+            </form>
+        </div>
+
+        <div class="candidature-inline-meta">
+            <span class="offer-chip"><?php echo htmlspecialchars(formatMoney($condidature->getBudgetPropose())); ?></span>
+            <span class="offer-chip"><?php echo htmlspecialchars((int) $condidature->getDelaiPropose()); ?> day<?php echo (int) $condidature->getDelaiPropose() === 1 ? '' : 's'; ?></span>
+            <?php if ($condidature->getResponseMode() !== 'decline'): ?>
+                <span class="offer-chip">Available: <?php echo htmlspecialchars($availabilityLabel); ?></span>
+            <?php endif; ?>
+            <span class="offer-chip">Submitted: <?php echo htmlspecialchars(formatDateLabel($condidature->getDateCandidature())); ?></span>
+            <span class="offer-chip">Updated: <?php echo htmlspecialchars(formatDateLabel($condidature->getDateDerniereModification(), 'Not updated')); ?></span>
+        </div>
+
+        <div class="offer-detail-list">
+            <div class="offer-detail-item">
+                <strong>Brand</strong>
+                <div style="display:flex;align-items:center;gap:.65rem;">
+                    <?php echo cre8_render_avatar($brand['id'] ?? 0, (string) ($brand['nom'] ?? 'Brand'), 'cre8-avatar-md'); ?>
+                    <div>
+                        <span><?php echo htmlspecialchars($brand['nom'] ?: 'Unknown brand'); ?></span>
+                        <p><?php echo htmlspecialchars($brand['email']); ?></p>
+                    </div>
+                </div>
+            </div>
+            <div class="offer-detail-item">
+                <strong>Offer context</strong>
+                <span><?php echo htmlspecialchars(excerptText($source['objective'], 100) ?: 'No source objective was added.'); ?></span>
+            </div>
+            <div class="offer-detail-item">
+                <strong><?php echo $condidature->getResponseMode() === 'decline' ? 'Refusal reason' : 'Creator support'; ?></strong>
+                <span>
+                    <?php
+                    if ($condidature->getResponseMode() === 'decline') {
+                        echo htmlspecialchars($refusalPreview !== '' ? $refusalPreview : 'No refusal reason was attached.');
+                    } else {
+                        echo htmlspecialchars($termsPreview !== '' ? $termsPreview : 'No creator terms were attached.');
+                    }
+                    ?>
+                </span>
+                <p>
+                    <?php
+                    if ($condidature->getResponseMode() === 'decline') {
+                        echo htmlspecialchars($notePreview !== '' ? $notePreview : 'No extra creator note was attached.');
+                    } else {
+                        echo htmlspecialchars($portfolioPreview !== '' ? $portfolioPreview : 'No portfolio link was attached.');
+                    }
+                    ?>
+                </p>
+            </div>
+        </div>
+
+        <?php if ($statusKey === 'acceptee' && $decisionNotePreview !== ''): ?>
+            <div class="response-callout<?php echo htmlspecialchars(candidatureSignalToneClass($statusKey)); ?>">
+                <strong>Final decision</strong>
+                <div class="mt-2 candidature-signal-copy"><?php echo htmlspecialchars(excerptText($decisionNotePreview, 160)); ?></div>
+            </div>
+        <?php elseif ($brandSignalMessage !== ''): ?>
+            <div class="response-callout<?php echo htmlspecialchars(candidatureSignalToneClass($statusKey)); ?>">
+                <strong>Latest brand update</strong>
+                <div class="mt-2 candidature-signal-copy"><?php echo htmlspecialchars(excerptText($brandSignalMessage, 160)); ?></div>
+                <div class="candidature-inline-meta mt-2">
+                    <?php if (!empty($latestBrandSignal['dateMessage'])): ?>
+                        <span class="offer-chip"><?php echo htmlspecialchars(formatDateLabel($latestBrandSignal['dateMessage'])); ?></span>
+                    <?php endif; ?>
+                    <?php if (array_key_exists('budgetPropose', $latestBrandSignal) && $latestBrandSignal['budgetPropose'] !== null): ?>
+                        <span class="offer-chip"><?php echo htmlspecialchars(formatMoney($latestBrandSignal['budgetPropose'])); ?></span>
+                    <?php endif; ?>
+                    <?php if (array_key_exists('delaiPropose', $latestBrandSignal) && $latestBrandSignal['delaiPropose'] !== null): ?>
+                        <span class="offer-chip">Timeline: <?php echo (int) $latestBrandSignal['delaiPropose']; ?> days</span>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php elseif ($decisionNotePreview !== ''): ?>
+            <div class="response-callout<?php echo htmlspecialchars(candidatureSignalToneClass($statusKey)); ?>">
+                <strong>Decision note</strong>
+                <div class="mt-2 candidature-signal-copy"><?php echo htmlspecialchars(excerptText($decisionNotePreview, 160)); ?></div>
+            </div>
+        <?php endif; ?>
+
+        <div class="compact-actions">
+            <?php if ($source['origin'] === 'par_offre'): ?>
+                <a class="btn btn-outline-secondary" href="../offre/creator_details.php?idOffre=<?php echo (int) $source['id']; ?>&idCreateur=<?php echo (int) $creatorId; ?>">View source offer</a>
+            <?php endif; ?>
+            <?php if ($isEditable): ?>
+                <span class="offer-chip">Editable now</span>
+            <?php endif; ?>
+        </div>
+    </article>
+    <?php
+}
+
 $filters = [
     'keyword' => trim((string) ($_GET['keyword'] ?? '')),
     'status' => trim((string) ($_GET['status'] ?? '')),
@@ -295,19 +485,6 @@ $prevPageUrl = $page > 1 ? 'index.php?' . http_build_query($paginationBase + ['p
 $nextPageUrl = $hasNextPage ? 'index.php?' . http_build_query($paginationBase + ['page' => $page + 1]) : '';
 $savedCandidatureIds = $creatorId ? getSavedCreatorCandidatureIds($creatorId) : [];
 
-$creatorSectionBuckets = [
-    'waiting' => [],
-    'accepted' => [],
-    'refused' => [],
-    'outdated' => [],
-    'saved' => [],
-];
-
-foreach ($contexts as $context) {
-    $statusKey = (string) $context['condidature']->getStatutCandidature();
-    $creatorSectionBuckets[candidatureTabKey($statusKey, $context)][] = $context;
-}
-
 $savedContextMap = [];
 foreach ($allContexts as $context) {
     $idCandidature = (int) $context['condidature']->getIdCandidature();
@@ -327,7 +504,7 @@ if ($creatorId && $validSavedCandidatureIds !== $savedCandidatureIds) {
     $savedCandidatureIds = $validSavedCandidatureIds;
 }
 
-$creatorSections = [
+$creatorWorkflowSections = [
     [
         'key' => 'waiting',
         'title' => 'Waiting',
@@ -335,7 +512,6 @@ $creatorSections = [
         'themeClass' => 'section-waiting',
         'emptyTitle' => 'No waiting candidatures',
         'emptyCopy' => 'Nothing is waiting for a next step in this filtered view right now.',
-        'cards' => $creatorSectionBuckets['waiting'],
     ],
     [
         'key' => 'accepted',
@@ -344,7 +520,6 @@ $creatorSections = [
         'themeClass' => 'section-accepted',
         'emptyTitle' => 'No accepted candidatures',
         'emptyCopy' => 'No candidature has reached an accepted outcome in this view yet.',
-        'cards' => $creatorSectionBuckets['accepted'],
     ],
     [
         'key' => 'refused',
@@ -353,7 +528,6 @@ $creatorSections = [
         'themeClass' => 'section-declined',
         'emptyTitle' => 'No refused candidatures',
         'emptyCopy' => 'No refused or declined candidature appears in this filtered view.',
-        'cards' => $creatorSectionBuckets['refused'],
     ],
     [
         'key' => 'outdated',
@@ -362,7 +536,6 @@ $creatorSections = [
         'themeClass' => 'section-outdated',
         'emptyTitle' => 'No outdated candidatures',
         'emptyCopy' => 'No candidature is past its source deadline in this filtered view.',
-        'cards' => $creatorSectionBuckets['outdated'],
     ],
     [
         'key' => 'saved',
@@ -371,18 +544,70 @@ $creatorSections = [
         'themeClass' => 'section-draft-pending',
         'emptyTitle' => 'No saved candidatures',
         'emptyCopy' => 'You do not have any draft or bookmarked candidature in this workspace yet.',
-        'cards' => $savedContexts,
     ],
 ];
 
-$creatorDefaultSectionKey = 'waiting';
 $requestedCreatorTab = statusFilterToCandidatureTab($filters['status']);
-if ($requestedCreatorTab !== '') {
-    $creatorDefaultSectionKey = $requestedCreatorTab;
-} else {
-    foreach ($creatorSections as $section) {
-        if (!empty($section['cards'])) {
-            $creatorDefaultSectionKey = $section['key'];
+
+$allBuckets = bucketContextsByWorkflow($contexts);
+$allBuckets['saved'] = $savedContexts;
+$offerBuckets = bucketContextsByWorkflow(filterContextsByOrigin($contexts, 'par_offre'));
+$offerBuckets['saved'] = filterContextsByOrigin($savedContexts, 'par_offre');
+$campaignBuckets = bucketContextsByWorkflow(filterContextsByOrigin($contexts, 'par_campagne'));
+$campaignBuckets['saved'] = filterContextsByOrigin($savedContexts, 'par_campagne');
+$savedBuckets = bucketContextsByWorkflow($savedContexts);
+
+$creatorParentGroups = [
+    [
+        'key' => 'all',
+        'title' => 'All responses',
+        'titleKey' => 'cand.allSources',
+        'subtitle' => 'All creator applications and offer responses in this filtered workspace.',
+        'count' => count($allContexts),
+        'buckets' => $allBuckets,
+    ],
+    [
+        'key' => 'from_offre',
+        'title' => 'Offer applications',
+        'titleKey' => 'cand.fromOffers',
+        'subtitle' => 'Responses created from targeted offer invitations.',
+        'count' => count(filterContextsByOrigin($allContexts, 'par_offre')),
+        'buckets' => $offerBuckets,
+    ],
+    [
+        'key' => 'from_campagne',
+        'title' => 'Campaign applications',
+        'titleKey' => 'cand.fromCampaigns',
+        'subtitle' => 'Applications submitted from campaign opportunities.',
+        'count' => count(filterContextsByOrigin($allContexts, 'par_campagne')),
+        'buckets' => $campaignBuckets,
+    ],
+    [
+        'key' => 'saved',
+        'title' => 'Saved/Drafts',
+        'titleKey' => 'cand.savedDrafts',
+        'subtitle' => 'Draft responses and bookmarked candidatures kept close for follow-up.',
+        'count' => count($savedContexts),
+        'buckets' => $savedBuckets,
+    ],
+];
+
+foreach ($creatorParentGroups as &$creatorParentGroup) {
+    $creatorParentGroup['visibleCount'] = countWorkflowBuckets($creatorParentGroup['buckets']);
+    $creatorParentGroup['defaultWorkflowTab'] = resolveWorkflowDefaultTab($creatorWorkflowSections, $creatorParentGroup['buckets'], $requestedCreatorTab);
+}
+unset($creatorParentGroup);
+
+$creatorDefaultParentKey = match ($filters['origin']) {
+    'par_offre' => 'from_offre',
+    'par_campagne' => 'from_campagne',
+    default => 'all',
+};
+
+if ($creatorDefaultParentKey === 'all' && countWorkflowBuckets($allBuckets) === 0) {
+    foreach ($creatorParentGroups as $creatorParentGroup) {
+        if ((int) $creatorParentGroup['visibleCount'] > 0) {
+            $creatorDefaultParentKey = $creatorParentGroup['key'];
             break;
         }
     }
@@ -567,7 +792,7 @@ if ($requestedCreatorTab !== '') {
                         <span class="offer-chip"><?php echo $activeFilterCount; ?> active filter<?php echo $activeFilterCount > 1 ? 's' : ''; ?></span>
                     <?php endif; ?>
                 </div>
-                <form method="get" action="index.php" class="filter-stack mt-4">
+                <form method="get" action="index.php" id="filter_form" class="filter-stack mt-4">
                     <div class="filter-grid">
                         <div>
                             <label for="keyword" class="form-label fw-semibold" data-i18n="cand.keyword">Keyword</label>
@@ -656,193 +881,116 @@ if ($requestedCreatorTab !== '') {
                 </form>
             </section>
 
-            <section class="offer-tab-shell" data-offer-tab-shell data-default-tab="<?php echo htmlspecialchars($creatorDefaultSectionKey); ?>">
-                <div class="offer-tab-list" role="tablist" aria-label="Creator candidature tabs">
-                    <?php foreach ($creatorSections as $section): ?>
-                        <?php $isActiveTab = $section['key'] === $creatorDefaultSectionKey; ?>
+            <section
+                class="brand-source-tab-shell creator-source-tab-shell"
+                data-brand-source-tab-shell
+                data-default-source-tab="<?php echo htmlspecialchars($creatorDefaultParentKey); ?>"
+            >
+                <div class="brand-source-tab-list" role="tablist" aria-label="Creator candidature source groups">
+                    <?php foreach ($creatorParentGroups as $group): ?>
+                        <?php $isActiveParent = $group['key'] === $creatorDefaultParentKey; ?>
                         <button
                             type="button"
-                            class="offer-tab-button<?php echo $isActiveTab ? ' is-active' : ''; ?>"
-                            id="creator-candidature-tab-<?php echo htmlspecialchars($section['key']); ?>"
+                            class="brand-source-tab-button<?php echo $isActiveParent ? ' is-active' : ''; ?>"
+                            id="creator-source-tab-<?php echo htmlspecialchars($group['key']); ?>"
                             role="tab"
-                            aria-selected="<?php echo $isActiveTab ? 'true' : 'false'; ?>"
-                            aria-controls="creator-candidature-panel-<?php echo htmlspecialchars($section['key']); ?>"
-                            data-offer-tab="<?php echo htmlspecialchars($section['key']); ?>"
+                            aria-selected="<?php echo $isActiveParent ? 'true' : 'false'; ?>"
+                            aria-controls="creator-source-panel-<?php echo htmlspecialchars($group['key']); ?>"
+                            data-brand-source-tab="<?php echo htmlspecialchars($group['key']); ?>"
                         >
-                            <span class="offer-tab-label"><?php echo htmlspecialchars($section['title']); ?></span>
-                            <span class="offer-tab-badge"><?php echo count($section['cards']); ?></span>
+                            <span data-i18n="<?php echo htmlspecialchars($group['titleKey']); ?>"><?php echo htmlspecialchars($group['title']); ?></span>
+                            <strong><?php echo (int) $group['count']; ?></strong>
                         </button>
                     <?php endforeach; ?>
                 </div>
 
-                <div class="offer-tab-panels">
-                    <?php foreach ($creatorSections as $section): ?>
-                        <?php $isActivePanel = $section['key'] === $creatorDefaultSectionKey; ?>
+                <div class="brand-source-tab-panels">
+                    <?php foreach ($creatorParentGroups as $group): ?>
+                        <?php $isActiveParentPanel = $group['key'] === $creatorDefaultParentKey; ?>
                         <section
-                            class="section-card offer-section-card <?php echo htmlspecialchars($section['themeClass']); ?> offer-tab-panel"
-                            id="creator-candidature-panel-<?php echo htmlspecialchars($section['key']); ?>"
+                            class="brand-source-tab-panel"
+                            id="creator-source-panel-<?php echo htmlspecialchars($group['key']); ?>"
                             role="tabpanel"
-                            aria-labelledby="creator-candidature-tab-<?php echo htmlspecialchars($section['key']); ?>"
-                            data-offer-tab-panel="<?php echo htmlspecialchars($section['key']); ?>"
-                            <?php echo $isActivePanel ? '' : 'hidden'; ?>
+                            aria-labelledby="creator-source-tab-<?php echo htmlspecialchars($group['key']); ?>"
+                            data-brand-source-tab-panel="<?php echo htmlspecialchars($group['key']); ?>"
+                            <?php echo $isActiveParentPanel ? '' : 'hidden'; ?>
                         >
-                            <div class="offer-section-header">
-                                <div class="offer-section-copy">
-                                    <h2 class="section-title"><?php echo htmlspecialchars($section['title']); ?></h2>
-                                    <p class="section-subtitle"><?php echo htmlspecialchars($section['subtitle']); ?></p>
+                            <div class="brand-source-panel-heading">
+                                <div>
+                                    <h2 class="section-title" data-i18n="<?php echo htmlspecialchars($group['titleKey']); ?>"><?php echo htmlspecialchars($group['title']); ?></h2>
+                                    <p class="section-subtitle"><?php echo htmlspecialchars($group['subtitle']); ?></p>
                                 </div>
                                 <span class="offer-section-count">
-                                    <?php echo count($section['cards']); ?> candidature<?php echo count($section['cards']) === 1 ? '' : 's'; ?>
+                                    <?php echo (int) $group['visibleCount']; ?> candidature<?php echo (int) $group['visibleCount'] === 1 ? '' : 's'; ?>
                                 </span>
                             </div>
 
-                            <?php if (!empty($section['cards'])): ?>
-                                <div class="candidature-card-grid">
-                                    <?php foreach ($section['cards'] as $context): ?>
+                            <section class="offer-tab-shell" data-offer-tab-shell data-default-tab="<?php echo htmlspecialchars($group['defaultWorkflowTab']); ?>">
+                                <div class="offer-tab-list" role="tablist" aria-label="<?php echo htmlspecialchars($group['title']); ?> workflow tabs">
+                                    <?php foreach ($creatorWorkflowSections as $section): ?>
                                         <?php
-                                        $condidature = $context['condidature'];
-                                        $source = $context['source'];
-                                        $brand = $context['brand'];
-                                        $isEditable = $condidature->canCreatorEdit();
-                                        $isSavedForLater = in_array((int) $condidature->getIdCandidature(), $savedCandidatureIds, true);
-                                        $statusKey = (string) $condidature->getStatutCandidature();
-                                        $isOutdated = isContextOutdated($context);
-                                        $latestBrandSignal = $context['negotiation']['latestBrand'] ?? null;
-                                        $brandSignalMessage = trim((string) ($latestBrandSignal['message'] ?? ''));
-                                        $decisionNotePreview = trim((string) $condidature->getNoteDecision());
-                                        $availabilityLabel = formatDateLabel($condidature->getDateDisponibilite(), 'Not shared yet');
-                                        $termsPreview = excerptText($condidature->getConditionsCreateur(), 110);
-                                        $portfolioPreview = trim((string) $condidature->getPortfolioUrl());
-                                        $refusalPreview = excerptText($condidature->getMotifRefus(), 110);
-                                        $notePreview = excerptText($condidature->getMessageMotivation(), 90);
-                                        $responsePreview = $condidature->getResponseMode() === 'decline'
-                                            ? excerptText($condidature->getMotifRefus(), 145)
-                                            : excerptText($condidature->getMessageMotivation(), 145);
+                                        $cards = $group['buckets'][$section['key']] ?? [];
+                                        $isActiveTab = $section['key'] === $group['defaultWorkflowTab'];
+                                        $tabId = 'creator-' . $group['key'] . '-tab-' . $section['key'];
+                                        $panelId = 'creator-' . $group['key'] . '-panel-' . $section['key'];
                                         ?>
-                                        <article
-                                            class="candidature-card<?php echo htmlspecialchars(candidatureCardToneClass($statusKey, $isOutdated)); ?>"
-                                            data-candidature-id="<?php echo (int) $condidature->getIdCandidature(); ?>"
-                                            data-card-href="details.php?idCandidature=<?php echo (int) $condidature->getIdCandidature(); ?>"
+                                        <button
+                                            type="button"
+                                            class="offer-tab-button<?php echo $isActiveTab ? ' is-active' : ''; ?>"
+                                            id="<?php echo htmlspecialchars($tabId); ?>"
+                                            role="tab"
+                                            aria-selected="<?php echo $isActiveTab ? 'true' : 'false'; ?>"
+                                            aria-controls="<?php echo htmlspecialchars($panelId); ?>"
+                                            data-offer-tab="<?php echo htmlspecialchars($section['key']); ?>"
                                         >
-                                            <div class="candidature-card-top">
-                                                <div>
-                                                    <div class="offer-flag-row">
-                                                        <span class="origin-badge"><?php echo htmlspecialchars(translateOrigin($source['origin'])); ?></span>
-                                                        <span class="candidature-badge <?php echo htmlspecialchars($isOutdated ? 'status-outdated' : candidatureBadgeClass($condidature->getStatutCandidature())); ?>">
-                                                            <?php echo htmlspecialchars($isOutdated ? 'Outdated' : $condidature->getDisplayStatusLabel()); ?>
-                                                        </span>
-                                                        <?php if ($isSavedForLater): ?>
-                                                            <span class="saved-badge">Saved</span>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                    <h2 class="candidature-card-title"><?php echo htmlspecialchars($source['title']); ?></h2>
-                                                    <p class="candidature-card-copy">
-                                                        <?php
-                                                        echo htmlspecialchars($responsePreview !== '' ? $responsePreview : 'No creator response note has been added yet.');
-                                                        ?>
-                                                    </p>
-                                                </div>
-                                                <form method="post" action="index.php<?php echo !empty($_SERVER['QUERY_STRING']) ? '?' . htmlspecialchars($_SERVER['QUERY_STRING']) : ''; ?>" class="m-0" data-candidature-save-toggle-form>
-                                                    <input type="hidden" name="idCandidature" value="<?php echo (int) $condidature->getIdCandidature(); ?>">
-                                                    <button type="submit" name="toggleSaved" class="saved-toggle <?php echo $isSavedForLater ? 'saved' : ''; ?>">
-                                                        <?php echo $isSavedForLater ? 'Saved' : 'Save for later'; ?>
-                                                    </button>
-                                                </form>
-                                            </div>
-
-                                            <div class="candidature-inline-meta">
-                                                <span class="offer-chip"><?php echo htmlspecialchars(formatMoney($condidature->getBudgetPropose())); ?></span>
-                                                <span class="offer-chip"><?php echo htmlspecialchars((int) $condidature->getDelaiPropose()); ?> day<?php echo (int) $condidature->getDelaiPropose() === 1 ? '' : 's'; ?></span>
-                                                <?php if ($condidature->getResponseMode() !== 'decline'): ?>
-                                                    <span class="offer-chip">Available: <?php echo htmlspecialchars($availabilityLabel); ?></span>
-                                                <?php endif; ?>
-                                                <span class="offer-chip">Submitted: <?php echo htmlspecialchars(formatDateLabel($condidature->getDateCandidature())); ?></span>
-                                                <span class="offer-chip">Updated: <?php echo htmlspecialchars(formatDateLabel($condidature->getDateDerniereModification(), 'Not updated')); ?></span>
-                                            </div>
-
-                                            <div class="offer-detail-list">
-                                                <div class="offer-detail-item">
-                                                    <strong>Brand</strong>
-                                                    <div style="display:flex;align-items:center;gap:.65rem;">
-                                                        <?php echo cre8_render_avatar($brand['id'] ?? 0, (string) ($brand['nom'] ?? 'Brand'), 'cre8-avatar-md'); ?>
-                                                        <div>
-                                                            <span><?php echo htmlspecialchars($brand['nom'] ?: 'Unknown brand'); ?></span>
-                                                            <p><?php echo htmlspecialchars($brand['email']); ?></p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="offer-detail-item">
-                                                    <strong>Offer context</strong>
-                                                    <span><?php echo htmlspecialchars(excerptText($source['objective'], 100) ?: 'No source objective was added.'); ?></span>
-                                                </div>
-                                                <div class="offer-detail-item">
-                                                    <strong><?php echo $condidature->getResponseMode() === 'decline' ? 'Refusal reason' : 'Creator support'; ?></strong>
-                                                    <span>
-                                                        <?php
-                                                        if ($condidature->getResponseMode() === 'decline') {
-                                                            echo htmlspecialchars($refusalPreview !== '' ? $refusalPreview : 'No refusal reason was attached.');
-                                                        } else {
-                                                            echo htmlspecialchars($termsPreview !== '' ? $termsPreview : 'No creator terms were attached.');
-                                                        }
-                                                        ?>
-                                                    </span>
-                                                    <p>
-                                                        <?php
-                                                        if ($condidature->getResponseMode() === 'decline') {
-                                                            echo htmlspecialchars($notePreview !== '' ? $notePreview : 'No extra creator note was attached.');
-                                                        } else {
-                                                            echo htmlspecialchars($portfolioPreview !== '' ? $portfolioPreview : 'No portfolio link was attached.');
-                                                        }
-                                                        ?>
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            <?php if ($statusKey === 'acceptee' && $decisionNotePreview !== ''): ?>
-                                                <div class="response-callout<?php echo htmlspecialchars(candidatureSignalToneClass($statusKey)); ?>">
-                                                    <strong>Final decision</strong>
-                                                    <div class="mt-2 candidature-signal-copy"><?php echo htmlspecialchars(excerptText($decisionNotePreview, 160)); ?></div>
-                                                </div>
-                                            <?php elseif ($brandSignalMessage !== ''): ?>
-                                                <div class="response-callout<?php echo htmlspecialchars(candidatureSignalToneClass($statusKey)); ?>">
-                                                    <strong>Latest brand update</strong>
-                                                    <div class="mt-2 candidature-signal-copy"><?php echo htmlspecialchars(excerptText($brandSignalMessage, 160)); ?></div>
-                                                    <div class="candidature-inline-meta mt-2">
-                                                        <?php if (!empty($latestBrandSignal['dateMessage'])): ?>
-                                                            <span class="offer-chip"><?php echo htmlspecialchars(formatDateLabel($latestBrandSignal['dateMessage'])); ?></span>
-                                                        <?php endif; ?>
-                                                        <?php if ($latestBrandSignal['budgetPropose'] !== null): ?>
-                                                            <span class="offer-chip"><?php echo htmlspecialchars(formatMoney($latestBrandSignal['budgetPropose'])); ?></span>
-                                                        <?php endif; ?>
-                                                        <?php if ($latestBrandSignal['delaiPropose'] !== null): ?>
-                                                            <span class="offer-chip">Timeline: <?php echo (int) $latestBrandSignal['delaiPropose']; ?> days</span>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                </div>
-                                            <?php elseif ($decisionNotePreview !== ''): ?>
-                                                <div class="response-callout<?php echo htmlspecialchars(candidatureSignalToneClass($statusKey)); ?>">
-                                                    <strong>Decision note</strong>
-                                                    <div class="mt-2 candidature-signal-copy"><?php echo htmlspecialchars(excerptText($decisionNotePreview, 160)); ?></div>
-                                                </div>
-                                            <?php endif; ?>
-
-                                            <div class="compact-actions">
-                                                <?php if ($source['origin'] === 'par_offre'): ?>
-                                                    <a class="btn btn-outline-secondary" href="../offre/creator_details.php?idOffre=<?php echo (int) $source['id']; ?>&idCreateur=<?php echo (int) $creatorId; ?>">View source offer</a>
-                                                <?php endif; ?>
-                                                <?php if ($isEditable): ?>
-                                                    <span class="offer-chip">Editable now</span>
-                                                <?php endif; ?>
-                                            </div>
-                                        </article>
+                                            <span class="offer-tab-label"><?php echo htmlspecialchars($section['title']); ?></span>
+                                            <span class="offer-tab-badge"><?php echo count($cards); ?></span>
+                                        </button>
                                     <?php endforeach; ?>
                                 </div>
-                            <?php else: ?>
-                                <div class="note-block offer-section-empty">
-                                    <strong><?php echo htmlspecialchars($section['emptyTitle']); ?></strong>
-                                    <p><?php echo htmlspecialchars($section['emptyCopy']); ?></p>
+
+                                <div class="offer-tab-panels">
+                                    <?php foreach ($creatorWorkflowSections as $section): ?>
+                                        <?php
+                                        $cards = $group['buckets'][$section['key']] ?? [];
+                                        $isActivePanel = $section['key'] === $group['defaultWorkflowTab'];
+                                        $tabId = 'creator-' . $group['key'] . '-tab-' . $section['key'];
+                                        $panelId = 'creator-' . $group['key'] . '-panel-' . $section['key'];
+                                        ?>
+                                        <section
+                                            class="section-card offer-section-card <?php echo htmlspecialchars($section['themeClass']); ?> offer-tab-panel"
+                                            id="<?php echo htmlspecialchars($panelId); ?>"
+                                            role="tabpanel"
+                                            aria-labelledby="<?php echo htmlspecialchars($tabId); ?>"
+                                            data-offer-tab-panel="<?php echo htmlspecialchars($section['key']); ?>"
+                                            <?php echo $isActivePanel ? '' : 'hidden'; ?>
+                                        >
+                                            <div class="offer-section-header">
+                                                <div class="offer-section-copy">
+                                                    <h2 class="section-title"><?php echo htmlspecialchars($section['title']); ?></h2>
+                                                    <p class="section-subtitle"><?php echo htmlspecialchars($section['subtitle']); ?></p>
+                                                </div>
+                                                <span class="offer-section-count">
+                                                    <?php echo count($cards); ?> candidature<?php echo count($cards) === 1 ? '' : 's'; ?>
+                                                </span>
+                                            </div>
+
+                                            <?php if (!empty($cards)): ?>
+                                                <div class="candidature-card-grid">
+                                                    <?php foreach ($cards as $context): ?>
+                                                        <?php renderCreatorCandidatureCard($context, $savedCandidatureIds, $creatorId); ?>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                            <?php else: ?>
+                                                <div class="note-block offer-section-empty">
+                                                    <strong><?php echo htmlspecialchars($section['emptyTitle']); ?></strong>
+                                                    <p><?php echo htmlspecialchars($section['emptyCopy']); ?></p>
+                                                </div>
+                                            <?php endif; ?>
+                                        </section>
+                                    <?php endforeach; ?>
                                 </div>
-                            <?php endif; ?>
+                            </section>
                         </section>
                     <?php endforeach; ?>
                 </div>
@@ -908,6 +1056,10 @@ require __DIR__ . '/cre8pilot_widget.php';
                     'cand.keyword': 'Keyword',
                     'cand.status': 'Status',
                     'cand.allStatuses': 'All statuses',
+                    'cand.allSources': 'All responses',
+                    'cand.fromOffers': 'Offer applications',
+                    'cand.fromCampaigns': 'Campaign applications',
+                    'cand.savedDrafts': 'Saved/Drafts',
                     'cand.origin': 'Origin',
                     'cand.allOrigins': 'All origins',
                     'cand.responseType': 'Response type',
@@ -1014,6 +1166,10 @@ require __DIR__ . '/cre8pilot_widget.php';
                     'cand.keyword': 'Mot-cle',
                     'cand.status': 'Statut',
                     'cand.allStatuses': 'Tous les statuts',
+                    'cand.allSources': 'Toutes les reponses',
+                    'cand.fromOffers': 'Candidatures depuis les offres',
+                    'cand.fromCampaigns': 'Candidatures depuis les campagnes',
+                    'cand.savedDrafts': 'Enregistrees/Brouillons',
                     'cand.origin': 'Origine',
                     'cand.allOrigins': 'Toutes les origines',
                     'cand.responseType': 'Type de reponse',

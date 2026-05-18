@@ -240,6 +240,7 @@ $frontActive = 'reclamation';
             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
     </style>
+    <link href="reclamation-front.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/reclamation-front.css')); ?>" rel="stylesheet">
 <link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
 <link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
@@ -251,18 +252,19 @@ $frontActive = 'reclamation';
         <?php require_once __DIR__ . '/../layout/header.php'; ?>
         <div class="front-reclamation-page">
         <!-- Projects Section-->
-        <section class="py-5">
-            <div class="container px-5 mb-5">
-                <div class="text-center mb-5">
+        <section class="py-5 reclamation-form-section">
+            <div class="container px-5 mb-5 front-reclamation-shell">
+                <div class="text-center mb-5 reclamation-hero">
                     <h1 class="display-5 fw-bolder mb-0">
                         <span class="text-gradient d-inline" data-i18n="account.submitComplaint">Submit a complaint</span>
                     </h1>
+                    <p class="reclamation-hero-copy" data-i18n="account.complaintHeroCopy">Tell us what happened so the Cre8Connect team can help you clearly.</p>
                 </div>
 
                 <div class="row justify-content-center">
                     <div class="col-lg-8">
 
-                        <div class="card shadow rounded-4 border-0">
+                        <div class="card shadow rounded-4 border-0 reclamation-form-card">
                             <div class="card-body p-5">
 
                                 <form method="POST" action="traiterReclamation.php" onsubmit="return validateReclamation(this)">
@@ -301,10 +303,10 @@ $frontActive = 'reclamation';
                 </div>
             </div>
         </section>
-        <section class="py-5">
-            <div class="container px-5">
+        <section class="py-5 reclamation-list-section">
+            <div class="container px-5 front-reclamation-shell">
 
-                <div class="text-center mb-5">
+                <div class="text-center mb-5 reclamation-section-heading">
                     <h2 class="fw-bolder" data-i18n="account.myComplaints">My complaints</h2>
                 </div>
 
@@ -315,14 +317,17 @@ $frontActive = 'reclamation';
                 <?php endif; ?>
 
                 <?php if (empty($liste)): ?>
-                    <p class="text-center text-muted" data-i18n="account.noComplaints">No complaints yet</p>
+                    <div class="reclamation-empty-state">
+                        <span class="reclamation-empty-icon"><i class="bi bi-life-preserver"></i></span>
+                        <p data-i18n="account.noComplaints">No complaints yet</p>
+                    </div>
                 <?php else: ?>
 
                     <div class="row">
                         <?php foreach ($liste as $rec): ?>
 
                             <div class="col-lg-6 mb-4">
-                                <div class="card shadow-sm border-0 h-100">
+                                <div class="card shadow-sm border-0 h-100 reclamation-card">
                                     <div class="card-body">
 
                                         <h5 class="fw-bold">
@@ -350,7 +355,7 @@ $frontActive = 'reclamation';
                                         <div class="text-end mt-3 d-flex justify-content-end gap-2">
 
                                             <!-- Edit -->
-                                            <button class="btn btn-sm d-flex align-items-center justify-content-center"
+                                            <button class="btn btn-sm d-flex align-items-center justify-content-center reclamation-icon-btn reclamation-edit-btn"
                                                 style="background-color:#AEEA94; width:40px; height:40px; border:none;"
                                                 data-bs-toggle="modal" data-bs-target="#modalEdit<?php echo $rec['id']; ?>">
                                                 <i class="bi bi-pencil"></i>
@@ -363,7 +368,7 @@ $frontActive = 'reclamation';
                                                 <input type="hidden" name="id" value="<?php echo $rec['id']; ?>">
 
                                                 <button type="submit"
-                                                    class="btn btn-sm d-flex align-items-center justify-content-center"
+                                                    class="btn btn-sm d-flex align-items-center justify-content-center reclamation-icon-btn reclamation-delete-btn"
                                                     style="background-color:#FF8383; width:40px; height:40px; border:none;">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
@@ -474,6 +479,7 @@ $frontActive = 'reclamation';
                 'account.myComplaints': 'My complaints',
                 'account.complaintSuccess': 'Complaint sent successfully!',
                 'account.noComplaints': 'No complaints yet',
+                'account.complaintHeroCopy': 'Tell us what happened so the Cre8Connect team can help you clearly.',
                 'account.adminResponse': 'Admin response:',
                 'account.waitingResponse': 'Waiting for a response...',
                 'account.deleteConfirm': 'Do you really want to delete this complaint?',
@@ -497,6 +503,7 @@ $frontActive = 'reclamation';
                 'account.myComplaints': 'Mes reclamations',
                 'account.complaintSuccess': 'Reclamation envoyee avec succes !',
                 'account.noComplaints': 'Aucune reclamation pour le moment',
+                'account.complaintHeroCopy': 'Expliquez-nous ce qui s est passe afin que l equipe Cre8Connect puisse vous aider clairement.',
                 'account.adminResponse': 'Reponse admin :',
                 'account.waitingResponse': 'En attente de reponse...',
                 'account.deleteConfirm': 'Voulez-vous vraiment supprimer cette reclamation ?',

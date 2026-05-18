@@ -302,6 +302,7 @@ $contrats = $controller->getByCreateur($idCreateur);
         }
         .toast.show { display:flex; }
     </style>
+    <link rel="stylesheet" href="contrat-front.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/contrat-front.css')); ?>">
 <link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
 <link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">

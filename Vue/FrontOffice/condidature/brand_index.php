@@ -481,33 +481,51 @@
     $requestedBrandWorkflowTab = statusFilterToCandidatureTab($filters['status']);
     $brandParentGroups = [
         [
+            'key' => 'all',
+            'title' => 'All applications',
+            'titleKey' => 'cand.allApplications',
+            'subtitle' => 'Every offer response and campaign application in one view.',
+            'emptyTitle' => 'No applications',
+            'emptyCopy' => 'No candidature is visible in this filtered view.',
+            'count' => count($allContexts),
+            'buckets' => bucketContextsByWorkflow($contexts),
+        ],
+        [
             'key' => 'from_offre',
             'title' => 'From offers',
+            'titleKey' => 'cand.fromOffers',
             'subtitle' => 'Candidatures created from targeted offer invitations.',
             'emptyTitle' => 'No offer candidatures',
             'emptyCopy' => 'No creator response from an offer is visible in this filtered view.',
+            'count' => count(filterContextsByOrigin($allContexts, 'par_offre')),
             'buckets' => bucketContextsByWorkflow(filterContextsByOrigin($contexts, 'par_offre')),
         ],
         [
             'key' => 'from_campagne',
             'title' => 'From campaigns',
+            'titleKey' => 'cand.fromCampaigns',
             'subtitle' => 'Applications submitted by creators to campaign opportunities.',
             'emptyTitle' => 'No campaign applications',
             'emptyCopy' => 'No creator application from a campaign is visible in this filtered view.',
+            'count' => count(filterContextsByOrigin($allContexts, 'par_campagne')),
             'buckets' => bucketContextsByWorkflow(filterContextsByOrigin($contexts, 'par_campagne')),
         ],
         [
             'key' => 'saved',
             'title' => 'Saved',
+            'titleKey' => 'cand.saved',
             'subtitle' => 'Draft responses and bookmarked candidatures kept close for follow-up.',
             'emptyTitle' => 'No saved candidatures',
             'emptyCopy' => 'No draft or bookmarked candidature is visible for this brand right now.',
+            'count' => count($savedContexts),
             'buckets' => bucketContextsByWorkflow($savedContexts),
         ],
     ];
 
     foreach ($brandParentGroups as &$brandParentGroup) {
-        $brandParentGroup['count'] = countWorkflowBuckets($brandParentGroup['buckets']);
+        if (!isset($brandParentGroup['count'])) {
+            $brandParentGroup['count'] = countWorkflowBuckets($brandParentGroup['buckets']);
+        }
         $brandParentGroup['defaultWorkflowTab'] = resolveWorkflowDefaultTab($brandWorkflowSections, $brandParentGroup['buckets'], $requestedBrandWorkflowTab);
     }
     unset($brandParentGroup);
@@ -515,7 +533,7 @@
     $brandDefaultParentKey = match ($filters['origin']) {
         'par_offre' => 'from_offre',
         'par_campagne' => 'from_campagne',
-        default => 'from_offre',
+        default => 'all',
     };
 
     if ($filters['origin'] === '') {
@@ -726,7 +744,7 @@
                                 aria-controls="brand-source-panel-<?php echo htmlspecialchars($group['key']); ?>"
                                 data-brand-source-tab="<?php echo htmlspecialchars($group['key']); ?>"
                             >
-                                <span><?php echo htmlspecialchars($group['title']); ?></span>
+                                <span<?php echo !empty($group['titleKey']) ? ' data-i18n="' . htmlspecialchars($group['titleKey']) . '"' : ''; ?>><?php echo htmlspecialchars($group['title']); ?></span>
                                 <strong><?php echo (int) $group['count']; ?></strong>
                             </button>
                         <?php endforeach; ?>
@@ -745,7 +763,7 @@
                             >
                                 <div class="brand-source-panel-heading">
                                     <div>
-                                        <h2 class="section-title"><?php echo htmlspecialchars($group['title']); ?></h2>
+                                        <h2 class="section-title"<?php echo !empty($group['titleKey']) ? ' data-i18n="' . htmlspecialchars($group['titleKey']) . '"' : ''; ?>><?php echo htmlspecialchars($group['title']); ?></h2>
                                         <p class="section-subtitle"><?php echo htmlspecialchars($group['subtitle']); ?></p>
                                     </div>
                                     <span class="offer-section-count">
@@ -901,6 +919,9 @@
                         'cand.acceptedSubtitle': 'Responses where the latest collaboration terms were fully accepted.',
                         'cand.refusedSubtitle': 'Responses that ended with a refusal or a declined invitation outcome.',
                         'cand.outdatedSubtitle': 'Responses linked to sources whose deadline has already passed without a final outcome.',
+                        'cand.allApplications': 'All applications',
+                        'cand.fromOffers': 'From offers',
+                        'cand.fromCampaigns': 'From campaigns',
                         'cand.noWaiting': 'No waiting responses',
                         'cand.noAccepted': 'No accepted responses',
                         'cand.noRefused': 'No refused responses',
@@ -971,6 +992,9 @@
                         'cand.acceptedSubtitle': 'Reponses dont les derniers termes de collaboration ont ete acceptes.',
                         'cand.refusedSubtitle': 'Reponses terminees par un refus ou une invitation declinee.',
                         'cand.outdatedSubtitle': 'Reponses liees a des sources dont l echeance est passee sans resultat final.',
+                        'cand.allApplications': 'Toutes les candidatures',
+                        'cand.fromOffers': 'Depuis les offres',
+                        'cand.fromCampaigns': 'Depuis les campagnes',
                         'cand.noWaiting': 'Aucune reponse en attente',
                         'cand.noAccepted': 'Aucune reponse acceptee',
                         'cand.noRefused': 'Aucune reponse refusee',
@@ -1042,6 +1066,9 @@
                     'Responses where the latest collaboration terms were fully accepted.': 'cand.acceptedSubtitle',
                     'Responses that ended with a refusal or a declined invitation outcome.': 'cand.refusedSubtitle',
                     'Responses linked to sources whose deadline has already passed without a final outcome.': 'cand.outdatedSubtitle',
+                    'All applications': 'cand.allApplications',
+                    'From offers': 'cand.fromOffers',
+                    'From campaigns': 'cand.fromCampaigns',
                     'No waiting responses': 'cand.noWaiting',
                     'No accepted responses': 'cand.noAccepted',
                     'No refused responses': 'cand.noRefused',

@@ -530,7 +530,7 @@ $nextPageUrl = $hasNextPage ? 'creator_list.php?' . http_build_query($pagination
             <section class="filter-card">
                 <h2 class="section-title" data-i18n="offer.filterInbox">Filter your invitation inbox</h2>
                 <p class="section-subtitle" data-i18n="offer.filterSubtitle">Narrow the list by topic, budget, or deadline.</p>
-                <form method="get" action="creator_list.php" class="filter-stack mt-4" data-module-validation="creator-filters" data-creator-filter-form novalidate>
+                <form method="get" action="creator_list.php" id="filter_form" class="filter-stack mt-4" data-module-validation="creator-filters" data-creator-filter-form novalidate>
                     <div class="filter-grid">
                         <div>
                             <label for="keyword" class="form-label fw-semibold" data-i18n="offer.keyword">Keyword</label>

@@ -137,10 +137,15 @@ function cre8_notif_page_filter_url(string $status, string $category): string
         require $themeBootstrap;
     }
     ?>
-    <link rel="stylesheet" href="<?php echo htmlspecialchars($frontBaseUrl . '/layout/front-header.css'); ?>">
+    <link rel="stylesheet" href="../layout/front-header.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/front-header.css')); ?>">
+    <link rel="stylesheet" href="notifications-page.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/notifications-page.css')); ?>">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+    <link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
 </head>
-<body>
-<?php require __DIR__ . '/../layout/header.php'; ?>
+<body class="d-flex flex-column min-vh-100">
+<?php require_once __DIR__ . '/../layout/header.php'; ?>
 
 <main class="front-notifications-page">
     <section class="front-notifications-shell">

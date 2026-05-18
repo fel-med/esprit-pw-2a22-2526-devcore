@@ -89,7 +89,7 @@ $frontActive = 'myspace';
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
     <link href="../assets/css/styles.css" rel="stylesheet" />
     <link href="../layout/front-header.css" rel="stylesheet" />
-    <link href="../assets/post-front.css?v=3" rel="stylesheet" />
+    <link href="../assets/post-front.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../assets/post-front.css')); ?>" rel="stylesheet" />
 <link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
 <link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
@@ -101,6 +101,14 @@ $frontActive = 'myspace';
 
 <section class="py-5">
     <div class="container px-4 px-lg-5">
+        <div class="create-post-hero">
+            <div>
+                <span class="create-post-eyebrow"><i class="bi bi-stars"></i> <span data-i18n="post.creatorStudio">Creator studio</span></span>
+                <h1 data-i18n="post.createTitle">Create a new post</h1>
+                <p data-i18n="post.createSubtitle">Share your latest update with your audience.</p>
+            </div>
+            <a href="./portfolio.php" class="btn social-nav-btn" data-i18n="post.backMySpace">Back to My Space</a>
+        </div>
         <div class="row justify-content-center">
             <div class="col-xl-8 col-lg-10">
                 <div class="form-shell">
@@ -132,7 +140,7 @@ $frontActive = 'myspace';
                             <div id="subjectCounter" class="input-counter"></div>
                         </div>
 
-                        <div class="mb-4 p-3 rounded-4 border bg-light-subtle">
+                        <div class="mb-4 p-3 rounded-4 border bg-light-subtle ai-assist-panel">
                             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
                                 <div>
                                     <label for="aiBrief" class="social-label mb-1" data-i18n="post.generateAi">Generate content with AI</label>
@@ -229,6 +237,7 @@ $frontActive = 'myspace';
     var translations = {
         en: {
             'post.createTitle': 'Create a new post',
+            'post.creatorStudio': 'Creator studio',
             'post.createSubtitle': 'Share your latest update with your audience.',
             'post.backMySpace': 'Back to My Space',
             'post.formError': 'Please fill in the required fields correctly.',
@@ -253,6 +262,7 @@ $frontActive = 'myspace';
         },
         fr: {
             'post.createTitle': 'Creer un nouveau post',
+            'post.creatorStudio': 'Studio createur',
             'post.createSubtitle': 'Partagez votre derniere actualite avec votre audience.',
             'post.backMySpace': 'Retour a My Space',
             'post.formError': 'Veuillez remplir correctement les champs obligatoires.',

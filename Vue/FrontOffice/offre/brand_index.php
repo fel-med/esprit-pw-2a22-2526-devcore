@@ -522,7 +522,7 @@ if (!empty($averageBudgetCards)) {
                         <span class="offer-chip"><?php echo $activeFilterCount; ?> <span data-i18n="<?php echo $activeFilterCount === 1 ? 'offer.activeFilter' : 'offer.activeFilters'; ?>"><?php echo $activeFilterCount === 1 ? 'active filter' : 'active filters'; ?></span></span>
                     <?php endif; ?>
                 </div>
-                <form method="get" action="brand_index.php" class="filter-stack mt-4">
+                <form method="get" action="brand_index.php" id="filter_form" class="filter-stack mt-4">
                     <div class="filter-grid">
                         <div>
                             <label for="keyword" class="form-label fw-semibold" data-i18n="offer.keyword">Keyword</label>
@@ -1270,6 +1270,17 @@ if (!empty($averageBudgetCards)) {
             window.setInterval(pollAcceptedOffers, 20000);
         })();
     </script>
+<?php
+$cre8PilotContext = [
+    'page' => 'brand_offer_workspace',
+    'mode' => 'list',
+    'role' => 'marque',
+    'allowedActions' => ['normal_chat', 'summarize_page', 'analyze_page', 'apply_filters', 'recommend_next_action', 'security_check'],
+    'formTarget' => 'filter_form',
+    'visibleEntityType' => 'offre',
+];
+require __DIR__ . '/../condidature/cre8pilot_widget.php';
+?>
     <script src="../layout/front-header.js"></script>
 </body>
 </html>

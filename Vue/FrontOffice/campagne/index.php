@@ -450,6 +450,252 @@ textarea.form-input{resize:vertical;min-height:90px;}
     outline: none;
 }
 /* ===== END PAGINATION ===== */
+
+/* Unified FrontOffice indicator polish */
+.campaign-front .kpi-strip {
+    gap: 12px;
+}
+
+.campaign-front .kpi-card {
+    min-height: auto;
+    padding: 14px 16px;
+    border: 1px solid color-mix(in srgb, var(--primary) 14%, var(--border));
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(236,233,255,0.70), rgba(255,255,255,0.92));
+    box-shadow: 0 8px 22px rgba(91,79,255,0.08);
+}
+
+.campaign-front .kpi-card:hover {
+    border-color: var(--primary-border);
+    box-shadow: 0 12px 26px rgba(91,79,255,0.12);
+}
+
+.campaign-front .kpi-card::before {
+    display: none;
+}
+
+.campaign-front .kpi-icon {
+    width: 30px;
+    height: 30px;
+    margin-bottom: 9px;
+    border: 1px solid color-mix(in srgb, var(--primary) 14%, var(--border));
+    border-radius: 999px;
+    background: var(--primary-light) !important;
+    color: var(--primary);
+    font-size: 14px;
+    box-shadow: none;
+}
+
+.campaign-front .kpi-value {
+    color: var(--primary);
+    font-family: 'Fraunces', serif;
+    font-size: clamp(1.3rem, 2vw, 1.65rem);
+    font-weight: 900;
+    letter-spacing: 0;
+}
+
+.campaign-front .kpi-label {
+    margin-top: 5px;
+    color: var(--text-sub);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 1.35;
+    text-transform: none;
+}
+
+html[data-theme="dark"] .campaign-front .kpi-card,
+body.dark-mode .campaign-front .kpi-card {
+    background: linear-gradient(135deg, rgba(42,38,96,0.66), rgba(28,26,46,0.92));
+    border-color: color-mix(in srgb, var(--primary) 22%, var(--border));
+    box-shadow: 0 8px 22px rgba(0,0,0,0.24);
+}
+
+html[data-theme="dark"] .campaign-front .kpi-icon,
+body.dark-mode .campaign-front .kpi-icon {
+    background: var(--primary-light) !important;
+    border-color: color-mix(in srgb, var(--primary) 24%, var(--border));
+    color: #ddd6fe;
+}
+
+/* Compact FrontOffice indicator row */
+.campaign-front .page-header {
+    padding: 1.8rem 2rem;
+    border: 1px solid rgba(91,79,255,0.14);
+    border-radius: 22px;
+    background:
+        radial-gradient(circle at 92% 16%, rgba(226,30,128,0.10), transparent 30%),
+        linear-gradient(135deg, rgba(236,233,255,0.88), rgba(255,255,255,0.94));
+    box-shadow: 0 18px 44px rgba(91,79,255,0.10);
+}
+
+.campaign-front .kpi-strip {
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: stretch;
+    grid-template-columns: none !important;
+    gap: 10px;
+    margin-bottom: 28px;
+}
+
+.campaign-front .kpi-card {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 1 auto;
+    min-width: 0;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(236,233,255,0.84), rgba(255,255,255,0.94));
+}
+
+.campaign-front .kpi-icon {
+    display: none !important;
+}
+
+.campaign-front .kpi-value {
+    flex: 0 0 auto;
+    font-size: 1.12rem;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.campaign-front .kpi-label {
+    margin-top: 0;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+html[data-theme="dark"] .campaign-front .page-header,
+body.dark-mode .campaign-front .page-header {
+    background:
+        radial-gradient(circle at 92% 16%, rgba(226,30,128,0.14), transparent 30%),
+        linear-gradient(135deg, rgba(42,38,96,0.66), rgba(28,26,46,0.92));
+    border-color: color-mix(in srgb, var(--primary) 22%, var(--border));
+    box-shadow: 0 18px 44px rgba(0,0,0,0.24);
+}
+
+html[data-theme="dark"] .campaign-front .kpi-card,
+body.dark-mode .campaign-front .kpi-card {
+    background: linear-gradient(135deg, rgba(42,38,96,0.58), rgba(28,26,46,0.9));
+}
+
+.campaign-front > .kpi-strip {
+    display: none !important;
+}
+
+.campaign-front .page-header .kpi-strip {
+    display: flex !important;
+    flex-basis: 100%;
+    width: 100%;
+    margin: 10px 0 0;
+}
+
+/* AI campaign generator spotlight: brand campaign page */
+.campaign-front > .ia-panel {
+    position: relative;
+    overflow: hidden;
+    border-radius: 22px;
+    border: 1px solid rgba(139, 92, 246, 0.32);
+    background:
+        radial-gradient(circle at 12% 10%, rgba(91,79,255,.2), transparent 34%),
+        radial-gradient(circle at 90% 18%, rgba(226,30,128,.16), transparent 30%),
+        linear-gradient(135deg, rgba(255,255,255,.94), rgba(236,233,255,.74));
+    box-shadow:
+        0 18px 45px rgba(91,79,255,.14),
+        0 0 0 1px rgba(255,255,255,.45) inset;
+}
+
+.campaign-front > .ia-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(120deg, rgba(91,79,255,.72), rgba(226,30,128,.62), rgba(139,92,246,.62), rgba(91,79,255,.72));
+    opacity: .48;
+    pointer-events: none;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    animation: aiCampaignBorder 7s ease-in-out infinite;
+}
+
+.campaign-front > .ia-panel::after {
+    content: "";
+    position: absolute;
+    width: 190px;
+    height: 190px;
+    right: -76px;
+    top: -78px;
+    border-radius: 999px;
+    background: rgba(226,30,128,.18);
+    filter: blur(12px);
+    pointer-events: none;
+}
+
+.campaign-front > .ia-panel > * {
+    position: relative;
+    z-index: 1;
+}
+
+.campaign-front > .ia-panel .ia-panel-header > span {
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--primary), #e21e80);
+    box-shadow: 0 10px 24px rgba(91,79,255,.24);
+}
+
+.campaign-front > .ia-panel .ia-panel-header h2 {
+    color: var(--primary);
+}
+
+.campaign-front > .ia-panel .ia-form-group input {
+    background: color-mix(in srgb, var(--white) 90%, var(--primary-light)) !important;
+    border-color: color-mix(in srgb, var(--primary) 14%, var(--border)) !important;
+}
+
+.campaign-front > .ia-panel .ia-form-group input:focus {
+    box-shadow: 0 0 0 4px rgba(91,79,255,.14);
+}
+
+.campaign-front > .ia-panel .btn-ia {
+    background: linear-gradient(135deg, var(--primary), #e21e80) !important;
+    border-radius: 12px;
+    box-shadow: 0 14px 30px rgba(91,79,255,.24), 0 0 20px rgba(226,30,128,.14);
+}
+
+.campaign-front > .ia-panel .btn-ia:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+    filter: brightness(1.04);
+}
+
+html[data-theme="dark"] .campaign-front > .ia-panel,
+body.dark-mode .campaign-front > .ia-panel {
+    background:
+        radial-gradient(circle at 12% 10%, rgba(124,111,255,.22), transparent 34%),
+        radial-gradient(circle at 90% 18%, rgba(226,30,128,.18), transparent 30%),
+        linear-gradient(135deg, rgba(42,38,96,.68), rgba(28,26,46,.94));
+    border-color: rgba(124,111,255,.3);
+    box-shadow: 0 18px 45px rgba(0,0,0,.28), 0 0 0 1px rgba(124,111,255,.1) inset;
+}
+
+@keyframes aiCampaignBorder {
+    0%, 100% { opacity: .36; }
+    50% { opacity: .64; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .campaign-front > .ia-panel::before {
+        animation: none;
+    }
+}
 </style>
 
     <!-- Shared FrontOffice header assets -->
@@ -477,6 +723,13 @@ textarea.form-input{resize:vertical;min-height:90px;}
                 <span data-i18n="btn_new_campaign">Nouvelle campagne</span>
             </a>
             </div>
+        </div>
+        <div class="kpi-strip">
+            <div class="kpi-card"><div class="kpi-icon">⚡</div><div class="kpi-value"><?= $totalActives ?></div><div class="kpi-label" data-i18n="kpi_total">Total</div></div>
+            <div class="kpi-card"><div class="kpi-icon">✅</div><div class="kpi-value"><?= $nbActives ?></div><div class="kpi-label" data-i18n="kpi_active">Actives</div></div>
+            <div class="kpi-card"><div class="kpi-icon">📝</div><div class="kpi-value"><?= $nbBrouillons ?></div><div class="kpi-label" data-i18n="kpi_draft">Brouillons</div></div>
+            <div class="kpi-card"><div class="kpi-icon">🏁</div><div class="kpi-value"><?= $nbTerminees ?></div><div class="kpi-label" data-i18n="kpi_done">Terminées</div></div>
+            <div class="kpi-card"><div class="kpi-icon">💰</div><div class="kpi-value"><?= number_format($budgetTotal, 0, ',', ' ') ?> €</div><div class="kpi-label" data-i18n="kpi_budget">Budget total</div></div>
         </div>
     </div>
 
