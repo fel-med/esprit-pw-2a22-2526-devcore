@@ -2,12 +2,13 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../Modele/reclamation.php';
 require_once __DIR__ . '/session_helper.php';
+require_once __DIR__ . '/notificationC.php';
 
 
 class ReclamationC {
 
     // ✔️ Ajouter une réclamation
-    public function ajouterReclamation($reclamation) {
+    public function ajouterReclamation($reclamation, bool $isSuspensionAppeal = false) {
         $sql = "INSERT INTO reclamation 
                 (idUtilisateur, description, statut, priorite) 
                 VALUES (:idUtilisateur, :description, :statut, :priorite)";
@@ -20,10 +21,51 @@ class ReclamationC {
                 'statut'        => $reclamation->getStatut(),
                 'priorite'      => $reclamation->getPriorite()
             ]);
+            $reclamationId = (int) $db->lastInsertId();
+            $idUtilisateur = (int) $reclamation->getIdUtilisateur();
+            $description = (string) $reclamation->getDescription();
+            $isSuspensionAppeal = $isSuspensionAppeal || stripos($description, '[Suspension Appeal]') !== false;
+            $complainantRole = $this->getUserRoleById($idUtilisateur);
+
+            if ($reclamationId > 0 && $complainantRole !== '') {
+                try {
+                    $notificationC = new NotificationC($db);
+                    $notificationC->notifyComplaintCreated(
+                        $reclamationId,
+                        $idUtilisateur,
+                        $complainantRole,
+                        $description,
+                        $isSuspensionAppeal
+                    );
+                } catch (Throwable $e) {
+                    error_log('Complaint notification creation failed: ' . $e->getMessage());
+                }
+            }
+
+            return $reclamationId > 0 ? $reclamationId : true;
         } catch (Exception $e) {
-            die('Erreur ajout reclamation: ' . $e->getMessage());
+            error_log('Erreur ajout reclamation: ' . $e->getMessage());
+            return false;
         }
     }
+
+private function getUserRoleById(int $idUtilisateur): string {
+    if ($idUtilisateur <= 0) {
+        return '';
+    }
+
+    try {
+        $db = config::getConnexion();
+        $stmt = $db->prepare("SELECT role FROM utilisateur WHERE id = :id LIMIT 1");
+        $stmt->execute(['id' => $idUtilisateur]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        return cc_normalize_role($row['role'] ?? '');
+    } catch (Throwable $e) {
+        error_log('Unable to resolve complaint user role: ' . $e->getMessage());
+        return '';
+    }
+}
 public function afficherReclamationsAvecReponsesUser($idUtilisateur) {
     $sql = "SELECT 
                 r.id,

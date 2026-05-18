@@ -476,10 +476,6 @@ require_once __DIR__ . '/../layout/sidebar.php';
                     <h1 class="page-title" data-tr="title_main">Gestion des Contrats</h1>
                     <p class="page-subtitle" data-tr="subtitle_main">Supervision et modération</p>
                 </div>
-                <div class="lang-switcher bo-lang-switch" role="group" aria-label="Language selector" data-lang-switch>
-                    <button type="button" class="lang-btn" id="langEN" data-lang-option="en" onclick="setLang('en')" title="English">EN</button>
-                    <button type="button" class="lang-btn" id="langFR" data-lang-option="fr" onclick="setLang('fr')" title="Français">FR</button>
-                </div>
             </div>
 
             <!-- CHARTS -->
@@ -660,7 +656,9 @@ require_once __DIR__ . '/../layout/sidebar.php';
 <script src="../layout/back-layout.js<?= contratAssetVersion(__DIR__ . '/../layout/back-layout.js') ?>"></script>
 <script>
 function cre8BoReadLang() {
-    return localStorage.getItem('cre8_bo_lang')
+    if (window.cre8BackGetLang) return window.cre8BackGetLang();
+    return localStorage.getItem('cre8_back_lang')
+        || localStorage.getItem('cre8_bo_lang')
         || localStorage.getItem('cre8_lang')
         || localStorage.getItem('cre8_lang_contrat')
         || localStorage.getItem('cre8_lang_campagne')
@@ -668,7 +666,9 @@ function cre8BoReadLang() {
         || 'fr';
 }
 function cre8BoWriteLang(lang) {
+    localStorage.setItem('cre8_back_lang', lang);
     localStorage.setItem('cre8_bo_lang', lang);
+    localStorage.setItem('cre8_lang', lang);
 }
 
 // ===== TRANSLATION =====
@@ -737,6 +737,10 @@ function translatePage(lang) {
 }
 
 function setLang(lang) {
+    if (window.cre8BackSetLang && window.cre8BackGetLang && window.cre8BackGetLang() !== lang) {
+        window.cre8BackSetLang(lang);
+        return;
+    }
     currentLang = lang;
     cre8BoWriteLang(lang);
     translatePage(lang);
@@ -888,9 +892,19 @@ document.getElementById('deleteModal').addEventListener('click', function(e) {
     if (e.target === this) closeModal();
 });
 window.addEventListener('cre8:themechange', initCharts);
+window.addEventListener('cre8:languagechange', function(event) {
+    currentLang = (event.detail && event.detail.lang) || cre8BoReadLang();
+    translatePage(currentLang);
+    displayRows(rows);
+    initCharts();
+});
 
 // ===== INIT =====
 window.onload = () => {
+    if (window.cre8BackRegisterTranslations) {
+        window.cre8BackRegisterTranslations(i18n);
+    }
+    currentLang = cre8BoReadLang();
     translatePage(currentLang);
     displayRows(rows);
     initCharts();

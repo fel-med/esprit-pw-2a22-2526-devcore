@@ -1,0 +1,188 @@
+(function () {
+  var dictionaries = {};
+  var supported = { en: true, fr: true };
+
+  function readLang() {
+    try {
+      var lang = localStorage.getItem('cre8_back_lang')
+        || localStorage.getItem('cre8_bo_lang')
+        || localStorage.getItem('cre8_lang')
+        || 'en';
+      return supported[lang] ? lang : 'en';
+    } catch (e) {
+      return 'en';
+    }
+  }
+
+  function writeLang(lang) {
+    try {
+      localStorage.setItem('cre8_back_lang', lang);
+      localStorage.setItem('cre8_bo_lang', lang);
+      localStorage.setItem('cre8_lang', lang);
+    } catch (e) {
+      /* ignore storage failures */
+    }
+  }
+
+  function mergeDictionary(dictionary) {
+    if (!dictionary || typeof dictionary !== 'object') {
+      return;
+    }
+
+    Object.keys(dictionary).forEach(function (lang) {
+      if (!supported[lang]) {
+        return;
+      }
+      dictionaries[lang] = Object.assign(dictionaries[lang] || {}, dictionary[lang] || {});
+    });
+  }
+
+  function textFor(key, lang) {
+    return (dictionaries[lang] && dictionaries[lang][key])
+      || (dictionaries.en && dictionaries.en[key])
+      || key;
+  }
+
+  function applyTranslations() {
+    var lang = readLang();
+
+    document.querySelectorAll('[data-i18n]').forEach(function (node) {
+      var key = node.getAttribute('data-i18n');
+      if (key) {
+        node.textContent = textFor(key, lang);
+      }
+    });
+
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function (node) {
+      var key = node.getAttribute('data-i18n-placeholder');
+      if (key) {
+        node.setAttribute('placeholder', textFor(key, lang));
+      }
+    });
+
+    document.querySelectorAll('[data-i18n-title]').forEach(function (node) {
+      var key = node.getAttribute('data-i18n-title');
+      if (key) {
+        node.setAttribute('title', textFor(key, lang));
+      }
+    });
+
+    document.querySelectorAll('[data-i18n-aria-label]').forEach(function (node) {
+      var key = node.getAttribute('data-i18n-aria-label');
+      if (key) {
+        node.setAttribute('aria-label', textFor(key, lang));
+      }
+    });
+
+    document.querySelectorAll('[data-i18n-opt]').forEach(function (node) {
+      var key = node.getAttribute('data-i18n-opt');
+      if (key) {
+        node.textContent = textFor(key, lang);
+      }
+    });
+
+    document.querySelectorAll('[data-cre8-back-lang]').forEach(function (button) {
+      var active = button.getAttribute('data-cre8-back-lang') === lang;
+      button.classList.toggle('active', active);
+      button.classList.toggle('btn-primary', active);
+      button.classList.toggle('btn-outline-secondary', !active);
+      button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+  }
+
+  function setLang(lang) {
+    lang = supported[lang] ? lang : 'en';
+    writeLang(lang);
+    applyTranslations();
+    window.dispatchEvent(new CustomEvent('cre8:languagechange', { detail: { lang: lang } }));
+  }
+
+  function bindButtons() {
+    document.querySelectorAll('[data-cre8-back-lang]').forEach(function (button) {
+      if (button.dataset.cre8BackLangBound === '1') {
+        return;
+      }
+      button.dataset.cre8BackLangBound = '1';
+      button.addEventListener('click', function () {
+        setLang(button.getAttribute('data-cre8-back-lang'));
+      });
+    });
+  }
+
+  window.cre8BackGetLang = readLang;
+  window.cre8BackSetLang = setLang;
+  window.cre8BackApplyTranslations = applyTranslations;
+  window.cre8BackRegisterTranslations = function (dictionary) {
+    mergeDictionary(dictionary);
+    applyTranslations();
+  };
+
+  mergeDictionary({
+    en: {
+      'common.language': 'Language',
+      'common.english': 'English',
+      'common.french': 'French',
+      'header.search': 'Search admin workspace',
+      'header.messages': 'Messages',
+      'header.noMessages': 'No new messages',
+      'header.notifications': 'Notifications',
+      'header.noNotifications': 'No new notifications',
+      'header.profile': 'Profile',
+      'header.profileSettings': 'Profile Settings',
+      'header.logout': 'Logout',
+      'nav.navigation': 'Navigation',
+      'nav.dashboard': 'Dashboard',
+      'nav.users': 'Users',
+      'nav.adminManagement': 'Admin Management',
+      'nav.serverCenter': 'Server Center',
+      'nav.complaints': 'Complaints',
+      'nav.adminRequests': 'Admin Requests',
+      'nav.collaborations': 'Collaborations',
+      'nav.campaigns': 'Campaigns',
+      'nav.products': 'Products',
+      'nav.contracts': 'Contracts',
+      'nav.posts': 'Posts',
+      'nav.comments': 'Comments',
+      'nav.events': 'Events',
+      'nav.forum': 'Forum'
+    },
+    fr: {
+      'common.language': 'Langue',
+      'common.english': 'Anglais',
+      'common.french': 'Francais',
+      'header.search': 'Rechercher dans l espace admin',
+      'header.messages': 'Messages',
+      'header.noMessages': 'Aucun nouveau message',
+      'header.notifications': 'Notifications',
+      'header.noNotifications': 'Aucune nouvelle notification',
+      'header.profile': 'Profil',
+      'header.profileSettings': 'Parametres du profil',
+      'header.logout': 'Deconnexion',
+      'nav.navigation': 'Navigation',
+      'nav.dashboard': 'Tableau de bord',
+      'nav.users': 'Utilisateurs',
+      'nav.adminManagement': 'Gestion des admins',
+      'nav.serverCenter': 'Centre serveur',
+      'nav.complaints': 'Reclamations',
+      'nav.adminRequests': 'Demandes admin',
+      'nav.collaborations': 'Collaborations',
+      'nav.campaigns': 'Campagnes',
+      'nav.products': 'Produits',
+      'nav.contracts': 'Contrats',
+      'nav.posts': 'Publications',
+      'nav.comments': 'Commentaires',
+      'nav.events': 'Evenements',
+      'nav.forum': 'Forum'
+    }
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
+      bindButtons();
+      applyTranslations();
+    });
+  } else {
+    bindButtons();
+    applyTranslations();
+  }
+})();

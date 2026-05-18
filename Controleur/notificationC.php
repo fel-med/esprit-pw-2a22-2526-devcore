@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/session_helper.php';
 
 class NotificationC
 {
@@ -227,6 +228,299 @@ class NotificationC
         $row['dateLecture'] = $row['dateLecture'] ?? null;
 
         return $row;
+    }
+
+    public function getBackOfficeUserIdsByRoles(array $roles, ?int $excludeUserId = null): array
+    {
+        $roles = array_values(array_unique(array_filter(array_map(static function ($role) {
+            return cc_normalize_role($role);
+        }, $roles), static function ($role) {
+            return in_array($role, ['admin', 'super_admin', 'hyper_admin'], true);
+        })));
+
+        if (empty($roles)) {
+            return [];
+        }
+
+        $params = [];
+        $placeholders = [];
+        foreach ($roles as $index => $role) {
+            $key = 'role' . $index;
+            $placeholders[] = ':' . $key;
+            $params[$key] = $role;
+        }
+
+        $sql = "
+            SELECT id
+            FROM utilisateur
+            WHERE role IN (" . implode(',', $placeholders) . ")
+              AND statut = 'actif'
+        ";
+
+        if ($excludeUserId !== null && $excludeUserId > 0) {
+            $sql .= ' AND id <> :excludeUserId';
+            $params['excludeUserId'] = $excludeUserId;
+        }
+
+        $stmt = $this->pdo->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue(':' . $key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
+        }
+        $stmt->execute();
+
+        return array_values(array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN)));
+    }
+
+    public function getComplaintNotificationRecipientIds(string $complainantRole, int $complainantId): array
+    {
+        $complainantRole = cc_normalize_role($complainantRole);
+
+        $candidateRoles = ['admin', 'super_admin', 'hyper_admin'];
+        $roles = array_values(array_filter($candidateRoles, static function ($viewerRole) use ($complainantRole) {
+            return cc_can_view_reclamation_from_role($viewerRole, $complainantRole);
+        }));
+
+        return $this->getBackOfficeUserIdsByRoles($roles, $complainantId > 0 ? $complainantId : null);
+    }
+
+    public function notifyUsers(
+        array $recipientIds,
+        string $typeAction,
+        string $title,
+        string $message,
+        ?string $link = null,
+        ?string $sourceType = null,
+        $idSource = null,
+        $idActeur = null,
+        ?string $roleActeur = null,
+        ?string $cleActionPrefix = null,
+        $donnees = null
+    ): void {
+        foreach (array_values(array_unique(array_map('intval', $recipientIds))) as $recipientId) {
+            if ($recipientId <= 0) {
+                continue;
+            }
+
+            $cleAction = null;
+            if ($cleActionPrefix !== null && trim($cleActionPrefix) !== '') {
+                $cleAction = rtrim($cleActionPrefix, '_') . '_user_' . $recipientId;
+            }
+
+            $this->createNotification(
+                $recipientId,
+                $typeAction,
+                $title,
+                $message,
+                $link,
+                $sourceType,
+                $idSource,
+                $idActeur,
+                $roleActeur,
+                $cleAction,
+                $donnees
+            );
+        }
+    }
+
+    public function notifyComplaintCreated($reclamationId, $complainantId, $complainantRole, $description, bool $isSuspensionAppeal): void
+    {
+        try {
+            $reclamationId = (int) $reclamationId;
+            $complainantId = (int) $complainantId;
+            $complainantRole = cc_normalize_role($complainantRole);
+
+            if ($reclamationId <= 0 || $complainantId <= 0 || $complainantRole === '') {
+                return;
+            }
+
+            $recipients = $this->getComplaintNotificationRecipientIds($complainantRole, $complainantId);
+            if (empty($recipients)) {
+                return;
+            }
+
+            $typeAction = $isSuspensionAppeal ? 'suspension_appeal_new' : 'complaint_new';
+            $title = $isSuspensionAppeal ? 'Suspension appeal submitted' : 'New complaint';
+            $message = $this->notificationExcerpt((string) $description);
+            $link = function_exists('cc_app_url')
+                ? cc_app_url('Vue/BackOffice/utilisateur/reclamations.php')
+                : 'Vue/BackOffice/utilisateur/reclamations.php';
+
+            $this->notifyUsers(
+                $recipients,
+                $typeAction,
+                $title,
+                $message,
+                $link,
+                'reclamation',
+                $reclamationId,
+                $complainantId,
+                $complainantRole,
+                $typeAction . '_' . $reclamationId,
+                [
+                    'reclamation_id' => $reclamationId,
+                    'complainant_role' => $complainantRole,
+                    'is_suspension_appeal' => $isSuspensionAppeal,
+                ]
+            );
+        } catch (Throwable $e) {
+            error_log('Complaint notification fan-out failed: ' . $e->getMessage());
+        }
+    }
+
+    public function getAdminRequestRecipientIds($receiverScope, $receiverId = null, $excludeSenderId = null): array
+    {
+        $receiverScope = strtolower(trim((string) $receiverScope));
+        $excludeSenderId = is_numeric($excludeSenderId) && (int) $excludeSenderId > 0 ? (int) $excludeSenderId : null;
+
+        if ($receiverScope === 'super_admins') {
+            return $this->getBackOfficeUserIdsByRoles(['super_admin', 'hyper_admin'], $excludeSenderId);
+        }
+
+        if ($receiverScope === 'hyper_admins') {
+            return $this->getBackOfficeUserIdsByRoles(['hyper_admin'], $excludeSenderId);
+        }
+
+        if ($receiverScope === 'specific_admin') {
+            $receiverId = is_numeric($receiverId) && (int) $receiverId > 0 ? (int) $receiverId : 0;
+            if ($receiverId <= 0 || ($excludeSenderId !== null && $receiverId === $excludeSenderId)) {
+                return [];
+            }
+
+            $stmt = $this->pdo->prepare("
+                SELECT id
+                FROM utilisateur
+                WHERE id = :id
+                  AND statut = 'actif'
+                  AND role IN ('admin', 'super_admin', 'hyper_admin')
+                LIMIT 1
+            ");
+            $stmt->execute(['id' => $receiverId]);
+            $id = (int) ($stmt->fetchColumn() ?: 0);
+
+            return $id > 0 ? [$id] : [];
+        }
+
+        return [];
+    }
+
+    public function notifyAdminRequestReceived(
+        $requestId,
+        $senderId,
+        $senderRole,
+        $receiverScope,
+        $receiverId,
+        $requestType,
+        $title,
+        $message
+    ): void {
+        try {
+            $requestId = (int) $requestId;
+            $senderId = (int) $senderId;
+            $senderRole = cc_normalize_role($senderRole);
+
+            if ($requestId <= 0 || $senderId <= 0) {
+                return;
+            }
+
+            $recipients = $this->getAdminRequestRecipientIds($receiverScope, $receiverId, $senderId);
+            if (empty($recipients)) {
+                return;
+            }
+
+            $link = function_exists('cc_app_url')
+                ? cc_app_url('Vue/BackOffice/utilisateur/admin_requests.php')
+                : 'Vue/BackOffice/utilisateur/admin_requests.php';
+            $requestTitle = trim((string) $title) ?: 'Admin request';
+            $body = $this->notificationExcerpt($requestTitle . ' - from ' . $senderRole . '. ' . (string) $message);
+
+            $this->notifyUsers(
+                $recipients,
+                'admin_request_received',
+                'New admin request',
+                $body,
+                $link,
+                'admin_request',
+                $requestId,
+                $senderId,
+                $senderRole,
+                'admin_request_received_' . $requestId,
+                [
+                    'request_id' => $requestId,
+                    'request_type' => (string) $requestType,
+                    'receiver_scope' => (string) $receiverScope,
+                ]
+            );
+        } catch (Throwable $e) {
+            error_log('Admin request received notification failed: ' . $e->getMessage());
+        }
+    }
+
+    public function notifyAdminRequestStatusUpdated(
+        $requestId,
+        $senderId,
+        $handledBy,
+        $handledByRole,
+        $newStatus,
+        $title,
+        $responseMessage = null
+    ): void {
+        try {
+            $requestId = (int) $requestId;
+            $senderId = (int) $senderId;
+            $handledBy = is_numeric($handledBy) ? (int) $handledBy : null;
+            $handledByRole = cc_normalize_role($handledByRole);
+            $newStatus = strtolower(trim((string) $newStatus));
+
+            if ($requestId <= 0 || $senderId <= 0 || !in_array($newStatus, ['approved', 'refused', 'done'], true)) {
+                return;
+            }
+
+            $requestTitle = trim((string) $title) ?: 'Admin request';
+            $message = 'Your request "' . $requestTitle . '" was ' . $newStatus . '.';
+            $responseMessage = trim((string) $responseMessage);
+            if ($responseMessage !== '') {
+                $message .= ' ' . $this->notificationExcerpt($responseMessage, 90);
+            }
+
+            $link = function_exists('cc_app_url')
+                ? cc_app_url('Vue/BackOffice/utilisateur/admin_requests.php')
+                : 'Vue/BackOffice/utilisateur/admin_requests.php';
+
+            $this->createNotification(
+                $senderId,
+                'admin_request_status_updated',
+                'Admin request updated',
+                $message,
+                $link,
+                'admin_request',
+                $requestId,
+                $handledBy,
+                $handledByRole,
+                'admin_request_status_' . $requestId . '_' . $newStatus . '_sender_' . $senderId,
+                [
+                    'request_id' => $requestId,
+                    'status' => $newStatus,
+                ]
+            );
+        } catch (Throwable $e) {
+            error_log('Admin request status notification failed: ' . $e->getMessage());
+        }
+    }
+
+    private function notificationExcerpt(string $description, int $limit = 140): string
+    {
+        $text = trim(preg_replace('/\s+/', ' ', strip_tags($description)) ?? '');
+        if ($text === '') {
+            return 'A complaint was submitted.';
+        }
+
+        if (function_exists('mb_strlen') && function_exists('mb_substr')) {
+            return mb_strlen($text, 'UTF-8') > $limit
+                ? mb_substr($text, 0, $limit - 1, 'UTF-8') . '...'
+                : $text;
+        }
+
+        return strlen($text) > $limit ? substr($text, 0, $limit - 1) . '...' : $text;
     }
 
 

@@ -35,7 +35,11 @@ if (isset($_POST['description']) && ($isSuspendedAppeal || isset($_POST['priorit
     );
 
     $reclamationC = new ReclamationC();
-    $reclamationC->ajouterReclamation($reclamation);
+    $createdId = $reclamationC->ajouterReclamation($reclamation, $isSuspendedAppeal);
+    if ($createdId === false) {
+        header('Location: reclamation.php' . ($isSuspendedAppeal ? '?appeal=1&error=1' : '?error=1'));
+        exit();
+    }
 
     header('Location: reclamation.php' . ($isSuspendedAppeal ? '?appeal=1&success=1' : '?success=1'));
     exit();

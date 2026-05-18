@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../Modele/adminRequest.php';
 require_once __DIR__ . '/session_helper.php';
+require_once __DIR__ . '/notificationC.php';
 
 class AdminRequestC
 {
@@ -84,7 +85,26 @@ class AdminRequestC
             ':message' => $message,
         ]);
 
-        return (int)$db->lastInsertId();
+        $requestId = (int)$db->lastInsertId();
+        if ($requestId > 0) {
+            try {
+                $notificationC = new NotificationC($db);
+                $notificationC->notifyAdminRequestReceived(
+                    $requestId,
+                    $senderId,
+                    $senderRole,
+                    $receiverScope,
+                    $receiverId,
+                    $requestType,
+                    $title,
+                    $message
+                );
+            } catch (Throwable $e) {
+                error_log('Admin request received notification hook failed: ' . $e->getMessage());
+            }
+        }
+
+        return $requestId;
     }
 
     public function listVisibleRequests($viewerId, $viewerRole, $filter = 'inbox'): array
@@ -146,6 +166,7 @@ class AdminRequestC
         }
 
         $db = config::getConnexion();
+        $request = $this->getRequestById($id);
         $stmt = $db->prepare("
             UPDATE admin_requests
             SET status = :status,
@@ -164,7 +185,25 @@ class AdminRequestC
             ':id' => $id,
         ]);
 
-        return $stmt->rowCount() > 0;
+        $updated = $stmt->rowCount() > 0;
+        if ($updated && $request !== null && in_array($status, ['approved', 'refused', 'done'], true)) {
+            try {
+                $notificationC = new NotificationC($db);
+                $notificationC->notifyAdminRequestStatusUpdated(
+                    $id,
+                    $request['sender_id'] ?? null,
+                    $handledBy,
+                    $handledByRole,
+                    $status,
+                    $request['title'] ?? '',
+                    $responseMessage
+                );
+            } catch (Throwable $e) {
+                error_log('Admin request status notification hook failed: ' . $e->getMessage());
+            }
+        }
+
+        return $updated;
     }
 
     public function cancelRequest($id, $senderId): bool

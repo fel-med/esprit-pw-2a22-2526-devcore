@@ -50,7 +50,7 @@ if ($adminId !== null) {
           <ul class="navbar-nav w-100">
             <li class="nav-item w-100">
               <form class="nav-link mt-2 mt-md-0 d-none d-lg-flex search" action="#" method="get">
-                <input type="text" class="form-control" placeholder="Search admin workspace">
+                <input type="text" class="form-control" placeholder="Search admin workspace" data-i18n-placeholder="header.search">
               </form>
             </li>
           </ul>
@@ -78,7 +78,7 @@ if ($adminId !== null) {
               </div>
             </li>
             <li class="nav-item nav-settings d-none d-lg-block">
-              <a class="nav-link" href="<?php echo htmlspecialchars($backBoRootWeb . '/dashboard/index.php'); ?>" title="Dashboard">
+              <a class="nav-link" href="<?php echo htmlspecialchars($backBoRootWeb . '/dashboard/index.php'); ?>" title="Dashboard" data-i18n-title="nav.dashboard" data-i18n-aria-label="nav.dashboard">
                 <i class="mdi mdi-view-grid"></i>
               </a>
             </li>
@@ -87,36 +87,40 @@ if ($adminId !== null) {
                 <i id="themeIcon" class="mdi mdi-weather-night"></i>
               </a>
             </li>
+            <li class="nav-item border-left d-flex align-items-center px-2" title="Language" data-i18n-title="common.language">
+              <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2 mr-1" data-cre8-back-lang="en" data-i18n-title="common.english">EN</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" data-cre8-back-lang="fr" data-i18n-title="common.french">FR</button>
+            </li>
             <li class="nav-item dropdown border-left">
-              <a class="nav-link count-indicator dropdown-toggle" id="messageDropdown" href="#" data-toggle="dropdown" aria-expanded="false">
+              <a class="nav-link count-indicator dropdown-toggle" id="messageDropdown" href="#" data-toggle="dropdown" aria-expanded="false" title="Messages" data-i18n-title="header.messages" data-i18n-aria-label="header.messages">
                 <i class="mdi mdi-email"></i>
                 <span class="count bg-success"></span>
               </a>
               <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list" aria-labelledby="messageDropdown">
-                <h6 class="p-3 mb-0">Messages</h6>
+                <h6 class="p-3 mb-0" data-i18n="header.messages">Messages</h6>
                 <div class="dropdown-divider"></div>
                 <a class="dropdown-item preview-item">
                   <div class="preview-thumbnail"><img src="<?php echo htmlspecialchars($backBoUtilisateurWeb . '/assets/images/faces/face4.jpg'); ?>" alt="image" class="rounded-circle profile-pic"></div>
                   <div class="preview-item-content"><p class="preview-subject ellipsis mb-1">Admin message center</p><p class="text-muted mb-0"> Ready for team updates </p></div>
                 </a>
                 <div class="dropdown-divider"></div>
-                <p class="p-3 mb-0 text-center">No new messages</p>
+                <p class="p-3 mb-0 text-center" data-i18n="header.noMessages">No new messages</p>
               </div>
             </li>
             <li class="nav-item dropdown border-left">
-              <a class="nav-link count-indicator dropdown-toggle" id="notificationDropdown" href="#" data-toggle="dropdown">
+              <a class="nav-link count-indicator dropdown-toggle" id="notificationDropdown" href="#" data-toggle="dropdown" title="Notifications" data-i18n-title="header.notifications" data-i18n-aria-label="header.notifications" data-bo-notification-toggle>
                 <i class="mdi mdi-bell"></i>
-                <span class="count bg-danger"></span>
+                <span class="count bg-danger d-none" id="boNotifCount" aria-live="polite" style="min-width:18px;height:18px;line-height:18px;font-size:.65rem;text-align:center;border-radius:999px;"></span>
               </a>
-              <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list" aria-labelledby="notificationDropdown">
-                <h6 class="p-3 mb-0">Notifications</h6>
+              <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list" aria-labelledby="notificationDropdown" data-bo-notification-dropdown>
+                <div class="d-flex align-items-center justify-content-between px-3 py-2">
+                  <h6 class="mb-0" data-i18n="header.notifications">Notifications</h6>
+                  <button type="button" class="btn btn-link btn-sm p-0 text-primary" id="boNotifMarkAll" data-i18n="header.markAllRead">Mark all as read</button>
+                </div>
                 <div class="dropdown-divider"></div>
-                <a class="dropdown-item preview-item">
-                  <div class="preview-thumbnail"><div class="preview-icon bg-dark rounded-circle"><i class="mdi mdi-calendar text-success"></i></div></div>
-                  <div class="preview-item-content"><p class="preview-subject mb-1">Admin workspace</p><p class="text-muted ellipsis mb-0"> Shared layout is active </p></div>
-                </a>
-                <div class="dropdown-divider"></div>
-                <p class="p-3 mb-0 text-center">See all notifications</p>
+                <div id="boNotifList" data-bo-notification-list>
+                  <p class="p-3 mb-0 text-center" data-i18n="header.noNotifications">No new notifications</p>
+                </div>
               </div>
             </li>
             <li class="nav-item dropdown cre8-profile-dropdown" data-cre8-profile-dropdown>
@@ -132,16 +136,16 @@ if ($adminId !== null) {
                 </div>
               </a>
               <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list cre8-profile-menu" aria-labelledby="profileDropdown" data-cre8-profile-menu>
-                <h6 class="p-3 mb-0">Profile</h6>
+                <h6 class="p-3 mb-0" data-i18n="header.profile">Profile</h6>
                 <div class="dropdown-divider"></div>
                 <a class="dropdown-item preview-item" href="<?php echo htmlspecialchars($backProfileSettingsUrl); ?>">
                   <div class="preview-thumbnail"><div class="preview-icon bg-dark rounded-circle"><i class="mdi mdi-settings text-success"></i></div></div>
-                  <div class="preview-item-content"><p class="preview-subject mb-1">Settings</p></div>
+                  <div class="preview-item-content"><p class="preview-subject mb-1" data-i18n="header.profileSettings">Profile Settings</p></div>
                 </a>
                 <div class="dropdown-divider"></div>
                 <a href="<?php echo htmlspecialchars($backBoUtilisateurWeb . '/logout.php'); ?>" class="dropdown-item preview-item">
                   <div class="preview-thumbnail"><div class="preview-icon bg-dark rounded-circle"><i class="mdi mdi-logout text-danger"></i></div></div>
-                  <div class="preview-item-content"><p class="preview-subject mb-1">Log out</p></div>
+                  <div class="preview-item-content"><p class="preview-subject mb-1" data-i18n="header.logout">Logout</p></div>
                 </a>
               </div>
             </li>
@@ -152,3 +156,10 @@ if ($adminId !== null) {
         </div>
       </nav>
       <!-- partial -->
+      <script src="<?php echo htmlspecialchars($backBoRootWeb . '/layout/back-translate.js?v=' . filemtime(__DIR__ . '/back-translate.js')); ?>"></script>
+      <script>
+        window.Cre8BackNotifications = {
+          apiUrl: <?php echo json_encode($backBoUtilisateurWeb . '/notifications_api.php', JSON_UNESCAPED_SLASHES); ?>
+        };
+      </script>
+      <script src="<?php echo htmlspecialchars($backBoRootWeb . '/layout/back-notifications.js?v=' . filemtime(__DIR__ . '/back-notifications.js')); ?>"></script>

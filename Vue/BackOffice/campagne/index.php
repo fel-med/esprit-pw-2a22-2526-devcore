@@ -695,10 +695,6 @@ require_once __DIR__ . '/../layout/sidebar.php';
                 <h1 class="page-title" data-i18n="pageTitle">⚡ Gestion des Campagnes</h1>
                 <p class="page-subtitle" data-i18n="pageSubtitle">Supervision et modération des campagnes.</p>
             </div>
-            <div class="lang-switcher bo-lang-switch" role="group" aria-label="Language selector" data-lang-switch>
-                <button type="button" class="lang-btn" id="langEN" data-lang-option="en" onclick="setLang('en')" title="English">EN</button>
-                <button type="button" class="lang-btn" id="langFR" data-lang-option="fr" onclick="setLang('fr')" title="Français">FR</button>
-            </div>
         </div>
 
         <!-- KPI -->
@@ -1102,7 +1098,9 @@ document.addEventListener('DOMContentLoaded', () => document.getElementById('for
 
 // ── Shared BO language key (persists across Campaigns / Products / Contracts) ──
 function cre8BoReadLang() {
-    return localStorage.getItem('cre8_bo_lang')
+    if (window.cre8BackGetLang) return window.cre8BackGetLang();
+    return localStorage.getItem('cre8_back_lang')
+        || localStorage.getItem('cre8_bo_lang')
         || localStorage.getItem('cre8_lang')
         || localStorage.getItem('cre8_lang_campagne')
         || localStorage.getItem('cre8_lang_produit')
@@ -1110,7 +1108,9 @@ function cre8BoReadLang() {
         || 'fr';
 }
 function cre8BoWriteLang(lang) {
+    localStorage.setItem('cre8_back_lang', lang);
     localStorage.setItem('cre8_bo_lang', lang);
+    localStorage.setItem('cre8_lang', lang);
 }
 
 // ── TRANSLATIONS ──────────────────────────────────────────────────
@@ -1159,6 +1159,10 @@ const translations = {
 let currentLang = cre8BoReadLang();
 
 function setLang(lang) {
+    if (window.cre8BackSetLang && window.cre8BackGetLang && window.cre8BackGetLang() !== lang) {
+        window.cre8BackSetLang(lang);
+        return;
+    }
     currentLang = lang;
     cre8BoWriteLang(lang);
     applyTranslations();
@@ -1381,6 +1385,10 @@ window.addEventListener('cre8:themechange', buildCharts);
 
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
+    if (window.cre8BackRegisterTranslations) {
+        window.cre8BackRegisterTranslations(translations);
+    }
+    currentLang = cre8BoReadLang();
     applyTranslations();
     updateTabLabels();
     document.getElementById('langFR')?.classList.toggle('active', currentLang === 'fr');
@@ -1391,6 +1399,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Search
     const si = document.getElementById('searchInput');
     if (si) si.addEventListener('input', filterAndPaginate);
+});
+
+window.addEventListener('cre8:languagechange', function(event) {
+    currentLang = (event.detail && event.detail.lang) || cre8BoReadLang();
+    applyTranslations();
+    updateTabLabels();
+    renderPagination();
+    if (typeof buildCharts === 'function') buildCharts();
 });
 </script>
 </body>

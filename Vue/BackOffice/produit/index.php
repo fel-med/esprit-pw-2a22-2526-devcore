@@ -486,10 +486,6 @@ require_once __DIR__ . '/../layout/sidebar.php';
                 <div class="page-title" data-i18n="pageTitle">Product Management</div>
                 <div class="page-subtitle" data-i18n="pageSubtitle">Supervise, add, edit and analyze all platform products.</div>
             </div>
-            <div class="lang-switcher bo-lang-switch" role="group" aria-label="Language selector" data-lang-switch>
-                <button type="button" class="lang-btn" id="langEN" data-lang-option="en" onclick="setLang('en')" title="English">EN</button>
-                <button type="button" class="lang-btn" id="langFR" data-lang-option="fr" onclick="setLang('fr')" title="Français">FR</button>
-            </div>
         </div>
         <div class="bo-content-actions">
             <div class="search-wrap">
@@ -1444,7 +1440,9 @@ const translations = {
 };
 
 function cre8BoReadLang() {
-    return localStorage.getItem('cre8_bo_lang')
+    if (window.cre8BackGetLang) return window.cre8BackGetLang();
+    return localStorage.getItem('cre8_back_lang')
+        || localStorage.getItem('cre8_bo_lang')
         || localStorage.getItem('cre8_lang')
         || localStorage.getItem('cre8_lang_produit')
         || localStorage.getItem('cre8_lang_campagne')
@@ -1452,17 +1450,23 @@ function cre8BoReadLang() {
         || 'fr';
 }
 function cre8BoWriteLang(lang) {
+    localStorage.setItem('cre8_back_lang', lang);
     localStorage.setItem('cre8_bo_lang', lang);
+    localStorage.setItem('cre8_lang', lang);
 }
 
 let currentLang = cre8BoReadLang();
 
 function setLang(lang) {
+    if (window.cre8BackSetLang && window.cre8BackGetLang && window.cre8BackGetLang() !== lang) {
+        window.cre8BackSetLang(lang);
+        return;
+    }
     currentLang = lang;
     cre8BoWriteLang(lang);
     applyTranslations();
-    document.getElementById('langEN').classList.toggle('active', lang === 'en');
-    document.getElementById('langFR').classList.toggle('active', lang === 'fr');
+    document.getElementById('langEN')?.classList.toggle('active', lang === 'en');
+    document.getElementById('langFR')?.classList.toggle('active', lang === 'fr');
     // Refresh pagination text
     renderPage(currentPage);
 }
@@ -1525,9 +1529,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Init theme (dark default for BackOffice)
     initTheme();
     // Init language
+    if (window.cre8BackRegisterTranslations) {
+        window.cre8BackRegisterTranslations(translations);
+    }
+    currentLang = cre8BoReadLang();
     applyTranslations();
-    document.getElementById('langEN').classList.toggle('active', currentLang === 'en');
-    document.getElementById('langFR').classList.toggle('active', currentLang === 'fr');
+    document.getElementById('langEN')?.classList.toggle('active', currentLang === 'en');
+    document.getElementById('langFR')?.classList.toggle('active', currentLang === 'fr');
+});
+
+window.addEventListener('cre8:languagechange', function(event) {
+    currentLang = (event.detail && event.detail.lang) || cre8BoReadLang();
+    applyTranslations();
+    renderPage(currentPage);
 });
 </script>
 </body>

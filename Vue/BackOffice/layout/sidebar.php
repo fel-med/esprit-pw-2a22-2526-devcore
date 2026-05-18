@@ -94,6 +94,23 @@ if (isHyperAdmin($backRole)) {
         'iconClass' => 'text-info',
     ]]);
 }
+
+$backNavI18nKeys = [
+    'dashboard' => 'nav.dashboard',
+    'users' => 'nav.users',
+    'admin_management' => 'nav.adminManagement',
+    'server_center' => 'nav.serverCenter',
+    'reclamations' => 'nav.complaints',
+    'admin_requests' => 'nav.adminRequests',
+    'collaborations' => 'nav.collaborations',
+    'campaigns' => 'nav.campaigns',
+    'products' => 'nav.products',
+    'contracts' => 'nav.contracts',
+    'posts' => 'nav.posts',
+    'comments' => 'nav.comments',
+    'events' => 'nav.events',
+    'forum' => 'nav.forum',
+];
 ?>
 <!-- partial:partials/_sidebar.html -->
 <nav class="sidebar sidebar-offcanvas" id="sidebar">
@@ -128,7 +145,7 @@ if (isHyperAdmin($backRole)) {
         <div class="dropdown-menu dropdown-menu-right sidebar-dropdown preview-list" aria-labelledby="profile-dropdown">
           <a href="<?php echo htmlspecialchars($backProfileSettingsUrl); ?>" class="dropdown-item preview-item">
             <div class="preview-thumbnail"><div class="preview-icon bg-dark rounded-circle"><i class="mdi mdi-settings text-primary"></i></div></div>
-            <div class="preview-item-content"><p class="preview-subject ellipsis mb-1 text-small">Account settings</p></div>
+            <div class="preview-item-content"><p class="preview-subject ellipsis mb-1 text-small" data-i18n="header.profileSettings">Profile Settings</p></div>
           </a>
           <div class="dropdown-divider"></div>
           <a href="#" class="dropdown-item preview-item">
@@ -145,7 +162,7 @@ if (isHyperAdmin($backRole)) {
     </li>
 
     <li class="nav-item nav-category">
-      <span class="nav-link">Navigation</span>
+      <span class="nav-link" data-i18n="nav.navigation">Navigation</span>
     </li>
 
     <?php foreach ($backItems as $item): ?>
@@ -159,7 +176,7 @@ if (isHyperAdmin($backRole)) {
           <span class="menu-icon">
             <i class="mdi <?php echo htmlspecialchars($item['icon'] . ' ' . $item['iconClass']); ?>"></i>
           </span>
-          <span class="menu-title"><?php echo htmlspecialchars($item['label']); ?></span>
+          <span class="menu-title" data-i18n="<?php echo htmlspecialchars($backNavI18nKeys[$item['key']] ?? ('nav.' . $item['key'])); ?>"><?php echo htmlspecialchars($item['label']); ?></span>
         </a>
       </li>
     <?php endforeach; ?>
