@@ -3346,74 +3346,309 @@ body.cre8-admin-layout .navbar .cre8-workspace-search-kbd {
   }
 }
 
-/* Header profile name + role pill */
-body.cre8-admin-layout .navbar-profile .cre8-header-user-meta {
+/* Header profile identity: avatar + name together, role displayed as a secondary line. */
+body.cre8-admin-layout .navbar-profile {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 0.45rem !important;
-  flex: 0 1 auto !important;
+  gap: 0.62rem !important;
   min-width: 0 !important;
 }
 
+body.cre8-admin-layout .navbar-profile .img-xs,
+body.cre8-admin-layout .navbar-profile img.img-xs,
+body.cre8-admin-layout .navbar-profile span.img-xs {
+  width: 2.55rem !important;
+  height: 2.55rem !important;
+  flex: 0 0 2.55rem !important;
+}
+
+body.cre8-admin-layout .navbar-profile .cre8-header-user-meta {
+  display: inline-flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  gap: 0.18rem !important;
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  line-height: 1.08 !important;
+}
+
+body.cre8-admin-layout .navbar-profile .cre8-header-user-name-row {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  min-width: 0 !important;
+  max-width: 180px !important;
+}
+
 body.cre8-admin-layout .navbar-profile .navbar-profile-name {
+  display: inline-block !important;
+  min-width: 0 !important;
+  max-width: 160px !important;
   margin: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
   white-space: nowrap !important;
   color: inherit !important;
   font-size: 0.94rem !important;
-  font-weight: 800 !important;
-  line-height: 1.2 !important;
+  font-weight: 900 !important;
+  line-height: 1.05 !important;
+  letter-spacing: -0.015em !important;
+}
+
+body.cre8-admin-layout .navbar-profile .cre8-profile-chevron {
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+  color: #96a1ba !important;
+  font-size: 1.02rem !important;
+  line-height: 1 !important;
+  transition: transform 0.18s ease, color 0.18s ease !important;
+}
+
+body.cre8-admin-layout .cre8-profile-dropdown.show .navbar-profile .cre8-profile-chevron,
+body.cre8-admin-layout .navbar-profile:hover .cre8-profile-chevron {
+  color: #ffffff !important;
+}
+
+body.cre8-admin-layout .cre8-profile-dropdown.show .navbar-profile .cre8-profile-chevron {
+  transform: rotate(180deg) !important;
 }
 
 body.cre8-admin-layout .navbar-profile .cre8-role-badge {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  height: 1.25rem !important;
-  padding: 0 0.5rem !important;
+  width: fit-content !important;
+  max-width: 160px !important;
+  min-height: 1.18rem !important;
+  padding: 0.12rem 0.5rem !important;
   white-space: nowrap !important;
   border-radius: 999px !important;
-  font-size: 0.62rem !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.03em !important;
-  text-transform: none !important;
+  font-size: 0.64rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.035em !important;
+  text-transform: uppercase !important;
   line-height: 1 !important;
   border: 1px solid transparent !important;
   flex-shrink: 0 !important;
-  opacity: 0.95 !important;
+  opacity: 0.96 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
 }
 
 body.cre8-admin-layout .navbar-profile .cre8-role-badge--admin {
-  background: rgba(59, 130, 246, 0.16) !important;
-  border-color: rgba(59, 130, 246, 0.35) !important;
-  color: #93c5fd !important;
+  background: rgba(59, 130, 246, 0.14) !important;
+  border-color: rgba(59, 130, 246, 0.32) !important;
+  color: #bfdbfe !important;
 }
 
 body.cre8-admin-layout .navbar-profile .cre8-role-badge--super {
-  background: rgba(139, 92, 246, 0.18) !important;
-  border-color: rgba(139, 92, 246, 0.38) !important;
-  color: #c4b5fd !important;
+  background: rgba(139, 92, 246, 0.16) !important;
+  border-color: rgba(139, 92, 246, 0.34) !important;
+  color: #ddd6fe !important;
 }
 
 body.cre8-admin-layout .navbar-profile .cre8-role-badge--hyper {
-  background: rgba(225, 29, 116, 0.16) !important;
-  border-color: rgba(225, 29, 116, 0.38) !important;
-  color: #f9a8d4 !important;
+  background: linear-gradient(135deg, rgba(225, 29, 116, 0.20), rgba(124, 58, 237, 0.14)) !important;
+  border-color: rgba(225, 29, 116, 0.42) !important;
+  color: #fbcfe8 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 16px rgba(225, 29, 116, 0.12) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .navbar-profile .cre8-profile-chevron,
+body.cre8-admin-layout.light-mode .navbar-profile .cre8-profile-chevron,
+body.light-mode.cre8-admin-layout .navbar-profile .cre8-profile-chevron {
+  color: #64748b !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .navbar-profile:hover .cre8-profile-chevron,
+html[data-theme="light"] body.cre8-admin-layout .cre8-profile-dropdown.show .navbar-profile .cre8-profile-chevron,
+body.cre8-admin-layout.light-mode .navbar-profile:hover .cre8-profile-chevron,
+body.cre8-admin-layout.light-mode .cre8-profile-dropdown.show .navbar-profile .cre8-profile-chevron,
+body.light-mode.cre8-admin-layout .navbar-profile:hover .cre8-profile-chevron,
+body.light-mode.cre8-admin-layout .cre8-profile-dropdown.show .navbar-profile .cre8-profile-chevron {
+  color: #4f46e5 !important;
 }
 
 html[data-theme="light"] body.cre8-admin-layout .navbar-profile .cre8-role-badge--admin,
 body.cre8-admin-layout.light-mode .navbar-profile .cre8-role-badge--admin,
 body.light-mode.cre8-admin-layout .navbar-profile .cre8-role-badge--admin {
+  background: rgba(59, 130, 246, 0.10) !important;
+  border-color: rgba(59, 130, 246, 0.24) !important;
   color: #1d4ed8 !important;
 }
 
 html[data-theme="light"] body.cre8-admin-layout .navbar-profile .cre8-role-badge--super,
 body.cre8-admin-layout.light-mode .navbar-profile .cre8-role-badge--super,
 body.light-mode.cre8-admin-layout .navbar-profile .cre8-role-badge--super {
+  background: rgba(139, 92, 246, 0.10) !important;
+  border-color: rgba(139, 92, 246, 0.24) !important;
   color: #6d28d9 !important;
 }
 
 html[data-theme="light"] body.cre8-admin-layout .navbar-profile .cre8-role-badge--hyper,
 body.cre8-admin-layout.light-mode .navbar-profile .cre8-role-badge--hyper,
 body.light-mode.cre8-admin-layout .navbar-profile .cre8-role-badge--hyper {
+  background: linear-gradient(135deg, rgba(225, 29, 116, 0.10), rgba(124, 58, 237, 0.08)) !important;
+  border-color: rgba(225, 29, 116, 0.26) !important;
   color: #be185d !important;
+  box-shadow: 0 0 14px rgba(225, 29, 116, 0.08) !important;
 }
+
+@media (max-width: 767.98px) {
+  body.cre8-admin-layout .navbar-profile .cre8-role-badge {
+    display: none !important;
+  }
+}
+
+@media (max-width: 575.98px) {
+  body.cre8-admin-layout .navbar-profile .cre8-header-user-meta {
+    display: none !important;
+  }
+}
+
+/* =========================================================
+   CRE8 HEADER LANGUAGE TOGGLE HARD LOCK
+   Keeps EN/FR as a rounded segmented pill on Collaboration pages.
+   Module CSS can load after the shared layout, so this override is
+   intentionally scoped to the shared BackOffice header only.
+   ========================================================= */
+body.cre8-admin-layout .navbar .navbar-nav-right > .nav-item.cre8-header-action-item.d-flex.align-items-center {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 70px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body.cre8-admin-layout .navbar .navbar-nav-right > .nav-item.cre8-header-action-item.d-flex.align-items-center:hover,
+body.cre8-admin-layout .navbar .navbar-nav-right > .nav-item.cre8-header-action-item.d-flex.align-items-center:focus,
+body.cre8-admin-layout .navbar .navbar-nav-right > .nav-item.cre8-header-action-item.d-flex.align-items-center:focus-within {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body.cre8-admin-layout .navbar .cre8-lang-toggle,
+body.cre8-admin-layout .navbar.fixed-top .cre8-lang-toggle,
+body.cre8-admin-layout .navbar .navbar-nav-right .cre8-lang-toggle {
+  box-sizing: border-box !important;
+  width: auto !important;
+  min-width: 86px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.18rem !important;
+  margin: 0 !important;
+  padding: 0.22rem !important;
+  border: 1px solid rgba(148, 163, 184, 0.18) !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.045) !important;
+  color: inherit !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+  overflow: hidden !important;
+}
+
+body.cre8-admin-layout .navbar .cre8-lang-toggle::before,
+body.cre8-admin-layout .navbar .cre8-lang-toggle::after {
+  display: none !important;
+  content: none !important;
+}
+
+body.cre8-admin-layout .navbar .cre8-lang-btn,
+body.cre8-admin-layout .navbar.fixed-top .cre8-lang-btn,
+body.cre8-admin-layout .navbar .navbar-nav-right .cre8-lang-btn,
+body.cre8-admin-layout .navbar .cre8-lang-toggle .cre8-lang-btn {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  box-sizing: border-box !important;
+  width: auto !important;
+  min-width: 38px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+  padding: 0 0.62rem !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  outline: 0 !important;
+  background: transparent !important;
+  color: #aeb8ce !important;
+  box-shadow: none !important;
+  font-family: "Segoe UI", Arial, sans-serif !important;
+  font-size: 0.78rem !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  letter-spacing: 0.02em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+}
+
+body.cre8-admin-layout .navbar .cre8-lang-btn:hover,
+body.cre8-admin-layout .navbar .cre8-lang-toggle .cre8-lang-btn:hover {
+  background: rgba(124, 92, 255, 0.14) !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+body.cre8-admin-layout .navbar .cre8-lang-btn.active,
+body.cre8-admin-layout .navbar .cre8-lang-btn.btn-primary,
+body.cre8-admin-layout .navbar .cre8-lang-toggle .cre8-lang-btn.active,
+body.cre8-admin-layout .navbar .cre8-lang-toggle .cre8-lang-btn.btn-primary {
+  background: linear-gradient(135deg, #5b4fff, #8b5cf6) !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 18px rgba(91, 79, 255, 0.28) !important;
+}
+
+body.cre8-admin-layout .navbar .cre8-lang-btn.btn-outline-secondary,
+body.cre8-admin-layout .navbar .cre8-lang-btn.btn-secondary,
+body.cre8-admin-layout .navbar .cre8-lang-toggle .cre8-lang-btn.btn-outline-secondary,
+body.cre8-admin-layout .navbar .cre8-lang-toggle .cre8-lang-btn.btn-secondary {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .navbar .cre8-lang-toggle,
+body.cre8-admin-layout.light-mode .navbar .cre8-lang-toggle,
+body.light-mode.cre8-admin-layout .navbar .cre8-lang-toggle {
+  border-color: #dbe3ef !important;
+  background: #f8fafc !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .navbar .cre8-lang-btn,
+body.cre8-admin-layout.light-mode .navbar .cre8-lang-btn,
+body.light-mode.cre8-admin-layout .navbar .cre8-lang-btn {
+  color: #64748b !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .navbar .cre8-lang-btn:hover,
+body.cre8-admin-layout.light-mode .navbar .cre8-lang-btn:hover,
+body.light-mode.cre8-admin-layout .navbar .cre8-lang-btn:hover {
+  background: #ece9ff !important;
+  color: #4f46e5 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .navbar .cre8-lang-btn.active,
+html[data-theme="light"] body.cre8-admin-layout .navbar .cre8-lang-btn.btn-primary,
+body.cre8-admin-layout.light-mode .navbar .cre8-lang-btn.active,
+body.cre8-admin-layout.light-mode .navbar .cre8-lang-btn.btn-primary,
+body.light-mode.cre8-admin-layout .navbar .cre8-lang-btn.active,
+body.light-mode.cre8-admin-layout .navbar .cre8-lang-btn.btn-primary {
+  background: linear-gradient(135deg, #5b4fff, #8b5cf6) !important;
+  color: #ffffff !important;
+}
+

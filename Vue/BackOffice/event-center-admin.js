@@ -9,11 +9,15 @@
     const button = panel.querySelector("[data-ec-stats-toggle]");
     panel.classList.toggle("is-collapsed", !visible);
     if (button) {
-      button.setAttribute("data-i18n", visible ? "common.hideStatistics" : "common.showStatistics");
-      if (window.cre8BackApplyTranslations) {
+      const key = visible ? "common.hideStatistics" : "common.showStatistics";
+      button.setAttribute("data-i18n", key);
+      button.textContent = window.cre8BackText
+        ? window.cre8BackText(key)
+        : (visible ? "Hide statistics" : "Show statistics");
+      if (window.cre8BackApplyStatsToggleButtons) {
+        window.cre8BackApplyStatsToggleButtons();
+      } else if (window.cre8BackApplyTranslations) {
         window.cre8BackApplyTranslations();
-      } else {
-        button.textContent = visible ? "Hide statistics" : "Show statistics";
       }
     }
   }

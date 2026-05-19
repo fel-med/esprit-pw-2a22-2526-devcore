@@ -43,14 +43,73 @@
       || key;
   }
 
+  function isStatsPanelVisible(panel, button) {
+    if (!panel) {
+      return true;
+    }
+    if (panel.hasAttribute('hidden')) {
+      return false;
+    }
+    if (panel.classList.contains('is-collapsed')) {
+      return false;
+    }
+    var statsBody = panel.querySelector('#statsBody');
+    if (statsBody && statsBody.style.display === 'none') {
+      return false;
+    }
+    if (panel.id === 'statsBody' && panel.style.display === 'none') {
+      return false;
+    }
+    if (button && button.getAttribute('aria-expanded') === 'false') {
+      return false;
+    }
+    return true;
+  }
+
+  function applyStatsToggleButton(button, lang) {
+    if (!button) {
+      return;
+    }
+
+    lang = supported[lang] ? lang : readLang();
+    var hideText = textFor('common.hideStatistics', lang);
+    var showText = textFor('common.showStatistics', lang);
+    var panel = button.closest('[data-bc-stats], [data-stats-region], [data-uc-stats], [data-cc-stats], [data-ec-stats]');
+    var visible = isStatsPanelVisible(panel, button);
+    var key = visible ? 'common.hideStatistics' : 'common.showStatistics';
+
+    button.setAttribute('data-label-hide', hideText);
+    button.setAttribute('data-label-show', showText);
+    button.setAttribute('data-i18n', key);
+    button.textContent = textFor(key, lang);
+    if (button.hasAttribute('aria-expanded')) {
+      button.setAttribute('aria-expanded', visible ? 'true' : 'false');
+    }
+  }
+
+  function applyStatsToggleButtons(lang) {
+    lang = supported[lang] ? lang : readLang();
+    document.querySelectorAll(
+      '[data-bc-stats-toggle], [data-stats-toggle], [data-uc-stats-toggle], [data-cc-stats-toggle], [data-ec-stats-toggle]'
+    ).forEach(function (button) {
+      applyStatsToggleButton(button, lang);
+    });
+  }
+
   function applyTranslations() {
     var lang = readLang();
 
     document.querySelectorAll('[data-i18n]').forEach(function (node) {
       var key = node.getAttribute('data-i18n');
-      if (key) {
-        node.textContent = textFor(key, lang);
+      if (!key) {
+        return;
       }
+      if (node.matches(
+        '[data-bc-stats-toggle], [data-stats-toggle], [data-uc-stats-toggle], [data-cc-stats-toggle], [data-ec-stats-toggle]'
+      )) {
+        return;
+      }
+      node.textContent = textFor(key, lang);
     });
 
     document.querySelectorAll('[data-i18n-placeholder]').forEach(function (node) {
@@ -73,6 +132,8 @@
         node.setAttribute('aria-label', textFor(key, lang));
       }
     });
+
+    applyStatsToggleButtons(lang);
 
     document.querySelectorAll('[data-i18n-opt]').forEach(function (node) {
       var key = node.getAttribute('data-i18n-opt');
@@ -168,6 +229,46 @@
       'common.language': 'Language',
       'common.english': 'English',
       'common.french': 'French',
+      'common.printPdf': 'Print / PDF',
+      'common.exportPdf': 'Export PDF',
+      'common.exportCsv': 'Export CSV',
+      'common.hideStatistics': 'Hide statistics',
+      'common.showStatistics': 'Show statistics',
+      'common.applyFilters': 'Apply filters',
+      'common.status': 'Status',
+      'common.actions': 'Actions',
+      'common.activate': 'Activate',
+      'common.suspend': 'Suspend',
+      'common.delete': 'Delete',
+      'common.cancel': 'Cancel',
+      'common.role': 'Role',
+      'common.search': 'Search',
+      'common.reset': 'Reset',
+      'common.view': 'View',
+      'common.edit': 'Edit',
+      'common.close': 'Close',
+      'common.save': 'Save',
+      'common.update': 'Update',
+      'common.create': 'Create',
+      'common.previous': 'Previous',
+      'common.next': 'Next',
+      'common.page': 'Page',
+      'common.of': 'of',
+      'common.perPage': 'Per page',
+      'common.empty': 'No data found',
+      'common.emptyHint': 'Try changing filters or search terms.',
+      'common.allStatuses': 'All statuses',
+      'common.keyword': 'Keyword',
+      'common.media': 'Media',
+      'common.sort': 'Sort',
+      'common.rows': 'Rows',
+      'common.comments': 'Comments',
+      'common.reply': 'Reply',
+      'common.optional': '(optional)',
+      'common.offer': 'Offer',
+      'common.campaign': 'Campaign',
+      'common.inspect': 'Inspect',
+      'collaboration.export.report': 'Export PDF report',
       'role.admin': 'Admin',
       'role.superAdmin': 'Super Admin',
       'role.hyperAdmin': 'Hyper Admin',
@@ -218,6 +319,46 @@
       'common.language': 'Langue',
       'common.english': 'Anglais',
       'common.french': 'Francais',
+      'common.printPdf': 'Imprimer / PDF',
+      'common.exportPdf': 'Exporter PDF',
+      'common.exportCsv': 'Exporter CSV',
+      'common.hideStatistics': 'Masquer les statistiques',
+      'common.showStatistics': 'Afficher les statistiques',
+      'common.applyFilters': 'Appliquer les filtres',
+      'common.status': 'Statut',
+      'common.actions': 'Actions',
+      'common.activate': 'Activer',
+      'common.suspend': 'Suspendre',
+      'common.delete': 'Supprimer',
+      'common.cancel': 'Annuler',
+      'common.role': 'Role',
+      'common.search': 'Rechercher',
+      'common.reset': 'Reinitialiser',
+      'common.view': 'Voir',
+      'common.edit': 'Modifier',
+      'common.close': 'Fermer',
+      'common.save': 'Enregistrer',
+      'common.update': 'Mettre a jour',
+      'common.create': 'Creer',
+      'common.previous': 'Precedent',
+      'common.next': 'Suivant',
+      'common.page': 'Page',
+      'common.of': 'sur',
+      'common.perPage': 'Par page',
+      'common.empty': 'Aucune donnee trouvee',
+      'common.emptyHint': 'Essayez de modifier les filtres ou la recherche.',
+      'common.allStatuses': 'Tous les statuts',
+      'common.keyword': 'Mot-cle',
+      'common.media': 'Media',
+      'common.sort': 'Tri',
+      'common.rows': 'Lignes',
+      'common.comments': 'Commentaires',
+      'common.reply': 'Repondre',
+      'common.optional': '(optionnel)',
+      'common.offer': 'Offre',
+      'common.campaign': 'Campagne',
+      'common.inspect': 'Inspecter',
+      'collaboration.export.report': 'Exporter le rapport PDF',
       'role.admin': 'Administrateur',
       'role.superAdmin': 'Super administrateur',
       'role.hyperAdmin': 'Hyper administrateur',
@@ -264,6 +405,12 @@
       'group.community': 'Communaute',
       'group.events': 'Evenements'
     }
+  });
+
+  window.cre8BackApplyStatsToggleButtons = applyStatsToggleButtons;
+
+  window.addEventListener('cre8:languagechange', function () {
+    applyStatsToggleButtons(readLang());
   });
 
   if (document.readyState === 'loading') {

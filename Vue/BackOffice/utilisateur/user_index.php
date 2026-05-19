@@ -663,6 +663,8 @@ $statusI18nKeys = [
   <script>
     window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
       en: {
+        'common.hideStatistics': 'Hide statistics',
+        'common.showStatistics': 'Show statistics',
         'userCenter.kicker': 'User Center',
         'userCenter.tabs.users': 'Users',
         'userCenter.tabs.usersHint': 'Accounts and roles',
@@ -709,6 +711,8 @@ $statusI18nKeys = [
         'users.status.inactive': 'Inactive'
       },
       fr: {
+        'common.hideStatistics': 'Masquer les statistiques',
+        'common.showStatistics': 'Afficher les statistiques',
         'userCenter.kicker': 'Centre utilisateurs',
         'userCenter.tabs.users': 'Utilisateurs',
         'userCenter.tabs.usersHint': 'Comptes et roles',

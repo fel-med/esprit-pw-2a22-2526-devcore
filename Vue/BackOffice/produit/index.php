@@ -207,14 +207,19 @@ body.cre8-admin-layout{font-family:'Inter',system-ui,sans-serif;background:var(-
 .page-title{font-size:20px;font-weight:600;}
 .page-subtitle{font-size:13px;color:var(--text-muted);margin-top:3px;}
 /* TOAST */
-#toastContainer{position:fixed;top:68px;right:22px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
-.toast{display:flex;align-items:center;gap:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 16px;font-size:13px;min-width:240px;max-width:340px;box-shadow:0 8px 24px rgba(0,0,0,.4);pointer-events:all;animation:toastIn .3s ease;}
-.toast.hide{opacity:0;transform:translateX(20px);transition:opacity .4s,transform .4s;}
-@keyframes toastIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
-.toast-success{border-color:rgba(16,185,129,.3);}
-.toast-danger{border-color:rgba(239,68,68,.3);}
-.toast-info{border-color:rgba(59,130,246,.3);}
-.toast-close{margin-left:auto;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;}
+#toastContainer{position:fixed;top:82px;right:18px;z-index:9999;width:min(280px,calc(100vw - 32px));display:flex;flex-direction:column;gap:7px;pointer-events:none;}
+.cre8-product-toast{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px;width:100%;min-height:42px;background:rgba(17,24,39,.96);border:1px solid rgba(148,163,184,.18);border-radius:14px;padding:9px 10px;font-size:12px;line-height:1.25;color:var(--text-primary);box-shadow:0 10px 26px rgba(0,0,0,.28);pointer-events:all;backdrop-filter:blur(10px);animation:productToastIn .22s ease;}
+.cre8-product-toast.hide{opacity:0;transform:translateX(14px);transition:opacity .35s ease,transform .35s ease;}
+.cre8-product-toast-message{min-width:0;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cre8-product-toast-icon{font-size:13px;line-height:1;}
+.cre8-product-toast-success{border-color:rgba(16,185,129,.36);}
+.cre8-product-toast-danger,.cre8-product-toast-error{border-color:rgba(239,68,68,.36);}
+.cre8-product-toast-info{border-color:rgba(59,130,246,.34);}
+.cre8-product-toast-warning{border-color:rgba(245,158,11,.36);}
+.cre8-product-toast-close{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;margin:0;border:0;border-radius:999px;background:rgba(148,163,184,.12);color:var(--text-dim);cursor:pointer;font-size:13px;line-height:1;}
+.cre8-product-toast-close:hover{background:rgba(148,163,184,.2);color:var(--text-primary);}
+@keyframes productToastIn{from{opacity:0;transform:translateX(14px) scale(.98);}to{opacity:1;transform:translateX(0) scale(1);}}
+html[data-theme="light"] .cre8-product-toast{background:rgba(255,255,255,.96);color:var(--text-primary);box-shadow:0 10px 24px rgba(15,23,42,.14);}
 /* ALERT */
 .alert{display:flex;align-items:center;gap:10px;padding:11px 16px;border-radius:var(--radius-md);font-size:13px;margin-bottom:20px;font-weight:450;}
 .alert-success{background:var(--success-soft);color:var(--success);border:1px solid rgba(16,185,129,.2);}
@@ -445,6 +450,96 @@ textarea.note-interne-ctrl{background:transparent;border:none;outline:none;width
     }
 }
 
+
+/* Final Product actions layout fix: combine toast patch + clean action buttons. */
+.produit-admin #produitsTable th:last-child,
+.produit-admin #produitsTable td:last-child {
+  width: 280px !important;
+  min-width: 280px !important;
+  max-width: 280px !important;
+}
+
+.produit-admin #content-archives table th:last-child,
+.produit-admin #content-archives table td:last-child {
+  width: 240px !important;
+  min-width: 240px !important;
+  max-width: 240px !important;
+}
+
+.produit-admin #produitsTable td:last-child,
+.produit-admin #content-archives table td:last-child {
+  overflow: visible !important;
+  white-space: normal !important;
+}
+
+.produit-admin #produitsTable .action-group,
+.produit-admin #content-archives table .action-group {
+  display: grid !important;
+  align-items: stretch !important;
+  justify-items: stretch !important;
+  gap: 0.42rem !important;
+  margin: 0 !important;
+}
+
+.produit-admin #produitsTable .action-group {
+  width: 248px !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.produit-admin #content-archives table .action-group {
+  width: 208px !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.produit-admin #produitsTable .action-group .btn-action,
+.produit-admin #content-archives table .action-group .btn-action {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 34px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.28rem !important;
+  margin: 0 !important;
+  padding: 0 0.62rem !important;
+  border-radius: 10px !important;
+  font-size: 0.76rem !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  text-decoration: none !important;
+}
+
+.produit-admin #produitsTable .action-group .btn-delete,
+.produit-admin #content-archives table .action-group .btn-restore,
+.produit-admin #content-archives table .action-group .btn-delete {
+  grid-column: 1 / -1 !important;
+}
+
+.produit-admin #produitsTable .action-group .btn-archive {
+  min-width: 0 !important;
+}
+
+@media (max-width: 1450px) {
+  .produit-admin #produitsTable th:last-child,
+  .produit-admin #produitsTable td:last-child {
+    width: 260px !important;
+    min-width: 260px !important;
+    max-width: 260px !important;
+  }
+
+  .produit-admin #produitsTable .action-group {
+    width: 228px !important;
+  }
+
+  .produit-admin #produitsTable .action-group .btn-action,
+  .produit-admin #content-archives table .action-group .btn-action {
+    font-size: 0.72rem !important;
+    padding-inline: 0.48rem !important;
+  }
+}
+
 </style>
 <link rel="stylesheet" href="../business-center-admin.css<?= produitAssetVersion(__DIR__ . '/../business-center-admin.css') ?>">
 <link rel="stylesheet" href="../unified-table-admin.css<?= produitAssetVersion(__DIR__ . '/../unified-table-admin.css') ?>">
@@ -475,7 +570,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
                 <p data-i18n="pageSubtitle">Supervise, edit and analyze all platform products.</p>
             </div>
             <div class="bc-page-actions">
-                <button class="btn-export" onclick="window.print()"><i class="mdi mdi-printer"></i><span data-i18n="btnPrint">Print / PDF</span></button>
+                <a href="admin_report.php?download=pdf" class="btn-export" target="_blank" rel="noopener"><i class="mdi mdi-printer"></i><span data-i18n="btnPrint">Print / PDF</span></a>
                 <a href="?export_csv=1" class="btn-export"><i class="mdi mdi-download"></i><span data-i18n="btnExportCsv">CSV</span></a>
             </div>
         </section>
@@ -769,6 +864,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
             <?php endif; ?>
         </div>
     </div>
+    </div>
 
     <!-- ARCHIVED TAB -->
     <div class="tab-content" id="content-archives">
@@ -788,7 +884,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
                     <th class="no-sort" data-i18n="colPrice">Price</th>
                     <th class="no-sort" data-i18n="colActions">Actions</th>
                 </tr></thead>
-                <tbody>
+                <tbody id="archiveTableBody">
                 <?php foreach ($listeArchives as $a): ?>
                 <tr>
                     <td class="td-img"><div class="td-img-thumb"><?php if(!empty($a['image'])): ?><img src="<?= htmlspecialchars(cre8_product_image_url($a['image']), ENT_QUOTES, 'UTF-8') ?>" alt=""><?php else: ?><div class="td-img-empty">📦</div><?php endif; ?></div></td>
@@ -807,7 +903,6 @@ require_once __DIR__ . '/../layout/sidebar.php';
                 </tbody>
             </table>
             <?php endif; ?>
-        </div>
         </div>
     </div>
         </div><!-- /produit-admin -->
@@ -853,14 +948,17 @@ const BASE_URL = <?= json_encode($baseUrl, JSON_UNESCAPED_SLASHES) ?>;
 const DEVISE_JS='<?= DEVISE ?>';
 
 /* ─── TOAST ──────────────────────────────────────────────────────── */
-function showToast(msg, type='info', dur=4000) {
+function showToast(msg, type='info', dur=5500) {
     const icons={success:'✅',danger:'🗑️',info:'ℹ️',error:'⚠️',warning:'⚠️'};
     const c=document.getElementById('toastContainer');
+    if(!c) return;
     const t=document.createElement('div');
-    t.className=`toast toast-${type}`;
-    t.innerHTML=`<span>${icons[type]||'ℹ️'}</span><span style="flex:1">${msg}</span><button class="toast-close" onclick="this.closest('.toast').remove()">✕</button>`;
+    t.className=`cre8-product-toast cre8-product-toast-${type}`;
+    t.innerHTML=`<span class="cre8-product-toast-icon">${icons[type]||'ℹ️'}</span><span class="cre8-product-toast-message"></span><button type="button" class="cre8-product-toast-close" aria-label="Close notification">✕</button>`;
+    t.querySelector('.cre8-product-toast-message').textContent=msg;
+    t.querySelector('.cre8-product-toast-close').addEventListener('click',()=>t.remove());
     c.appendChild(t);
-    setTimeout(()=>{t.classList.add('hide');setTimeout(()=>t.remove(),450);},dur);
+    setTimeout(()=>{t.classList.add('hide');setTimeout(()=>t.remove(),380);},dur);
 }
 <?php if ($message): ?>showToast(<?= json_encode($message) ?>,'<?= $messageType ?>');<?php endif; ?>
 const alertEl=document.getElementById('alertMsg');
@@ -1064,6 +1162,10 @@ function renderPage(page,q,pMin,pMax,catSel) {
     if(catSel===undefined) catSel=document.getElementById('catFilterSelect').value.toLowerCase();
     const perPage=25;
     const allRows=Array.from(document.querySelectorAll('#tableBody tr'));
+    const visibleCountEl=document.getElementById('visibleCount');
+    const paginationInfoEl=document.getElementById('paginationInfo');
+    const paginationButtonsEl=document.getElementById('paginationButtons');
+    if (!visibleCountEl || !paginationInfoEl || !paginationButtonsEl) return;
     const visible=allRows.filter(row=>{
         const n=row.dataset.nom||'';
         const p=parseFloat(row.dataset.prix)||0;
@@ -1079,14 +1181,14 @@ function renderPage(page,q,pMin,pMax,catSel) {
     const start=(page-1)*perPage, end=Math.min(start+perPage,total);
     allRows.forEach(r=>r.style.display='none');
     visible.forEach((r,i)=>r.style.display=(i>=start&&i<end)?'':'none');
-    document.getElementById('visibleCount').textContent=total;
+    visibleCountEl.textContent=total;
     // ===== ADDED FEATURE: TRANSLATION-AWARE PAGINATION INFO =====
     const T = translations[currentLang] || translations['en'];
-    document.getElementById('paginationInfo').textContent=total===0
+    paginationInfoEl.textContent=total===0
         ? (T.noResults||'No results')
         : `${start+1}–${end} ${T.of||'of'} ${total}`;
     // ===== END ADDED FEATURE =====
-    const btns=document.getElementById('paginationButtons');
+    const btns=paginationButtonsEl;
     btns.innerHTML='';
     if(pages<=1) return;
     const addBtn=(lbl,p,dis,act)=>{const b=document.createElement('button');b.className='page-btn'+(act?' active':'');b.textContent=lbl;b.disabled=dis;b.onclick=()=>renderPage(p);btns.appendChild(b);};
@@ -1133,12 +1235,237 @@ function resetFilters() {
 }
 
 /* ─── AJAX PIN / ARCHIVE ──────────────────────────────────────────── */
-function ajaxToggle(action, id, label) {
-    const fd=new FormData();fd.append('action',action);fd.append('id',id);
-    fetch('index.php',{method:'POST',body:fd}).then(r=>r.json()).then(()=>{
-        showToast(`${label} done!`,action==='archive'?'warning':'info');
-        setTimeout(()=>location.reload(),1200);
+function updateProductTabCounts(activeDelta, archiveDelta) {
+    const activePill = document.querySelector('#tab-actifs .tab-pill');
+    const archivePill = document.querySelector('#tab-archives-btn .tab-pill');
+
+    if (activePill) {
+        activePill.textContent = String(Math.max(0, (parseInt(activePill.textContent, 10) || 0) + activeDelta));
+    }
+    if (archivePill) {
+        archivePill.textContent = String(Math.max(0, (parseInt(archivePill.textContent, 10) || 0) + archiveDelta));
+    }
+}
+
+function syncProductTabsFromServer() {
+    return fetch(window.location.href, {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        cache: 'no-store'
+    })
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            ['actifs', 'archives'].forEach(name => {
+                const freshContent = doc.querySelector(`#content-${name}`);
+                const currentContent = document.querySelector(`#content-${name}`);
+                if (freshContent && currentContent) {
+                    currentContent.innerHTML = freshContent.innerHTML;
+                }
+            });
+
+            const freshArchivePill = doc.querySelector('#tab-archives-btn .tab-pill');
+            const currentArchivePill = document.querySelector('#tab-archives-btn .tab-pill');
+            if (freshArchivePill && currentArchivePill) {
+                currentArchivePill.textContent = freshArchivePill.textContent;
+            }
+
+            const freshActivePill = doc.querySelector('#tab-actifs .tab-pill');
+            const currentActivePill = document.querySelector('#tab-actifs .tab-pill');
+            if (freshActivePill && currentActivePill) {
+                currentActivePill.textContent = freshActivePill.textContent;
+            }
+
+            const freshArchiveKpi = doc.querySelector('.kpi-archive .kpi-value');
+            const currentArchiveKpi = document.querySelector('.kpi-archive .kpi-value');
+            if (freshArchiveKpi && currentArchiveKpi) {
+                currentArchiveKpi.textContent = freshArchiveKpi.textContent;
+            }
+
+            renderPage(Math.min(currentPage, Math.max(1, currentPage)));
+
+            if (typeof window.cre8BackApplyTranslations === 'function') {
+                window.cre8BackApplyTranslations();
+            }
+        })
+        .catch(() => {
+            /* Archive sync is visual-only. The action itself already succeeded. */
+        });
+}
+
+function syncArchivedTabFromServer() {
+    return syncProductTabsFromServer();
+}
+
+function ensureArchivedProductsTable() {
+    const archivePanel = document.querySelector('#content-archives .table-panel');
+    if (!archivePanel) {
+        return null;
+    }
+
+    let tbody = archivePanel.querySelector('#archiveTableBody');
+    if (tbody) {
+        return tbody;
+    }
+
+    const emptyState = archivePanel.querySelector('.empty-state');
+    if (emptyState) {
+        emptyState.remove();
+    }
+
+    const table = document.createElement('table');
+    table.innerHTML = `
+        <thead><tr>
+            <th class="no-sort" data-i18n="colImg">Image</th>
+            <th class="no-sort" data-i18n="colName">Name</th>
+            <th class="no-sort" data-i18n="colCategory">Category</th>
+            <th class="no-sort" data-i18n="colPrice">Price</th>
+            <th class="no-sort" data-i18n="colActions">Actions</th>
+        </tr></thead>
+        <tbody id="archiveTableBody"></tbody>`;
+    archivePanel.appendChild(table);
+
+    if (typeof window.cre8BackApplyTranslations === 'function') {
+        window.cre8BackApplyTranslations();
+    }
+
+    return table.querySelector('#archiveTableBody');
+}
+
+function addArchivedRowFromActiveRow(row, id) {
+    if (!row) {
+        return;
+    }
+
+    const archiveBody = ensureArchivedProductsTable();
+    if (!archiveBody || archiveBody.querySelector(`tr[data-archive-id="${id}"]`)) {
+        return;
+    }
+
+    const cells = row.children;
+    const archivedRow = document.createElement('tr');
+    archivedRow.setAttribute('data-archive-id', String(id));
+
+    const imgCell = cells[0] ? cells[0].cloneNode(true) : document.createElement('td');
+    const nameCell = cells[2] ? cells[2].cloneNode(true) : document.createElement('td');
+    const categoryCell = cells[3] ? cells[3].cloneNode(true) : document.createElement('td');
+    const priceCell = cells[5] ? cells[5].cloneNode(true) : document.createElement('td');
+    const actionsCell = document.createElement('td');
+    const actions = document.createElement('div');
+    actions.className = 'action-group';
+
+    const restoreBtn = document.createElement('button');
+    restoreBtn.type = 'button';
+    restoreBtn.className = 'btn-action btn-restore';
+    restoreBtn.setAttribute('data-i18n', 'btnRestore');
+    restoreBtn.textContent = '♻️ Restore';
+    restoreBtn.addEventListener('click', function () {
+        ajaxToggle('archive', id, 'Restore');
     });
+
+    const editLink = row.querySelector('.btn-edit-a');
+    if (editLink) {
+        actions.appendChild(restoreBtn);
+        actions.appendChild(editLink.cloneNode(true));
+    } else {
+        actions.appendChild(restoreBtn);
+    }
+
+    const deleteBtn = row.querySelector('.btn-delete');
+    if (deleteBtn) {
+        actions.appendChild(deleteBtn.cloneNode(true));
+    }
+
+    actionsCell.appendChild(actions);
+    archivedRow.append(imgCell, nameCell, categoryCell, priceCell, actionsCell);
+    archiveBody.prepend(archivedRow);
+
+    if (typeof window.cre8BackApplyTranslations === 'function') {
+        window.cre8BackApplyTranslations();
+    }
+}
+
+function refreshProductRowAfterToggle(action, id, label) {
+    const row = document.querySelector(`#tableBody tr[data-id="${id}"]`);
+
+    if (action === 'epingle' && row) {
+        const wasPinned = row.dataset.epingle === '1';
+        row.dataset.epingle = wasPinned ? '0' : '1';
+
+        const statusCell = row.querySelector('td:nth-child(7)');
+        if (statusCell) {
+            let pinnedBadge = statusCell.querySelector('.status-badge.pinned');
+            if (wasPinned && pinnedBadge) {
+                pinnedBadge.remove();
+            } else if (!wasPinned && !pinnedBadge) {
+                pinnedBadge = document.createElement('span');
+                pinnedBadge.className = 'status-badge pinned';
+                pinnedBadge.setAttribute('data-i18n', 'statusPinned');
+                pinnedBadge.textContent = '📌 Pinned';
+                statusCell.prepend(pinnedBadge);
+            }
+        }
+
+        const pinBtn = row.querySelector('.btn-pin');
+        if (pinBtn) {
+            const nextLabel = wasPinned ? 'Pin' : 'Unpin';
+            pinBtn.setAttribute('data-i18n', wasPinned ? 'btnPin' : 'btnUnpin');
+            pinBtn.textContent = wasPinned ? '📌 Pin' : '📌 Unpin';
+            pinBtn.setAttribute('onclick', `ajaxToggle('epingle',${id},'${nextLabel}')`);
+        }
+
+        if (typeof window.cre8BackApplyTranslations === 'function') {
+            window.cre8BackApplyTranslations();
+        }
+        renderPage(currentPage);
+        return;
+    }
+
+    if (action === 'archive') {
+        const activeRow = row;
+        const activeTabOpen = document.getElementById('content-actifs')?.classList.contains('active');
+        const archiveTabOpen = document.getElementById('content-archives')?.classList.contains('active');
+        const currentRow = activeRow || document.activeElement?.closest('tr');
+
+        if (activeRow) {
+            addArchivedRowFromActiveRow(activeRow, id);
+        }
+
+        if (currentRow) {
+            currentRow.remove();
+        }
+
+        if (activeTabOpen || activeRow) {
+            updateProductTabCounts(-1, 1);
+            renderPage(currentPage);
+        } else if (archiveTabOpen) {
+            updateProductTabCounts(1, -1);
+        }
+    }
+}
+
+function ajaxToggle(action, id, label) {
+    const fd = new FormData();
+    fd.append('action', action);
+    fd.append('id', id);
+
+    fetch('index.php', { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(r => r.json())
+        .then(data => {
+            if (!data || data.ok !== true) {
+                throw new Error('Action failed');
+            }
+            refreshProductRowAfterToggle(action, id, label);
+            if (action === 'archive') {
+                syncArchivedTabFromServer();
+            }
+            showToast(`${label} done!`, action === 'archive' ? 'warning' : 'info', 3200);
+        })
+        .catch(() => {
+            showToast('Action failed. Please try again.', 'error', 3600);
+        });
 }
 
 /* ─── PRODUCT PREVIEW ────────────────────────────────────────────── */
@@ -1493,7 +1820,11 @@ function applyTranslations() {
     // Text content elements
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        if (T[key] !== undefined) el.textContent = T[key];
+        if (T[key] !== undefined) {
+            el.textContent = T[key];
+        } else if (window.cre8BackText) {
+            el.textContent = window.cre8BackText(key);
+        }
     });
 
     // Placeholder attributes
@@ -1557,6 +1888,9 @@ document.addEventListener('DOMContentLoaded', () => {
 window.addEventListener('cre8:languagechange', function(event) {
     currentLang = (event.detail && event.detail.lang) || cre8BoReadLang();
     applyTranslations();
+    if (window.cre8BackApplyStatsToggleButtons) {
+        window.cre8BackApplyStatsToggleButtons();
+    }
     renderPage(currentPage);
 });
 </script>

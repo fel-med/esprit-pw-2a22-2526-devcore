@@ -29,6 +29,16 @@ $page = max(1, (int) ($_GET['page'] ?? 1));
 $perPage = 10;
 $offset = ($page - 1) * $perPage;
 
+$brandIdFilter = null;
+if (isset($_GET['brandId']) && $_GET['brandId'] !== '') {
+    $brandIdFilter = (int) $_GET['brandId'];
+} elseif (isset($_GET['idMarque']) && $_GET['idMarque'] !== '') {
+    $brandIdFilter = (int) $_GET['idMarque'];
+}
+if ($brandIdFilter !== null && $brandIdFilter <= 0) {
+    $brandIdFilter = null;
+}
+
 $filterValues = [
     $searchKeyword,
     $searchStatut,
@@ -39,6 +49,9 @@ $filterValues = [
     $searchSort,
 ];
 $activeFilterCount = count(array_filter($filterValues, static fn($value) => $value !== '' && $value !== null && $value !== 'newest'));
+if ($brandIdFilter !== null) {
+    $activeFilterCount++;
+}
 $hasActiveFilters = $activeFilterCount > 0;
 
 function translateOfferStatus($status)
@@ -389,7 +402,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['deleteOffre'], $_POST
 $offres = $offreController->searchOffresAdmin(
     $searchKeyword ?: null,
     $searchStatut ?: null,
-    null,
+    $brandIdFilter,
     null,
     $searchBudgetFrom !== '' ? $searchBudgetFrom : null,
     $searchBudgetTo !== '' ? $searchBudgetTo : null,
@@ -413,6 +426,9 @@ $persistedFilters = [
     'dateLimiteTo' => $searchDateLimiteTo,
     'sort' => $searchSort,
 ];
+if ($brandIdFilter !== null) {
+    $persistedFilters['brandId'] = $brandIdFilter;
+}
 
 $offerIds = array_map(static fn($offre) => $offre->getIdOffre(), $offres);
 $brandIds = array_map(static fn($offre) => $offre->getIdMarque(), $offres);
@@ -734,6 +750,11 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                     <h1 data-i18n="offers.title">Offer administration</h1>
                     <p data-i18n="offers.subtitle">Track targeted offers, understand creator response behavior, and keep the collaboration pipeline visible for admins.</p>
                 </div>
+                <div class="bc-page-actions">
+                    <a href="../condidature/admin_report.php?download=pdf" class="btn-export">
+                        <i class="mdi mdi-printer"></i><span data-i18n="common.printPdf">Print / PDF</span>
+                    </a>
+                </div>
             </div>
         </header>
 
@@ -804,6 +825,9 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
             </div>
 
             <form method="get" class="search-form" data-module-validation="admin-filters" novalidate>
+                <?php if ($brandIdFilter !== null): ?>
+                    <input type="hidden" name="brandId" value="<?php echo (int) $brandIdFilter; ?>">
+                <?php endif; ?>
                 <div class="search-grid">
                     <div class="search-group">
                         <label for="keyword" data-i18n="offers.filter.keyword">Keyword</label>
@@ -1650,9 +1674,16 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
             const key = 'cre8_bo_stats_visible';
             const setVisible = (visible) => {
                 region.hidden = !visible;
-                toggle.setAttribute('data-i18n', visible ? 'common.hideStatistics' : 'common.showStatistics');
-                toggle.textContent = visible ? 'Hide statistics' : 'Show statistics';
-                if (window.cre8BackApplyTranslations) { window.cre8BackApplyTranslations(); }
+                const key = visible ? 'common.hideStatistics' : 'common.showStatistics';
+                toggle.setAttribute('data-i18n', key);
+                toggle.textContent = window.cre8BackText
+                    ? window.cre8BackText(key)
+                    : (visible ? 'Hide statistics' : 'Show statistics');
+                if (window.cre8BackApplyStatsToggleButtons) {
+                    window.cre8BackApplyStatsToggleButtons();
+                } else if (window.cre8BackApplyTranslations) {
+                    window.cre8BackApplyTranslations();
+                }
                 toggle.setAttribute('aria-expanded', visible ? 'true' : 'false');
                 if (visible) {
                     window.dispatchEvent(new Event('resize'));

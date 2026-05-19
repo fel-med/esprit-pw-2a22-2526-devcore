@@ -42,6 +42,11 @@ $adminRoleShortLabel = match ($adminRole) {
     'super_admin' => 'Super',
     default => 'Admin',
 };
+$adminRoleLabel = match ($adminRole) {
+    'hyper_admin' => 'Hyper Admin',
+    'super_admin' => 'Super Admin',
+    default => 'Regular Admin',
+};
 $adminRoleClass = match ($adminRole) {
     'hyper_admin' => 'cre8-role-badge--hyper',
     'super_admin' => 'cre8-role-badge--super',
@@ -66,9 +71,6 @@ if ($adminId !== null) {
           </a>
         </div>
         <div class="navbar-menu-wrapper flex-grow d-flex align-items-stretch">
-          <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-toggle="minimize">
-            <span class="mdi mdi-menu"></span>
-          </button>
           <ul class="navbar-nav w-100">
             <li class="nav-item w-100">
               <form class="nav-link mt-2 mt-md-0 d-none d-lg-flex search cre8-workspace-search" action="#" method="get" role="search" autocomplete="off" data-cre8-workspace-search>
@@ -131,10 +133,12 @@ if ($adminId !== null) {
                     <span class="img-xs rounded-circle d-inline-flex align-items-center justify-content-center text-white font-weight-bold" style="background:linear-gradient(135deg,#5b4fff,#8b5cf6);"><?php echo htmlspecialchars($adminInitial); ?></span>
                   <?php endif; ?>
                   <div class="cre8-header-user-meta d-none d-sm-flex">
-                    <span class="navbar-profile-name"><?php echo htmlspecialchars($adminName); ?></span>
-                    <span class="cre8-role-badge <?php echo htmlspecialchars($adminRoleClass); ?> d-none d-md-inline-flex" data-i18n="<?php echo htmlspecialchars($adminRoleShortKey); ?>" data-i18n-title="<?php echo htmlspecialchars($adminRoleKey); ?>"><?php echo htmlspecialchars($adminRoleShortLabel); ?></span>
+                    <span class="cre8-header-user-name-row">
+                      <span class="navbar-profile-name"><?php echo htmlspecialchars($adminName); ?></span>
+                      <i class="mdi mdi-menu-down cre8-profile-chevron" aria-hidden="true"></i>
+                    </span>
+                    <span class="cre8-role-badge <?php echo htmlspecialchars($adminRoleClass); ?> d-none d-md-inline-flex"><?php echo htmlspecialchars($adminRoleLabel); ?></span>
                   </div>
-                  <i class="mdi mdi-menu-down d-none d-sm-block"></i>
                 </div>
               </a>
               <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list cre8-profile-menu" aria-labelledby="profileDropdown" data-cre8-profile-menu>
@@ -152,9 +156,6 @@ if ($adminId !== null) {
               </div>
             </li>
           </ul>
-          <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button" data-toggle="offcanvas">
-            <span class="mdi mdi-format-line-spacing"></span>
-          </button>
         </div>
       </nav>
       <!-- partial -->

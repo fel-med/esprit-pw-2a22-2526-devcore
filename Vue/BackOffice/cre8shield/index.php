@@ -5,10 +5,13 @@ require_once __DIR__ . '/../layout/early-theme.php';
 require_once __DIR__ . '/../../../Controleur/session_helper.php';
 require_once __DIR__ . '/../../../Controleur/cre8shieldC.php';
 require_once __DIR__ . '/../../../Controleur/condidatureC.php';
+require_once __DIR__ . '/../../../Controleur/utilisateurC.php';
+require_once __DIR__ . '/../../../Controleur/adminAuditC.php';
 require_once __DIR__ . '/../../FrontOffice/layout/avatar_helper.php';
 
 $candidatureController = new CondidatureC();
 $cre8shieldController = new Cre8ShieldC();
+$userController = new UtilisateurC();
 $sessionUser = $_SESSION['utilisateur'] ?? ($_SESSION['user'] ?? []);
 
 if (!isset($sessionUser['id']) || !isBackOfficeRole(cc_current_user_role())) {
@@ -44,7 +47,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['cre8shieldAction']) 
         $sortRedirect = 'time_desc';
     }
 
-    if ($catchId > 0 && $cre8shieldController->isAvailable()) {
+    if ($action === 'suspend_reported_user') {
+        $targetUserId = (int) ($_POST['reportedUserId'] ?? 0);
+        $targetUser = $targetUserId > 0 ? $userController->getUserById($targetUserId) : null;
+
+        if (!$targetUser) {
+            $notice = 'Reported user was not found.';
+            $noticeType = 'danger';
+        } elseif (!cc_can_manage_user($adminId, cc_current_user_role(), $targetUser, 'suspend')) {
+            $notice = 'You are not allowed to suspend this reported user.';
+            $noticeType = 'danger';
+        } elseif (strtolower(trim((string) ($targetUser['statut'] ?? ''))) !== 'actif') {
+            $notice = 'Only active reported users can be suspended.';
+            $noticeType = 'danger';
+        } else {
+            $reason = 'Suspended from Cre8Shield catch #' . ($catchId > 0 ? $catchId : 'unknown');
+            $userController->suspendUserWithMetadata($targetUserId, $adminId, cc_current_user_role(), $reason);
+            cc_log_admin_action(
+                $adminId,
+                cc_current_user_role(),
+                'suspend_user',
+                $targetUserId,
+                $targetUser['role'] ?? null,
+                $targetUser['statut'] ?? null,
+                'suspendu',
+                $reason
+            );
+            $notice = 'Reported user suspended successfully.';
+            $noticeType = 'success';
+        }
+    } elseif ($catchId > 0 && $cre8shieldController->isAvailable()) {
         $ok = false;
         switch ($action) {
             case 'mark_reviewed':
@@ -503,6 +535,10 @@ function cre8shieldNoticeI18nKey($notice): ?string
         'Could not escalate this catch.' => 'cre8shield.notice.escalatedFail',
         'Catch resolved.' => 'cre8shield.notice.resolved',
         'Could not resolve this catch.' => 'cre8shield.notice.resolvedFail',
+        'Reported user was not found.' => 'cre8shield.notice.reportedUserMissing',
+        'You are not allowed to suspend this reported user.' => 'cre8shield.notice.suspendDenied',
+        'Only active reported users can be suspended.' => 'cre8shield.notice.suspendActiveOnly',
+        'Reported user suspended successfully.' => 'cre8shield.notice.reportedSuspended',
         'Unknown action.' => 'cre8shield.notice.unknownAction',
         'Cre8Shield monitor table is not available.' => 'cre8shield.notice.tableUnavailable',
         default => null,
@@ -581,7 +617,7 @@ function cre8shieldPrettyRoleId($role, $userId)
  * becomes a clickable button that opens the user modal; otherwise it falls
  * back to the legacy text-only label so the layout never collapses.
  */
-function cre8shieldRenderUserCell($role, $userId, array $userMap, $variant = 'reporter')
+function cre8shieldRenderUserCell($role, $userId, array $userMap, $variant = 'reporter', $catchId = 0)
 {
     $userId = (int) $userId;
     $role = trim((string) $role);
@@ -603,7 +639,8 @@ function cre8shieldRenderUserCell($role, $userId, array $userMap, $variant = 're
 
     $avatarHtml = cre8_render_avatar($userId, $primary, 'cre8-avatar-sm cre8shield-user-avatar');
 
-    return '<button type="button" class="cre8shield-user-link variant-' . htmlspecialchars($variant) . '" data-cre8shield-user-trigger data-user-id="' . $userId . '" title="Open user details">'
+    $catchId = (int) $catchId;
+    return '<button type="button" class="cre8shield-user-link variant-' . htmlspecialchars($variant) . '" data-cre8shield-user-trigger data-user-id="' . $userId . '" data-user-context="' . htmlspecialchars($variant) . '" data-catch-id="' . $catchId . '" title="Open user details">'
         . $avatarHtml
         . '<span class="cre8shield-user-link-copy">'
         . '<strong>' . htmlspecialchars($primary) . '</strong>'
@@ -647,7 +684,36 @@ function cre8shieldCandidatureStatusLabel($status)
     };
 }
 
-function cre8shieldRenderUserCardTemplate(int $userId, array $user)
+function cre8shieldUserWorkspaceUrl(string $role, int $userId): string
+{
+    $roleLower = cc_normalize_role($role);
+    $userId = max(0, $userId);
+
+    if ($roleLower === 'createur') {
+        return '../condidature/index.php?' . http_build_query([
+            'creatorId' => $userId,
+            'from' => 'cre8shield',
+        ]);
+    }
+
+    if ($roleLower === 'marque') {
+        return '../offre/index.php?' . http_build_query([
+            'brandId' => $userId,
+            'from' => 'cre8shield',
+        ]);
+    }
+
+    if (in_array($roleLower, ['admin', 'super_admin', 'hyper_admin'], true)) {
+        return '../utilisateur/admin_management.php?' . http_build_query(['from' => 'cre8shield']);
+    }
+
+    return '../utilisateur/index.php?' . http_build_query([
+        'search' => (string) $userId,
+        'from' => 'cre8shield',
+    ]);
+}
+
+function cre8shieldRenderUserCardTemplate(int $userId, array $user, int $currentUserId, string $currentRole, string $tab, string $sort)
 {
     $name = trim((string) ($user['nom'] ?? '')) !== '' ? (string) $user['nom'] : ('User #' . $userId);
     $email = (string) ($user['email'] ?? '');
@@ -656,12 +722,15 @@ function cre8shieldRenderUserCardTemplate(int $userId, array $user)
     $createdAt = (string) ($user['date_creation'] ?? '');
     $createdLabel = $createdAt !== '' ? cre8shieldFormatDateLabel($createdAt, '—') : '—';
     $roleLower = strtolower($role);
-    $workspaceUrl = $roleLower === 'createur'
-        ? '../condidature/index.php'
-        : '../offre/index.php';
+    $workspaceUrl = cre8shieldUserWorkspaceUrl($role, $userId);
     $workspaceLabel = $roleLower === 'createur'
         ? 'Open creator workspace'
         : ($roleLower === 'marque' ? 'Open brand workspace' : 'Open admin workspace');
+    $policyTarget = $user;
+    $policyTarget['id'] = $userId;
+    $canSuspendReported = strtolower(trim($statut)) === 'actif'
+        && function_exists('cc_can_manage_user')
+        && cc_can_manage_user($currentUserId, $currentRole, $policyTarget, 'suspend');
 
     ob_start();
     ?>
@@ -701,6 +770,16 @@ function cre8shieldRenderUserCardTemplate(int $userId, array $user)
         </dl>
         <div class="cre8shield-modal-user-actions">
             <a class="cre8shield-action-btn" href="<?php echo htmlspecialchars($workspaceUrl); ?>"><?php echo htmlspecialchars($workspaceLabel); ?></a>
+            <?php if ($canSuspendReported): ?>
+                <form method="post" action="index.php" class="cre8shield-reported-suspend-form" data-cre8shield-reported-only hidden>
+                    <input type="hidden" name="cre8shieldAction" value="suspend_reported_user">
+                    <input type="hidden" name="reportedUserId" value="<?php echo $userId; ?>">
+                    <input type="hidden" name="catchId" value="" data-cre8shield-reported-catch-input>
+                    <input type="hidden" name="tab" value="<?php echo htmlspecialchars($tab); ?>">
+                    <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort); ?>">
+                    <button type="submit" class="cre8shield-action-btn is-warning" data-i18n="cre8shield.actions.suspendReported">Suspend reported user</button>
+                </form>
+            <?php endif; ?>
         </div>
     </article>
     <?php
@@ -1436,7 +1515,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                                 </option>
                             <?php endforeach; ?>
                         </select>
-                        <button type="submit" class="btn btn-primary"><span data-i18n="common.applyFilters">Apply</span></button>
+                        <button type="submit" class="btn btn-primary"><span data-i18n="common.applyFilters">Apply filters</span></button>
                     </form>
                 </section>
 
@@ -1483,11 +1562,11 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                             $updated = cre8shieldFormatDateLabel($row['updated_at'] ?? '', '—');
                             $reviewed = cre8shieldFormatDateLabel($row['reviewed_at'] ?? '', '—');
                             $reviewedBy = isset($row['reviewed_by']) && (int) $row['reviewed_by'] > 0 ? '#' . (int) $row['reviewed_by'] : '—';
+                            $catchId = (int) ($row['id_catch'] ?? 0);
                             $reporterLabel = cre8shieldPrettyRoleId($row['reporter_role'] ?? '', $row['reporter_user_id'] ?? 0);
                             $reportedLabel = cre8shieldPrettyRoleId($row['reported_role'] ?? '', $row['reported_user_id'] ?? 0);
-                            $reporterCellHtml = cre8shieldRenderUserCell($row['reporter_role'] ?? '', $row['reporter_user_id'] ?? 0, $cre8shieldUserMap, 'reporter');
-                            $reportedCellHtml = cre8shieldRenderUserCell($row['reported_role'] ?? '', $row['reported_user_id'] ?? 0, $cre8shieldUserMap, 'reported');
-                            $catchId = (int) ($row['id_catch'] ?? 0);
+                            $reporterCellHtml = cre8shieldRenderUserCell($row['reporter_role'] ?? '', $row['reporter_user_id'] ?? 0, $cre8shieldUserMap, 'reporter', $catchId);
+                            $reportedCellHtml = cre8shieldRenderUserCell($row['reported_role'] ?? '', $row['reported_user_id'] ?? 0, $cre8shieldUserMap, 'reported', $catchId);
                             $detailsId = 'cre8shieldDetails' . $catchId;
                             $sourceKind = cre8shieldDetermineSourceKind($row['page'] ?? '', $row['source_type'] ?? '', $row['source_id'] ?? '');
                             $sourceTargetId = $sourceKind === 'prompt'
@@ -1585,8 +1664,14 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                                     </div>
                                 <?php endif; ?>
 
-                                <details class="cre8shield-details" id="<?php echo htmlspecialchars($detailsId); ?>">
-                                    <summary class="cre8shield-details-summary" data-i18n="cre8shield.card.viewFullDetails">View full details</summary>
+                                <button type="button"
+                                        class="cre8shield-details-summary cre8shield-details-modal-trigger"
+                                        data-cre8shield-details-trigger
+                                        data-details-template="<?php echo htmlspecialchars($detailsId); ?>Template"
+                                >
+                                    <span data-i18n="cre8shield.card.viewFullDetails">View full details</span>
+                                </button>
+                                <template id="<?php echo htmlspecialchars($detailsId); ?>Template">
                                     <div class="cre8shield-details-body">
                                         <?php if ($finding !== ''): ?>
                                             <section>
@@ -1643,7 +1728,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                                             </section>
                                         <?php endif; ?>
                                     </div>
-                                </details>
+                                </template>
 
                                 <div class="cre8shield-card-actions">
                                     <button type="button"
@@ -1700,7 +1785,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
 
                 <div class="cre8shield-templates" hidden>
                     <?php foreach ($cre8shieldUserMap as $tplUserId => $tplUser): ?>
-                        <template id="cre8shieldUserTemplate-<?php echo (int) $tplUserId; ?>"><?php echo cre8shieldRenderUserCardTemplate((int) $tplUserId, $tplUser); ?></template>
+                        <template id="cre8shieldUserTemplate-<?php echo (int) $tplUserId; ?>"><?php echo cre8shieldRenderUserCardTemplate((int) $tplUserId, $tplUser, $adminId, cc_current_user_role(), $tab, $sort); ?></template>
                     <?php endforeach; ?>
                     <?php foreach ($cre8shieldOfferSnapshots as $tplOfferId => $tplOffer): ?>
                         <template id="cre8shieldSourceTemplate-offer-<?php echo (int) $tplOfferId; ?>"><?php echo cre8shieldRenderOfferSourceTemplate((int) $tplOfferId, $tplOffer, $cre8shieldUserMap); ?></template>
@@ -1822,6 +1907,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                 'cre8shield.actions.ignore': 'Ignore',
                 'cre8shield.actions.escalate': 'Escalate',
                 'cre8shield.actions.resolve': 'Resolve',
+                'cre8shield.actions.suspendReported': 'Suspend reported user',
                 'cre8shield.modal.details': 'Details',
                 'cre8shield.modal.context': 'Cre8Shield context',
                 'cre8shield.modal.close': 'Close',
@@ -1908,6 +1994,10 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                 'cre8shield.notice.escalatedFail': 'Could not escalate this catch.',
                 'cre8shield.notice.resolved': 'Catch resolved.',
                 'cre8shield.notice.resolvedFail': 'Could not resolve this catch.',
+                'cre8shield.notice.reportedUserMissing': 'Reported user was not found.',
+                'cre8shield.notice.suspendDenied': 'You are not allowed to suspend this reported user.',
+                'cre8shield.notice.suspendActiveOnly': 'Only active reported users can be suspended.',
+                'cre8shield.notice.reportedSuspended': 'Reported user suspended successfully.',
                 'cre8shield.notice.unknownAction': 'Unknown action.',
                 'cre8shield.notice.tableUnavailable': 'Cre8Shield monitor table is not available.',
                 'cre8shield.notice.tableUnavailableLong': 'The cre8shield_catches table is not available on this database. Cre8Pilot will continue to run rule-based and AI checks, but catches cannot be persisted yet.'
@@ -1990,6 +2080,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                 'cre8shield.actions.ignore': 'Ignorer',
                 'cre8shield.actions.escalate': 'Escalader',
                 'cre8shield.actions.resolve': 'Resoudre',
+                'cre8shield.actions.suspendReported': 'Suspendre l utilisateur signale',
                 'cre8shield.modal.details': 'Details',
                 'cre8shield.modal.context': 'Contexte Cre8Shield',
                 'cre8shield.modal.close': 'Fermer',
@@ -2076,6 +2167,10 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                 'cre8shield.notice.escalatedFail': 'Impossible d escalader cette alerte.',
                 'cre8shield.notice.resolved': 'Alerte resolue.',
                 'cre8shield.notice.resolvedFail': 'Impossible de resoudre cette alerte.',
+                'cre8shield.notice.reportedUserMissing': 'Utilisateur signale introuvable.',
+                'cre8shield.notice.suspendDenied': 'Vous n etes pas autorise a suspendre cet utilisateur signale.',
+                'cre8shield.notice.suspendActiveOnly': 'Seuls les utilisateurs signales actifs peuvent etre suspendus.',
+                'cre8shield.notice.reportedSuspended': 'Utilisateur signale suspendu avec succes.',
                 'cre8shield.notice.unknownAction': 'Action inconnue.',
                 'cre8shield.notice.tableUnavailable': 'La table du moniteur Cre8Shield n est pas disponible.',
                 'cre8shield.notice.tableUnavailableLong': 'La table cre8shield_catches n est pas disponible dans cette base. Cre8Pilot continuera les controles IA et regles, mais les alertes ne peuvent pas encore etre enregistrees.'
@@ -2093,7 +2188,8 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
             const eyebrow = modal.querySelector('[data-cre8shield-modal-eyebrow]');
             const closeButtons = modal.querySelectorAll('[data-cre8shield-modal-close]');
 
-            function openModalWithTemplate(templateId, title, eyebrowLabel) {
+            function openModalWithTemplate(templateId, title, eyebrowLabel, options) {
+                options = options || {};
                 if (!body) {
                     return;
                 }
@@ -2106,6 +2202,14 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                 } else {
                     body.innerHTML = '<p class="cre8shield-modal-empty" data-i18n="cre8shield.modal.noData">No data is available for this entry.</p>';
                 }
+                const reportedOnlyBlocks = body.querySelectorAll('[data-cre8shield-reported-only]');
+                reportedOnlyBlocks.forEach(function (block) {
+                    block.hidden = options.context !== 'reported';
+                });
+                const catchInputs = body.querySelectorAll('[data-cre8shield-reported-catch-input]');
+                catchInputs.forEach(function (input) {
+                    input.value = options.catchId || '';
+                });
                 if (titleNode && title) {
                     titleNode.textContent = title;
                 }
@@ -2157,7 +2261,26 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                     openModalWithTemplate(
                         'cre8shieldUserTemplate-' + uid,
                         (window.cre8BackText ? window.cre8BackText('cre8shield.modal.userTitle') : 'User') + ' #' + uid,
-                        window.cre8BackText ? window.cre8BackText('cre8shield.modal.userProfile') : 'User profile'
+                        window.cre8BackText ? window.cre8BackText('cre8shield.modal.userProfile') : 'User profile',
+                        {
+                            context: userTrigger.dataset.userContext || '',
+                            catchId: userTrigger.dataset.catchId || ''
+                        }
+                    );
+                    return;
+                }
+
+                const detailsTrigger = event.target.closest('[data-cre8shield-details-trigger]');
+                if (detailsTrigger) {
+                    event.preventDefault();
+                    const templateId = detailsTrigger.dataset.detailsTemplate || '';
+                    if (!templateId) {
+                        return;
+                    }
+                    openModalWithTemplate(
+                        templateId,
+                        window.cre8BackText ? window.cre8BackText('cre8shield.card.viewFullDetails') : 'View full details',
+                        window.cre8BackText ? window.cre8BackText('cre8shield.modal.details') : 'Details'
                     );
                     return;
                 }

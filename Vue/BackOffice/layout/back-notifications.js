@@ -94,9 +94,8 @@
 
     var icon = document.createElement('span');
     icon.className = 'cre8-notification-empty-icon';
-    var glyph = document.createElement('i');
-    glyph.className = 'mdi mdi-bell-check-outline';
-    icon.appendChild(glyph);
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = '✓';
 
     var title = document.createElement('strong');
     title.setAttribute('data-i18n', 'header.noNotifications');

@@ -9,9 +9,16 @@
     const button = panel.querySelector("[data-bc-stats-toggle]");
     panel.classList.toggle("is-collapsed", !visible);
     if (button) {
-      const hide = button.getAttribute("data-label-hide") || "Hide statistics";
-      const show = button.getAttribute("data-label-show") || "Show statistics";
-      button.textContent = visible ? hide : show;
+      const key = visible ? "common.hideStatistics" : "common.showStatistics";
+      button.setAttribute("data-i18n", key);
+      button.textContent = window.cre8BackText
+        ? window.cre8BackText(key)
+        : (visible ? "Hide statistics" : "Show statistics");
+      if (window.cre8BackApplyStatsToggleButtons) {
+        window.cre8BackApplyStatsToggleButtons();
+      } else if (window.cre8BackApplyTranslations) {
+        window.cre8BackApplyTranslations();
+      }
     }
   }
 
@@ -79,6 +86,15 @@
   window.addEventListener("popstate", () => {
     const region = getRegion();
     if (region) replaceResultsFromUrl(window.location.href, false);
+  });
+
+  window.addEventListener("cre8:languagechange", () => {
+    document.querySelectorAll("[data-bc-stats]").forEach(applyStatsState);
+    if (window.cre8BackApplyStatsToggleButtons) {
+      window.cre8BackApplyStatsToggleButtons();
+    } else if (window.cre8BackApplyTranslations) {
+      window.cre8BackApplyTranslations();
+    }
   });
 
   if (document.readyState === "loading") {

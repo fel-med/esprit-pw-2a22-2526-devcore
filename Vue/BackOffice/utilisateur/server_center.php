@@ -28,6 +28,8 @@ $folders = $serverCenter->getFolderChecks();
     <link rel="stylesheet" href="assets/vendors/css/vendor.bundle.base.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="../layout/back-layout.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/back-layout.css')); ?>">
+    <link rel="stylesheet" href="user-center-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/user-center-admin.css')); ?>">
+    <link rel="stylesheet" href="../unified-table-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../unified-table-admin.css')); ?>">
     <link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
     <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
     <style>
@@ -62,20 +64,22 @@ $folders = $serverCenter->getFolderChecks();
     <div class="container-fluid page-body-wrapper cre8-admin-main">
         <?php require_once __DIR__ . '/../layout/header.php'; ?>
         <div class="main-panel">
-            <div class="content-wrapper server-center-page">
-                <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+            <div class="content-wrapper user-center-shell server-center-page">
+                <div class="uc-page-head">
                     <div>
-                        <h2 class="mb-1" data-i18n="serverCenter.title">Server Center</h2>
-                        <p class="text-muted mb-0" data-i18n="serverCenter.subtitle">Read-only diagnostics for Hyper Admin.</p>
+                        <p class="uc-kicker" data-i18n="serverCenter.kicker">Safe diagnostics</p>
+                        <h1 data-i18n="serverCenter.title">Server Center</h1>
+                        <p data-i18n="serverCenter.subtitle">Read-only diagnostics for Hyper Admin.</p>
                     </div>
-                    <span class="badge bg-info text-dark" data-i18n="serverCenter.readOnlyBadge">Read-only</span>
+                    <span class="uc-badge uc-readonly-badge" data-i18n="serverCenter.readOnlyBadge">Read-only</span>
                 </div>
 
-                <div class="alert alert-info" role="alert">
-                    <span data-i18n="serverCenter.readOnlyAlert">This page is read-only. It does not execute commands, restart services, delete files, or modify the database.</span>
+                <div class="alert server-readonly-alert" role="alert">
+                    <strong data-i18n="serverCenter.readOnlyTitle">Read-only mode</strong>
+                    <span class="d-block mt-1" data-i18n="serverCenter.readOnlyAlert">This page is read-only. It does not execute commands, restart services, delete files, or modify the database.</span>
                 </div>
 
-                <div class="row g-4 mb-4">
+                <div class="admin-tool-grid dashboard mb-4">
                     <?php
                     $cards = [
                         ['label' => 'PHP version', 'key' => 'serverCenter.card.phpVersion', 'value' => $summary['php_version']],
@@ -87,10 +91,10 @@ $folders = $serverCenter->getFolderChecks();
                     ];
                     foreach ($cards as $card):
                     ?>
-                        <div class="col-md-6 col-xl-4">
-                            <div class="card diag-card">
+                        <div>
+                            <div class="diag-card server-diag-card">
                                 <div class="card-body">
-                                    <div class="text-muted small mb-2"><span data-i18n="<?php echo htmlspecialchars($card['key']); ?>"><?php echo htmlspecialchars($card['label']); ?></span></div>
+                                    <div class="server-card-label mb-2"><span data-i18n="<?php echo htmlspecialchars($card['key']); ?>"><?php echo htmlspecialchars($card['label']); ?></span></div>
                                     <div class="diag-value"><?php echo htmlspecialchars((string)$card['value']); ?></div>
                                 </div>
                             </div>
@@ -98,9 +102,9 @@ $folders = $serverCenter->getFolderChecks();
                     <?php endforeach; ?>
                 </div>
 
-                <div class="row g-4 mb-4">
-                    <div class="col-lg-7">
-                        <div class="card diag-card">
+                <div class="admin-tool-grid split mb-4">
+                    <div>
+                        <div class="diag-card">
                             <div class="card-body">
                                 <h5 class="card-title" data-i18n="serverCenter.disk.title">Disk summary</h5>
                                 <?php if ($disk['available']): ?>
@@ -133,11 +137,11 @@ $folders = $serverCenter->getFolderChecks();
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-5">
-                        <div class="card diag-card">
+                    <div>
+                        <div class="diag-card">
                             <div class="card-body">
                                 <h5 class="card-title" data-i18n="serverCenter.database.title">Database status</h5>
-                                <span class="badge bg-<?php echo $database['connected'] ? 'success' : 'danger'; ?>">
+                                <span class="uc-badge <?php echo $database['connected'] ? 'uc-status-actif' : 'uc-status-bloque'; ?>">
                                     <?php echo htmlspecialchars($database['message']); ?>
                                 </span>
                                 <p class="text-muted mt-3 mb-0"><span data-i18n="serverCenter.database.note">Connection is checked with a safe SELECT 1 query. No database rows are modified.</span></p>
@@ -146,11 +150,11 @@ $folders = $serverCenter->getFolderChecks();
                     </div>
                 </div>
 
-                <div class="card diag-card mb-4">
+                <div class="diag-card mb-4">
                     <div class="card-body">
                         <h5 class="card-title" data-i18n="serverCenter.folder.title">Folder health</h5>
-                        <div class="table-responsive">
-                            <table class="table table-hover folder-table">
+                        <div class="uc-table-wrap">
+                            <table class="uc-table folder-table">
                                 <thead>
                                 <tr>
                                     <th data-i18n="serverCenter.folder.folder">Folder</th>
@@ -170,15 +174,15 @@ $folders = $serverCenter->getFolderChecks();
                                             <strong><?php echo htmlspecialchars($folder['label']); ?></strong>
                                             <div class="text-muted small"><?php echo htmlspecialchars($folder['path']); ?></div>
                                         </td>
-                                        <td><span class="badge bg-<?php echo $folder['exists'] ? 'success' : 'secondary'; ?>"><span data-i18n="<?php echo $folder['exists'] ? 'common.yes' : 'common.no'; ?>"><?php echo $folder['exists'] ? 'Yes' : 'No'; ?></span></span></td>
-                                        <td><span class="badge bg-<?php echo $folder['is_readable'] ? 'success' : 'warning'; ?>"><span data-i18n="<?php echo $folder['is_readable'] ? 'common.yes' : 'common.no'; ?>"><?php echo $folder['is_readable'] ? 'Yes' : 'No'; ?></span></span></td>
-                                        <td><span class="badge bg-<?php echo $folder['is_writable'] ? 'success' : 'warning'; ?>"><span data-i18n="<?php echo $folder['is_writable'] ? 'common.yes' : 'common.no'; ?>"><?php echo $folder['is_writable'] ? 'Yes' : 'No'; ?></span></span></td>
+                                        <td><span class="uc-badge <?php echo $folder['exists'] ? 'uc-status-actif' : 'uc-status-none'; ?>"><span data-i18n="<?php echo $folder['exists'] ? 'common.yes' : 'common.no'; ?>"><?php echo $folder['exists'] ? 'Yes' : 'No'; ?></span></span></td>
+                                        <td><span class="uc-badge <?php echo $folder['is_readable'] ? 'uc-status-actif' : 'uc-status-en_attente'; ?>"><span data-i18n="<?php echo $folder['is_readable'] ? 'common.yes' : 'common.no'; ?>"><?php echo $folder['is_readable'] ? 'Yes' : 'No'; ?></span></span></td>
+                                        <td><span class="uc-badge <?php echo $folder['is_writable'] ? 'uc-status-actif' : 'uc-status-en_attente'; ?>"><span data-i18n="<?php echo $folder['is_writable'] ? 'common.yes' : 'common.no'; ?>"><?php echo $folder['is_writable'] ? 'Yes' : 'No'; ?></span></span></td>
                                         <td><?php echo htmlspecialchars($folder['size_human']); ?></td>
                                         <td><?php echo (int)$folder['file_count']; ?></td>
                                         <td><?php echo (int)$folder['directory_count']; ?></td>
                                         <td>
                                             <?php if ($folder['partial']): ?>
-                                                <span class="badge bg-info text-dark" data-i18n="serverCenter.folder.partial">Partial</span>
+                                                <span class="uc-badge uc-readonly-badge" data-i18n="serverCenter.folder.partial">Partial</span>
                                             <?php endif; ?>
                                             <?php echo htmlspecialchars($folder['note'] ?: '-'); ?>
                                         </td>
@@ -190,7 +194,7 @@ $folders = $serverCenter->getFolderChecks();
                     </div>
                 </div>
 
-                <div class="card diag-card">
+                <div class="diag-card">
                     <div class="card-body">
                         <h5 class="card-title" data-i18n="serverCenter.safety.title">Safety checklist</h5>
                         <ul class="mb-0">
@@ -211,9 +215,11 @@ window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
   en: {
     'common.yes': 'Yes',
     'common.no': 'No',
+    'serverCenter.kicker': 'Safe diagnostics',
     'serverCenter.title': 'Server Center',
     'serverCenter.subtitle': 'Read-only diagnostics for Hyper Admin.',
     'serverCenter.readOnlyBadge': 'Read-only',
+    'serverCenter.readOnlyTitle': 'Read-only mode',
     'serverCenter.readOnlyAlert': 'This page is read-only. It does not execute commands, restart services, delete files, or modify the database.',
     'serverCenter.card.phpVersion': 'PHP version',
     'serverCenter.card.osFamily': 'OS family',
@@ -247,9 +253,11 @@ window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
   fr: {
     'common.yes': 'Oui',
     'common.no': 'Non',
+    'serverCenter.kicker': 'Diagnostics securises',
     'serverCenter.title': 'Centre serveur',
     'serverCenter.subtitle': 'Diagnostics en lecture seule pour Hyper Admin.',
     'serverCenter.readOnlyBadge': 'Lecture seule',
+    'serverCenter.readOnlyTitle': 'Mode lecture seule',
     'serverCenter.readOnlyAlert': 'Cette page est en lecture seule. Elle n execute aucune commande, ne redemarre aucun service, ne supprime aucun fichier et ne modifie pas la base de donnees.',
     'serverCenter.card.phpVersion': 'Version PHP',
     'serverCenter.card.osFamily': 'Famille OS',

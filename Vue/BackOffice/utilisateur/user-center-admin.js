@@ -15,9 +15,16 @@
     const button = panel.querySelector("[data-uc-stats-toggle]");
     panel.classList.toggle("is-collapsed", !visible);
     if (button) {
-      button.setAttribute("data-i18n", visible ? "common.hideStatistics" : "common.showStatistics");
-      button.textContent = visible ? "Hide statistics" : "Show statistics";
-      applyBackTranslations();
+      const key = visible ? "common.hideStatistics" : "common.showStatistics";
+      button.setAttribute("data-i18n", key);
+      button.textContent = window.cre8BackText
+        ? window.cre8BackText(key)
+        : (visible ? "Hide statistics" : "Show statistics");
+      if (window.cre8BackApplyStatsToggleButtons) {
+        window.cre8BackApplyStatsToggleButtons();
+      } else {
+        applyBackTranslations();
+      }
     }
   }
 
@@ -90,7 +97,10 @@
     replaceResultsFromUrl(window.location.href, false);
   });
 
-  window.addEventListener("cre8:languagechange", applyBackTranslations);
+  window.addEventListener("cre8:languagechange", () => {
+    document.querySelectorAll("[data-uc-stats]").forEach(applyStatsState);
+    applyBackTranslations();
+  });
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", setupStatsToggle);

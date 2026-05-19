@@ -131,7 +131,7 @@ $offerArchivedRatio = $totalOffers > 0 ? max(0, 100 - $offerActiveRatio) : 0;
             <p>Live operational view across candidature and offer workflows.</p>
         </div>
         <div class="admin-chart-section-actions">
-            <a class="admin-report-link" href="../condidature/admin_report.php">Export PDF report</a>
+            <a class="admin-report-link" href="../condidature/admin_report.php?download=pdf" data-i18n="collaboration.export.report">Export PDF report</a>
             <button type="button" class="admin-chart-toggle" data-admin-chart-toggle aria-expanded="true">Hide</button>
         </div>
     </div>

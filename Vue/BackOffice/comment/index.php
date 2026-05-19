@@ -344,6 +344,8 @@ require_once __DIR__ . '/../layout/sidebar.php';
 <script>
 window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
   en: {
+    'common.hideStatistics': 'Hide statistics',
+    'common.showStatistics': 'Show statistics',
     'community.kicker': 'Community Center',
     'community.tabsAria': 'Community Center sections',
     'community.tab.posts': 'Posts',
@@ -407,6 +409,8 @@ window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
     'comments.confirmDelete': 'Are you sure you want to delete this comment?'
   },
   fr: {
+    'common.hideStatistics': 'Masquer les statistiques',
+    'common.showStatistics': 'Afficher les statistiques',
     'community.kicker': 'Centre communauté',
     'community.tabsAria': 'Sections du centre communauté',
     'community.tab.posts': 'Publications',

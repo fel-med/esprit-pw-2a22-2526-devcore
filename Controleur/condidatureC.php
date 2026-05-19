@@ -15660,6 +15660,32 @@ class CondidatureC
             'context' => $this->getAdminCandidatureById($idCandidature),
         ];
     }
+
+    public function deleteAdminCandidature($idCandidature)
+    {
+        $idCandidature = (int) $idCandidature;
+        if ($idCandidature <= 0) {
+            return false;
+        }
+
+        $context = $this->getAdminCandidatureById($idCandidature);
+        if (!$context || !($context['condidature'] ?? null)) {
+            return false;
+        }
+
+        try {
+            if ($this->negotiationTableExists()) {
+                $negotiationStmt = $this->pdo->prepare('DELETE FROM negociation_candidature WHERE idCandidature = :idCandidature');
+                $negotiationStmt->execute(['idCandidature' => $idCandidature]);
+            }
+
+            $stmt = $this->pdo->prepare('DELETE FROM candidature WHERE idCandidature = :idCandidature');
+
+            return $stmt->execute(['idCandidature' => $idCandidature]);
+        } catch (Throwable $exception) {
+            return false;
+        }
+    }
 }
 
 ?>

@@ -6445,3 +6445,84 @@ body.light-mode.cre8-admin-layout #sidebar .nav .nav-item.menu-items.active > .n
 }
 /* === /Cre8Connect shared chrome hard lock V3 ============================= */
 
+
+
+/* Collaboration export button parity with Campaign page.
+   The Offers/Candidatures headers now use the same action wrapper and button
+   classes as Business Center export controls, without changing report logic. */
+.admin-shell .bc-page-actions {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    flex-wrap: wrap !important;
+    gap: 0.65rem !important;
+}
+
+.admin-shell .bc-page-actions .btn-export,
+.admin-shell a.btn-export {
+    width: auto !important;
+    max-width: none !important;
+    flex: 0 0 auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.35rem !important;
+    min-height: 2.3rem !important;
+    padding: 0.55rem 0.9rem !important;
+    border: 1px solid var(--border-color-strong) !important;
+    border-radius: 0.25rem !important;
+    background: rgba(15, 23, 42, 0.36) !important;
+    color: #bfdbfe !important;
+    box-shadow: none !important;
+    font-size: 0.86rem !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+    cursor: pointer !important;
+}
+
+.admin-shell .bc-page-actions .btn-export:hover,
+.admin-shell a.btn-export:hover {
+    color: #ffffff !important;
+    border-color: var(--primary-color) !important;
+    background: rgba(0, 144, 231, 0.22) !important;
+    text-decoration: none !important;
+}
+
+.admin-shell .bc-page-actions .btn-export i,
+.admin-shell a.btn-export i {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1rem !important;
+    line-height: 1 !important;
+}
+
+html[data-theme="light"] .admin-shell .bc-page-actions .btn-export,
+html[data-theme="light"] .admin-shell a.btn-export,
+body.light-mode .admin-shell .bc-page-actions .btn-export,
+body.light-mode .admin-shell a.btn-export {
+    background: #ffffff !important;
+    color: var(--primary-color) !important;
+    border-color: var(--border-color-strong) !important;
+}
+
+html[data-theme="light"] .admin-shell .bc-page-actions .btn-export:hover,
+html[data-theme="light"] .admin-shell a.btn-export:hover,
+body.light-mode .admin-shell .bc-page-actions .btn-export:hover,
+body.light-mode .admin-shell a.btn-export:hover {
+    background: #f8f6ff !important;
+    color: var(--primary-color-strong) !important;
+}
+
+@media (max-width: 720px) {
+    .admin-shell .bc-page-actions {
+        width: 100% !important;
+        justify-content: flex-start !important;
+    }
+
+    .admin-shell .bc-page-actions .btn-export {
+        width: 100% !important;
+    }
+}

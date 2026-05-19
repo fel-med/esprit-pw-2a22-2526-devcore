@@ -284,6 +284,8 @@ $total_signales     = count($messages_signales);
 <script>
 window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
   en: {
+    "common.hideStatistics": "Hide statistics",
+    "common.showStatistics": "Show statistics",
     "eventCenter.kicker": "Event Center",
     "eventCenter.tab.events": "Events",
     "eventCenter.tab.eventsSub": "Planning and participation",
@@ -342,6 +344,8 @@ window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
     "common.perPage": "Per page"
   },
   fr: {
+    "common.hideStatistics": "Masquer les statistiques",
+    "common.showStatistics": "Afficher les statistiques",
     "eventCenter.kicker": "Centre événements",
     "eventCenter.tab.events": "Événements",
     "eventCenter.tab.eventsSub": "Planification et participation",

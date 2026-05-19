@@ -58,6 +58,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'retir
     echo json_encode(['ok' => true]); exit;
 }
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'ia_analyser') {
+    $isIaAjax = (
+        ($_POST['ajax'] ?? '') === '1'
+        || strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest'
+    );
+
     $id   = intval($_POST['id_campagne'] ?? 0);
     $camp = $campagneC->recupererCampagne($id);
     if ($camp) {
@@ -67,6 +72,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'ia_an
         );
         if (!$iaResult) $iaError = "Erreur IA. Réessayez.";
     } else { $iaError = "Campagne introuvable."; }
+
+    if ($isIaAjax) {
+        header('Content-Type: application/json; charset=UTF-8');
+        echo json_encode([
+            'ok'     => $iaResult !== null && !$iaError,
+            'result' => $iaResult,
+            'error'  => $iaError,
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
 }
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add') {
     header('Location: index.php?add_disabled=1'); exit;
@@ -104,6 +119,36 @@ $budgetTotal    = array_sum(array_column($liste, 'budget'));
 $nbActives      = count(array_filter($liste, fn($c) => $c['statut'] === 'active'));
 $nbBrouillons   = count(array_filter($liste, fn($c) => $c['statut'] === 'brouillon'));
 $nbTerminees    = count(array_filter($liste, fn($c) => $c['statut'] === 'terminee'));
+
+if (isset($_GET['export_csv'])) {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="campaigns_' . date('Y-m-d') . '.csv"');
+
+    $out = fopen('php://output', 'w');
+    if ($out !== false) {
+        fwrite($out, "\xEF\xBB\xBF");
+        fputcsv($out, ['ID', 'Title', 'Objective', 'Description', 'Status', 'Start date', 'End date', 'Budget', 'Brand', 'Products', 'Archived']);
+        foreach ($toutesCampagnes as $campagneExport) {
+            $campaignId = (int) ($campagneExport['idCampagne'] ?? 0);
+            fputcsv($out, [
+                $campaignId,
+                $campagneExport['titreCampagne'] ?? '',
+                $campagneExport['objectif'] ?? '',
+                $campagneExport['description'] ?? '',
+                $campagneExport['statut'] ?? '',
+                $campagneExport['dateDebut'] ?? '',
+                $campagneExport['dateFin'] ?? '',
+                $campagneExport['budget'] ?? '',
+                $campagneExport['nomMarque'] ?? '',
+                $campaignId > 0 ? $campagneC->compterProduitsCampagne($campaignId) : 0,
+                !empty($campagneExport['estArchive']) ? 'Yes' : 'No',
+            ]);
+        }
+        fclose($out);
+    }
+    exit;
+}
+
 
 function statutLabel($s) { return match($s) { 'active'=>'✅ Active','terminee'=>'🏁 Terminée','annulee'=>'❌ Annulée',default=>'📝 Brouillon' }; }
 function statutClass($s) { return match($s) { 'active'=>'badge-success','terminee'=>'badge-info','annulee'=>'badge-danger',default=>'badge-warning' }; }
@@ -413,13 +458,46 @@ textarea.form-control { resize:vertical; min-height:80px; }
     clear: both;
     overflow: hidden;
 }
+.ia-result-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
 .ia-result-title {
     display: block;
     font-size: .95rem;
     font-weight: 800;
     color: var(--accent);
-    margin: 0 0 14px;
+    margin: 0;
     line-height: 1.4;
+}
+.ia-hide-btn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 30px;
+    padding: 0 12px;
+    border: 1px solid rgba(168, 99, 255, .28);
+    border-radius: 999px;
+    background: rgba(168, 99, 255, .11);
+    color: var(--accent);
+    font-family: inherit;
+    font-size: .75rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform .15s ease, background .15s ease, border-color .15s ease;
+}
+.ia-hide-btn:hover {
+    transform: translateY(-1px);
+    background: rgba(168, 99, 255, .18);
+    border-color: rgba(168, 99, 255, .45);
+}
+.ia-result[hidden],
+.ia-error[hidden] {
+    display: none !important;
 }
 .ia-field {
     display: block;
@@ -832,7 +910,14 @@ require_once __DIR__ . '/../layout/sidebar.php';
                 <h1 data-i18n="pageTitle">Campaign administration</h1>
                 <p data-i18n="pageSubtitle">Create, analyze, archive and moderate brand campaigns.</p>
             </div>
-
+            <div class="bc-page-actions">
+                <a href="admin_report.php?download=pdf" class="btn-export" target="_blank" rel="noopener">
+                    <i class="mdi mdi-printer"></i><span data-i18n="common.printPdf">Print / PDF</span>
+                </a>
+                <a href="?export_csv=1" class="btn-export">
+                    <i class="mdi mdi-download"></i><span data-i18n="common.exportCsv">CSV</span>
+                </a>
+            </div>
         </section>
 
         <nav class="bc-entity-tabs" aria-label="Business Center sections">
@@ -895,7 +980,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
                     <span style="font-size:20px">🧠</span>
                     <h2 data-i18n="iaTitle">Analyser une campagne avec l'IA</h2>
                 </div>
-                <form method="POST" id="iaForm">
+                <form method="POST" id="iaForm" data-ia-form>
                     <input type="hidden" name="action" value="ia_analyser">
                     <div class="ia-form-row">
                         <div class="ia-form-group">
@@ -909,8 +994,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <button type="submit" class="btn btn-ia"
-                                onclick="document.getElementById('iaLoading').classList.add('show')">
+                        <button type="submit" class="btn btn-ia" id="iaAnalyzeSubmit">
                             🧠 <span data-i18n="iaAnalyzeBtn">Analyser</span>
                         </button>
                     </div>
@@ -919,20 +1003,25 @@ require_once __DIR__ . '/../layout/sidebar.php';
                     <div class="spinner"></div>
                     <span data-i18n="iaLoading">Analyse IA en cours…</span>
                 </div>
-                <?php if ($iaError): ?>
-                <div class="ia-error">⚠️ <?= htmlspecialchars($iaError, ENT_QUOTES, 'UTF-8') ?></div>
-                <?php endif; ?>
-                <?php if ($iaResult): ?>
-                <div class="ia-result">
-                    <div class="ia-result-title" data-i18n="iaResultTitle">📊 Résultat de l'analyse</div>
-                    <?php if (!empty($iaResult['score_qualite'])): ?><div class="ia-field"><div class="ia-label" data-i18n="iaScore">Score qualité</div><div class="ia-value big">⭐ <?= htmlspecialchars($iaResult['score_qualite'], ENT_QUOTES, 'UTF-8') ?> / 10</div></div><?php endif; ?>
-                    <?php if (!empty($iaResult['points_forts'])): ?><div class="ia-field"><div class="ia-label">✅ Points forts</div><div class="pill-list"><?php foreach ($iaResult['points_forts'] as $p): ?><span class="pill pill-g"><?= htmlspecialchars($p, ENT_QUOTES, 'UTF-8') ?></span><?php endforeach; ?></div></div><?php endif; ?>
-                    <?php if (!empty($iaResult['points_faibles'])): ?><div class="ia-field"><div class="ia-label">⚠️ Points faibles</div><div class="pill-list"><?php foreach ($iaResult['points_faibles'] as $p): ?><span class="pill pill-w"><?= htmlspecialchars($p, ENT_QUOTES, 'UTF-8') ?></span><?php endforeach; ?></div></div><?php endif; ?>
-                    <?php if (!empty($iaResult['risques'])): ?><div class="ia-field"><div class="ia-label">🚨 Risques</div><div class="pill-list"><?php foreach ($iaResult['risques'] as $r): ?><span class="pill pill-r"><?= htmlspecialchars($r, ENT_QUOTES, 'UTF-8') ?></span><?php endforeach; ?></div></div><?php endif; ?>
-                    <?php if (!empty($iaResult['recommandations'])): ?><div class="ia-field"><div class="ia-label">💡 Recommandations</div><div class="pill-list"><?php foreach ($iaResult['recommandations'] as $r): ?><span class="pill pill-a"><?= htmlspecialchars($r, ENT_QUOTES, 'UTF-8') ?></span><?php endforeach; ?></div></div><?php endif; ?>
-                    <?php if (!empty($iaResult['budget_adequat'])): ?><div class="ia-field"><div class="ia-label">💰 Budget</div><div class="ia-value"><?= htmlspecialchars($iaResult['budget_adequat'], ENT_QUOTES, 'UTF-8') ?></div></div><?php endif; ?>
+                <div id="iaResultHost">
+                    <?php if ($iaError): ?>
+                    <div class="ia-error" data-ia-error>⚠️ <?= htmlspecialchars($iaError, ENT_QUOTES, 'UTF-8') ?></div>
+                    <?php endif; ?>
+                    <?php if ($iaResult): ?>
+                    <div class="ia-result" id="iaResultBox">
+                        <div class="ia-result-head">
+                            <div class="ia-result-title" data-i18n="iaResultTitle">📊 Résultat de l'analyse</div>
+                            <button type="button" class="ia-hide-btn" data-ia-hide-result>✕ <span data-i18n="iaHideResult">Masquer</span></button>
+                        </div>
+                        <?php if (!empty($iaResult['score_qualite'])): ?><div class="ia-field"><div class="ia-label" data-i18n="iaScore">Score qualité</div><div class="ia-value big">⭐ <?= htmlspecialchars($iaResult['score_qualite'], ENT_QUOTES, 'UTF-8') ?> / 10</div></div><?php endif; ?>
+                        <?php if (!empty($iaResult['points_forts'])): ?><div class="ia-field"><div class="ia-label" data-i18n="iaStrong">✅ Points forts</div><div class="pill-list"><?php foreach ($iaResult['points_forts'] as $p): ?><span class="pill pill-g"><?= htmlspecialchars($p, ENT_QUOTES, 'UTF-8') ?></span><?php endforeach; ?></div></div><?php endif; ?>
+                        <?php if (!empty($iaResult['points_faibles'])): ?><div class="ia-field"><div class="ia-label" data-i18n="iaWeak">⚠️ Points faibles</div><div class="pill-list"><?php foreach ($iaResult['points_faibles'] as $p): ?><span class="pill pill-w"><?= htmlspecialchars($p, ENT_QUOTES, 'UTF-8') ?></span><?php endforeach; ?></div></div><?php endif; ?>
+                        <?php if (!empty($iaResult['risques'])): ?><div class="ia-field"><div class="ia-label" data-i18n="iaRisks">🚨 Risques</div><div class="pill-list"><?php foreach ($iaResult['risques'] as $r): ?><span class="pill pill-r"><?= htmlspecialchars($r, ENT_QUOTES, 'UTF-8') ?></span><?php endforeach; ?></div></div><?php endif; ?>
+                        <?php if (!empty($iaResult['recommandations'])): ?><div class="ia-field"><div class="ia-label" data-i18n="iaRecommendations">💡 Recommandations</div><div class="pill-list"><?php foreach ($iaResult['recommandations'] as $r): ?><span class="pill pill-a"><?= htmlspecialchars($r, ENT_QUOTES, 'UTF-8') ?></span><?php endforeach; ?></div></div><?php endif; ?>
+                        <?php if (!empty($iaResult['budget_adequat'])): ?><div class="ia-field"><div class="ia-label" data-i18n="iaBudget">💰 Budget</div><div class="ia-value"><?= htmlspecialchars($iaResult['budget_adequat'], ENT_QUOTES, 'UTF-8') ?></div></div><?php endif; ?>
+                    </div>
+                    <?php endif; ?>
                 </div>
-                <?php endif; ?>
             </div>
         </div>
 
@@ -1286,10 +1375,13 @@ const translations = {
         statsSubtitle:'Repartition des campagnes, archives et vue budgetaire.',
         exportCsv:'Export CSV', adminLabel:'Admin',
         kpiTotal:'Total actives', kpiActive:'Actives', kpiDraft:'Brouillons', kpiEnded:'Terminées', kpiBudget:'Budget total', kpiArchived:'Archivées',
-        statsTitle:'Statistiques dynamiques', statsHide:'▲ Masquer', statsShow:'▼ Afficher',
+        statsTitle:'Statistiques dynamiques', statsHide:'Masquer les statistiques', statsShow:'Afficher les statistiques',
+        'common.hideStatistics':'Masquer les statistiques', 'common.showStatistics':'Afficher les statistiques',
         chartStatusTitle:'Répartition par statut', chartActiveArchiveTitle:'Actives vs Archivées', chartBudgetTitle:'Budget par statut (€)',
         iaTitle:"Analyser une campagne avec l'IA", iaSelectLabel:'Sélectionner une campagne', iaSelectPlaceholder:'— Choisir —',
         iaAnalyzeBtn:'Analyser', iaLoading:'Analyse IA en cours…', iaResultTitle:"📊 Résultat de l'analyse", iaScore:'Score qualité',
+        iaHideResult:'Masquer', iaStrong:'✅ Points forts', iaWeak:'⚠️ Points faibles', iaRisks:'🚨 Risques',
+        iaRecommendations:'💡 Recommandations', iaBudget:'💰 Budget', iaErrorFallback:'Erreur IA. Réessayez.', iaNoData:'Aucun résultat IA disponible.',
         tabActive:'Actives', tabArchived:'Archivées', filterAll:'Tous statuts', searchPlaceholder:'Rechercher…',
         panelTitle:'Toutes les campagnes', campaignCount:'campagne(s)', noCampaign:'Aucune campagne.', noArchived:'Aucune campagne archivée.',
         colTitle:'Titre', colStatus:'Statut', colDates:'Dates', colBudget:'Budget', colBrand:'Marque', colProducts:'Produits', colActions:'Actions',
@@ -1314,10 +1406,13 @@ const translations = {
         statsSubtitle:'Campaign distribution, archive split and budget overview.',
         exportCsv:'Export CSV', adminLabel:'Admin',
         kpiTotal:'Total active', kpiActive:'Active', kpiDraft:'Drafts', kpiEnded:'Completed', kpiBudget:'Total budget', kpiArchived:'Archived',
-        statsTitle:'Dynamic Statistics', statsHide:'▲ Hide', statsShow:'▼ Show',
+        statsTitle:'Dynamic Statistics', statsHide:'Hide statistics', statsShow:'Show statistics',
+        'common.hideStatistics':'Hide statistics', 'common.showStatistics':'Show statistics',
         chartStatusTitle:'Distribution by status', chartActiveArchiveTitle:'Active vs Archived', chartBudgetTitle:'Budget by status (€)',
         iaTitle:'Analyze a campaign with AI', iaSelectLabel:'Select a campaign', iaSelectPlaceholder:'— Choose —',
         iaAnalyzeBtn:'Analyze', iaLoading:'AI analysis in progress…', iaResultTitle:'📊 Analysis result', iaScore:'Quality score',
+        iaHideResult:'Hide', iaStrong:'✅ Strengths', iaWeak:'⚠️ Weak points', iaRisks:'🚨 Risks',
+        iaRecommendations:'💡 Recommendations', iaBudget:'💰 Budget', iaErrorFallback:'AI error. Try again.', iaNoData:'No AI result available.',
         tabActive:'Active', tabArchived:'Archived', filterAll:'All statuses', searchPlaceholder:'Search…',
         panelTitle:'All campaigns', campaignCount:'campaign(s)', noCampaign:'No campaigns.', noArchived:'No archived campaigns.',
         colTitle:'Title', colStatus:'Status', colDates:'Dates', colBudget:'Budget', colBrand:'Brand', colProducts:'Products', colActions:'Actions',
@@ -1348,14 +1443,30 @@ function setLang(lang) {
 }
 function applyTranslations() {
     const T = translations[currentLang];
-    document.querySelectorAll('[data-i18n]').forEach(el => { if (T[el.getAttribute('data-i18n')]) el.textContent = T[el.getAttribute('data-i18n')]; });
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (!key) return;
+        if (T[key] !== undefined) {
+            el.textContent = T[key];
+        } else if (window.cre8BackText) {
+            el.textContent = window.cre8BackText(key);
+        }
+    });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { const k = el.getAttribute('data-i18n-placeholder'); if (T[k]) el.setAttribute('placeholder', T[k]); });
     if (window.cre8BackApplyTranslations) window.cre8BackApplyTranslations();
     const isDark = !document.body.classList.contains('light-mode');
     const themeLabel = document.getElementById('themeLabel');
     if (themeLabel) themeLabel.textContent = isDark ? T.themeLabel : T.themeLabelDark;
-    const statsVisible = document.getElementById('statsBody').style.display !== 'none';
-    document.getElementById('statsToggleBtn').textContent = statsVisible ? T.statsHide : T.statsShow;
+    const statsBody = document.getElementById('statsBody');
+    const statsToggle = document.getElementById('statsToggleBtn');
+    const statsVisible = statsBody ? statsBody.style.display !== 'none' : true;
+    if (statsToggle) {
+        const key = statsVisible ? 'common.hideStatistics' : 'common.showStatistics';
+        statsToggle.setAttribute('data-i18n', key);
+        statsToggle.setAttribute('data-label-hide', T['common.hideStatistics'] || 'Hide statistics');
+        statsToggle.setAttribute('data-label-show', T['common.showStatistics'] || 'Show statistics');
+        statsToggle.textContent = window.cre8BackText ? window.cre8BackText(key) : (T[key] || (statsVisible ? T.statsHide : T.statsShow));
+    }
     const ps = T.perPageSuffix || ' / page';
     document.querySelectorAll('#perPageSelect option').forEach(opt => {
         opt.textContent = opt.value + ps;
@@ -1552,7 +1663,132 @@ function toggleStats() {
     const T = translations[currentLang];
     statsVisible = !statsVisible;
     body.style.display = statsVisible ? '' : 'none';
-    btn.textContent = statsVisible ? T.statsHide : T.statsShow;
+    const key = statsVisible ? 'common.hideStatistics' : 'common.showStatistics';
+    btn.setAttribute('data-i18n', key);
+    btn.setAttribute('data-label-hide', T['common.hideStatistics'] || 'Hide statistics');
+    btn.setAttribute('data-label-show', T['common.showStatistics'] || 'Show statistics');
+    btn.textContent = window.cre8BackText ? window.cre8BackText(key) : (T[key] || (statsVisible ? T.statsHide : T.statsShow));
+}
+
+// ── AI ANALYSIS WITHOUT PAGE RELOAD ────────────────────────────────
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, ch => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+    }[ch]));
+}
+
+function iaT(key, fallback) {
+    const T = translations[currentLang] || translations.fr || {};
+    return T[key] || fallback;
+}
+
+function renderIaPills(items, className) {
+    if (!Array.isArray(items) || items.length === 0) return '';
+    return '<div class="pill-list">' + items.map(item =>
+        '<span class="pill ' + className + '">' + escapeHtml(item) + '</span>'
+    ).join('') + '</div>';
+}
+
+function renderIaField(labelKey, fallbackLabel, bodyHtml) {
+    if (!bodyHtml) return '';
+    return '<div class="ia-field"><div class="ia-label" data-i18n="' + labelKey + '">' +
+        escapeHtml(iaT(labelKey, fallbackLabel)) +
+        '</div>' + bodyHtml + '</div>';
+}
+
+function renderIaError(message) {
+    const host = document.getElementById('iaResultHost');
+    if (!host) return;
+    host.innerHTML = '<div class="ia-error" data-ia-error>⚠️ ' +
+        escapeHtml(message || iaT('iaErrorFallback', 'AI error. Try again.')) +
+        '</div>';
+}
+
+function renderIaResult(result) {
+    const host = document.getElementById('iaResultHost');
+    if (!host) return;
+
+    if (!result || typeof result !== 'object') {
+        renderIaError(iaT('iaNoData', 'No AI result available.'));
+        return;
+    }
+
+    let html = '<div class="ia-result" id="iaResultBox">' +
+        '<div class="ia-result-head">' +
+            '<div class="ia-result-title" data-i18n="iaResultTitle">' + escapeHtml(iaT('iaResultTitle', '📊 Analysis result')) + '</div>' +
+            '<button type="button" class="ia-hide-btn" data-ia-hide-result>✕ <span data-i18n="iaHideResult">' + escapeHtml(iaT('iaHideResult', 'Hide')) + '</span></button>' +
+        '</div>';
+
+    if (result.score_qualite !== undefined && result.score_qualite !== null && result.score_qualite !== '') {
+        html += renderIaField('iaScore', 'Quality score',
+            '<div class="ia-value big">⭐ ' + escapeHtml(result.score_qualite) + ' / 10</div>');
+    }
+
+    html += renderIaField('iaStrong', '✅ Strengths', renderIaPills(result.points_forts, 'pill-g'));
+    html += renderIaField('iaWeak', '⚠️ Weak points', renderIaPills(result.points_faibles, 'pill-w'));
+    html += renderIaField('iaRisks', '🚨 Risks', renderIaPills(result.risques, 'pill-r'));
+    html += renderIaField('iaRecommendations', '💡 Recommendations', renderIaPills(result.recommandations, 'pill-a'));
+
+    if (result.budget_adequat) {
+        html += renderIaField('iaBudget', '💰 Budget',
+            '<div class="ia-value">' + escapeHtml(result.budget_adequat) + '</div>');
+    }
+
+    html += '</div>';
+    host.innerHTML = html;
+
+    if (typeof applyTranslations === 'function') {
+        applyTranslations();
+    }
+}
+
+function initCampaignAiAnalyzer() {
+    const form = document.getElementById('iaForm');
+    const loading = document.getElementById('iaLoading');
+    const submit = document.getElementById('iaAnalyzeSubmit');
+    const host = document.getElementById('iaResultHost');
+
+    if (!form || !host) return;
+
+    host.addEventListener('click', event => {
+        const hideBtn = event.target.closest('[data-ia-hide-result]');
+        if (!hideBtn) return;
+        const box = hideBtn.closest('.ia-result, .ia-error');
+        if (box) box.hidden = true;
+    });
+
+    form.addEventListener('submit', event => {
+        event.preventDefault();
+
+        const formData = new FormData(form);
+        formData.set('action', 'ia_analyser');
+        formData.set('ajax', '1');
+
+        if (loading) loading.classList.add('show');
+        if (submit) submit.disabled = true;
+
+        fetch(window.location.pathname + window.location.search, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(payload => {
+            if (!payload || !payload.ok) {
+                renderIaError(payload && payload.error ? payload.error : iaT('iaErrorFallback', 'AI error. Try again.'));
+                return;
+            }
+            renderIaResult(payload.result);
+        })
+        .catch(() => {
+            renderIaError(iaT('iaErrorFallback', 'AI error. Try again.'));
+        })
+        .finally(() => {
+            if (loading) loading.classList.remove('show');
+            if (submit) submit.disabled = false;
+        });
+    });
 }
 
 // ── INIT ──────────────────────────────────────────────────────────
@@ -1571,6 +1807,7 @@ document.addEventListener('DOMContentLoaded', () => {
     filteredRows = getAllRows();
     applyPagination();
     buildCharts();
+    initCampaignAiAnalyzer();
     // Search
     const si = document.getElementById('searchInput');
     if (si) si.addEventListener('input', filterAndPaginate);

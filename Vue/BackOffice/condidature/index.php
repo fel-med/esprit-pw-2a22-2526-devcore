@@ -402,6 +402,11 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                     <h1 data-i18n="candidatures.title">Candidature administration</h1>
                     <p data-i18n="candidatures.subtitle">Inspect creator responses, follow review stages, and keep every targeted candidature visible from the same dashboard.</p>
                 </div>
+                <div class="bc-page-actions">
+                    <a href="admin_report.php?download=pdf" class="btn-export">
+                        <i class="mdi mdi-printer"></i><span data-i18n="common.printPdf">Print / PDF</span>
+                    </a>
+                </div>
             </div>
         </header>
 
@@ -1189,9 +1194,16 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
             const key = 'cre8_bo_stats_visible';
             const setVisible = (visible) => {
                 region.hidden = !visible;
-                toggle.setAttribute('data-i18n', visible ? 'common.hideStatistics' : 'common.showStatistics');
-                toggle.textContent = visible ? 'Hide statistics' : 'Show statistics';
-                if (window.cre8BackApplyTranslations) { window.cre8BackApplyTranslations(); }
+                const key = visible ? 'common.hideStatistics' : 'common.showStatistics';
+                toggle.setAttribute('data-i18n', key);
+                toggle.textContent = window.cre8BackText
+                    ? window.cre8BackText(key)
+                    : (visible ? 'Hide statistics' : 'Show statistics');
+                if (window.cre8BackApplyStatsToggleButtons) {
+                    window.cre8BackApplyStatsToggleButtons();
+                } else if (window.cre8BackApplyTranslations) {
+                    window.cre8BackApplyTranslations();
+                }
                 toggle.setAttribute('aria-expanded', visible ? 'true' : 'false');
                 if (visible) {
                     window.dispatchEvent(new Event('resize'));

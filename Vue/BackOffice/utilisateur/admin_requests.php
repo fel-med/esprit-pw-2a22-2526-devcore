@@ -246,6 +246,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $inboxRequests = $requestC->listVisibleRequests($currentUserId, $currentRole, 'inbox');
 $sentRequests = $requestC->listVisibleRequests($currentUserId, $currentRole, 'sent');
 $allRequests = $currentRole === 'hyper_admin' ? $requestC->listVisibleRequests($currentUserId, $currentRole, 'all') : [];
+$showSentRequestsPanel = $currentRole !== 'hyper_admin' || !empty($sentRequests);
 $flash = $_SESSION['admin_request_flash'] ?? null;
 unset($_SESSION['admin_request_flash']);
 ?>
@@ -261,6 +262,8 @@ unset($_SESSION['admin_request_flash']);
     <link rel="stylesheet" href="assets/vendors/css/vendor.bundle.base.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="../layout/back-layout.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/back-layout.css')); ?>">
+    <link rel="stylesheet" href="user-center-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/user-center-admin.css')); ?>">
+    <link rel="stylesheet" href="../unified-table-admin.css?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../unified-table-admin.css')); ?>">
     <link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
     <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
     <style>
@@ -278,12 +281,14 @@ unset($_SESSION['admin_request_flash']);
     <div class="container-fluid page-body-wrapper cre8-admin-main">
         <?php require_once __DIR__ . '/../layout/header.php'; ?>
         <div class="main-panel">
-            <div class="content-wrapper">
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+            <div class="content-wrapper user-center-shell admin-requests-shell">
+                <div class="uc-page-head">
                     <div>
-                        <h2 class="mb-1" data-i18n="adminRequests.title">Admin Requests</h2>
-                        <p class="text-muted mb-0" data-i18n="adminRequests.subtitle">Send and handle internal admin-level requests without executing account or server actions automatically.</p>
+                        <p class="uc-kicker" data-i18n="adminRequests.kicker">Internal workflow</p>
+                        <h1 data-i18n="adminRequests.title">Admin Requests</h1>
+                        <p data-i18n="adminRequests.subtitle">Send and handle internal admin-level requests without executing account or server actions automatically.</p>
                     </div>
+                    <span class="uc-badge uc-role-badge"><?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $currentRole))); ?></span>
                 </div>
 
                 <?php if ($flash): ?>
@@ -299,8 +304,8 @@ unset($_SESSION['admin_request_flash']);
                 <?php endif; ?>
 
                 <div class="row g-4 mb-4">
-                    <div class="col-lg-5">
-                        <div class="card request-card h-100">
+                    <div class="<?php echo empty($createReceiverOptions) ? 'd-none' : 'col-lg-5'; ?>">
+                        <div class="request-card h-100">
                             <div class="card-body">
                                 <h5 class="card-title" data-i18n="adminRequests.create.title">Create request</h5>
                                 <?php if (empty($createReceiverOptions)): ?>
@@ -336,22 +341,22 @@ unset($_SESSION['admin_request_flash']);
                                             <label class="form-label" data-i18n="adminRequests.form.message">Message</label>
                                             <textarea name="message" class="form-control" rows="5" required></textarea>
                                         </div>
-                                        <button type="submit" class="btn btn-primary" data-i18n="adminRequests.action.send">Send request</button>
+                                        <button type="submit" class="uc-primary-btn" data-i18n="adminRequests.action.send">Send request</button>
                                     </form>
                                 <?php endif; ?>
                             </div>
                         </div>
                     </div>
 
-                    <div class="col-lg-7">
-                        <div class="card request-card h-100">
+                    <div class="<?php echo empty($createReceiverOptions) ? 'col-12' : 'col-lg-7'; ?>">
+                        <div class="request-card h-100">
                             <div class="card-body">
                                 <h5 class="card-title" data-i18n="adminRequests.inbox.title">Inbox</h5>
                                 <?php if (empty($inboxRequests)): ?>
                                     <p class="text-muted mb-0" data-i18n="adminRequests.inbox.empty">No incoming requests.</p>
                                 <?php else: ?>
-                                    <div class="table-responsive">
-                                        <table class="table table-hover request-table">
+                                    <div class="uc-table-wrap">
+                                        <table class="uc-table request-table request-table-inbox">
                                             <thead>
                                             <tr>
                                                 <th>ID</th>
@@ -378,7 +383,7 @@ unset($_SESSION['admin_request_flash']);
                                                             <div class="small mt-2"><strong data-i18n="adminRequests.table.response">Response:</strong> <?php echo nl2br(htmlspecialchars($request['response_message'])); ?></div>
                                                         <?php endif; ?>
                                                     </td>
-                                                    <td><span class="badge bg-<?php echo cre8_admin_request_status_badge($request['status']); ?>"><span data-i18n="<?php echo htmlspecialchars(cre8_admin_request_status_key((string)$request['status'])); ?>"><?php echo htmlspecialchars($request['status']); ?></span></span></td>
+                                                    <td><span class="uc-badge status-<?php echo htmlspecialchars((string)$request['status']); ?>"><span data-i18n="<?php echo htmlspecialchars(cre8_admin_request_status_key((string)$request['status'])); ?>"><?php echo htmlspecialchars($request['status']); ?></span></span></td>
                                                     <td><?php echo htmlspecialchars($request['created_at'] ?? ''); ?></td>
                                                     <td class="request-actions">
                                                         <?php if (cc_can_handle_admin_request($currentUserId, $currentRole, $request)): ?>
@@ -386,9 +391,9 @@ unset($_SESSION['admin_request_flash']);
                                                                 <input type="hidden" name="action" value="handle_request">
                                                                 <input type="hidden" name="request_id" value="<?php echo (int)$request['id']; ?>">
                                                                 <textarea name="response_message" class="form-control form-control-sm" placeholder="Optional response" data-i18n-placeholder="adminRequests.action.optionalResponse"></textarea>
-                                                                <button name="new_status" value="approved" class="btn btn-sm btn-success" type="submit" data-i18n="adminRequests.action.approve">Approve</button>
-                                                                <button name="new_status" value="refused" class="btn btn-sm btn-danger" type="submit" data-i18n="adminRequests.action.refuse">Refuse</button>
-                                                                <button name="new_status" value="done" class="btn btn-sm btn-info" type="submit" data-i18n="adminRequests.action.done">Done</button>
+                                                                <button name="new_status" value="approved" class="uc-action-btn uc-action-success" type="submit" data-i18n="adminRequests.action.approve">Approve</button>
+                                                                <button name="new_status" value="refused" class="uc-action-btn uc-action-danger" type="submit" data-i18n="adminRequests.action.refuse">Refuse</button>
+                                                                <button name="new_status" value="done" class="uc-action-btn uc-action-info" type="submit" data-i18n="adminRequests.action.done">Done</button>
                                                             </form>
                                                         <?php else: ?>
                                                             <span class="text-muted small" data-i18n="adminRequests.action.noActions">No actions</span>
@@ -405,14 +410,15 @@ unset($_SESSION['admin_request_flash']);
                     </div>
                 </div>
 
-                <div class="card request-card mb-4">
+                <?php if ($showSentRequestsPanel): ?>
+                <div class="request-card mb-4">
                     <div class="card-body">
                         <h5 class="card-title" data-i18n="adminRequests.sent.title">Sent requests</h5>
                         <?php if (empty($sentRequests)): ?>
                             <p class="text-muted mb-0" data-i18n="adminRequests.sent.empty">You have not sent any requests yet.</p>
                         <?php else: ?>
-                            <div class="table-responsive">
-                                <table class="table table-hover request-table">
+                            <div class="uc-table-wrap">
+                                <table class="uc-table request-table request-table-sent">
                                     <thead>
                                     <tr>
                                         <th>ID</th>
@@ -440,7 +446,7 @@ unset($_SESSION['admin_request_flash']);
                                                     <div class="small mt-2"><strong data-i18n="adminRequests.table.response">Response:</strong> <?php echo nl2br(htmlspecialchars($request['response_message'])); ?></div>
                                                 <?php endif; ?>
                                             </td>
-                                            <td><span class="badge bg-<?php echo cre8_admin_request_status_badge($request['status']); ?>"><span data-i18n="<?php echo htmlspecialchars(cre8_admin_request_status_key((string)$request['status'])); ?>"><?php echo htmlspecialchars($request['status']); ?></span></span></td>
+                                            <td><span class="uc-badge status-<?php echo htmlspecialchars((string)$request['status']); ?>"><span data-i18n="<?php echo htmlspecialchars(cre8_admin_request_status_key((string)$request['status'])); ?>"><?php echo htmlspecialchars($request['status']); ?></span></span></td>
                                             <td><?php echo htmlspecialchars(trim(($request['handled_by_role'] ?? '') . ' #' . ($request['handled_by'] ?? ''), ' #')); ?><br><span class="text-muted small"><?php echo htmlspecialchars($request['handled_at'] ?? ''); ?></span></td>
                                             <td><?php echo htmlspecialchars($request['created_at'] ?? ''); ?></td>
                                             <td>
@@ -448,7 +454,7 @@ unset($_SESSION['admin_request_flash']);
                                                     <form method="POST" onsubmit="return confirm(window.cre8BackText ? window.cre8BackText('adminRequests.confirm.cancel') : 'Cancel this request?');">
                                                         <input type="hidden" name="action" value="cancel_request">
                                                         <input type="hidden" name="request_id" value="<?php echo (int)$request['id']; ?>">
-                                                        <button type="submit" class="btn btn-sm btn-outline-secondary" data-i18n="common.cancel">Cancel</button>
+                                                        <button type="submit" class="uc-action-btn uc-action-muted" data-i18n="common.cancel">Cancel</button>
                                                     </form>
                                                 <?php else: ?>
                                                     <span class="text-muted small">-</span>
@@ -463,12 +469,14 @@ unset($_SESSION['admin_request_flash']);
                     </div>
                 </div>
 
+                <?php endif; ?>
+
                 <?php if ($currentRole === 'hyper_admin'): ?>
-                    <div class="card request-card">
+                    <div class="request-card">
                         <div class="card-body">
                             <h5 class="card-title" data-i18n="adminRequests.all.title">All requests</h5>
-                            <div class="table-responsive">
-                                <table class="table table-hover request-table">
+                            <div class="uc-table-wrap">
+                                <table class="uc-table request-table request-table-all">
                                     <thead>
                                     <tr>
                                         <th>ID</th>
@@ -487,7 +495,7 @@ unset($_SESSION['admin_request_flash']);
                                             <td><?php echo htmlspecialchars($request['sender_role']); ?> #<?php echo (int)$request['sender_id']; ?></td>
                                             <td><span data-i18n="<?php echo htmlspecialchars(cre8_admin_request_receiver_key((string)$request['receiver_scope'])); ?>"><?php echo htmlspecialchars($receiverLabels[$request['receiver_scope']] ?? $request['receiver_scope']); ?></span></td>
                                             <td><span data-i18n="<?php echo htmlspecialchars(cre8_admin_request_type_key((string)$request['request_type'])); ?>"><?php echo htmlspecialchars($requestTypeLabels[$request['request_type']] ?? $request['request_type']); ?></span></td>
-                                            <td><span class="badge bg-<?php echo cre8_admin_request_status_badge($request['status']); ?>"><span data-i18n="<?php echo htmlspecialchars(cre8_admin_request_status_key((string)$request['status'])); ?>"><?php echo htmlspecialchars($request['status']); ?></span></span></td>
+                                            <td><span class="uc-badge status-<?php echo htmlspecialchars((string)$request['status']); ?>"><span data-i18n="<?php echo htmlspecialchars(cre8_admin_request_status_key((string)$request['status'])); ?>"><?php echo htmlspecialchars($request['status']); ?></span></span></td>
                                             <td><?php echo htmlspecialchars($request['title']); ?></td>
                                             <td><?php echo htmlspecialchars($request['created_at'] ?? ''); ?></td>
                                         </tr>
@@ -507,6 +515,7 @@ unset($_SESSION['admin_request_flash']);
 window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
   en: {
     'common.optional': '(optional)',
+    'adminRequests.kicker': 'Internal workflow',
     'adminRequests.title': 'Admin Requests',
     'adminRequests.subtitle': 'Send and handle internal admin-level requests without executing account or server actions automatically.',
     'adminRequests.create.title': 'Create request',
@@ -564,6 +573,7 @@ window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
   },
   fr: {
     'common.optional': '(optionnel)',
+    'adminRequests.kicker': 'Workflow interne',
     'adminRequests.title': 'Demandes admin',
     'adminRequests.subtitle': 'Envoyez et traitez les demandes internes entre admins sans executer automatiquement des actions de compte ou de serveur.',
     'adminRequests.create.title': 'Creer une demande',

@@ -1734,3 +1734,264 @@ html:not([data-theme="light"]) body.cre8-admin-layout .cre8shield-modal-user-car
         min-width: 0 !important;
     }
 }
+
+/* =========================================================
+   Cre8Shield final BackOffice color alignment.
+   Visual-only; keeps risk logic, filters, actions, and modals intact.
+   ========================================================= */
+body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-tabs,
+body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-summary,
+body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-grid {
+  position: relative;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-tab {
+  background: #191c24 !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(148, 163, 184, 0.20) !important;
+  box-shadow: none !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-tab:hover {
+  background: #202434 !important;
+  color: #ffffff !important;
+  border-color: rgba(155, 93, 224, 0.36) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-tab.is-active {
+  background: linear-gradient(135deg, #7c5cff, #e11d74) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  box-shadow: 0 16px 34px rgba(155, 93, 224, 0.22) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-tab:not(.is-active) .cre8shield-tab-count {
+  background: rgba(148, 163, 184, 0.13) !important;
+  border-color: rgba(148, 163, 184, 0.22) !important;
+  color: #cbd5e1 !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-toolbar {
+  background: #191c24 !important;
+  border-color: rgba(148, 163, 184, 0.18) !important;
+  color: #f8fafc !important;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-toolbar strong,
+html:not([data-theme="light"]) body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-sort-form label {
+  color: #e2e8f0 !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-toolbar span {
+  color: #94a3b8 !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-sort-form select {
+  background: #2a3038 !important;
+  color: #f8fafc !important;
+  border-color: rgba(148, 163, 184, 0.22) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-sort-form button,
+html:not([data-theme="light"]) body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-action-btn.is-primary {
+  background: linear-gradient(135deg, #7c5cff, #e11d74) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  box-shadow: 0 14px 28px rgba(155, 93, 224, 0.20) !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-empty {
+  background: #191c24 !important;
+  border-color: rgba(148, 163, 184, 0.24) !important;
+  color: #94a3b8 !important;
+}
+
+html:not([data-theme="light"]) body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-pre {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+  border: 1px solid rgba(148, 163, 184, 0.16) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-tab {
+  background: #ffffff !important;
+  color: #334155 !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-tab:hover {
+  background: #f8f6ff !important;
+  color: #5b21b6 !important;
+  border-color: rgba(155, 93, 224, 0.28) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-tab.is-active {
+  background: linear-gradient(135deg, #7c5cff, #e11d74) !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-toolbar,
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-summary article,
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-card {
+  background: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  color: #111827 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-toolbar strong,
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-summary article p,
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-card-meta-grid dd,
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-card-section p {
+  color: #111827 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-toolbar span,
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-summary article h3,
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-summary article small {
+  color: #64748b !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-sort-form select,
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-card-meta-grid,
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-card-section,
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-details {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-toolbar {
+  border-radius: 0.85rem !important;
+}
+
+body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-tab,
+body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-toolbar,
+body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-summary article,
+body.cre8-admin-layout .content-wrapper.admin-shell .cre8shield-card {
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+
+
+/* Follow-up polish: clearer risk score and modal-based full details. */
+.cre8shield-score {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.28rem;
+    color: #cbd5e1;
+    font-size: 0.92rem;
+    font-weight: 900;
+    letter-spacing: 0.01em;
+}
+
+.cre8shield-score strong {
+    color: #ffffff;
+    font-size: 1.18rem;
+    line-height: 1;
+    font-weight: 950;
+    text-shadow: 0 0 14px rgba(147, 197, 253, 0.22);
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8shield-score {
+    color: #475569;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8shield-score strong {
+    color: #1d4ed8;
+    text-shadow: none;
+}
+
+.cre8shield-details-modal-trigger {
+    width: 100%;
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.45rem;
+    border: 1px dashed rgba(96, 165, 250, 0.34) !important;
+    border-radius: 0.7rem !important;
+    background: rgba(15, 23, 42, 0.32) !important;
+    color: #bfdbfe !important;
+    padding: 0.52rem 0.7rem !important;
+    font-weight: 900 !important;
+    cursor: pointer;
+    text-align: left;
+}
+
+.cre8shield-details-modal-trigger::before {
+    content: '›';
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    height: 1rem;
+    color: currentColor;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.cre8shield-details-modal-trigger:hover {
+    background: rgba(37, 99, 235, 0.16) !important;
+    border-color: rgba(96, 165, 250, 0.55) !important;
+    color: #ffffff !important;
+}
+
+.cre8shield-modal-body .cre8shield-details-body {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.cre8shield-modal-body .cre8shield-details-body section {
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 0.85rem;
+    background: rgba(15, 23, 42, 0.36);
+    padding: 0.85rem 0.95rem;
+}
+
+.cre8shield-modal-body .cre8shield-details-body section h5 {
+    margin: 0 0 0.45rem;
+    color: #bfdbfe;
+    font-size: 0.78rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.cre8shield-modal-body .cre8shield-details-body section p {
+    margin: 0;
+    color: #e2e8f0;
+    line-height: 1.62;
+}
+
+.cre8shield-modal-body .cre8shield-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 0.55rem 0.75rem;
+}
+
+.cre8shield-modal-body .cre8shield-details-grid div {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8shield-details-modal-trigger {
+    background: #f8fafc !important;
+    color: #4f46e5 !important;
+    border-color: rgba(79, 70, 229, 0.24) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8shield-details-modal-trigger:hover {
+    background: #eef2ff !important;
+    color: #312e81 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8shield-modal-body .cre8shield-details-body section {
+    background: #f8fafc;
+    border-color: #e5e7eb;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8shield-modal-body .cre8shield-details-body section h5 {
+    color: #4f46e5;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .cre8shield-modal-body .cre8shield-details-body section p {
+    color: #111827;
+}
