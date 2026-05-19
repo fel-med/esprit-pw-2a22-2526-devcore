@@ -37,6 +37,25 @@
     });
   }
 
+
+
+  function buildGetUrlFromForm(form) {
+    const action = form.getAttribute("action") || window.location.pathname;
+    const url = new URL(action, window.location.href);
+    const params = new URLSearchParams();
+    const data = new FormData(form);
+    data.forEach((value, key) => {
+      const stringValue = String(value).trim();
+      if (stringValue !== "") {
+        params.append(key, stringValue);
+      }
+    });
+    url.search = params.toString();
+    url.hash = "";
+    return url.toString();
+  }
+
+
   function getRegion() {
     return document.getElementById("ecResultsRegion");
   }
@@ -70,6 +89,23 @@
         if (window.cre8BackApplyTranslations) window.cre8BackApplyTranslations();
       });
   }
+
+
+
+  document.addEventListener("submit", (event) => {
+    const form = event.target.closest("form.ec-filter-grid");
+    if (!form || event.defaultPrevented) return;
+    event.preventDefault();
+    replaceResultsFromUrl(buildGetUrlFromForm(form), true);
+  });
+
+  document.addEventListener("click", (event) => {
+    const resetLink = event.target.closest("form.ec-filter-grid a[href]");
+    if (!resetLink || event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    replaceResultsFromUrl(new URL(resetLink.getAttribute("href"), window.location.href).toString(), true);
+  });
+
 
   document.addEventListener("click", (event) => {
     const link = event.target.closest(".ec-results-region .ec-page-btn[href]");

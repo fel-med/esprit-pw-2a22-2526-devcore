@@ -13,6 +13,18 @@ if (!isset($sessionUser['id']) || !isBackOfficeRole(cc_current_user_role())) {
     exit;
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete_candidature') {
+    $deleteId = (int)($_POST['idCandidature'] ?? 0);
+    $deleteOk = $deleteId > 0 && $controller->deleteAdminCandidature($deleteId);
+    $query = $_GET;
+    $query['notice'] = $deleteOk
+        ? 'Candidature deleted successfully.'
+        : 'Unable to delete this candidature.';
+    $query['noticeType'] = $deleteOk ? 'success' : 'danger';
+    header('Location: index.php?' . http_build_query($query));
+    exit;
+}
+
 $notice = trim((string) ($_GET['notice'] ?? ''));
 $noticeType = trim((string) ($_GET['noticeType'] ?? 'success'));
 $error = null;
@@ -402,11 +414,6 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                     <h1 data-i18n="candidatures.title">Candidature administration</h1>
                     <p data-i18n="candidatures.subtitle">Inspect creator responses, follow review stages, and keep every targeted candidature visible from the same dashboard.</p>
                 </div>
-                <div class="bc-page-actions">
-                    <a href="admin_report.php?download=pdf" class="btn-export">
-                        <i class="mdi mdi-printer"></i><span data-i18n="common.printPdf">Print / PDF</span>
-                    </a>
-                </div>
             </div>
         </header>
 
@@ -705,6 +712,11 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                                                     data-source-status="<?php echo htmlspecialchars(trim((string) ($source['status'] ?? '')) !== '' ? ucwords(str_replace('_', ' ', (string) $source['status'])) : 'Not set'); ?>"
                                                 ><span data-i18n="common.source">Source</span></button>
                                                 <a class="btn btn-info btn-sm inspect-link" href="details.php?idCandidature=<?php echo (int) $condidature->getIdCandidature(); ?>"><span data-i18n="common.review">Review</span></a>
+                                                <form method="POST" class="inline-delete-form" data-delete-confirm data-delete-title="<?php echo htmlspecialchars($source['title'] ?: ('Candidature #' . (int) $condidature->getIdCandidature())); ?>" data-delete-creator="<?php echo htmlspecialchars(trim(($creator['nom'] ?? 'Unknown creator') . ' · ' . ($originLabel ?? ''))); ?>">
+                                                    <input type="hidden" name="action" value="delete_candidature">
+                                                    <input type="hidden" name="idCandidature" value="<?php echo (int) $condidature->getIdCandidature(); ?>">
+                                                    <button type="submit" class="btn btn-danger btn-sm inspect-link"><span data-i18n="common.delete">Delete</span></button>
+                                                </form>
                                             </div>
                                         </td>
                                     </tr>
@@ -748,6 +760,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
             </div>
         </div>
     </div>
+        <?php require __DIR__ . '/../layout/footer.php'; ?>
         </main>
     </div>
 
@@ -783,6 +796,32 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
         </section>
     </div>
 
+
+    <dialog id="candidatureDeleteDialog" class="delete-dialog" aria-labelledby="candidatureDeleteDialogTitle">
+        <div class="delete-dialog-card">
+            <div class="delete-dialog-header">
+                <div>
+                    <span class="delete-dialog-kicker" data-i18n="candidatures.delete.kicker">Delete candidature</span>
+                    <h2 id="candidatureDeleteDialogTitle" data-i18n="candidatures.delete.title">Delete this candidature?</h2>
+                    <p data-i18n="candidatures.delete.subtitle">This removes the selected candidature from the BackOffice pipeline.</p>
+                </div>
+                <button type="button" class="delete-dialog-close" data-delete-close data-i18n="common.close">Close</button>
+            </div>
+            <div class="delete-dialog-body">
+                <div class="delete-dialog-preview">
+                    <span class="delete-dialog-preview-label" data-i18n="candidatures.delete.selected">Selected candidature</span>
+                    <strong id="candidatureDeleteDialogTitleText">Selected candidature</strong>
+                    <span id="candidatureDeleteDialogContext">The selected candidature will be removed from the dashboard pipeline.</span>
+                </div>
+                <p class="delete-dialog-warning" data-i18n="common.cannotUndo">This action cannot be undone.</p>
+                <div class="delete-dialog-actions">
+                    <button type="button" class="delete-dialog-secondary" data-delete-close data-i18n="common.cancel">Cancel</button>
+                    <button type="button" id="candidatureDeleteDialogConfirm" class="delete-dialog-danger" data-i18n="common.delete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </dialog>
+
     <script>
         window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
             en: {
@@ -799,6 +838,11 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                 'common.delete': 'Delete',
                 'common.inspect': 'Inspect',
                 'common.review': 'Review',
+                'common.cannotUndo': 'This action cannot be undone.',
+                'candidatures.delete.kicker': 'Delete candidature',
+                'candidatures.delete.title': 'Delete this candidature?',
+                'candidatures.delete.subtitle': 'This removes the selected candidature from the BackOffice pipeline.',
+                'candidatures.delete.selected': 'Selected candidature',
                 'common.source': 'Source',
                 'common.responses': 'Responses',
                 'common.close': 'Close',
@@ -903,6 +947,11 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                 'common.delete': 'Supprimer',
                 'common.inspect': 'Inspecter',
                 'common.review': 'Examiner',
+                'common.cannotUndo': 'Cette action est irreversible.',
+                'candidatures.delete.kicker': 'Supprimer la candidature',
+                'candidatures.delete.title': 'Supprimer cette candidature ?',
+                'candidatures.delete.subtitle': 'Cette action retire la candidature selectionnee du pipeline BackOffice.',
+                'candidatures.delete.selected': 'Candidature selectionnee',
                 'common.source': 'Source',
                 'common.responses': 'Reponses',
                 'common.close': 'Fermer',
@@ -996,6 +1045,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
         });
     </script>
     <script src="../layout/back-layout.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/back-layout.js')); ?>"></script>
+    <script src="condidature-admin-delete.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/condidature-admin-delete.js')); ?>"></script>
     <script>
         (() => {
             const overlay = document.querySelector('[data-source-preview-overlay]');
@@ -1120,6 +1170,24 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                 return;
             }
 
+
+
+            const buildGetUrlFromForm = (form) => {
+                const action = form.getAttribute('action') || window.location.pathname;
+                const url = new URL(action, window.location.href);
+                const params = new URLSearchParams();
+                const data = new FormData(form);
+                data.forEach((value, key) => {
+                    const stringValue = String(value).trim();
+                    if (stringValue !== '') {
+                        params.append(key, stringValue);
+                    }
+                });
+                url.search = params.toString();
+                url.hash = '';
+                return url.toString();
+            };
+
             const replaceRegion = async (url, pushState = true) => {
                 const currentRegion = getRegion();
                 if (!currentRegion) {
@@ -1179,6 +1247,34 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                 replaceRegion(url);
             });
 
+
+
+            document.addEventListener('submit', (event) => {
+                const form = event.target.closest('form.search-form');
+                if (!form || event.defaultPrevented) {
+                    return;
+                }
+
+                const method = (form.getAttribute('method') || 'get').toLowerCase();
+                if (method !== 'get') {
+                    return;
+                }
+
+                event.preventDefault();
+                replaceRegion(buildGetUrlFromForm(form));
+            });
+
+            document.addEventListener('click', (event) => {
+                const resetLink = event.target.closest('form.search-form a.clear-link[href]');
+                if (!resetLink || event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                    return;
+                }
+
+                event.preventDefault();
+                replaceRegion(new URL(resetLink.getAttribute('href'), window.location.href).toString());
+            });
+
+
             window.addEventListener('popstate', () => {
                 replaceRegion(window.location.href, false);
             });
@@ -1194,16 +1290,9 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
             const key = 'cre8_bo_stats_visible';
             const setVisible = (visible) => {
                 region.hidden = !visible;
-                const key = visible ? 'common.hideStatistics' : 'common.showStatistics';
-                toggle.setAttribute('data-i18n', key);
-                toggle.textContent = window.cre8BackText
-                    ? window.cre8BackText(key)
-                    : (visible ? 'Hide statistics' : 'Show statistics');
-                if (window.cre8BackApplyStatsToggleButtons) {
-                    window.cre8BackApplyStatsToggleButtons();
-                } else if (window.cre8BackApplyTranslations) {
-                    window.cre8BackApplyTranslations();
-                }
+                toggle.setAttribute('data-i18n', visible ? 'common.hideStatistics' : 'common.showStatistics');
+                toggle.textContent = visible ? 'Hide statistics' : 'Show statistics';
+                if (window.cre8BackApplyTranslations) { window.cre8BackApplyTranslations(); }
                 toggle.setAttribute('aria-expanded', visible ? 'true' : 'false');
                 if (visible) {
                     window.dispatchEvent(new Event('resize'));

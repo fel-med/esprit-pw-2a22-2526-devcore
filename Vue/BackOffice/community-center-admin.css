@@ -485,16 +485,21 @@ html[data-theme="light"] .cc-action-muted {
   background: rgba(96, 165, 250, 0.04);
 }
 
+.cc-posts-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
 .cc-posts-table th:nth-child(1),
-.cc-posts-table td:nth-child(1) { width: 9%; }
+.cc-posts-table td:nth-child(1) { width: 8%; }
 .cc-posts-table th:nth-child(2),
-.cc-posts-table td:nth-child(2) { width: 15%; }
+.cc-posts-table td:nth-child(2) { width: 12%; }
 .cc-posts-table th:nth-child(3),
 .cc-posts-table td:nth-child(3) { width: 16%; }
 .cc-posts-table th:nth-child(4),
 .cc-posts-table td:nth-child(4) { width: 22%; }
 .cc-posts-table th:nth-child(5),
-.cc-posts-table td:nth-child(5) { width: 10%; }
+.cc-posts-table td:nth-child(5) { width: 11%; }
 .cc-posts-table th:nth-child(6),
 .cc-posts-table td:nth-child(6),
 .cc-posts-table th:nth-child(7),
@@ -503,6 +508,45 @@ html[data-theme="light"] .cc-action-muted {
 .cc-posts-table td:nth-child(8) { width: 7%; }
 .cc-posts-table th:nth-child(9),
 .cc-posts-table td:nth-child(9) { width: 14%; }
+
+.cc-posts-table tbody td {
+  vertical-align: top;
+}
+
+.cc-posts-table td:nth-child(3),
+.cc-posts-table td:nth-child(4) {
+  min-width: 0;
+  max-width: 0;
+  overflow: hidden;
+}
+
+.cc-posts-table td:nth-child(3) {
+  padding-right: 0.9rem;
+}
+
+.cc-posts-table td:nth-child(4) {
+  padding-left: 0.25rem;
+}
+
+.cc-posts-table td:nth-child(3) strong {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow-wrap: anywhere;
+}
+
+.cc-posts-table td:nth-child(4) .cc-excerpt {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.45;
+  margin: 0;
+}
 
 .cc-comments-table th:nth-child(1),
 .cc-comments-table td:nth-child(1) { width: 9%; }
@@ -755,4 +799,54 @@ html[data-theme="light"] .cc-page-ellipsis {
     align-items: flex-start;
     flex-direction: column;
   }
+}
+
+/* =========================================================
+   Final light-mode contrast pass (Community Center)
+   ========================================================= */
+
+html[data-theme="light"] body.cre8-admin-layout .community-center-shell .cc-table thead th,
+body.light-mode.cre8-admin-layout .community-center-shell .cc-table thead th {
+  background: #eef1f7 !important;
+  background-color: #eef1f7 !important;
+  color: #111827 !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+}
+
+html[data-theme="light"] .community-center-shell .cc-badge-muted,
+body.light-mode.cre8-admin-layout .community-center-shell .cc-badge-muted {
+  background: #eef2f7 !important;
+  color: #334155 !important;
+  border: 1px solid rgba(100, 116, 139, 0.2) !important;
+}
+
+html[data-theme="light"] .community-center-shell .cc-entity-tab:not(.is-active) .cc-tab-icon,
+body.light-mode.cre8-admin-layout .community-center-shell .cc-entity-tab:not(.is-active) .cc-tab-icon {
+  background: rgba(109, 40, 217, 0.1) !important;
+  color: #5b21b6 !important;
+}
+
+html[data-theme="light"] .community-center-shell .cc-entity-tab:not(.is-active) strong,
+html[data-theme="light"] .community-center-shell .cc-entity-tab:not(.is-active) small,
+body.light-mode.cre8-admin-layout .community-center-shell .cc-entity-tab:not(.is-active) strong,
+body.light-mode.cre8-admin-layout .community-center-shell .cc-entity-tab:not(.is-active) small {
+  color: #111827 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .community-center-shell .cc-action-muted,
+html[data-theme="light"] body.cre8-admin-layout .community-center-shell .cc-secondary-btn,
+body.light-mode.cre8-admin-layout .community-center-shell .cc-action-muted,
+body.light-mode.cre8-admin-layout .community-center-shell .cc-secondary-btn {
+  background: #ffffff !important;
+  color: #1d4ed8 !important;
+  border: 1px solid rgba(37, 99, 235, 0.22) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .community-center-shell .cc-comments-table td:nth-child(4) .cc-badge-muted,
+html[data-theme="light"] body.cre8-admin-layout .community-center-shell .cc-comments-table td:nth-child(5) .cc-badge-muted,
+body.light-mode.cre8-admin-layout .community-center-shell .cc-comments-table td:nth-child(4) .cc-badge-muted,
+body.light-mode.cre8-admin-layout .community-center-shell .cc-comments-table td:nth-child(5) .cc-badge-muted {
+  background: rgba(109, 40, 217, 0.1) !important;
+  color: #5b21b6 !important;
+  border-color: rgba(109, 40, 217, 0.22) !important;
 }

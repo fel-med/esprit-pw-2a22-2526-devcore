@@ -849,7 +849,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
                             <button class="btn-action btn-view" onclick="openPreview(<?= $p['idProduit'] ?>)" data-i18n="btnView">👁 View</button>
                             <a href="?edit=<?= $p['idProduit'] ?>" class="btn-action btn-edit-a" data-i18n="btnEdit">✏️ Edit</a>
                             <button class="btn-action btn-pin" onclick="ajaxToggle('epingle',<?= $p['idProduit'] ?>,'<?= $isPinned?'Unpin':'Pin' ?>')" data-i18n="<?= $isPinned?'btnUnpin':'btnPin' ?>"><?= $isPinned?'📌 Unpin':'📌 Pin' ?></button>
-                            <button class="btn-action btn-archive" onclick="ajaxToggle('archive',<?= $p['idProduit'] ?>,'Archive')" data-i18n="btnArchive">🗄️</button>
+                            <button class="btn-action btn-archive" onclick="ajaxToggle('archive',<?= $p['idProduit'] ?>,'Archive')" data-i18n="btnArchive">🗄 Archive</button>
                             <button class="btn-action btn-delete" onclick="openDeleteModal(<?= $p['idProduit'] ?>,'<?= htmlspecialchars(addslashes($p['nomProduit']), ENT_QUOTES, 'UTF-8') ?>')" data-i18n="btnDelete">🗑</button>
                         </div>
                     </td>
@@ -906,6 +906,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
         </div>
     </div>
         </div><!-- /produit-admin -->
+        <?php require __DIR__ . '/../layout/footer.php'; ?>
     </div><!-- /content-wrapper -->
     </div><!-- /main-panel -->
 </div><!-- /page-body-wrapper -->
@@ -1622,7 +1623,7 @@ const translations = {
         btnEdit: '✏️ Edit',
         btnPin: '📌 Pin',
         btnUnpin: '📌 Unpin',
-        btnArchive: '🗄️',
+        btnArchive: '🗄 Archive',
         btnDelete: '🗑',
         // Archived tab
         archivedTitle: 'Archived products',
@@ -1758,7 +1759,7 @@ const translations = {
         btnEdit: '✏️ Modifier',
         btnPin: '📌 Épingler',
         btnUnpin: '📌 Désépingler',
-        btnArchive: '🗄️',
+        btnArchive: '🗄 Archiver',
         btnDelete: '🗑',
         // Archived tab
         archivedTitle: 'Produits archivés',

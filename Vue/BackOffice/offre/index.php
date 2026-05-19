@@ -1036,6 +1036,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
             </div>
         </div>
     </div>
+    <?php require __DIR__ . '/../layout/footer.php'; ?>
     <dialog class="inspect-dialog" id="offerInspectDialog" aria-labelledby="offerInspectDialogTitle">
         <div class="inspect-dialog-card">
             <div class="inspect-dialog-header">
@@ -1600,6 +1601,24 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                 return;
             }
 
+
+
+            const buildGetUrlFromForm = (form) => {
+                const action = form.getAttribute('action') || window.location.pathname;
+                const url = new URL(action, window.location.href);
+                const params = new URLSearchParams();
+                const data = new FormData(form);
+                data.forEach((value, key) => {
+                    const stringValue = String(value).trim();
+                    if (stringValue !== '') {
+                        params.append(key, stringValue);
+                    }
+                });
+                url.search = params.toString();
+                url.hash = '';
+                return url.toString();
+            };
+
             const replaceRegion = async (url, pushState = true) => {
                 const currentRegion = getRegion();
                 if (!currentRegion) {
@@ -1658,6 +1677,34 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                 event.preventDefault();
                 replaceRegion(url);
             });
+
+
+
+            document.addEventListener('submit', (event) => {
+                const form = event.target.closest('form.search-form');
+                if (!form || event.defaultPrevented) {
+                    return;
+                }
+
+                const method = (form.getAttribute('method') || 'get').toLowerCase();
+                if (method !== 'get') {
+                    return;
+                }
+
+                event.preventDefault();
+                replaceRegion(buildGetUrlFromForm(form));
+            });
+
+            document.addEventListener('click', (event) => {
+                const resetLink = event.target.closest('form.search-form a.clear-link[href]');
+                if (!resetLink || event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                    return;
+                }
+
+                event.preventDefault();
+                replaceRegion(new URL(resetLink.getAttribute('href'), window.location.href).toString());
+            });
+
 
             window.addEventListener('popstate', () => {
                 replaceRegion(window.location.href, false);

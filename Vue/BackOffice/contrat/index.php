@@ -658,6 +658,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
             </div>
             </div>
         </div><!-- /contrat-admin -->
+        <?php require __DIR__ . '/../layout/footer.php'; ?>
     </div><!-- /content-wrapper -->
     </div><!-- /main-panel -->
 </div><!-- /page-body-wrapper -->

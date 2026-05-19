@@ -208,6 +208,7 @@ $folders = $serverCenter->getFolderChecks();
             </div>
         </div>
     </div>
+    <?php require __DIR__ . '/../layout/footer.php'; ?>
 </div>
 
 <script>

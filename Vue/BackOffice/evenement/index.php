@@ -482,25 +482,23 @@ try {
               <table class="ec-table ec-events-table">
                 <thead>
                   <tr>
-                    <th class="ec-col-check"><input type="checkbox" aria-label="Select all events" data-i18n-aria-label="events.table.selectAll"></th>
                     <th data-i18n="events.table.image">Image</th>
-                    <th onclick="sortTable(2)" style="cursor:pointer;"><span data-i18n="events.table.event">Event</span> <span class="sort-icon" id="sort-icon-2"></span></th>
-                    <th onclick="sortTable(3)" style="cursor:pointer;"><span data-i18n="events.table.type">Type</span> <span class="sort-icon" id="sort-icon-3"></span></th>
-                    <th onclick="sortTable(4)" style="cursor:pointer;"><span data-i18n="common.status">Status</span> <span class="sort-icon" id="sort-icon-4"></span></th>
-                    <th onclick="sortTable(5)" style="cursor:pointer;"><span data-i18n="events.table.date">Date</span> <span class="sort-icon" id="sort-icon-5"></span></th>
-                    <th onclick="sortTable(6)" style="cursor:pointer;"><span data-i18n="events.table.place">Place</span> <span class="sort-icon" id="sort-icon-6"></span></th>
-                    <th onclick="sortTable(7)" style="cursor:pointer;"><span data-i18n="events.table.capacity">Capacity</span> <span class="sort-icon" id="sort-icon-7"></span></th>
+                    <th onclick="sortTable(1)" style="cursor:pointer;"><span data-i18n="events.table.event">Event</span> <span class="sort-icon" id="sort-icon-1"></span></th>
+                    <th onclick="sortTable(2)" style="cursor:pointer;"><span data-i18n="events.table.type">Type</span> <span class="sort-icon" id="sort-icon-2"></span></th>
+                    <th onclick="sortTable(3)" style="cursor:pointer;"><span data-i18n="common.status">Status</span> <span class="sort-icon" id="sort-icon-3"></span></th>
+                    <th onclick="sortTable(4)" style="cursor:pointer;"><span data-i18n="events.table.date">Date</span> <span class="sort-icon" id="sort-icon-4"></span></th>
+                    <th onclick="sortTable(5)" style="cursor:pointer;"><span data-i18n="events.table.place">Place</span> <span class="sort-icon" id="sort-icon-5"></span></th>
+                    <th onclick="sortTable(6)" style="cursor:pointer;"><span data-i18n="events.table.capacity">Capacity</span> <span class="sort-icon" id="sort-icon-6"></span></th>
                     <th data-i18n="common.actions">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="tableBody">
                   <?php if (empty($pagedEvents)): ?>
-                    <tr><td colspan="9"><div class="ec-empty-state"><span><i class="mdi mdi-calendar-remove"></i></span><strong data-i18n="events.empty.title">No event found</strong><p data-i18n="events.empty.subtitle">Try another filter or create a new event.</p></div></td></tr>
+                    <tr><td colspan="8"><div class="ec-empty-state"><span><i class="mdi mdi-calendar-remove"></i></span><strong data-i18n="events.empty.title">No event found</strong><p data-i18n="events.empty.subtitle">Try another filter or create a new event.</p></div></td></tr>
                   <?php else: ?>
                     <?php foreach ($pagedEvents as $event): ?>
                       <?php $percentage = ($event->getCapacite() > 0) ? ($event->getNbInscrits() / $event->getCapacite()) * 100 : 0; ?>
                       <tr data-event-id="<?= $event->getId() ?>">
-                        <td><input type="checkbox" class="event-checkbox" aria-label="Select event"></td>
                         <td>
                           <?php if ($event->getImage()): ?>
                             <img class="ec-event-thumb" src="<?= $BASE ?>/<?= htmlspecialchars($event->getImage()) ?>" alt="">
@@ -546,13 +544,7 @@ try {
 
       <!-- content-wrapper ends -->
 
-      <!-- Footer -->
-      <footer class="footer">
-        <div class="d-sm-flex justify-content-center justify-content-sm-between">
-          <span class="text-muted d-block text-center text-sm-left d-sm-inline-block">Copyright &copy; cre8connect 2024</span>
-          <span class="float-none float-sm-right d-block mt-1 mt-sm-0 text-center" data-i18n="events.footer">Event management</span>
-        </div>
-      </footer>
+      <?php require __DIR__ . '/../layout/footer.php'; ?>
     </div>
     <!-- main-panel ends -->
   </div>
@@ -916,7 +908,7 @@ window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
     return raw.split('T')[0].split(' ')[0].slice(0, 10);
   }
 
-  let sortColumn = 2;
+  let sortColumn = 1;
   let sortDirection = 'asc';
   let originalRows = [];
 
@@ -933,7 +925,7 @@ window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
     tbody.innerHTML = '';
     originalRows.forEach(html => tbody.insertAdjacentHTML('beforeend', html));
     document.querySelectorAll('.sort-icon').forEach(i => { i.classList.remove('active','asc','desc'); i.textContent = ''; });
-    sortColumn = 2; sortDirection = 'asc';
+    sortColumn = 1; sortDirection = 'asc';
     const si = document.getElementById('tableSearchInput');
     if (si) si.value = '';
     document.getElementById('tableCount').textContent = document.querySelectorAll('#tableBody tr').length;
@@ -1004,7 +996,7 @@ window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
       const cells = row.querySelectorAll('td');
       let found = false;
       cells.forEach((cell, i) => {
-        if (i !== 0 && i !== 8 && cell.textContent.toLowerCase().includes(filter)) found = true;
+        if (i !== 7 && cell.textContent.toLowerCase().includes(filter)) found = true;
       });
       row.style.display = found ? '' : 'none';
       if (found) count++;
@@ -1022,11 +1014,11 @@ window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
     rows.sort((a, b) => {
       let av = a.cells[col]?.textContent.trim() || '';
       let bv = b.cells[col]?.textContent.trim() || '';
-      if (col === 7) {
+      if (col === 6) {
         const am = av.match(/(\d+)\/(\d+)/), bm = bv.match(/(\d+)\/(\d+)/);
         if (am && bm) return sortDirection === 'asc' ? parseInt(am[1]) - parseInt(bm[1]) : parseInt(bm[1]) - parseInt(am[1]);
       }
-      if (col === 5) { av = new Date(av); bv = new Date(bv); return sortDirection === 'asc' ? av - bv : bv - av; }
+      if (col === 4) { av = new Date(av); bv = new Date(bv); return sortDirection === 'asc' ? av - bv : bv - av; }
       av = av.toLowerCase(); bv = bv.toLowerCase();
       return sortDirection === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
     });

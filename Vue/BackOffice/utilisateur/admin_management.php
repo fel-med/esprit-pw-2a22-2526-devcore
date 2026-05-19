@@ -460,11 +460,7 @@ unset($_SESSION['admin_management_flash']);
           </div>
         </div>
 
-        <footer class="footer">
-          <div class="d-sm-flex justify-content-center justify-content-sm-between">
-            <span class="text-muted d-block text-center text-sm-left d-sm-inline-block">Copyright &copy; cre8connect 2026</span>
-          </div>
-        </footer>
+        <?php require __DIR__ . '/../layout/footer.php'; ?>
       </div>
     </div>
   </div>

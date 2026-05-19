@@ -45,10 +45,10 @@ if (isset($_POST['id'])) {
     }
 
     $canEditRole = cc_can_manage_user($actorId, $actorRole, $targetUserForPermission, 'edit_role');
-    $canEditProfile = $canEditRole;
+    $canEditProfile = cc_can_manage_user($actorId, $actorRole, $targetUserForPermission, 'edit_profile');
 
-    if (!$canEditProfile) {
-        header("Location: index.php");
+    if (!$canEditProfile && !$canEditRole) {
+        header("Location: index.php?error=forbidden");
         exit;
     }
 
@@ -59,14 +59,19 @@ if (isset($_POST['id'])) {
     };
 
     if ($roleChanged && (!$canEditRole || $actorRole === 'admin' || !in_array($role, $assignableRoles, true))) {
-        header("Location: index.php");
+        header("Location: index.php?error=forbidden");
         exit;
+    }
+
+    if (!$canEditProfile) {
+        $_POST['nom'] = $targetUser['nom'] ?? '';
+        $_POST['email'] = $targetUser['email'] ?? '';
     }
 
     $userC->updateUser(
         $targetId,
-        $_POST['nom'],
-        $_POST['email'],
+        trim((string)($_POST['nom'] ?? ($targetUser['nom'] ?? ''))),
+        trim((string)($_POST['email'] ?? ($targetUser['email'] ?? ''))),
         $role
     );
 

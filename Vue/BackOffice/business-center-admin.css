@@ -1438,3 +1438,191 @@ body.cre8-admin-layout.light-mode .business-center-shell .bc-ai-spotlight .form-
   70% { opacity: 1; }
   100% { transform: translateX(120%); opacity: 0; }
 }
+
+/* =========================================================
+   Batch 2 final contract table polish
+   Scope: contracts table only. No CRUD/JS/export behavior changed.
+   ========================================================= */
+.business-center-shell #contratsTable {
+  min-width: 1120px !important;
+  table-layout: fixed !important;
+}
+
+.business-center-shell #contratsTable th,
+.business-center-shell #contratsTable td {
+  vertical-align: middle !important;
+  min-width: 0 !important;
+}
+
+.business-center-shell #contratsTable th:nth-child(1),
+.business-center-shell #contratsTable td:nth-child(1) { width: 7% !important; }
+.business-center-shell #contratsTable th:nth-child(2),
+.business-center-shell #contratsTable td:nth-child(2) { width: 19% !important; }
+.business-center-shell #contratsTable th:nth-child(3),
+.business-center-shell #contratsTable td:nth-child(3) { width: 13% !important; }
+.business-center-shell #contratsTable th:nth-child(4),
+.business-center-shell #contratsTable td:nth-child(4) { width: 13% !important; }
+.business-center-shell #contratsTable th:nth-child(5),
+.business-center-shell #contratsTable td:nth-child(5) { width: 11% !important; }
+.business-center-shell #contratsTable th:nth-child(6),
+.business-center-shell #contratsTable td:nth-child(6) { width: 17% !important; }
+.business-center-shell #contratsTable th:nth-child(7),
+.business-center-shell #contratsTable td:nth-child(7) { width: 14% !important; }
+.business-center-shell #contratsTable th:nth-child(8),
+.business-center-shell #contratsTable td:nth-child(8) { width: 6% !important; }
+
+.business-center-shell #contratsTable td:nth-child(2) strong {
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  line-height: 1.35 !important;
+  max-width: 100% !important;
+  overflow-wrap: anywhere !important;
+}
+
+.business-center-shell #contratsTable td:nth-child(3),
+.business-center-shell #contratsTable td:nth-child(4) {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.business-center-shell #contratsTable td:nth-child(5) {
+  white-space: nowrap !important;
+}
+
+.business-center-shell #contratsTable td:nth-child(6) {
+  white-space: nowrap !important;
+  color: var(--bc-muted) !important;
+}
+
+.business-center-shell #contratsTable td:nth-child(6) span {
+  color: var(--bc-muted-2) !important;
+}
+
+.business-center-shell #contratsTable td:nth-child(7) form {
+  margin: 0 !important;
+}
+
+.business-center-shell #contratsTable .select-statut {
+  width: 100% !important;
+  max-width: 11.5rem !important;
+  min-width: 0 !important;
+  min-height: 2.55rem !important;
+  white-space: nowrap !important;
+}
+
+.business-center-shell #contratsTable td:nth-child(8) {
+  text-align: center !important;
+}
+
+.business-center-shell #contratsTable td:nth-child(8) .btn,
+.business-center-shell #contratsTable td:nth-child(8) .btn-sm {
+  width: 2.45rem !important;
+  height: 2.45rem !important;
+  min-width: 2.45rem !important;
+  min-height: 2.45rem !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+html[data-theme="light"] .business-center-shell #contratsTable .select-statut {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border-color: rgba(15, 23, 42, 0.14) !important;
+}
+
+html[data-theme="light"] .business-center-shell #contratsTable td:nth-child(6),
+html[data-theme="light"] .business-center-shell #contratsTable td:nth-child(6) span {
+  color: #475569 !important;
+}
+
+@media (max-width: 1320px) {
+  .business-center-shell #contratsTable {
+    min-width: 1060px !important;
+  }
+}
+
+/* Light-mode contrast — Product table (scoped to produit-admin) */
+html[data-theme="light"] .business-center-shell .produit-admin .status-badge.pinned,
+body.light-mode.cre8-admin-layout .business-center-shell .produit-admin .status-badge.pinned {
+  background: rgba(37, 99, 235, 0.1) !important;
+  color: #1d4ed8 !important;
+  border: 1px solid rgba(37, 99, 235, 0.22) !important;
+}
+
+html[data-theme="light"] .business-center-shell .produit-admin .status-badge.available,
+body.light-mode.cre8-admin-layout .business-center-shell .produit-admin .status-badge.available {
+  background: rgba(22, 163, 74, 0.12) !important;
+  color: #166534 !important;
+  border: 1px solid rgba(22, 163, 74, 0.25) !important;
+}
+
+html[data-theme="light"] .business-center-shell .produit-admin .status-badge.future,
+body.light-mode.cre8-admin-layout .business-center-shell .produit-admin .status-badge.future {
+  background: rgba(245, 158, 11, 0.14) !important;
+  color: #92400e !important;
+  border: 1px solid rgba(245, 158, 11, 0.28) !important;
+}
+
+html[data-theme="light"] .business-center-shell .produit-admin .btn-action.btn-view,
+body.light-mode.cre8-admin-layout .business-center-shell .produit-admin .btn-action.btn-view {
+  background: #0369a1 !important;
+  color: #ffffff !important;
+  border-color: #0369a1 !important;
+}
+
+html[data-theme="light"] .business-center-shell .produit-admin .btn-action.btn-edit-a,
+body.light-mode.cre8-admin-layout .business-center-shell .produit-admin .btn-action.btn-edit-a {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+}
+
+html[data-theme="light"] .business-center-shell .produit-admin .btn-action.btn-pin,
+body.light-mode.cre8-admin-layout .business-center-shell .produit-admin .btn-action.btn-pin {
+  background: #9333ea !important;
+  color: #ffffff !important;
+  border-color: #9333ea !important;
+}
+
+html[data-theme="light"] .business-center-shell .produit-admin .btn-action.btn-archive,
+body.light-mode.cre8-admin-layout .business-center-shell .produit-admin .btn-action.btn-archive {
+  background: #0f766e !important;
+  color: #ffffff !important;
+  border-color: #0f766e !important;
+}
+
+html[data-theme="light"] .business-center-shell .produit-admin .btn-action.btn-delete,
+body.light-mode.cre8-admin-layout .business-center-shell .produit-admin .btn-action.btn-delete {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  border-color: #ef4444 !important;
+}
+
+html[data-theme="light"] .business-center-shell .produit-admin .btn-action.btn-restore,
+body.light-mode.cre8-admin-layout .business-center-shell .produit-admin .btn-action.btn-restore {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  border-color: #16a34a !important;
+}
+
+html[data-theme="light"] .business-center-shell .produit-admin .btn-action:hover,
+body.light-mode.cre8-admin-layout .business-center-shell .produit-admin .btn-action:hover {
+  filter: brightness(0.95);
+  color: #ffffff !important;
+}
+
+html[data-theme="light"] .business-center-shell .produit-admin #produitsTable thead th,
+html[data-theme="light"] .business-center-shell .produit-admin #content-archives table thead th,
+body.light-mode.cre8-admin-layout .business-center-shell .produit-admin #produitsTable thead th,
+body.light-mode.cre8-admin-layout .business-center-shell .produit-admin #content-archives table thead th {
+  background: #eef1f7 !important;
+  color: #111827 !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+}
+

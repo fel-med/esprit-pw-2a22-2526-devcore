@@ -425,6 +425,28 @@ $modules = [
       color: #64748b;
     }
 
+    html[data-theme="light"] .admin-dashboard-hero-badge,
+    body.light-mode .admin-dashboard-hero-badge {
+      background: rgba(109, 40, 217, 0.1);
+      border-color: rgba(109, 40, 217, 0.22);
+      color: #5b21b6;
+    }
+
+    html[data-theme="light"] .admin-dashboard-hero-badge strong,
+    body.light-mode .admin-dashboard-hero-badge strong {
+      color: #111827;
+    }
+
+    html[data-theme="light"] .admin-dashboard-hero-badge span,
+    body.light-mode .admin-dashboard-hero-badge span {
+      color: #64748b;
+    }
+
+    html[data-theme="light"] .admin-dashboard-stat span,
+    body.light-mode .admin-dashboard-stat span {
+      color: #64748b;
+    }
+
     @media (max-width: 1180px) {
       .admin-dashboard-stats,
       .admin-dashboard-grid {
@@ -515,6 +537,7 @@ $modules = [
             <h2 data-i18n="dashboard.migration.title">BackOffice migration status</h2>
             <p data-i18n="dashboard.migration.text">This dashboard uses the shared BackOffice sidebar and header. Keep migrating the remaining BackOffice modules batch by batch, then test each module in both dark mode and light mode.</p>
           </section>
+          <?php require __DIR__ . '/../layout/footer.php'; ?>
         </div>
       </div>
     </div>

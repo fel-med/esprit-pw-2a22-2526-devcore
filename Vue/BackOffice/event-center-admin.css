@@ -170,3 +170,56 @@ html[data-theme="light"] .ec-secondary-btn, html[data-theme="light"] .ec-soft-bt
 
 @media (max-width: 1320px) { .ec-table { table-layout: auto; } .ec-table-wrap { overflow-x: auto; } .ec-stats-body,.ec-stats-body-forum { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 980px) { .ec-entity-tabs,.ec-filter-grid,.ec-stats-body,.ec-stats-body-forum { grid-template-columns: 1fr; } .ec-page-head { flex-direction: column; align-items: flex-start; padding: 1.15rem; } .ec-page-actions { width: 100%; justify-content: flex-start; } .ec-pagination { align-items: flex-start; flex-direction: column; } }
+
+/* =========================================================
+   Final light-mode contrast pass (Events / Forum)
+   ========================================================= */
+
+html[data-theme="light"] body.cre8-admin-layout .event-center-shell .ec-table thead th,
+body.light-mode.cre8-admin-layout .event-center-shell .ec-table thead th {
+  background: #eef1f7 !important;
+  background-color: #eef1f7 !important;
+  color: #111827 !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+}
+
+html[data-theme="light"] .event-center-shell .ec-chip,
+body.light-mode.cre8-admin-layout .event-center-shell .ec-chip {
+  background: rgba(37, 99, 235, 0.1) !important;
+  color: #1d4ed8 !important;
+  border: 1px solid rgba(37, 99, 235, 0.22) !important;
+}
+
+html[data-theme="light"] .event-center-shell .ec-status-actif,
+html[data-theme="light"] .event-center-shell .ec-status-active,
+body.light-mode.cre8-admin-layout .event-center-shell .ec-status-actif,
+body.light-mode.cre8-admin-layout .event-center-shell .ec-status-active {
+  background: rgba(22, 163, 74, 0.12) !important;
+  color: #166534 !important;
+  border-color: rgba(22, 163, 74, 0.25) !important;
+}
+
+html[data-theme="light"] .event-center-shell .ec-status-en_attente,
+html[data-theme="light"] .event-center-shell .ec-status-brouillon,
+body.light-mode.cre8-admin-layout .event-center-shell .ec-status-en_attente,
+body.light-mode.cre8-admin-layout .event-center-shell .ec-status-brouillon {
+  background: rgba(245, 158, 11, 0.14) !important;
+  color: #92400e !important;
+  border-color: rgba(245, 158, 11, 0.28) !important;
+}
+
+html[data-theme="light"] .event-center-shell .ec-status-archive,
+html[data-theme="light"] .event-center-shell .ec-status-termine,
+body.light-mode.cre8-admin-layout .event-center-shell .ec-status-archive,
+body.light-mode.cre8-admin-layout .event-center-shell .ec-status-termine {
+  background: #eef2f7 !important;
+  color: #334155 !important;
+  border-color: rgba(100, 116, 139, 0.2) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .event-center-shell .ec-action-muted,
+body.light-mode.cre8-admin-layout .event-center-shell .ec-action-muted {
+  background: #ffffff !important;
+  color: #1d4ed8 !important;
+  border: 1px solid rgba(37, 99, 235, 0.22) !important;
+}

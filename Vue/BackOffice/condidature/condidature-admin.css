@@ -1269,3 +1269,121 @@ body.light-mode.cre8-admin-layout .navbar .cre8-lang-btn.btn-primary {
   color: #ffffff !important;
 }
 
+/* Final light-mode contrast pass — candidature table */
+html[data-theme="light"] body.cre8-admin-layout .admin-candidature-table thead th,
+body.light-mode.cre8-admin-layout .admin-candidature-table thead th {
+  background: #eef1f7 !important;
+  color: #111827 !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .admin-candidature-table .badge-status.envoyee,
+html[data-theme="light"] body.cre8-admin-layout .admin-candidature-table .badge-status.en_etude,
+body.light-mode.cre8-admin-layout .admin-candidature-table .badge-status.envoyee,
+body.light-mode.cre8-admin-layout .admin-candidature-table .badge-status.en_etude {
+  background: rgba(37, 99, 235, 0.1) !important;
+  color: #1d4ed8 !important;
+  border-color: rgba(37, 99, 235, 0.22) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .admin-candidature-table .badge-status.negociation,
+body.light-mode.cre8-admin-layout .admin-candidature-table .badge-status.negociation {
+  background: rgba(245, 158, 11, 0.14) !important;
+  color: #92400e !important;
+  border-color: rgba(245, 158, 11, 0.28) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .admin-candidature-table .badge-status.acceptee,
+body.light-mode.cre8-admin-layout .admin-candidature-table .badge-status.acceptee {
+  background: rgba(22, 163, 74, 0.12) !important;
+  color: #166534 !important;
+  border-color: rgba(22, 163, 74, 0.25) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .admin-candidature-table .badge-status.brouillon,
+body.light-mode.cre8-admin-layout .admin-candidature-table .badge-status.brouillon {
+  background: #eef2f7 !important;
+  color: #334155 !important;
+  border-color: rgba(100, 116, 139, 0.2) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .admin-candidature-table .badge-status.refusee,
+html[data-theme="light"] body.cre8-admin-layout .admin-candidature-table .badge-status.retiree,
+body.light-mode.cre8-admin-layout .admin-candidature-table .badge-status.refusee,
+body.light-mode.cre8-admin-layout .admin-candidature-table .badge-status.retiree {
+  background: rgba(225, 29, 72, 0.12) !important;
+  color: #9f1239 !important;
+  border-color: rgba(225, 29, 72, 0.25) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .admin-candidature-table .candidature-detail-pill,
+html[data-theme="light"] body.cre8-admin-layout .admin-candidature-table .candidature-origin-pill,
+body.light-mode.cre8-admin-layout .admin-candidature-table .candidature-detail-pill,
+body.light-mode.cre8-admin-layout .admin-candidature-table .candidature-origin-pill {
+  background: rgba(37, 99, 235, 0.1) !important;
+  color: #1d4ed8 !important;
+  border-color: rgba(37, 99, 235, 0.22) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .admin-candidature-table .badge-status.envoyee,
+body.light-mode.cre8-admin-layout .admin-candidature-table .badge-status.envoyee {
+  background: rgba(37, 99, 235, 0.1) !important;
+  color: #1d4ed8 !important;
+  border-color: rgba(37, 99, 235, 0.22) !important;
+}
+
+/* Source */
+html[data-theme="light"] body.cre8-admin-layout .admin-candidature-table button.btn-info.inspect-link.source-preview-trigger,
+body.light-mode.cre8-admin-layout .admin-candidature-table button.btn-info.inspect-link.source-preview-trigger {
+  background: #0369a1 !important;
+  color: #ffffff !important;
+  border-color: #0369a1 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .admin-candidature-table button.btn-info.inspect-link.source-preview-trigger:hover,
+body.light-mode.cre8-admin-layout .admin-candidature-table button.btn-info.inspect-link.source-preview-trigger:hover {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+  border-color: #0284c7 !important;
+}
+
+/* Review */
+html[data-theme="light"] body.cre8-admin-layout .admin-candidature-table a.btn-info.inspect-link,
+body.light-mode.cre8-admin-layout .admin-candidature-table a.btn-info.inspect-link {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border-color: #7c3aed !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .admin-candidature-table a.btn-info.inspect-link:hover,
+body.light-mode.cre8-admin-layout .admin-candidature-table a.btn-info.inspect-link:hover {
+  background: #6d28d9 !important;
+  color: #ffffff !important;
+  border-color: #6d28d9 !important;
+}
+
+/* Delete */
+html[data-theme="light"] body.cre8-admin-layout .admin-candidature-table button.btn-danger.inspect-link,
+body.light-mode.cre8-admin-layout .admin-candidature-table button.btn-danger.inspect-link {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  border-color: #ef4444 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .admin-candidature-table button.btn-danger.inspect-link:hover,
+body.light-mode.cre8-admin-layout .admin-candidature-table button.btn-danger.inspect-link:hover {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #dc2626 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper.admin-shell .admin-table.admin-candidature-table td .admin-actions-stack .inspect-link,
+html[data-theme="light"] body.cre8-admin-layout .content-wrapper.admin-shell .admin-table.admin-candidature-table td .admin-actions-stack .inspect-link *,
+body.light-mode.cre8-admin-layout .content-wrapper.admin-shell .admin-table.admin-candidature-table td .admin-actions-stack .inspect-link,
+body.light-mode.cre8-admin-layout .content-wrapper.admin-shell .admin-table.admin-candidature-table td .admin-actions-stack .inspect-link * {
+  color: #ffffff !important;
+}
+

@@ -3652,3 +3652,16 @@ body.light-mode.cre8-admin-layout .navbar .cre8-lang-btn.btn-primary {
   color: #ffffff !important;
 }
 
+.cre8-back-footer {
+  margin-top: 1.5rem;
+  padding: 1rem 1.25rem;
+  text-align: center;
+  color: var(--cre8-muted, #94a3b8);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+html[data-theme="light"] .cre8-back-footer {
+  color: #64748b;
+}
+

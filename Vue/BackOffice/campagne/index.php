@@ -1233,6 +1233,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
         </div>
         <?php endif; ?>
         </div><!-- /campagne-admin -->
+        <?php require __DIR__ . '/../layout/footer.php'; ?>
     </div><!-- /content-wrapper -->
     </div><!-- /main-panel -->
 </div><!-- /page-body-wrapper -->

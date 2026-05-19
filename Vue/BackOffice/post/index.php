@@ -375,6 +375,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
                 </div>
             </section>
         </div>
+        <?php require __DIR__ . '/../layout/footer.php'; ?>
     </div>
 </div>
 </div>

@@ -556,11 +556,12 @@ $statusI18nKeys = [
                         $canReactivateUser = $rowStatus === 'suspendu' && cc_can_reactivate_suspension($actorId, $actorRole, $rowUser);
                         $canToggleStatus = $canSuspendUser || $canReactivateUser;
                         $canDeleteUser = cc_can_manage_user($actorId, $actorRole, $rowUser, 'delete');
+                        $canEditProfile = cc_can_manage_user($actorId, $actorRole, $rowUser, 'edit_profile');
                         $canEditRole = $actorRole === 'hyper_admin'
                             && (int)$actorId !== (int)($rowUser['id'] ?? 0)
                             && in_array($rowRole, ['admin', 'super_admin'], true)
                             && cc_can_manage_user($actorId, $actorRole, $rowUser, 'edit_role');
-                        $canEditUser = $canEditRole;
+                        $canEditUser = $canEditProfile || $canEditRole;
                         $statusLabels = [
                             'actif' => 'Active',
                             'suspendu' => 'Suspended',
@@ -577,11 +578,11 @@ $statusI18nKeys = [
                         <td>
                           <div class="uc-user-cell">
                             <span class="uc-user-avatar"><?= htmlspecialchars($initial) ?></span>
-                            <input form="<?= $updateFormId ?>" type="text" name="nom" value="<?= htmlspecialchars($u['nom'] ?? '') ?>" class="uc-inline-input" <?= $canEditUser ? '' : 'readonly disabled' ?>>
+                            <input form="<?= $updateFormId ?>" type="text" name="nom" value="<?= htmlspecialchars($u['nom'] ?? '') ?>" class="uc-inline-input" <?= $canEditProfile ? '' : 'readonly disabled' ?> data-locked="<?= $canEditProfile ? '0' : '1' ?>">
                           </div>
                         </td>
                         <td>
-                          <input form="<?= $updateFormId ?>" type="email" name="email" value="<?= htmlspecialchars($u['email'] ?? '') ?>" class="uc-inline-input" <?= $canEditUser ? '' : 'readonly disabled' ?>>
+                          <input form="<?= $updateFormId ?>" type="email" name="email" value="<?= htmlspecialchars($u['email'] ?? '') ?>" class="uc-inline-input" <?= $canEditProfile ? '' : 'readonly disabled' ?> data-locked="<?= $canEditProfile ? '0' : '1' ?>">
                         </td>
                         <td>
                           <select form="<?= $updateFormId ?>" name="role" class="uc-inline-select" <?= $canEditRole ? '' : 'disabled' ?>>
@@ -661,6 +662,7 @@ $statusI18nKeys = [
             </div>
           </section>
         </div>
+        <?php require __DIR__ . '/../layout/footer.php'; ?>
         <!-- content-wrapper ends -->
       </div>
       <!-- main-panel ends -->

@@ -720,6 +720,7 @@ foreach ($liste as $rec) {
             </div>
           </section>
         </div>
+        <?php require __DIR__ . '/../layout/footer.php'; ?>
         <!-- content-wrapper ends -->
         </div>
         <!-- main-panel ends -->

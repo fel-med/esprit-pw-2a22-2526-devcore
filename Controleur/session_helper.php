@@ -132,7 +132,7 @@ if (!function_exists('cc_can_manage_user_role')) {
         $targetRole = cc_normalize_role($targetRole);
         $action = strtolower(trim((string)$action));
 
-        if (!in_array($action, ['suspend', 'reactivate', 'delete', 'edit_role'], true)) {
+        if (!in_array($action, ['suspend', 'reactivate', 'delete', 'edit_role', 'edit_profile'], true)) {
             return false;
         }
 
@@ -148,6 +148,14 @@ if (!function_exists('cc_can_manage_user_role')) {
         if ($actorRole === 'super_admin') {
             if ($action === 'delete') {
                 return in_array($targetRole, ['createur', 'marque'], true);
+            }
+
+            if ($action === 'edit_role') {
+                return in_array($targetRole, ['createur', 'marque', 'admin'], true);
+            }
+
+            if ($action === 'edit_profile') {
+                return in_array($targetRole, ['createur', 'marque', 'admin'], true);
             }
 
             return in_array($targetRole, ['createur', 'marque', 'admin'], true);

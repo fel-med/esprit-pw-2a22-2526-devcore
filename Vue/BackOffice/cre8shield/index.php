@@ -118,6 +118,9 @@ if (!array_key_exists($sort, $sortOptions)) {
     $sort = 'time_desc';
 }
 
+$shieldPerPage = 12;
+$shieldPage = max(1, (int) ($_GET['shieldPage'] ?? 1));
+
 $notice = trim((string) ($_GET['notice'] ?? ''));
 $noticeType = trim((string) ($_GET['noticeType'] ?? 'success'));
 
@@ -126,16 +129,27 @@ $tableAvailable = $cre8shieldController->isAvailable();
 $rows = [];
 $counts = ['high' => 0, 'medium' => 0, 'reviewed' => 0, 'escalated' => 0];
 
+$shieldTabTotal = 0;
+$shieldTotalPages = 1;
+$shieldOffset = 0;
+
 if ($tableAvailable) {
     $counts = $cre8shieldController->getMonitorCounts();
+    $shieldTabTotal = (int) ($counts[$tab] ?? 0);
+    $shieldTotalPages = max(1, (int) ceil($shieldTabTotal / $shieldPerPage));
+    if ($shieldPage > $shieldTotalPages) {
+        $shieldPage = $shieldTotalPages;
+    }
+    $shieldOffset = ($shieldPage - 1) * $shieldPerPage;
+
     if ($tab === 'high') {
-        $rows = $cre8shieldController->listByRisk('high', 200, 0, $sort);
+        $rows = $cre8shieldController->listByRisk('high', $shieldPerPage, $shieldOffset, $sort);
     } elseif ($tab === 'medium') {
-        $rows = $cre8shieldController->listByRisk('medium', 200, 0, $sort);
+        $rows = $cre8shieldController->listByRisk('medium', $shieldPerPage, $shieldOffset, $sort);
     } elseif ($tab === 'escalated') {
-        $rows = $cre8shieldController->listEscalated(200, 0, $sort);
+        $rows = $cre8shieldController->listEscalated($shieldPerPage, $shieldOffset, $sort);
     } else {
-        $rows = $cre8shieldController->listReviewed(200, 0, $sort);
+        $rows = $cre8shieldController->listReviewed($shieldPerPage, $shieldOffset, $sort);
     }
 }
 
@@ -1038,6 +1052,38 @@ $tabBase = function ($name) use ($tab) {
 $tabHref = function ($name) use ($sort) {
     return 'index.php?tab=' . urlencode((string) $name) . '&sort=' . urlencode((string) $sort);
 };
+$shieldPageHref = function (int $page) use ($tab, $sort): string {
+    $params = [
+        'tab' => $tab,
+        'sort' => $sort,
+    ];
+    if ($page > 1) {
+        $params['shieldPage'] = $page;
+    }
+    return 'index.php?' . http_build_query($params);
+};
+$shieldPageItems = static function (int $current, int $total): array {
+    if ($total <= 1) {
+        return [];
+    }
+    if ($total <= 7) {
+        return range(1, $total);
+    }
+    $items = [1];
+    $start = max(2, $current - 1);
+    $end = min($total - 1, $current + 1);
+    if ($start > 2) {
+        $items[] = '…';
+    }
+    for ($i = $start; $i <= $end; $i++) {
+        $items[] = $i;
+    }
+    if ($end < $total - 1) {
+        $items[] = '…';
+    }
+    $items[] = $total;
+    return $items;
+};
 
 $backActive = 'collaborations';
 
@@ -1485,6 +1531,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                     </article>
                 </section>
 
+                <div id="cre8shieldResultsRegion" class="cre8shield-results-region" aria-live="polite">
                 <nav class="nav nav-tabs cre8shield-tabs" aria-label="Cre8Shield tabs">
                     <a class="<?php echo $tabBase('high'); ?>" href="<?php echo htmlspecialchars($tabHref('high')); ?>">
                         <span data-i18n="cre8shield.tabs.high">High risks</span> <span class="badge badge-danger cre8shield-tab-count"><?php echo (int) ($counts['high'] ?? 0); ?></span>
@@ -1508,7 +1555,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                     <form method="get" action="index.php" class="cre8shield-sort-form form-inline">
                         <input type="hidden" name="tab" value="<?php echo htmlspecialchars($tab); ?>">
                         <label for="cre8shieldSort" data-i18n="cre8shield.toolbar.sortBy">Sort by</label>
-                        <select id="cre8shieldSort" name="sort" class="form-control" onchange="this.form.submit()">
+                        <select id="cre8shieldSort" name="sort" class="form-control">
                             <?php foreach ($sortOptions as $sortKey => $sortLabel): ?>
                                 <option value="<?php echo htmlspecialchars($sortKey); ?>"<?php echo $sort === $sortKey ? ' selected' : ''; ?><?php echo cre8shieldI18nAttr(cre8shieldSortI18nKey($sortKey)); ?>>
                                     <?php echo htmlspecialchars($sortLabel); ?>
@@ -1781,9 +1828,36 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                             </article>
                         <?php endforeach; ?>
                     </div>
+
+                    <?php if ($shieldTotalPages > 1): ?>
+                        <?php
+                        $shieldRangeStart = $shieldTabTotal === 0 ? 0 : $shieldOffset + 1;
+                        $shieldRangeEnd = min($shieldTabTotal, $shieldOffset + count($rows));
+                        ?>
+                        <nav class="cre8shield-pagination" aria-label="Cre8Shield cards pagination">
+                            <p class="cre8shield-pagination-meta">
+                                <span data-i18n="cre8shield.pagination.showing">Showing</span>
+                                <?php echo (int) $shieldRangeStart; ?>–<?php echo (int) $shieldRangeEnd; ?>
+                                <span data-i18n="common.of">of</span> <?php echo (int) $shieldTabTotal; ?>
+                                · <span data-i18n="common.page">Page</span> <?php echo (int) $shieldPage; ?>
+                                <span data-i18n="common.of">of</span> <?php echo (int) $shieldTotalPages; ?>
+                            </p>
+                            <div class="cre8shield-pagination-nav">
+                                <a class="cre8shield-page-btn<?php echo $shieldPage <= 1 ? ' is-disabled' : ''; ?>" href="<?php echo $shieldPage <= 1 ? '#' : htmlspecialchars($shieldPageHref($shieldPage - 1)); ?>" aria-label="Previous page">‹</a>
+                                <?php foreach ($shieldPageItems($shieldPage, $shieldTotalPages) as $pageItem): ?>
+                                    <?php if ($pageItem === '…'): ?>
+                                        <span class="cre8shield-page-ellipsis">…</span>
+                                    <?php else: ?>
+                                        <a class="cre8shield-page-btn<?php echo (int) $pageItem === $shieldPage ? ' is-active' : ''; ?>" href="<?php echo htmlspecialchars($shieldPageHref((int) $pageItem)); ?>"><?php echo (int) $pageItem; ?></a>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                                <a class="cre8shield-page-btn<?php echo $shieldPage >= $shieldTotalPages ? ' is-disabled' : ''; ?>" href="<?php echo $shieldPage >= $shieldTotalPages ? '#' : htmlspecialchars($shieldPageHref($shieldPage + 1)); ?>" aria-label="Next page">›</a>
+                            </div>
+                        </nav>
+                    <?php endif; ?>
                 <?php endif; ?>
 
-                <div class="cre8shield-templates" hidden>
+                <div class="cre8shield-templates" hidden aria-hidden="true">
                     <?php foreach ($cre8shieldUserMap as $tplUserId => $tplUser): ?>
                         <template id="cre8shieldUserTemplate-<?php echo (int) $tplUserId; ?>"><?php echo cre8shieldRenderUserCardTemplate((int) $tplUserId, $tplUser, $adminId, cc_current_user_role(), $tab, $sort); ?></template>
                     <?php endforeach; ?>
@@ -1807,6 +1881,10 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                         <template id="cre8shieldSourceTemplate-prompt-<?php echo $tplCatchId; ?>"><?php echo cre8shieldRenderPromptSourceTemplate($tplRow); ?></template>
                     <?php endforeach; ?>
                 </div>
+
+                </div>
+
+                <?php require __DIR__ . '/../layout/footer.php'; ?>
 
                 <div class="cre8shield-modal-overlay" data-cre8shield-modal hidden aria-hidden="true">
                     <div class="cre8shield-modal-card" role="dialog" aria-modal="true" aria-labelledby="cre8shieldModalTitle">
@@ -1863,6 +1941,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                 'cre8shield.sort.statusPriority': 'Escalated priority',
                 'cre8shield.empty.title': 'No catches in this tab.',
                 'cre8shield.empty.subtitle': 'Cre8Shield will list medium and high risk findings as soon as they are raised by chat or page scans.',
+                'cre8shield.pagination.showing': 'Showing',
                 'cre8shield.card.escalatedCatch': 'Escalated catch',
                 'cre8shield.card.escalatedPriority': 'ESCALATED · priority review',
                 'cre8shield.card.score': 'Score',
@@ -2035,6 +2114,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
                 'cre8shield.sort.updatedAsc': 'Plus ancienne mise a jour',
                 'cre8shield.sort.statusPriority': 'Priorite aux escalades',
                 'cre8shield.empty.title': 'Aucune alerte dans cet onglet.',
+                'cre8shield.pagination.showing': 'Affichage',
                 'cre8shield.empty.subtitle': 'Cre8Shield affichera les risques moyens et eleves des qu ils seront detectes par le chat ou les scans de pages.',
                 'cre8shield.card.escalatedCatch': 'Alerte escaladee',
                 'cre8shield.card.escalatedPriority': 'ESCALADE · verification prioritaire',
@@ -2178,6 +2258,119 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
         });
     </script>
     <script>
+
+        (function () {
+            const selector = '#cre8shieldResultsRegion';
+            const getRegion = () => document.querySelector(selector);
+
+            if (!window.fetch || !window.DOMParser || !window.history || !getRegion()) {
+                return;
+            }
+
+            const applyTranslations = () => {
+                if (window.cre8BackApplyTranslations) {
+                    window.cre8BackApplyTranslations();
+                }
+            };
+
+            const buildGetUrlFromForm = (form) => {
+                const action = form.getAttribute('action') || window.location.pathname;
+                const url = new URL(action, window.location.href);
+                const params = new URLSearchParams();
+                const data = new FormData(form);
+                data.forEach((value, key) => {
+                    const stringValue = String(value).trim();
+                    if (stringValue !== '') {
+                        params.append(key, stringValue);
+                    }
+                });
+                url.search = params.toString();
+                url.hash = '';
+                return url.toString();
+            };
+
+            const replaceRegion = async (url, pushState = true) => {
+                const currentRegion = getRegion();
+                if (!currentRegion) {
+                    window.location.href = url;
+                    return;
+                }
+
+                currentRegion.classList.add('is-loading');
+
+                try {
+                    const response = await fetch(url, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        credentials: 'same-origin'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Unable to load Cre8Shield results.');
+                    }
+
+                    const html = await response.text();
+                    const doc = new DOMParser().parseFromString(html, 'text/html');
+                    const nextRegion = doc.querySelector(selector);
+
+                    if (!nextRegion) {
+                        throw new Error('Cre8Shield results region missing.');
+                    }
+
+                    currentRegion.replaceWith(nextRegion);
+                    if (pushState) {
+                        window.history.pushState({ cre8shieldAjax: true }, '', url);
+                    }
+                    applyTranslations();
+                    window.dispatchEvent(new Event('resize'));
+                } catch (error) {
+                    window.location.href = url;
+                } finally {
+                    const activeRegion = getRegion();
+                    if (activeRegion) {
+                        activeRegion.classList.remove('is-loading');
+                    }
+                    applyTranslations();
+                }
+            };
+
+            document.addEventListener('submit', (event) => {
+                const form = event.target.closest(`${selector} form.cre8shield-sort-form`);
+                if (!form || event.defaultPrevented) {
+                    return;
+                }
+                event.preventDefault();
+                replaceRegion(buildGetUrlFromForm(form));
+            });
+
+            document.addEventListener('click', (event) => {
+                const tabLink = event.target.closest(`${selector} .cre8shield-tabs a[href]`);
+                if (!tabLink || event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                    return;
+                }
+                event.preventDefault();
+                replaceRegion(new URL(tabLink.getAttribute('href'), window.location.href).toString());
+            });
+
+            document.addEventListener('click', (event) => {
+                const pageLink = event.target.closest(`${selector} .cre8shield-pagination a.cre8shield-page-btn[href]:not(.is-disabled)`);
+                if (!pageLink || event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                    return;
+                }
+                const href = pageLink.getAttribute('href');
+                if (!href || href === '#') {
+                    return;
+                }
+                event.preventDefault();
+                replaceRegion(new URL(href, window.location.href).toString());
+            });
+
+            window.addEventListener('popstate', () => {
+                if (getRegion()) {
+                    replaceRegion(window.location.href, false);
+                }
+            });
+        })();
+
         (function () {
             const modal = document.querySelector('[data-cre8shield-modal]');
             if (!modal) {

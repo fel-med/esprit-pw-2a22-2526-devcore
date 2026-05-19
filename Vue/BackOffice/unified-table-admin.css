@@ -346,3 +346,63 @@ body.light-mode.cre8-admin-layout .badge-secondary {
   background: rgba(100, 116, 139, 0.12) !important;
   color: #475569 !important;
 }
+
+/* uc-status-* compound badges + muted community badges */
+html[data-theme="light"] body.cre8-admin-layout .uc-badge.uc-status-actif,
+html[data-theme="light"] body.cre8-admin-layout .uc-badge.uc-status-traitee,
+html[data-theme="light"] body.cre8-admin-layout .uc-badge.uc-priority-low,
+body.light-mode.cre8-admin-layout .uc-badge.uc-status-actif,
+body.light-mode.cre8-admin-layout .uc-badge.uc-status-traitee,
+body.light-mode.cre8-admin-layout .uc-badge.uc-priority-low {
+  background: rgba(22, 163, 74, 0.12) !important;
+  color: #166534 !important;
+  border-color: rgba(22, 163, 74, 0.25) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .uc-badge.uc-status-suspendu,
+html[data-theme="light"] body.cre8-admin-layout .uc-badge.uc-priority-high,
+body.light-mode.cre8-admin-layout .uc-badge.uc-status-suspendu,
+body.light-mode.cre8-admin-layout .uc-badge.uc-priority-high {
+  background: rgba(225, 29, 72, 0.12) !important;
+  color: #9f1239 !important;
+  border-color: rgba(225, 29, 72, 0.25) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .uc-badge.uc-status-en_attente,
+html[data-theme="light"] body.cre8-admin-layout .uc-badge.uc-priority-normal,
+body.light-mode.cre8-admin-layout .uc-badge.uc-status-en_attente,
+body.light-mode.cre8-admin-layout .uc-badge.uc-priority-normal {
+  background: rgba(245, 158, 11, 0.14) !important;
+  color: #92400e !important;
+  border-color: rgba(245, 158, 11, 0.28) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .uc-badge.uc-status-bloque,
+html[data-theme="light"] body.cre8-admin-layout .uc-badge.uc-status-inactif,
+html[data-theme="light"] body.cre8-admin-layout .uc-badge.uc-status-none,
+body.light-mode.cre8-admin-layout .uc-badge.uc-status-bloque,
+body.light-mode.cre8-admin-layout .uc-badge.uc-status-inactif,
+body.light-mode.cre8-admin-layout .uc-badge.uc-status-none {
+  background: #eef2f7 !important;
+  color: #334155 !important;
+  border-color: rgba(100, 116, 139, 0.2) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .community-center-shell .cc-badge-muted,
+body.light-mode.cre8-admin-layout .community-center-shell .cc-badge-muted {
+  background: #eef2f7 !important;
+  color: #334155 !important;
+  border-color: rgba(100, 116, 139, 0.2) !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .uc-action-muted,
+html[data-theme="light"] body.cre8-admin-layout .ec-action-muted,
+html[data-theme="light"] body.cre8-admin-layout .cc-action-muted,
+body.light-mode.cre8-admin-layout .uc-action-muted,
+body.light-mode.cre8-admin-layout .ec-action-muted,
+body.light-mode.cre8-admin-layout .cc-action-muted {
+  background: #ffffff !important;
+  color: #1d4ed8 !important;
+  border-color: rgba(37, 99, 235, 0.22) !important;
+  box-shadow: none !important;
+}
