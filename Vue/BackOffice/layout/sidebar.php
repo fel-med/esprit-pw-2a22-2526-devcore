@@ -39,6 +39,11 @@ $backRoleLabel = match ($backRole) {
     'super_admin' => 'Super Admin',
     default => 'Admin',
 };
+$backRoleKey = match ($backRole) {
+    'hyper_admin' => 'role.hyperAdmin',
+    'super_admin' => 'role.superAdmin',
+    default => 'role.admin',
+};
 $backAvatarUrl = null;
 $backUserId = cc_current_user_id();
 
@@ -196,7 +201,7 @@ $renderBackSidebarItem = static function (array $item) use ($backActive): void {
           </div>
           <div class="profile-name">
             <h5 class="mb-0 font-weight-normal"><?php echo htmlspecialchars($backUserName); ?></h5>
-            <span><?php echo htmlspecialchars($backRoleLabel); ?></span>
+            <span class="cre8-role-badge" data-i18n="<?php echo htmlspecialchars($backRoleKey); ?>"><?php echo htmlspecialchars($backRoleLabel); ?></span>
           </div>
         </div>
 

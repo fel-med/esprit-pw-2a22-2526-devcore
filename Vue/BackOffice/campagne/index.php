@@ -69,19 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'ia_an
     } else { $iaError = "Campagne introuvable."; }
 }
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add') {
-    $titre  = trim($_POST['titre'] ?? '');
-    $budget = str_replace(',', '.', $_POST['budget'] ?? '');
-    $errors = [];
-    if (strlen($titre) < 2) $errors[] = "Titre requis (min 2 car.).";
-    if (!is_numeric($budget) || floatval($budget) < 0) $errors[] = "Budget invalide.";
-    if (empty($errors)) {
-        $campagne = new Campagne(null, htmlspecialchars($titre, ENT_QUOTES, 'UTF-8'), trim($_POST['description'] ?? ''),
-            trim($_POST['dateDebut'] ?? '') ?: null, trim($_POST['dateFin'] ?? '') ?: null,
-            floatval($budget), $_POST['statut'] ?? 'brouillon', null,
-            trim($_POST['objectif'] ?? ''), 0);
-        $campagneC->ajouterCampagne($campagne);
-        header('Location: index.php?added=1'); exit;
-    } else { $message = implode(' | ', $errors); $messageType = "error"; }
+    header('Location: index.php?add_disabled=1'); exit;
 }
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'update') {
     $titre  = trim($_POST['titre'] ?? '');
@@ -99,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
     } else { $message = implode(' | ', $errors); $messageType = "error"; }
 }
 
-if (isset($_GET['added']))   { $message = "Campagne ajoutée.";   $messageType = "success"; }
+if (isset($_GET['add_disabled'])) { $message = "Campaign creation is disabled in BackOffice."; $messageType = "info"; }
 if (isset($_GET['updated'])) { $message = "Campagne modifiée.";  $messageType = "info"; }
 if (isset($_GET['deleted'])) { $message = "Campagne supprimée."; $messageType = "danger"; }
 
@@ -880,7 +868,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
                     <i class="fas fa-chart-bar"></i> <span data-i18n="statsTitle">Statistiques dynamiques</span></h2>
                     <p data-i18n="statsSubtitle">Campaign distribution, archive split and budget overview.</p>
                 </div>
-                <button type="button" class="bc-secondary-btn" data-bc-stats-toggle data-label-hide="Hide statistics" data-label-show="Show statistics" id="statsToggleBtn" data-i18n="statsHide">Hide statistics</button>
+                <button type="button" class="bc-secondary-btn" data-bc-stats-toggle data-label-hide="Hide statistics" data-label-show="Show statistics" id="statsToggleBtn" data-i18n="common.hideStatistics">Hide statistics</button>
             </div>
             <div class="bc-stats-body" id="statsBody">
                 <div class="charts-grid">
@@ -901,7 +889,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
         </section>
 
         <!-- IA ANALYSE -->
-        <div class="card">
+        <div class="card campaign-ai-card bc-ai-spotlight">
             <div class="card-body">
                 <div class="ia-header">
                     <span style="font-size:20px">🧠</span>
@@ -1083,11 +1071,12 @@ require_once __DIR__ . '/../layout/sidebar.php';
             </div>
         </div>
 
-        <!-- FORM AJOUTER / MODIFIER -->
+        <?php if ($campagneUpdate): ?>
+        <!-- FORM MODIFIER -->
         <div class="card" id="formAnchor">
             <div class="card-body">
                 <div class="form-section-title">
-                    <?= $campagneUpdate ? '✏️ Modifier la campagne' : '➕ Ajouter une campagne' ?>
+                    ✏️ Modifier la campagne
                 </div>
                 <?php if ($campagneUpdate): ?>
                 <div class="edit-banner">
@@ -1096,7 +1085,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
                 </div>
                 <?php endif; ?>
                 <form method="POST" action="index.php">
-                    <input type="hidden" name="action" value="<?= $campagneUpdate ? 'update' : 'add' ?>">
+                    <input type="hidden" name="action" value="update">
                     <?php if ($campagneUpdate): ?>
                     <input type="hidden" name="id" value="<?= $campagneUpdate['idCampagne'] ?>">
                     <input type="hidden" name="estArchive" value="<?= intval($campagneUpdate['estArchive'] ?? 0) ?>">
@@ -1144,7 +1133,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
                     </div>
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary">
-                            <?= $campagneUpdate ? '💾 Enregistrer' : '✅ Ajouter' ?>
+                            💾 Enregistrer
                         </button>
                         <?php if ($campagneUpdate): ?>
                         <a href="index.php" class="btn btn-cancel">Annuler</a>
@@ -1153,6 +1142,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
                 </form>
             </div>
         </div>
+        <?php endif; ?>
         </div><!-- /campagne-admin -->
     </div><!-- /content-wrapper -->
     </div><!-- /main-panel -->

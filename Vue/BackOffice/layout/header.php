@@ -26,6 +26,28 @@ $adminInitial = function_exists('mb_substr') ? mb_substr($adminName, 0, 1, 'UTF-
 $adminInitial = strtoupper((string) $adminInitial) ?: 'U';
 $adminAvatarUrl = null;
 $adminId = cc_current_user_id();
+$adminRole = function_exists('cc_current_user_role') ? cc_current_user_role() : 'admin';
+$adminRoleKey = match ($adminRole) {
+    'hyper_admin' => 'role.hyperAdmin',
+    'super_admin' => 'role.superAdmin',
+    default => 'role.admin',
+};
+$adminRoleShortKey = match ($adminRole) {
+    'hyper_admin' => 'role.short.hyperAdmin',
+    'super_admin' => 'role.short.superAdmin',
+    default => 'role.short.admin',
+};
+$adminRoleShortLabel = match ($adminRole) {
+    'hyper_admin' => 'Hyper',
+    'super_admin' => 'Super',
+    default => 'Admin',
+};
+$adminRoleClass = match ($adminRole) {
+    'hyper_admin' => 'cre8-role-badge--hyper',
+    'super_admin' => 'cre8-role-badge--super',
+    default => 'cre8-role-badge--admin',
+};
+
 
 if ($adminId !== null) {
     try {
@@ -108,7 +130,10 @@ if ($adminId !== null) {
                   <?php else: ?>
                     <span class="img-xs rounded-circle d-inline-flex align-items-center justify-content-center text-white font-weight-bold" style="background:linear-gradient(135deg,#5b4fff,#8b5cf6);"><?php echo htmlspecialchars($adminInitial); ?></span>
                   <?php endif; ?>
-                  <p class="mb-0 d-none d-sm-block navbar-profile-name"><?php echo htmlspecialchars($adminName); ?></p>
+                  <div class="cre8-header-user-meta d-none d-sm-flex">
+                    <span class="navbar-profile-name"><?php echo htmlspecialchars($adminName); ?></span>
+                    <span class="cre8-role-badge <?php echo htmlspecialchars($adminRoleClass); ?> d-none d-md-inline-flex" data-i18n="<?php echo htmlspecialchars($adminRoleShortKey); ?>" data-i18n-title="<?php echo htmlspecialchars($adminRoleKey); ?>"><?php echo htmlspecialchars($adminRoleShortLabel); ?></span>
+                  </div>
                   <i class="mdi mdi-menu-down d-none d-sm-block"></i>
                 </div>
               </a>

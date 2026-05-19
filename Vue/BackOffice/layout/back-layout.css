@@ -3345,3 +3345,75 @@ body.cre8-admin-layout .navbar .cre8-workspace-search-kbd {
     flex-basis: 480px !important;
   }
 }
+
+/* Header profile name + role pill */
+body.cre8-admin-layout .navbar-profile .cre8-header-user-meta {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.45rem !important;
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+}
+
+body.cre8-admin-layout .navbar-profile .navbar-profile-name {
+  margin: 0 !important;
+  white-space: nowrap !important;
+  color: inherit !important;
+  font-size: 0.94rem !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+}
+
+body.cre8-admin-layout .navbar-profile .cre8-role-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 1.25rem !important;
+  padding: 0 0.5rem !important;
+  white-space: nowrap !important;
+  border-radius: 999px !important;
+  font-size: 0.62rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.03em !important;
+  text-transform: none !important;
+  line-height: 1 !important;
+  border: 1px solid transparent !important;
+  flex-shrink: 0 !important;
+  opacity: 0.95 !important;
+}
+
+body.cre8-admin-layout .navbar-profile .cre8-role-badge--admin {
+  background: rgba(59, 130, 246, 0.16) !important;
+  border-color: rgba(59, 130, 246, 0.35) !important;
+  color: #93c5fd !important;
+}
+
+body.cre8-admin-layout .navbar-profile .cre8-role-badge--super {
+  background: rgba(139, 92, 246, 0.18) !important;
+  border-color: rgba(139, 92, 246, 0.38) !important;
+  color: #c4b5fd !important;
+}
+
+body.cre8-admin-layout .navbar-profile .cre8-role-badge--hyper {
+  background: rgba(225, 29, 116, 0.16) !important;
+  border-color: rgba(225, 29, 116, 0.38) !important;
+  color: #f9a8d4 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .navbar-profile .cre8-role-badge--admin,
+body.cre8-admin-layout.light-mode .navbar-profile .cre8-role-badge--admin,
+body.light-mode.cre8-admin-layout .navbar-profile .cre8-role-badge--admin {
+  color: #1d4ed8 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .navbar-profile .cre8-role-badge--super,
+body.cre8-admin-layout.light-mode .navbar-profile .cre8-role-badge--super,
+body.light-mode.cre8-admin-layout .navbar-profile .cre8-role-badge--super {
+  color: #6d28d9 !important;
+}
+
+html[data-theme="light"] body.cre8-admin-layout .navbar-profile .cre8-role-badge--hyper,
+body.cre8-admin-layout.light-mode .navbar-profile .cre8-role-badge--hyper,
+body.light-mode.cre8-admin-layout .navbar-profile .cre8-role-badge--hyper {
+  color: #be185d !important;
+}

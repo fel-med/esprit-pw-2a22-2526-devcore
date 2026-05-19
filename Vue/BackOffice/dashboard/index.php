@@ -136,6 +136,16 @@ $modules = [
         'accent' => 'emerald',
         'count' => null,
     ],
+    [
+        'label' => 'Forum',
+        'label_key' => 'dashboard.modules.forum.title',
+        'description' => 'Moderate forums and discussions.',
+        'description_key' => 'dashboard.modules.forum.description',
+        'href' => '../forum/index.php',
+        'icon' => 'mdi-forum-outline',
+        'accent' => 'violet',
+        'count' => null,
+    ],
 ];
 ?>
 <!DOCTYPE html>
@@ -542,6 +552,8 @@ $modules = [
           'dashboard.modules.comments.description': 'Review community comments and interactions.',
           'dashboard.modules.events.title': 'Events',
           'dashboard.modules.events.description': 'Prepare event administration after merge.',
+          'dashboard.modules.forum.title': 'Forum',
+          'dashboard.modules.forum.description': 'Moderate forums and discussions.',
           'dashboard.modules.records': '{count} records',
           'dashboard.migration.title': 'BackOffice migration status',
           'dashboard.migration.text': 'This dashboard uses the shared BackOffice sidebar and header. Keep migrating the remaining BackOffice modules batch by batch, then test each module in both dark mode and light mode.'
@@ -574,6 +586,8 @@ $modules = [
           'dashboard.modules.comments.description': 'Examiner les commentaires et interactions.',
           'dashboard.modules.events.title': 'Evenements',
           'dashboard.modules.events.description': 'Preparer l administration des evenements apres integration.',
+          'dashboard.modules.forum.title': 'Forum',
+          'dashboard.modules.forum.description': 'Moderer les forums et discussions.',
           'dashboard.modules.records': '{count} enregistrements',
           'dashboard.migration.title': 'Statut de migration BackOffice',
           'dashboard.migration.text': 'Ce tableau de bord utilise la barre laterale et l entete BackOffice partages. Continuez la migration des modules par lots, puis testez chaque module en mode sombre et clair.'

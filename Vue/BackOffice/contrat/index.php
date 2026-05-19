@@ -453,6 +453,8 @@ body.light-mode.cre8-admin-layout .contrat-admin {
 }
 
 </style>
+<link rel="stylesheet" href="../business-center-admin.css<?= contratAssetVersion(__DIR__ . '/../business-center-admin.css') ?>">
+<link rel="stylesheet" href="../unified-table-admin.css<?= contratAssetVersion(__DIR__ . '/../unified-table-admin.css') ?>">
 <link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
 <link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
@@ -468,35 +470,33 @@ require_once __DIR__ . '/../layout/sidebar.php';
 <div class="container-fluid page-body-wrapper cre8-admin-main">
 <?php require_once __DIR__ . '/../layout/header.php'; ?>
     <div class="main-panel">
-    <div class="content-wrapper">
+    <div class="content-wrapper business-center-shell">
         <div class="contrat-admin">
 
-            <div class="translation-toolbar" aria-label="Language controls">
-                <div class="page-heading">
-                    <h1 class="page-title" data-tr="title_main">Gestion des Contrats</h1>
-                    <p class="page-subtitle" data-tr="subtitle_main">Supervision et modération</p>
-                </div>
+
+        <section class="bc-page-head">
+            <div>
+                <p class="bc-kicker" data-tr="business_kicker">Business Center</p>
+                <h1 data-tr="title_main">Contract administration</h1>
+                <p data-tr="subtitle_main">Track business contracts, value, status and lifecycle.</p>
             </div>
 
-            <!-- CHARTS -->
-            <div class="charts-row">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="card-title" style="margin-bottom:12px" data-tr="chart_volume">Volume par statut</div>
-                        <div class="chart-container">
-                            <canvas id="contractsChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-body">
-                        <div class="card-title" style="margin-bottom:12px" data-tr="chart_active_split">Actifs vs Inactifs</div>
-                        <div class="chart-container">
-                            <canvas id="statusPieChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        </section>
+
+        <nav class="bc-entity-tabs" aria-label="Business Center sections">
+            <a class="bc-entity-tab " href="../campagne/index.php" >
+                <span class="bc-tab-icon"><i class="mdi mdi-bullhorn-outline"></i></span>
+                <span><strong data-tr="business_tab_campaigns">Campaigns</strong><small data-tr="business_sub_campaigns">Campaign planning and moderation</small></span>
+            </a>
+            <a class="bc-entity-tab " href="../produit/index.php" >
+                <span class="bc-tab-icon"><i class="mdi mdi-package-variant-closed"></i></span>
+                <span><strong data-tr="business_tab_products">Products</strong><small data-tr="business_sub_products">Catalog, images and product data</small></span>
+            </a>
+            <a class="bc-entity-tab is-active" href="../contrat/index.php" aria-current="page">
+                <span class="bc-tab-icon"><i class="mdi mdi-file-document-edit-outline"></i></span>
+                <span><strong data-tr="business_tab_contracts">Contracts</strong><small data-tr="business_sub_contracts">Contract status and value tracking</small></span>
+            </a>
+        </nav>
 
             <!-- KPI STATS -->
             <div class="stats-grid">
@@ -530,6 +530,35 @@ require_once __DIR__ . '/../layout/sidebar.php';
                 </div>
             </div>
 
+
+            <!-- CHARTS -->
+            <section class="bc-statistics-panel" data-bc-stats>
+                <div class="bc-section-head">
+                    <div>
+                        <h2 data-tr="stats_title">Contract statistics</h2>
+                        <p data-tr="stats_subtitle">Volume by status and active split.</p>
+                    </div>
+                    <button type="button" class="bc-secondary-btn" data-bc-stats-toggle data-label-hide="Hide statistics" data-label-show="Show statistics" data-i18n="common.hideStatistics">Hide statistics</button>
+                </div>
+                <div class="charts-row bc-stats-body">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="card-title" style="margin-bottom:12px" data-tr="chart_volume">Volume par statut</div>
+                        <div class="chart-container">
+                            <canvas id="contractsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="card-title" style="margin-bottom:12px" data-tr="chart_active_split">Actifs vs Inactifs</div>
+                        <div class="chart-container">
+                            <canvas id="statusPieChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </section>
             <!-- FILTERS -->
             <div class="filters-bar">
                 <div class="filter-group">
@@ -553,7 +582,8 @@ require_once __DIR__ . '/../layout/sidebar.php';
             </div>
 
             <!-- TABLE PANEL -->
-            <div class="card">
+            <div id="bcResultsRegion" class="bc-results-region">
+            <div class="card bc-table-card">
                 <div class="card-header">
                     <h5 class="card-title">
                         <i class="fas fa-file-signature" style="color:var(--accent);margin-right:8px"></i>
@@ -572,7 +602,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
                             <span data-tr="empty_state">Aucun contrat enregistré pour le moment.</span>
                         </div>
                     <?php else: ?>
-                    <table class="table" id="contratsTable">
+                    <table class="table bc-table" id="contratsTable">
                         <thead>
                             <tr>
                                 <th onclick="sortTable(0)" data-tr="th_hash"># <i class="fas fa-sort"></i></th>
@@ -626,6 +656,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
                     <?php endif; ?>
                 </div>
             </div>
+            </div>
         </div><!-- /contrat-admin -->
     </div><!-- /content-wrapper -->
     </div><!-- /main-panel -->
@@ -654,7 +685,6 @@ require_once __DIR__ . '/../layout/sidebar.php';
 </div>
 
 <script src="../layout/back-layout.js<?= contratAssetVersion(__DIR__ . '/../layout/back-layout.js') ?>"></script>
-<script src="../business-center-admin.js<?= contratAssetVersion(__DIR__ . '/../business-center-admin.js') ?>"></script>
 <script>
 function cre8BoReadLang() {
     if (window.cre8BackGetLang) return window.cre8BackGetLang();
@@ -678,7 +708,11 @@ const i18n = {
         nav_dashboard:"Tableau de bord", nav_overview:"Aperçu", nav_modules:"Modules",
         nav_users:"Utilisateurs", nav_offers:"Offres", nav_campaigns:"Campagnes", nav_products:"Produits",
         nav_contracts:"Contrats", nav_events:"Événements", nav_posts:"Posts", nav_reclamations:"Réclamations",
-        title_main:"Gestion des Contrats", subtitle_main:"Supervision et modération",
+        title_main:"Gestion des Contrats", subtitle_main:"Suivez les contrats, leur valeur, leur statut et leur cycle de vie.",
+        business_kicker:"Business Center", business_tab_campaigns:"Campagnes", business_sub_campaigns:"Planification et moderation des campagnes",
+        business_tab_products:"Produits", business_sub_products:"Catalogue, images et donnees produits",
+        business_tab_contracts:"Contrats", business_sub_contracts:"Suivi du statut et de la valeur des contrats",
+        stats_title:"Statistiques des contrats", stats_subtitle:"Volume par statut et repartition actifs/inactifs.",
         stat_total:"Total", stat_pending:"En attente", stat_signed:"Signés", stat_value:"Valeur totale",
         filter_search:"Recherche", filter_status:"Statut", filter_date:"Date Min", opt_all:"Tous les statuts",
         panel_title:"Tous les contrats", panel_count:" contrat(s)",
@@ -696,7 +730,11 @@ const i18n = {
         nav_dashboard:"Dashboard", nav_overview:"Overview", nav_modules:"Modules",
         nav_users:"Users", nav_offers:"Offers", nav_campaigns:"Campaigns", nav_products:"Products",
         nav_contracts:"Contracts", nav_events:"Events", nav_posts:"Posts", nav_reclamations:"Complaints",
-        title_main:"Contract Management", subtitle_main:"Supervision and moderation",
+        title_main:"Contract administration", subtitle_main:"Track business contracts, value, status and lifecycle.",
+        business_kicker:"Business Center", business_tab_campaigns:"Campaigns", business_sub_campaigns:"Campaign planning and moderation",
+        business_tab_products:"Products", business_sub_products:"Catalog, images and product data",
+        business_tab_contracts:"Contracts", business_sub_contracts:"Contract status and value tracking",
+        stats_title:"Contract statistics", stats_subtitle:"Volume by status and active split.",
         stat_total:"Total", stat_pending:"Pending", stat_signed:"Signed", stat_value:"Total Value",
         filter_search:"Search", filter_status:"Status", filter_date:"Min Date", opt_all:"All statuses",
         panel_title:"All Contracts", panel_count:" contract(s)",
@@ -816,13 +854,13 @@ function renderPagination(total) {
     c.innerHTML = '';
     for (let i = 1; i <= total; i++) {
         const li = document.createElement('div');
-        li.className = 'page-item' + (i === 1 ? ' active' : '');
+        li.className = 'page-item';
         const btn = document.createElement('button');
-        btn.className = 'page-link';
+        btn.className = 'page-btn' + (i === 1 ? ' active is-active' : '');
         btn.innerText = i;
         btn.onclick = () => {
-            document.querySelectorAll('.page-item').forEach(x => x.classList.remove('active'));
-            li.classList.add('active');
+            document.querySelectorAll('#pagination .page-btn').forEach(x => x.classList.remove('active','is-active'));
+            btn.classList.add('active','is-active');
             renderPage(i);
         };
         li.appendChild(btn);
@@ -912,5 +950,6 @@ window.onload = () => {
     initCharts();
 };
 </script>
+<script src="../business-center-admin.js<?= contratAssetVersion(__DIR__ . '/../business-center-admin.js') ?>"></script>
 </body>
 </html>

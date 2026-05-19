@@ -1056,3 +1056,385 @@ html[data-theme="light"] .business-center-shell .form-panel {
     grid-template-columns: 1fr !important;
   }
 }
+
+
+/* =======================================================================
+   BackOffice final fixes — verified items:
+   1) pagination visual parity across Business tables
+   3) campaign AI button highlight/glow
+   6) campaign statistics alignment
+   ======================================================================= */
+
+/* 1) Pagination parity: support legacy .current and Bootstrap-like page-link. */
+.business-center-shell .pagination,
+.business-center-shell .pagination-buttons,
+.business-center-shell #pagination,
+.business-center-shell #paginationControls,
+.business-center-shell #paginationButtons {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.55rem !important;
+  flex-wrap: wrap !important;
+  padding: 1rem 1.15rem !important;
+  border-top: 1px solid var(--bc-border) !important;
+  color: var(--bc-muted) !important;
+}
+
+.business-center-shell .pagination-info,
+.business-center-shell .page-info {
+  color: var(--bc-muted) !important;
+  font-weight: 800 !important;
+  font-size: 0.82rem !important;
+  margin: 0 !important;
+}
+
+.business-center-shell .pagination button,
+.business-center-shell .pagination a,
+.business-center-shell .page-btn,
+.business-center-shell .pagination-btn,
+.business-center-shell .bc-page-btn,
+.business-center-shell .page-link {
+  min-width: 2.45rem !important;
+  height: 2.45rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1px solid var(--bc-border) !important;
+  border-radius: 0.55rem !important;
+  background: var(--bc-card-soft) !important;
+  color: #93c5fd !important;
+  text-decoration: none !important;
+  font-weight: 900 !important;
+  padding: 0 0.72rem !important;
+  line-height: 1 !important;
+  box-shadow: none !important;
+}
+
+.business-center-shell .pagination button.active,
+.business-center-shell .pagination button.is-active,
+.business-center-shell .pagination a.active,
+.business-center-shell .pagination a.is-active,
+.business-center-shell .page-btn.active,
+.business-center-shell .page-btn.current,
+.business-center-shell .page-btn.is-active,
+.business-center-shell .bc-page-btn.is-active,
+.business-center-shell .page-item.active .page-link,
+.business-center-shell .page-link.active,
+.business-center-shell .page-link.is-active {
+  background: #7c4dff !important;
+  border-color: #7c4dff !important;
+  color: #ffffff !important;
+}
+
+.business-center-shell .pagination button:disabled,
+.business-center-shell .page-btn:disabled,
+.business-center-shell .bc-page-btn.is-disabled,
+.business-center-shell .page-link:disabled {
+  opacity: 0.35 !important;
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+}
+
+/* 3) Campaign AI button highlight. */
+.business-center-shell .btn.btn-ia {
+  position: relative !important;
+  isolation: isolate !important;
+  overflow: hidden !important;
+  background: linear-gradient(135deg, #9b5de0 0%, #e11d74 100%) !important;
+  border: 1px solid rgba(225, 29, 116, 0.55) !important;
+  color: #ffffff !important;
+  box-shadow:
+    0 0 18px rgba(155, 93, 224, 0.45),
+    0 10px 26px rgba(225, 29, 116, 0.24) !important;
+  animation: bc-ia-glow 2.35s ease-in-out infinite !important;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease !important;
+}
+
+.business-center-shell .btn.btn-ia::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: -40% -20% !important;
+  z-index: -1 !important;
+  background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.32) 45%, transparent 70%) !important;
+  transform: translateX(-120%) rotate(12deg) !important;
+  animation: bc-ia-shine 3.2s ease-in-out infinite !important;
+}
+
+.business-center-shell .btn.btn-ia:hover {
+  transform: translateY(-2px) !important;
+  filter: brightness(1.06) !important;
+  box-shadow:
+    0 0 28px rgba(155, 93, 224, 0.66),
+    0 14px 34px rgba(225, 29, 116, 0.38) !important;
+}
+
+@keyframes bc-ia-glow {
+  0%, 100% { box-shadow: 0 0 16px rgba(155, 93, 224, 0.42), 0 10px 26px rgba(225, 29, 116, 0.22); }
+  50% { box-shadow: 0 0 30px rgba(155, 93, 224, 0.68), 0 12px 32px rgba(225, 29, 116, 0.34); }
+}
+
+@keyframes bc-ia-shine {
+  0%, 55% { transform: translateX(-120%) rotate(12deg); }
+  78%, 100% { transform: translateX(120%) rotate(12deg); }
+}
+
+/* 6) Campaign statistics alignment: stable 3 -> 2 -> 1 columns. */
+.business-center-shell .bc-statistics-panel .bc-stats-body {
+  padding: 1rem 1.15rem 1.15rem !important;
+}
+
+.business-center-shell .bc-statistics-panel .bc-stats-body > .charts-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  align-items: stretch !important;
+  gap: 1rem !important;
+  width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.business-center-shell .bc-statistics-panel .bc-stats-body > .charts-grid > div {
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  min-height: 330px !important;
+  height: 100% !important;
+}
+
+.business-center-shell .bc-statistics-panel .bc-stats-body > .charts-grid .chart-inner,
+.business-center-shell .bc-statistics-panel .bc-stats-body > .charts-grid .chart-wrap,
+.business-center-shell .bc-statistics-panel .bc-stats-body > .charts-grid .chart-container {
+  flex: 1 1 auto !important;
+  height: 280px !important;
+  min-height: 260px !important;
+}
+
+@media (max-width: 1200px) {
+  .business-center-shell .bc-statistics-panel .bc-stats-body > .charts-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 780px) {
+  .business-center-shell .bc-statistics-panel .bc-stats-body > .charts-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Campaign statistics final alignment — #statsBody must not be a 2-col grid itself. */
+.business-center-shell .bc-statistics-panel #statsBody {
+  width: 100% !important;
+  display: block !important;
+  grid-template-columns: none !important;
+  padding: 1rem 1.15rem 1.15rem !important;
+}
+
+.business-center-shell .bc-statistics-panel #statsBody .charts-grid {
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 1rem !important;
+  align-items: stretch !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.business-center-shell .bc-statistics-panel #statsBody .charts-grid > * {
+  min-width: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border: 1px solid var(--bc-border) !important;
+  border-radius: 0.25rem !important;
+  background: var(--bc-card-soft) !important;
+  padding: 1rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.business-center-shell .bc-statistics-panel #statsBody .chart-inner,
+.business-center-shell .bc-statistics-panel #statsBody .chart-wrap,
+.business-center-shell .bc-statistics-panel #statsBody .chart-container {
+  width: 100% !important;
+  height: 280px !important;
+  min-height: 280px !important;
+  flex: 1 1 auto !important;
+}
+
+.business-center-shell .bc-statistics-panel #statsBody canvas {
+  max-width: 100% !important;
+}
+
+@media (max-width: 1200px) {
+  .business-center-shell .bc-statistics-panel #statsBody .charts-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 780px) {
+  .business-center-shell .bc-statistics-panel #statsBody .charts-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Campaign AI spotlight card — whole block glow (scoped to .bc-ai-spotlight only). */
+.business-center-shell .bc-ai-spotlight {
+  position: relative !important;
+  overflow: hidden !important;
+  isolation: isolate !important;
+  border: 1px solid rgba(225, 29, 116, 0.45) !important;
+  background:
+    radial-gradient(circle at top left, rgba(155, 93, 224, 0.22), transparent 34%),
+    radial-gradient(circle at bottom right, rgba(225, 29, 116, 0.18), transparent 36%),
+    var(--bc-card) !important;
+  box-shadow:
+    0 0 0 1px rgba(155, 93, 224, 0.12),
+    0 0 24px rgba(155, 93, 224, 0.25),
+    0 18px 42px rgba(0, 0, 0, 0.25) !important;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease !important;
+  animation: bc-ai-card-glow 3.6s ease-in-out infinite !important;
+}
+
+.business-center-shell .bc-ai-spotlight::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: -2px !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+  background: linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.12) 45%, transparent 65%) !important;
+  transform: translateX(-120%) !important;
+  animation: bc-ai-sheen 5s ease-in-out infinite !important;
+}
+
+.business-center-shell .bc-ai-spotlight::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+  border-radius: inherit !important;
+  box-shadow: inset 0 0 0 1px rgba(155, 93, 224, 0.14) !important;
+}
+
+.business-center-shell .bc-ai-spotlight:hover {
+  border-color: rgba(225, 29, 116, 0.58) !important;
+  box-shadow:
+    0 0 0 1px rgba(155, 93, 224, 0.2),
+    0 0 32px rgba(155, 93, 224, 0.34),
+    0 22px 48px rgba(0, 0, 0, 0.3) !important;
+}
+
+.business-center-shell .bc-ai-spotlight .card-body {
+  position: relative !important;
+  z-index: 1 !important;
+  background: transparent !important;
+}
+
+.business-center-shell .bc-ai-spotlight .ia-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.65rem !important;
+  margin-bottom: 1rem !important;
+  padding-bottom: 0.75rem !important;
+  border-bottom: 1px solid rgba(155, 93, 224, 0.2) !important;
+}
+
+.business-center-shell .bc-ai-spotlight .ia-header span {
+  filter: drop-shadow(0 0 8px rgba(155, 93, 224, 0.55)) !important;
+}
+
+.business-center-shell .bc-ai-spotlight .ia-header h2 {
+  margin: 0 !important;
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  background: linear-gradient(135deg, #c4b5fd 0%, #f9a8d4 55%, #93c5fd 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+  text-shadow: none !important;
+}
+
+.business-center-shell .bc-ai-spotlight .ia-form-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 0.75rem !important;
+  align-items: end !important;
+}
+
+.business-center-shell .bc-ai-spotlight select.form-control,
+.business-center-shell .bc-ai-spotlight .form-control {
+  background: rgba(15, 23, 42, 0.42) !important;
+  border-color: rgba(155, 93, 224, 0.32) !important;
+  color: var(--bc-text) !important;
+}
+
+.business-center-shell .bc-ai-spotlight select.form-control:focus,
+.business-center-shell .bc-ai-spotlight .form-control:focus {
+  border-color: rgba(225, 29, 116, 0.55) !important;
+  box-shadow: 0 0 0 2px rgba(155, 93, 224, 0.22) !important;
+}
+
+.business-center-shell .bc-ai-spotlight .btn.btn-ia {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.business-center-shell .bc-ai-spotlight .ia-result,
+.business-center-shell .bc-ai-spotlight .ia-error,
+.business-center-shell .bc-ai-spotlight .ia-loading {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+html[data-theme="light"] .business-center-shell .bc-ai-spotlight,
+body.cre8-admin-layout.light-mode .business-center-shell .bc-ai-spotlight,
+body.light-mode.cre8-admin-layout .business-center-shell .bc-ai-spotlight {
+  border-color: rgba(155, 93, 224, 0.35) !important;
+  background:
+    radial-gradient(circle at top left, rgba(155, 93, 224, 0.12), transparent 34%),
+    radial-gradient(circle at bottom right, rgba(225, 29, 116, 0.1), transparent 36%),
+    var(--bc-card) !important;
+  box-shadow:
+    0 0 0 1px rgba(155, 93, 224, 0.1),
+    0 0 18px rgba(155, 93, 224, 0.16),
+    0 14px 32px rgba(15, 23, 42, 0.08) !important;
+}
+
+html[data-theme="light"] .business-center-shell .bc-ai-spotlight .ia-header h2,
+body.cre8-admin-layout.light-mode .business-center-shell .bc-ai-spotlight .ia-header h2,
+body.light-mode.cre8-admin-layout .business-center-shell .bc-ai-spotlight .ia-header h2 {
+  background: linear-gradient(135deg, #6d28d9 0%, #be185d 55%, #2563eb 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+}
+
+html[data-theme="light"] .business-center-shell .bc-ai-spotlight select.form-control,
+html[data-theme="light"] .business-center-shell .bc-ai-spotlight .form-control,
+body.cre8-admin-layout.light-mode .business-center-shell .bc-ai-spotlight select.form-control,
+body.cre8-admin-layout.light-mode .business-center-shell .bc-ai-spotlight .form-control {
+  background: #ffffff !important;
+  border-color: rgba(155, 93, 224, 0.28) !important;
+  color: var(--bc-text) !important;
+}
+
+@keyframes bc-ai-card-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px rgba(155, 93, 224, 0.12),
+      0 0 20px rgba(155, 93, 224, 0.22),
+      0 16px 38px rgba(0, 0, 0, 0.22);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(225, 29, 116, 0.18),
+      0 0 30px rgba(155, 93, 224, 0.32),
+      0 20px 44px rgba(0, 0, 0, 0.28);
+  }
+}
+
+@keyframes bc-ai-sheen {
+  0%, 55% { transform: translateX(-120%); opacity: 0; }
+  70% { opacity: 1; }
+  100% { transform: translateX(120%); opacity: 0; }
+}
