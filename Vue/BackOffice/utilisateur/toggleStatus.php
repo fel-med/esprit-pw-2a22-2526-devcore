@@ -11,7 +11,7 @@ if (!isset($_GET['id'], $_GET['newStatus'])) {
 }
 
 $id = (int) $_GET['id'];
-$newStatus = strtolower(trim((string) $_GET['newStatus']));
+$newStatus = cc_normalize_status($_GET['newStatus']);
 $requestReason = trim((string)($_GET['reason'] ?? $_POST['reason'] ?? ''));
 
 if ($id <= 0) {
@@ -31,10 +31,7 @@ try {
         cc_json_response(["success" => false, "message" => "User not found"], 404);
     }
 
-    $oldStatus = strtolower(trim((string)($targetUser['statut'] ?? '')));
-    if (in_array($oldStatus, ['bloque', 'en_attente'], true)) {
-        cc_json_response(["success" => false, "message" => "This status cannot be changed from this endpoint"], 403);
-    }
+    $oldStatus = cc_normalize_status($targetUser['statut'] ?? '');
 
     if ($newStatus === 'suspendu') {
         if ($oldStatus !== 'actif') {
@@ -52,15 +49,16 @@ try {
         cc_json_response(["success" => true, "message" => "Status updated successfully"]);
     }
 
-    if ($oldStatus !== 'suspendu') {
-        cc_json_response(["success" => false, "message" => "Only suspended users can be reactivated"], 400);
+    if (!in_array($oldStatus, ['suspendu', 'bloque', 'en_attente', 'inactif'], true)) {
+        cc_json_response(["success" => false, "message" => "Only inactive users can be activated"], 400);
     }
 
-    if (!cc_can_manage_user($actorId, $actorRole, $targetUser, 'reactivate') || !cc_can_reactivate_suspension($actorId, $actorRole, $targetUser)) {
+    $targetUser['statut'] = $oldStatus;
+    if (!cc_can_activate_account($actorId, $actorRole, $targetUser)) {
         cc_json_response(["success" => false, "message" => "You are not allowed to perform this action"], 403);
     }
 
-    $reason = 'Reactivated from BackOffice user management';
+    $reason = 'Activated from BackOffice user management';
     $userC->reactivateUserAndClearSuspension($id);
     cc_log_admin_action($actorId, $actorRole, 'reactivate_user', $id, $targetUser['role'] ?? null, $oldStatus, 'actif', $reason);
 

@@ -79,15 +79,18 @@ function admin_management_flash_key(string $message): ?string
 
 function admin_management_can_manage_target(string $actorRole, int $actorId, array $target, string $action): bool
 {
-    $targetRole = strtolower(trim((string)($target['role'] ?? '')));
+    $targetRole = cc_normalize_role($target['role'] ?? '');
     $allowedTargetRoles = $actorRole === 'hyper_admin' ? ['admin', 'super_admin'] : ['admin'];
     if (!in_array($targetRole, $allowedTargetRoles, true)) {
         return false;
     }
 
+    if ($action === 'activate') {
+        return cc_can_activate_account($actorId, $actorRole, $target);
+    }
+
     $helperAction = match ($action) {
         'block' => 'suspend',
-        'activate' => 'reactivate',
         default => $action,
     };
 
@@ -155,7 +158,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($action === 'block') {
-            if (strtolower(trim((string)($target['statut'] ?? ''))) !== 'actif') {
+            if (cc_normalize_status($target['statut'] ?? '') !== 'actif') {
                 admin_management_flash('danger', 'Only active accounts can be suspended.');
                 admin_management_redirect();
             }
@@ -165,7 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             cc_log_admin_action($currentUserId, $currentRole, 'suspend_user', $targetId, $target['role'] ?? null, $target['statut'] ?? null, 'suspendu', $reason);
             admin_management_flash('success', 'Account blocked successfully.');
         } elseif ($action === 'activate') {
-            if (!cc_can_reactivate_suspension($currentUserId, $currentRole, $target)) {
+            if (!cc_can_activate_account($currentUserId, $currentRole, $target)) {
                 admin_management_flash('danger', 'You are not allowed to reactivate this suspension.');
                 admin_management_redirect();
             }
@@ -373,14 +376,33 @@ unset($_SESSION['admin_management_flash']);
 
                         <?php foreach ($adminAccounts as $account): ?>
                           <?php
-                            $targetRole = strtolower(trim((string)($account['role'] ?? '')));
-                            $targetStatus = strtolower(trim((string)($account['statut'] ?? '')));
+                            $targetRole = cc_normalize_role($account['role'] ?? '');
+                            $targetStatus = cc_normalize_status($account['statut'] ?? '');
                             $isSelf = (int)$account['id'] === $currentUserId;
-                            $canBlock = $targetStatus === 'suspendu'
-                              ? admin_management_can_manage_target($currentRole, $currentUserId, $account, 'activate') && cc_can_reactivate_suspension($currentUserId, $currentRole, $account)
-                              : ($targetStatus === 'actif' && admin_management_can_manage_target($currentRole, $currentUserId, $account, 'block'));
+                            $canBlock = $targetStatus === 'actif'
+                              ? admin_management_can_manage_target($currentRole, $currentUserId, $account, 'block')
+                              : (in_array($targetStatus, ['suspendu', 'bloque', 'en_attente', 'inactif'], true) && admin_management_can_manage_target($currentRole, $currentUserId, array_merge($account, ['statut' => $targetStatus]), 'activate'));
                             $canDelete = admin_management_can_manage_target($currentRole, $currentUserId, $account, 'delete');
-                            $isSuspended = $targetStatus === 'suspendu';
+                            $statusClass = match ($targetStatus) {
+                              'actif' => 'uc-status-actif',
+                              'suspendu', 'bloque' => 'uc-status-bloque',
+                              'en_attente' => 'uc-status-en_attente',
+                              default => 'uc-status-inactif',
+                            };
+                            $statusI18n = match ($targetStatus) {
+                              'actif' => 'adminManagement.status.active',
+                              'suspendu' => 'adminManagement.status.suspended',
+                              'bloque' => 'adminManagement.status.blocked',
+                              'en_attente' => 'adminManagement.status.pending',
+                              default => 'adminManagement.status.inactive',
+                            };
+                            $statusLabel = match ($targetStatus) {
+                              'actif' => 'Active',
+                              'suspendu' => 'Suspended',
+                              'bloque' => 'Blocked',
+                              'en_attente' => 'Pending',
+                              default => 'Inactive',
+                            };
                           ?>
                           <tr data-admin-account-row>
                             <td><?php echo (int)$account['id']; ?></td>
@@ -390,8 +412,8 @@ unset($_SESSION['admin_management_flash']);
                               <span class="uc-badge uc-role-badge admin-management-badge"><span data-i18n="<?php echo htmlspecialchars(admin_management_role_i18n_key($targetRole)); ?>"><?php echo htmlspecialchars(admin_management_role_label($targetRole)); ?></span></span>
                             </td>
                             <td>
-                              <span class="uc-badge <?php echo $isSuspended ? 'uc-status-bloque' : 'uc-status-actif'; ?> admin-management-badge">
-                                <span data-i18n="<?php echo $isSuspended ? 'adminManagement.status.blocked' : 'adminManagement.status.active'; ?>"><?php echo $isSuspended ? 'Blocked' : 'Active'; ?></span>
+                              <span class="uc-badge <?php echo $statusClass; ?> admin-management-badge">
+                                <span data-i18n="<?php echo $statusI18n; ?>"><?php echo $statusLabel; ?></span>
                               </span>
                             </td>
                             <td>
@@ -399,9 +421,9 @@ unset($_SESSION['admin_management_flash']);
                                 <?php if ($canBlock): ?>
                                   <form method="POST" class="m-0">
                                     <input type="hidden" name="id" value="<?php echo (int)$account['id']; ?>">
-                                    <input type="hidden" name="action" value="<?php echo $isSuspended ? 'activate' : 'block'; ?>">
-                                    <button type="submit" class="uc-action-btn <?php echo $isSuspended ? 'uc-action-success' : 'uc-action-warning'; ?>">
-                                      <span data-i18n="<?php echo $isSuspended ? 'common.activate' : 'adminManagement.action.block'; ?>"><?php echo $isSuspended ? 'Activate' : 'Block'; ?></span>
+                                    <input type="hidden" name="action" value="<?php echo $targetStatus === 'actif' ? 'block' : 'activate'; ?>">
+                                    <button type="submit" class="uc-action-btn <?php echo $targetStatus === 'actif' ? 'uc-action-warning' : 'uc-action-success'; ?>">
+                                      <span data-i18n="<?php echo $targetStatus === 'actif' ? 'adminManagement.action.block' : 'common.activate'; ?>"><?php echo $targetStatus === 'actif' ? 'Block' : 'Activate'; ?></span>
                                     </button>
                                   </form>
                                 <?php endif; ?>
@@ -493,7 +515,10 @@ window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
     'adminManagement.pagination.showing': 'Showing',
     'adminManagement.pagination.perPage': 'Per page',
     'adminManagement.status.active': 'Active',
+    'adminManagement.status.suspended': 'Suspended',
     'adminManagement.status.blocked': 'Blocked',
+    'adminManagement.status.pending': 'Pending',
+    'adminManagement.status.inactive': 'Inactive',
     'adminManagement.confirm.delete': 'Delete this administrator account permanently?',
     'adminManagement.flash.nameRequired': 'Name is required.',
     'adminManagement.flash.emailRequired': 'A valid email is required.',
@@ -534,7 +559,10 @@ window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
     'adminManagement.pagination.showing': 'Affichage',
     'adminManagement.pagination.perPage': 'Par page',
     'adminManagement.status.active': 'Actif',
+    'adminManagement.status.suspended': 'Suspendu',
     'adminManagement.status.blocked': 'Bloque',
+    'adminManagement.status.pending': 'En attente',
+    'adminManagement.status.inactive': 'Inactif',
     'adminManagement.confirm.delete': 'Supprimer definitivement ce compte administrateur ?',
     'adminManagement.flash.nameRequired': 'Le nom est obligatoire.',
     'adminManagement.flash.emailRequired': 'Un email valide est obligatoire.',

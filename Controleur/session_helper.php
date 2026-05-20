@@ -234,6 +234,23 @@ if (!function_exists('cc_can_reactivate_suspension')) {
     }
 }
 
+if (!function_exists('cc_can_activate_account')) {
+    function cc_can_activate_account($actorId, $actorRole, array $targetUser): bool
+    {
+        if (!cc_can_manage_user($actorId, $actorRole, $targetUser, 'reactivate')) {
+            return false;
+        }
+
+        $targetStatus = cc_normalize_status($targetUser['statut'] ?? '');
+
+        if ($targetStatus === 'suspendu') {
+            return cc_can_reactivate_suspension($actorId, $actorRole, $targetUser);
+        }
+
+        return in_array($targetStatus, ['bloque', 'en_attente', 'inactif'], true);
+    }
+}
+
 if (!function_exists('cc_can_view_reclamation_from_role')) {
     function cc_can_view_reclamation_from_role($viewerRole, $complainantRole): bool
     {

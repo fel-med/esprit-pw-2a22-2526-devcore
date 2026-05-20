@@ -553,7 +553,7 @@ $statusI18nKeys = [
                         $u['role'] = $rowRole;
                         $u['statut'] = $rowStatus;
                         $canSuspendUser = $rowStatus === 'actif' && cc_can_manage_user($actorId, $actorRole, $rowUser, 'suspend');
-                        $canReactivateUser = $rowStatus === 'suspendu' && cc_can_reactivate_suspension($actorId, $actorRole, $rowUser);
+                        $canReactivateUser = in_array($rowStatus, ['suspendu', 'bloque', 'en_attente', 'inactif'], true) && cc_can_activate_account($actorId, $actorRole, $rowUser);
                         $canToggleStatus = $canSuspendUser || $canReactivateUser;
                         $canDeleteUser = cc_can_manage_user($actorId, $actorRole, $rowUser, 'delete');
                         $canEditProfile = cc_can_manage_user($actorId, $actorRole, $rowUser, 'edit_profile');

@@ -241,8 +241,13 @@ class ProfileC
 
     public function getSafeProfileImagePath(string $imageName): ?string
     {
+        $imageName = trim($imageName);
+        if ($imageName !== basename($imageName)) {
+            return null;
+        }
+
         $imageName = basename($imageName);
-        if ($imageName === '' || !preg_match('/^profile_\d+_\d{8}_\d{6}_[a-f0-9]{8}\.(jpg|jpeg|png|webp)$/', $imageName)) {
+        if ($imageName === '' || !preg_match('/^profile_[a-z0-9][a-z0-9_-]{0,120}\.(jpg|jpeg|png|webp)$/i', $imageName)) {
             return null;
         }
 
