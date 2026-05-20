@@ -328,4 +328,11 @@ require_once '../partials/header.php';
     }
 })();
 </script>
-<?php require_once '../partials/footer.php'; ?>
+<script src="../layout/front-header.js"></script>
+</main>
+<?php require __DIR__ . '/../layout/footer.php'; ?>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../assets/js/scripts.js"></script>
+<script src="../assets/post-front.js?v=2"></script>
+</body>
+</html>

@@ -1297,6 +1297,173 @@ $frontActive = 'campaigns';
             margin: 16px 0 0;
         }
 
+        /* Product hero alignment polish only */
+        .product-front .page-header {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(150px, 210px);
+            align-items: center;
+            gap: 28px;
+            min-height: 0;
+            padding: 34px 42px;
+        }
+
+        .product-front .page-header-left {
+            display: grid;
+            align-content: center;
+            gap: 14px;
+            min-width: 0;
+            z-index: 1;
+        }
+
+        .product-front .page-header-left h1 {
+            margin-bottom: 0;
+        }
+
+        .product-front .page-header-left p {
+            max-width: 560px;
+            margin-bottom: 0;
+        }
+
+        .product-front .page-header-controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px 16px;
+            margin-top: 2px;
+        }
+
+        .product-front .page-header-stats,
+        .product-front .page-header-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .product-front .page-header-stats {
+            flex: 1 1 280px;
+            margin-bottom: 0;
+        }
+
+        .product-front .page-header-actions {
+            flex: 0 1 auto;
+            justify-content: flex-end;
+            margin-top: 0;
+        }
+
+        .product-front .page-header-stat,
+        .product-front .page-header-actions .btn-export,
+        .product-front .page-header-actions .btn-add-product {
+            min-height: 40px;
+            justify-content: center;
+            white-space: nowrap;
+        }
+
+        .product-front .page-header-stat {
+            flex: 0 0 auto;
+            padding-inline: 15px;
+        }
+
+        .product-front .page-header-actions .btn-export,
+        .product-front .page-header-actions .btn-add-product {
+            flex: 0 0 auto;
+            padding-inline: 18px;
+        }
+
+        .product-front .page-header .kpi-strip {
+            display: flex !important;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 9px;
+            width: 100%;
+            margin: 2px 0 0;
+        }
+
+        .product-front .page-header .kpi-card {
+            justify-content: center;
+            min-height: 42px;
+            width: auto;
+            max-width: 100%;
+            padding: 8px 13px;
+        }
+
+        .product-front .page-header .kpi-value,
+        .product-front .page-header .kpi-label {
+            min-width: 0;
+        }
+
+        .product-front .page-header .kpi-label {
+            white-space: nowrap;
+        }
+
+        .product-front .page-header .kpi-alert,
+        .product-front .page-header .kpi-link {
+            display: none;
+        }
+
+        .product-front .page-header-aside {
+            display: flex;
+            align-self: stretch;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+            z-index: 1;
+        }
+
+        .product-front .page-header-illus {
+            width: clamp(116px, 13vw, 156px);
+            height: clamp(116px, 13vw, 156px);
+            font-size: clamp(70px, 7vw, 92px);
+        }
+
+        @media (max-width: 1080px) {
+            .product-front .page-header {
+                grid-template-columns: minmax(0, 1fr) 130px;
+                gap: 20px;
+            }
+
+            .product-front .page-header-controls {
+                justify-content: flex-start;
+            }
+
+            .product-front .page-header-actions {
+                justify-content: flex-start;
+            }
+        }
+
+        @media (max-width: 860px) {
+            .product-front .page-header {
+                grid-template-columns: 1fr;
+            }
+
+            .product-front .page-header-aside {
+                justify-content: flex-start;
+                min-height: 96px;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .product-front .page-header {
+                padding: 30px 24px;
+            }
+
+            .product-front .page-header-stats,
+            .product-front .page-header-actions {
+                align-items: stretch;
+            }
+
+            .product-front .page-header-stat,
+            .product-front .page-header-actions .btn-export,
+            .product-front .page-header-actions .btn-add-product {
+                flex: 1 1 180px;
+            }
+
+            .product-front .page-header .kpi-card {
+                flex: 1 1 160px;
+            }
+        }
+
         @media (max-width: 1000px) { .kpi-strip { grid-template-columns: repeat(3, 1fr); } .top-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 900px) { .form-layout { grid-template-columns: 1fr; } .kpi-strip { grid-template-columns: 1fr 1fr; } .recent-grid { grid-template-columns: 1fr; } nav { padding: 0 20px; } .nav-links { display: none; } .qv-box { flex-direction: column; } .qv-img { width: 100%; height: 200px; } .top-grid { grid-template-columns: repeat(2, 1fr); } }
     </style>
@@ -1319,25 +1486,27 @@ $frontActive = 'campaigns';
         <div class="page-header-left">
             <h1 data-i18n="page_title">My Products</h1>
             <p data-i18n="page_subtitle">Manage, organize and promote your products to content creators.</p>
-            <div class="page-header-stats">
-                <div class="page-header-stat">
-                    <div class="stat-icon"><?= $totalProduits ?></div>
-                    <span class="stat-text" data-i18n="stat_products_available">Products available</span>
+            <div class="page-header-controls">
+                <div class="page-header-stats">
+                    <div class="page-header-stat">
+                        <div class="stat-icon"><?= $totalProduits ?></div>
+                        <span class="stat-text" data-i18n="stat_products_available">Products available</span>
+                    </div>
+                    <div class="page-header-stat">
+                        <div class="stat-icon"><?= count($categories) ?></div>
+                        <span class="stat-text" data-i18n="stat_categories">Categories</span>
+                    </div>
                 </div>
-                <div class="page-header-stat">
-                    <div class="stat-icon"><?= count($categories) ?></div>
-                    <span class="stat-text" data-i18n="stat_categories">Categories</span>
+                <div class="page-header-actions">
+                    <button type="button" id="btnExport" class="btn-export">
+                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        <span data-i18n="btn_export">Export CSV</span>
+                    </button>
+                    <a href="#formAnchor" class="btn-add-product" id="btnShowForm">
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                        <span data-i18n="btn_add_product">Add a product</span>
+                    </a>
                 </div>
-            </div>
-            <div class="page-header-actions">
-                <button type="button" id="btnExport" class="btn-export">
-                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                    <span data-i18n="btn_export">Export CSV</span>
-                </button>
-                <a href="#formAnchor" class="btn-add-product" id="btnShowForm">
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                    <span data-i18n="btn_add_product">Add a product</span>
-                </a>
             </div>
             <div class="kpi-strip">
                 <div class="kpi-card">
@@ -3111,6 +3280,7 @@ document.getElementById('formAnchor').scrollIntoView({ behavior: 'smooth', block
 <?php endif; ?>
 </script>
 
+<?php require __DIR__ . '/../layout/footer.php'; ?>
 <script src="../layout/front-header.js"></script>
 </body>
 </html>

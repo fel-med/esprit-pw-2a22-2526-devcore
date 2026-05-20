@@ -183,3 +183,20 @@
     padding: 0 0.75rem;
   }
 }
+
+footer.cre8-front-footer {
+  margin-top: 2rem;
+  padding: 1.2rem 1rem;
+  border-top: 1px solid rgba(100, 116, 139, 0.18);
+  background: transparent;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+html[data-theme="dark"] footer.cre8-front-footer,
+body.dark-mode footer.cre8-front-footer {
+  border-top-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.68);
+}

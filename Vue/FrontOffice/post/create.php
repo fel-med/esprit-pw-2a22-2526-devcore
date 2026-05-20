@@ -299,4 +299,10 @@ $frontActive = 'myspace';
 })();
 </script>
 <script src="../layout/front-header.js"></script>
-<?php require_once '../partials/footer.php'; ?>
+</main>
+<?php require __DIR__ . '/../layout/footer.php'; ?>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../assets/js/scripts.js"></script>
+<script src="../assets/post-front.js?v=2"></script>
+</body>
+</html>

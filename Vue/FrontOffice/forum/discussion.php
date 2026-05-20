@@ -804,5 +804,6 @@ if (!isset($forum) || !isset($messages)) {
         applyDiscTranslation(readDiscussionLang());
     });
 </script>
+<?php require __DIR__ . '/../layout/footer.php'; ?>
 </body>
 </html>

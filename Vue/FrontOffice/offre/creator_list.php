@@ -1134,6 +1134,7 @@ require __DIR__ . '/../condidature/cre8pilot_widget.php';
             window.addEventListener('creatorListUpdated', () => window.setTimeout(applyOfferTranslations, 0));
         })();
     </script>
+    <?php require __DIR__ . '/../layout/footer.php'; ?>
     <script src="../layout/front-header.js"></script>
 </body>
 </html>

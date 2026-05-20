@@ -704,18 +704,7 @@ $projectBase = $brandFrontPos !== false ? substr($brandPagePath, 0, $brandFrontP
 
 </div>
 
-<!-- =========================
-     FOOTER
-========================= -->
-
-<footer>
-
-    <p>
-        <span data-i18n="brand.copyright">Copyright © Cre8connect 2026</span>
-    </p>
-
-</footer>
-
+<?php require __DIR__ . '/../layout/footer.php'; ?>
 <script src="../layout/front-header.js"></script>
 <script src="../layout/front-translate.js"></script>
 <script>

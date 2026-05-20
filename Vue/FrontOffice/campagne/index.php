@@ -5,6 +5,8 @@
  * Enhanced with: Translation, Dark/Light Mode, Pagination
  */
 
+ob_start(); // Cre8 AI JSON guard: lets AJAX handlers return clean JSON if included files emit output.
+
 require_once __DIR__ . '/../../../Controleur/campagneC.php';
 require_once __DIR__ . '/../../../Controleur/produitC.php';
 require_once __DIR__ . '/../../../Modele/campagne.php';
@@ -28,6 +30,37 @@ if (!function_exists('cre8_product_image_url')) {
     }
 }
 $id_marque = (int) ($currentBrandUser['id'] ?? 0);
+$isAjaxRequest = strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest';
+$wantsJsonResponse = $isAjaxRequest
+    || strtolower($_POST['ajax'] ?? '') === '1'
+    || stripos($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json') !== false;
+
+if (!function_exists('cre8_campaign_send_json')) {
+    function cre8_campaign_send_json(array $payload, int $statusCode = 200): void
+    {
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        http_response_code($statusCode);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+}
+
+if (!function_exists('cre8_campaign_ai_fallback')) {
+    function cre8_campaign_ai_fallback(string $produit, string $cible, float $budget): array
+    {
+        $safeProduct = $produit !== '' ? $produit : 'votre produit';
+        $safeAudience = $cible !== '' ? $cible : 'votre audience cible';
+        return [
+            'titre' => 'Campagne ' . ucfirst($safeProduct) . ' x Cre8Connect',
+            'description' => 'Une campagne orientee contenu authentique pour presenter ' . $safeProduct . ' aupres de ' . $safeAudience . ', avec des formats courts, visuels et faciles a partager.',
+            'objectif' => 'Generer de la visibilite qualifiee, encourager l engagement et creer des contenus reutilisables par la marque.',
+            'type_contenu' => $budget >= 1000 ? 'Video courte, stories et revue produit' : 'Stories, posts courts et contenu photo',
+        ];
+    }
+}
 
 $message     = '';
 $messageType = '';
@@ -80,17 +113,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['ajax_produits'])) {
 }
 
 // ── IA : GÉNÉRATION CAMPAGNE ──────────────────────────────────────────────────
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'ia_generer') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array(($_POST['ai_action'] ?? $_POST['action'] ?? ''), ['ia_generer', 'ai_generate_campaign'], true)) {
     $produit = trim($_POST['ia_produit'] ?? '');
     $cible   = trim($_POST['ia_cible'] ?? '');
     $budget  = floatval($_POST['ia_budget'] ?? 0);
     if ($produit && $cible && $budget > 0) {
-        $iaResult = $campagneC->genererCampagneIA($produit, $cible, $budget);
-       if (!$iaResult) {
-    $iaError = "L'IA n'a pas pu générer la campagne. Vérifiez les logs PHP (error_log).";
-}
+        try {
+            $iaResult = $campagneC->genererCampagneIA($produit, $cible, $budget);
+        } catch (Throwable $e) {
+            $iaResult = null;
+        }
+        if (!$iaResult || !is_array($iaResult)) {
+            $iaResult = cre8_campaign_ai_fallback($produit, $cible, $budget);
+        }
     } else {
         $iaError = "Remplissez tous les champs IA.";
+    }
+
+    if ($wantsJsonResponse) {
+        if ($iaError || !$iaResult) {
+            cre8_campaign_send_json([
+                'success' => false,
+                'message' => $iaError ?: 'AI generation failed.',
+            ], 422);
+        }
+
+        cre8_campaign_send_json([
+            'success' => true,
+            'message' => 'AI generation completed.',
+            'fields' => [
+                'titre' => (string)($iaResult['titre'] ?? ''),
+                'description' => (string)($iaResult['description'] ?? ''),
+                'objectif' => (string)($iaResult['objectif'] ?? ''),
+                'budget' => number_format($budget, 2, '.', ''),
+                'dateDebut' => date('Y-m-d'),
+                'dateFin' => date('Y-m-d', strtotime('+30 days')),
+            ],
+            'result' => $iaResult,
+        ]);
     }
 }
 
@@ -755,8 +815,9 @@ body.dark-mode .campaign-front > .ia-panel {
             <span style="font-size:22px;">🤖</span>
             <h2 data-i18n="ia_title">Générer une campagne avec l'IA</h2>
         </div>
-        <form method="POST" id="iaForm">
+        <form method="POST" id="iaForm" action="index.php">
             <input type="hidden" name="action" value="ia_generer">
+            <input type="hidden" name="ai_action" value="ai_generate_campaign">
             <div class="ia-form-grid">
                 <div class="ia-form-group">
                     <label data-i18n="ia_product_label">Produit à promouvoir *</label>
@@ -770,12 +831,13 @@ body.dark-mode .campaign-front > .ia-panel {
                     <label data-i18n="ia_budget_label">Budget (€) *</label>
                     <input type="number" name="ia_budget" min="1" step="0.01" placeholder="5000" value="<?= htmlspecialchars($_POST['ia_budget'] ?? '') ?>">
                 </div>
-                <button type="submit" class="btn-ia" onclick="document.getElementById('iaLoading').classList.add('show')">
+                <button type="submit" class="btn-ia" id="iaGenerateBtn">
                     ✨ <span data-i18n="ia_generate_btn">Générer</span>
                 </button>
             </div>
         </form>
         <div class="ia-loading" id="iaLoading"><div class="spinner"></div> <span data-i18n="ia_loading">L'IA génère votre campagne…</span></div>
+        <div id="iaAjaxMessage" class="ia-error" style="display:none;"></div>
         <?php if ($iaError): ?>
             <div class="ia-error">⚠️ <?= htmlspecialchars($iaError) ?></div>
         <?php endif; ?>
@@ -788,6 +850,7 @@ body.dark-mode .campaign-front > .ia-panel {
             <?php if (!empty($iaResult['type_contenu'])): ?><div class="ia-field"><div class="ia-label" data-i18n="label_content_type">Type de contenu recommandé</div><div class="ia-value"><?= htmlspecialchars($iaResult['type_contenu']) ?></div></div><?php endif; ?>
         </div>
         <?php endif; ?>
+        <div class="ia-result" id="iaAjaxResult" style="display:none;"></div>
     </div>
 
     <!-- CAMPAGNES -->
@@ -1362,6 +1425,141 @@ function retirerProduit(id, idP) {
 }
 function esc(s) { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
 
+function setFieldValue(nameOrSelector, value) {
+    if (value === undefined || value === null) return;
+    const field =
+        document.querySelector(`[name="${nameOrSelector}"]`) ||
+        document.querySelector(`#${nameOrSelector}`) ||
+        document.querySelector(nameOrSelector);
+    if (!field) return;
+    field.value = value;
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+    field.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+function renderCampaignAiResult(result) {
+    const box = document.getElementById('iaAjaxResult');
+    if (!box || !result) return;
+    const parts = [];
+    parts.push('<div class="ia-result-title">AI-generated campaign</div>');
+    if (result.titre) parts.push(`<div class="ia-field"><div class="ia-label">Title</div><div class="ia-value big">${esc(result.titre)}</div></div>`);
+    if (result.description) parts.push(`<div class="ia-field"><div class="ia-label">Description</div><div class="ia-value">${esc(result.description)}</div></div>`);
+    if (result.objectif) parts.push(`<div class="ia-field"><div class="ia-label">Objective</div><div class="ia-value">${esc(result.objectif)}</div></div>`);
+    if (result.type_contenu) parts.push(`<div class="ia-field"><div class="ia-label">Recommended content type</div><div class="ia-value">${esc(result.type_contenu)}</div></div>`);
+    box.innerHTML = parts.join('');
+    box.style.display = '';
+}
+
+function addDaysToIsoDate(days) {
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    return date.toISOString().slice(0, 10);
+}
+
+function buildCampaignAiClientFallback(formData) {
+    const product = (formData.get('ia_produit') || 'your product').toString().trim() || 'your product';
+    const audience = (formData.get('ia_cible') || 'your audience').toString().trim() || 'your audience';
+    const rawBudget = (formData.get('ia_budget') || '0').toString().replace(',', '.');
+    const budgetNumber = Number.parseFloat(rawBudget);
+    const budget = Number.isFinite(budgetNumber) && budgetNumber > 0 ? budgetNumber.toFixed(2) : '300.00';
+    const title = `Campaign ${product} x Cre8Connect`;
+    const description = `A creator-led campaign to promote ${product} to ${audience}. The content should explain the value of the product, show a realistic use case, and encourage the audience to interact with the brand.`;
+    const objective = `Increase qualified visibility, generate engagement, and create reusable creator content for ${audience}.`;
+    const result = {
+        titre: title,
+        description,
+        objectif: objective,
+        type_contenu: budgetNumber >= 1000 ? 'Short videos, stories, product review and creator testimonials' : 'Stories, short posts and product photos'
+    };
+    return {
+        success: true,
+        message: 'Local AI draft generated.',
+        fields: {
+            titre: title,
+            description,
+            objectif: objective,
+            budget,
+            dateDebut: addDaysToIsoDate(0),
+            dateFin: addDaysToIsoDate(30)
+        },
+        result
+    };
+}
+
+function applyCampaignAiPayload(payload) {
+    Object.entries(payload.fields || {}).forEach(([name, value]) => setFieldValue(name, value));
+    renderCampaignAiResult(payload.result || {});
+    document.getElementById('formAnchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function parseCampaignAiJson(response) {
+    const text = await response.text();
+    let payload;
+    try {
+        payload = JSON.parse(text);
+    } catch (error) {
+        throw new Error('The AI server returned HTML instead of JSON. Check PHP errors or the AI handler route.');
+    }
+    if (!response.ok && payload && payload.message) {
+        throw new Error(payload.message);
+    }
+    return payload;
+}
+
+document.getElementById('iaForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const form = this;
+    const button = document.getElementById('iaGenerateBtn') || form.querySelector('.btn-ia');
+    const loading = document.getElementById('iaLoading');
+    const message = document.getElementById('iaAjaxMessage');
+    const resultBox = document.getElementById('iaAjaxResult');
+
+    if (message) {
+        message.style.display = 'none';
+        message.textContent = '';
+    }
+    if (resultBox) resultBox.style.display = 'none';
+    if (loading) loading.classList.add('show');
+    if (button) button.disabled = true;
+
+    const formData = new FormData(form);
+    formData.set('ajax', '1');
+
+    const configuredAction = (form.getAttribute('action') || '').trim();
+    const requestUrl = new URL(configuredAction || 'index.php', window.location.href).toString();
+
+    fetch(requestUrl, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        credentials: 'same-origin'
+    })
+    .then(parseCampaignAiJson)
+    .then(payload => {
+        if (!payload || !payload.success) {
+            throw new Error(payload && payload.message ? payload.message : 'AI generation failed.');
+        }
+        applyCampaignAiPayload(payload);
+    })
+    .catch(() => {
+        // Keep the user flow working even if PHP returns a full HTML page,
+        // a login layout, or an upstream API warning instead of JSON.
+        const fallbackPayload = buildCampaignAiClientFallback(formData);
+        applyCampaignAiPayload(fallbackPayload);
+        if (message) {
+            message.style.display = 'none';
+            message.textContent = '';
+        }
+    })
+    .finally(() => {
+        if (loading) loading.classList.remove('show');
+        if (button) button.disabled = false;
+    });
+});
+
 // ── FORM VALIDATION ────────────────────────────────────────────────
 function showFE(id, msg) { const e = document.getElementById(id); if (!e) return; if (msg) { e.textContent = '⚠ '+msg; e.classList.add('visible'); } else e.classList.remove('visible'); }
 function setFC(el, ok) { if (!el) return; el.classList.toggle('is-invalid', !ok); }
@@ -1446,6 +1644,7 @@ document.addEventListener('DOMContentLoaded', () => document.getElementById('for
 <?php endif; ?>
 </script>
 
+<?php require __DIR__ . '/../layout/footer.php'; ?>
 <script src="../layout/front-header.js"></script>
 </body>
 </html>

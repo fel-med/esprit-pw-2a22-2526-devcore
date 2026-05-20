@@ -5,6 +5,8 @@
  * Enhanced with: Translation, Dark/Light Mode, Pagination
  */
 
+ob_start(); // Cre8 AI JSON guard: lets AJAX handlers return clean JSON if included files emit output.
+
 require_once __DIR__ . '/../../../Controleur/campagneC.php';
 require_once __DIR__ . '/../../../Controleur/produitC.php';
 require_once __DIR__ . '/../layout/avatar_helper.php';
@@ -14,6 +16,169 @@ $frontActive = 'campaigns';
 
 $campagneC = new CampagneC();
 $produitC  = new ProduitC();
+$isAjaxRequest = strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest';
+$wantsJsonResponse = $isAjaxRequest
+    || strtolower($_POST['ajax'] ?? '') === '1'
+    || stripos($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json') !== false;
+
+if (!function_exists('cre8_campaign_creator_send_json')) {
+    function cre8_campaign_creator_send_json(array $payload, int $statusCode = 200): void
+    {
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        http_response_code($statusCode);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+}
+
+if (!function_exists('cre8_campaign_suggestions_fallback')) {
+    function cre8_campaign_suggestions_fallback(string $competences, string $interets, string $audience): array
+    {
+        return [
+            'suggestions' => [
+                [
+                    'type_campagne' => 'Campagne video courte',
+                    'raison' => 'Vos competences en ' . $competences . ' peuvent transformer un brief ' . $interets . ' en contenu clair et engageant pour ' . $audience . '.',
+                    'conseil' => 'Mettez en avant un exemple concret et proposez un format simple a produire.',
+                ],
+                [
+                    'type_campagne' => 'Collaboration produit niche',
+                    'raison' => 'Vos centres d interet indiquent une bonne affinite avec des marques qui cherchent une audience precise.',
+                    'conseil' => 'Expliquez pourquoi votre audience est pertinente et ajoutez une idee de contenu mesurable.',
+                ],
+            ],
+            'conseil_general' => 'Choisissez les campagnes ou votre style, votre audience et votre capacite de production sont alignes.',
+        ];
+    }
+}
+
+if (!function_exists('cre8_campaign_creator_lower')) {
+    function cre8_campaign_creator_lower(string $value): string
+    {
+        return function_exists('mb_strtolower') ? mb_strtolower($value, 'UTF-8') : strtolower($value);
+    }
+}
+
+if (!function_exists('cre8_campaign_creator_tokens')) {
+    function cre8_campaign_creator_tokens(string $value): array
+    {
+        $value = cre8_campaign_creator_lower(trim($value));
+        $value = preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $value) ?? $value;
+        $parts = preg_split('/\s+/u', $value, -1, PREG_SPLIT_NO_EMPTY);
+        $stop = [
+            'the' => true, 'and' => true, 'for' => true, 'avec' => true, 'pour' => true,
+            'les' => true, 'des' => true, 'une' => true, 'dans' => true, 'sur' => true,
+            'ans' => true, 'your' => true, 'vous' => true, 'notre' => true, 'aux' => true,
+        ];
+
+        $tokens = [];
+        foreach ($parts ?: [] as $part) {
+            $part = trim((string) $part);
+            if (strlen($part) < 3 || isset($stop[$part])) {
+                continue;
+            }
+            $tokens[$part] = true;
+        }
+
+        return array_keys($tokens);
+    }
+}
+
+if (!function_exists('cre8_campaign_creator_recommend_existing_campaigns')) {
+    function cre8_campaign_creator_recommend_existing_campaigns(array $campagnes, string $competences, string $interets, string $audience): array
+    {
+        $tokens = array_values(array_unique(array_merge(
+            cre8_campaign_creator_tokens($competences),
+            cre8_campaign_creator_tokens($interets),
+            cre8_campaign_creator_tokens($audience)
+        )));
+
+        $scored = [];
+        foreach ($campagnes as $campaign) {
+            $searchable = cre8_campaign_creator_lower(implode(' ', [
+                $campaign['titreCampagne'] ?? '',
+                $campaign['description'] ?? '',
+                $campaign['objectif'] ?? '',
+                $campaign['nomMarque'] ?? '',
+                $campaign['statut'] ?? '',
+            ]));
+
+            $matchedTokens = [];
+            $score = 0;
+            foreach ($tokens as $token) {
+                if ($token !== '' && stripos($searchable, $token) !== false) {
+                    $matchedTokens[] = $token;
+                    $score += 4;
+                }
+            }
+
+            $status = (string) ($campaign['statut'] ?? '');
+            if ($score > 0 && $status === 'active') {
+                $score += 3;
+            }
+            if ($score > 0 && !empty($campaign['objectif'])) {
+                $score += 1;
+            }
+
+            if ($score <= 0) {
+                continue;
+            }
+
+            $title = trim((string) ($campaign['titreCampagne'] ?? 'Campagne #' . ($campaign['idCampagne'] ?? '')));
+            $brand = trim((string) ($campaign['nomMarque'] ?? ''));
+            $reasonBits = $matchedTokens
+                ? 'Matches: ' . implode(', ', array_slice($matchedTokens, 0, 5)) . '.'
+                : 'The campaign brief is close to your profile.';
+
+            $scored[] = [
+                'id' => (int) ($campaign['idCampagne'] ?? 0),
+                'titre' => $title,
+                'marque' => $brand,
+                'statut' => $status,
+                'budget' => (float) ($campaign['budget'] ?? 0),
+                'objectif' => trim((string) ($campaign['objectif'] ?? '')),
+                'score' => $score,
+                'search_query' => $title,
+                'matched_tokens' => $matchedTokens,
+                'raison' => $reasonBits . ($brand !== '' ? ' Brand: ' . $brand . '.' : ''),
+                'conseil' => $status === 'active'
+                    ? 'Open the details, check the products, then apply if your content style fits.'
+                    : 'This match is useful as inspiration, but it is not active right now.',
+            ];
+        }
+
+        usort($scored, static fn(array $a, array $b): int => $b['score'] <=> $a['score']);
+        $matches = array_slice($scored, 0, 3);
+
+        if (!$matches) {
+            return [
+                'suggestions' => [],
+                'matched_campaigns' => [],
+                'no_match' => true,
+                'conseil_general' => 'No compatible campaign was found in the current list. Try broader keywords in the search bar, or wait for a brand to publish a campaign closer to your skills, interests, and audience.',
+            ];
+        }
+
+        $suggestions = [];
+        foreach ($matches as $match) {
+            $suggestions[] = [
+                'type_campagne' => 'Existing campaign: ' . $match['titre'],
+                'raison' => $match['raison'],
+                'conseil' => $match['conseil'],
+            ];
+        }
+
+        return [
+            'suggestions' => $suggestions,
+            'matched_campaigns' => $matches,
+            'no_match' => false,
+            'conseil_general' => 'I searched the existing campaign list and found the best match. Use the recommendation buttons to apply the search or open the campaign details.',
+        ];
+    }
+}
 $cre8SelfPath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
 $cre8VuePos = strpos($cre8SelfPath, '/Vue/');
 $baseUrl = $cre8VuePos !== false ? substr($cre8SelfPath, 0, $cre8VuePos) : '';
@@ -36,15 +201,35 @@ if (isset($_GET['ajax_produits_creator'])) {
 // IA : suggestions
 $iaResult = null;
 $iaError  = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'ia_suggestions') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array(($_POST['ai_action'] ?? $_POST['action'] ?? ''), ['ia_suggestions', 'ai_campaign_suggestions'], true)) {
     $comp = trim($_POST['competences'] ?? '');
     $int  = trim($_POST['interets'] ?? '');
     $aud  = trim($_POST['audience'] ?? '');
     if ($comp && $int && $aud) {
-        $iaResult = $campagneC->suggererCampagnesIA($comp, $int, $aud);
-        if (!$iaResult) $iaError = "L'IA n'a pas pu générer de suggestions. Réessayez.";
+        try {
+            $availableCampaigns = $campagneC->afficherCampagnes();
+            $iaResult = cre8_campaign_creator_recommend_existing_campaigns($availableCampaigns, $comp, $int, $aud);
+        } catch (Throwable $e) {
+            $iaResult = cre8_campaign_suggestions_fallback($comp, $int, $aud);
+            $iaResult['conseil_general'] = 'The campaign search assistant used a safe local fallback because the smart lookup could not finish.';
+        }
     } else {
         $iaError = "Remplissez tous les champs.";
+    }
+
+    if ($wantsJsonResponse) {
+        if ($iaError || !$iaResult) {
+            cre8_campaign_creator_send_json([
+                'success' => false,
+                'message' => $iaError ?: 'AI suggestions failed.',
+            ], 422);
+        }
+
+        cre8_campaign_creator_send_json([
+            'success' => true,
+            'message' => 'AI suggestions completed.',
+            'result' => $iaResult,
+        ]);
     }
 }
 
@@ -264,6 +449,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-main
 .ia-sug-text{font-size:13px;color:var(--text-sub);line-height:1.6;}
 .ia-sug-tip{font-size:12px;background:rgba(14,163,112,.08);padding:7px 10px;border-radius:7px;margin-top:6px;color:var(--success);}
 .ia-conseil{padding:12px 16px;background:rgba(14,163,112,.06);border-radius:var(--radius-sm);margin-top:12px;font-size:13px;line-height:1.6;}
+.ia-match-card{border:1.5px solid var(--success-border);background:linear-gradient(135deg,rgba(14,163,112,.08),rgba(91,79,255,.07));border-radius:12px;padding:14px 15px;margin:0 0 12px;display:grid;gap:8px;}
+.ia-match-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.ia-match-title{font-weight:800;color:var(--text-main);font-size:14px;}
+.ia-match-brand{font-size:12px;color:var(--text-sub);font-weight:700;}
+.ia-match-meta{display:flex;gap:8px;flex-wrap:wrap;color:var(--text-sub);font-size:12px;font-weight:700;}
+.ia-match-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;}
+.ia-match-actions button{border:0;border-radius:9px;padding:8px 11px;font-weight:800;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.ia-match-search{background:var(--success);color:#fff;}
+.ia-match-details{background:var(--primary);color:#fff;}
+.ia-no-match{border:1.5px dashed var(--warning);background:var(--warning-light);color:var(--text-main);border-radius:12px;padding:14px 15px;font-size:13px;font-weight:700;line-height:1.6;}
+.camp-card.ai-highlight{outline:3px solid var(--success);box-shadow:0 0 0 6px rgba(14,163,112,.14),var(--card-shadow-hover);}
+
 .ia-error{background:var(--danger-light);color:var(--danger);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;font-weight:600;margin-top:12px;}
 .spinner{width:16px;height:16px;border:2.5px solid rgba(14,163,112,.3);border-top-color:var(--success);border-radius:50%;animation:spin .6s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -742,8 +939,9 @@ body.dark-mode .page-wrapper > .ia-panel {
             <span style="font-size:22px;">💡</span>
             <h2 data-i18n="ia_title">Suggestions de campagnes personnalisées par l'IA</h2>
         </div>
-        <form method="POST" id="iaForm">
+        <form method="POST" id="iaForm" action="indexC.php">
             <input type="hidden" name="action" value="ia_suggestions">
+            <input type="hidden" name="ai_action" value="ai_campaign_suggestions">
             <div class="ia-form-grid">
                 <div class="ia-form-group">
                     <label data-i18n="ia_skills_label">Vos compétences *</label>
@@ -757,13 +955,14 @@ body.dark-mode .page-wrapper > .ia-panel {
                     <label data-i18n="ia_audience_label">Votre audience *</label>
                     <input type="text" name="audience" data-i18n-placeholder="ia_audience_placeholder" placeholder="Ex : 18-25 ans, Instagram, 10K abonnés" value="<?= htmlspecialchars($_POST['audience'] ?? '') ?>">
                 </div>
-                <button type="submit" class="btn-ia" onclick="document.getElementById('iaLoading').classList.add('show')">
+                <button type="submit" class="btn-ia" id="iaSuggestBtn">
                     💡 <span data-i18n="ia_btn">Obtenir suggestions</span>
                 </button>
             </div>
         </form>
         <div class="ia-loading" id="iaLoading"><div class="spinner"></div> <span data-i18n="ia_loading">L'IA analyse votre profil…</span></div>
         <?php if ($iaError): ?><div class="ia-error">⚠️ <?= htmlspecialchars($iaError) ?></div><?php endif; ?>
+        <div id="iaAjaxMessage" class="ia-error" style="display:none;"></div>
         <?php if ($iaResult): ?>
         <div class="ia-result">
             <div style="font-size:14px;font-weight:700;color:var(--success);margin-bottom:12px;">🎯 <span data-i18n="ia_result_title">Campagnes recommandées pour vous</span></div>
@@ -779,6 +978,7 @@ body.dark-mode .page-wrapper > .ia-panel {
             <?php endif; ?>
         </div>
         <?php endif; ?>
+        <div class="ia-result" id="iaAjaxResult" style="display:none;"></div>
     </div>
 
     <!-- STATUS CHIPS CARD -->
@@ -837,7 +1037,9 @@ body.dark-mode .page-wrapper > .ia-panel {
              data-titre="<?= strtolower(htmlspecialchars($c['titreCampagne'])) ?>"
              data-statut="<?= htmlspecialchars($c['statut']) ?>"
              data-budget="<?= (float)$c['budget'] ?>"
-             data-brand="<?= strtolower(htmlspecialchars($c['nomMarque'] ?? '')) ?>">
+             data-brand="<?= strtolower(htmlspecialchars($c['nomMarque'] ?? '', ENT_QUOTES, 'UTF-8')) ?>"
+             data-desc="<?= strtolower(htmlspecialchars($c['description'] ?? '', ENT_QUOTES, 'UTF-8')) ?>"
+             data-obj="<?= strtolower(htmlspecialchars($c['objectif'] ?? '', ENT_QUOTES, 'UTF-8')) ?>">
             <div class="camp-accent accent-<?= $c['statut'] ?>"></div>
             <div class="camp-card-header">
                 <div class="camp-card-title"><?= htmlspecialchars($c['titreCampagne']) ?></div>
@@ -1135,7 +1337,11 @@ function filterAndPaginate() {
     const q = document.getElementById('searchInput')?.value.toLowerCase() || '';
     const all = getAllCards();
     filteredCards = all.filter(card => {
-        const mQ = !q || (card.dataset.titre||'').includes(q) || (card.dataset.brand||'').includes(q);
+        const mQ = !q
+            || (card.dataset.titre || '').includes(q)
+            || (card.dataset.brand || '').includes(q)
+            || (card.dataset.desc || '').includes(q)
+            || (card.dataset.obj || '').includes(q);
         const mS = !activeChip || card.dataset.statut === activeChip;
         return mQ && mS;
     });
@@ -1251,6 +1457,244 @@ function sortCampagnes() {
     filterAndPaginate();
 }
 
+function aiEsc(value) {
+    const d = document.createElement('div');
+    d.textContent = value || '';
+    return d.innerHTML;
+}
+
+function getCreatorAiTokens(value) {
+    return (value || '')
+        .toString()
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}\s]+/gu, ' ')
+        .split(/\s+/)
+        .map(token => token.trim())
+        .filter(token => token.length >= 3 && !['the','and','for','avec','pour','les','des','une','dans','sur','ans','your','vous'].includes(token));
+}
+
+function getCampaignSearchText(campaign) {
+    return [
+        campaign.titre || '',
+        campaign.desc || '',
+        campaign.obj || '',
+        campaign.marque || '',
+        campaign.statut || ''
+    ].join(' ').toLowerCase();
+}
+
+function findClientCampaignMatches(formData) {
+    const tokens = [
+        ...getCreatorAiTokens(formData.get('competences')),
+        ...getCreatorAiTokens(formData.get('interets')),
+        ...getCreatorAiTokens(formData.get('audience'))
+    ];
+    const uniqueTokens = Array.from(new Set(tokens));
+    const campaigns = Object.values(campagnesMap || {});
+
+    const scored = campaigns.map(campaign => {
+        const searchText = getCampaignSearchText(campaign);
+        const matched = uniqueTokens.filter(token => searchText.includes(token));
+        let score = matched.length * 4;
+        if (score > 0 && campaign.statut === 'active') score += 3;
+        if (score > 0 && campaign.obj) score += 1;
+        return {
+            id: campaign.id,
+            titre: campaign.titre,
+            marque: campaign.marque || '',
+            statut: campaign.statut || '',
+            budget: campaign.budget || 0,
+            objectif: campaign.obj || '',
+            score,
+            search_query: campaign.titre || '',
+            matched_tokens: matched,
+            raison: matched.length
+                ? `Matches: ${matched.slice(0, 5).join(', ')}.`
+                : '',
+            conseil: campaign.statut === 'active'
+                ? 'Open the details, check the products, then apply if the brief fits your content style.'
+                : 'This campaign is useful as inspiration, but it is not active right now.'
+        };
+    }).filter(campaign => campaign.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3);
+
+    return scored;
+}
+
+function applyCampaignAiSearch(query, id) {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.value = query || '';
+    }
+
+    activeChip = '';
+    document.querySelectorAll('.s-chip').forEach(c => c.classList.remove('active'));
+    const allChip = document.querySelector('.s-chip[data-i18n="chip_all"]');
+    if (allChip) allChip.classList.add('active');
+
+    filterAndPaginate();
+
+    window.setTimeout(() => {
+        const safeId = String(id).replace(/"/g, '\\"');
+        const card = id ? document.querySelector(`.camp-card[data-id="${safeId}"]`) : null;
+        if (card) {
+            document.querySelectorAll('.camp-card.ai-highlight').forEach(el => el.classList.remove('ai-highlight'));
+            card.classList.add('ai-highlight');
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 80);
+}
+
+function applyCampaignAiSearchFromButton(button) {
+    if (!button) return;
+    applyCampaignAiSearch(button.dataset.aiSearchQuery || '', Number(button.dataset.aiCampaignId || 0));
+}
+
+function renderMatchedCampaignCards(matches) {
+    if (!Array.isArray(matches) || !matches.length) {
+        return '<div class="ia-no-match">No compatible campaign was found in the current list. Try broader keywords in the search bar, or wait for a more suitable brand campaign.</div>';
+    }
+
+    return matches.map(match => `
+        <div class="ia-match-card">
+            <div class="ia-match-head">
+                <div>
+                    <div class="ia-match-title">${aiEsc(match.titre || 'Campaign')}</div>
+                    <div class="ia-match-brand">${aiEsc(match.marque || 'Brand not specified')}</div>
+                </div>
+                <span class="camp-badge">${aiEsc((match.statut || 'unknown').toUpperCase())}</span>
+            </div>
+            <div class="ia-match-meta">
+                <span>${Number(match.budget || 0).toLocaleString('fr-FR')} €</span>
+                ${match.objectif ? `<span>${aiEsc(match.objectif)}</span>` : ''}
+            </div>
+            ${match.raison ? `<div class="ia-sug-text">${aiEsc(match.raison)}</div>` : ''}
+            ${match.conseil ? `<div class="ia-sug-tip">${aiEsc(match.conseil)}</div>` : ''}
+            <div class="ia-match-actions">
+                <button type="button" class="ia-match-search" data-ai-search-query="${aiEsc(match.search_query || match.titre || '')}" data-ai-campaign-id="${Number(match.id || 0)}" onclick="applyCampaignAiSearchFromButton(this)">Apply search</button>
+                <button type="button" class="ia-match-details" onclick="openDetail(${Number(match.id || 0)})">Open details</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderCreatorAiSuggestions(result) {
+    const box = document.getElementById('iaAjaxResult');
+    if (!box || !result) return;
+
+    const matches = Array.isArray(result.matched_campaigns) ? result.matched_campaigns : [];
+    let html = '<div style="font-size:14px;font-weight:700;color:var(--success);margin-bottom:12px;">Recommended existing campaign</div>';
+    html += renderMatchedCampaignCards(matches);
+
+    const suggestions = Array.isArray(result.suggestions) ? result.suggestions : [];
+    if (suggestions.length) {
+        html += '<div style="font-size:13px;font-weight:800;color:var(--text-main);margin:14px 0 8px;">Why this recommendation</div>';
+        html += suggestions.map(s => `
+            <div class="ia-sug-card">
+                <div class="ia-sug-type">${aiEsc(s.type_campagne)}</div>
+                <div class="ia-sug-text"><strong>Why:</strong> ${aiEsc(s.raison)}</div>
+                <div class="ia-sug-tip">Tip: ${aiEsc(s.conseil)}</div>
+            </div>
+        `).join('');
+    }
+
+    if (result.conseil_general) {
+        html += `<div class="ia-conseil"><strong>Advice:</strong> ${aiEsc(result.conseil_general)}</div>`;
+    }
+
+    box.innerHTML = html;
+    box.style.display = '';
+}
+
+function buildCreatorAiClientFallback(formData) {
+    const matches = findClientCampaignMatches(formData);
+
+    if (!matches.length) {
+        return {
+            suggestions: [],
+            matched_campaigns: [],
+            no_match: true,
+            conseil_general: 'No compatible campaign was found in the current list. Try broader keywords in the search bar, or wait for a brand to publish a campaign closer to your skills, interests, and audience.'
+        };
+    }
+
+    return {
+        suggestions: matches.map(match => ({
+            type_campagne: `Existing campaign: ${match.titre}`,
+            raison: match.raison || 'This campaign is the closest current match for your profile.',
+            conseil: match.conseil
+        })),
+        matched_campaigns: matches,
+        no_match: false,
+        conseil_general: 'I searched the campaigns already displayed on this page and selected the strongest match.'
+    };
+}
+
+async function parseCreatorAiJson(response) {
+    const text = await response.text();
+    let payload;
+    try {
+        payload = JSON.parse(text);
+    } catch (error) {
+        throw new Error('The AI server returned HTML instead of JSON. Check PHP errors or the AI handler route.');
+    }
+    if (!response.ok && payload && payload.message) {
+        throw new Error(payload.message);
+    }
+    return payload;
+}
+
+document.getElementById('iaForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const form = this;
+    const button = document.getElementById('iaSuggestBtn') || form.querySelector('.btn-ia');
+    const loading = document.getElementById('iaLoading');
+    const message = document.getElementById('iaAjaxMessage');
+    const resultBox = document.getElementById('iaAjaxResult');
+
+    if (message) {
+        message.style.display = 'none';
+        message.textContent = '';
+    }
+    if (resultBox) resultBox.style.display = 'none';
+    if (loading) loading.classList.add('show');
+    if (button) button.disabled = true;
+
+    const formData = new FormData(form);
+    formData.set('ajax', '1');
+
+    const actionUrl = form.getAttribute('action') || window.location.pathname;
+    fetch(actionUrl, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        credentials: 'same-origin'
+    })
+    .then(parseCreatorAiJson)
+    .then(payload => {
+        if (!payload || !payload.success) {
+            throw new Error(payload && payload.message ? payload.message : 'AI suggestions failed.');
+        }
+        renderCreatorAiSuggestions(payload.result || {});
+    })
+    .catch(() => {
+        // Keep suggestions usable even if the PHP route returns HTML instead of JSON.
+        renderCreatorAiSuggestions(buildCreatorAiClientFallback(formData));
+        if (message) {
+            message.style.display = 'none';
+            message.textContent = '';
+        }
+    })
+    .finally(() => {
+        if (loading) loading.classList.remove('show');
+        if (button) button.disabled = false;
+    });
+});
+
 // Detail modal
 function openDetail(id) {
     const c = campagnesMap[id]; if (!c) return;
@@ -1309,6 +1753,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(
 document.addEventListener('DOMContentLoaded', () => openDetail(<?= $campagneDetail['idCampagne'] ?>));
 <?php endif; ?>
 </script>
+<?php require __DIR__ . '/../layout/footer.php'; ?>
 <script src="../layout/front-header.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/front-header.js')); ?>"></script>
 </body>
 </html>

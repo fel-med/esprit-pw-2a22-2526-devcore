@@ -21,6 +21,7 @@ $contrat    = null;
 $iaResult   = null;
 $iaError    = '';
 $formError  = '';
+$isAjaxRequest = strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest';
 
 
 function contract_normalize_date(?string $date): string
@@ -98,6 +99,184 @@ function contract_context_payload(ContratC $controller, array $context): array
         'availableFrom' => $availableFrom,
     ];
 }
+
+function contract_json_response(array $payload, int $statusCode = 200): void
+{
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    http_response_code($statusCode);
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+function contract_days_from_deadline(string $deadline): int
+{
+    if (preg_match('/(\d+)/', $deadline, $matches)) {
+        return max(1, min(180, (int) $matches[1]));
+    }
+
+    return 30;
+}
+
+function contract_start_date_from_payload(array $payload): string
+{
+    $today = date('Y-m-d');
+    $availableFrom = contract_normalize_date($payload['availableFrom'] ?? '');
+    if ($availableFrom !== '' && $availableFrom > $today) {
+        return $availableFrom;
+    }
+
+    return $today;
+}
+
+function contract_pick_recommended_candidature(array $contexts, ContratC $controller): ?array
+{
+    if (empty($contexts)) {
+        return null;
+    }
+
+    usort($contexts, static function (array $a, array $b) use ($controller): int {
+        $amountB = contract_context_amount($controller, $b);
+        $amountA = contract_context_amount($controller, $a);
+        if ($amountB !== $amountA) {
+            return $amountB <=> $amountA;
+        }
+
+        $dateA = '';
+        $dateB = '';
+        $candA = $a['condidature'] ?? null;
+        $candB = $b['condidature'] ?? null;
+        if (is_object($candA) && method_exists($candA, 'getDateDisponibilite')) {
+            $dateA = contract_normalize_date($candA->getDateDisponibilite());
+        }
+        if (is_object($candB) && method_exists($candB, 'getDateDisponibilite')) {
+            $dateB = contract_normalize_date($candB->getDateDisponibilite());
+        }
+
+        return strcmp($dateA ?: '9999-12-31', $dateB ?: '9999-12-31');
+    });
+
+    return $contexts[0];
+}
+
+function contract_find_candidature_context(array $contexts, int $id): ?array
+{
+    if ($id <= 0) {
+        return null;
+    }
+
+    foreach ($contexts as $context) {
+        $candidature = $context['condidature'] ?? null;
+        if (is_object($candidature) && method_exists($candidature, 'getIdCandidature') && (int) $candidature->getIdCandidature() === $id) {
+            return $context;
+        }
+    }
+
+    return null;
+}
+
+function contract_build_description_from_ai(array $iaResult): string
+{
+    $descriptionParts = [];
+    if (!empty($iaResult['conditions_paiement'])) {
+        $descriptionParts[] = "Payment terms:\n" . (string) $iaResult['conditions_paiement'];
+    }
+    if (!empty($iaResult['obligations_marque']) && is_array($iaResult['obligations_marque'])) {
+        $descriptionParts[] = "Brand obligations:\n- " . implode("\n- ", array_map('strval', $iaResult['obligations_marque']));
+    }
+    if (!empty($iaResult['obligations_createur']) && is_array($iaResult['obligations_createur'])) {
+        $descriptionParts[] = "Creator obligations:\n- " . implode("\n- ", array_map('strval', $iaResult['obligations_createur']));
+    }
+    if (!empty($iaResult['droits_utilisation'])) {
+        $descriptionParts[] = "Usage rights:\n" . (string) $iaResult['droits_utilisation'];
+    }
+    if (!empty($iaResult['clause_resiliation'])) {
+        $descriptionParts[] = "Termination:\n" . (string) $iaResult['clause_resiliation'];
+    }
+
+    return trim(implode("\n\n", $descriptionParts));
+}
+
+function contract_build_local_ai_result(string $sourceTitle, string $creatorName, float $amount, int $days, bool $eligible): array
+{
+    $titleBase = $sourceTitle !== '' ? $sourceTitle : 'Collaboration';
+    $creatorLabel = $creatorName !== '' ? $creatorName : 'selected creator';
+
+    if (!$eligible) {
+        return [
+            'titre_contrat' => 'Contract recommendation unavailable',
+            'conditions_paiement' => 'No accepted candidature without an existing contract is available yet. Accept a candidature first, then the AI can recommend the best candidate and prepare a ready-to-use contract draft.',
+            'obligations_marque' => [
+                'Review accepted candidatures before starting the contract.',
+                'Create the contract only after the collaboration is officially accepted on Cre8Connect.',
+            ],
+            'obligations_createur' => [
+                'Wait for an accepted candidature before contract generation.',
+                'Keep collaboration details inside the Cre8Connect workflow.',
+            ],
+            'droits_utilisation' => 'Usage rights should be defined once an accepted candidature is selected.',
+            'clause_resiliation' => 'A standard cancellation clause can be generated after selecting an accepted candidature.',
+        ];
+    }
+
+    return [
+        'titre_contrat' => 'Contract - ' . $titleBase . ' with ' . $creatorLabel,
+        'conditions_paiement' => sprintf('The brand will pay %.2f € for the accepted collaboration. Payment should stay inside the Cre8Connect workflow and be released after deliverables are reviewed.', $amount),
+        'obligations_marque' => [
+            'Provide the brief, product information, deadlines, and validation notes clearly.',
+            'Review the creator deliverables within a reasonable time after submission.',
+            'Respect the accepted budget and collaboration scope.',
+        ],
+        'obligations_createur' => [
+            'Deliver the agreed content for ' . $titleBase . ' within ' . $days . ' day(s).',
+            'Respect the campaign brief and disclose any delay early.',
+            'Keep all collaboration exchanges inside Cre8Connect.',
+        ],
+        'droits_utilisation' => 'The brand may use the approved content for the agreed campaign channels. Any extended usage or paid ads should be confirmed before publication.',
+        'clause_resiliation' => 'Either party may request cancellation if the collaboration scope changes significantly, if deadlines are not respected, or if platform safety rules are violated.',
+    ];
+}
+
+/**
+ * @return array{0: array<int, array<string, mixed>>, 1: int, 2: string}
+ */
+function contract_load_available_accepted_candidatures(CondidatureC $candidatureController, ContratC $controller, int $idMarque): array
+{
+    $acceptedContexts = [];
+    $unsupportedCount = 0;
+    $error = '';
+
+    try {
+        $candidateContexts = $candidatureController->getBrandCandidatures($idMarque, ['status' => 'acceptee']);
+        foreach ($candidateContexts as $ctx) {
+            $rowCandidature = $ctx['condidature'] ?? null;
+            if (!isContractEligibleCandidature(is_object($rowCandidature) ? $rowCandidature : null, is_array($ctx) ? $ctx : null)) {
+                continue;
+            }
+            if ($controller->contractExistsForCandidature($ctx, $idMarque)) {
+                continue;
+            }
+            if (!$controller->supportsCandidatureOrigin($ctx)) {
+                $unsupportedCount++;
+                continue;
+            }
+            $acceptedContexts[] = $ctx;
+        }
+    } catch (Throwable $e) {
+        $error = 'Unable to load accepted applications: ' . $e->getMessage();
+    }
+
+    return [$acceptedContexts, $unsupportedCount, $error];
+}
+
+[$acceptedCandidatureContexts, $unsupportedAcceptedCandidatureCount, $acceptedCandidatureLoadError] = contract_load_available_accepted_candidatures($candidatureController, $controller, $idMarque);
+if ($acceptedCandidatureLoadError !== '' && $formError === '') {
+    $formError = $acceptedCandidatureLoadError;
+}
+$acceptedCandidaturePayloads = array_map(static fn($ctx) => contract_context_payload($controller, $ctx), $acceptedCandidatureContexts);
 
 // ── CRUD (HANDLER PHP) ────────────────────────────────────────────────────────
 
@@ -180,44 +359,112 @@ if ($action === 'edit') {
     }
 }
 
-// ── IA : GÉNÉRATION CONTRAT ───────────────────────────────────────────────────
+// ── IA : SMART CONTRACT RECOMMENDATION ────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action_ia'] ?? '') === 'generer') {
-    $camp = trim($_POST['ia_campagne'] ?? '');
-    $rem  = floatval($_POST['ia_remuneration'] ?? 0);
-    $del  = trim($_POST['ia_delai'] ?? '');
-    if ($camp && $rem > 0 && $del) {
-        $iaResult = $controller->genererContratIA($camp, $rem, $del);
-        if (!$iaResult) $iaError = "Erreur IA. Réessayez.";
+    $requestedCandidatureId = (int) ($_POST['ia_candidature_id'] ?? 0);
+    $selectedContext = contract_find_candidature_context($acceptedCandidatureContexts, $requestedCandidatureId);
+    if (!$selectedContext) {
+        $selectedContext = contract_pick_recommended_candidature($acceptedCandidatureContexts, $controller);
+    }
+
+    $selectedPayload = $selectedContext ? contract_context_payload($controller, $selectedContext) : null;
+    $hasEligibleCandidature = is_array($selectedPayload);
+
+    $camp = trim((string) ($_POST['ia_campagne'] ?? ''));
+    $rem  = (float) ($_POST['ia_remuneration'] ?? 0);
+    $del  = trim((string) ($_POST['ia_delai'] ?? ''));
+
+    if ($hasEligibleCandidature) {
+        if ($camp === '') {
+            $camp = (string) ($selectedPayload['sourceTitle'] ?: $selectedPayload['originLabel'] . ' collaboration');
+        }
+        if ($rem <= 0) {
+            $rem = (float) ($selectedPayload['amount'] ?? 0);
+        }
+        if ($del === '') {
+            $del = '30 days';
+        }
     } else {
-        $iaError = "Remplissez tous les champs IA.";
+        if ($camp === '') {
+            $camp = 'future accepted collaboration';
+        }
+        if ($rem <= 0) {
+            $rem = 0.0;
+        }
+        if ($del === '') {
+            $del = '30 days';
+        }
+    }
+
+    $days = contract_days_from_deadline($del);
+    $creatorName = $hasEligibleCandidature ? (string) ($selectedPayload['creatorName'] ?? '') : '';
+    $sourceTitle = $hasEligibleCandidature ? (string) ($selectedPayload['sourceTitle'] ?? $camp) : $camp;
+
+    try {
+        $iaResult = [];
+        if ($hasEligibleCandidature && $rem > 0) {
+            $iaResult = $controller->genererContratIA($camp, $rem, $del);
+        }
+
+        if (!$iaResult || !is_array($iaResult)) {
+            $iaResult = contract_build_local_ai_result($sourceTitle, $creatorName, $rem, $days, $hasEligibleCandidature);
+        }
+
+        $startDate = $hasEligibleCandidature ? contract_start_date_from_payload($selectedPayload) : date('Y-m-d');
+        $endDate = date('Y-m-d', strtotime($startDate . ' +' . $days . ' days'));
+
+        $fields = [];
+        if ($hasEligibleCandidature) {
+            $fields = [
+                'id_candidature' => (int) ($selectedPayload['id'] ?? 0),
+                'titre' => (string) ($iaResult['titre_contrat'] ?? ('Contract - ' . $sourceTitle)),
+                'description' => contract_build_description_from_ai($iaResult),
+                'montant_preview' => number_format((float) $rem, 2, '.', ''),
+                'date_debut' => $startDate,
+                'date_fin' => $endDate,
+            ];
+        }
+
+        $recommendation = [
+            'eligible' => $hasEligibleCandidature,
+            'reason' => $hasEligibleCandidature
+                ? 'Recommended from accepted candidatures without an existing contract.'
+                : 'No accepted candidature without an existing contract is available yet.',
+            'candidature' => $selectedPayload,
+            'unsupportedAcceptedCount' => $unsupportedAcceptedCandidatureCount,
+        ];
+
+        $message = $hasEligibleCandidature
+            ? sprintf(
+                'Recommended %s for %s. Open “New contract” and the draft will be applied automatically.',
+                $creatorName !== '' ? $creatorName : 'the selected creator',
+                $sourceTitle !== '' ? $sourceTitle : 'this collaboration'
+            )
+            : 'No accepted candidature is available for contract creation. Accept a candidature first; for now, the AI can only give a general recommendation.';
+
+        if ($isAjaxRequest) {
+            contract_json_response([
+                'success' => true,
+                'message' => $message,
+                'eligible' => $hasEligibleCandidature,
+                'fields' => $fields,
+                'result' => $iaResult,
+                'recommendation' => $recommendation,
+            ]);
+        }
+    } catch (Throwable $e) {
+        if ($isAjaxRequest) {
+            contract_json_response([
+                'success' => false,
+                'message' => 'AI contract recommendation failed: ' . $e->getMessage(),
+            ], 500);
+        }
+
+        $iaError = 'AI contract recommendation failed: ' . $e->getMessage();
     }
 }
 
 $contrats = $controller->getByMarque($idMarque);
-$acceptedCandidatureContexts = [];
-$unsupportedAcceptedCandidatureCount = 0;
-try {
-    $candidateContexts = $candidatureController->getBrandCandidatures($idMarque, ['status' => 'acceptee']);
-    foreach ($candidateContexts as $ctx) {
-        $rowCandidature = $ctx['condidature'] ?? null;
-        if (!isContractEligibleCandidature(is_object($rowCandidature) ? $rowCandidature : null, is_array($ctx) ? $ctx : null)) {
-            continue;
-        }
-        if ($controller->contractExistsForCandidature($ctx, $idMarque)) {
-            continue;
-        }
-        if (!$controller->supportsCandidatureOrigin($ctx)) {
-            $unsupportedAcceptedCandidatureCount++;
-            continue;
-        }
-        $acceptedCandidatureContexts[] = $ctx;
-    }
-} catch (Throwable $e) {
-    if ($formError === '') {
-        $formError = 'Unable to load accepted applications: ' . $e->getMessage();
-    }
-}
-$acceptedCandidaturePayloads = array_map(static fn($ctx) => contract_context_payload($controller, $ctx), $acceptedCandidatureContexts);
 $isEdit   = ($action === 'edit') && isset($contrat);
 $isCreate = ($action === 'create');
 
@@ -300,6 +547,19 @@ nav{background:var(--bg-white);border-bottom:1px solid var(--border);padding:0 4
 .ia-fg input, .ia-fg select {padding:9px 13px;border:1px solid var(--border-dark);border-radius:10px;background:var(--bg);color:var(--text-primary);outline:none;}
 
 .btn-ia{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:10px;font-weight:700;cursor:pointer;border:none;background:linear-gradient(135deg,var(--accent),#8b5cf6);color:#fff;transition:all .2s;}
+.ia-loading{display:none;align-items:center;gap:10px;padding:12px 0;color:var(--accent);font-weight:700;font-size:.86rem;}
+.ia-loading.show{display:flex;}
+.spinner{width:16px;height:16px;border:2px solid rgba(124,58,237,.25);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+.ia-error{background:var(--danger-soft);color:var(--danger);border:1px solid rgba(220,38,38,.25);border-radius:10px;padding:10px 14px;font-size:.85rem;font-weight:700;margin-top:12px;}
+.ia-result{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:16px;}
+.ia-result-title{font-weight:800;color:var(--accent);margin-bottom:8px;}
+.contract-ai-hint{grid-column:1 / -1;background:var(--accent-soft);border:1px solid rgba(91,76,245,.18);border-radius:12px;padding:12px 14px;color:var(--text-secondary);font-size:.85rem;line-height:1.45;}
+.contract-ai-hint strong{color:var(--text-primary);}
+.contract-ai-recommendation{margin-top:12px;padding:12px 14px;border-radius:12px;background:var(--accent-soft);border:1px solid rgba(91,76,245,.18);color:var(--text-secondary);font-size:.85rem;line-height:1.45;}
+.contract-ai-recommendation strong{color:var(--text-primary);}
+.contract-ai-recommendation a{color:var(--accent);font-weight:800;text-decoration:none;}
+.contract-ai-recommendation a:hover{text-decoration:underline;}
+@keyframes spin{to{transform:rotate(360deg);}}
 
 /* STATS */
 .stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px;margin-bottom:32px;}
@@ -398,34 +658,71 @@ nav{background:var(--bg-white);border-bottom:1px solid var(--border);padding:0 4
             <span style="font-size:22px;">📄</span>
             <h2 data-i18n="ia_title">Générer un contrat avec l'IA</h2>
         </div>
-        <form method="POST">
+        <form method="POST" action="index.php" id="contractAiForm">
             <input type="hidden" name="action_ia" value="generer">
             <div class="ia-form-grid">
+                <?php if (!empty($acceptedCandidaturePayloads)): ?>
+                    <div class="contract-ai-hint">
+                        <strong>Smart contract AI:</strong>
+                        <?= count($acceptedCandidaturePayloads) ?> accepted candidature(s) without contract found.
+                        The AI can recommend the best one and prepare the contract draft from it.
+                    </div>
+                    <div class="ia-fg" style="grid-column: span 2;">
+                        <label>Accepted candidature to analyze</label>
+                        <select name="ia_candidature_id" id="contractAiCandidatureSelect">
+                            <option value="">Let AI recommend the best accepted candidature</option>
+                            <?php foreach ($acceptedCandidaturePayloads as $payload): ?>
+                                <?php
+                                    $aiLabel = sprintf(
+                                        '%s — %s — %s — %.2f €%s',
+                                        $payload['creatorName'] !== '' ? $payload['creatorName'] : ('Creator #' . $payload['creatorId']),
+                                        $payload['originLabel'],
+                                        $payload['sourceTitle'] !== '' ? $payload['sourceTitle'] : ('Source #' . $payload['sourceId']),
+                                        (float) $payload['amount'],
+                                        $payload['availableFrom'] !== '' ? (' — available from ' . $payload['availableFrom']) : ''
+                                    );
+                                ?>
+                                <option value="<?= (int) $payload['id'] ?>"><?= htmlspecialchars($aiLabel) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div class="contract-helper">Leave empty to let the AI choose the strongest accepted candidature.</div>
+                    </div>
+                <?php else: ?>
+                    <div class="contract-empty" style="grid-column: 1 / -1;">
+                        No accepted candidature without contract is available yet.
+                        The AI can give a general recommendation, but it cannot prepare a ready-to-create contract until one candidature is accepted.
+                        <?php if ($unsupportedAcceptedCandidatureCount > 0): ?>
+                            <br><?= (int) $unsupportedAcceptedCandidatureCount ?> accepted candidature(s) are not compatible with the current contract table.
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
                 <div class="ia-fg">
-                    <label data-i18n="label_campaign">Campagne *</label>
-                    <input type="text" name="ia_campagne" data-i18n-placeholder="ph_ia_campaign" placeholder="Ex : Lancement Été 2025" value="<?= htmlspecialchars($_POST['ia_campagne'] ?? '') ?>">
+                    <label data-i18n="label_campaign">Campaign / source</label>
+                    <input type="text" name="ia_campagne" id="contractAiCampaign" data-i18n-placeholder="ph_ia_campaign" placeholder="Ex : Lancement Été 2025" value="<?= htmlspecialchars($_POST['ia_campagne'] ?? '') ?>">
                 </div>
                 <div class="ia-fg">
-                    <label data-i18n="label_reward">Rémunération (€) *</label>
-                    <input type="number" name="ia_remuneration" min="1" step="0.01" placeholder="2500" value="<?= htmlspecialchars($_POST['ia_remuneration'] ?? '') ?>">
+                    <label data-i18n="label_reward">Recommended amount (€)</label>
+                    <input type="number" name="ia_remuneration" id="contractAiReward" min="0" step="0.01" placeholder="2500" value="<?= htmlspecialchars($_POST['ia_remuneration'] ?? '') ?>">
                 </div>
                 <div class="ia-fg">
-                    <label data-i18n="label_deadline">Délai de livraison *</label>
-                    <input type="text" name="ia_delai" data-i18n-placeholder="ph_ia_deadline" placeholder="Ex : 30 jours" value="<?= htmlspecialchars($_POST['ia_delai'] ?? '') ?>">
+                    <label data-i18n="label_deadline">Delivery deadline</label>
+                    <input type="text" name="ia_delai" id="contractAiDeadline" data-i18n-placeholder="ph_ia_deadline" placeholder="Ex : 30 jours" value="<?= htmlspecialchars($_POST['ia_delai'] ?? '30 days') ?>">
                 </div>
-                <button type="submit" class="btn-ia" onclick="document.getElementById('iaLoading').classList.add('show')">
+                <button type="submit" class="btn-ia" id="contractAiBtn">
                     <span data-i18n="btn_generate">📄 Générer</span>
                 </button>
             </div>
         </form>
         <div class="ia-loading" id="iaLoading"><div class="spinner"></div> <span data-i18n="ia_writing">Rédaction IA en cours…</span></div>
         
+        <div id="contractAiMessage" class="ia-error" style="display:none;"></div>
         <?php if ($iaResult): ?>
         <div class="ia-result">
             <div class="ia-result-title">📋 Contrat généré : <?= htmlspecialchars($iaResult['titre_contrat'] ?? '') ?></div>
             <p style="font-size: 0.85rem; color: var(--text-secondary);"><?= nl2br(htmlspecialchars($iaResult['conditions_paiement'] ?? '')) ?></p>
         </div>
         <?php endif; ?>
+        <div class="ia-result" id="contractAiResult" style="display:none;"></div>
     </div>
 
     <div class="stats-bar">
@@ -762,6 +1059,167 @@ function updateContractCandidaturePreview() {
     }
 }
 
+function updateContractAiCandidaturePreview() {
+    const select = document.getElementById('contractAiCandidatureSelect');
+    if (!select) return;
+    const selectedId = Number(select.value || 0);
+    const selected = acceptedCandidatures.find(item => Number(item.id) === selectedId);
+    if (!selected) return;
+
+    const campaignInput = document.getElementById('contractAiCampaign');
+    const rewardInput = document.getElementById('contractAiReward');
+    const deadlineInput = document.getElementById('contractAiDeadline');
+
+    if (campaignInput && !campaignInput.value.trim()) {
+        campaignInput.value = selected.sourceTitle || `${selected.originLabel || 'Accepted'} collaboration`;
+    }
+    if (rewardInput && (!rewardInput.value || Number(rewardInput.value) <= 0)) {
+        rewardInput.value = formatContractAmount(selected.amount);
+    }
+    if (deadlineInput && !deadlineInput.value.trim()) {
+        deadlineInput.value = '30 days';
+    }
+}
+
+function setFieldValue(nameOrSelector, value) {
+    if (value === undefined || value === null) return false;
+    const field =
+        document.querySelector(`[name="${nameOrSelector}"]`) ||
+        document.querySelector(`#${nameOrSelector}`) ||
+        document.querySelector(nameOrSelector);
+    if (!field) return false;
+    field.value = value;
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+    field.dispatchEvent(new Event('change', { bubbles: true }));
+    return true;
+}
+
+function applyContractAiFields(fields) {
+    if (!fields) return false;
+    let applied = false;
+    const select = document.getElementById('contractCandidatureSelect');
+    if (select && !select.value && acceptedCandidatures.length) {
+        select.value = String(acceptedCandidatures[0].id);
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        applied = true;
+    }
+    Object.entries(fields).forEach(([name, value]) => {
+        applied = setFieldValue(name, value) || applied;
+    });
+    updateContractCandidaturePreview();
+    return applied;
+}
+
+function contractAiEsc(value) {
+    const d = document.createElement('div');
+    d.textContent = value || '';
+    return d.innerHTML;
+}
+
+function renderContractAiResult(result, stored, payload) {
+    const box = document.getElementById('contractAiResult');
+    if (!box || !result) return;
+    const title = result.titre_contrat || 'Generated contract';
+    const text = result.conditions_paiement || result.droits_utilisation || '';
+    const recommendation = payload && payload.recommendation ? payload.recommendation : {};
+    const selected = recommendation.candidature || null;
+    const message = payload && payload.message ? payload.message : '';
+    const eligible = payload ? payload.eligible !== false : true;
+    const newContractLink = 'index.php?action=create';
+
+    box.innerHTML = `
+        <div class="ia-result-title">${eligible ? '📋 Smart contract recommendation' : '💡 Contract recommendation'}</div>
+        ${message ? `<div class="contract-ai-recommendation">${contractAiEsc(message)}</div>` : ''}
+        ${selected ? `
+            <div class="contract-ai-recommendation">
+                <strong>Recommended candidature:</strong> ${contractAiEsc(selected.creatorName || ('Creator #' + selected.creatorId))}
+                <br><strong>Source:</strong> ${contractAiEsc(selected.originLabel || 'Source')} — ${contractAiEsc(selected.sourceTitle || ('#' + selected.sourceId))}
+                <br><strong>Amount:</strong> ${formatContractAmount(selected.amount)} €
+                ${selected.availableFrom ? `<br><strong>Available from:</strong> ${contractAiEsc(selected.availableFrom)}` : ''}
+            </div>
+        ` : ''}
+        <div style="margin-top:12px;">
+            <strong>${contractAiEsc(title)}</strong>
+            ${text ? `<p style="font-size:0.85rem;color:var(--text-secondary);margin-top:8px;">${contractAiEsc(text).replace(/\n/g, '<br>')}</p>` : ''}
+        </div>
+        ${stored ? `<div class="contract-ai-recommendation"><a href="${newContractLink}">Open New contract</a> to apply this draft automatically.</div>` : ''}
+        ${!eligible ? '<div class="contract-ai-recommendation">Accept a candidature first to let the AI prepare a ready-to-create contract.</div>' : ''}
+    `;
+    box.style.display = '';
+}
+
+function bindContractAiForm() {
+    const form = document.getElementById('contractAiForm');
+    if (!form) return;
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+        const button = document.getElementById('contractAiBtn') || form.querySelector('.btn-ia');
+        const loading = document.getElementById('iaLoading');
+        const message = document.getElementById('contractAiMessage');
+        const resultBox = document.getElementById('contractAiResult');
+
+        if (message) {
+            message.style.display = 'none';
+            message.textContent = '';
+        }
+        if (resultBox) resultBox.style.display = 'none';
+        if (loading) loading.classList.add('show');
+        if (button) button.disabled = true;
+
+        const requestUrl = form.getAttribute('action') || window.location.pathname;
+        fetch(requestUrl, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin'
+        })
+        .then(async response => {
+            const text = await response.text();
+            let payload = null;
+            try {
+                payload = JSON.parse(text);
+            } catch (error) {
+                throw new Error('The AI contract server returned HTML instead of JSON. Check the AI route or PHP errors.');
+            }
+            if (!response.ok || !payload || !payload.success) {
+                throw new Error(payload && payload.message ? payload.message : 'AI contract generation failed.');
+            }
+            return payload;
+        })
+        .then(payload => {
+            const fields = payload.fields || {};
+            const hasFields = Object.keys(fields).length > 0;
+            const applied = hasFields ? applyContractAiFields(fields) : false;
+            if (hasFields && !applied) {
+                sessionStorage.setItem('cre8_contract_ai_fields', JSON.stringify(fields));
+            }
+            renderContractAiResult(payload.result || {}, hasFields && !applied, payload);
+        })
+        .catch(error => {
+            if (message) {
+                message.textContent = 'Error: ' + (error.message || 'AI contract generation failed.');
+                message.style.display = '';
+            }
+        })
+        .finally(() => {
+            if (loading) loading.classList.remove('show');
+            if (button) button.disabled = false;
+        });
+    });
+}
+
+function applyPendingContractAiFields() {
+    const raw = sessionStorage.getItem('cre8_contract_ai_fields');
+    if (!raw) return;
+    try {
+        if (applyContractAiFields(JSON.parse(raw))) {
+            sessionStorage.removeItem('cre8_contract_ai_fields');
+        }
+    } catch (e) {
+        sessionStorage.removeItem('cre8_contract_ai_fields');
+    }
+}
+
 // ===== FEATURE 3 & 4: PAGINATION, FILTERING, SORTING =====
 const grid = document.getElementById('contractsGrid');
 const cards = grid ? Array.from(grid.getElementsByClassName('contract-card')) : [];
@@ -830,6 +1288,12 @@ document.addEventListener('DOMContentLoaded', () => {
         candidatureSelect.addEventListener('change', updateContractCandidaturePreview);
         updateContractCandidaturePreview();
     }
+    const aiCandidatureSelect = document.getElementById('contractAiCandidatureSelect');
+    if (aiCandidatureSelect) {
+        aiCandidatureSelect.addEventListener('change', updateContractAiCandidaturePreview);
+    }
+    bindContractAiForm();
+    applyPendingContractAiFields();
     const startInput = document.getElementById('contractStartDate');
     const endInput = document.getElementById('contractEndDate');
     if (startInput && endInput) {
@@ -844,6 +1308,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
+<?php require __DIR__ . '/../layout/footer.php'; ?>
 <script src="../layout/front-header.js"></script>
 </body>
 </html>

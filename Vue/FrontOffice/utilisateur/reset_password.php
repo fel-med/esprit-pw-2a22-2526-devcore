@@ -192,6 +192,7 @@ document.querySelector("form").addEventListener("submit", function(e) {
     }
 });
 </script>
+<?php require __DIR__ . '/../layout/footer.php'; ?>
 </body>
 </html>
 

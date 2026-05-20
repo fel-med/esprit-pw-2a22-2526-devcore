@@ -654,6 +654,7 @@ $totalMessages = array_sum(array_column($forums, 'nb_messages'));
         </div>
     </main>
 
+    <?php require __DIR__ . '/../layout/footer.php'; ?>
     <script src="<?= $BASE ?>/Vue/FrontOffice/layout/front-header.js"></script>
     <script>
         // ── Translations ─────────────────────────────────────────────────────

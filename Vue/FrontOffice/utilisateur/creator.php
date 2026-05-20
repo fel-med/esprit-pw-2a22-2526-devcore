@@ -446,7 +446,7 @@ $welcomeText = $isBrand
 </div>
 
 <!-- ══ FOOTER ══ -->
-<footer>Copyright © Cre8connect 2026</footer>
+<?php require __DIR__ . '/../layout/footer.php'; ?>
 
 <script src="../layout/front-header.js"></script>
 <script>

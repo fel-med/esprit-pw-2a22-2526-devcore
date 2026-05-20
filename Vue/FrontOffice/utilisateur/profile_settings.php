@@ -719,6 +719,7 @@ if (document.readyState === 'loading') {
     cre8RegisterAccountTranslations();
 }
 </script>
+<?php require __DIR__ . '/../layout/footer.php'; ?>
 <script src="../layout/front-header.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/face-api.js/dist/face-api.min.js"></script>
 <script>

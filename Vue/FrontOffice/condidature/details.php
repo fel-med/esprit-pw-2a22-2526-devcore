@@ -1850,6 +1850,7 @@ require __DIR__ . '/cre8pilot_widget.php';
             window.addEventListener('cre8:languagechange', () => applyCandidatureTranslations());
         })();
     </script>
+    <?php require __DIR__ . '/../layout/footer.php'; ?>
     <script src="../layout/front-header.js"></script>
 </body>
 </html>

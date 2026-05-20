@@ -1153,6 +1153,7 @@ if (!isset($evenements)) {
     <div id="toast" style="position: fixed; bottom: 28px; right: 28px; background: #0ea370; color: white; padding: 12px 24px; border-radius: 30px; display: none; z-index: 1070;"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <?php require __DIR__ . '/../layout/footer.php'; ?>
     <script src="<?= htmlspecialchars(event_front_url('Vue/FrontOffice/layout/front-header.js')) ?>"></script>
     <script>
         let currentEventId = null;

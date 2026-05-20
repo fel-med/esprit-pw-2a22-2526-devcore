@@ -1131,6 +1131,7 @@
                 window.addEventListener('candidatureListUpdated', () => window.setTimeout(applyCandidatureTranslations, 0));
             })();
         </script>
+        <?php require __DIR__ . '/../layout/footer.php'; ?>
         <script src="../layout/front-header.js"></script>
     </body>
-    </html>
+</html>

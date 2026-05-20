@@ -342,5 +342,6 @@ function cre8_notif_page_filter_url(string $status, string $category): string
     });
 })();
 </script>
+<?php require __DIR__ . '/../layout/footer.php'; ?>
 </body>
 </html>

@@ -625,6 +625,7 @@ if (params.get('success') === '1') {
     setTimeout(() => toast.classList.remove('show'), 3500);
 }
 </script>
+<?php require __DIR__ . '/../layout/footer.php'; ?>
 <script src="../layout/front-header.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/front-header.js')); ?>"></script>
 </body>
 </html>

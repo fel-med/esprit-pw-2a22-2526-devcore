@@ -74,5 +74,6 @@ if (isset($_POST['reset'])) {
     window.addEventListener('cre8:languagechange', registerTranslations);
 })();
 </script>
+<?php require __DIR__ . '/../layout/footer.php'; ?>
 </body>
 </html>

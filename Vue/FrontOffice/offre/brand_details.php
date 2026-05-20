@@ -479,6 +479,7 @@ require __DIR__ . '/../condidature/cre8pilot_widget.php';
             window.addEventListener('cre8:languagechange', () => applyOfferTranslations());
         })();
     </script>
+    <?php require __DIR__ . '/../layout/footer.php'; ?>
     <script src="../layout/front-header.js"></script>
 </body>
 </html>
