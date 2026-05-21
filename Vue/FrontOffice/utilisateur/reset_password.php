@@ -8,6 +8,13 @@ $userC = new UtilisateurC();
 
 if (isset($_POST['update'])) {
     $message = $userC->resetPassword($_POST['password'], $_POST['token']);
+    if (stripos($message, 'mis') !== false) {
+        $loginUrl = function_exists('cc_app_url')
+            ? cc_app_url('Vue/FrontOffice/utilisateur/login.php?reset=success')
+            : 'login.php?reset=success';
+        header('Location: ' . $loginUrl);
+        exit;
+    }
 }
 ?>
 
@@ -23,9 +30,24 @@ if (isset($_POST['update'])) {
 .progress-bar {
     transition: width 0.4s ease;
 }
-.public-lang-switch { position:fixed; top:16px; right:16px; display:inline-flex; gap:.25rem; border:1px solid rgba(78,84,200,.22); border-radius:999px; padding:.2rem; background:#fff; z-index:10; }
+.auth-shell { min-height: 100vh; }
+.auth-topbar { border-bottom: 1px solid rgba(0, 0, 0, 0.06); }
+.auth-main { padding: 2rem 0; }
+.auth-home-link { border-radius: 999px; font-weight: 700; }
+.auth-brand-logo {
+    width: 235px;
+    height: auto;
+    max-height: 72px;
+    object-fit: contain;
+    display: block;
+}
+.public-lang-switch { display:inline-flex; gap:.25rem; border:1px solid rgba(78,84,200,.22); border-radius:999px; padding:.2rem; background:#fff; }
 .public-lang-switch button { border:0; border-radius:999px; background:transparent; color:#5f6674; font-weight:800; font-size:.72rem; padding:.25rem .55rem; }
 .public-lang-switch button.is-active { background:#4e54c8; color:#fff; }
+@media (max-width: 575.98px) {
+    .auth-brand-logo { width: 175px; max-height: 56px; }
+    .auth-main { padding: 1.25rem 0; }
+}
 </style>
 <link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
@@ -33,12 +55,21 @@ if (isset($_POST['update'])) {
 <link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
 </head>
 
-<body class="d-flex align-items-center justify-content-center bg-light" style="min-height:100vh;">
-<div class="public-lang-switch" aria-label="Language">
-    <button type="button" data-lang-choice="en">EN</button>
-    <button type="button" data-lang-choice="fr">FR</button>
-</div>
+<body class="d-flex flex-column h-100 bg-light auth-shell">
+<header class="auth-topbar bg-white">
+    <div class="container-fluid px-3 px-lg-4 d-flex align-items-center justify-content-between gap-3">
+        <a class="navbar-brand m-0 d-inline-flex align-items-center" href="index.php"><img src="../../public/images/logoweb.png" alt="Cre8Connect" class="auth-brand-logo"></a>
+        <div class="d-flex align-items-center gap-2">
+            <div class="public-lang-switch" aria-label="Language">
+                <button type="button" data-lang-choice="en">EN</button>
+                <button type="button" data-lang-choice="fr">FR</button>
+            </div>
+            <a class="btn btn-outline-dark btn-sm auth-home-link px-3" href="index.php">&larr; <span data-i18n="auth.home">Home</span></a>
+        </div>
+    </div>
+</header>
 
+<main class="flex-grow-1 d-flex align-items-center justify-content-center auth-main">
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-lg-6">
@@ -49,18 +80,12 @@ if (isset($_POST['update'])) {
 
                 <form method="POST">
 
-                    <input type="hidden" name="token" value="<?= $token ?>">
+                    <input type="hidden" name="token" value="<?= htmlspecialchars($token, ENT_QUOTES, 'UTF-8') ?>">
 
                     <div class="mb-3">
-                        <div class="input-group mb-3">
     <input type="password" name="password" id="password"
            class="form-control"
            placeholder="New password" data-i18n-placeholder="auth.newPassword" required>
-
-    <button type="button" class="btn btn-outline-secondary" id="togglePassword">
-        👁️
-    </button>
-</div>
 <!-- Barre -->
     <div class="progress mt-2" style="height: 6px;">
         <div id="strengthBar" class="progress-bar" style="width: 0%"></div>
@@ -78,8 +103,8 @@ if (isset($_POST['update'])) {
                 </form>
 
                 <?php if (!empty($message)) { ?>
-                    <div class="alert alert-success mt-3">
-                        <?= $message ?>
+                    <div class="alert alert-danger mt-3">
+                        <?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?>
                     </div>
                 <?php } ?>
 
@@ -88,6 +113,7 @@ if (isset($_POST['update'])) {
         </div>
     </div>
 </div>
+</main>
 <script src="../layout/front-translate.js"></script>
 <script>
 const cre8ResetTranslations = {
@@ -95,6 +121,7 @@ const cre8ResetTranslations = {
         'auth.resetTitle': 'New password',
         'auth.newPassword': 'New password',
         'auth.updatePassword': 'Update password',
+        'auth.home': 'Home',
         'auth.weak': 'Weak',
         'auth.medium': 'Medium',
         'auth.good': 'Good',
@@ -105,6 +132,7 @@ const cre8ResetTranslations = {
         'auth.resetTitle': 'Nouveau mot de passe',
         'auth.newPassword': 'Nouveau mot de passe',
         'auth.updatePassword': 'Mettre a jour',
+        'auth.home': 'Accueil',
         'auth.weak': 'Faible',
         'auth.medium': 'Moyen',
         'auth.good': 'Bon',
@@ -119,34 +147,11 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 window.addEventListener('cre8:languagechange', cre8RegisterResetTranslations);
 </script>
 <script>
-const passwordInput = document.getElementById("password");
-const toggleBtn = document.getElementById("togglePassword");
-
-toggleBtn.addEventListener("click", function () {
-    const type = passwordInput.getAttribute("type") === "password" ? "text" : "password";
-    passwordInput.setAttribute("type", type);
-
-    // changer icône
-    this.textContent = type === "password" ? "👁️" : "🙈";
-});
-</script>
-<script>
 const password = document.getElementById("password");
 const bar = document.getElementById("strengthBar");
 const text = document.getElementById("strengthText");
-const toggleBtn = document.getElementById("togglePassword");
 
-// 👁️ show / hide
-toggleBtn.addEventListener("click", function () {
-    const type = password.type === "password" ? "text" : "password";
-    password.type = type;
-
-    this.innerHTML = type === "password"
-        ? '<i class="bi bi-eye"></i>'
-        : '<i class="bi bi-eye-slash"></i>';
-});
-
-// 🔐 force du mot de passe
+// password strength
 password.addEventListener("input", function () {
     const val = password.value;
     let score = 0;

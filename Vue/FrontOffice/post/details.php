@@ -13,32 +13,63 @@ $commentC = new CommentC();
 $idUser   = (int)$_SESSION['id'];
 $currentUserName = (string)($_SESSION['nom'] ?? $_SESSION['user']['nom'] ?? $_SESSION['utilisateur']['nom'] ?? 'User');
 
-if (!isset($_GET['id']) || empty($_GET['id'])) {
+if (empty($_GET['id']) && empty($_GET['idPost'])) {
+    http_response_code(404);
     die('Post ID is missing.');
 }
 
-$postId = $_GET['id'];
-$postC->incrementViews($postId);
+$postId = trim((string)($_GET['id'] ?? $_GET['idPost']));
+if ($postId === '' || strlen($postId) > 80 || !preg_match('/^[A-Za-z0-9_-]+$/', $postId)) {
+    http_response_code(404);
+    die('Invalid post ID.');
+}
+
 $post = $postC->showPost($postId);
 if (!$post) {
+    http_response_code(404);
     die('Post not found.');
 }
 
+$postId = (string)$post['id'];
+$postC->incrementViews($postId);
 $commentsTree = $commentC->getCommentsTreeByPost($postId);
 $commentCount = $commentC->countCommentsByPost($postId);
 
 $pageTitle   = $post['subject'];
 $currentPage = 'actuality';
+$frontActive = 'myspace';
+$backUrl = './index.php';
 
-require_once '../partials/header.php';
 ?>
-<link rel="stylesheet" href="../assets/comment-front.css">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <?php require_once __DIR__ . '/../layout/front-theme-bootstrap.php'; ?>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= htmlspecialchars($pageTitle) ?></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;700;800&family=Fraunces:wght@700;800&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link href="../assets/css/styles.css" rel="stylesheet" />
+    <link href="../layout/front-header.css" rel="stylesheet" />
+    <link href="../assets/post-front.css?v=3" rel="stylesheet" />
+    <link rel="stylesheet" href="../assets/comment-front.css">
+<link rel="icon" type="image/png" sizes="16x16" href="../../public/images/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../public/images/favicon-32.png">
+<link rel="shortcut icon" type="image/png" href="../../public/images/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../../public/images/apple-touch-icon.png">
+</head>
+<body class="d-flex flex-column min-vh-100 social-body">
+<main class="flex-shrink-0">
+<?php require_once __DIR__ . '/../layout/header.php'; ?>
 
 <section class="py-5">
     <div class="container px-4 px-lg-5">
 
         <div class="mb-4">
-            <a href="./index.php" class="btn social-nav-btn">
+            <a href="<?= htmlspecialchars($backUrl, ENT_QUOTES, 'UTF-8') ?>" class="btn social-nav-btn">
                 <i class="bi bi-arrow-left"></i> <span data-i18n="post.backActuality">Back to Actuality</span>
             </a>
         </div>
@@ -125,9 +156,11 @@ require_once '../partials/header.php';
     </div>
 </section>
 
-<script src="../layout/front-translate.js"></script>
 <script>
 (function () {
+    var detailsI18nObserver = null;
+    var detailsI18nApplying = false;
+
     var translations = {
         en: {
             'post.backActuality': 'Back to Actuality',
@@ -186,27 +219,51 @@ require_once '../partials/header.php';
             'post.voiceRecording': 'Ecoute en cours... parlez maintenant'
         }
     };
-    function applyExtraLabels() {
-        if (typeof window.cre8ApplyI18n === 'function') {
-            window.cre8ApplyI18n(translations);
+    function reconnectDetailsObserver() {
+        if (detailsI18nObserver && document.body) {
+            detailsI18nObserver.observe(document.body, { childList: true, subtree: true });
         }
-        Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-idle-label]'), function (el) {
-            var lang = typeof window.cre8FrontReadLang === 'function' ? window.cre8FrontReadLang() : 'en';
-            var value = translations[lang] && translations[lang][el.getAttribute('data-i18n-idle-label')];
-            if (value) el.setAttribute('data-idle-label', value);
-        });
-        Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-recording-label]'), function (el) {
-            var lang = typeof window.cre8FrontReadLang === 'function' ? window.cre8FrontReadLang() : 'en';
-            var value = translations[lang] && translations[lang][el.getAttribute('data-i18n-recording-label')];
-            if (value) el.setAttribute('data-recording-label', value);
-        });
     }
+
+    function applyExtraLabels() {
+        if (detailsI18nApplying) {
+            return;
+        }
+        detailsI18nApplying = true;
+        if (detailsI18nObserver) {
+            detailsI18nObserver.disconnect();
+        }
+
+        try {
+            if (typeof window.cre8ApplyI18n === 'function') {
+                window.cre8ApplyI18n(translations);
+            }
+            Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-idle-label]'), function (el) {
+                var lang = typeof window.cre8FrontReadLang === 'function' ? window.cre8FrontReadLang() : 'en';
+                var value = translations[lang] && translations[lang][el.getAttribute('data-i18n-idle-label')];
+                if (value) el.setAttribute('data-idle-label', value);
+            });
+            Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-recording-label]'), function (el) {
+                var lang = typeof window.cre8FrontReadLang === 'function' ? window.cre8FrontReadLang() : 'en';
+                var value = translations[lang] && translations[lang][el.getAttribute('data-i18n-recording-label')];
+                if (value) el.setAttribute('data-recording-label', value);
+            });
+        } finally {
+            window.setTimeout(function () {
+                detailsI18nApplying = false;
+                reconnectDetailsObserver();
+            }, 0);
+        }
+    }
+
     function registerPostTranslations() {
         if (typeof window.cre8RegisterTranslations === 'function') {
             window.cre8RegisterTranslations(translations);
         }
+        if (!detailsI18nObserver && typeof MutationObserver !== 'undefined') {
+            detailsI18nObserver = new MutationObserver(applyExtraLabels);
+        }
         applyExtraLabels();
-        new MutationObserver(applyExtraLabels).observe(document.body, { childList: true, subtree: true });
     }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', registerPostTranslations);

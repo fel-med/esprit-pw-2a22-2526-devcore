@@ -207,8 +207,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['nom'])) {
                         }
                     }
 
-                    header("Location: login.php");
-                    exit();
+                    $loginResult = $userC->login($_POST['email'], $_POST['password']);
+                    if (is_string($loginResult) && $loginResult !== '') {
+                        $error = $loginResult;
+                    }
                 }
             }
         } else {
@@ -558,6 +560,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['nom'])) {
 
     <div class="mb-3">
         <input type="password" id="password" name="password" class="form-control" placeholder="Password" data-i18n-placeholder="auth.password">
+        <div class="progress mt-2" style="height: 6px;">
+            <div id="passwordStrengthBar" class="progress-bar" style="width: 0%"></div>
+        </div>
+        <small id="passwordStrengthText" class="text-muted d-block mt-1"></small>
         <small id="passwordError" class="text-danger"></small>
     </div>
 
@@ -695,6 +701,10 @@ const cre8AuthTranslations = {
         'auth.emailInvalid': 'Please enter a valid email address',
         'auth.passwordRequired': 'Password is required',
         'auth.passwordMin': 'Minimum 6 characters',
+        'auth.weak': 'Weak',
+        'auth.medium': 'Medium',
+        'auth.good': 'Good',
+        'auth.strong': 'Strong',
         'auth.roleRequired': 'Please select a role',
         'auth.fixErrors': 'Please correct the errors before continuing!',
         'auth.removeFaceScan': 'Remove face scan',
@@ -744,6 +754,10 @@ const cre8AuthTranslations = {
         'auth.emailInvalid': 'Veuillez entrer une adresse email valide',
         'auth.passwordRequired': 'Le mot de passe est requis',
         'auth.passwordMin': 'Minimum 6 caracteres',
+        'auth.weak': 'Faible',
+        'auth.medium': 'Moyen',
+        'auth.good': 'Bon',
+        'auth.strong': 'Fort',
         'auth.roleRequired': 'Veuillez selectionner un role',
         'auth.fixErrors': 'Veuillez corriger les erreurs avant de continuer !',
         'auth.removeFaceScan': 'Supprimer le scan visage',
@@ -762,7 +776,7 @@ function cre8AuthLang() { if (typeof cre8FrontReadLang === 'function') return cr
 function cre8AuthText(key) { const l = cre8AuthLang(); return (cre8AuthTranslations[l] && cre8AuthTranslations[l][key]) || cre8AuthTranslations.en[key] || key; }
 function cre8RegisterAuthTranslations() { if (typeof cre8RegisterTranslations === 'function') cre8RegisterTranslations(cre8AuthTranslations); document.title = cre8AuthLang() === 'fr' ? 'Cre8Connect - Inscription' : 'Cre8Connect - Register'; }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', cre8RegisterAuthTranslations); else cre8RegisterAuthTranslations();
-window.addEventListener('cre8:languagechange', function () { cre8RegisterAuthTranslations(); updateAboutRoleHint(); });
+window.addEventListener('cre8:languagechange', function () { cre8RegisterAuthTranslations(); updateAboutRoleHint(); if (typeof updatePasswordStrength === 'function') updatePasswordStrength(); });
         </script>
         <!-- Core theme JS-->
     
@@ -774,6 +788,8 @@ window.addEventListener('cre8:languagechange', function () { cre8RegisterAuthTra
 let nom = document.getElementById("nom");
 let email = document.getElementById("email");
 let password = document.getElementById("password");
+let passwordStrengthBar = document.getElementById("passwordStrengthBar");
+let passwordStrengthText = document.getElementById("passwordStrengthText");
 let roleInputs = document.querySelectorAll('input[name="role"]');
 
 
@@ -856,8 +872,46 @@ email.addEventListener("input", function () {
 });
 
 // ===== PASSWORD =====
+function updatePasswordStrength() {
+    if (!passwordStrengthBar || !passwordStrengthText) return;
+
+    const val = password.value;
+    let score = 0;
+
+    if (val.length >= 6) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+
+    if (val.length === 0) {
+        passwordStrengthBar.style.width = "0%";
+        passwordStrengthBar.className = "progress-bar";
+        passwordStrengthText.textContent = "";
+        return;
+    }
+
+    if (score <= 1) {
+        passwordStrengthBar.style.width = "25%";
+        passwordStrengthBar.className = "progress-bar bg-danger";
+        passwordStrengthText.textContent = cre8AuthText("auth.weak");
+    } else if (score === 2) {
+        passwordStrengthBar.style.width = "50%";
+        passwordStrengthBar.className = "progress-bar bg-warning";
+        passwordStrengthText.textContent = cre8AuthText("auth.medium");
+    } else if (score === 3) {
+        passwordStrengthBar.style.width = "75%";
+        passwordStrengthBar.className = "progress-bar bg-info";
+        passwordStrengthText.textContent = cre8AuthText("auth.good");
+    } else {
+        passwordStrengthBar.style.width = "100%";
+        passwordStrengthBar.className = "progress-bar bg-success";
+        passwordStrengthText.textContent = cre8AuthText("auth.strong");
+    }
+}
+
 password.addEventListener("input", function () {
     let error = document.getElementById("passwordError");
+    updatePasswordStrength();
 
     if (password.value.trim() === "") {
         error.textContent = cre8AuthText("auth.passwordRequired");
@@ -1172,4 +1226,3 @@ document.addEventListener("DOMContentLoaded", async () => {
 <!-- ✅ reCAPTCHA OK -->
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>    </body>
 </html>
-

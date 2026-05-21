@@ -8,6 +8,39 @@ use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\SMTP;   
 class UtilisateurC {
 
+    private function buildPasswordResetBaseUrl(): string
+    {
+        foreach (['APP_BASE_URL', 'APP_URL', 'BASE_URL', 'SITE_URL'] as $key) {
+            $configuredUrl = trim((string)($_ENV[$key] ?? ''));
+            if ($configuredUrl !== '') {
+                return rtrim($configuredUrl, '/');
+            }
+        }
+
+        $forwardedProto = strtolower(trim(explode(',', (string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''))[0]));
+        $scheme = $forwardedProto === 'https'
+            || (!empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off')
+            ? 'https'
+            : 'http';
+
+        $host = trim((string)($_SERVER['HTTP_HOST'] ?? 'localhost'));
+        $scriptName = str_replace('\\', '/', (string)($_SERVER['SCRIPT_NAME'] ?? ''));
+        $projectBasePath = '';
+
+        $frontUserMarker = '/Vue/FrontOffice/utilisateur/';
+        $markerPosition = stripos($scriptName, $frontUserMarker);
+        if ($markerPosition !== false) {
+            $projectBasePath = substr($scriptName, 0, $markerPosition);
+        } else {
+            $vueMarkerPosition = stripos($scriptName, '/Vue/');
+            if ($vueMarkerPosition !== false) {
+                $projectBasePath = substr($scriptName, 0, $vueMarkerPosition);
+            }
+        }
+
+        return rtrim($scheme . '://' . $host . $projectBasePath, '/');
+    }
+
     public function ajouterUser($user) {
         $db = config::getConnexion();
 
@@ -248,7 +281,8 @@ public function sendResetLink($email) {
     $sql = "UPDATE utilisateur SET reset_token=?, reset_expire=? WHERE email=?";
     $db->prepare($sql)->execute([$token, $expire, $email]);
 
-   $link = "http://localhost/crea8connect/Esprit-PW-2A22-2526-Devcore/Vue/FrontOffice/utilisateur/reset_password.php?token=" . $token;
+    $baseUrl = $this->buildPasswordResetBaseUrl();
+    $link = rtrim($baseUrl, '/') . '/Vue/FrontOffice/utilisateur/reset_password.php?token=' . urlencode($token);
 
     $mail = new PHPMailer(true);
 

@@ -155,9 +155,16 @@ if (!function_exists('render_edit_comment_form')) {
 }
 
 if (!function_exists('render_comment_tree_node')) {
-    function render_comment_tree_node(array $comment, string $postId, string $context, int $currentUserId = 0, int $depth = 0): void
+    function render_comment_tree_node(array $comment, string $postId, string $context, int $currentUserId = 0, int $depth = 0, array $renderPath = []): void
     {
         $commentId = (string)($comment['id'] ?? '');
+        if ($depth > 20 || ($commentId !== '' && isset($renderPath[$commentId]))) {
+            return;
+        }
+        if ($commentId !== '') {
+            $renderPath[$commentId] = true;
+        }
+
         $margin = min($depth * 24, 96);
         $owned = (int)($comment['idUser'] ?? 0) === $currentUserId;
         ?>
@@ -209,7 +216,7 @@ if (!function_exists('render_comment_tree_node')) {
 
                 <?php if (!empty($comment['replies'])) : ?>
                     <?php foreach ($comment['replies'] as $reply) : ?>
-                        <?php render_comment_tree_node($reply, $postId, $context, $currentUserId, $depth + 1); ?>
+                        <?php render_comment_tree_node($reply, $postId, $context, $currentUserId, $depth + 1, $renderPath); ?>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </div>

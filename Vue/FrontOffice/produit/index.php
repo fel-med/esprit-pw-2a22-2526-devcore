@@ -1860,7 +1860,7 @@ $frontActive = 'campaigns';
                                 <span class="lp-cat" id="lpCat"></span>
                             </div>
                             <div class="lp-name" id="lpName" data-i18n="lp_name_placeholder">Product name</div>
-                            <div class="lp-price-badge" id="lpPrice">0.00 €</div>
+                            <div class="lp-price-badge" id="lpPrice" style="display:none;"></div>
                             <div class="lp-desc" id="lpDesc" data-i18n="lp_desc_placeholder">Description will appear here…</div>
                             <div class="lp-tags" id="lpTags"></div>
                         </div>
@@ -2725,11 +2725,16 @@ function updateLivePreview() {
     const nom  = document.getElementById('nom').value.trim()         || (dict.lp_name_placeholder || 'Product name');
     const desc = document.getElementById('description').value.trim() || (dict.lp_desc_placeholder || 'Description will appear here…');
     const raw  = document.getElementById('prix').value.replace(',', '.');
-    const prix = parseFloat(raw) || 0;
+    const hasPrice = raw.trim() !== '' && !Number.isNaN(parseFloat(raw));
+    const prix = hasPrice ? parseFloat(raw) : 0;
     const cat  = document.getElementById('categorie').value;
     document.getElementById('lpName').textContent  = nom;
     document.getElementById('lpDesc').textContent  = desc;
-    document.getElementById('lpPrice').textContent = prix.toFixed(2) + ' €';
+    const lpPrice = document.getElementById('lpPrice');
+    if (lpPrice) {
+        lpPrice.textContent = hasPrice ? prix.toFixed(2) + ' \u20ac' : '';
+        lpPrice.style.display = hasPrice ? '' : 'none';
+    }
     const lpCat = document.getElementById('lpCat');
     if (lpCat) lpCat.textContent = cat || '';
     const tagsEl = document.getElementById('lpTags');

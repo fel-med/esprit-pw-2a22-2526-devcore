@@ -6,6 +6,9 @@ require_once __DIR__ . '/../config_stt.php';
 
 class CommentC
 {
+    private const MAX_TREE_DEPTH = 20;
+    private const MAX_TREE_NODES = 500;
+
     private PDO $db;
 
     public function __construct()
@@ -205,6 +208,7 @@ class CommentC
                 FROM `comment` c
                 LEFT JOIN utilisateur u ON u.id = c.idUser
                 WHERE c.idPost = :postId
+                  AND (c.idComment IS NULL OR c.idComment = '')
                 ORDER BY c.id ASC";
 
         $query = $this->db->prepare($sql);
@@ -229,18 +233,44 @@ class CommentC
         return array_map([$this, 'hydrateLegacyShape'], $rows);
     }
 
-    private function buildTree(array $comments): array
+    private function buildTree(array $comments, array &$visited = [], int $depth = 0, int &$nodeCount = 0): array
     {
-        foreach ($comments as &$comment) {
-            $comment['replies'] = $this->buildTree($this->listRepliesByComment($comment['id']));
+        if ($depth >= self::MAX_TREE_DEPTH || $nodeCount >= self::MAX_TREE_NODES) {
+            return [];
         }
-        unset($comment);
-        return $comments;
+
+        $tree = [];
+        foreach ($comments as $comment) {
+            $commentId = (string)($comment['id'] ?? '');
+            if ($commentId === '' || isset($visited[$commentId])) {
+                continue;
+            }
+
+            $visited[$commentId] = true;
+            $nodeCount++;
+
+            $comment['replies'] = $this->buildTree(
+                $this->listRepliesByComment($commentId),
+                $visited,
+                $depth + 1,
+                $nodeCount
+            );
+            $tree[] = $comment;
+
+            if ($nodeCount >= self::MAX_TREE_NODES) {
+                break;
+            }
+        }
+
+        return $tree;
     }
 
     public function getCommentsTreeByPost(string $postId): array
     {
-        return $this->buildTree($this->listCommentsByPost($postId));
+        $visited = [];
+        $nodeCount = 0;
+
+        return $this->buildTree($this->listCommentsByPost($postId), $visited, 0, $nodeCount);
     }
 
     private function flattenTree(array $tree, array &$flat): void
