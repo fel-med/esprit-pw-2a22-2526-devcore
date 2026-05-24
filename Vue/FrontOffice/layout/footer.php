@@ -6,6 +6,8 @@ $cre8FrontFooterPos = strpos($cre8FrontFooterPath, $cre8FrontFooterMarker);
 
 if ($cre8FrontFooterPos !== false) {
     $cre8FrontFooterBase = substr($cre8FrontFooterPath, 0, $cre8FrontFooterPos) . '/Vue/FrontOffice';
+} elseif (($cre8FrontFooterControllerPos = strpos($cre8FrontFooterPath, '/Controleur/')) !== false) {
+    $cre8FrontFooterBase = substr($cre8FrontFooterPath, 0, $cre8FrontFooterControllerPos) . '/Vue/FrontOffice';
 }
 
 $cre8FrontFooterCss = $cre8FrontFooterBase !== ''

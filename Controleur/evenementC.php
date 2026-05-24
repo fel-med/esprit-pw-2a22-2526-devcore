@@ -3,6 +3,7 @@ session_start();
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../Modele/evenement.php';
 require_once __DIR__ . '/notificationC.php';
+require_once __DIR__ . '/session_helper.php';
 
 // ── Base URL helper ──────────────────────────────────────────────────────────
 // Detects the project sub-path dynamically so no URL is ever hardcoded.
@@ -33,6 +34,10 @@ class EvenementControleur {
         if (isset($_SESSION['user_id'])) return (int)$_SESSION['user_id'];
         if (isset($_SESSION['utilisateur']['id'])) return (int)$_SESSION['utilisateur']['id'];
         return 0;
+    }
+
+    private function currentUserRole(): string {
+        return cc_current_user_role();
     }
 
     private function generateTodayEventNotificationsForUser(int $userId): void
@@ -260,6 +265,9 @@ class EvenementControleur {
         $userId = $this->currentUserId();
         if ($userId <= 0) {
             return ['success' => false, 'message' => 'Please log in to register for this event.'];
+        }
+        if (cc_is_backoffice_role($this->currentUserRole())) {
+            return ['success' => false, 'message' => 'Admins manage events from BackOffice.'];
         }
 
         try {

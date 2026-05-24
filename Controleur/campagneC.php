@@ -81,6 +81,33 @@ class CampagneC
         return $db->query($sql)->fetchAll();
     }
 
+    public function afficherCampagnesCreateur(bool $includeOutdated = false): array
+    {
+        $where = "WHERE c.statut <> 'brouillon'";
+
+        if (!$includeOutdated) {
+            $where .= " AND c.statut = 'active'
+                        AND COALESCE(c.estArchive, 0) = 0
+                        AND (c.dateFin IS NULL OR c.dateFin = '0000-00-00' OR c.dateFin >= CURDATE())";
+        }
+
+        $sql = "SELECT c.*, u.nom AS nomMarque
+                FROM campagne c
+                LEFT JOIN utilisateur u ON u.id = c.idMarque
+                $where
+                ORDER BY
+                    CASE
+                        WHEN c.statut = 'active'
+                         AND COALESCE(c.estArchive, 0) = 0
+                         AND (c.dateFin IS NULL OR c.dateFin = '0000-00-00' OR c.dateFin >= CURDATE())
+                        THEN 0
+                        ELSE 1
+                    END,
+                    c.dateDebut DESC";
+
+        return config::getConnexion()->query($sql)->fetchAll();
+    }
+
     // ─── AFFICHER ARCHIVÉES ────────────────────────────────────────────────────
     public function afficherCampagnesArchives(?int $idMarque = null): array
     {

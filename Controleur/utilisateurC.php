@@ -2,11 +2,99 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../Modele/utilisateur.php';
 require_once __DIR__ . '/session_helper.php';
+require_once __DIR__ . '/adminAuditC.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\SMTP;   
 class UtilisateurC {
+
+    private function utilisateurColumns(PDO $db): array
+    {
+        static $columns = null;
+        if ($columns !== null) {
+            return $columns;
+        }
+
+        $columns = [];
+        try {
+            $stmt = $db->query("SHOW COLUMNS FROM utilisateur");
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $field = (string)($row['Field'] ?? '');
+                if ($field !== '') {
+                    $columns[$field] = true;
+                }
+            }
+        } catch (Throwable $e) {
+            error_log('Utilisateur column inspection failed: ' . $e->getMessage());
+        }
+
+        return $columns;
+    }
+
+    private function utilisateurHasColumn(PDO $db, string $column): bool
+    {
+        $columns = $this->utilisateurColumns($db);
+        return isset($columns[$column]);
+    }
+
+    private function userSelectColumns(PDO $db): string
+    {
+        $columns = [
+            'id',
+            'nom',
+            'email',
+            'role',
+            'statut',
+            'suspended_by',
+            'suspended_by_role',
+            'suspended_at',
+            'suspension_reason',
+        ];
+
+        foreach (['deleted_at', 'deleted_by', 'deleted_by_role', 'delete_reason', 'restored_at', 'restored_by', 'restored_by_role'] as $column) {
+            if ($this->utilisateurHasColumn($db, $column)) {
+                $columns[] = $column;
+            }
+        }
+
+        return implode(', ', $columns);
+    }
+
+    private function activeUserFilter(PDO $db): string
+    {
+        return $this->utilisateurHasColumn($db, 'deleted_at') ? ' AND deleted_at IS NULL' : '';
+    }
+
+    public function userSoftDeleteColumnsReady(): bool
+    {
+        $db = config::getConnexion();
+        foreach (['deleted_at', 'deleted_by', 'deleted_by_role', 'delete_reason', 'restored_at', 'restored_by', 'restored_by_role'] as $column) {
+            if (!$this->utilisateurHasColumn($db, $column)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private function resolveActorId($actorId): int
+    {
+        if (is_numeric($actorId) && (int)$actorId > 0) {
+            return (int)$actorId;
+        }
+
+        return function_exists('cc_current_user_id') ? (int)cc_current_user_id() : 0;
+    }
+
+    private function resolveActorRole($actorRole): string
+    {
+        $role = trim((string)$actorRole);
+        if ($role !== '') {
+            return function_exists('cc_normalize_role') ? cc_normalize_role($role) : strtolower($role);
+        }
+
+        return function_exists('cc_current_user_role') ? cc_current_user_role() : '';
+    }
 
     private function buildPasswordResetBaseUrl(): string
     {
@@ -85,10 +173,11 @@ public function afficherAdminAccounts(array $roles) {
     }
 
     $placeholders = implode(',', array_fill(0, count($roles), '?'));
+    $select = $this->userSelectColumns($db);
     $stmt = $db->prepare("
-        SELECT id, nom, email, role, statut, suspended_by, suspended_by_role, suspended_at, suspension_reason
+        SELECT $select
         FROM utilisateur
-        WHERE role IN ($placeholders)
+        WHERE role IN ($placeholders)" . $this->activeUserFilter($db) . "
         ORDER BY role DESC, id DESC
     ");
     $stmt->execute($roles);
@@ -98,8 +187,9 @@ public function afficherAdminAccounts(array $roles) {
 
 public function getUserById($id) {
     $db = config::getConnexion();
+    $select = $this->userSelectColumns($db);
     $stmt = $db->prepare("
-        SELECT id, nom, email, role, statut, suspended_by, suspended_by_role, suspended_at, suspension_reason
+        SELECT $select
         FROM utilisateur
         WHERE id = ?
     ");
@@ -110,8 +200,9 @@ public function getUserById($id) {
 
 public function getUserByEmail($email) {
     $db = config::getConnexion();
+    $select = $this->userSelectColumns($db);
     $stmt = $db->prepare("
-        SELECT id, nom, email, role, statut, suspended_by, suspended_by_role, suspended_at, suspension_reason
+        SELECT $select
         FROM utilisateur
         WHERE email = ?
         LIMIT 1
@@ -119,6 +210,23 @@ public function getUserByEmail($email) {
     $stmt->execute([trim((string)$email)]);
 
     return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+public function getDeletedUsers(): array {
+    $db = config::getConnexion();
+    if (!$this->userSoftDeleteColumnsReady()) {
+        return [];
+    }
+
+    $select = $this->userSelectColumns($db);
+    $stmt = $db->query("
+        SELECT $select
+        FROM utilisateur
+        WHERE deleted_at IS NOT NULL
+        ORDER BY deleted_at DESC, id DESC
+    ");
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 public function ajouterAdminAccount($nom, $email, $password, $role) {
@@ -183,15 +291,150 @@ public function reactivateUserAndClearSuspension($targetId) {
     $stmt->execute([(int)$targetId]);
 }
 
-public function deleteUserById($id) {
+public function softDeleteUserById($id, $actorId = null, $actorRole = null, $reason = null): array
+{
     $db = config::getConnexion();
-    $stmt = $db->prepare("DELETE FROM utilisateur WHERE id = ?");
-    $stmt->execute([(int)$id]);
+    if (!$this->userSoftDeleteColumnsReady()) {
+        return ['success' => false, 'message' => 'Soft-delete columns are missing. Run the required SQL first.'];
+    }
+
+    $targetId = (int)$id;
+    $actorId = $this->resolveActorId($actorId);
+    $actorRole = $this->resolveActorRole($actorRole);
+    $reason = trim((string)($reason ?? 'Deleted from BackOffice user management'));
+
+    if ($targetId <= 0 || $actorId <= 0 || $actorRole === '') {
+        return ['success' => false, 'message' => 'Missing actor or target user.'];
+    }
+
+    $before = $this->getUserById($targetId);
+    if (!$before) {
+        return ['success' => false, 'message' => 'Target account was not found.'];
+    }
+    if (!empty($before['deleted_at'])) {
+        return ['success' => false, 'message' => 'Target account is already deleted.'];
+    }
+
+    $stmt = $db->prepare("
+        UPDATE utilisateur
+        SET deleted_at = NOW(),
+            deleted_by = :deleted_by,
+            deleted_by_role = :deleted_by_role,
+            delete_reason = :delete_reason
+        WHERE id = :id
+          AND deleted_at IS NULL
+    ");
+    $ok = $stmt->execute([
+        ':deleted_by' => $actorId,
+        ':deleted_by_role' => $actorRole,
+        ':delete_reason' => $reason !== '' ? $reason : null,
+        ':id' => $targetId,
+    ]);
+
+    if (!$ok || $stmt->rowCount() < 1) {
+        return ['success' => false, 'message' => 'Unable to delete this account.'];
+    }
+
+    $after = $this->getUserById($targetId);
+    cc_log_admin_entity_action($db, $actorId, $actorRole, 'soft_delete_user', 'utilisateur', $targetId, $before, $after, $reason, 1, 'available');
+
+    return ['success' => true, 'message' => 'Account deleted successfully.', 'before' => $before, 'after' => $after];
+}
+
+public function restoreDeletedUserById($id, $actorId = null, $actorRole = null, $reason = null): array
+{
+    $db = config::getConnexion();
+    if (!$this->userSoftDeleteColumnsReady()) {
+        return ['success' => false, 'message' => 'Soft-delete columns are missing. Run the required SQL first.'];
+    }
+
+    $targetId = (int)$id;
+    $actorId = $this->resolveActorId($actorId);
+    $actorRole = $this->resolveActorRole($actorRole);
+    $reason = trim((string)($reason ?? 'Restored by Hyper Admin'));
+
+    if ($targetId <= 0 || $actorId <= 0 || $actorRole === '') {
+        return ['success' => false, 'message' => 'Missing actor or target user.'];
+    }
+
+    $before = $this->getUserById($targetId);
+    if (!$before || empty($before['deleted_at'])) {
+        return ['success' => false, 'message' => 'Deleted account was not found.'];
+    }
+
+    $stmt = $db->prepare("
+        UPDATE utilisateur
+        SET deleted_at = NULL,
+            deleted_by = NULL,
+            deleted_by_role = NULL,
+            delete_reason = NULL,
+            restored_at = NOW(),
+            restored_by = :restored_by,
+            restored_by_role = :restored_by_role
+        WHERE id = :id
+          AND deleted_at IS NOT NULL
+    ");
+    $ok = $stmt->execute([
+        ':restored_by' => $actorId,
+        ':restored_by_role' => $actorRole,
+        ':id' => $targetId,
+    ]);
+
+    if (!$ok || $stmt->rowCount() < 1) {
+        return ['success' => false, 'message' => 'Unable to restore this account.'];
+    }
+
+    $after = $this->getUserById($targetId);
+    cc_log_admin_entity_action($db, $actorId, $actorRole, 'restore_deleted_user', 'utilisateur', $targetId, $before, $after, $reason, 0, 'not_available');
+
+    return ['success' => true, 'message' => 'Account restored successfully.', 'before' => $before, 'after' => $after];
+}
+
+public function finalDeleteUserById($id, $actorId = null, $actorRole = null): array
+{
+    $db = config::getConnexion();
+    if (!$this->userSoftDeleteColumnsReady()) {
+        return ['success' => false, 'message' => 'Soft-delete columns are missing. Run the required SQL first.'];
+    }
+
+    $targetId = (int)$id;
+    $actorId = $this->resolveActorId($actorId);
+    $actorRole = $this->resolveActorRole($actorRole);
+    if ($targetId <= 0 || $actorId <= 0 || $actorRole === '') {
+        return ['success' => false, 'message' => 'Missing actor or target user.'];
+    }
+
+    $before = $this->getUserById($targetId);
+    if (!$before || empty($before['deleted_at'])) {
+        return ['success' => false, 'message' => 'Only soft-deleted accounts can be permanently deleted.'];
+    }
+
+    $ageStmt = $db->prepare("SELECT deleted_at <= (NOW() - INTERVAL 7 DAY) AS can_delete FROM utilisateur WHERE id = :id AND deleted_at IS NOT NULL");
+    $ageStmt->execute([':id' => $targetId]);
+    $canDelete = (int)($ageStmt->fetchColumn() ?: 0) === 1;
+    if (!$canDelete) {
+        return ['success' => false, 'message' => 'Final delete is available only after 7 days.'];
+    }
+
+    cc_log_admin_entity_action($db, $actorId, $actorRole, 'final_delete_user', 'utilisateur', $targetId, $before, null, 'Permanent delete after 7-day soft-delete window', 0, 'not_available');
+
+    $stmt = $db->prepare("DELETE FROM utilisateur WHERE id = :id AND deleted_at IS NOT NULL AND deleted_at <= (NOW() - INTERVAL 7 DAY)");
+    $ok = $stmt->execute([':id' => $targetId]);
+    if (!$ok || $stmt->rowCount() < 1) {
+        return ['success' => false, 'message' => 'Unable to permanently delete this account.'];
+    }
+
+    return ['success' => true, 'message' => 'Account permanently deleted.'];
+}
+
+public function deleteUserById($id) {
+    $result = $this->softDeleteUserById($id, null, null, 'Deleted from Admin Management');
+    return (bool)($result['success'] ?? false);
 }
 
     public function afficherUsers($search = '', $role = '', $page = 1, $limit = 10) {
     $db = config::getConnexion();
-    $sql = "SELECT * FROM utilisateur WHERE 1=1";
+    $sql = "SELECT * FROM utilisateur WHERE 1=1" . $this->activeUserFilter($db);
     
     if (!empty($search)) {
         $sql .= " AND (nom LIKE :search OR email LIKE :search)";
@@ -267,7 +510,7 @@ public function deleteUserById($id) {
 public function sendResetLink($email) {
     $db = config::getConnexion();
 
-    $query = $db->prepare("SELECT * FROM utilisateur WHERE email=?");
+    $query = $db->prepare("SELECT * FROM utilisateur WHERE email=?" . $this->activeUserFilter($db));
     $query->execute([$email]);
     $user = $query->fetch();
 
@@ -395,7 +638,7 @@ public function resetPassword($password, $token) {
     $db = config::getConnexion();
 
     $sql = "SELECT * FROM utilisateur 
-            WHERE reset_token=? AND reset_expire > NOW()";
+            WHERE reset_token=? AND reset_expire > NOW()" . $this->activeUserFilter($db);
     $query = $db->prepare($sql);
     $query->execute([$token]);
 
@@ -416,18 +659,19 @@ public function resetPassword($password, $token) {
         $db = config::getConnexion();
         
         // Total utilisateurs
-        $total = $db->query("SELECT COUNT(*) as total FROM utilisateur")->fetch()['total'];
+        $activeFilter = $this->activeUserFilter($db);
+        $total = $db->query("SELECT COUNT(*) as total FROM utilisateur WHERE 1=1$activeFilter")->fetch()['total'];
         
         // Par rôle
-        $admin = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE role IN ('admin', 'super_admin', 'hyper_admin')")->fetch()['count'];
-        $createur = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE role='createur'")->fetch()['count'];
-        $marque = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE role='marque'")->fetch()['count'];
+        $admin = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE role IN ('admin', 'super_admin', 'hyper_admin')$activeFilter")->fetch()['count'];
+        $createur = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE role='createur'$activeFilter")->fetch()['count'];
+        $marque = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE role='marque'$activeFilter")->fetch()['count'];
         
         // Par statut - Inclure les NULL (traiter comme 'actif' par défaut)
-        $actif = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE statut='actif' OR statut IS NULL")->fetch()['count'];
-        $inactif = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE statut='inactif'")->fetch()['count'];
-        $suspendu = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE statut='suspendu'")->fetch()['count'];
-        $en_attente = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE statut='en_attente'")->fetch()['count'];
+        $actif = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE (statut='actif' OR statut IS NULL)$activeFilter")->fetch()['count'];
+        $inactif = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE statut='inactif'$activeFilter")->fetch()['count'];
+        $suspendu = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE statut='suspendu'$activeFilter")->fetch()['count'];
+        $en_attente = $db->query("SELECT COUNT(*) as count FROM utilisateur WHERE statut='en_attente'$activeFilter")->fetch()['count'];
         
         return [
             'total' => $total,
@@ -556,8 +800,8 @@ public function resetPassword($password, $token) {
         }
     }
     public function supprimerUser($id) {
-        $db = config::getConnexion();
-        $db->prepare("DELETE FROM utilisateur WHERE id=?")->execute([$id]);
+        $result = $this->softDeleteUserById($id, null, null, 'Deleted from BackOffice user management');
+        return (bool)($result['success'] ?? false);
     }
 
 
@@ -613,6 +857,10 @@ public function login($email, $password) {
 
     if (!$user) {
         return "Utilisateur introuvable";
+    }
+
+    if (!empty($user['deleted_at'] ?? null)) {
+        return "Compte indisponible";
     }
 
     // TEST PASSWORD — handle both bcrypt hashes and legacy plain text

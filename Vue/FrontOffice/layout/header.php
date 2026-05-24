@@ -59,6 +59,8 @@ if ($notificationUserId > 0) {
 }
 
 $sessionRole = cre8_front_normalize_role($currentFrontUser['role'] ?? '');
+$isAdminVisitor = cre8_front_is_admin_visitor($currentFrontUser);
+$backOfficeUrl = $projectBase . '/Vue/BackOffice/dashboard/index.php';
 
 if ($notificationUserId > 0) {
     $condidatureControllerPath = __DIR__ . '/../../../Controleur/condidatureC.php';
@@ -69,7 +71,7 @@ if ($notificationUserId > 0) {
                 $deadlineNotificationC = new CondidatureC();
                 if ($sessionRole === 'marque' && method_exists($deadlineNotificationC, 'generateBrandDeadlineSoonNotifications')) {
                     $deadlineNotificationC->generateBrandDeadlineSoonNotifications($notificationUserId);
-                } elseif ($sessionRole !== 'marque' && method_exists($deadlineNotificationC, 'generateCreatorDeadlineSoonNotifications')) {
+                } elseif ($sessionRole === 'createur' && method_exists($deadlineNotificationC, 'generateCreatorDeadlineSoonNotifications')) {
                     $deadlineNotificationC->generateCreatorDeadlineSoonNotifications($notificationUserId);
                 }
             }
@@ -104,6 +106,15 @@ $forumUrl  = $projectBase . '/Controleur/forumC.php';
 $logoutUrl = $frontBaseUrl . '/utilisateur/logout.php';
 $profileSettingsUrl = $frontBaseUrl . '/utilisateur/profile_settings.php';
 $profileImageUrl = null;
+
+if ($isAdminVisitor) {
+    $homeUrl = $frontBaseUrl . '/utilisateur/creator.php';
+    $campaignsUrl = $frontBaseUrl . '/campagne/indexC.php';
+    $productsUrl = $frontBaseUrl . '/produit/indexC.php';
+    $offersUrl = $frontBaseUrl . '/offre/creator_list.php';
+    $candidaturesUrl = $frontBaseUrl . '/condidature/admin_readonly.php';
+    $contractsUrl = '';
+}
 
 if (!empty($currentFrontUser['id'])) {
     try {
@@ -161,8 +172,12 @@ if (!isset($frontActive)) {
                 <i class="bi bi-briefcase"></i> <span data-i18n="header.collaborations">Collaborations</span> <i class="bi bi-chevron-down front-nav-caret"></i>
             </button>
             <div class="front-nav-dropdown" role="menu">
-                <a href="<?php echo htmlspecialchars($offersUrl); ?>" role="menuitem" data-i18n="header.offers">Offers</a>
-                <a href="<?php echo htmlspecialchars($candidaturesUrl); ?>" role="menuitem" data-i18n="header.applications">Applications</a>
+                <?php if ($offersUrl !== ''): ?>
+                    <a href="<?php echo htmlspecialchars($offersUrl); ?>" role="menuitem" data-i18n="header.offers">Offers</a>
+                <?php endif; ?>
+                <?php if ($candidaturesUrl !== ''): ?>
+                    <a href="<?php echo htmlspecialchars($candidaturesUrl); ?>" role="menuitem" data-i18n="<?php echo $isAdminVisitor ? 'header.candidatures' : 'header.applications'; ?>"><?php echo $isAdminVisitor ? 'Candidatures' : 'Applications'; ?></a>
+                <?php endif; ?>
             </div>
         </li>
 
@@ -173,7 +188,9 @@ if (!isset($frontActive)) {
             <div class="front-nav-dropdown" role="menu">
                 <a href="<?php echo htmlspecialchars($campaignsUrl); ?>" role="menuitem" data-i18n="header.campaigns">Campaigns</a>
                 <a href="<?php echo htmlspecialchars($productsUrl); ?>" role="menuitem" data-i18n="header.products">Products</a>
-                <a href="<?php echo htmlspecialchars($contractsUrl); ?>" role="menuitem" data-i18n="header.contracts">Contracts</a>
+                <?php if ($contractsUrl !== ''): ?>
+                    <a href="<?php echo htmlspecialchars($contractsUrl); ?>" role="menuitem" data-i18n="header.contracts">Contracts</a>
+                <?php endif; ?>
             </div>
         </li>
 
@@ -232,10 +249,10 @@ if (!isset($frontActive)) {
         <i class="bi bi-chevron-down front-profile-caret" aria-hidden="true"></i>
 
         <div class="front-profile-dropdown" role="menu">
-            <a class="front-profile-menu-row front-profile-settings-row" href="<?php echo htmlspecialchars($profileSettingsUrl); ?>" role="menuitem">
+            <a class="front-profile-menu-row front-profile-settings-row" href="<?php echo htmlspecialchars($isAdminVisitor ? $backOfficeUrl : $profileSettingsUrl); ?>" role="menuitem">
                 <span class="front-profile-row-left">
-                    <span class="front-profile-row-icon"><i class="bi bi-person-gear"></i></span>
-                    <span class="front-profile-row-text" data-i18n="header.profileSettings">Profile settings</span>
+                    <span class="front-profile-row-icon"><i class="bi <?php echo $isAdminVisitor ? 'bi-arrow-left-circle' : 'bi-person-gear'; ?>"></i></span>
+                    <span class="front-profile-row-text" data-i18n="<?php echo $isAdminVisitor ? 'header.returnBackOffice' : 'header.profileSettings'; ?>"><?php echo $isAdminVisitor ? 'Return to BackOffice' : 'Profile settings'; ?></span>
                 </span>
             </a>
 
@@ -283,6 +300,7 @@ if (!isset($frontActive)) {
             'header.home': 'Home',
             'header.collaborations': 'Collaborations',
             'header.offers': 'Offers',
+            'header.candidatures': 'Candidatures',
             'header.applications': 'Applications',
             'header.campaigns': 'Campaigns',
             'header.products': 'Products',
@@ -295,6 +313,7 @@ if (!isset($frontActive)) {
             'header.forum': 'Forum',
             'header.complaints': 'Complaints',
             'header.profileSettings': 'Profile settings',
+            'header.returnBackOffice': 'Return to BackOffice',
             'header.language': 'Language',
             'header.appearance': 'Appearance',
             'header.themeLight': 'Light',
@@ -310,6 +329,7 @@ if (!isset($frontActive)) {
             'header.home': 'Accueil',
             'header.collaborations': 'Collaborations',
             'header.offers': 'Offres',
+            'header.candidatures': 'Candidatures',
             'header.applications': 'Candidatures',
             'header.campaigns': 'Campagnes',
             'header.products': 'Produits',
@@ -322,6 +342,7 @@ if (!isset($frontActive)) {
             'header.forum': 'Forum',
             'header.complaints': 'Réclamations',
             'header.profileSettings': 'Paramètres du profil',
+            'header.returnBackOffice': 'Retour au BackOffice',
             'header.language': 'Langue',
             'header.appearance': 'Apparence',
             'header.themeLight': 'Clair',

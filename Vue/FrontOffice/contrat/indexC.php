@@ -1,26 +1,26 @@
 ﻿<?php
-if (session_status() === PHP_SESSION_NONE) session_start();
+require_once __DIR__ . '/../layout/session_bridge.php';
+$currentUser = cre8_front_require_user();
 $frontActive = 'campaigns';
 
 // ── TEMPORAIRE : à supprimer après intégration de l'authentification ──
-$_SESSION['id']   = 4;  // Sophie Martin — créateur
-$_SESSION['role'] = 'createur';
 // ─────────────────────────────────────────────────────────────────────
 
 require_once __DIR__ . '/../../../Controleur/contratC.php';
 
 $controller = new ContratC();
 $action     = $_GET['action'] ?? 'index';
-$idCreateur = 4;
+$isCreator = cre8_front_normalize_role($currentUser['role'] ?? '') === 'createur';
+$idCreateur = $isCreator ? (int) $currentUser['id'] : 0;
 
-if ($action === 'signer') {
+if ($action === 'signer' && $isCreator) {
     $id = (int)($_GET['id'] ?? 0);
     $controller->updateStatut($id, 'signe');
     header('Location: indexC.php?action=index');
     exit;
 }
 
-$contrats = $controller->getByCreateur($idCreateur);
+$contrats = $isCreator ? $controller->getByCreateur($idCreateur) : [];
 ?>
 <!DOCTYPE html>
 <html lang="fr">

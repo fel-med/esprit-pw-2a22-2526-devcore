@@ -225,7 +225,7 @@ if (isset($_POST['reset_email'])) {
                 <video id="video" autoplay muted playsinline class="face-video"></video>
                 <canvas id="faceOverlay" class="face-overlay"></canvas>
             </div>
-            <div id="faceLoginStatus" class="small text-muted mt-2 text-center">
+            <div id="faceLoginStatus" class="small text-muted mt-2 text-center" role="status" aria-live="polite">
                 <span data-i18n="auth.faceCameraOpen">Camera is open. Click Capture / Retry when your face is clear.</span>
             </div>
             <div class="d-flex gap-2 mt-3">
@@ -326,16 +326,16 @@ const cre8AuthTranslations = {
         'auth.invalidEmail': 'Invalid email',
         'auth.sendLink': 'Send link',
         'auth.faceDetectedLogin': 'Face detected. Click Capture / Retry to log in.',
-        'auth.noFaceDetected': 'No face detected. Adjust your position.',
+        'auth.noFaceDetected': 'No face detected. Please look at the camera and try again.',
         'auth.faceDetectionFailed': 'Face detection failed. Please try again.',
         'auth.scanningFace': 'Scanning face...',
-        'auth.faceNotDetectedRetry': 'Face not detected. Adjust your position and click Capture / Retry.',
+        'auth.faceNotDetectedRetry': 'No face detected. Please look at the camera and try again.',
         'auth.faceChecking': 'Face detected. Checking account...',
-        'auth.userNotRecognized': 'User not recognized',
+        'auth.userNotRecognized': 'Face not recognized. Please try again or login with email and password.',
         'auth.faceLoginFailed': 'Face login failed. Please click Capture / Retry again.',
         'auth.faceUnavailable': 'Face login unavailable',
         'auth.faceNotAvailable': 'Face login is not available right now.',
-        'auth.cameraPermission': 'Could not access the camera. Check permissions or try again.',
+        'auth.cameraPermission': 'Camera access is required for Face ID login.',
         'auth.privacy': 'Privacy',
         'auth.terms': 'Terms',
         'auth.contact': 'Contact'
@@ -358,16 +358,16 @@ const cre8AuthTranslations = {
         'auth.invalidEmail': 'Email invalide',
         'auth.sendLink': 'Envoyer le lien',
         'auth.faceDetectedLogin': 'Visage detecte. Cliquez sur Capturer / Reessayer pour vous connecter.',
-        'auth.noFaceDetected': 'Aucun visage detecte. Ajustez votre position.',
+        'auth.noFaceDetected': 'Aucun visage detecte. Regardez la camera puis reessayez.',
         'auth.faceDetectionFailed': 'Detection du visage echouee. Veuillez reessayer.',
         'auth.scanningFace': 'Scan du visage...',
-        'auth.faceNotDetectedRetry': 'Visage non detecte. Ajustez votre position et cliquez sur Capturer / Reessayer.',
+        'auth.faceNotDetectedRetry': 'Aucun visage detecte. Regardez la camera puis reessayez.',
         'auth.faceChecking': 'Visage detecte. Verification du compte...',
-        'auth.userNotRecognized': 'Utilisateur non reconnu',
+        'auth.userNotRecognized': 'Visage non reconnu. Reessayez ou connectez-vous avec email et mot de passe.',
         'auth.faceLoginFailed': 'Connexion Face ID echouee. Cliquez sur Capturer / Reessayer.',
         'auth.faceUnavailable': 'Connexion Face ID indisponible',
         'auth.faceNotAvailable': 'La connexion Face ID est indisponible pour le moment.',
-        'auth.cameraPermission': 'Impossible d acceder a la camera. Verifiez les autorisations ou reessayez.',
+        'auth.cameraPermission': 'L acces a la camera est requis pour la connexion Face ID.',
         'auth.privacy': 'Confidentialite',
         'auth.terms': 'Conditions',
         'auth.contact': 'Contact'
@@ -406,12 +406,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     let scanInProgress = false;
     let liveLoopId = null;
     let liveDetecting = false;
+    let statusHoldUntil = 0;
 
     scanBtn.disabled = true;
 
-    function updateStatus(message, type = "muted") {
+    function updateStatus(message, type = "muted", holdMs = 0) {
         faceLoginStatus.textContent = cre8AuthText(message);
         faceLoginStatus.className = "small mt-2 text-center text-" + type;
+        statusHoldUntil = holdMs > 0 ? Date.now() + holdMs : 0;
+    }
+
+    function updateStatusText(message, type = "muted", holdMs = 0) {
+        faceLoginStatus.textContent = message;
+        faceLoginStatus.className = "small mt-2 text-center text-" + type;
+        statusHoldUntil = holdMs > 0 ? Date.now() + holdMs : 0;
+    }
+
+    function canUpdateLiveStatus() {
+        return !scanInProgress && Date.now() >= statusHoldUntil;
     }
 
     function clearOverlay() {
@@ -480,19 +492,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 if (detection) {
                     drawDetectionBox(detection);
-                    if (!scanInProgress) {
+                    if (canUpdateLiveStatus()) {
                         updateStatus("auth.faceDetectedLogin", "success");
                     }
                 } else {
                     clearOverlay();
-                    if (!scanInProgress) {
+                    if (canUpdateLiveStatus()) {
                         updateStatus("auth.noFaceDetected", "danger");
                     }
                 }
             } catch (error) {
                 console.error(error);
                 clearOverlay();
-                if (!scanInProgress) {
+                if (canUpdateLiveStatus()) {
                     updateStatus("auth.faceDetectionFailed", "danger");
                 }
             } finally {
@@ -565,7 +577,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             if (!detection) {
                 clearOverlay();
-                updateStatus("auth.faceNotDetectedRetry", "danger");
+                updateStatus("auth.faceNotDetectedRetry", "danger", 6500);
                 return;
             }
 
@@ -580,7 +592,13 @@ document.addEventListener("DOMContentLoaded", async () => {
                 body: JSON.stringify({ face: descriptor })
             });
 
-            const data = await response.json();
+            const text = await response.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (parseError) {
+                throw new Error("Invalid Face ID response");
+            }
 
             if (data.success) {
                 stopCamera();
@@ -588,14 +606,16 @@ document.addEventListener("DOMContentLoaded", async () => {
                 return;
             }
 
-            const distanceText = Number.isFinite(Number(data.distance))
-                ? " Distance: " + Number(data.distance).toFixed(4)
-                : "";
-
-            updateStatus((data.message || cre8AuthText("auth.userNotRecognized")) + distanceText, "danger");
+            if (data.error === "face_not_recognized") {
+                updateStatus("auth.userNotRecognized", "danger", 6500);
+            } else if (data.message) {
+                updateStatusText(data.message, "danger", 6500);
+            } else {
+                updateStatus("auth.userNotRecognized", "danger", 6500);
+            }
         } catch (error) {
             console.error(error);
-            updateStatus("auth.faceLoginFailed", "danger");
+            updateStatus("auth.faceLoginFailed", "danger", 6500);
         } finally {
             captureFaceLogin.disabled = false;
             scanInProgress = false;
@@ -627,7 +647,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         } catch (error) {
             console.error(error);
             stopCamera();
-            alert(cre8AuthText("auth.cameraPermission"));
+            faceLoginPanel.style.display = "block";
+            updateStatus("auth.cameraPermission", "danger", 8000);
         }
     });
 

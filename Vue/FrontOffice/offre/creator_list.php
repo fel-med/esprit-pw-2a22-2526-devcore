@@ -1,6 +1,12 @@
 <?php
 require_once __DIR__ . '/../layout/session_bridge.php';
-$currentUser = cre8_front_require_user('createur');
+$currentUser = cre8_front_require_user();
+$currentRole = cre8_front_normalize_role($currentUser['role'] ?? '');
+$isAdminVisitor = cre8_front_is_admin_visitor($currentUser);
+if (!$isAdminVisitor && $currentRole !== 'createur') {
+    http_response_code(403);
+    exit('Access denied for this workspace.');
+}
 $frontActive = 'collaborations';
 require_once __DIR__ . '/../layout/avatar_helper.php';
 
@@ -9,7 +15,7 @@ require_once __DIR__ . '/../../../Controleur/condidatureC.php';
 
 $controller = new OffreC();
 $candidatureController = new CondidatureC();
-$creatorId = (int) $currentUser['id'];
+$creatorId = $isAdminVisitor ? 0 : (int) $currentUser['id'];
 
 $offres = [];
 $error = null;
@@ -267,7 +273,7 @@ function excerptText($text, $length = 155)
     return rtrim(substr($text, 0, max(0, $length - 3))) . '...';
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggleSaved'], $_POST['idOffre']) && is_numeric($_POST['idOffre'])) {
+if (!$isAdminVisitor && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggleSaved'], $_POST['idOffre']) && is_numeric($_POST['idOffre'])) {
     $offerId = (int) $_POST['idOffre'];
     $wasSaved = $controller->isOffreSavedByCreator($creatorId, $offerId);
     $noticeMessage = '';
@@ -323,7 +329,9 @@ $creatorMetrics = [
 ];
 
 try {
-    $offres = $controller->searchOffers($creatorId, $keyword, $budgetFrom, $budgetTo, $dateLimite, $dateLimiteTo, $sort ?: 'budget_high', $perPage + 1, $offset);
+    $offres = $isAdminVisitor
+        ? $controller->searchOffresAdmin($keyword, 'publiee', null, null, $budgetFrom, $budgetTo, $dateLimite, $dateLimiteTo, $sort ?: 'budget_high', $perPage + 1, $offset)
+        : $controller->searchOffers($creatorId, $keyword, $budgetFrom, $budgetTo, $dateLimite, $dateLimiteTo, $sort ?: 'budget_high', $perPage + 1, $offset);
     if (count($offres) > $perPage) {
         $hasNextPage = true;
         array_pop($offres);
@@ -333,7 +341,9 @@ try {
     if ($sort === '') {
         $offres = sortCreatorOffersForDisplay($offres, $responseGroups, $creatorId);
     }
-    $creatorMetrics = $candidatureController->getCreatorActionMetrics($creatorId);
+    if (!$isAdminVisitor) {
+        $creatorMetrics = $candidatureController->getCreatorActionMetrics($creatorId);
+    }
 } catch (Exception $exception) {
     $error = 'An error occurred while loading your invitations.';
 }
@@ -342,12 +352,12 @@ $offerIds = array_map(static fn($offre) => $offre->getIdOffre(), $offres);
 $brandIds = array_map(static fn($offre) => $offre->getIdMarque(), $offres);
 $brandMap = $controller->getUsersByIds($brandIds, 'marque');
 $responseGroups = $controller->getCandidaturesGroupedByOfferIds($offerIds);
-$savedOffers = $controller->getSavedOffreIdsByCreator($creatorId);
+$savedOffers = $isAdminVisitor ? [] : $controller->getSavedOffreIdsByCreator($creatorId);
 $savedOfferList = [];
 $savedBrandMap = [];
 $savedResponseGroups = [];
 
-if (!empty($savedOffers)) {
+if (!$isAdminVisitor && !empty($savedOffers)) {
     $savedOfferList = $controller->getSavedOffresByCreator($creatorId, $savedOfferFilters, $sort === '' ? 'recently_saved' : $sort, 100, 0);
     $savedOfferIds = array_map(static fn($offre) => $offre->getIdOffre(), $savedOfferList);
     $savedBrandIds = array_map(static fn($offre) => $offre->getIdMarque(), $savedOfferList);
@@ -481,7 +491,9 @@ $nextPageUrl = $hasNextPage ? 'creator_list.php?' . http_build_query($pagination
                             ?>
                             <article
                                 class="saved-offer-card<?php echo $isAccepted ? ' is-accepted' : ($isDeclined ? ' is-declined' : (isOfferOutdated($offre) ? ' is-outdated' : '')); ?>"
+                                <?php if (!$isAdminVisitor): ?>
                                 data-card-href="creator_details.php?idOffre=<?php echo (int) $offre->getIdOffre(); ?>&idCreateur=<?php echo (int) $creatorId; ?>"
+                                <?php endif; ?>
                             >
                                 <div class="saved-offer-head">
                                     <div>
@@ -511,10 +523,12 @@ $nextPageUrl = $hasNextPage ? 'creator_list.php?' . http_build_query($pagination
                                 </div>
 
                                 <div class="saved-offer-actions">
+                                    <?php if (!$isAdminVisitor): ?>
                                     <form method="post" action="creator_list.php<?php echo !empty($_SERVER['QUERY_STRING']) ? '?' . htmlspecialchars($_SERVER['QUERY_STRING']) : ''; ?>" data-save-toggle-form>
                                         <input type="hidden" name="idOffre" value="<?php echo (int) $offre->getIdOffre(); ?>">
                                         <button type="submit" name="toggleSaved" class="btn btn-outline-secondary">Remove</button>
                                     </form>
+                                    <?php endif; ?>
                                 </div>
                             </article>
                         <?php endforeach; ?>
@@ -640,7 +654,9 @@ $nextPageUrl = $hasNextPage ? 'creator_list.php?' . http_build_query($pagination
                                                 ?>
                                                 <article
                                                     class="saved-offer-card<?php echo $isAccepted ? ' is-accepted' : ($isDeclined ? ' is-declined' : (isOfferOutdated($offre) ? ' is-outdated' : '')); ?>"
+                                                    <?php if (!$isAdminVisitor): ?>
                                                     data-card-href="creator_details.php?idOffre=<?php echo (int) $offre->getIdOffre(); ?>&idCreateur=<?php echo (int) $creatorId; ?>"
+                                                    <?php endif; ?>
                                                 >
                                                     <div class="saved-offer-head">
                                                         <div>
@@ -670,10 +686,12 @@ $nextPageUrl = $hasNextPage ? 'creator_list.php?' . http_build_query($pagination
                                                     </div>
 
                                                     <div class="saved-offer-actions">
+                                                        <?php if (!$isAdminVisitor): ?>
                                                         <form method="post" action="creator_list.php<?php echo !empty($_SERVER['QUERY_STRING']) ? '?' . htmlspecialchars($_SERVER['QUERY_STRING']) : ''; ?>" data-save-toggle-form>
                                                             <input type="hidden" name="idOffre" value="<?php echo (int) $offre->getIdOffre(); ?>">
                                                             <button type="submit" name="toggleSaved" class="btn btn-outline-secondary">Remove saved</button>
                                                         </form>
+                                                        <?php endif; ?>
                                                     </div>
                                                 </article>
                                             <?php endforeach; ?>
@@ -692,7 +710,9 @@ $nextPageUrl = $hasNextPage ? 'creator_list.php?' . http_build_query($pagination
                                                 <?php $isOutdated = isOfferOutdated($offre); ?>
                                                 <article
                                                     class="offer-card<?php echo $isAccepted ? ' is-accepted' : ($isDeclined ? ' is-declined' : ($isOutdated ? ' is-outdated' : ($isTopBudget ? ' is-top-budget' : ''))); ?>"
+                                                    <?php if (!$isAdminVisitor): ?>
                                                     data-card-href="creator_details.php?idOffre=<?php echo (int) $offre->getIdOffre(); ?>&idCreateur=<?php echo (int) $creatorId; ?>"
+                                                    <?php endif; ?>
                                                 >
                                                     <div class="offer-card-head">
                                                         <div>
@@ -710,7 +730,7 @@ $nextPageUrl = $hasNextPage ? 'creator_list.php?' . http_build_query($pagination
                                                             <h2 class="offer-card-title"><?php echo htmlspecialchars($offre->getTitre()); ?></h2>
                                                             <p class="offer-summary mt-2"><?php echo htmlspecialchars(excerptText($offre->getDescription(), 155)); ?></p>
                                                         </div>
-                                                        <?php if (!$creatorResponse): ?>
+                                                        <?php if (!$creatorResponse && !$isAdminVisitor): ?>
                                                             <form method="post" action="creator_list.php<?php echo !empty($_SERVER['QUERY_STRING']) ? '?' . htmlspecialchars($_SERVER['QUERY_STRING']) : ''; ?>" data-save-toggle-form>
                                                                 <input type="hidden" name="idOffre" value="<?php echo (int) $offre->getIdOffre(); ?>">
                                                                 <button type="submit" name="toggleSaved" class="saved-toggle <?php echo $saved ? 'saved' : ''; ?>">

@@ -178,9 +178,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             cc_log_admin_action($currentUserId, $currentRole, 'reactivate_user', $targetId, $target['role'] ?? null, $target['statut'] ?? null, 'actif', $reason);
             admin_management_flash('success', 'Account activated successfully.');
         } elseif ($action === 'delete') {
-            $userC->deleteUserById($targetId);
-            cc_log_admin_action($currentUserId, $currentRole, 'delete_user', $targetId, $target['role'] ?? null, $target['statut'] ?? null, 'deleted', 'Deleted from Admin Management');
-            admin_management_flash('success', 'Account deleted successfully.');
+            $deleteResult = $userC->softDeleteUserById($targetId, $currentUserId, $currentRole, 'Deleted from Admin Management');
+            admin_management_flash(
+                !empty($deleteResult['success']) ? 'success' : 'danger',
+                (string)($deleteResult['message'] ?? (!empty($deleteResult['success']) ? 'Account deleted successfully.' : 'Unable to delete this account.'))
+            );
         }
 
         admin_management_redirect();
@@ -311,6 +313,25 @@ unset($_SESSION['admin_management_flash']);
             </div>
           </div>
 
+          <?php if ($isHyperAdmin): ?>
+            <div class="uc-entity-tabs" aria-label="Admin management sections">
+              <span class="uc-entity-tab is-active">
+                <span class="uc-tab-icon"><i class="mdi mdi-account-key"></i></span>
+                <span>
+                  <strong data-i18n="adminManagement.tab.activeUsers">Admin Accounts</strong>
+                  <small data-i18n="adminManagement.tab.activeUsersHint">Create and manage active BackOffice accounts.</small>
+                </span>
+              </span>
+              <a href="deleted_users.php" class="uc-entity-tab">
+                <span class="uc-tab-icon"><i class="mdi mdi-delete-restore"></i></span>
+                <span>
+                  <strong data-i18n="adminManagement.deletedUsers">Deleted Users</strong>
+                  <small data-i18n="adminManagement.deletedUsersHint">Restore soft-deleted users or review final delete eligibility.</small>
+                </span>
+              </a>
+            </div>
+          <?php endif; ?>
+
           <div class="admin-tool-grid two-col">
             <div>
               <div class="admin-management-card">
@@ -429,7 +450,7 @@ unset($_SESSION['admin_management_flash']);
                                 <?php endif; ?>
 
                                 <?php if ($canDelete): ?>
-                                  <form method="POST" class="m-0" onsubmit="return confirm(window.cre8BackText ? window.cre8BackText('adminManagement.confirm.delete') : 'Delete this administrator account permanently?');">
+                                  <form method="POST" class="m-0" onsubmit="return confirm(window.cre8BackText ? window.cre8BackText('adminManagement.confirm.delete') : 'Delete this administrator account?');">
                                     <input type="hidden" name="id" value="<?php echo (int)$account['id']; ?>">
                                     <input type="hidden" name="action" value="delete">
                                     <button type="submit" class="uc-action-btn uc-action-danger" data-i18n="common.delete">Delete</button>
@@ -507,6 +528,8 @@ window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
     'adminManagement.action.block': 'Block',
     'adminManagement.action.currentAccount': 'Current account',
     'adminManagement.action.noActions': 'No actions',
+    'adminManagement.tab.activeUsers': 'Admin Accounts',
+    'adminManagement.tab.activeUsersHint': 'Create and manage active BackOffice accounts.',
     'adminManagement.table.title': 'Managed Accounts',
     'adminManagement.table.name': 'Name',
     'adminManagement.table.email': 'Email',
@@ -519,7 +542,7 @@ window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
     'adminManagement.status.blocked': 'Blocked',
     'adminManagement.status.pending': 'Pending',
     'adminManagement.status.inactive': 'Inactive',
-    'adminManagement.confirm.delete': 'Delete this administrator account permanently?',
+    'adminManagement.confirm.delete': 'Delete this administrator account?',
     'adminManagement.flash.nameRequired': 'Name is required.',
     'adminManagement.flash.emailRequired': 'A valid email is required.',
     'adminManagement.flash.passwordRequired': 'Password must contain at least 6 characters.',
@@ -532,6 +555,8 @@ window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
     'adminManagement.flash.blocked': 'Account blocked successfully.',
     'adminManagement.flash.activated': 'Account activated successfully.',
     'adminManagement.flash.deleted': 'Account deleted successfully.',
+    'adminManagement.deletedUsers': 'Deleted Users',
+    'adminManagement.deletedUsersHint': 'Restore soft-deleted users or review final delete eligibility.',
     'adminManagement.flash.invalidAction': 'Invalid action.'
   },
   fr: {
@@ -551,6 +576,8 @@ window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
     'adminManagement.action.block': 'Bloquer',
     'adminManagement.action.currentAccount': 'Compte actuel',
     'adminManagement.action.noActions': 'Aucune action',
+    'adminManagement.tab.activeUsers': 'Comptes admins',
+    'adminManagement.tab.activeUsersHint': 'Creez et gerez les comptes BackOffice actifs.',
     'adminManagement.table.title': 'Comptes geres',
     'adminManagement.table.name': 'Nom',
     'adminManagement.table.email': 'Email',
@@ -563,7 +590,7 @@ window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
     'adminManagement.status.blocked': 'Bloque',
     'adminManagement.status.pending': 'En attente',
     'adminManagement.status.inactive': 'Inactif',
-    'adminManagement.confirm.delete': 'Supprimer definitivement ce compte administrateur ?',
+    'adminManagement.confirm.delete': 'Supprimer ce compte administrateur ?',
     'adminManagement.flash.nameRequired': 'Le nom est obligatoire.',
     'adminManagement.flash.emailRequired': 'Un email valide est obligatoire.',
     'adminManagement.flash.passwordRequired': 'Le mot de passe doit contenir au moins 6 caracteres.',
@@ -576,6 +603,8 @@ window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
     'adminManagement.flash.blocked': 'Compte bloque avec succes.',
     'adminManagement.flash.activated': 'Compte active avec succes.',
     'adminManagement.flash.deleted': 'Compte supprime avec succes.',
+    'adminManagement.deletedUsers': 'Comptes supprimes',
+    'adminManagement.deletedUsersHint': 'Restaurez les comptes supprimes ou verifiez la suppression definitive.',
     'adminManagement.flash.invalidAction': 'Action invalide.'
   }
 });

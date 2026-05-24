@@ -128,7 +128,7 @@ $total_signales     = count($messages_signales);
           </div>
           <div class="ec-page-actions">
             <a href="<?= htmlspecialchars($BASE . '/Controleur/forumC.php?action=creer_forums_auto') ?>" class="ec-primary-btn">
-              <i class="mdi mdi-refresh me-1"></i> <span data-i18n="forum.action.createToday">Create today's forums</span>
+              <i class="mdi mdi-refresh me-1"></i> <span data-i18n="forum.action.createToday">Generate missing forums</span>
             </a>
           </div>
         </section>
@@ -143,6 +143,17 @@ $total_signales     = count($messages_signales);
             <span><strong data-i18n="eventCenter.tab.forum">Forum</strong><small data-i18n="eventCenter.tab.forumSub">Discussions and moderation</small></span>
           </a>
         </nav>
+
+        <?php if (!empty($_SESSION['forum_admin_flash']) && is_array($_SESSION['forum_admin_flash'])): ?>
+          <?php
+            $forumFlash = $_SESSION['forum_admin_flash'];
+            unset($_SESSION['forum_admin_flash']);
+            $forumFlashType = in_array(($forumFlash['type'] ?? ''), ['success', 'info', 'danger'], true) ? $forumFlash['type'] : 'info';
+          ?>
+          <div class="alert alert-<?= htmlspecialchars($forumFlashType) ?> mb-4" role="alert">
+            <?= htmlspecialchars((string)($forumFlash['message'] ?? '')) ?>
+          </div>
+        <?php endif; ?>
 
         <section class="ec-statistics-panel" data-ec-stats>
           <div class="ec-section-head">
@@ -240,7 +251,7 @@ $total_signales     = count($messages_signales);
                       <td><?= htmlspecialchars($forum['nom_utilisateur'] ?? 'Admin') ?></td>
                       <td><span class="ec-chip"><?= (int)($forum['nb_messages'] ?? 0) ?> <span data-i18n="forum.table.messagesLower">messages</span></span></td>
                       <td class="ec-date-cell"><?= htmlspecialchars(date('Y-m-d', strtotime($forum['dateCreation']))) ?></td>
-                      <td><div class="ec-actions"><a href="<?= htmlspecialchars($BASE . '/Controleur/forumC.php?action=voir&id=' . (int)$forum['idForum']) ?>" class="ec-action-btn ec-action-primary"><i class="mdi mdi-eye me-1"></i><span data-i18n="common.view">View</span></a><button type="button" class="ec-action-btn ec-action-danger" onclick="supprimerForum(<?= (int)$forum['idForum'] ?>, '<?= htmlspecialchars(addslashes($forum['TitreForum'] ?? $forum['titreForum'] ?? '')) ?>')"><i class="mdi mdi-delete me-1"></i><span data-i18n="common.delete">Delete</span></button></div></td>
+                      <td><div class="ec-actions"><a href="<?= htmlspecialchars($BASE . '/Controleur/forumC.php?action=voir&source=backoffice&id=' . (int)$forum['idForum']) ?>" class="ec-action-btn ec-action-primary"><i class="mdi mdi-eye me-1"></i><span data-i18n="common.view">View</span></a><button type="button" class="ec-action-btn ec-action-danger" onclick="supprimerForum(<?= (int)$forum['idForum'] ?>, '<?= htmlspecialchars(addslashes($forum['TitreForum'] ?? $forum['titreForum'] ?? '')) ?>')"><i class="mdi mdi-delete me-1"></i><span data-i18n="common.delete">Delete</span></button></div></td>
                     </tr>
                     <?php endforeach; ?>
                   <?php endif; ?>
@@ -264,10 +275,8 @@ $total_signales     = count($messages_signales);
           </div>
         </section>
 
-      
-
-      </div><!-- content-wrapper -->
       <?php require __DIR__ . '/../layout/footer.php'; ?>
+      </div><!-- content-wrapper -->
     </div><!-- main-panel -->
   </div><!-- page-body-wrapper -->
 </div><!-- container-scroller -->
@@ -288,7 +297,7 @@ window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
     "eventCenter.tab.forumSub": "Discussions and moderation",
     "forum.title": "Forum administration",
     "forum.subtitle": "Supervise forum discussions, reported messages, and community activity.",
-    "forum.action.createToday": "Create today's forums",
+    "forum.action.createToday": "Generate missing forums",
     "forum.stats.title": "Workspace statistics",
     "forum.stats.subtitle": "Forum health, messages, activity, and moderation overview.",
     "forum.kpi.total": "Total forums",
@@ -348,7 +357,7 @@ window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
     "eventCenter.tab.forumSub": "Discussions et modération",
     "forum.title": "Administration du forum",
     "forum.subtitle": "Supervisez les discussions, les messages signalés et l'activité de la communauté.",
-    "forum.action.createToday": "Créer les forums du jour",
+    "forum.action.createToday": "Générer les forums manquants",
     "forum.stats.title": "Statistiques de l'espace",
     "forum.stats.subtitle": "Santé des forums, messages, activité et vue de modération.",
     "forum.kpi.total": "Total forums",

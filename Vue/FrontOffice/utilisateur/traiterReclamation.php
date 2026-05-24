@@ -8,9 +8,15 @@ session_start();
 
 $idUtilisateur = cc_current_reclamation_user_id();
 $isSuspendedAppeal = cc_is_suspended_appeal_session();
+$currentReclamationRole = cc_current_reclamation_user_role();
 
 if ($idUtilisateur === null) {
     header('Location: login.php');
+    exit();
+}
+
+if (!$isSuspendedAppeal && cc_is_backoffice_role($currentReclamationRole ?? '')) {
+    header('Location: reclamation.php?admin_backoffice=1');
     exit();
 }
 

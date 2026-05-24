@@ -279,6 +279,7 @@
       'header.searchPlaceholder': 'Search pages or modules...',
       'header.searchNoResults': 'No page found',
       'header.searchHint': 'Press Enter to open',
+      'header.searchOpen': 'Open',
       'header.messages': 'Messages',
       'header.noMessages': 'No new messages',
       'header.notifications': 'Notifications',
@@ -288,6 +289,7 @@
       'header.allCaughtUp': "You're all caught up.",
       'header.profile': 'Profile',
       'header.profileSettings': 'Profile Settings',
+      'header.visitFrontOffice': 'FrontOffice',
       'header.logout': 'Logout',
       // Keep every nav.* key used by layout/sidebar.php in both dictionaries.
       // Missing keys display raw labels like nav.userCenter.
@@ -369,6 +371,7 @@
       'header.searchPlaceholder': 'Rechercher des pages ou modules...',
       'header.searchNoResults': 'Aucune page trouvee',
       'header.searchHint': 'Appuyez sur Entree pour ouvrir',
+      'header.searchOpen': 'Ouvrir',
       'header.messages': 'Messages',
       'header.noMessages': 'Aucun nouveau message',
       'header.notifications': 'Notifications',
@@ -378,6 +381,7 @@
       'header.allCaughtUp': 'Vous etes a jour.',
       'header.profile': 'Profil',
       'header.profileSettings': 'Parametres du profil',
+      'header.visitFrontOffice': 'FrontOffice',
       'header.logout': 'Deconnexion',
       // Keep every nav.* key used by layout/sidebar.php in both dictionaries.
       // Missing keys display raw labels like nav.userCenter.

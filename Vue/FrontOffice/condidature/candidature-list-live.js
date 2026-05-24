@@ -2,6 +2,9 @@
     const REGION_SELECTOR = '[data-candidature-live-region]';
     const SAVE_FORM_SELECTOR = 'form[data-candidature-save-toggle-form]';
     const SOURCE_SHELL_SELECTOR = '[data-brand-source-tab-shell]';
+    const FILTER_FORM_SELECTOR = 'form.filter-stack[method="get"]';
+    const RESET_LINK_SELECTOR = '.filter-actions a[href]';
+    const PAGINATION_LINK_SELECTOR = '.front-pagination a[href]';
     let latestRequestId = 0;
 
     function getRegion() {
@@ -116,6 +119,55 @@
         HTMLFormElement.prototype.submit.call(form);
     }
 
+    function isFilterForm(form) {
+        if (!(form instanceof HTMLFormElement)) {
+            return false;
+        }
+
+        const method = (form.getAttribute('method') || 'get').toLowerCase();
+        if (method !== 'get' || !form.closest(REGION_SELECTOR)) {
+            return false;
+        }
+
+        const action = (form.getAttribute('action') || '').toLowerCase();
+        return action === ''
+            || action.includes('index.php')
+            || action.includes('brand_index.php');
+    }
+
+    function buildFilterUrl(form) {
+        const url = new URL(form.getAttribute('action') || window.location.pathname, window.location.href);
+        const formData = new FormData(form);
+        url.search = '';
+
+        for (const [key, rawValue] of formData.entries()) {
+            const value = typeof rawValue === 'string' ? rawValue.trim() : rawValue;
+            if (value !== '') {
+                url.searchParams.set(key, value);
+            }
+        }
+
+        return url;
+    }
+
+    function ajaxUrlFrom(url) {
+        const ajaxUrl = new URL(url.toString(), window.location.href);
+        ajaxUrl.searchParams.set('ajax', '1');
+        return ajaxUrl;
+    }
+
+    function pushUrlWithoutAjax(url, mode = 'push') {
+        const historyUrl = new URL(url.toString(), window.location.href);
+        historyUrl.searchParams.delete('ajax');
+        const next = historyUrl.pathname + historyUrl.search + historyUrl.hash;
+
+        if (mode === 'replace') {
+            window.history.replaceState({ candidatureLive: true }, '', next);
+        } else {
+            window.history.pushState({ candidatureLive: true }, '', next);
+        }
+    }
+
     async function replaceRegion(requestUrl, fetchOptions, activeState) {
         const currentRegion = getRegion();
         if (!currentRegion) {
@@ -222,9 +274,58 @@
         }
     }
 
+    async function handleFilterSubmit(form, submitter) {
+        const button = submitter || form.querySelector('button[type="submit"], input[type="submit"]');
+        const targetUrl = buildFilterUrl(form);
+        const activeState = getActiveTabState();
+
+        if (button) {
+            button.disabled = true;
+        }
+
+        try {
+            await replaceRegion(ajaxUrlFrom(targetUrl).toString(), {}, activeState);
+            pushUrlWithoutAjax(targetUrl);
+        } catch (error) {
+            window.location.assign(targetUrl.toString());
+        } finally {
+            if (button) {
+                button.disabled = false;
+            }
+        }
+    }
+
+    async function handleRegionLink(link) {
+        const targetUrl = new URL(link.href, window.location.href);
+        const activeState = getActiveTabState();
+
+        try {
+            await replaceRegion(ajaxUrlFrom(targetUrl).toString(), {}, activeState);
+            pushUrlWithoutAjax(targetUrl);
+        } catch (error) {
+            window.location.assign(targetUrl.toString());
+        }
+    }
+
+    function shouldIgnoreModifiedClick(event, link) {
+        return event.defaultPrevented
+            || event.button !== 0
+            || event.metaKey
+            || event.ctrlKey
+            || event.shiftKey
+            || event.altKey
+            || link.target === '_blank';
+    }
+
     document.addEventListener('submit', (event) => {
         const form = event.target;
         if (!(form instanceof HTMLFormElement)) {
+            return;
+        }
+
+        if (form.matches(FILTER_FORM_SELECTOR) && isFilterForm(form)) {
+            event.preventDefault();
+            handleFilterSubmit(form, event.submitter);
             return;
         }
 
@@ -235,6 +336,27 @@
 
         event.preventDefault();
         handleSaveToggle(saveForm, event.submitter);
+    });
+
+    document.addEventListener('click', (event) => {
+        const link = event.target.closest(`${RESET_LINK_SELECTOR}, ${PAGINATION_LINK_SELECTOR}`);
+
+        if (!link || !link.closest(REGION_SELECTOR) || shouldIgnoreModifiedClick(event, link)) {
+            return;
+        }
+
+        event.preventDefault();
+        handleRegionLink(link);
+    });
+
+    window.addEventListener('popstate', () => {
+        if (!getRegion()) {
+            return;
+        }
+
+        replaceRegion(ajaxUrlFrom(window.location.href).toString(), {}, getActiveTabState()).catch(() => {
+            window.location.reload();
+        });
     });
 
     document.addEventListener('DOMContentLoaded', () => bindBrandSourceTabs(document));

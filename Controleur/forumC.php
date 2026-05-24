@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/session_helper.php';
 
 class ForumC {
     private $pdo;
@@ -115,6 +116,17 @@ class ForumC {
             $created++;
         }
         return $created;
+    }
+
+    public function compterEvenementsEligiblesForum(): int {
+        $stmt = $this->pdo->prepare("
+            SELECT COUNT(*)
+            FROM evenement e
+            WHERE DATE(e.DateFormation) <= CURDATE()
+              AND e.statut = 'actif'
+        ");
+        $stmt->execute();
+        return (int)$stmt->fetchColumn();
     }
 
     // Report a message
@@ -261,6 +273,36 @@ switch ($action) {
         $controller->statistiques();
         break;
 
+    case 'creer_forums_auto':
+        if (!cc_is_backoffice_role(cc_current_user_role())) {
+            $_SESSION['forum_admin_flash'] = [
+                'type' => 'danger',
+                'message' => 'You are not authorized to create forums.',
+            ];
+            header('Location: ' . $BASE . '/Controleur/forumC.php?action=admin');
+            exit;
+        }
+
+        try {
+            $createdCount = $controller->creerForumsAuto();
+            $eligibleEvents = $controller->compterEvenementsEligiblesForum();
+            $_SESSION['forum_admin_flash'] = [
+                'type' => $createdCount > 0 ? 'success' : 'info',
+                'message' => $createdCount > 0
+                    ? $createdCount . ' forum' . ($createdCount > 1 ? 's' : '') . ' generated successfully.'
+                    : ($eligibleEvents > 0 ? 'All eligible events already have forums.' : 'No eligible events found.'),
+            ];
+        } catch (Throwable $e) {
+            error_log('creer_forums_auto error: ' . $e->getMessage());
+            $_SESSION['forum_admin_flash'] = [
+                'type' => 'danger',
+                'message' => 'Unable to create forums right now.',
+            ];
+        }
+
+        header('Location: ' . $BASE . '/Controleur/forumC.php?action=admin');
+        exit;
+
     case 'supprimer_forum':
         if ($id > 0) {
             $controller->supprimerForum($id);
@@ -299,7 +341,12 @@ switch ($action) {
             if ($data) {
                 $forum = $data['forum'];
                 $messages = $data['messages'];
-                require __DIR__ . '/../Vue/FrontOffice/forum/discussion.php';
+                $forumSource = strtolower(trim((string)($_GET['source'] ?? $_GET['from'] ?? '')));
+                if ($forumSource === 'backoffice') {
+                    require __DIR__ . '/../Vue/BackOffice/forum/discussion.php';
+                } else {
+                    require __DIR__ . '/../Vue/FrontOffice/forum/discussion.php';
+                }
             } else {
                 header('Location: ' . $BASE . '/Controleur/forumC.php');
             }

@@ -56,9 +56,9 @@ if (!$isLoggedIn) {
 
 $role = cre8_home_normalize_role_compat($role);
 
-// Keep BackOffice users in BackOffice; creators and brands use the shared FrontOffice hub.
+// BackOffice users may enter the shared hub in FrontOffice visitor mode.
 if (isBackOfficeRole($role)) {
-    header('Location: ../../BackOffice/dashboard/index.php');
+    header('Location: creator.php');
     exit;
 }
 

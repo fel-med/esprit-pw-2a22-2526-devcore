@@ -14,14 +14,7 @@ if (empty($currentFrontUser['isLoggedIn'])) {
 
 $currentRole = cre8_front_normalize_role($currentFrontUser['role'] ?? '');
 
-if (isBackOfficeRole($currentRole)) {
-    $scriptPath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
-    $frontOfficeMarker = '/Vue/FrontOffice/';
-    $frontOfficePos = strpos($scriptPath, $frontOfficeMarker);
-    $projectBase = $frontOfficePos !== false ? substr($scriptPath, 0, $frontOfficePos) : '';
-    header('Location: ' . $projectBase . '/Vue/BackOffice/dashboard/index.php');
-    exit;
-}
+$isAdminVisitor = cre8_front_is_admin_visitor($currentFrontUser);
 
 $userName = $currentFrontUser['nom']
     ?? $_SESSION['nom']
@@ -54,6 +47,8 @@ $frontActive = 'home';
 $pageTitle = $isBrand ? 'Brand Home — Cre8connect' : 'Creator Home — Cre8connect';
 $roleLabel = $isBrand ? 'Brand' : 'Creator';
 $roleIcon = $isBrand ? 'bi-shop-window' : 'bi-patch-check-fill';
+$roleI18nKey = $isBrand ? 'account.roleBrand' : 'account.roleCreator';
+$welcomeI18nKey = $isBrand ? 'account.brandWelcomeText' : 'account.creatorWelcomeText';
 
 $quickCards = $isBrand
     ? [
@@ -163,6 +158,71 @@ $quickCards = $isBrand
 $welcomeText = $isBrand
     ? 'Your brand space helps you manage campaigns, organize products, track contracts, manage collaborations, and discover events from one place.'
     : 'Your creator space helps you publish content, grow your portfolio, discover available campaigns and events, reply to offers, and track your applications easily.';
+
+if ($isAdminVisitor) {
+    $pageTitle = 'FrontOffice Visitor Mode - Cre8connect';
+    $roleLabel = 'Admin Visitor';
+    $roleIcon = 'bi-shield-check';
+    $roleI18nKey = 'account.roleAdminVisitor';
+    $welcomeI18nKey = 'account.adminVisitorWelcomeText';
+    $welcomeText = 'You are browsing the FrontOffice as an administrator. You can view community activity, publish posts, comment, read forums, and inspect public collaboration pages in read-only mode. Admin actions remain in BackOffice.';
+    $quickCards = [
+        [
+            'href' => '../post/index.php',
+            'iconClass' => 'icon-blue',
+            'icon' => 'bi-newspaper',
+            'title' => 'Feeds',
+            'titleKey' => 'account.feeds',
+            'subtitle' => 'View community posts',
+            'subtitleKey' => 'account.viewPosts',
+        ],
+        [
+            'href' => '../post/create.php',
+            'iconClass' => 'icon-purple',
+            'icon' => 'bi-pencil-square',
+            'title' => 'Create Post',
+            'titleKey' => 'account.createPost',
+            'subtitle' => 'Share a community update as yourself',
+            'subtitleKey' => 'account.createPostVisitor',
+        ],
+        [
+            'href' => '../offre/creator_list.php',
+            'iconClass' => 'icon-green',
+            'icon' => 'bi-briefcase',
+            'title' => 'Offers',
+            'titleKey' => 'account.offers',
+            'subtitle' => 'Browse published offers read-only',
+            'subtitleKey' => 'account.browseOffersReadOnly',
+        ],
+        [
+            'href' => '../condidature/admin_readonly.php',
+            'iconClass' => 'icon-red',
+            'icon' => 'bi-send-check',
+            'title' => 'Candidatures',
+            'titleKey' => 'account.candidatures',
+            'subtitle' => 'Review platform candidatures read-only',
+            'subtitleKey' => 'account.reviewCandidaturesReadOnly',
+        ],
+        [
+            'href' => '../evenement/index.php',
+            'iconClass' => 'icon-orange',
+            'icon' => 'bi-calendar-event',
+            'title' => 'Events',
+            'titleKey' => 'account.events',
+            'subtitle' => 'View community events',
+            'subtitleKey' => 'account.viewEvents',
+        ],
+        [
+            'href' => '../../BackOffice/dashboard/index.php',
+            'iconClass' => 'icon-green',
+            'icon' => 'bi-arrow-left-circle',
+            'title' => 'Return to BackOffice',
+            'titleKey' => 'account.returnBackOffice',
+            'subtitle' => 'Manage admin workflows from BackOffice',
+            'subtitleKey' => 'account.manageFromBackOffice',
+        ],
+    ];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -419,7 +479,7 @@ $welcomeText = $isBrand
         <?php endif; ?>
         <div>
             <div class="cover-name"><?php echo htmlspecialchars($userName); ?></div>
-            <div class="cover-role"><i class="bi <?php echo htmlspecialchars($roleIcon); ?>"></i> <span data-i18n="<?php echo $isBrand ? 'account.roleBrand' : 'account.roleCreator'; ?>"><?php echo htmlspecialchars($roleLabel); ?></span></div>
+            <div class="cover-role"><i class="bi <?php echo htmlspecialchars($roleIcon); ?>"></i> <span data-i18n="<?php echo htmlspecialchars($roleI18nKey); ?>"><?php echo htmlspecialchars($roleLabel); ?></span></div>
             <div class="cover-handle">@<?php echo htmlspecialchars($userHandle); ?></div>
         </div>
     </div>
@@ -440,7 +500,7 @@ $welcomeText = $isBrand
     <!-- Welcome banner -->
     <div class="welcome-banner">
         <h2><span data-i18n="account.welcome">Welcome</span>, <?php echo htmlspecialchars($userName); ?></h2>
-        <p data-i18n="<?php echo $isBrand ? 'account.brandWelcomeText' : 'account.creatorWelcomeText'; ?>"><?php echo htmlspecialchars($welcomeText); ?></p>
+        <p data-i18n="<?php echo htmlspecialchars($welcomeI18nKey); ?>"><?php echo htmlspecialchars($welcomeText); ?></p>
     </div>
 
 </div>
@@ -455,6 +515,7 @@ $welcomeText = $isBrand
         en: {
             'account.roleBrand': 'Brand',
             'account.roleCreator': 'Creator',
+            'account.roleAdminVisitor': 'Admin Visitor',
             'account.myCampaigns': 'My Campaigns',
             'account.manageCampaigns': 'Create and manage your campaigns',
             'account.products': 'Products',
@@ -469,20 +530,30 @@ $welcomeText = $isBrand
             'account.managePortfolio': 'Manage your portfolio and publications',
             'account.feeds': 'Feeds',
             'account.viewPosts': 'View community posts',
+            'account.createPost': 'Create Post',
+            'account.createPostVisitor': 'Share a community update as yourself',
             'account.offers': 'Offers',
             'account.browseOffers': 'Browse brand invitations',
+            'account.browseOffersReadOnly': 'Browse published offers read-only',
             'account.applications': 'Applications',
+            'account.candidatures': 'Candidatures',
             'account.trackApplications': 'Track your replies and negotiations',
+            'account.reviewCandidaturesReadOnly': 'Review platform candidatures read-only',
             'account.campaigns': 'Campaigns',
             'account.discoverCampaigns': 'Discover available campaigns',
             'account.joinEvents': 'Join events and workshops',
+            'account.viewEvents': 'View community events',
+            'account.returnBackOffice': 'Return to BackOffice',
+            'account.manageFromBackOffice': 'Manage admin workflows from BackOffice',
             'account.welcome': 'Welcome',
             'account.brandWelcomeText': 'Your brand space helps you manage campaigns, organize products, track contracts, manage collaborations, and discover events from one place.',
-            'account.creatorWelcomeText': 'Your creator space helps you publish content, grow your portfolio, discover available campaigns and events, reply to offers, and track your applications easily.'
+            'account.creatorWelcomeText': 'Your creator space helps you publish content, grow your portfolio, discover available campaigns and events, reply to offers, and track your applications easily.',
+            'account.adminVisitorWelcomeText': 'You are browsing the FrontOffice as an administrator. You can view community activity, publish posts, comment, read forums, and inspect public collaboration pages in read-only mode. Admin actions remain in BackOffice.'
         },
         fr: {
             'account.roleBrand': 'Marque',
             'account.roleCreator': 'Createur',
+            'account.roleAdminVisitor': 'Visiteur admin',
             'account.myCampaigns': 'Mes campagnes',
             'account.manageCampaigns': 'Creez et gerez vos campagnes',
             'account.products': 'Produits',
@@ -497,16 +568,25 @@ $welcomeText = $isBrand
             'account.managePortfolio': 'Gerez votre portfolio et vos publications',
             'account.feeds': 'Feeds',
             'account.viewPosts': 'Voir les posts de la communaute',
+            'account.createPost': 'Creer un post',
+            'account.createPostVisitor': 'Partager une actualite communaute avec votre compte',
             'account.offers': 'Offres',
             'account.browseOffers': 'Parcourez les invitations des marques',
+            'account.browseOffersReadOnly': 'Parcourir les offres publiees en lecture seule',
             'account.applications': 'Candidatures',
+            'account.candidatures': 'Candidatures',
             'account.trackApplications': 'Suivez vos reponses et negociations',
+            'account.reviewCandidaturesReadOnly': 'Consulter les candidatures de la plateforme en lecture seule',
             'account.campaigns': 'Campagnes',
             'account.discoverCampaigns': 'Decouvrez les campagnes disponibles',
             'account.joinEvents': 'Participez aux evenements et ateliers',
+            'account.viewEvents': 'Voir les evenements de la communaute',
+            'account.returnBackOffice': 'Retour au BackOffice',
+            'account.manageFromBackOffice': 'Gerer les workflows admin depuis le BackOffice',
             'account.welcome': 'Bienvenue',
             'account.brandWelcomeText': 'Votre espace marque vous aide a gerer vos campagnes, organiser vos produits, suivre vos contrats, gerer vos collaborations et decouvrir les evenements depuis un seul endroit.',
-            'account.creatorWelcomeText': 'Votre espace createur vous aide a publier du contenu, developper votre portfolio, decouvrir les campagnes et evenements disponibles, repondre aux offres et suivre facilement vos candidatures.'
+            'account.creatorWelcomeText': 'Votre espace createur vous aide a publier du contenu, developper votre portfolio, decouvrir les campagnes et evenements disponibles, repondre aux offres et suivre facilement vos candidatures.',
+            'account.adminVisitorWelcomeText': 'Vous parcourez le FrontOffice en tant qu administrateur. Vous pouvez voir l activite de la communaute, publier des posts, commenter, lire les forums et consulter les pages de collaboration publiques en lecture seule. Les actions admin restent dans le BackOffice.'
         }
     };
     function registerAccountTranslations() {

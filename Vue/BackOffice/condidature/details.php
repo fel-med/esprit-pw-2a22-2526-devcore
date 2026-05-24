@@ -339,7 +339,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
 <body class="cre8-admin-layout"><?php cre8_bo_early_theme_print_body_script(); ?>
     <div class="container-scroller cre8-admin-page">
         <?php require_once dirname(__DIR__) . '/layout/sidebar.php'; ?>
-        <main class="page-body-wrapper cre8-admin-main">
+        <div class="container-fluid page-body-wrapper cre8-admin-main">
             <?php require_once dirname(__DIR__) . '/layout/header.php'; ?>
     <div class="main-panel">
     <div class="content-wrapper admin-shell">
@@ -588,7 +588,7 @@ if (!function_exists('renderBackOfficeCollaborationTabs')) {
         <?php endif; ?>
     </div>
     </div>
-        </main>
+        </div>
     </div>
     <script src="../layout/back-layout.js?v=<?php echo urlencode((string) filemtime(__DIR__ . '/../layout/back-layout.js')); ?>"></script>
 </body>

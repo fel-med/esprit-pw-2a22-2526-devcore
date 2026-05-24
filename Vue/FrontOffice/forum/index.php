@@ -66,6 +66,9 @@ $totalMessages = array_sum(array_column($forums, 'nb_messages'));
         body {
             background-color: var(--bg);
             color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         /* ── HERO ── */
@@ -391,6 +394,12 @@ $totalMessages = array_sum(array_column($forums, 'nb_messages'));
         /* Marketplace body composition for forum index. */
         main.container {
             max-width: 1220px;
+            flex: 1 0 auto;
+        }
+
+        body > .cre8-front-footer {
+            flex-shrink: 0;
+            margin-top: auto;
         }
 
         .hero-section {
@@ -606,6 +615,7 @@ $totalMessages = array_sum(array_column($forums, 'nb_messages'));
                 </div>
 
                 <?php if (empty($forums)): ?>
+                    <div class="empty-state">
                         <div class="empty-state-icon">💬</div>
                         <h3>Aucun forum pour le moment</h3>
                         <p>Les forums apparaissent automatiquement le jour des événements.</p>

@@ -6,11 +6,12 @@ require_once '../../../Controleur/adminAuditC.php';
 $actorId = cc_require_admin('../../FrontOffice/utilisateur/login.php');
 $actorRole = cc_current_user_role();
 
-function cre8_user_delete_redirect(string $message = ''): void
+function cre8_user_delete_redirect(string $message = '', string $type = 'error'): void
 {
     $location = 'index.php';
     if ($message !== '') {
-        $location .= '?error=' . urlencode($message);
+        $param = $type === 'success' ? 'success' : 'error';
+        $location .= '?' . $param . '=' . urlencode($message);
     }
     header('Location: ' . $location);
     exit;
@@ -29,20 +30,10 @@ if (isset($_GET['id'])) {
         cre8_user_delete_redirect('You are not allowed to perform this action.');
     }
 
-    $userC->supprimerUser($targetId);
-    if ($userC->getUserById($targetId)) {
-        cre8_user_delete_redirect('Unable to delete this account.');
-    }
-
-    cc_log_admin_action(
-        $actorId,
-        $actorRole,
-        'delete_user',
-        $targetId,
-        $targetUser['role'] ?? null,
-        $targetUser['statut'] ?? null,
-        'deleted',
-        'Deleted from BackOffice user management'
+    $result = $userC->softDeleteUserById($targetId, $actorId, $actorRole, 'Deleted from BackOffice user management');
+    cre8_user_delete_redirect(
+        (string)($result['message'] ?? (!empty($result['success']) ? 'Account deleted successfully.' : 'Unable to delete this account.')),
+        !empty($result['success']) ? 'success' : 'error'
     );
 }
 

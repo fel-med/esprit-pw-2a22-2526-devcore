@@ -6,8 +6,100 @@ require_once __DIR__ . '/../../../Controleur/produitC.php';
 require_once __DIR__ . '/../layout/avatar_helper.php';
 
 $frontActive = 'campaigns';
-
+$currentFrontUser = cre8_front_session_user();
+$isAdminVisitor = cre8_front_is_admin_visitor($currentFrontUser);
+$currentFrontRole = cre8_front_normalize_role($currentFrontUser['role'] ?? '');
+$currentFrontUserId = (int) ($currentFrontUser['id'] ?? 0);
+$canReviewProducts = !empty($currentFrontUser['isLoggedIn']) && $currentFrontRole === 'createur';
 $controller = new ProduitC();
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['action'] ?? '') === 'product_reviews') {
+    header('Content-Type: application/json; charset=utf-8');
+
+    try {
+        $productId = (int) ($_GET['idProduit'] ?? $_GET['product_id'] ?? 0);
+        $product = $controller->recupererProduit($productId);
+        if (!$product || !empty($product['estArchive'])) {
+            http_response_code(404);
+            throw new RuntimeException('Product not found.');
+        }
+
+        $rating = isset($_GET['rating']) && $_GET['rating'] !== '' ? (int) $_GET['rating'] : null;
+        $page = (int) ($_GET['page'] ?? 1);
+        $perPage = (int) ($_GET['per_page'] ?? 5);
+        $stats = $controller->getProductReviewStats([$productId])[$productId] ?? ['avgRating' => null, 'reviewCount' => 0];
+
+        echo json_encode([
+            'success' => true,
+            'stats' => $stats,
+            'reviewPage' => $controller->getPaginatedProductReviews($productId, $page, $perPage, $rating),
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    } catch (Throwable $e) {
+        if (http_response_code() < 400) {
+            http_response_code(400);
+        }
+        echo json_encode([
+            'success' => false,
+            'message' => $e->getMessage(),
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $productAction = trim((string) ($_POST['action'] ?? $_POST['product_action'] ?? ''));
+    if (in_array($productAction, ['interested', 'product_interest', 'apply_product'], true)) {
+        http_response_code(403);
+        $isAjax = strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest';
+        if ($isAjax) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Product applications were replaced by reviews.',
+            ]);
+        } else {
+            echo 'Product applications were replaced by reviews.';
+        }
+        exit;
+    }
+
+    if ($productAction === 'save_review') {
+        header('Content-Type: application/json; charset=utf-8');
+
+        try {
+            if (!$canReviewProducts) {
+                http_response_code(403);
+                throw new RuntimeException('Only creators can write product reviews.');
+            }
+
+            $productId = (int) ($_POST['idProduit'] ?? $_POST['product_id'] ?? 0);
+            $rating = (int) ($_POST['rating'] ?? 0);
+            $title = (string) ($_POST['title'] ?? '');
+            $reviewText = (string) ($_POST['reviewText'] ?? $_POST['review_text'] ?? '');
+
+            $review = $controller->saveOrUpdateProductReview($productId, $currentFrontUserId, $rating, $title, $reviewText);
+            $stats = $controller->getProductReviewStats([$productId])[$productId] ?? ['avgRating' => null, 'reviewCount' => 0];
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Review saved.',
+                'review' => $review,
+                'stats' => $stats,
+                'reviewPage' => $controller->getPaginatedProductReviews($productId, 1, 5, null),
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        } catch (Throwable $e) {
+            if (http_response_code() < 400) {
+                http_response_code(400);
+            }
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
+        exit;
+    }
+}
+
 $cre8SelfPath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
 $cre8VuePos = strpos($cre8SelfPath, '/Vue/');
 $baseUrl = $cre8VuePos !== false ? substr($cre8SelfPath, 0, $cre8VuePos) : '';
@@ -21,8 +113,13 @@ if (!function_exists('cre8_product_image_url')) {
 }
 
 // Load all active products (no marque filter — public catalog)
-$produits   = $controller->afficherProduits();
+$initialSort = in_array(($_GET['sort'] ?? ''), ['rating_desc', 'rating_asc', 'reviews_desc'], true) ? (string) $_GET['sort'] : '';
+$produits   = $controller->afficherProduits(null, $initialSort);
 $categories = $controller->getCategories();
+$productIds = array_map(static fn($p) => (int) ($p['idProduit'] ?? 0), $produits);
+$reviewStats = $controller->getProductReviewStats($productIds);
+$productReviews = $controller->getProductReviewsForProducts($productIds);
+$myProductReviews = $canReviewProducts ? $controller->getCreatorReviewsForProducts($currentFrontUserId, $productIds) : [];
 
 // Detail view: ?voir=ID
 $produitDetail = null;
@@ -264,6 +361,8 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
         .product-brand-row { display: inline-flex; align-items: center; gap: 7px; color: var(--text-sub); font-size: 12px; font-weight: 700; margin-bottom: 8px; max-width: 100%; }
         .product-brand-row span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .pcard-name { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 800; color: var(--text-main); line-height: 1.25; margin-bottom: 6px; letter-spacing: -0.2px; }
+        .pcard-rating { display: inline-flex; align-items: center; gap: 4px; width: fit-content; margin-bottom: 8px; padding: 4px 9px; border-radius: 999px; background: var(--warning-light); color: var(--warning); border: 1px solid var(--warning-border); font-size: 12px; font-weight: 800; }
+        .pcard-rating.is-empty { background: var(--bg); color: var(--text-sub); border-color: var(--border); }
         .pcard-desc { font-size: 13px; color: var(--text-sub); line-height: 1.6; margin-bottom: 10px; flex: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
         /* Tags on card */
@@ -279,8 +378,8 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
         .pcard-actions { display: flex; gap: 8px; padding-top: 14px; border-top: 1px solid var(--border); flex-wrap: wrap; }
         .btn-see-detail { flex: 1; min-width: 80px; padding: 9px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; font-family: 'DM Sans', sans-serif; cursor: pointer; text-align: center; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: background .18s, transform .15s; box-shadow: 0 2px 8px var(--primary-glow); }
         .btn-see-detail:hover { background: var(--primary-hover); transform: translateY(-1px); }
-        .btn-interested { flex: 0 0 auto; padding: 9px 14px; background: var(--primary-light); color: var(--primary); border: 1.5px solid var(--primary-border); border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background .18s; }
-        .btn-interested:hover { background: var(--primary-light); filter: brightness(.92); }
+        .btn-review-product { flex: 0 0 auto; padding: 9px 14px; background: var(--primary-light); color: var(--primary); border: 1.5px solid var(--primary-border); border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background .18s; }
+        .btn-review-product:hover { background: var(--primary-light); filter: brightness(.92); }
 
         /* ── EMPTY STATE ── */
         .empty-state { text-align: center; padding: 64px 24px; background: var(--white); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--card-shadow); transition: background .25s, border-color .25s; }
@@ -300,6 +399,8 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
         .detail-cat { font-size: 11px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
         .detail-name { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 900; color: var(--text-main); margin-bottom: 8px; letter-spacing: -0.5px; }
         .detail-price { font-family: 'Fraunces', serif; font-size: 30px; font-weight: 900; color: var(--primary); margin-bottom: 12px; }
+        .detail-rating { display: inline-flex; align-items: center; gap: 5px; margin-bottom: 12px; padding: 6px 11px; border-radius: 999px; background: var(--warning-light); border: 1px solid var(--warning-border); color: var(--warning); font-size: 13px; font-weight: 900; }
+        .detail-rating.is-empty { background: var(--bg); border-color: var(--border); color: var(--text-sub); }
         .detail-dispo { font-size: 13px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
         .detail-dispo.available { color: var(--success); }
         .detail-dispo.future { color: var(--warning); }
@@ -314,6 +415,48 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
         .btn-primary-detail:hover { background: var(--primary-hover); }
         .btn-close-detail { background: var(--bg); color: var(--text-sub); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; margin-left: auto; transition: all .2s; }
         .btn-close-detail:hover { background: var(--white); }
+
+        .reviews-panel { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
+        .reviews-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+        .reviews-head h4 { margin: 0; font-family: 'Fraunces', serif; font-size: 17px; font-weight: 900; color: var(--text-main); }
+        .review-filter-row { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-bottom: 12px; }
+        .review-filter-chip { border: 1.5px solid var(--border); background: var(--bg); color: var(--text-sub); border-radius: 999px; padding: 6px 10px; font: 800 12px 'DM Sans', sans-serif; cursor: pointer; transition: all .16s; }
+        .review-filter-chip:hover { border-color: var(--primary); color: var(--primary); }
+        .review-filter-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 3px 10px var(--primary-glow); }
+        .review-list { display: grid; gap: 10px; max-height: 360px; overflow-y: auto; padding-right: 4px; }
+        .review-item { border: 1px solid var(--border); border-radius: 12px; background: var(--bg); padding: 12px; }
+        .review-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+        .review-author { color: var(--text-main); font-size: 13px; font-weight: 900; }
+        .review-stars { color: var(--warning); font-size: 13px; letter-spacing: 0.03em; white-space: nowrap; }
+        .review-title { margin: 0 0 4px; color: var(--text-main); font-size: 13px; font-weight: 900; }
+        .review-text { margin: 0; color: var(--text-sub); font-size: 13px; line-height: 1.55; }
+        .review-date { margin-top: 7px; color: var(--text-dim); font-size: 11px; font-weight: 700; }
+        .review-empty { border: 1px dashed var(--border); border-radius: 12px; padding: 14px; color: var(--text-sub); font-size: 13px; background: var(--bg); }
+        .review-pager { display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+        .review-pager .pg-btn { padding: 6px 10px; font-size: 12px; min-width: 32px; }
+        .review-loading { border: 1px dashed var(--border); border-radius: 12px; padding: 14px; color: var(--text-sub); font-size: 13px; background: var(--bg); }
+
+        .review-overlay { display: none; position: fixed; inset: 0; z-index: 420; align-items: center; justify-content: center; padding: 20px; background: rgba(15,14,26,0.58); }
+        .review-overlay.open { display: flex; }
+        .review-box { width: 520px; max-width: 100%; background: var(--white); border: 1px solid var(--border); border-radius: 18px; box-shadow: 0 24px 70px rgba(15,14,26,0.26); padding: 24px; animation: slideUp .22s ease; }
+        .review-box-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+        .review-box h3 { margin: 0; font-family: 'Fraunces', serif; font-size: 22px; font-weight: 900; color: var(--text-main); }
+        .review-product-name { margin-top: 5px; color: var(--text-sub); font-size: 13px; font-weight: 700; }
+        .review-close { width: 34px; height: 34px; border: 0; border-radius: 999px; background: var(--bg); color: var(--text-sub); cursor: pointer; font-size: 16px; }
+        .review-field { display: grid; gap: 7px; margin-bottom: 14px; }
+        .review-field label { color: var(--text-main); font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; }
+        .review-field input, .review-field textarea { width: 100%; border: 1.5px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text-main); padding: 11px 12px; font: 600 14px 'DM Sans', sans-serif; outline: none; transition: border-color .18s, box-shadow .18s; }
+        .review-field textarea { min-height: 116px; resize: vertical; line-height: 1.55; }
+        .review-field input:focus, .review-field textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+        .star-picker { display: inline-flex; gap: 4px; width: fit-content; padding: 6px 8px; border: 1px solid var(--border); border-radius: 999px; background: var(--bg); }
+        .star-picker button { border: 0; background: transparent; color: var(--text-dim); font-size: 24px; line-height: 1; cursor: pointer; transition: color .15s, transform .15s; }
+        .star-picker button.is-selected, .star-picker button:hover { color: var(--warning); transform: translateY(-1px); }
+        .review-message { min-height: 19px; color: var(--danger); font-size: 13px; font-weight: 800; margin-bottom: 12px; }
+        .review-message.success { color: var(--success); }
+        .review-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
+        .review-cancel { background: var(--bg); color: var(--text-sub); border: 1.5px solid var(--border); border-radius: 10px; padding: 10px 16px; font-weight: 800; cursor: pointer; }
+        .review-submit { background: var(--primary); color: #fff; border: 0; border-radius: 10px; padding: 10px 18px; font-weight: 900; cursor: pointer; box-shadow: 0 3px 10px var(--primary-glow); }
+        .review-submit:disabled { opacity: 0.65; cursor: wait; }
 
         /* ===== ADDED FEATURE: PAGINATION ===== */
         .pagination-bar { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 28px 0 4px; flex-wrap: wrap; }
@@ -509,6 +652,9 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
                 <option value="prix_asc" data-i18n="sortPriceAsc">Price ↑</option>
                 <option value="prix_desc" data-i18n="sortPriceDesc">Price ↓</option>
                 <option value="epingle" data-i18n="sortFeatured">Featured first</option>
+                <option value="rating_desc" data-i18n="sortRatingDesc">Highest rated</option>
+                <option value="rating_asc" data-i18n="sortRatingAsc">Lowest rated</option>
+                <option value="reviews_desc" data-i18n="sortMostReviewed">Most reviewed</option>
             </select>
             <div class="view-toggle">
                 <button class="view-btn active" id="vbtn-grid" title="Grid">
@@ -553,20 +699,28 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
     </div>
     <?php else: ?>
     <div class="products-grid" id="productsGrid">
-        <?php foreach ($produits as $p):
+        <?php $cardOrder = 0; foreach ($produits as $p):
+            $productId   = (int) $p['idProduit'];
             $isPinned    = !empty($p['estEpingle']);
             $dispo       = $p['dateDisponibilite'] ?? null;
             $dispoFuture = $dispo && strtotime($dispo) > time();
             $tags        = array_filter(array_map('trim', explode(',', $p['caracteristiques'] ?? '')));
             $brandName   = trim((string) ($p['nomMarque'] ?? ''));
+            $stats       = $reviewStats[$productId] ?? ['avgRating' => null, 'reviewCount' => 0];
+            $avgRating   = $stats['avgRating'];
+            $reviewCount = (int) ($stats['reviewCount'] ?? 0);
+            $hasMyReview = isset($myProductReviews[$productId]);
         ?>
         <div class="product-card <?= $isPinned ? 'is-pinned' : '' ?>"
-             data-id="<?= $p['idProduit'] ?>"
+             data-id="<?= $productId ?>"
              data-name="<?= htmlspecialchars(strtolower($p['nomProduit'])) ?>"
              data-desc="<?= htmlspecialchars(strtolower($p['description'] ?? '')) ?>"
              data-prix="<?= (float)$p['prix'] ?>"
              data-cat="<?= htmlspecialchars(strtolower($p['categorie'] ?? '')) ?>"
              data-epingle="<?= (int)$isPinned ?>"
+             data-rating="<?= $reviewCount > 0 ? htmlspecialchars((string) $avgRating, ENT_QUOTES, 'UTF-8') : '' ?>"
+             data-review-count="<?= $reviewCount ?>"
+             data-order="<?= $cardOrder++ ?>"
              data-img="<?= !empty($p['image']) ? htmlspecialchars(cre8_product_image_url($p['image']), ENT_QUOTES, 'UTF-8') : '' ?>"
              data-tags="<?= htmlspecialchars(implode(',', $tags)) ?>"
              data-dispo="<?= htmlspecialchars($dispo ?? '') ?>">
@@ -616,6 +770,11 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
                 <?php endif; ?>
 
                 <div class="pcard-name"><?= htmlspecialchars($p['nomProduit']) ?></div>
+                <div class="pcard-rating <?= $reviewCount > 0 ? '' : 'is-empty' ?>" data-rating-product="<?= $productId ?>">
+                    <?= $reviewCount > 0
+                        ? '★ ' . number_format((float) $avgRating, 1) . ' · ' . $reviewCount . ' ' . ($reviewCount === 1 ? 'review' : 'reviews')
+                        : '☆ No reviews yet' ?>
+                </div>
                 <p class="pcard-desc"><?= htmlspecialchars($p['description'] ?? '') ?></p>
 
                 <?php if ($dispo): ?>
@@ -643,7 +802,9 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
                         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                         <span data-i18n="seeDetails">See details</span>
                     </button>
-                    <button class="btn-interested" data-i18n="interested">✉️ I'm interested</button>
+                    <?php if ($canReviewProducts): ?>
+                    <button class="btn-review-product" data-review-button-product="<?= $productId ?>" data-i18n="<?= $hasMyReview ? 'editReview' : 'writeReview' ?>"><?= $hasMyReview ? '★ See / change your review' : '★ Write a review' ?></button>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -672,6 +833,7 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
             <div class="detail-cat" id="detailCat"></div>
             <div class="detail-name" id="detailName"></div>
             <div class="detail-price" id="detailPrice"></div>
+            <div class="detail-rating is-empty" id="detailRating">☆ No reviews yet</div>
             <div class="detail-dispo" id="detailDispo"></div>
             <div class="detail-marque" id="detailMarque" style="display:none;"></div>
             <div class="detail-desc" id="detailDesc"></div>
@@ -680,11 +842,69 @@ $categoriesDisponibles = ['Beauty & Care','Fashion & Accessories','Tech & Gadget
                 <div class="detail-carac" id="detailCarac"></div>
                 <div class="detail-tags" id="detailTags" style="margin-top:8px;"></div>
             </div>
+            <div class="reviews-panel">
+                <div class="reviews-head">
+                    <h4 data-i18n="reviewsTitle">Product reviews</h4>
+                </div>
+                <div class="review-filter-row" id="detailReviewFilters" aria-label="Review star filters">
+                    <button type="button" class="review-filter-chip active" data-rating="" data-i18n="allStars">All stars</button>
+                    <button type="button" class="review-filter-chip" data-rating="5">5★</button>
+                    <button type="button" class="review-filter-chip" data-rating="4">4★</button>
+                    <button type="button" class="review-filter-chip" data-rating="3">3★</button>
+                    <button type="button" class="review-filter-chip" data-rating="2">2★</button>
+                    <button type="button" class="review-filter-chip" data-rating="1">1★</button>
+                </div>
+                <div class="review-list" id="detailReviews"></div>
+                <div class="review-pager" id="detailReviewPager"></div>
+            </div>
             <div class="detail-actions">
-                <button class="btn-primary-detail" data-i18n="applyBtn">✉️ Apply for this product</button>
+                <?php if ($canReviewProducts): ?>
+                <button class="btn-primary-detail" id="detailReviewBtn" data-i18n="writeReview">★ Write a review</button>
+                <?php endif; ?>
                 <button class="btn-close-detail" data-i18n="closeBtn">Close</button>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- REVIEW MODAL -->
+<div class="review-overlay" id="reviewModal" aria-hidden="true">
+    <div class="review-box" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle">
+        <div class="review-box-head">
+            <div>
+                <h3 id="reviewModalTitle" data-i18n="reviewModalTitle">Write a review</h3>
+                <div class="review-product-name" id="reviewProductName"></div>
+            </div>
+            <button type="button" class="review-close" id="reviewCloseBtn" aria-label="Close">×</button>
+        </div>
+        <form id="reviewForm">
+            <input type="hidden" name="action" value="save_review">
+            <input type="hidden" name="idProduit" id="reviewProductId" value="">
+            <input type="hidden" name="rating" id="reviewRatingValue" value="">
+            <div class="review-field">
+                <label data-i18n="ratingLabel">Rating</label>
+                <div class="star-picker" id="reviewStars" aria-label="Rating">
+                    <button type="button" data-rating="1">★</button>
+                    <button type="button" data-rating="2">★</button>
+                    <button type="button" data-rating="3">★</button>
+                    <button type="button" data-rating="4">★</button>
+                    <button type="button" data-rating="5">★</button>
+                </div>
+            </div>
+            <div class="review-field">
+                <label for="reviewTitle" data-i18n="reviewTitleLabel">Title</label>
+                <input type="text" id="reviewTitle" name="title" maxlength="150" data-i18n-placeholder="reviewTitlePlaceholder" placeholder="What stood out?">
+            </div>
+            <div class="review-field">
+                <label for="reviewText" data-i18n="reviewTextLabel">Review</label>
+                <textarea id="reviewText" name="reviewText" maxlength="2000" data-i18n-placeholder="reviewTextPlaceholder" placeholder="Share your experience with this product."></textarea>
+            </div>
+            <div class="review-message" id="reviewMessage"></div>
+            <div class="review-actions">
+                <button type="button" class="review-cancel" id="reviewCancelBtn" data-i18n="cancelReview">Cancel</button>
+                <button type="submit" class="review-submit" id="reviewSubmitBtn" data-i18n="saveReview">Save review</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -711,13 +931,15 @@ const BASE_URL = <?= json_encode($baseUrl, JSON_UNESCAPED_SLASHES) ?>;
 const produitsMap = {};
 <?php foreach ($produits as $p): ?>
 <?php
+    $productId = (int) $p['idProduit'];
     $brandName = trim((string) ($p['nomMarque'] ?? ''));
     $brandHtml = $brandName !== ''
         ? cre8_render_avatar((int) ($p['idMarque'] ?? 0), $brandName, 'cre8-avatar-sm') . '<span>' . htmlspecialchars($brandName, ENT_QUOTES, 'UTF-8') . '</span>'
         : '';
+    $stats = $reviewStats[$productId] ?? ['avgRating' => null, 'reviewCount' => 0];
 ?>
-produitsMap[<?= $p['idProduit'] ?>] = {
-    id:     <?= $p['idProduit'] ?>,
+produitsMap[<?= $productId ?>] = {
+    id:     <?= $productId ?>,
     nom:    <?= json_encode($p['nomProduit']) ?>,
     desc:   <?= json_encode($p['description'] ?? '') ?>,
     carac:  <?= json_encode($p['caracteristiques'] ?? '') ?>,
@@ -727,8 +949,303 @@ produitsMap[<?= $p['idProduit'] ?>] = {
     dispo:  <?= json_encode($p['dateDisponibilite'] ?? '') ?>,
     marque: <?= json_encode($brandName !== '' ? $brandName : (($p['idMarque'] ?? null) ? 'Brand ID #' . $p['idMarque'] : null)) ?>,
     marqueHtml: <?= json_encode($brandHtml) ?>,
+    reviewStats: <?= json_encode($stats, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>,
+    reviews: <?= json_encode($productReviews[$productId] ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>,
+    myReview: <?= json_encode($myProductReviews[$productId] ?? null, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>,
 };
 <?php endforeach; ?>
+
+const CAN_REVIEW_PRODUCTS = <?= $canReviewProducts ? 'true' : 'false' ?>;
+const INITIAL_SORT = <?= json_encode($initialSort) ?>;
+const DETAIL_REVIEWS_PER_PAGE = 5;
+let currentDetailProductId = null;
+let activeReviewProductId = null;
+let detailReviewPage = 1;
+let detailReviewRating = '';
+
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, ch => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+    }[ch]));
+}
+
+function formatReviewSummary(stats) {
+    const count = parseInt(stats?.reviewCount || 0, 10);
+    if (!count) return '☆ No reviews yet';
+    const avg = Number(stats.avgRating || 0).toFixed(1);
+    return `★ ${avg} · ${count} ${count === 1 ? 'review' : 'reviews'}`;
+}
+
+function getReviewButtonLabel(product) {
+    const T = translations[currentLang] || translations.en;
+    return product && product.myReview
+        ? (T.editReview || '★ See / change your review')
+        : (T.writeReview || '★ Write a review');
+}
+
+function renderStars(rating) {
+    const value = Math.max(0, Math.min(5, parseInt(rating || 0, 10)));
+    return '★'.repeat(value) + '☆'.repeat(5 - value);
+}
+
+function updateProductRatingUI(productId) {
+    const p = produitsMap[productId];
+    if (!p) return;
+    const hasReviews = !!(p.reviewStats && parseInt(p.reviewStats.reviewCount || 0, 10) > 0);
+    const rating = hasReviews ? Number(p.reviewStats.avgRating || 0) : 0;
+    const count = parseInt(p.reviewStats.reviewCount || 0, 10);
+    document.querySelectorAll(`[data-rating-product="${productId}"]`).forEach(el => {
+        el.textContent = formatReviewSummary(p.reviewStats || {});
+        el.classList.toggle('is-empty', !hasReviews);
+    });
+    document.querySelectorAll(`.product-card[data-id="${productId}"]`).forEach(card => {
+        card.dataset.rating = hasReviews ? String(rating) : '';
+        card.dataset.reviewCount = String(count);
+    });
+    updateReviewButtons(productId);
+    if (String(currentDetailProductId) === String(productId)) {
+        const detailRating = document.getElementById('detailRating');
+        detailRating.textContent = formatReviewSummary(p.reviewStats || {});
+        detailRating.classList.toggle('is-empty', !hasReviews);
+        fetchDetailReviews(productId, detailReviewPage, detailReviewRating);
+    }
+}
+
+function updateReviewButtons(productId) {
+    if (!CAN_REVIEW_PRODUCTS) return;
+    const p = produitsMap[productId];
+    if (!p) return;
+    const label = getReviewButtonLabel(p);
+    const key = p.myReview ? 'editReview' : 'writeReview';
+    document.querySelectorAll(`[data-review-button-product="${productId}"]`).forEach(btn => {
+        btn.setAttribute('data-i18n', key);
+        btn.textContent = label;
+    });
+    if (String(currentDetailProductId) === String(productId)) {
+        const detailBtn = document.getElementById('detailReviewBtn');
+        if (detailBtn) {
+            detailBtn.setAttribute('data-i18n', key);
+            detailBtn.textContent = label;
+        }
+    }
+}
+
+function renderDetailReviews(product, reviewPage = null) {
+    const wrap = document.getElementById('detailReviews');
+    const pager = document.getElementById('detailReviewPager');
+    if (!wrap) return;
+    const pageData = reviewPage || {
+        reviews: Array.isArray(product.reviews) ? product.reviews.slice(0, DETAIL_REVIEWS_PER_PAGE) : [],
+        total: Array.isArray(product.reviews) ? product.reviews.length : 0,
+        page: 1,
+        pages: Math.max(1, Math.ceil((Array.isArray(product.reviews) ? product.reviews.length : 0) / DETAIL_REVIEWS_PER_PAGE)),
+        rating: detailReviewRating || null
+    };
+    const reviews = Array.isArray(pageData.reviews) ? pageData.reviews : [];
+    const T = translations[currentLang] || translations.en;
+    if (!reviews.length) {
+        wrap.innerHTML = `<div class="review-empty">${escapeHtml(pageData.rating ? (T.noReviewsMatch || 'No reviews match this filter.') : (T.noReviewsYet || 'No reviews yet.'))}</div>`;
+        if (pager) pager.innerHTML = '';
+        return;
+    }
+
+    wrap.innerHTML = reviews.map(review => {
+        const date = review.createdAt ? new Date(review.createdAt.replace(' ', 'T')) : null;
+        const formattedDate = date && !Number.isNaN(date.getTime())
+            ? date.toLocaleDateString(currentLang === 'fr' ? 'fr-FR' : 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+            : '';
+        return `
+            <article class="review-item">
+                <div class="review-top">
+                    <span class="review-author">${escapeHtml(review.creatorName || 'Creator')}</span>
+                    <span class="review-stars">${renderStars(review.rating)}</span>
+                </div>
+                <h5 class="review-title">${escapeHtml(review.title || '')}</h5>
+                <p class="review-text">${escapeHtml(review.reviewText || '')}</p>
+                ${formattedDate ? `<div class="review-date">${escapeHtml(formattedDate)}</div>` : ''}
+            </article>
+        `;
+    }).join('');
+    renderDetailReviewPager(pageData);
+}
+
+function renderDetailReviewPager(pageData) {
+    const pager = document.getElementById('detailReviewPager');
+    if (!pager) return;
+    const pages = Math.max(1, parseInt(pageData.pages || 1, 10));
+    const page = Math.max(1, parseInt(pageData.page || 1, 10));
+    if (pages <= 1) {
+        pager.innerHTML = '';
+        return;
+    }
+    const T = translations[currentLang] || translations.en;
+    let html = `<button class="pg-btn" type="button" data-review-page="${page - 1}" ${page <= 1 ? 'disabled' : ''}>${escapeHtml(T.prevPage || '← Prev')}</button>`;
+    for (let i = 1; i <= pages; i++) {
+        if (i === 1 || i === pages || Math.abs(i - page) <= 1) {
+            html += `<button class="pg-btn${i === page ? ' current' : ''}" type="button" data-review-page="${i}">${i}</button>`;
+        } else if (i === page - 2 || i === page + 2) {
+            html += `<span class="pg-dots">…</span>`;
+        }
+    }
+    html += `<button class="pg-btn" type="button" data-review-page="${page + 1}" ${page >= pages ? 'disabled' : ''}>${escapeHtml(T.nextPage || 'Next →')}</button>`;
+    pager.innerHTML = html;
+    pager.querySelectorAll('[data-review-page]').forEach(btn => {
+        btn.addEventListener('click', () => fetchDetailReviews(currentDetailProductId, parseInt(btn.dataset.reviewPage || '1', 10), detailReviewRating));
+    });
+}
+
+async function fetchDetailReviews(productId, page = 1, rating = '') {
+    if (!productId) return;
+    const wrap = document.getElementById('detailReviews');
+    const pager = document.getElementById('detailReviewPager');
+    const T = translations[currentLang] || translations.en;
+    detailReviewPage = Math.max(1, parseInt(page || 1, 10));
+    detailReviewRating = rating ? String(rating) : '';
+    if (wrap) wrap.innerHTML = `<div class="review-loading">${escapeHtml(T.reviewsLoading || 'Loading reviews...')}</div>`;
+    if (pager) pager.innerHTML = '';
+
+    try {
+        const url = new URL(window.location.href);
+        url.searchParams.set('action', 'product_reviews');
+        url.searchParams.set('idProduit', String(productId));
+        url.searchParams.set('page', String(detailReviewPage));
+        url.searchParams.set('per_page', String(DETAIL_REVIEWS_PER_PAGE));
+        if (detailReviewRating) {
+            url.searchParams.set('rating', detailReviewRating);
+        } else {
+            url.searchParams.delete('rating');
+        }
+        const response = await fetch(url.toString(), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin'
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.success) {
+            throw new Error(payload.message || 'Reviews could not be loaded.');
+        }
+        const p = produitsMap[productId];
+        if (p && payload.stats) {
+            p.reviewStats = payload.stats;
+            const hasReviews = parseInt(p.reviewStats.reviewCount || 0, 10) > 0;
+            document.querySelectorAll(`[data-rating-product="${productId}"]`).forEach(el => {
+                el.textContent = formatReviewSummary(p.reviewStats || {});
+                el.classList.toggle('is-empty', !hasReviews);
+            });
+            document.querySelectorAll(`.product-card[data-id="${productId}"]`).forEach(card => {
+                card.dataset.rating = hasReviews ? String(Number(p.reviewStats.avgRating || 0)) : '';
+                card.dataset.reviewCount = String(parseInt(p.reviewStats.reviewCount || 0, 10));
+            });
+            const detailRating = document.getElementById('detailRating');
+            if (detailRating && String(currentDetailProductId) === String(productId)) {
+                detailRating.textContent = formatReviewSummary(p.reviewStats || {});
+                detailRating.classList.toggle('is-empty', !hasReviews);
+            }
+        }
+        renderDetailReviews(p || {}, payload.reviewPage || null);
+    } catch (error) {
+        if (wrap) wrap.innerHTML = `<div class="review-empty">${escapeHtml(error.message || 'Reviews could not be loaded.')}</div>`;
+    }
+}
+
+function setReviewRating(value) {
+    const parsed = parseInt(value || 0, 10);
+    const rating = parsed > 0 ? Math.max(1, Math.min(5, parsed)) : 0;
+    document.getElementById('reviewRatingValue').value = rating ? String(rating) : '';
+    document.querySelectorAll('#reviewStars button').forEach(btn => {
+        btn.classList.toggle('is-selected', parseInt(btn.dataset.rating || 0, 10) <= rating);
+    });
+}
+
+function openReviewModal(productId) {
+    if (!CAN_REVIEW_PRODUCTS) return;
+    const p = produitsMap[productId];
+    if (!p) return;
+
+    activeReviewProductId = productId;
+    const existing = p.myReview || null;
+    const T = translations[currentLang] || translations.en;
+    document.getElementById('reviewProductId').value = String(productId);
+    document.getElementById('reviewProductName').textContent = p.nom || '';
+    document.getElementById('reviewTitle').value = existing?.title || '';
+    document.getElementById('reviewText').value = existing?.reviewText || '';
+    document.getElementById('reviewMessage').textContent = '';
+    document.getElementById('reviewMessage').classList.remove('success');
+    document.getElementById('reviewSubmitBtn').textContent = existing ? (T.updateReview || 'Update review') : (T.saveReview || 'Save review');
+    setReviewRating(existing?.rating || 0);
+
+    const modal = document.getElementById('reviewModal');
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeReviewModal() {
+    const modal = document.getElementById('reviewModal');
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    activeReviewProductId = null;
+    if (!document.getElementById('detailModal').classList.contains('open')) {
+        document.body.style.overflow = '';
+    }
+}
+
+async function submitReviewForm(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const message = document.getElementById('reviewMessage');
+    const submit = document.getElementById('reviewSubmitBtn');
+    const T = translations[currentLang] || translations.en;
+    message.classList.remove('success');
+    message.textContent = '';
+
+    if (!document.getElementById('reviewRatingValue').value) {
+        message.textContent = T.ratingRequired || 'Please choose a rating.';
+        return;
+    }
+
+    submit.disabled = true;
+    try {
+        const response = await fetch(window.location.href, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin'
+        });
+        const text = await response.text();
+        let payload;
+        try {
+            payload = JSON.parse(text);
+        } catch (error) {
+            throw new Error('The review server returned an invalid response.');
+        }
+        if (!response.ok || !payload.success) {
+            throw new Error(payload.message || 'Review could not be saved.');
+        }
+
+        const productId = document.getElementById('reviewProductId').value;
+        const p = produitsMap[productId];
+        if (p) {
+            p.myReview = payload.review || p.myReview;
+            p.reviewStats = payload.stats || p.reviewStats;
+            if (payload.reviewPage && Array.isArray(payload.reviewPage.reviews)) {
+                p.reviews = payload.reviewPage.reviews;
+            }
+            detailReviewPage = 1;
+            detailReviewRating = '';
+            document.querySelectorAll('#detailReviewFilters .review-filter-chip').forEach(chip => {
+                chip.classList.toggle('active', chip.dataset.rating === '');
+            });
+            updateProductRatingUI(productId);
+        }
+        message.classList.add('success');
+        message.textContent = T.reviewSaved || 'Review saved.';
+        setTimeout(closeReviewModal, 450);
+    } catch (error) {
+        message.textContent = error.message || 'Review could not be saved.';
+    } finally {
+        submit.disabled = false;
+    }
+}
 
 // ── CATEGORY FILTER ────────────────────────────────────────────────
 let activeCategory = '';
@@ -736,7 +1253,7 @@ function filterByCategory(cat, btn) {
     activeCategory = cat.toLowerCase();
     document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
     btn.classList.add('active');
-    filterAndPaginate();
+    sortProducts();
 }
 
 // ── FILTER + SEARCH (now calls paginator) ─────────────────────────
@@ -771,20 +1288,36 @@ function resetFilters() {
     document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
     const firstChip = document.querySelector('.cat-chip');
     if (firstChip) firstChip.classList.add('active');
-    filterAndPaginate();
+    sortProducts();
 }
 
 // ── SORT ───────────────────────────────────────────────────────────
 function sortProducts() {
     const mode = document.getElementById('sortSelect').value;
     const grid = document.getElementById('productsGrid');
-    if (!grid || !mode) return;
+    if (!grid) return;
     const cards = Array.from(grid.querySelectorAll('.product-card'));
+    const reviewedFirst = (card) => parseInt(card.dataset.reviewCount || 0, 10) > 0 ? 0 : 1;
     cards.sort((a, b) => {
+        if (!mode) return parseInt(a.dataset.order || 0, 10) - parseInt(b.dataset.order || 0, 10);
         if (mode === 'nom')       return (a.dataset.name || '').localeCompare(b.dataset.name || '');
         if (mode === 'prix_asc')  return parseFloat(a.dataset.prix) - parseFloat(b.dataset.prix);
         if (mode === 'prix_desc') return parseFloat(b.dataset.prix) - parseFloat(a.dataset.prix);
         if (mode === 'epingle')   return parseInt(b.dataset.epingle || 0) - parseInt(a.dataset.epingle || 0);
+        if (mode === 'rating_desc') {
+            return reviewedFirst(a) - reviewedFirst(b)
+                || parseFloat(b.dataset.rating || 0) - parseFloat(a.dataset.rating || 0)
+                || parseInt(b.dataset.reviewCount || 0, 10) - parseInt(a.dataset.reviewCount || 0, 10);
+        }
+        if (mode === 'rating_asc') {
+            return reviewedFirst(a) - reviewedFirst(b)
+                || parseFloat(a.dataset.rating || 0) - parseFloat(b.dataset.rating || 0)
+                || parseInt(b.dataset.reviewCount || 0, 10) - parseInt(a.dataset.reviewCount || 0, 10);
+        }
+        if (mode === 'reviews_desc') {
+            return parseInt(b.dataset.reviewCount || 0, 10) - parseInt(a.dataset.reviewCount || 0, 10)
+                || parseFloat(b.dataset.rating || 0) - parseFloat(a.dataset.rating || 0);
+        }
         return 0;
     });
     cards.forEach(c => grid.appendChild(c));
@@ -806,6 +1339,7 @@ function openDetail(e, id) {
     if (id === undefined) { id = e; e = null; }
     const p = produitsMap[id];
     if (!p) return;
+    currentDetailProductId = id;
 
     const imgEl = document.getElementById('detailImg');
     imgEl.innerHTML = p.img
@@ -818,6 +1352,10 @@ function openDetail(e, id) {
     document.getElementById('detailName').textContent  = p.nom;
     document.getElementById('detailPrice').textContent = p.prix.toFixed(2) + ' €';
 
+    const hasReviews = !!(p.reviewStats && parseInt(p.reviewStats.reviewCount || 0, 10) > 0);
+    const detailRating = document.getElementById('detailRating');
+    detailRating.textContent = formatReviewSummary(p.reviewStats || {});
+    detailRating.classList.toggle('is-empty', !hasReviews);
     const T = translations[currentLang] || translations['en'];
     const dispoEl = document.getElementById('detailDispo');
     if (p.dispo) {
@@ -847,12 +1385,25 @@ function openDetail(e, id) {
     const tags = (p.carac || '').split(',').map(t => t.trim()).filter(Boolean);
     tagsEl.innerHTML = tags.map(t => `<span class="detail-tag">🏷️ ${t}</span>`).join('');
 
+    detailReviewPage = 1;
+    detailReviewRating = '';
+    document.querySelectorAll('#detailReviewFilters .review-filter-chip').forEach(chip => {
+        chip.classList.toggle('active', chip.dataset.rating === '');
+    });
+    const detailReviewBtn = document.getElementById('detailReviewBtn');
+    if (detailReviewBtn) {
+        detailReviewBtn.setAttribute('data-product-id', id);
+        detailReviewBtn.setAttribute('data-i18n', p.myReview ? 'editReview' : 'writeReview');
+        detailReviewBtn.textContent = getReviewButtonLabel(p);
+    }
+    fetchDetailReviews(id, 1, '');
     document.getElementById('detailModal').classList.add('open');
     document.body.style.overflow = 'hidden';
 }
 
 function closeDetail() {
     document.getElementById('detailModal').classList.remove('open');
+    currentDetailProductId = null;
     document.body.style.overflow = '';
 }
 function closeDetailOutside(e) {
@@ -864,6 +1415,9 @@ document.addEventListener('DOMContentLoaded', () => openDetail(<?= $produitDetai
 <?php endif; ?>
 
 document.addEventListener('DOMContentLoaded', () => {
+    if (INITIAL_SORT) {
+        document.getElementById('sortSelect').value = INITIAL_SORT;
+    }
     // Category chips
     document.querySelectorAll('.cat-chip').forEach((chip, index) => {
         const cat = index === 0 ? '' : chip.textContent.trim().toLowerCase();
@@ -886,22 +1440,48 @@ document.addEventListener('DOMContentLoaded', () => {
         const id = btn.closest('.product-card').dataset.id;
         btn.addEventListener('click', (e) => openDetail(e, id));
     });
-    document.querySelectorAll('.btn-interested').forEach(btn => {
+    document.querySelectorAll('.btn-review-product').forEach(btn => {
         const id = btn.closest('.product-card').dataset.id;
-        btn.addEventListener('click', (e) => openDetail(e, id));
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openReviewModal(id);
+        });
     });
 
     // Modal close
     document.getElementById('detailModal').addEventListener('click', closeDetailOutside);
     document.querySelector('.detail-close').addEventListener('click', closeDetail);
-    document.querySelector('.btn-primary-detail').addEventListener('click', closeDetail);
+    document.querySelector('.btn-primary-detail')?.addEventListener('click', () => {
+        if (currentDetailProductId) openReviewModal(currentDetailProductId);
+    });
     document.querySelector('.btn-close-detail').addEventListener('click', closeDetail);
+    document.getElementById('reviewForm')?.addEventListener('submit', submitReviewForm);
+    document.getElementById('reviewCloseBtn')?.addEventListener('click', closeReviewModal);
+    document.getElementById('reviewCancelBtn')?.addEventListener('click', closeReviewModal);
+    document.getElementById('reviewModal')?.addEventListener('click', e => {
+        if (e.target === document.getElementById('reviewModal')) closeReviewModal();
+    });
+    document.querySelectorAll('#reviewStars button').forEach(btn => {
+        btn.addEventListener('click', () => setReviewRating(btn.dataset.rating));
+    });
+    document.querySelectorAll('#detailReviewFilters .review-filter-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            document.querySelectorAll('#detailReviewFilters .review-filter-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            fetchDetailReviews(currentDetailProductId, 1, chip.dataset.rating || '');
+        });
+    });
 
     // Init pagination on load
     applyPagination();
 });
 
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        if (document.getElementById('reviewModal')?.classList.contains('open')) closeReviewModal();
+        else closeDetail();
+    }
+});
 
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1025,6 +1605,9 @@ const translations = {
         sortPriceAsc: 'Price ↑',
         sortPriceDesc: 'Price ↓',
         sortFeatured: 'Featured first',
+        sortRatingDesc: 'Highest rated',
+        sortRatingAsc: 'Lowest rated',
+        sortMostReviewed: 'Most reviewed',
         // Filters
         categoryLabel: 'Category:',
         catAll: 'All',
@@ -1036,7 +1619,8 @@ const translations = {
         // Cards
         quickView: 'Quick view',
         seeDetails: 'See details',
-        interested: '✉️ I\'m interested',
+        writeReview: '★ Write a review',
+        editReview: '★ See / change your review',
         // Empty & no results
         emptyTitle: 'No products available yet',
         emptySubtitle: 'Brands are publishing products for collaboration. Check back soon!',
@@ -1044,7 +1628,23 @@ const translations = {
         noMatchSubtitle: 'Try adjusting your filters or search terms.',
         // Detail modal
         detailTagsLabel: 'Characteristics & Tags',
-        applyBtn: '✉️ Apply for this product',
+        applyBtn: '★ Write a review',
+        reviewsTitle: 'Product reviews',
+        allStars: 'All stars',
+        noReviewsYet: 'No reviews yet.',
+        noReviewsMatch: 'No reviews match this filter.',
+        reviewsLoading: 'Loading reviews...',
+        reviewModalTitle: 'Write a review',
+        ratingLabel: 'Rating',
+        reviewTitleLabel: 'Title',
+        reviewTitlePlaceholder: 'What stood out?',
+        reviewTextLabel: 'Review',
+        reviewTextPlaceholder: 'Share your experience with this product.',
+        saveReview: 'Save review',
+        updateReview: 'Update review',
+        cancelReview: 'Cancel',
+        ratingRequired: 'Please choose a rating.',
+        reviewSaved: 'Review saved.',
         closeBtn: 'Close',
         availableFrom: 'Available from',
         availableSince: 'Available since',
@@ -1090,6 +1690,9 @@ const translations = {
         sortPriceAsc: 'Prix ↑',
         sortPriceDesc: 'Prix ↓',
         sortFeatured: 'Vedettes en premier',
+        sortRatingDesc: 'Mieux notés',
+        sortRatingAsc: 'Moins bien notés',
+        sortMostReviewed: 'Plus d’avis',
         // Filters
         categoryLabel: 'Catégorie :',
         catAll: 'Toutes',
@@ -1101,7 +1704,8 @@ const translations = {
         // Cards
         quickView: 'Aperçu rapide',
         seeDetails: 'Voir les détails',
-        interested: '✉️ Je suis intéressé',
+        writeReview: '★ Écrire un avis',
+        editReview: '★ Voir / modifier votre avis',
         // Empty & no results
         emptyTitle: 'Aucun produit disponible',
         emptySubtitle: 'Les marques publient des produits pour collaborer. Revenez bientôt !',
@@ -1109,7 +1713,23 @@ const translations = {
         noMatchSubtitle: 'Essayez d\'ajuster vos filtres ou votre recherche.',
         // Detail modal
         detailTagsLabel: 'Caractéristiques & Tags',
-        applyBtn: '✉️ Postuler pour ce produit',
+        applyBtn: '★ Écrire un avis',
+        reviewsTitle: 'Avis produit',
+        allStars: 'Toutes les notes',
+        noReviewsYet: 'Aucun avis pour le moment.',
+        noReviewsMatch: 'Aucun avis ne correspond à ce filtre.',
+        reviewsLoading: 'Chargement des avis...',
+        reviewModalTitle: 'Écrire un avis',
+        ratingLabel: 'Note',
+        reviewTitleLabel: 'Titre',
+        reviewTitlePlaceholder: 'Qu’est-ce qui ressort ?',
+        reviewTextLabel: 'Avis',
+        reviewTextPlaceholder: 'Partagez votre expérience avec ce produit.',
+        saveReview: 'Enregistrer l’avis',
+        updateReview: 'Mettre à jour l’avis',
+        cancelReview: 'Annuler',
+        ratingRequired: 'Veuillez choisir une note.',
+        reviewSaved: 'Avis enregistré.',
         closeBtn: 'Fermer',
         availableFrom: 'Disponible à partir du',
         availableSince: 'Disponible depuis le',

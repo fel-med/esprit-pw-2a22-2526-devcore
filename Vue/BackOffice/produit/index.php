@@ -36,6 +36,8 @@ if (empty($_SESSION['user']['nom']) && empty($_SESSION['utilisateur']['nom']) &&
 $produitC = new ProduitC();
 $message = '';
 $messageType = '';
+$currentBackRole = function_exists('cc_current_user_role') ? cc_current_user_role() : ($_SESSION['role'] ?? '');
+$currentBackUserId = function_exists('cc_current_user_id') ? (cc_current_user_id() ?? 0) : (int) ($_SESSION['id'] ?? 0);
 $cre8SelfPath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
 $cre8VuePos = strpos($cre8SelfPath, '/Vue/');
 $baseUrl = $cre8VuePos !== false ? substr($cre8SelfPath, 0, $cre8VuePos) : '';
@@ -46,6 +48,50 @@ if (!function_exists('cre8_product_image_url')) {
         if ($filename === '') return '';
         return $baseUrl . '/Vue/public/produits/' . rawurlencode(basename($filename));
     }
+}
+
+if (($_GET['action'] ?? $_POST['action'] ?? '') === 'get_product_reviews') {
+    header('Content-Type: application/json; charset=utf-8');
+    $productId = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
+
+    try {
+        $product = $produitC->recupererProduit($productId);
+        if (!$product) {
+            http_response_code(404);
+            throw new RuntimeException('Product not found.');
+        }
+
+        $isBackOfficeUser = function_exists('cc_is_backoffice_role')
+            ? cc_is_backoffice_role($currentBackRole)
+            : in_array($currentBackRole, ['admin', 'super_admin', 'hyper_admin'], true);
+        $isOwnerBrand = $currentBackRole === 'marque'
+            && $currentBackUserId > 0
+            && (int) ($product['idMarque'] ?? 0) === $currentBackUserId;
+
+        if (!$isBackOfficeUser && !$isOwnerBrand) {
+            http_response_code(403);
+            throw new RuntimeException('You are not authorized to view product reviews.');
+        }
+
+        echo json_encode([
+            'success' => true,
+            'product' => [
+                'id' => (int) ($product['idProduit'] ?? 0),
+                'name' => (string) ($product['nomProduit'] ?? ''),
+            ],
+            'stats' => $produitC->getAllProductReviewStats($productId),
+            'reviews' => $produitC->getAllProductReviewsByProduct($productId),
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    } catch (Throwable $e) {
+        if (http_response_code() < 400) {
+            http_response_code(400);
+        }
+        echo json_encode([
+            'success' => false,
+            'message' => $e->getMessage(),
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+    exit;
 }
 define('DEVISE', '€');
 
@@ -282,13 +328,15 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
 .td-desc{color:var(--text-muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .prix-badge{display:inline-flex;background:var(--success-soft);color:var(--success);padding:3px 9px;border-radius:20px;font-size:12px;font-weight:600;}
 .cat-badge{display:inline-flex;background:var(--accent-soft);color:var(--accent);padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;}
-.action-group{display:flex;align-items:center;gap:4px;flex-wrap:nowrap;}
-.btn-action{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:var(--radius-sm);font-size:11px;font-weight:500;cursor:pointer;text-decoration:none;border:1px solid transparent;transition:.15s;white-space:nowrap;font-family:inherit;}
+.action-group{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:8px;width:100%;}
+.btn-action{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:34px;padding:6px 9px;border-radius:var(--radius-sm);font-size:11px;font-weight:700;line-height:1.1;cursor:pointer;text-decoration:none;border:1px solid transparent;transition:background .15s,color .15s,border-color .15s,transform .15s;white-space:nowrap;font-family:inherit;text-align:center;}
+.btn-action:hover{transform:translateY(-1px);}
 .btn-view{background:rgba(139,92,246,.1);color:var(--accent);border-color:rgba(139,92,246,.2);}
 .btn-edit-a{background:var(--warning-soft);color:var(--warning);border-color:rgba(245,158,11,.2);}
 .btn-delete{background:var(--danger-soft);color:var(--danger);border-color:rgba(239,68,68,.2);}
 .btn-pin{background:var(--warning-soft);color:var(--warning);border-color:rgba(245,158,11,.2);}
 .btn-archive{background:rgba(100,116,139,0.12);color:#64748b;border-color:rgba(100,116,139,.2);}
+.btn-reviews{background:var(--info-soft);color:var(--info);border-color:rgba(59,130,246,.28);}
 .td-img{position:relative;width:46px;}
 .td-img-thumb{position:relative;display:inline-block;}
 .td-img-thumb img{width:42px;height:42px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border);cursor:pointer;display:block;}
@@ -302,6 +350,28 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
 .status-badge.future{background:var(--warning-soft);color:var(--warning);}
 /* ARCHIVED */
 .btn-restore{background:var(--success-soft);color:var(--success);border:1px solid rgba(16,185,129,.2);font-family:inherit;}
+#reviewsModal.open{align-items:flex-start;justify-content:center;padding:clamp(72px,10vh,108px) 18px 24px;overflow-y:auto;}
+.reviews-modal-box{width:min(720px,calc(100vw - 36px));max-height:calc(100vh - clamp(96px,14vh,132px));overflow:hidden;display:flex;flex-direction:column;padding:0;}
+.reviews-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:22px 24px 16px;border-bottom:1px solid var(--border);}
+.reviews-modal-title{font-size:18px;font-weight:800;color:var(--text-primary);margin:0;}
+.reviews-modal-sub{font-size:12px;color:var(--text-muted);margin-top:5px;line-height:1.4;word-break:break-word;}
+.reviews-modal-close{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-card-alt);color:var(--text-muted);font-size:20px;line-height:1;cursor:pointer;transition:background .15s,color .15s,border-color .15s;}
+.reviews-modal-close:hover{background:var(--danger-soft);color:var(--danger);border-color:rgba(239,68,68,.24);}
+.reviews-summary{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:16px 24px 14px;padding:10px 12px;background:var(--bg-card-alt);color:var(--text-primary);border:1px solid var(--border);border-radius:var(--radius-md);font-size:13px;font-weight:800;}
+.reviews-summary-rating{display:inline-flex;align-items:center;gap:7px;color:var(--warning);}
+.reviews-summary-count{display:inline-flex;align-items:center;border-radius:999px;padding:4px 9px;background:var(--info-soft);color:var(--info);font-size:12px;font-weight:800;}
+.reviews-list{display:grid;gap:12px;overflow:auto;overflow-x:hidden;padding:0 24px 4px;min-height:0;flex:1 1 auto;}
+.review-card{background:var(--bg-card-alt);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px;box-shadow:0 8px 22px rgba(15,23,42,.04);}
+.review-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:8px;}
+.review-author{font-size:13px;font-weight:800;color:var(--text-primary);line-height:1.35;}
+.review-stars{display:inline-flex;align-items:center;justify-content:flex-end;min-width:74px;font-size:13px;color:var(--warning);white-space:nowrap;letter-spacing:0;}
+.review-title{font-size:13px;font-weight:800;color:var(--text-primary);margin-bottom:6px;line-height:1.35;}
+.review-text{font-size:13px;line-height:1.58;color:var(--text-muted);white-space:pre-wrap;overflow-wrap:anywhere;}
+.review-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:11px;font-size:11px;color:var(--text-dim);font-weight:700;}
+.review-status{display:inline-flex;align-items:center;border-radius:999px;padding:3px 8px;background:var(--accent-soft);color:var(--accent);text-transform:capitalize;}
+.reviews-empty{border:1px dashed var(--border);border-radius:var(--radius-md);padding:24px;text-align:center;color:var(--text-muted);font-size:13px;background:var(--bg-card-alt);}
+.reviews-loading{padding:24px;color:var(--text-muted);font-size:13px;text-align:center;}
+.reviews-modal-footer{padding:16px 24px 20px;border-top:1px solid var(--border);margin-top:16px;}
 /* PAGINATION */
 .pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-top:1px solid var(--border);}
 .pagination-info{font-size:12px;color:var(--text-muted);}
@@ -371,6 +441,8 @@ textarea.note-interne-ctrl{background:transparent;border:none;outline:none;width
 .modal-actions{display:flex;gap:10px;justify-content:flex-end;}
 .btn-modal-cancel{background:var(--bg-card-alt);color:var(--text-muted);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 16px;font-size:13px;cursor:pointer;font-family:inherit;}
 .btn-modal-confirm{background:var(--danger);color:#fff;border:none;border-radius:var(--radius-sm);padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+#reviewsModal .reviews-modal-box{width:min(720px,calc(100vw - 36px));max-height:calc(100vh - clamp(96px,14vh,132px));overflow:hidden;display:flex;flex-direction:column;padding:0;}
+#reviewsModal .reviews-modal-footer{margin-top:16px;padding:16px 24px 20px;border-top:1px solid var(--border);}
 /* FORM ACTIONS */
 .form-actions-row{display:flex;gap:10px;margin-top:14px;}
 .btn-primary{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:9px 18px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;}
@@ -451,19 +523,19 @@ textarea.note-interne-ctrl{background:transparent;border:none;outline:none;width
 }
 
 
-/* Final Product actions layout fix: combine toast patch + clean action buttons. */
+/* Product action grid: compact, balanced pairs for every row. */
 .produit-admin #produitsTable th:last-child,
 .produit-admin #produitsTable td:last-child {
-  width: 280px !important;
-  min-width: 280px !important;
-  max-width: 280px !important;
+  width: 258px !important;
+  min-width: 258px !important;
+  max-width: 258px !important;
 }
 
 .produit-admin #content-archives table th:last-child,
 .produit-admin #content-archives table td:last-child {
-  width: 240px !important;
-  min-width: 240px !important;
-  max-width: 240px !important;
+  width: 230px !important;
+  min-width: 230px !important;
+  max-width: 230px !important;
 }
 
 .produit-admin #produitsTable td:last-child,
@@ -477,18 +549,18 @@ textarea.note-interne-ctrl{background:transparent;border:none;outline:none;width
   display: grid !important;
   align-items: stretch !important;
   justify-items: stretch !important;
-  gap: 0.42rem !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
   margin: 0 !important;
+  width: 100% !important;
 }
 
 .produit-admin #produitsTable .action-group {
-  width: 248px !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  max-width: 226px !important;
 }
 
 .produit-admin #content-archives table .action-group {
-  width: 208px !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  max-width: 198px !important;
 }
 
 .produit-admin #produitsTable .action-group .btn-action,
@@ -499,44 +571,75 @@ textarea.note-interne-ctrl{background:transparent;border:none;outline:none;width
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 0.28rem !important;
+  gap: 5px !important;
   margin: 0 !important;
-  padding: 0 0.62rem !important;
-  border-radius: 10px !important;
-  font-size: 0.76rem !important;
-  font-weight: 900 !important;
-  line-height: 1 !important;
+  padding: 6px 9px !important;
+  border-radius: var(--radius-sm) !important;
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  line-height: 1.1 !important;
   text-align: center !important;
   white-space: nowrap !important;
   text-decoration: none !important;
 }
 
-.produit-admin #produitsTable .action-group .btn-delete,
-.produit-admin #content-archives table .action-group .btn-restore,
-.produit-admin #content-archives table .action-group .btn-delete {
-  grid-column: 1 / -1 !important;
-}
-
-.produit-admin #produitsTable .action-group .btn-archive {
-  min-width: 0 !important;
+.produit-admin #produitsTable .action-group .btn-reviews,
+.produit-admin #content-archives table .action-group .btn-reviews {
+  background: rgba(59,130,246,.12) !important;
+  color: var(--info) !important;
+  border-color: rgba(59,130,246,.28) !important;
 }
 
 @media (max-width: 1450px) {
   .produit-admin #produitsTable th:last-child,
   .produit-admin #produitsTable td:last-child {
-    width: 260px !important;
-    min-width: 260px !important;
-    max-width: 260px !important;
+    width: 246px !important;
+    min-width: 246px !important;
+    max-width: 246px !important;
   }
 
   .produit-admin #produitsTable .action-group {
-    width: 228px !important;
+    max-width: 214px !important;
   }
 
   .produit-admin #produitsTable .action-group .btn-action,
   .produit-admin #content-archives table .action-group .btn-action {
-    font-size: 0.72rem !important;
-    padding-inline: 0.48rem !important;
+    font-size: 0.68rem !important;
+    padding-inline: 0.42rem !important;
+  }
+}
+
+@media (max-width: 640px) {
+  #reviewsModal.open {
+    padding: 64px 12px 18px;
+  }
+
+  #reviewsModal .reviews-modal-box {
+    width: calc(100vw - 24px);
+    max-height: calc(100vh - 82px);
+  }
+
+  .reviews-modal-head,
+  .reviews-list,
+  #reviewsModal .reviews-modal-footer {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .reviews-summary {
+    margin-left: 16px;
+    margin-right: 16px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .review-card-top {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .review-stars {
+    justify-content: flex-start;
   }
 }
 
@@ -847,6 +950,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
                     <td>
                         <div class="action-group">
                             <button class="btn-action btn-view" onclick="openPreview(<?= $p['idProduit'] ?>)" data-i18n="btnView">👁 View</button>
+                            <button class="btn-action btn-reviews" onclick="openReviewsModal(<?= $p['idProduit'] ?>)" data-i18n="btnReviews">★ Reviews</button>
                             <a href="?edit=<?= $p['idProduit'] ?>" class="btn-action btn-edit-a" data-i18n="btnEdit">✏️ Edit</a>
                             <button class="btn-action btn-pin" onclick="ajaxToggle('epingle',<?= $p['idProduit'] ?>,'<?= $isPinned?'Unpin':'Pin' ?>')" data-i18n="<?= $isPinned?'btnUnpin':'btnPin' ?>"><?= $isPinned?'📌 Unpin':'📌 Pin' ?></button>
                             <button class="btn-action btn-archive" onclick="ajaxToggle('archive',<?= $p['idProduit'] ?>,'Archive')" data-i18n="btnArchive">🗄 Archive</button>
@@ -894,6 +998,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
                     <td>
                         <div class="action-group">
                             <button class="btn-action btn-restore" onclick="ajaxToggle('archive',<?= $a['idProduit'] ?>,'Restore')" data-i18n="btnRestore">♻️ Restore</button>
+                            <button class="btn-action btn-reviews" onclick="openReviewsModal(<?= $a['idProduit'] ?>)" data-i18n="btnReviews">★ Reviews</button>
                             <a href="?edit=<?= $a['idProduit'] ?>" class="btn-action btn-edit-a" data-i18n="btnEdit">✏️ Edit</a>
                             <button class="btn-action btn-delete" onclick="openDeleteModal(<?= $a['idProduit'] ?>,'<?= htmlspecialchars(addslashes($a['nomProduit']), ENT_QUOTES, 'UTF-8') ?>')" data-i18n="btnDelete">🗑</button>
                         </div>
@@ -927,6 +1032,26 @@ require_once __DIR__ . '/../layout/sidebar.php';
                 <span style="font-size:12px;color:var(--text-dim)"><span data-i18n="previewProductId">Product ID:</span> <span id="previewId"></span></span>
                 <button class="preview-close-btn" onclick="closePreview()" data-i18n="btnClose">✕ Close</button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- REVIEWS MODAL -->
+<div class="modal-overlay" id="reviewsModal">
+    <div class="modal-box reviews-modal-box">
+        <div class="reviews-modal-head">
+            <div>
+                <h3 class="reviews-modal-title" id="reviewsModalTitle" data-i18n="reviewsModalTitle">Product reviews</h3>
+                <div class="reviews-modal-sub" id="reviewsProductName"></div>
+            </div>
+            <button class="reviews-modal-close" type="button" onclick="closeReviewsModal()" aria-label="Close">×</button>
+        </div>
+        <div class="reviews-summary" id="reviewsSummary">☆ No reviews yet</div>
+        <div class="reviews-list" id="reviewsList">
+            <div class="reviews-loading" data-i18n="reviewsLoading">Loading reviews...</div>
+        </div>
+        <div class="modal-actions reviews-modal-footer">
+            <button class="btn-modal-cancel" type="button" onclick="closeReviewsModal()" data-i18n="btnClose">Close</button>
         </div>
     </div>
 </div>
@@ -1369,6 +1494,10 @@ function addArchivedRowFromActiveRow(row, id) {
     const editLink = row.querySelector('.btn-edit-a');
     if (editLink) {
         actions.appendChild(restoreBtn);
+        const reviewsBtn = row.querySelector('.btn-reviews');
+        if (reviewsBtn) {
+            actions.appendChild(reviewsBtn.cloneNode(true));
+        }
         actions.appendChild(editLink.cloneNode(true));
     } else {
         actions.appendChild(restoreBtn);
@@ -1488,6 +1617,103 @@ function openPreview(id) {
 function closePreview(){document.getElementById('previewModal').classList.remove('open');}
 document.getElementById('previewModal').addEventListener('click',e=>{if(e.target.id==='previewModal')closePreview();});
 
+function escapeReviewHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, ch => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    }[ch]));
+}
+
+function renderReviewStars(rating) {
+    const value = Math.max(0, Math.min(5, parseInt(rating || 0, 10)));
+    return '★'.repeat(value) + '☆'.repeat(5 - value);
+}
+
+function formatReviewDate(value) {
+    if (!value) return '';
+    const date = new Date(String(value).replace(' ', 'T'));
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toLocaleDateString(currentLang === 'fr' ? 'fr-FR' : 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function renderReviewsModal(payload) {
+    const T = translations[currentLang] || translations.en;
+    const product = payload.product || {};
+    const stats = payload.stats || {};
+    const reviews = Array.isArray(payload.reviews) ? payload.reviews : [];
+    const count = parseInt(stats.reviewCount || 0, 10);
+    const avg = stats.avgRating !== null && stats.avgRating !== undefined ? Number(stats.avgRating).toFixed(1) : null;
+
+    document.getElementById('reviewsProductName').textContent = product.name ? `#${product.id} · ${product.name}` : '';
+    document.getElementById('reviewsSummary').textContent = count > 0
+        ? `★ ${avg} · ${count} ${count === 1 ? (T.reviewOne || 'review') : (T.reviewMany || 'reviews')}`
+        : (T.noReviewsYet || 'No reviews yet.');
+
+    if (product.name) {
+        document.getElementById('reviewsProductName').textContent = `Product #${product.id} - ${product.name}`;
+    }
+    document.getElementById('reviewsSummary').innerHTML = count > 0
+        ? `<span class="reviews-summary-rating">${renderReviewStars(Math.round(Number(avg) || 0))} ${escapeReviewHtml(avg)}</span><span class="reviews-summary-count">${count} ${escapeReviewHtml(count === 1 ? (T.reviewOne || 'review') : (T.reviewMany || 'reviews'))}</span>`
+        : `<span class="reviews-summary-rating">${escapeReviewHtml(T.noReviewsYet || 'No reviews yet.')}</span><span class="reviews-summary-count">0 ${escapeReviewHtml(T.reviewMany || 'reviews')}</span>`;
+
+    const list = document.getElementById('reviewsList');
+    if (!reviews.length) {
+        list.innerHTML = `<div class="reviews-empty">${escapeReviewHtml(T.noReviewsYet || 'No reviews yet.')}</div>`;
+        return;
+    }
+
+    list.innerHTML = reviews.map(review => {
+        const date = formatReviewDate(review.createdAt);
+        return `
+            <article class="review-card">
+                <div class="review-card-top">
+                    <span class="review-author">${escapeReviewHtml(review.creatorName || 'Creator')}</span>
+                    <span class="review-stars">${renderReviewStars(review.rating)}</span>
+                </div>
+                <div class="review-title">${escapeReviewHtml(review.title || '')}</div>
+                <div class="review-text">${escapeReviewHtml(review.reviewText || '')}</div>
+                <div class="review-meta">
+                    ${date ? `<span>${escapeReviewHtml(date)}</span>` : ''}
+                    <span class="review-status">${escapeReviewHtml(review.status || 'published')}</span>
+                </div>
+            </article>
+        `;
+    }).join('');
+}
+
+async function openReviewsModal(id) {
+    const modal = document.getElementById('reviewsModal');
+    const T = translations[currentLang] || translations.en;
+    modal.classList.add('open');
+    document.getElementById('reviewsProductName').textContent = '';
+    document.getElementById('reviewsSummary').textContent = T.reviewsLoading || 'Loading reviews...';
+    document.getElementById('reviewsList').innerHTML = `<div class="reviews-loading">${escapeReviewHtml(T.reviewsLoading || 'Loading reviews...')}</div>`;
+
+    try {
+        const url = new URL(window.location.href);
+        url.searchParams.set('action', 'get_product_reviews');
+        url.searchParams.set('id', String(id));
+        const response = await fetch(url.toString(), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin'
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.success) {
+            throw new Error(payload.message || 'Unable to load reviews.');
+        }
+        renderReviewsModal(payload);
+    } catch (error) {
+        document.getElementById('reviewsSummary').textContent = T.reviewLoadError || 'Unable to load reviews.';
+        document.getElementById('reviewsList').innerHTML = `<div class="reviews-empty">${escapeReviewHtml(error.message || 'Unable to load reviews.')}</div>`;
+    }
+}
+
+function closeReviewsModal(){document.getElementById('reviewsModal').classList.remove('open');}
+document.getElementById('reviewsModal').addEventListener('click',e=>{if(e.target.id==='reviewsModal')closeReviewsModal();});
+
 /* ─── DELETE MODAL ───────────────────────────────────────────────── */
 function openDeleteModal(id,name){
     const T=translations[currentLang]||translations['en'];
@@ -1499,7 +1725,7 @@ function closeDeleteModal(){document.getElementById('deleteModal').classList.rem
 document.getElementById('btnCancelDelete').addEventListener('click',closeDeleteModal);
 document.getElementById('deleteModal').addEventListener('click',e=>{if(e.target.id==='deleteModal')closeDeleteModal();});
 
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDeleteModal();closePreview();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDeleteModal();closePreview();closeReviewsModal();}});
 
 // Init pagination on load
 document.addEventListener('DOMContentLoaded',()=>renderPage(1));
@@ -1625,6 +1851,13 @@ const translations = {
         btnUnpin: '📌 Unpin',
         btnArchive: '🗄 Archive',
         btnDelete: '🗑',
+        btnReviews: '★ Reviews',
+        reviewsModalTitle: 'Product reviews',
+        reviewsLoading: 'Loading reviews...',
+        noReviewsYet: 'No reviews yet.',
+        reviewOne: 'review',
+        reviewMany: 'reviews',
+        reviewLoadError: 'Unable to load reviews.',
         // Archived tab
         archivedTitle: 'Archived products',
         noArchived: 'No archived products.',
@@ -1761,6 +1994,13 @@ const translations = {
         btnUnpin: '📌 Désépingler',
         btnArchive: '🗄 Archiver',
         btnDelete: '🗑',
+        btnReviews: '★ Avis',
+        reviewsModalTitle: 'Avis produit',
+        reviewsLoading: 'Chargement des avis...',
+        noReviewsYet: 'Aucun avis pour le moment.',
+        reviewOne: 'avis',
+        reviewMany: 'avis',
+        reviewLoadError: 'Impossible de charger les avis.',
         // Archived tab
         archivedTitle: 'Produits archivés',
         noArchived: 'Aucun produit archivé.',

@@ -22,8 +22,37 @@ if (!function_exists('cre8_front_normalize_role')) {
             'brand', 'brands', 'marque' => 'marque',
             'creator', 'creators', 'createur', 'creatrice' => 'createur',
             'admin', 'administrator', 'administrateur' => 'admin',
+            'super_admin' => 'super_admin',
+            'hyper_admin' => 'hyper_admin',
             default => $role,
         };
+    }
+}
+
+if (!function_exists('cre8_front_is_admin_role')) {
+    function cre8_front_is_admin_role($role): bool
+    {
+        return in_array(cre8_front_normalize_role($role), ['admin', 'super_admin', 'hyper_admin'], true);
+    }
+}
+
+if (!function_exists('cre8_front_is_admin_visitor')) {
+    function cre8_front_is_admin_visitor($userOrRole = null): bool
+    {
+        $role = is_array($userOrRole)
+            ? ($userOrRole['role'] ?? '')
+            : ($userOrRole ?? ($_SESSION['role'] ?? ($_SESSION['user']['role'] ?? ($_SESSION['utilisateur']['role'] ?? ''))));
+
+        return cre8_front_is_admin_role($role);
+    }
+}
+
+if (!function_exists('cre8_front_permission_mode')) {
+    function cre8_front_permission_mode($userOrRole = null): string
+    {
+        return cre8_front_is_admin_visitor($userOrRole)
+            ? 'admin_visitor'
+            : cre8_front_normalize_role(is_array($userOrRole) ? ($userOrRole['role'] ?? '') : (string) $userOrRole);
     }
 }
 

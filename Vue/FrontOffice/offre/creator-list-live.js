@@ -3,6 +3,7 @@
     const CREATOR_FILTER_SELECTOR = 'form[data-creator-filter-form]';
     const SAVE_TOGGLE_SELECTOR = 'form[data-save-toggle-form]';
     const RESET_LINK_SELECTOR = 'a[data-creator-reset-link]';
+    const PAGINATION_LINK_SELECTOR = '.front-pagination a[href]';
     let latestRequestId = 0;
 
     function getCreatorRegion() {
@@ -241,12 +242,28 @@
     document.addEventListener('click', (event) => {
         const resetLink = event.target.closest(RESET_LINK_SELECTOR);
 
-        if (!resetLink || shouldIgnoreModifiedClick(event, resetLink)) {
+        if (resetLink && !shouldIgnoreModifiedClick(event, resetLink)) {
+            event.preventDefault();
+            handleResetLink(resetLink);
+            return;
+        }
+
+        const paginationLink = event.target.closest(PAGINATION_LINK_SELECTOR);
+        if (!paginationLink || !paginationLink.closest(CREATOR_REGION_SELECTOR) || shouldIgnoreModifiedClick(event, paginationLink)) {
             return;
         }
 
         event.preventDefault();
-        handleResetLink(resetLink);
+        const requestUrl = new URL(paginationLink.href, window.location.href);
+        requestUrl.searchParams.set('ajax', '1');
+
+        replaceCreatorRegion(requestUrl.toString(), {}, {
+            activeTab: getActiveCreatorTabKey(),
+            historyMode: 'push',
+            historyUrl: paginationLink.href
+        }).catch(() => {
+            window.location.assign(paginationLink.href);
+        });
     });
 
     window.addEventListener('popstate', () => {

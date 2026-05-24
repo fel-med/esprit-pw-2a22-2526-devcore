@@ -43,10 +43,36 @@ function cre8_normalize_login_role($role): string
     };
 }
 
+function cre8_login_user_has_column(PDO $db, string $column): bool
+{
+    static $columns = null;
+
+    if ($columns === null) {
+        $columns = [];
+        try {
+            $stmt = $db->query("SHOW COLUMNS FROM utilisateur");
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $field = (string)($row['Field'] ?? '');
+                if ($field !== '') {
+                    $columns[$field] = true;
+                }
+            }
+        } catch (Throwable $e) {
+            error_log('Face login user column inspection failed: ' . $e->getMessage());
+        }
+    }
+
+    return isset($columns[$column]);
+}
+
 $data = json_decode(file_get_contents("php://input"), true);
 
 if (!isset($data['face']) || !is_array($data['face'])) {
-    echo json_encode(["success" => false, "message" => "Données invalides"]);
+    echo json_encode([
+        "success" => false,
+        "error" => "invalid_face_payload",
+        "message" => "Face login failed. Please click Capture / Retry again."
+    ]);
     exit();
 }
 
@@ -54,7 +80,8 @@ $inputFace = $data['face'];
 
 $db = config::getConnexion();
 
-$sql = "SELECT id, nom, email, role, statut, face_descriptor FROM utilisateur WHERE face_descriptor IS NOT NULL AND face_descriptor != ''";
+$hasDeletedAt = cre8_login_user_has_column($db, 'deleted_at');
+$sql = "SELECT id, nom, email, role, statut, face_descriptor" . ($hasDeletedAt ? ", deleted_at" : "") . " FROM utilisateur WHERE face_descriptor IS NOT NULL AND face_descriptor != ''" . ($hasDeletedAt ? " AND deleted_at IS NULL" : "");
 $users = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
 function distance($a, $b) {
@@ -151,12 +178,13 @@ if ($bestUser && $bestDist < 0.75) {
 }
 
 // ❌ non reconnu
-$message = "Utilisateur non reconnu";
+$message = "Face not recognized. Please try again or login with email and password.";
 if ($bestDist === 999) {
-    $message = "Aucun visage enregistré pour la connexion faciale";
+    $message = "Face not recognized. Please try again or login with email and password.";
 }
 echo json_encode([
     "success" => false,
+    "error" => "face_not_recognized",
     "message" => $message,
     "distance" => $bestDist
 ]);

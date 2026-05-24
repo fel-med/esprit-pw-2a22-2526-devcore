@@ -19,6 +19,7 @@ if ($cre8Pos !== false) {
 $backBoUtilisateurWeb = $backBoRootWeb . '/utilisateur';
 $backProfileSettingsUrl = $backBoUtilisateurWeb . '/profile_settings.php';
 $backProfileUploadWeb = $backProjectBase . '/Vue/public/uploads/profile';
+$backFrontOfficeUrl = $backProjectBase . '/Vue/FrontOffice/utilisateur/home.php';
 
 $adminName = $_SESSION['user']['nom'] ?? ($_SESSION['utilisateur']['nom'] ?? ($_SESSION['nom'] ?? 'Utilisateur')); 
 $adminName = trim((string) $adminName) ?: 'Utilisateur';
@@ -27,6 +28,7 @@ $adminInitial = strtoupper((string) $adminInitial) ?: 'U';
 $adminAvatarUrl = null;
 $adminId = cc_current_user_id();
 $adminRole = function_exists('cc_current_user_role') ? cc_current_user_role() : 'admin';
+$canVisitFrontOffice = function_exists('isBackOfficeRole') ? isBackOfficeRole($adminRole) : in_array($adminRole, ['admin', 'super_admin', 'hyper_admin'], true);
 $adminRoleKey = match ($adminRole) {
     'hyper_admin' => 'role.hyperAdmin',
     'super_admin' => 'role.superAdmin',
@@ -91,6 +93,13 @@ if ($adminId !== null) {
                 <i class="mdi mdi-view-grid"></i>
               </a>
             </li>
+            <?php if ($canVisitFrontOffice): ?>
+            <li class="nav-item nav-settings d-none d-lg-block">
+              <a class="nav-link" href="<?php echo htmlspecialchars($backFrontOfficeUrl); ?>" title="FrontOffice" data-i18n-title="header.visitFrontOffice" data-i18n-aria-label="header.visitFrontOffice">
+                <i class="mdi mdi-web"></i>
+              </a>
+            </li>
+            <?php endif; ?>
             <li class="nav-item cre8-header-action-item">
               <a class="nav-link count-indicator back-theme-toggle" href="#" onclick="toggleDarkMode(); return false;" title="Mode jour / nuit" aria-label="Toggle light or dark mode">
                 <i id="themeIcon" class="mdi mdi-weather-night"></i>

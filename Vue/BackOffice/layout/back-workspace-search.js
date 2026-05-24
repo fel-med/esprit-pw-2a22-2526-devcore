@@ -88,6 +88,22 @@
       }
     }
 
+    function formatMeta(entry) {
+      var aliases = String(entry.aliases || '')
+        .split(/\s+/)
+        .map(function (part) {
+          return part.trim();
+        })
+        .filter(Boolean)
+        .slice(0, 5);
+
+      if (aliases.length) {
+        return aliases.join(' · ');
+      }
+
+      return entry.path || '';
+    }
+
     function renderEmpty() {
       var empty = document.createElement('div');
       var strong = document.createElement('strong');
@@ -140,7 +156,7 @@
 
         text.className = 'cre8-workspace-search-copy';
         title.textContent = entry.title;
-        meta.textContent = entry.aliases ? entry.aliases.split(/\s+/).slice(0, 5).join(' ') : entry.path;
+        meta.textContent = formatMeta(entry);
         open.className = 'cre8-workspace-search-open';
         open.setAttribute('data-i18n', 'header.searchOpen');
         open.textContent = 'Open';

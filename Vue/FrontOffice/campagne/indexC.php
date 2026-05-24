@@ -9,13 +9,28 @@ ob_start(); // Cre8 AI JSON guard: lets AJAX handlers return clean JSON if inclu
 
 require_once __DIR__ . '/../../../Controleur/campagneC.php';
 require_once __DIR__ . '/../../../Controleur/produitC.php';
+require_once __DIR__ . '/../layout/session_bridge.php';
 require_once __DIR__ . '/../layout/avatar_helper.php';
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 $frontActive = 'campaigns';
+$currentFrontUser = cre8_front_session_user();
+$isAdminVisitor = cre8_front_is_admin_visitor($currentFrontUser);
 
 $campagneC = new CampagneC();
 $produitC  = new ProduitC();
+$showOutdated = (string) ($_GET['show_outdated'] ?? '') === '1';
+$outdatedToggleParams = $_GET;
+unset($outdatedToggleParams['voir']);
+if ($showOutdated) {
+    unset($outdatedToggleParams['show_outdated']);
+} else {
+    $outdatedToggleParams['show_outdated'] = '1';
+}
+$outdatedToggleUrl = strtok($_SERVER['PHP_SELF'] ?? 'indexC.php', '?');
+if (!empty($outdatedToggleParams)) {
+    $outdatedToggleUrl .= '?' . http_build_query($outdatedToggleParams);
+}
 $isAjaxRequest = strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest';
 $wantsJsonResponse = $isAjaxRequest
     || strtolower($_POST['ajax'] ?? '') === '1'
@@ -179,6 +194,35 @@ if (!function_exists('cre8_campaign_creator_recommend_existing_campaigns')) {
         ];
     }
 }
+
+if (!function_exists('cre8_campaign_is_outdated')) {
+    function cre8_campaign_is_outdated(array $campaign): bool
+    {
+        $status = strtolower(trim((string) ($campaign['statut'] ?? '')));
+        if (in_array($status, ['terminee', 'annulee', 'archivee', 'expiree', 'cloturee'], true)) {
+            return true;
+        }
+
+        if ((int) ($campaign['estArchive'] ?? 0) === 1) {
+            return true;
+        }
+
+        $endDate = trim((string) ($campaign['dateFin'] ?? ''));
+        if ($endDate === '' || $endDate === '0000-00-00') {
+            return false;
+        }
+
+        return $endDate < date('Y-m-d');
+    }
+}
+
+if (!function_exists('cre8_campaign_can_receive_application')) {
+    function cre8_campaign_can_receive_application(array $campaign): bool
+    {
+        return strtolower(trim((string) ($campaign['statut'] ?? ''))) === 'active'
+            && !cre8_campaign_is_outdated($campaign);
+    }
+}
 $cre8SelfPath = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
 $cre8VuePos = strpos($cre8SelfPath, '/Vue/');
 $baseUrl = $cre8VuePos !== false ? substr($cre8SelfPath, 0, $cre8VuePos) : '';
@@ -207,7 +251,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array(($_POST['ai_action'] ?? $_
     $aud  = trim($_POST['audience'] ?? '');
     if ($comp && $int && $aud) {
         try {
-            $availableCampaigns = $campagneC->afficherCampagnes();
+            $availableCampaigns = $campagneC->afficherCampagnesCreateur($showOutdated);
             $iaResult = cre8_campaign_creator_recommend_existing_campaigns($availableCampaigns, $comp, $int, $aud);
         } catch (Throwable $e) {
             $iaResult = cre8_campaign_suggestions_fallback($comp, $int, $aud);
@@ -233,9 +277,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array(($_POST['ai_action'] ?? $_
     }
 }
 
-$campagnes      = $campagneC->afficherCampagnes();
+$campagnes      = $campagneC->afficherCampagnesCreateur($showOutdated);
 $totalCampagnes = count($campagnes);
-$nbActives      = count(array_filter($campagnes, fn($c) => $c['statut'] === 'active'));
+$nbActives      = count(array_filter($campagnes, fn($c) => cre8_campaign_can_receive_application($c)));
 $budgetTotal    = array_sum(array_column($campagnes, 'budget'));
 
 $campagneDetail = null;
@@ -545,6 +589,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-main
     padding: 6px 2px; transition: color .18s; white-space: nowrap;
 }
 .btn-reset-filters:hover { color: var(--primary); }
+.outdated-toggle {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--bg); color: var(--text-sub);
+    border: 1.5px solid var(--border); border-radius: 999px;
+    padding: 8px 13px; font-size: 12.5px; font-weight: 700;
+    text-decoration: none; transition: all .18s; white-space: nowrap;
+}
+.outdated-toggle:hover,
+.outdated-toggle.is-active {
+    background: var(--primary-light); color: var(--primary);
+    border-color: var(--primary-border);
+}
 
 /* CAMP GRID */
 .camp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-bottom: 28px; }
@@ -565,6 +621,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-main
 .camp-card-header { padding: 18px 20px 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 .camp-card-title { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 900; flex: 1; letter-spacing: -0.2px; }
 .camp-badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 700; padding: 4px 11px; border-radius: 20px; flex-shrink: 0; }
+.camp-badge-outdated {
+    background: var(--danger-light) !important;
+    color: var(--danger) !important;
+    border: 1px solid var(--danger-border);
+}
 .camp-card-body { padding: 12px 20px 16px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
 .camp-desc { font-size: 13px; color: var(--text-sub); line-height: 1.65; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
 .camp-obj { font-size: 12px; background: var(--primary-light); color: var(--primary); border-radius: 20px; padding: 6px 13px; font-weight: 600; }
@@ -1010,6 +1071,10 @@ body.dark-mode .page-wrapper > .ia-panel {
             <option value="12">12 / page</option>
             <option value="999" data-i18n="show_all">Tout afficher</option>
         </select>
+        <a class="outdated-toggle <?= $showOutdated ? 'is-active' : '' ?>" href="<?= htmlspecialchars($outdatedToggleUrl, ENT_QUOTES, 'UTF-8') ?>">
+            <span><?= $showOutdated ? '✓' : '+' ?></span>
+            <span data-i18n="filter_show_outdated">Show outdated</span>
+        </a>
         <span class="result-count"><span id="visibleCount"><?= $totalCampagnes ?></span> <span data-i18n="result_count_label">campagne(s)</span></span>
         <button class="btn-reset-filters" onclick="resetFilters()" data-i18n="btn_reset_filters">Réinitialiser</button>
     </div>
@@ -1031,11 +1096,14 @@ body.dark-mode .page-wrapper > .ia-panel {
         <?php foreach ($campagnes as $c):
             $nbProd = $campagneC->compterProduitsCampagne($c['idCampagne']);
             $brandName = trim((string) ($c['nomMarque'] ?? ''));
+            $isOutdatedCampaign = cre8_campaign_is_outdated($c);
+            $canApplyCampaign = cre8_campaign_can_receive_application($c);
         ?>
         <div class="camp-card"
              data-id="<?= $c['idCampagne'] ?>"
              data-titre="<?= strtolower(htmlspecialchars($c['titreCampagne'])) ?>"
              data-statut="<?= htmlspecialchars($c['statut']) ?>"
+             data-outdated="<?= $isOutdatedCampaign ? '1' : '0' ?>"
              data-budget="<?= (float)$c['budget'] ?>"
              data-brand="<?= strtolower(htmlspecialchars($c['nomMarque'] ?? '', ENT_QUOTES, 'UTF-8')) ?>"
              data-desc="<?= strtolower(htmlspecialchars($c['description'] ?? '', ENT_QUOTES, 'UTF-8')) ?>"
@@ -1044,6 +1112,9 @@ body.dark-mode .page-wrapper > .ia-panel {
             <div class="camp-card-header">
                 <div class="camp-card-title"><?= htmlspecialchars($c['titreCampagne']) ?></div>
                 <span class="camp-badge" style="background:<?= statutBg($c['statut']) ?>;color:<?= statutColor($c['statut']) ?>"><?= statutLabel($c['statut']) ?></span>
+                <?php if ($isOutdatedCampaign): ?>
+                <span class="camp-badge camp-badge-outdated" data-i18n="badge_outdated">Expired</span>
+                <?php endif; ?>
             </div>
             <div class="camp-card-body">
                 <div class="camp-desc"><?= htmlspecialchars($c['description']) ?></div>
@@ -1066,7 +1137,7 @@ body.dark-mode .page-wrapper > .ia-panel {
                 <button class="btn-detail" onclick="openDetail(<?= $c['idCampagne'] ?>)">
                     👁 <span data-i18n="btn_details">Voir les détails</span>
                 </button>
-                <?php if ($c['statut'] === 'active'): ?>
+                <?php if ($canApplyCampaign && !$isAdminVisitor): ?>
                 <button class="btn-apply" onclick="postulerCampagne(<?= (int) $c['idCampagne'] ?>)">🙋 <span data-i18n="btn_apply">Postuler</span></button>
                 <?php endif; ?>
             </div>
@@ -1116,7 +1187,9 @@ body.dark-mode .page-wrapper > .ia-panel {
             </div>
         </div>
         <div class="detail-footer">
+            <?php if (!$isAdminVisitor): ?>
             <button class="btn-apply-big" id="detailApplyBtn" onclick="postulerCampagne(selectedCampaignId)">🙋 <span data-i18n="btn_apply_campaign">Postuler à cette campagne</span></button>
+            <?php endif; ?>
             <button class="btn-close-detail" onclick="closeDetail()" data-i18n="btn_close">Fermer</button>
         </div>
     </div>
@@ -1124,11 +1197,14 @@ body.dark-mode .page-wrapper > .ia-panel {
 
 <script>
 const BASE_URL = <?= json_encode($baseUrl, JSON_UNESCAPED_SLASHES) ?>;
+const isAdminVisitor = <?= $isAdminVisitor ? 'true' : 'false' ?>;
 
 const campagnesMap = {};
 <?php foreach ($campagnes as $c): ?>
 <?php
     $brandNameForMap = trim((string) ($c['nomMarque'] ?? ''));
+    $isOutdatedForMap = cre8_campaign_is_outdated($c);
+    $canApplyForMap = cre8_campaign_can_receive_application($c);
     $brandHtmlForMap = $brandNameForMap !== ''
         ? cre8_render_avatar((int) ($c['idMarque'] ?? 0), $brandNameForMap, 'cre8-avatar-sm') . '<span>' . htmlspecialchars($brandNameForMap, ENT_QUOTES, 'UTF-8') . '</span>'
         : '';
@@ -1142,6 +1218,8 @@ campagnesMap[<?= $c['idCampagne'] ?>] = {
     debut: <?= json_encode($c['dateDebut'] ?? '') ?>,
     fin:   <?= json_encode($c['dateFin'] ?? '') ?>,
     statut: <?= json_encode($c['statut']) ?>,
+    outdated: <?= $isOutdatedForMap ? 'true' : 'false' ?>,
+    canApply: <?= $canApplyForMap ? 'true' : 'false' ?>,
     marque: <?= json_encode($brandNameForMap) ?>,
     marqueHtml: <?= json_encode($brandHtmlForMap) ?>,
 };
@@ -1154,7 +1232,9 @@ const sBgs    = {active:'#edfaf5',brouillon:'#fffbeb',terminee:'#eff6ff',annulee
 let selectedCampaignId = null;
 
 function postulerCampagne(id) {
-    if (!id) return;
+    if (!id || isAdminVisitor) return;
+    const campaign = campagnesMap[id];
+    if (!campaign || !campaign.canApply) return;
     window.location.href = '../condidature/details.php?origin=par_campagne&idSource=' + encodeURIComponent(id);
 }
 
@@ -1198,10 +1278,12 @@ const translations = {
         sort_budget_desc: 'Budget ↓',
         sort_budget_asc: 'Budget ↑',
         show_all: 'Tout afficher',
+        filter_show_outdated: 'Afficher expirées',
         result_count_label: 'campagne(s)',
         section_all_campaigns: 'Toutes les campagnes',
         empty_title: 'Aucune campagne disponible',
         empty_subtitle: 'Les marques publient régulièrement de nouvelles campagnes. Revenez bientôt !',
+        badge_outdated: 'Expirée',
         products_linked: 'produits liés',
         btn_details: 'Voir les détails',
         btn_apply: 'Postuler',
@@ -1257,10 +1339,12 @@ const translations = {
         sort_budget_desc: 'Budget ↓',
         sort_budget_asc: 'Budget ↑',
         show_all: 'Show all',
+        filter_show_outdated: 'Show outdated',
         result_count_label: 'campaign(s)',
         section_all_campaigns: 'All campaigns',
         empty_title: 'No campaigns available',
         empty_subtitle: 'Brands publish new campaigns regularly. Check back soon!',
+        badge_outdated: 'Expired',
         products_linked: 'linked products',
         btn_details: 'View details',
         btn_apply: 'Apply',
@@ -1429,6 +1513,10 @@ function filterChip(val, btn) {
 }
 
 function resetFilters() {
+    if (<?= $showOutdated ? 'true' : 'false' ?>) {
+        window.location.href = <?= json_encode(strtok($_SERVER['PHP_SELF'] ?? 'indexC.php', '?')) ?>;
+        return;
+    }
     const searchInput = document.getElementById('searchInput');
     if (searchInput) searchInput.value = '';
     const sortSel = document.getElementById('sortSelect');
@@ -1496,7 +1584,7 @@ function findClientCampaignMatches(formData) {
         const searchText = getCampaignSearchText(campaign);
         const matched = uniqueTokens.filter(token => searchText.includes(token));
         let score = matched.length * 4;
-        if (score > 0 && campaign.statut === 'active') score += 3;
+        if (score > 0 && campaign.canApply) score += 3;
         if (score > 0 && campaign.obj) score += 1;
         return {
             id: campaign.id,
@@ -1511,7 +1599,7 @@ function findClientCampaignMatches(formData) {
             raison: matched.length
                 ? `Matches: ${matched.slice(0, 5).join(', ')}.`
                 : '',
-            conseil: campaign.statut === 'active'
+            conseil: campaign.canApply
                 ? 'Open the details, check the products, then apply if the brief fits your content style.'
                 : 'This campaign is useful as inspiration, but it is not active right now.'
         };
@@ -1700,9 +1788,18 @@ function openDetail(id) {
     const c = campagnesMap[id]; if (!c) return;
     selectedCampaignId = id;
     const badge = document.getElementById('detailBadge');
-    badge.textContent = sLabels[c.statut] || c.statut;
-    badge.style.background = sBgs[c.statut] || '#f0f0f0';
-    badge.style.color = sColors[c.statut] || '#555';
+    if (c.outdated) {
+        const dict = translations[currentLang] || translations.en || {};
+        badge.textContent = dict.badge_outdated || 'Expired';
+        badge.classList.add('camp-badge-outdated');
+        badge.style.background = '';
+        badge.style.color = '';
+    } else {
+        badge.textContent = sLabels[c.statut] || c.statut;
+        badge.classList.remove('camp-badge-outdated');
+        badge.style.background = sBgs[c.statut] || '#f0f0f0';
+        badge.style.color = sColors[c.statut] || '#555';
+    }
     document.getElementById('detailTitle').textContent = c.titre;
     const detailMarque = document.getElementById('detailMarque');
     if (c.marqueHtml) {
@@ -1724,7 +1821,10 @@ function openDetail(id) {
     else objWrap.style.display = 'none';
     document.getElementById('detailBudget').textContent = new Intl.NumberFormat('fr-FR').format(c.budget) + ' €';
     document.getElementById('detailDates').textContent = (c.debut || '—') + ' → ' + (c.fin || '—');
-    document.getElementById('detailApplyBtn').style.display = c.statut === 'active' ? '' : 'none';
+    const detailApplyBtn = document.getElementById('detailApplyBtn');
+    if (detailApplyBtn) {
+        detailApplyBtn.style.display = c.canApply ? '' : 'none';
+    }
     document.getElementById('detailProductsGrid').innerHTML = '<div class="prod-loader">⏳ Chargement des produits…</div>';
     document.getElementById('detailModal').classList.add('open');
     document.body.style.overflow = 'hidden';

@@ -1,25 +1,13 @@
 <?php
-session_start();
+require_once __DIR__ . '/../layout/session_bridge.php';
+$currentUser = cre8_front_require_user('createur');
 $frontActive = 'collaborations';
 
 require_once __DIR__ . '/../layout/avatar_helper.php';
 require_once __DIR__ . '/../../../Controleur/condidatureC.php';
 
 $controller = new CondidatureC();
-$sessionUser = $_SESSION['utilisateur'] ?? [];
-
-if (!isset($sessionUser['id']) || (($sessionUser['role'] ?? '') !== 'createur')) {
-    $defaultCreator = $controller->getDefaultUserByRole('createur');
-    if ($defaultCreator) {
-        $_SESSION['utilisateur'] = [
-            'id' => (int) $defaultCreator['id'],
-            'role' => 'createur',
-            'nom' => $defaultCreator['nom'],
-            'email' => $defaultCreator['email'],
-        ];
-        $sessionUser = $_SESSION['utilisateur'];
-    }
-}
+$sessionUser = $currentUser;
 
 $creatorId = isset($sessionUser['id']) ? (int) $sessionUser['id'] : null;
 $creatorUser = $creatorId ? ($controller->getUsersByIds([$creatorId], 'createur')[$creatorId] ?? null) : null;

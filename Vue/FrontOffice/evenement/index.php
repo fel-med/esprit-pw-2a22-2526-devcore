@@ -2,6 +2,7 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+require_once __DIR__ . '/../../../Controleur/session_helper.php';
 
 $scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
 if (($pos = strpos($scriptName, '/Vue/')) !== false) {
@@ -14,6 +15,7 @@ if (($pos = strpos($scriptName, '/Vue/')) !== false) {
 $APP_BASE = rtrim($APP_BASE, '/');
 $BASE = ($APP_BASE === '' ? '' : $APP_BASE) . '/Vue';
 $frontActive = 'events';
+$isAdminVisitor = cc_is_backoffice_role(cc_current_user_role());
 
 if (!function_exists('event_front_url')) {
     function event_front_url($path) {
@@ -387,6 +389,35 @@ if (!isset($evenements)) {
             background: var(--primary);
             border-color: var(--primary);
             color: white;
+            box-shadow: 0 8px 18px rgba(91, 79, 255, 0.22);
+        }
+
+        html:not([data-theme="dark"]) .events-sidebar .chip.active,
+        body.light-mode .events-sidebar .chip.active {
+            background: #5b4fff;
+            border-color: #4438e0;
+            color: #ffffff;
+            box-shadow: 0 8px 18px rgba(91, 79, 255, 0.26);
+        }
+
+        .events-sidebar .chip[data-lieu-filter] {
+            min-width: 58px;
+            text-align: center;
+        }
+
+        html:not([data-theme="dark"]) .events-sidebar .chip[data-lieu-filter].active,
+        body.light-mode .events-sidebar .chip[data-lieu-filter].active {
+            background: #5b4fff !important;
+            border-color: #4438e0 !important;
+            color: #ffffff !important;
+            box-shadow: 0 8px 18px rgba(91, 79, 255, 0.26) !important;
+        }
+
+        [data-theme="dark"] .events-sidebar .chip[data-lieu-filter].active,
+        body.dark-mode .events-sidebar .chip[data-lieu-filter].active {
+            background: var(--primary) !important;
+            border-color: var(--primary) !important;
+            color: #ffffff !important;
         }
         .events-content {
             flex: 1;
@@ -1063,7 +1094,7 @@ if (!isset($evenements)) {
     $forumLink = '';
     if (isset($forumsData[$event->getId()])) {
         $forumId = (int)$forumsData[$event->getId()]['idForum'];
-        $forumHref = event_front_url('Controleur/forumC.php?idForum=' . $forumId);
+        $forumHref = event_front_url('Controleur/forumC.php?action=voir&id=' . $forumId);
         $forumLink = '<a href="' . htmlspecialchars($forumHref) . '" class="btn-event-secondary mt-2">💬 <span data-i18n="access_forum">Accéder au forum</span></a>';
     }
 ?>
@@ -1157,6 +1188,7 @@ if (!isset($evenements)) {
     <script src="<?= htmlspecialchars(event_front_url('Vue/FrontOffice/layout/front-header.js')) ?>"></script>
     <script>
         let currentEventId = null;
+        const isAdminVisitor = <?= $isAdminVisitor ? 'true' : 'false' ?>;
         let currentLang = 'en';
         const EVENT_APP_BASE = <?= json_encode($APP_BASE, JSON_UNESCAPED_SLASHES) ?>;
 
@@ -1312,6 +1344,10 @@ if (!isset($evenements)) {
         }
 
         function ouvrirModalInscription(eventId) {
+            if (isAdminVisitor) {
+                showToast('Admins manage events from BackOffice.', true);
+                return;
+            }
             currentEventId = eventId;
             document.getElementById('inscrireNom').value = '';
             document.getElementById('inscrireEmail').value = '';

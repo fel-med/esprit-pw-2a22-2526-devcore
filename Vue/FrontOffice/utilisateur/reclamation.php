@@ -6,6 +6,8 @@ require_once '../../../Controleur/reclamationC.php';
 
 $isSuspendedAppeal = cc_is_suspended_appeal_session();
 $currentReclamationUserId = cc_current_reclamation_user_id();
+$currentReclamationRole = cc_current_reclamation_user_role();
+$isAdminVisitor = !$isSuspendedAppeal && cc_is_backoffice_role($currentReclamationRole ?? '');
 
 if ($currentReclamationUserId === null) {
     die("User not connected");
@@ -405,6 +407,11 @@ $frontActive = 'reclamation';
                         <div class="card shadow rounded-4 border-0 reclamation-form-card">
                             <div class="card-body p-5">
 
+                                <?php if ($isAdminVisitor): ?>
+                                    <div class="alert alert-warning text-center mb-0">
+                                        <span data-i18n="account.adminBackofficeComplaints">Admins can't send complaints here</span>
+                                    </div>
+                                <?php else: ?>
                                 <form method="POST" action="traiterReclamation.php" onsubmit="return validateReclamation(this)">
 
                                     <!-- Description -->
@@ -437,6 +444,7 @@ $frontActive = 'reclamation';
                                     </div>
 
                                 </form>
+                                <?php endif; ?>
 
                             </div>
                         </div>
@@ -625,7 +633,8 @@ $frontActive = 'reclamation';
                 'account.minError': 'Description must contain at least 10 characters.',
                 'account.maxError': 'Description must not exceed 50 characters.',
                 'account.spacesError': 'Description cannot contain only spaces.',
-                'account.characters': 'characters'
+                'account.characters': 'characters',
+                'account.adminBackofficeComplaints': 'Admins can\'t send complaints here'
             },
             fr: {
                 'account.submitComplaint': 'Envoyer une reclamation',
@@ -655,7 +664,8 @@ $frontActive = 'reclamation';
                 'account.minError': 'La description doit contenir au moins 10 caracteres.',
                 'account.maxError': 'La description ne doit pas depasser 50 caracteres.',
                 'account.spacesError': 'La description ne peut pas contenir seulement des espaces.',
-                'account.characters': 'caracteres'
+                'account.characters': 'caracteres',
+                'account.adminBackofficeComplaints': 'Admins can\'t send complaints here'
             }
         };
         function cre8ComplaintLang() {

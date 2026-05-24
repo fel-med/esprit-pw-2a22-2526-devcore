@@ -13851,6 +13851,7 @@ class CondidatureC
                 c.dateDebut,
                 c.dateFin,
                 c.statut,
+                c.estArchive,
                 m.id AS brandId,
                 m.nom AS brandName,
                 m.email AS brandEmail
@@ -13878,6 +13879,7 @@ class CondidatureC
             'datePublication' => $row['dateDebut'] ?? null,
             'dateLimite' => $row['dateFin'] ?? null,
             'status' => $row['statut'] ?? null,
+            'isArchived' => (int) ($row['estArchive'] ?? 0) === 1,
             'brand' => [
                 'id' => isset($row['brandId']) ? (int) $row['brandId'] : (isset($row['idMarque']) ? (int) $row['idMarque'] : null),
                 'nom' => (string) ($row['brandName'] ?? ''),
@@ -14845,6 +14847,29 @@ class CondidatureC
         return $messageChanged || $budgetChanged || $delayChanged;
     }
 
+    private function isCampaignSourceClosed($source): bool
+    {
+        if (!is_array($source) || ($source['origin'] ?? '') !== 'par_campagne') {
+            return false;
+        }
+
+        $status = strtolower(trim((string) ($source['status'] ?? '')));
+        if ($status !== 'active') {
+            return true;
+        }
+
+        if (!empty($source['isArchived'])) {
+            return true;
+        }
+
+        $deadline = trim((string) ($source['dateLimite'] ?? ''));
+        if ($deadline === '' || $deadline === '0000-00-00') {
+            return false;
+        }
+
+        return $deadline < $this->todayDate();
+    }
+
     public function validateCreatorCandidature(array $data, $intent = 'draft', $source = null, Condidature $existing = null)
     {
         $errors = [];
@@ -14870,6 +14895,15 @@ class CondidatureC
 
         if ($existing && $existing->isCreatorLocked()) {
             $errors[] = 'This candidature is locked and can no longer be edited by the creator.';
+            return $errors;
+        }
+
+        if ($isCampaignFlow
+            && !$negotiationOnly
+            && !in_array($intent, ['review', 'final_accept', 'final_decline'], true)
+            && $this->isCampaignSourceClosed($source)
+        ) {
+            $errors[] = 'This campaign is no longer accepting applications.';
             return $errors;
         }
 

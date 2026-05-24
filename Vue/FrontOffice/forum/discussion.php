@@ -14,8 +14,13 @@ if (($pos = strpos($scriptPath, '/Vue/')) !== false) {
     $BASE = rtrim(dirname(dirname($scriptPath)), '/');
 }
 $BASE = rtrim($BASE, '/');
+$frontActive = 'events';
+$forumSource = strtolower(trim((string)($forumSource ?? $_GET['source'] ?? $_GET['from'] ?? '')));
+$forumBackUrl = $forumSource === 'backoffice'
+    ? $BASE . '/Controleur/forumC.php?action=admin'
+    : $BASE . '/Controleur/forumC.php';
 if (!isset($forum) || !isset($messages)) {
-    header('Location: ' . $BASE . '/Controleur/forumC.php');
+    header('Location: ' . $forumBackUrl);
     exit;
 }
 ?>
@@ -74,12 +79,21 @@ if (!isset($forum) || !isset($messages)) {
             background: var(--bg);
             color: var(--text-main);
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .disc-page {
             max-width: 860px;
+            width: 100%;
+            flex: 1 0 auto;
             margin: 0 auto;
             padding: 32px 24px 80px;
+        }
+
+        body > .cre8-front-footer {
+            flex-shrink: 0;
+            margin-top: auto;
         }
 
         .back-link {
@@ -520,10 +534,11 @@ if (!isset($forum) || !isset($messages)) {
     </style>
 </head>
 <body>
+<?php require_once __DIR__ . '/../layout/header.php'; ?>
 <div class="disc-page">
 
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:12px;">
-        <a href="<?= $BASE ?>/Controleur/forumC.php" class="back-link" style="margin-bottom:0;">← <span data-i18n="back_to_forums">Retour aux forums</span></a>
+        <a href="<?= htmlspecialchars($forumBackUrl) ?>" class="back-link" style="margin-bottom:0;">← <span data-i18n="back_to_forums">Retour aux forums</span></a>
     </div>
 
     <div class="forum-header-card">
@@ -805,5 +820,6 @@ if (!isset($forum) || !isset($messages)) {
     });
 </script>
 <?php require __DIR__ . '/../layout/footer.php'; ?>
+<script src="<?= $BASE ?>/Vue/FrontOffice/layout/front-header.js"></script>
 </body>
 </html>
