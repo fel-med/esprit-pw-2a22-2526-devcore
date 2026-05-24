@@ -3,6 +3,7 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../Modele/utilisateur.php';
 require_once __DIR__ . '/session_helper.php';
 require_once __DIR__ . '/adminAuditC.php';
+require_once __DIR__ . '/notificationC.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -36,6 +37,43 @@ class UtilisateurC {
     {
         $columns = $this->utilisateurColumns($db);
         return isset($columns[$column]);
+    }
+
+    private function tableColumns(PDO $db, string $table): array
+    {
+        static $cache = [];
+        $table = preg_replace('/[^a-zA-Z0-9_]/', '', $table);
+        if ($table === '') {
+            return [];
+        }
+        if (array_key_exists($table, $cache)) {
+            return $cache[$table];
+        }
+
+        $cache[$table] = [];
+        try {
+            $stmt = $db->query("SHOW COLUMNS FROM `$table`");
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $field = (string)($row['Field'] ?? '');
+                if ($field !== '') {
+                    $cache[$table][$field] = true;
+                }
+            }
+        } catch (Throwable $e) {
+            error_log('Table column inspection failed for ' . $table . ': ' . $e->getMessage());
+        }
+
+        return $cache[$table];
+    }
+
+    private function restoreLogColumns(PDO $db): array
+    {
+        return $this->tableColumns($db, 'account_restore_logs');
+    }
+
+    private function accountEmailLogColumns(PDO $db): array
+    {
+        return $this->tableColumns($db, 'account_email_logs');
     }
 
     private function userSelectColumns(PDO $db): string
@@ -96,6 +134,267 @@ class UtilisateurC {
         return function_exists('cc_current_user_role') ? cc_current_user_role() : '';
     }
 
+    private function envValue(array $keys): string
+    {
+        foreach ($keys as $key) {
+            $value = $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key);
+            if ($value !== false && trim((string)$value) !== '') {
+                return trim((string)$value);
+            }
+        }
+
+        return '';
+    }
+
+    private function safeMailError(Throwable $e, ?PHPMailer $mail = null): string
+    {
+        $message = $mail && trim((string)$mail->ErrorInfo) !== '' ? (string)$mail->ErrorInfo : $e->getMessage();
+        $message = preg_replace('/\s+/', ' ', strip_tags($message)) ?? 'Email delivery failed.';
+        return substr($message, 0, 250);
+    }
+
+    private function configureRestoreMailer(PHPMailer $mail): void
+    {
+        $host = $this->envValue(['CRE8CONNECT_SMTP_HOST', 'SMTP_HOST', 'MAIL_HOST']);
+        $username = $this->envValue(['CRE8CONNECT_SMTP_USERNAME', 'SMTP_USERNAME', 'MAIL_USERNAME']);
+        $password = $this->envValue(['CRE8CONNECT_SMTP_PASSWORD', 'SMTP_PASSWORD', 'MAIL_PASSWORD']);
+        $port = (int)($this->envValue(['CRE8CONNECT_SMTP_PORT', 'SMTP_PORT', 'MAIL_PORT']) ?: 587);
+        $secure = $this->envValue(['CRE8CONNECT_SMTP_SECURE', 'SMTP_SECURE', 'MAIL_ENCRYPTION']) ?: 'tls';
+        $fromEmail = $this->envValue(['CRE8CONNECT_MAIL_FROM', 'MAIL_FROM_ADDRESS', 'SMTP_FROM_EMAIL']) ?: $username;
+        $fromName = $this->envValue(['CRE8CONNECT_MAIL_FROM_NAME', 'MAIL_FROM_NAME']) ?: 'Cre8Connect';
+
+        if ($host === '' || $username === '' || $password === '' || $fromEmail === '') {
+            throw new RuntimeException('Restore email SMTP is not configured.');
+        }
+
+        $mail->CharSet = 'UTF-8';
+        $mail->Encoding = 'base64';
+        $mail->isSMTP();
+        $mail->Host = $host;
+        $mail->SMTPAuth = true;
+        $mail->Username = $username;
+        $mail->Password = $password;
+        $mail->SMTPSecure = $secure;
+        $mail->Port = $port;
+        $mail->setFrom($fromEmail, $fromName);
+    }
+
+    private function sendAccountRestoreEmail(array $user): array
+    {
+        return $this->sendAccountStatusEmail($user, 'restored');
+    }
+
+    private function accountStatusEmailContent(string $eventType): array
+    {
+        return match ($eventType) {
+            'suspended' => [
+                'subject' => 'Your Cre8Connect account has been suspended',
+                'html' => 'Your Cre8Connect account has been suspended. You can submit an appeal or complaint to the administration if you believe this needs review.',
+                'text' => "Your Cre8Connect account has been suspended.\nYou can submit an appeal or complaint to the administration if you believe this needs review.",
+            ],
+            'deleted' => [
+                'subject' => 'Your Cre8Connect account has been disabled',
+                'html' => 'Your Cre8Connect account has been disabled. You can submit an appeal or complaint to the administration if you believe this needs review.',
+                'text' => "Your Cre8Connect account has been disabled.\nYou can submit an appeal or complaint to the administration if you believe this needs review.",
+            ],
+            'reactivated' => [
+                'subject' => 'Your Cre8Connect account has been reactivated',
+                'html' => 'Your Cre8Connect account has been reactivated. You can log in again using your existing credentials.',
+                'text' => "Your Cre8Connect account has been reactivated.\nYou can log in again using your existing credentials.",
+            ],
+            'profile_updated' => [
+                'subject' => 'Your Cre8Connect account information was updated',
+                'html' => 'Your Cre8Connect account information was updated.',
+                'text' => 'Your Cre8Connect account information was updated.',
+            ],
+            'email_changed' => [
+                'subject' => 'Your Cre8Connect account email was changed',
+                'html' => 'Your Cre8Connect account email was changed.',
+                'text' => 'Your Cre8Connect account email was changed.',
+            ],
+            'role_changed' => [
+                'subject' => 'Your Cre8Connect account role was updated',
+                'html' => 'Your Cre8Connect account role was updated.',
+                'text' => 'Your Cre8Connect account role was updated.',
+            ],
+            default => [
+                'subject' => 'Your Cre8Connect account has been restored',
+                'html' => 'Your Cre8Connect account has been restored. You can log in again using your existing credentials.',
+                'text' => "Your Cre8Connect account has been restored.\nYou can log in again using your existing credentials.",
+            ],
+        };
+    }
+
+    private function accountEmailEventTypes(): array
+    {
+        return ['suspended', 'deleted', 'reactivated', 'restored', 'profile_updated', 'email_changed', 'role_changed'];
+    }
+
+    public function sendAccountStatusEmail(array $user, string $eventType, ?string $reason = null): array
+    {
+        $eventType = strtolower(trim($eventType));
+        if (!in_array($eventType, $this->accountEmailEventTypes(), true)) {
+            return ['success' => false, 'error' => 'Unsupported account email event.'];
+        }
+
+        $email = trim((string)($user['email'] ?? ''));
+        if ($email === '') {
+            return ['success' => false, 'error' => 'User has no email address.'];
+        }
+
+        $mail = new PHPMailer(true);
+        try {
+            $this->configureRestoreMailer($mail);
+            $name = trim((string)($user['nom'] ?? ''));
+            $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+            $greetingHtml = $name !== '' ? 'Hello ' . $safeName . ',' : 'Hello,';
+            $greetingText = $name !== '' ? 'Hello ' . $name . ',' : 'Hello,';
+            $content = $this->accountStatusEmailContent($eventType);
+            $detail = trim((string)($reason ?? ''));
+            $detailHtml = $detail !== '' ? '<p>' . htmlspecialchars($detail, ENT_QUOTES, 'UTF-8') . '</p>' : '';
+            $contactHtml = in_array($eventType, ['profile_updated', 'email_changed', 'role_changed'], true)
+                ? '<p>If you did not expect this change, please contact the administration through the complaint/appeal page.</p>'
+                : '';
+            $contactText = in_array($eventType, ['profile_updated', 'email_changed', 'role_changed'], true)
+                ? "\nIf you did not expect this change, please contact the administration through the complaint/appeal page."
+                : '';
+
+            $mail->addAddress($email, $name !== '' ? $name : $email);
+            $mail->isHTML(true);
+            $mail->Subject = $content['subject'];
+            $mail->Body = '
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f6f9;font-family:Arial,sans-serif;color:#333;">
+  <div style="max-width:600px;margin:36px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 5px 15px rgba(0,0,0,.08);">
+    <div style="background:linear-gradient(135deg,#9B5DE0,#E11D74);color:#fff;padding:26px 30px;font-size:22px;font-weight:700;">Cre8Connect</div>
+    <div style="padding:30px;line-height:1.6;">
+      <p>' . $greetingHtml . '</p>
+      <p>' . htmlspecialchars($content['html'], ENT_QUOTES, 'UTF-8') . '</p>
+      ' . $detailHtml . '
+      ' . $contactHtml . '
+      <p style="margin-top:24px;color:#6b7280;font-size:13px;">For your security, this email does not include your password.</p>
+    </div>
+  </div>
+</body>
+</html>';
+            $mail->AltBody = $greetingText . "\n\n" . $content['text'] . ($detail !== '' ? "\n" . $detail : '') . $contactText . "\n\nFor your security, this email does not include your password.";
+            $mail->send();
+
+            return ['success' => true, 'error' => null];
+        } catch (Throwable $e) {
+            return ['success' => false, 'error' => $this->safeMailError($e, $mail)];
+        }
+    }
+
+    private function createAccountEmailLog(PDO $db, array $user, string $eventType, int $actorId, string $actorRole, ?string $reason, array $emailResult): int
+    {
+        $columnsAvailable = $this->accountEmailLogColumns($db);
+        if ($columnsAvailable === []) {
+            return 0;
+        }
+
+        $success = !empty($emailResult['success']);
+        $values = [
+            'idUtilisateur' => (int)($user['id'] ?? 0),
+            'email' => (string)($user['email'] ?? ''),
+            'eventType' => $eventType,
+            'actorId' => $actorId > 0 ? $actorId : null,
+            'actorRole' => $actorRole !== '' ? $actorRole : null,
+            'reason' => $reason !== null && trim($reason) !== '' ? substr(trim($reason), 0, 255) : null,
+            'emailStatus' => $success ? 'sent' : 'failed',
+            'emailAttempts' => 1,
+            'emailError' => $success ? null : (string)($emailResult['error'] ?? 'Email delivery failed.'),
+        ];
+
+        $rawNowColumns = ['createdAt', 'lastEmailAttemptAt'];
+        if ($success) {
+            $rawNowColumns[] = 'emailSentAt';
+        }
+
+        $columns = [];
+        $placeholders = [];
+        $params = [];
+        foreach ($values as $column => $value) {
+            if (!isset($columnsAvailable[$column])) {
+                continue;
+            }
+            $columns[] = $column;
+            $placeholders[] = ':' . $column;
+            $params[':' . $column] = $value;
+        }
+        foreach ($rawNowColumns as $column) {
+            if (!isset($columnsAvailable[$column])) {
+                continue;
+            }
+            $columns[] = $column;
+            $placeholders[] = 'NOW()';
+        }
+
+        if ($columns === []) {
+            return 0;
+        }
+
+        try {
+            $stmt = $db->prepare('INSERT INTO account_email_logs (`' . implode('`, `', $columns) . '`) VALUES (' . implode(', ', $placeholders) . ')');
+            $stmt->execute($params);
+            return (int)$db->lastInsertId();
+        } catch (Throwable $e) {
+            error_log('Account email log insert failed: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    private function updateAccountEmailLogAttempt(PDO $db, int $emailLogId, array $emailResult): void
+    {
+        $columnsAvailable = $this->accountEmailLogColumns($db);
+        if ($emailLogId <= 0 || $columnsAvailable === []) {
+            return;
+        }
+
+        $success = !empty($emailResult['success']);
+        $sets = [];
+        $params = [':idEmailLog' => $emailLogId];
+
+        if (isset($columnsAvailable['emailStatus'])) {
+            $sets[] = 'emailStatus = :emailStatus';
+            $params[':emailStatus'] = $success ? 'sent' : 'failed';
+        }
+        if (isset($columnsAvailable['emailAttempts'])) {
+            $sets[] = 'emailAttempts = COALESCE(emailAttempts, 0) + 1';
+        }
+        if (isset($columnsAvailable['lastEmailAttemptAt'])) {
+            $sets[] = 'lastEmailAttemptAt = NOW()';
+        }
+        if (isset($columnsAvailable['emailSentAt']) && $success) {
+            $sets[] = 'emailSentAt = NOW()';
+        }
+        if (isset($columnsAvailable['emailError'])) {
+            $sets[] = 'emailError = :emailError';
+            $params[':emailError'] = $success ? null : (string)($emailResult['error'] ?? 'Email delivery failed.');
+        }
+
+        if ($sets === []) {
+            return;
+        }
+
+        $stmt = $db->prepare('UPDATE account_email_logs SET ' . implode(', ', $sets) . ' WHERE idEmailLog = :idEmailLog');
+        $stmt->execute($params);
+    }
+
+    private function logAccountStatusEmailAttempt(PDO $db, array $user, string $eventType, int $actorId, string $actorRole, ?string $reason, ?array $emailResult = null): array
+    {
+        try {
+            $emailResult = $emailResult ?? $this->sendAccountStatusEmail($user, $eventType, $reason);
+            $emailLogId = $this->createAccountEmailLog($db, $user, $eventType, $actorId, $actorRole, $reason, $emailResult);
+            return ['log_id' => $emailLogId, 'email' => $emailResult];
+        } catch (Throwable $e) {
+            error_log('Account status email attempt failed: ' . $e->getMessage());
+            return ['log_id' => 0, 'email' => ['success' => false, 'error' => $this->safeMailError($e)]];
+        }
+    }
+
     private function buildPasswordResetBaseUrl(): string
     {
         foreach (['APP_BASE_URL', 'APP_URL', 'BASE_URL', 'SITE_URL'] as $key) {
@@ -152,17 +451,69 @@ $query->execute([
 
         return "success";
     }
-public function updateUser($id, $nom, $email, $role) {
+public function updateUser($id, $nom, $email, $role, $actorId = null, $actorRole = null) {
     $db = config::getConnexion();
+    $targetId = (int)$id;
+    $before = $this->getUserById($targetId);
+    $actorId = $this->resolveActorId($actorId);
+    $actorRole = $this->resolveActorRole($actorRole);
+
     $sql = "UPDATE utilisateur SET nom = :nom, email = :email, role = :role WHERE id = :id";
     $req = $db->prepare($sql);
     $req->execute([
-        'id' => $id,
+        'id' => $targetId,
         'nom' => $nom,
         'email' => $email,
         'role' => $role
         
     ]);
+
+    $after = $this->getUserById($targetId);
+    if (!$before || !$after) {
+        return;
+    }
+
+    $oldName = trim((string)($before['nom'] ?? ''));
+    $newName = trim((string)($after['nom'] ?? ''));
+    $oldEmail = trim((string)($before['email'] ?? ''));
+    $newEmail = trim((string)($after['email'] ?? ''));
+    $oldRole = function_exists('cc_normalize_role') ? cc_normalize_role($before['role'] ?? '') : strtolower(trim((string)($before['role'] ?? '')));
+    $newRole = function_exists('cc_normalize_role') ? cc_normalize_role($after['role'] ?? '') : strtolower(trim((string)($after['role'] ?? '')));
+
+    if ($oldName !== $newName) {
+        $this->logAccountStatusEmailAttempt(
+            $db,
+            $after,
+            'profile_updated',
+            $actorId,
+            $actorRole,
+            'Your account name was changed from ' . ($oldName !== '' ? $oldName : 'empty') . ' to ' . ($newName !== '' ? $newName : 'empty') . '.'
+        );
+    }
+
+    if ($oldEmail !== $newEmail && $oldEmail !== '') {
+        $emailTarget = $after;
+        $emailTarget['email'] = $oldEmail;
+        $this->logAccountStatusEmailAttempt(
+            $db,
+            $emailTarget,
+            'email_changed',
+            $actorId,
+            $actorRole,
+            'Your account email was changed from ' . $oldEmail . ' to ' . $newEmail . '.'
+        );
+    }
+
+    if ($oldRole !== $newRole) {
+        $this->logAccountStatusEmailAttempt(
+            $db,
+            $after,
+            'role_changed',
+            $actorId,
+            $actorRole,
+            'Your role was changed from ' . $oldRole . ' to ' . $newRole . '.'
+        );
+    }
 }
 
 public function afficherAdminAccounts(array $roles) {
@@ -229,6 +580,364 @@ public function getDeletedUsers(): array {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+private function createRestoreNotification(PDO $db, array $user, int $actorId, string $actorRole): ?int
+{
+    try {
+        $targetId = (int)($user['id'] ?? 0);
+        if ($targetId <= 0) {
+            return null;
+        }
+
+        $notificationC = new NotificationC($db);
+        $id = $notificationC->createNotification(
+            $targetId,
+            'account_restored',
+            'Account restored',
+            'Your Cre8Connect account has been restored. You can log in again.',
+            function_exists('cc_app_url') ? cc_app_url('Vue/FrontOffice/utilisateur/login.php') : 'Vue/FrontOffice/utilisateur/login.php',
+            'utilisateur',
+            $targetId,
+            $actorId,
+            $actorRole,
+            'account_restored_' . $targetId . '_' . time(),
+            ['user_id' => $targetId]
+        );
+
+        return is_numeric($id) ? (int)$id : null;
+    } catch (Throwable $e) {
+        error_log('Account restore notification failed: ' . $e->getMessage());
+        return null;
+    }
+}
+
+private function createAccountRestoreLog(PDO $db, array $before, array $after, int $actorId, string $actorRole, string $reason, ?int $notificationId, array $emailResult): int
+{
+    $columnsAvailable = $this->restoreLogColumns($db);
+    if ($columnsAvailable === []) {
+        return 0;
+    }
+
+    $values = [
+        'idUtilisateur' => (int)($after['id'] ?? $before['id'] ?? 0),
+        'restoredBy' => $actorId,
+        'restoredByRole' => $actorRole,
+        'restoreType' => 'undo_delete',
+        'oldStatus' => (string)($before['statut'] ?? ''),
+        'newStatus' => (string)($after['statut'] ?? ''),
+        'reason' => $reason,
+        'emailSent' => !empty($emailResult['success']) ? 1 : 0,
+        'notificationId' => $notificationId,
+        'emailAttempts' => 1,
+        'emailStatus' => !empty($emailResult['success']) ? 'sent' : 'failed',
+        'emailError' => !empty($emailResult['success']) ? null : (string)($emailResult['error'] ?? 'Email delivery failed.'),
+    ];
+
+    $rawNowColumns = ['createdAt'];
+    if (!empty($emailResult['success'])) {
+        $rawNowColumns[] = 'emailSentAt';
+    }
+    if (isset($columnsAvailable['lastEmailAttemptAt'])) {
+        $rawNowColumns[] = 'lastEmailAttemptAt';
+    }
+
+    $columns = [];
+    $placeholders = [];
+    $params = [];
+    foreach ($values as $column => $value) {
+        if (!isset($columnsAvailable[$column])) {
+            continue;
+        }
+        $columns[] = $column;
+        $placeholders[] = ':' . $column;
+        $params[':' . $column] = $value;
+    }
+    foreach ($rawNowColumns as $column) {
+        if (!isset($columnsAvailable[$column])) {
+            continue;
+        }
+        $columns[] = $column;
+        $placeholders[] = 'NOW()';
+    }
+
+    if ($columns === []) {
+        return 0;
+    }
+
+    try {
+        $sql = 'INSERT INTO account_restore_logs (`' . implode('`, `', $columns) . '`) VALUES (' . implode(', ', $placeholders) . ')';
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        return (int)$db->lastInsertId();
+    } catch (Throwable $e) {
+        error_log('Account restore log insert failed: ' . $e->getMessage());
+        return 0;
+    }
+}
+
+private function fetchAccountRestoreLogById(PDO $db, int $restoreLogId): ?array
+{
+    if ($restoreLogId <= 0 || $this->restoreLogColumns($db) === []) {
+        return null;
+    }
+
+    $stmt = $db->prepare("SELECT * FROM account_restore_logs WHERE idRestore = :id LIMIT 1");
+    $stmt->execute([':id' => $restoreLogId]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $row ?: null;
+}
+
+private function updateRestoreLogEmailAttempt(PDO $db, int $restoreLogId, array $emailResult): void
+{
+    $columnsAvailable = $this->restoreLogColumns($db);
+    if ($restoreLogId <= 0 || $columnsAvailable === []) {
+        return;
+    }
+
+    $sets = [];
+    $params = [':idRestore' => $restoreLogId];
+    $success = !empty($emailResult['success']);
+
+    if (isset($columnsAvailable['emailSent'])) {
+        $sets[] = 'emailSent = :emailSent';
+        $params[':emailSent'] = $success ? 1 : 0;
+    }
+    if (isset($columnsAvailable['emailSentAt']) && $success) {
+        $sets[] = 'emailSentAt = NOW()';
+    }
+    if (isset($columnsAvailable['emailAttempts'])) {
+        $sets[] = 'emailAttempts = COALESCE(emailAttempts, 0) + 1';
+    }
+    if (isset($columnsAvailable['lastEmailAttemptAt'])) {
+        $sets[] = 'lastEmailAttemptAt = NOW()';
+    }
+    if (isset($columnsAvailable['emailStatus'])) {
+        $sets[] = 'emailStatus = :emailStatus';
+        $params[':emailStatus'] = $success ? 'sent' : 'failed';
+    }
+    if (isset($columnsAvailable['emailError'])) {
+        $sets[] = 'emailError = :emailError';
+        $params[':emailError'] = $success ? null : (string)($emailResult['error'] ?? 'Email delivery failed.');
+    }
+
+    if ($sets === []) {
+        return;
+    }
+
+    $stmt = $db->prepare('UPDATE account_restore_logs SET ' . implode(', ', $sets) . ' WHERE idRestore = :idRestore');
+    $stmt->execute($params);
+}
+
+public function getAccountRestoreLogs(): array
+{
+    $db = config::getConnexion();
+    $logColumns = $this->restoreLogColumns($db);
+    if ($logColumns === []) {
+        return [];
+    }
+
+    $select = [
+        'l.idRestore',
+        'l.idUtilisateur',
+        'l.restoredBy',
+        'l.restoredByRole',
+        'l.restoreType',
+        'l.oldStatus',
+        'l.newStatus',
+        'l.reason',
+        'l.emailSent',
+        'l.emailSentAt',
+        'l.notificationId',
+        'l.createdAt',
+        'u.nom',
+        'u.email',
+        'u.role',
+    ];
+
+    foreach (['restored_at', 'restored_by', 'restored_by_role'] as $userColumn) {
+        $select[] = $this->utilisateurHasColumn($db, $userColumn) ? 'u.' . $userColumn : 'NULL AS ' . $userColumn;
+    }
+
+    foreach (['emailAttempts', 'lastEmailAttemptAt', 'emailStatus', 'emailError'] as $optionalColumn) {
+        if (isset($logColumns[$optionalColumn])) {
+            $select[] = 'l.' . $optionalColumn;
+        }
+    }
+
+    $stmt = $db->query('
+        SELECT ' . implode(', ', $select) . '
+        FROM account_restore_logs l
+        LEFT JOIN utilisateur u ON u.id = l.idUtilisateur
+        ORDER BY l.createdAt DESC, l.idRestore DESC
+    ');
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+public function accountRestoreLogsReady(): bool
+{
+    $db = config::getConnexion();
+    return $this->restoreLogColumns($db) !== [];
+}
+
+public function accountEmailLogsReady(): bool
+{
+    $db = config::getConnexion();
+    return $this->accountEmailLogColumns($db) !== [];
+}
+
+private function fetchAccountEmailLogById(PDO $db, int $emailLogId): ?array
+{
+    if ($emailLogId <= 0 || $this->accountEmailLogColumns($db) === []) {
+        return null;
+    }
+
+    $stmt = $db->prepare("SELECT * FROM account_email_logs WHERE idEmailLog = :id LIMIT 1");
+    $stmt->execute([':id' => $emailLogId]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $row ?: null;
+}
+
+public function getAccountEmailLogs(): array
+{
+    $db = config::getConnexion();
+    $logColumns = $this->accountEmailLogColumns($db);
+    if ($logColumns === []) {
+        return [];
+    }
+
+    $select = [
+        'l.idEmailLog',
+        'l.idUtilisateur',
+        'l.email',
+        'l.eventType',
+        'l.actorId',
+        'l.actorRole',
+        'l.reason',
+        'l.emailStatus',
+        'l.emailAttempts',
+        'l.lastEmailAttemptAt',
+        'l.emailSentAt',
+        'l.emailError',
+        'l.createdAt',
+        'u.nom',
+        'u.role',
+    ];
+
+    $stmt = $db->query('
+        SELECT ' . implode(', ', $select) . '
+        FROM account_email_logs l
+        LEFT JOIN utilisateur u ON u.id = l.idUtilisateur
+        ORDER BY l.createdAt DESC, l.idEmailLog DESC
+    ');
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+public function retryAccountStatusEmailByLogId($emailLogId, $actorId = null, $actorRole = null): array
+{
+    $db = config::getConnexion();
+    $emailLogId = (int)$emailLogId;
+    $actorId = $this->resolveActorId($actorId);
+    $actorRole = $this->resolveActorRole($actorRole);
+
+    if ($emailLogId <= 0 || $actorId <= 0 || $actorRole === '') {
+        return ['success' => false, 'message' => 'Missing actor or email log.'];
+    }
+
+    $beforeLog = $this->fetchAccountEmailLogById($db, $emailLogId);
+    if (!$beforeLog) {
+        return ['success' => false, 'message' => 'Account email log was not found.'];
+    }
+
+    $eventType = strtolower(trim((string)($beforeLog['eventType'] ?? '')));
+    if (!in_array($eventType, $this->accountEmailEventTypes(), true)) {
+        return ['success' => false, 'message' => 'Unsupported email event.'];
+    }
+
+    $user = $this->getUserById((int)($beforeLog['idUtilisateur'] ?? 0));
+    if (!$user) {
+        $user = [
+            'id' => (int)($beforeLog['idUtilisateur'] ?? 0),
+            'nom' => '',
+            'email' => (string)($beforeLog['email'] ?? ''),
+            'role' => '',
+        ];
+    }
+    if (!empty($beforeLog['email'])) {
+        $user['email'] = (string)$beforeLog['email'];
+    }
+
+    $emailResult = $this->sendAccountStatusEmail($user, $eventType, (string)($beforeLog['reason'] ?? ''));
+    $this->updateAccountEmailLogAttempt($db, $emailLogId, $emailResult);
+    $afterLog = $this->fetchAccountEmailLogById($db, $emailLogId);
+
+    cc_log_admin_entity_action(
+        $db,
+        $actorId,
+        $actorRole,
+        'retry_account_status_email',
+        'account_email_logs',
+        $emailLogId,
+        $beforeLog,
+        $afterLog,
+        'Retry account status email',
+        0,
+        'not_available'
+    );
+
+    return [
+        'success' => !empty($emailResult['success']),
+        'message' => !empty($emailResult['success']) ? 'Account email sent successfully.' : 'Account email retry failed.',
+        'email' => $emailResult,
+    ];
+}
+
+public function retryRestoreEmailByLogId($restoreLogId, $actorId = null, $actorRole = null): array
+{
+    $db = config::getConnexion();
+    $restoreLogId = (int)$restoreLogId;
+    $actorId = $this->resolveActorId($actorId);
+    $actorRole = $this->resolveActorRole($actorRole);
+
+    if ($restoreLogId <= 0 || $actorId <= 0 || $actorRole === '') {
+        return ['success' => false, 'message' => 'Missing actor or restore log.'];
+    }
+
+    $beforeLog = $this->fetchAccountRestoreLogById($db, $restoreLogId);
+    if (!$beforeLog) {
+        return ['success' => false, 'message' => 'Restore log was not found.'];
+    }
+
+    $user = $this->getUserById((int)($beforeLog['idUtilisateur'] ?? 0));
+    if (!$user) {
+        return ['success' => false, 'message' => 'Restored user was not found.'];
+    }
+
+    $emailResult = $this->sendAccountRestoreEmail($user);
+    $this->updateRestoreLogEmailAttempt($db, $restoreLogId, $emailResult);
+    $afterLog = $this->fetchAccountRestoreLogById($db, $restoreLogId);
+
+    cc_log_admin_entity_action(
+        $db,
+        $actorId,
+        $actorRole,
+        'retry_restore_email',
+        'account_restore_logs',
+        $restoreLogId,
+        $beforeLog,
+        $afterLog,
+        'Retry account restore email',
+        0,
+        'not_available'
+    );
+
+    return [
+        'success' => !empty($emailResult['success']),
+        'message' => !empty($emailResult['success']) ? 'Restore email sent successfully.' : 'Restore email retry failed.',
+        'email' => $emailResult,
+    ];
+}
+
 public function ajouterAdminAccount($nom, $email, $password, $role) {
     $db = config::getConnexion();
 
@@ -258,8 +967,14 @@ public function updateUserStatus($id, $status) {
     $stmt->execute([$status, (int)$id]);
 }
 
-public function suspendUserWithMetadata($targetId, $actorId, $actorRole, $reason) {
+public function suspendUserWithMetadata($targetId, $actorId, $actorRole, $reason): array {
     $db = config::getConnexion();
+    $targetId = (int)$targetId;
+    $actorId = $this->resolveActorId($actorId);
+    $actorRole = $this->resolveActorRole($actorRole);
+    $reason = trim((string)$reason);
+    $before = $this->getUserById($targetId);
+
     $stmt = $db->prepare("
         UPDATE utilisateur
         SET statut = 'suspendu',
@@ -270,15 +985,32 @@ public function suspendUserWithMetadata($targetId, $actorId, $actorRole, $reason
         WHERE id = ?
     ");
     $stmt->execute([
-        (int)$actorId,
-        strtolower(trim((string)$actorRole)),
-        trim((string)$reason),
-        (int)$targetId,
+        $actorId,
+        strtolower($actorRole),
+        $reason,
+        $targetId,
     ]);
+
+    $after = $this->getUserById($targetId);
+    $emailLog = $after ? $this->logAccountStatusEmailAttempt($db, $after, 'suspended', $actorId, $actorRole, $reason) : ['log_id' => 0, 'email' => ['success' => false, 'error' => 'User not found after suspension.']];
+
+    return [
+        'success' => $stmt->rowCount() >= 0,
+        'before' => $before,
+        'after' => $after,
+        'email_log_id' => $emailLog['log_id'] ?? 0,
+        'email' => $emailLog['email'] ?? null,
+    ];
 }
 
-public function reactivateUserAndClearSuspension($targetId) {
+public function reactivateUserAndClearSuspension($targetId, $actorId = null, $actorRole = null, $reason = null): array {
     $db = config::getConnexion();
+    $targetId = (int)$targetId;
+    $actorId = $this->resolveActorId($actorId);
+    $actorRole = $this->resolveActorRole($actorRole);
+    $reason = trim((string)($reason ?? 'Reactivated from BackOffice user management'));
+    $before = $this->getUserById($targetId);
+
     $stmt = $db->prepare("
         UPDATE utilisateur
         SET statut = 'actif',
@@ -288,7 +1020,18 @@ public function reactivateUserAndClearSuspension($targetId) {
             suspension_reason = NULL
         WHERE id = ?
     ");
-    $stmt->execute([(int)$targetId]);
+    $stmt->execute([$targetId]);
+
+    $after = $this->getUserById($targetId);
+    $emailLog = $after ? $this->logAccountStatusEmailAttempt($db, $after, 'reactivated', $actorId, $actorRole, $reason) : ['log_id' => 0, 'email' => ['success' => false, 'error' => 'User not found after reactivation.']];
+
+    return [
+        'success' => $stmt->rowCount() >= 0,
+        'before' => $before,
+        'after' => $after,
+        'email_log_id' => $emailLog['log_id'] ?? 0,
+        'email' => $emailLog['email'] ?? null,
+    ];
 }
 
 public function softDeleteUserById($id, $actorId = null, $actorRole = null, $reason = null): array
@@ -337,8 +1080,9 @@ public function softDeleteUserById($id, $actorId = null, $actorRole = null, $rea
 
     $after = $this->getUserById($targetId);
     cc_log_admin_entity_action($db, $actorId, $actorRole, 'soft_delete_user', 'utilisateur', $targetId, $before, $after, $reason, 1, 'available');
+    $emailLog = $after ? $this->logAccountStatusEmailAttempt($db, $after, 'deleted', $actorId, $actorRole, $reason) : ['log_id' => 0, 'email' => null];
 
-    return ['success' => true, 'message' => 'Account deleted successfully.', 'before' => $before, 'after' => $after];
+    return ['success' => true, 'message' => 'Account deleted successfully.', 'before' => $before, 'after' => $after, 'email_log_id' => $emailLog['log_id'] ?? 0, 'email' => $emailLog['email'] ?? null];
 }
 
 public function restoreDeletedUserById($id, $actorId = null, $actorRole = null, $reason = null): array
@@ -387,7 +1131,21 @@ public function restoreDeletedUserById($id, $actorId = null, $actorRole = null, 
     $after = $this->getUserById($targetId);
     cc_log_admin_entity_action($db, $actorId, $actorRole, 'restore_deleted_user', 'utilisateur', $targetId, $before, $after, $reason, 0, 'not_available');
 
-    return ['success' => true, 'message' => 'Account restored successfully.', 'before' => $before, 'after' => $after];
+    $notificationId = $this->createRestoreNotification($db, $after ?: [], $actorId, $actorRole);
+    $emailResult = $this->sendAccountRestoreEmail($after ?: []);
+    $restoreLogId = $this->createAccountRestoreLog($db, $before, $after ?: [], $actorId, $actorRole, $reason, $notificationId, $emailResult);
+    $accountEmailLogId = $after ? $this->createAccountEmailLog($db, $after, 'restored', $actorId, $actorRole, $reason, $emailResult) : 0;
+
+    return [
+        'success' => true,
+        'message' => !empty($emailResult['success']) ? 'Account restored successfully. Restore email sent.' : 'Account restored successfully. Restore email failed and can be retried from Restore Logs.',
+        'before' => $before,
+        'after' => $after,
+        'restore_log_id' => $restoreLogId,
+        'account_email_log_id' => $accountEmailLogId,
+        'notification_id' => $notificationId,
+        'email' => $emailResult,
+    ];
 }
 
 public function finalDeleteUserById($id, $actorId = null, $actorRole = null): array
@@ -860,7 +1618,14 @@ public function login($email, $password) {
     }
 
     if (!empty($user['deleted_at'] ?? null)) {
-        return "Compte indisponible";
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        cc_clear_normal_auth_session(false);
+        cc_set_account_appeal_session($user, 'account_deleted');
+        session_write_close();
+        header('Location: ' . $this->appUrl('Vue/FrontOffice/utilisateur/reclamation.php?appeal=1&reason=account_deleted'));
+        exit();
     }
 
     // TEST PASSWORD — handle both bcrypt hashes and legacy plain text
@@ -887,17 +1652,11 @@ public function login($email, $password) {
     $user['role'] = $normalizedRole;
 
     if ($user['statut'] === 'suspendu') {
-        unset($_SESSION['connected'], $_SESSION['id'], $_SESSION['nom'], $_SESSION['email'], $_SESSION['role'], $_SESSION['user'], $_SESSION['utilisateur']);
-        $_SESSION['suspended_appeal'] = [
-            'id' => (int) $user['id'],
-            'role' => $normalizedRole,
-            'nom' => $user['nom'] ?? '',
-            'email' => $user['email'] ?? '',
-            'statut' => 'suspendu',
-        ];
+        cc_clear_normal_auth_session(false);
+        cc_set_account_appeal_session(array_merge($user, ['role' => $normalizedRole]), 'account_suspended');
 
         session_write_close();
-        header('Location: ' . $this->appUrl('Vue/FrontOffice/utilisateur/reclamation.php?appeal=1'));
+        header('Location: ' . $this->appUrl('Vue/FrontOffice/utilisateur/reclamation.php?appeal=1&reason=account_suspended'));
         exit();
     }
 

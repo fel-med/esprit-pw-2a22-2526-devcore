@@ -24,7 +24,10 @@ class ReclamationC {
             $reclamationId = (int) $db->lastInsertId();
             $idUtilisateur = (int) $reclamation->getIdUtilisateur();
             $description = (string) $reclamation->getDescription();
-            $isSuspensionAppeal = $isSuspensionAppeal || stripos($description, '[Suspension Appeal]') !== false;
+            $isSuspensionAppeal = $isSuspensionAppeal
+                || stripos($description, '[Suspension Appeal]') !== false
+                || stripos($description, '[Account appeal - suspended]') !== false
+                || stripos($description, '[Account appeal - deleted]') !== false;
             $complainantRole = $this->getUserRoleById($idUtilisateur);
 
             if ($reclamationId > 0 && $complainantRole !== '') {

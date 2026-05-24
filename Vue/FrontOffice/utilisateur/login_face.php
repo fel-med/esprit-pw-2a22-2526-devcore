@@ -81,7 +81,7 @@ $inputFace = $data['face'];
 $db = config::getConnexion();
 
 $hasDeletedAt = cre8_login_user_has_column($db, 'deleted_at');
-$sql = "SELECT id, nom, email, role, statut, face_descriptor" . ($hasDeletedAt ? ", deleted_at" : "") . " FROM utilisateur WHERE face_descriptor IS NOT NULL AND face_descriptor != ''" . ($hasDeletedAt ? " AND deleted_at IS NULL" : "");
+$sql = "SELECT id, nom, email, role, statut, face_descriptor" . ($hasDeletedAt ? ", deleted_at" : "") . " FROM utilisateur WHERE face_descriptor IS NOT NULL AND face_descriptor != ''";
 $users = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
 function distance($a, $b) {
@@ -120,19 +120,25 @@ if ($bestUser && $bestDist < 0.75) {
     $normalizedRole = cre8_normalize_login_role($bestUser['role'] ?? '');
     $bestUser['role'] = $normalizedRole;
 
-    if ($bestUser['statut'] === 'suspendu') {
+    if (!empty($bestUser['deleted_at'] ?? null)) {
         unset($_SESSION['connected'], $_SESSION['id'], $_SESSION['nom'], $_SESSION['email'], $_SESSION['role'], $_SESSION['user'], $_SESSION['utilisateur']);
-        $_SESSION['suspended_appeal'] = [
-            'id' => (int) $bestUser['id'],
-            'role' => $normalizedRole,
-            'nom' => $bestUser['nom'] ?? '',
-            'email' => $bestUser['email'] ?? '',
-            'statut' => 'suspendu',
-        ];
+        cc_set_account_appeal_session($bestUser, 'account_deleted');
 
         echo json_encode([
             "success" => true,
-            "redirect" => cre8_login_url('Vue/FrontOffice/utilisateur/reclamation.php?appeal=1'),
+            "redirect" => cre8_login_url('Vue/FrontOffice/utilisateur/reclamation.php?appeal=1&reason=account_deleted'),
+            "distance" => $bestDist
+        ]);
+        exit();
+    }
+
+    if ($bestUser['statut'] === 'suspendu') {
+        unset($_SESSION['connected'], $_SESSION['id'], $_SESSION['nom'], $_SESSION['email'], $_SESSION['role'], $_SESSION['user'], $_SESSION['utilisateur']);
+        cc_set_account_appeal_session($bestUser, 'account_suspended');
+
+        echo json_encode([
+            "success" => true,
+            "redirect" => cre8_login_url('Vue/FrontOffice/utilisateur/reclamation.php?appeal=1&reason=account_suspended'),
             "distance" => $bestDist
         ]);
         exit();

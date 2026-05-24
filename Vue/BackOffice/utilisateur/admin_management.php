@@ -174,7 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $reason = 'Reactivated from Admin Management';
-            $userC->reactivateUserAndClearSuspension($targetId);
+            $userC->reactivateUserAndClearSuspension($targetId, $currentUserId, $currentRole, $reason);
             cc_log_admin_action($currentUserId, $currentRole, 'reactivate_user', $targetId, $target['role'] ?? null, $target['statut'] ?? null, 'actif', $reason);
             admin_management_flash('success', 'Account activated successfully.');
         } elseif ($action === 'delete') {
@@ -263,6 +263,10 @@ unset($_SESSION['admin_management_flash']);
       gap: .4rem;
     }
 
+    .admin-management-shell .uc-entity-tabs {
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
     body.light-mode .admin-management-card {
       background: #fff;
       border-color: #e5e7eb;
@@ -327,6 +331,20 @@ unset($_SESSION['admin_management_flash']);
                 <span>
                   <strong data-i18n="adminManagement.deletedUsers">Deleted Users</strong>
                   <small data-i18n="adminManagement.deletedUsersHint">Restore soft-deleted users or review final delete eligibility.</small>
+                </span>
+              </a>
+              <a href="restore_logs.php" class="uc-entity-tab">
+                <span class="uc-tab-icon"><i class="mdi mdi-email-check-outline"></i></span>
+                <span>
+                  <strong data-i18n="adminManagement.restoreLogs">Restore Logs</strong>
+                  <small data-i18n="adminManagement.restoreLogsHint">Track restore notifications and retry failed emails.</small>
+                </span>
+              </a>
+              <a href="account_email_logs.php" class="uc-entity-tab">
+                <span class="uc-tab-icon"><i class="mdi mdi-email-outline"></i></span>
+                <span>
+                  <strong data-i18n="adminManagement.accountEmails">Account Emails</strong>
+                  <small data-i18n="adminManagement.accountEmailsHint">Retry failed suspension, deletion, and reactivation emails.</small>
                 </span>
               </a>
             </div>
@@ -557,6 +575,10 @@ window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
     'adminManagement.flash.deleted': 'Account deleted successfully.',
     'adminManagement.deletedUsers': 'Deleted Users',
     'adminManagement.deletedUsersHint': 'Restore soft-deleted users or review final delete eligibility.',
+    'adminManagement.restoreLogs': 'Restore Logs',
+    'adminManagement.restoreLogsHint': 'Track restore notifications and retry failed emails.',
+    'adminManagement.accountEmails': 'Account Emails',
+    'adminManagement.accountEmailsHint': 'Retry failed suspension, deletion, and reactivation emails.',
     'adminManagement.flash.invalidAction': 'Invalid action.'
   },
   fr: {
@@ -605,6 +627,10 @@ window.cre8BackRegisterTranslations && window.cre8BackRegisterTranslations({
     'adminManagement.flash.deleted': 'Compte supprime avec succes.',
     'adminManagement.deletedUsers': 'Comptes supprimes',
     'adminManagement.deletedUsersHint': 'Restaurez les comptes supprimes ou verifiez la suppression definitive.',
+    'adminManagement.restoreLogs': 'Journaux de restauration',
+    'adminManagement.restoreLogsHint': 'Suivez les notifications et relancez les emails en echec.',
+    'adminManagement.accountEmails': 'Emails de compte',
+    'adminManagement.accountEmailsHint': 'Relancez les emails de suspension, suppression et reactivation en echec.',
     'adminManagement.flash.invalidAction': 'Action invalide.'
   }
 });

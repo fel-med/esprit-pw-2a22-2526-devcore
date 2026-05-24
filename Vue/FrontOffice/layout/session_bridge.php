@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../../../Controleur/session_helper.php';
+
 if (!function_exists('cre8_front_start_session')) {
     function cre8_front_start_session(): void
     {
@@ -130,6 +132,8 @@ if (!function_exists('cre8_front_session_user')) {
                 'isLoggedIn' => false,
             ];
         }
+
+        cc_enforce_active_normal_session(cre8_front_login_url());
 
         $user = [
             'id' => $id,

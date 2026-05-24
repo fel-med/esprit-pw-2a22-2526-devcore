@@ -72,7 +72,9 @@ if (isset($_POST['id'])) {
         $targetId,
         trim((string)($_POST['nom'] ?? ($targetUser['nom'] ?? ''))),
         trim((string)($_POST['email'] ?? ($targetUser['email'] ?? ''))),
-        $role
+        $role,
+        $actorId,
+        $actorRole
     );
 
     if ($roleChanged) {

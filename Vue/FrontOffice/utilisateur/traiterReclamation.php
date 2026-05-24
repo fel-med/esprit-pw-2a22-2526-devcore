@@ -8,6 +8,7 @@ session_start();
 
 $idUtilisateur = cc_current_reclamation_user_id();
 $isSuspendedAppeal = cc_is_suspended_appeal_session();
+$appealReason = function_exists('cc_account_appeal_reason') ? cc_account_appeal_reason() : ($isSuspendedAppeal ? 'account_suspended' : '');
 $currentReclamationRole = cc_current_reclamation_user_role();
 
 if ($idUtilisateur === null) {
@@ -25,8 +26,11 @@ if (isset($_POST['description']) && ($isSuspendedAppeal || isset($_POST['priorit
     $priorite = $_POST['priorite'] ?? 'normale';
 
     if ($isSuspendedAppeal) {
-        if (!str_starts_with($description, '[Suspension Appeal]')) {
-            $description = '[Suspension Appeal] ' . $description;
+        $prefix = $appealReason === 'account_deleted'
+            ? '[Account appeal - deleted]'
+            : '[Account appeal - suspended]';
+        if (!str_starts_with($description, $prefix)) {
+            $description = $prefix . ' ' . $description;
         }
         $priorite = 'haute';
     }

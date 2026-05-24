@@ -3,14 +3,30 @@ session_start();
 
 require_once '../../../Controleur/session_helper.php';
 require_once '../../../Controleur/reclamationC.php';
+require_once '../../../Controleur/utilisateurC.php';
 
 $isSuspendedAppeal = cc_is_suspended_appeal_session();
+$appealReason = function_exists('cc_account_appeal_reason') ? cc_account_appeal_reason() : ($isSuspendedAppeal ? 'account_suspended' : '');
 $currentReclamationUserId = cc_current_reclamation_user_id();
 $currentReclamationRole = cc_current_reclamation_user_role();
 $isAdminVisitor = !$isSuspendedAppeal && cc_is_backoffice_role($currentReclamationRole ?? '');
+$appealAccountActive = false;
+$appealReturnUrl = 'login.php?account_active=1';
 
 if ($currentReclamationUserId === null) {
     die("User not connected");
+}
+
+$userC = new UtilisateurC();
+if ($isSuspendedAppeal && $currentReclamationUserId) {
+    $appealUser = $userC->getUserById((int)$currentReclamationUserId);
+    if ($appealUser && empty($appealUser['deleted_at']) && cc_normalize_status($appealUser['statut'] ?? '') !== 'suspendu') {
+        $appealAccountActive = true;
+        $appealRole = cc_normalize_role($appealUser['role'] ?? $currentReclamationRole ?? '');
+        $appealReturnUrl = cc_app_url($appealRole === 'admin' || $appealRole === 'super_admin' || $appealRole === 'hyper_admin'
+            ? 'Vue/BackOffice/dashboard/index.php'
+            : 'Vue/FrontOffice/utilisateur/login.php?account_active=1');
+    }
 }
 
 $reclamationC = new ReclamationC();
@@ -373,7 +389,7 @@ $frontActive = 'reclamation';
 <body class="d-flex flex-column h-100 bg-light">
     <?php if ($isSuspendedAppeal): ?>
         <div class="appeal-topbar">
-            <div class="appeal-topbar-title">Cre8Connect - <span data-i18n="account.suspensionAppealTitle">Suspension appeal</span></div>
+            <div class="appeal-topbar-title">Cre8Connect - <span data-i18n="account.accountAppealTitle">Account appeal</span></div>
             <div class="appeal-actions">
                 <div class="appeal-lang-toggle" aria-label="Language">
                     <button type="button" data-appeal-lang="en" data-i18n="account.langEn">EN</button>
@@ -392,13 +408,29 @@ $frontActive = 'reclamation';
             <div class="container px-5 mb-5 front-reclamation-shell">
                 <div class="text-center mb-5 reclamation-hero">
                     <h1 class="display-5 fw-bolder mb-0">
-                        <span class="text-gradient d-inline" data-i18n="<?php echo $isSuspendedAppeal ? 'account.suspensionAppealTitle' : 'account.submitComplaint'; ?>">
-                            <?php echo $isSuspendedAppeal ? 'Suspension appeal' : 'Submit a complaint'; ?>
+                        <span class="text-gradient d-inline" data-i18n="<?php echo $isSuspendedAppeal ? 'account.accountAppealTitle' : 'account.submitComplaint'; ?>">
+                            <?php echo $isSuspendedAppeal ? 'Account appeal' : 'Submit a complaint'; ?>
                         </span>
                     </h1>
-                    <p class="reclamation-hero-copy" data-i18n="<?php echo $isSuspendedAppeal ? 'account.suspensionAppealCopy' : 'account.complaintHeroCopy'; ?>">
-                        <?php echo $isSuspendedAppeal ? 'Your account is suspended. You can submit a complaint to request a review.' : 'Tell us what happened so the Cre8Connect team can help you clearly.'; ?>
+                    <?php
+                        $appealCopyKey = $appealReason === 'account_deleted' ? 'account.deletedAppealCopy' : 'account.suspensionAppealCopy';
+                        $appealCopyText = $appealReason === 'account_deleted'
+                            ? 'Your account was removed or disabled. You can send an appeal to the administration.'
+                            : 'Your account is suspended. You can send an appeal to the administration.';
+                    ?>
+                    <p class="reclamation-hero-copy" data-i18n="<?php echo $isSuspendedAppeal ? $appealCopyKey : 'account.complaintHeroCopy'; ?>">
+                        <?php echo $isSuspendedAppeal ? $appealCopyText : 'Tell us what happened so the Cre8Connect team can help you clearly.'; ?>
                     </p>
+                    <?php if ($appealAccountActive): ?>
+                        <div class="alert alert-success mt-4 mb-0">
+                            <strong data-i18n="account.activeAgainTitle">Your account has been restored/reactivated.</strong>
+                            <div class="mt-2" data-i18n="account.activeAgainCopy">Your account is active again. Please log in to return to Cre8Connect.</div>
+                            <div class="d-flex justify-content-center gap-2 flex-wrap mt-3">
+                                <a class="btn btn-primary" href="<?php echo htmlspecialchars($appealReturnUrl, ENT_QUOTES, 'UTF-8'); ?>" data-i18n="account.returnToCre8Connect">Return to Cre8Connect</a>
+                                <a class="btn btn-outline-secondary" href="reclamation.php?appeal=1&reason=<?php echo urlencode($appealReason); ?>" data-i18n="account.checkAgain">Check again</a>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="row justify-content-center">
@@ -407,7 +439,11 @@ $frontActive = 'reclamation';
                         <div class="card shadow rounded-4 border-0 reclamation-form-card">
                             <div class="card-body p-5">
 
-                                <?php if ($isAdminVisitor): ?>
+                                <?php if ($appealAccountActive): ?>
+                                    <div class="alert alert-success text-center mb-0">
+                                        <span data-i18n="account.activeAgainForm">Your account is available again. Use the button above to continue.</span>
+                                    </div>
+                                <?php elseif ($isAdminVisitor): ?>
                                     <div class="alert alert-warning text-center mb-0">
                                         <span data-i18n="account.adminBackofficeComplaints">Admins can't send complaints here</span>
                                     </div>
@@ -607,8 +643,10 @@ $frontActive = 'reclamation';
         const cre8ComplaintTranslations = {
             en: {
                 'account.submitComplaint': 'Submit a complaint',
+                'account.accountAppealTitle': 'Account appeal',
                 'account.suspensionAppealTitle': 'Suspension appeal',
-                'account.suspensionAppealCopy': 'Your account is suspended. You can submit a complaint to request a review.',
+                'account.suspensionAppealCopy': 'Your account is suspended. You can send an appeal to the administration.',
+                'account.deletedAppealCopy': 'Your account was removed or disabled. You can send an appeal to the administration.',
                 'account.description': 'Description',
                 'account.descriptionPlaceholder': 'Describe your problem...',
                 'account.priority': 'Priority',
@@ -634,12 +672,19 @@ $frontActive = 'reclamation';
                 'account.maxError': 'Description must not exceed 50 characters.',
                 'account.spacesError': 'Description cannot contain only spaces.',
                 'account.characters': 'characters',
-                'account.adminBackofficeComplaints': 'Admins can\'t send complaints here'
+                'account.adminBackofficeComplaints': 'Admins can\'t send complaints here',
+                'account.activeAgainTitle': 'Your account has been restored/reactivated.',
+                'account.activeAgainCopy': 'Your account is active again. Please log in to return to Cre8Connect.',
+                'account.returnToCre8Connect': 'Return to Cre8Connect',
+                'account.checkAgain': 'Check again',
+                'account.activeAgainForm': 'Your account is available again. Use the button above to continue.'
             },
             fr: {
                 'account.submitComplaint': 'Envoyer une reclamation',
+                'account.accountAppealTitle': 'Recours de compte',
                 'account.suspensionAppealTitle': 'Recours de suspension',
-                'account.suspensionAppealCopy': 'Votre compte est suspendu. Vous pouvez envoyer une reclamation pour demander une revue.',
+                'account.suspensionAppealCopy': 'Votre compte est suspendu. Vous pouvez envoyer un recours a l administration.',
+                'account.deletedAppealCopy': 'Votre compte a ete retire ou desactive. Vous pouvez envoyer un recours a l administration.',
                 'account.description': 'Description',
                 'account.descriptionPlaceholder': 'Decrivez votre probleme...',
                 'account.priority': 'Priorite',
@@ -665,7 +710,12 @@ $frontActive = 'reclamation';
                 'account.maxError': 'La description ne doit pas depasser 50 caracteres.',
                 'account.spacesError': 'La description ne peut pas contenir seulement des espaces.',
                 'account.characters': 'caracteres',
-                'account.adminBackofficeComplaints': 'Admins can\'t send complaints here'
+                'account.adminBackofficeComplaints': 'Les admins ne peuvent pas envoyer de reclamations ici',
+                'account.activeAgainTitle': 'Votre compte a ete restaure/reactive.',
+                'account.activeAgainCopy': 'Votre compte est de nouveau actif. Connectez-vous pour revenir a Cre8Connect.',
+                'account.returnToCre8Connect': 'Retourner a Cre8Connect',
+                'account.checkAgain': 'Verifier a nouveau',
+                'account.activeAgainForm': 'Votre compte est de nouveau disponible. Utilisez le bouton ci-dessus pour continuer.'
             }
         };
         function cre8ComplaintLang() {
@@ -861,11 +911,20 @@ $frontActive = 'reclamation';
         }
         
         // ===== CLEAR ERRORS ON FOCUS =====
-        descriptionInput.addEventListener('focus', function() {
-            const descriptionError = document.getElementById('descriptionError');
-            descriptionError.classList.add('d-none');
-            this.classList.remove('border-danger');
-        });
+        if (descriptionInput) {
+            descriptionInput.addEventListener('focus', function() {
+                const descriptionError = document.getElementById('descriptionError');
+                if (descriptionError) {
+                    descriptionError.classList.add('d-none');
+                }
+                this.classList.remove('border-danger');
+            });
+        }
+        <?php if ($isSuspendedAppeal && !$appealAccountActive): ?>
+        setTimeout(function () {
+            window.location.href = 'reclamation.php?appeal=1&reason=<?php echo urlencode($appealReason); ?>';
+        }, 15000);
+        <?php endif; ?>
     </script>
     <script src="../layout/front-header.js"></script>
 

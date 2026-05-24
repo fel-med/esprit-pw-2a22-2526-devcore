@@ -59,7 +59,7 @@ try {
     }
 
     $reason = 'Activated from BackOffice user management';
-    $userC->reactivateUserAndClearSuspension($id);
+    $userC->reactivateUserAndClearSuspension($id, $actorId, $actorRole, $reason);
     cc_log_admin_action($actorId, $actorRole, 'reactivate_user', $id, $targetUser['role'] ?? null, $oldStatus, 'actif', $reason);
 
     cc_json_response(["success" => true, "message" => "Status updated successfully"]);

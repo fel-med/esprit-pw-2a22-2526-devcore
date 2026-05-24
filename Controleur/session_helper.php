@@ -365,10 +365,46 @@ if (!function_exists('cc_is_suspended_appeal_session')) {
         $appealUser = $_SESSION['suspended_appeal'] ?? null;
 
         return is_array($appealUser)
-            && cc_normalize_status($appealUser['statut'] ?? '') === 'suspendu'
             && isset($appealUser['id'])
             && is_numeric($appealUser['id'])
-            && (int)$appealUser['id'] > 0;
+            && (int)$appealUser['id'] > 0
+            && in_array(cc_account_appeal_reason(), ['account_suspended', 'account_deleted'], true);
+    }
+}
+
+if (!function_exists('cc_account_appeal_reason')) {
+    function cc_account_appeal_reason(): string
+    {
+        cc_start_session();
+        $appealUser = $_SESSION['suspended_appeal'] ?? null;
+        if (!is_array($appealUser)) {
+            return '';
+        }
+
+        $reason = strtolower(trim((string)($appealUser['reason'] ?? '')));
+        if (in_array($reason, ['account_suspended', 'account_deleted'], true)) {
+            return $reason;
+        }
+
+        $status = cc_normalize_status($appealUser['statut'] ?? '');
+        return $status === 'suspendu' ? 'account_suspended' : '';
+    }
+}
+
+if (!function_exists('cc_set_account_appeal_session')) {
+    function cc_set_account_appeal_session(array $user, string $reason): void
+    {
+        cc_start_session();
+        $reason = in_array($reason, ['account_suspended', 'account_deleted'], true) ? $reason : 'account_suspended';
+
+        $_SESSION['suspended_appeal'] = [
+            'id' => (int)($user['id'] ?? 0),
+            'role' => cc_normalize_role($user['role'] ?? ''),
+            'nom' => $user['nom'] ?? '',
+            'email' => $user['email'] ?? '',
+            'statut' => $reason === 'account_deleted' ? 'deleted' : 'suspendu',
+            'reason' => $reason,
+        ];
     }
 }
 
@@ -456,7 +492,7 @@ if (!function_exists('cc_fetch_session_user')) {
         try {
             $db = config::getConnexion();
             $stmt = $db->prepare("
-                SELECT id, nom, email, role, statut
+                SELECT id, nom, email, role, statut, deleted_at
                 FROM utilisateur
                 WHERE id = ?
                 LIMIT 1
@@ -495,6 +531,14 @@ if (!function_exists('cc_enforce_active_normal_session')) {
             exit;
         }
 
+        if (!empty($user['deleted_at'] ?? null)) {
+            cc_clear_normal_auth_session(false);
+            cc_set_account_appeal_session($user, 'account_deleted');
+
+            header('Location: ' . cc_app_url('Vue/FrontOffice/utilisateur/reclamation.php?appeal=1&reason=account_deleted'));
+            exit;
+        }
+
         $status = cc_normalize_status($user['statut'] ?? '');
         if ($status === 'actif') {
             return;
@@ -502,15 +546,9 @@ if (!function_exists('cc_enforce_active_normal_session')) {
 
         if ($status === 'suspendu') {
             cc_clear_normal_auth_session(false);
-            $_SESSION['suspended_appeal'] = [
-                'id' => (int)$user['id'],
-                'role' => cc_normalize_role($user['role'] ?? ''),
-                'nom' => $user['nom'] ?? '',
-                'email' => $user['email'] ?? '',
-                'statut' => 'suspendu',
-            ];
+            cc_set_account_appeal_session($user, 'account_suspended');
 
-            header('Location: ' . cc_app_url('Vue/FrontOffice/utilisateur/reclamation.php?appeal=1'));
+            header('Location: ' . cc_app_url('Vue/FrontOffice/utilisateur/reclamation.php?appeal=1&reason=account_suspended'));
             exit;
         }
 

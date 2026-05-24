@@ -141,6 +141,10 @@ unset($_SESSION['deleted_users_flash']);
       overflow: hidden;
     }
 
+    .admin-management-shell .uc-entity-tabs {
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
     .deleted-users-card .card-title {
       color: var(--uc-text);
     }
@@ -504,6 +508,20 @@ unset($_SESSION['deleted_users_flash']);
                 <small>Restore soft-deleted users or review final delete eligibility.</small>
               </span>
             </span>
+            <a href="restore_logs.php" class="uc-entity-tab">
+              <span class="uc-tab-icon"><i class="mdi mdi-email-check-outline"></i></span>
+              <span>
+                <strong>Restore Logs</strong>
+                <small>Track restore notifications and retry failed emails.</small>
+              </span>
+            </a>
+            <a href="account_email_logs.php" class="uc-entity-tab">
+              <span class="uc-tab-icon"><i class="mdi mdi-email-outline"></i></span>
+              <span>
+                <strong>Account Emails</strong>
+                <small>Retry failed suspension, deletion, and reactivation emails.</small>
+              </span>
+            </a>
           </div>
 
           <div class="card deleted-users-card">
